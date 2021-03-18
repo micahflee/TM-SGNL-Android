@@ -1,0 +1,66 @@
+{
+  "version": 2,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "org.thoughtcrime.securesms",
+  "variantName": "processInternalProdDebugResources",
+  "elements": [
+    {
+      "type": "UNIVERSAL",
+      "filters": [],
+      "versionCode": 79700,
+      "versionName": "5.4.11",
+      "outputFile": "Signal-Android-internal-prod-universal-debug-5.4.11.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "x86"
+        }
+      ],
+      "versionCode": 79703,
+      "versionName": "5.4.11",
+      "outputFile": "Signal-Android-internal-prod-x86-debug-5.4.11.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "arm64-v8a"
+        }
+      ],
+      "versionCode": 79702,
+      "versionName": "5.4.11",
+      "outputFile": "Signal-Android-internal-prod-arm64-v8a-debug-5.4.11.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "armeabi-v7a"
+        }
+      ],
+      "versionCode": 79701,
+      "versionName": "5.4.11",
+      "outputFile": "Signal-Android-internal-prod-armeabi-v7a-debug-5.4.11.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "x86_64"
+        }
+      ],
+      "versionCode": 79704,
+      "versionName": "5.4.11",
+      "outputFile": "Signal-Android-internal-prod-x86_64-debug-5.4.11.apk"
+    }
+  ]
+}

@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="theme_type" format="string"/>
+
+    <attr name="search_view_style" format="reference" />
+    <attr name="search_view_style_dark" format="reference" />
+
+    <attr name="emoji_category_recent" format="reference"/>
+    <attr name="emoji_category_people" format="reference"/>
+    <attr name="emoji_category_nature" format="reference"/>
+    <attr name="emoji_category_foods"  format="reference"/>
+    <attr name="emoji_category_activity" format="reference"/>
+    <attr name="emoji_category_places" format="reference"/>
+    <attr name="emoji_category_objects" format="reference"/>
+    <attr name="emoji_category_symbols" format="reference"/>
+    <attr name="emoji_category_flags" format="reference"/>
+    <attr name="emoji_category_emoticons" format="reference"/>
+
+    <attr name="contact_filter_toolbar_icon_tint" format="color" />
+
+    <declare-styleable name="CustomDefaultPreference">
+        <attr name="custom_pref_toggle" format="string"/>
+    </declare-styleable>
+
+    <declare-styleable name="ColorPreference">
+        <attr name="itemLayout" format="reference" />
+        <attr name="choices" format="reference" />
+        <attr name="numColumns" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="AvatarImageView">
+        <attr name="inverted" format="boolean" />
+        <attr name="fallbackImageSize" format="enum">
+            <enum name="large" value="1" />
+            <enum name="small" value="2" />
+        </attr>
+    </declare-styleable>
+
+    <attr name="minWidth" format="dimension" />
+    <attr name="maxWidth" format="dimension" />
+    <attr name="minHeight" format="dimension" />
+    <attr name="maxHeight" format="dimension" />
+
+    <declare-styleable name="ThumbnailView">
+        <attr name="minWidth" />
+        <attr name="maxWidth" />
+        <attr name="minHeight" />
+        <attr name="maxHeight" />
+        <attr name="thumbnail_radius" format="dimension" />
+        <attr name="thumbnail_fit" format="enum">
+            <enum name="center_crop" value="0" />
+            <enum name="fit_center" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="DeliveryStatusView">
+        <attr name="iconColor" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="AlertView">
+        <attr name="useSmallIcon" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="AudioView">
+        <attr name="foregroundTintColor" format="color" />
+        <attr name="backgroundTintColor" format="color" />
+        <attr name="waveformThumbTint" format="color" />
+        <attr name="waveformPlayedBarsColor" format="color" />
+        <attr name="waveformUnplayedBarsColor" format="color" />
+        <attr name="progressAndPlayTint" format="color" />
+        <attr name="small" format="boolean" />
+        <attr name="autoRewind" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="CircleColorImageView">
+        <attr name="circleColor" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="ShapeScrim">
+        <attr name="shape" format="string"/>
+        <attr name="radius" format="float"/>
+    </declare-styleable>
+
+    <declare-styleable name="CameraView">
+        <attr name="camera" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="HourglassView">
+        <attr name="full" format="reference"/>
+        <attr name="empty" format="reference"/>
+        <attr name="tint" format="color"/>
+        <attr name="percentage" format="integer"/>
+        <attr name="offset" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="SquareFrameLayout">
+        <attr name="square_height" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="VerticalSlideColorPicker">
+        <attr name="pickerBorderColor" format="color" />
+        <attr name="pickerBorderWidth" format="dimension" />
+        <attr name="pickerColors" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="EmojiTextView">
+        <attr name="scaleEmojis" format="boolean" />
+        <attr name="emoji_maxLength" format="integer" />
+        <attr name="emoji_forceCustom" format="boolean" />
+        <attr name="emoji_renderMentions" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="RingtonePreference">
+        <attr name="showAdd" format="boolean" />
+        <attr name="summaryHasRingtone" format="string|reference" />
+    </declare-styleable>
+
+    <declare-styleable name="ColorPickerPreference">
+        <attr name="currentColor" format="reference" />
+
+        <attr name="colors" format="reference" />
+
+        <attr name="sortColors" format="boolean|reference" />
+
+        <attr name="colorDescriptions" format="reference" />
+
+        <attr name="columns" format="integer|reference" />
+
+        <attr name="colorSize" format="enum|reference">
+            <enum name="large" value="1" />
+            <enum name="small" value="2" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="QuoteView">
+        <attr name="message_type" format="enum">
+            <enum name="preview" value="0" />
+            <enum name="outgoing" value="1" />
+            <enum name="incoming" value="2" />
+        </attr>
+        <attr name="quote_colorPrimary" format="color" />
+        <attr name="quote_colorSecondary" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="SharedContactView">
+        <attr name="contact_titleColor" format="color" />
+        <attr name="contact_captionColor" format="color" />
+        <attr name="contact_footerIconColor" format="color" />
+        <attr name="contact_footerAlpha" format="float" />
+    </declare-styleable>
+
+    <declare-styleable name="LinkPreviewView">
+        <attr name="linkpreview_type" format="enum">
+            <enum name="conversation" value="0" />
+            <enum name="compose" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="DocumentView">
+        <attr name="doc_titleColor" format="color" />
+        <attr name="doc_captionColor" format="color" />
+        <attr name="doc_downloadButtonTint" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="ConversationItemFooter">
+        <attr name="footer_text_color" format="color" />
+        <attr name="footer_icon_color" format="color" />
+        <attr name="footer_reveal_dot_color" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="ConversationItemThumbnail">
+        <attr name="conversationThumbnail_minWidth" format="dimension" />
+        <attr name="conversationThumbnail_maxWidth" format="dimension" />
+        <attr name="conversationThumbnail_minHeight" format="dimension" />
+        <attr name="conversationThumbnail_maxHeight" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="TypingIndicatorView">
+        <attr name="typingIndicator_tint" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="MaxHeightScrollView">
+        <attr name="scrollView_maxHeight" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="LabeledEditText">
+        <attr name="labeledEditText_label" format="string" />
+        <attr name="labeledEditText_background" format="color" />
+        <attr name="labeledEditText_textLayout" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="ViewOnceMessageView">
+        <attr name="revealable_unopenedForegroundColor" format="color" />
+        <attr name="revealable_openedForegroundColor" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="MediaKeyboard">
+        <attr name="tabs_gravity" format="enum">
+            <enum name="bottom" value="0" />
+            <enum name="top" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="CameraXFlashState">
+        <attr name="state_flash_auto" format="boolean" />
+        <attr name="state_flash_off" format="boolean" />
+        <attr name="state_flash_on" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="ContactFilterToolbar">
+        <attr name="searchTextStyle" format="reference" />
+        <attr name="showDialpad" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="SquareImageView">
+        <attr name="siv_dominant" format="enum">
+            <enum name="width" value="0" />
+            <enum name="height" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="OutlinedThumbnailView">
+        <attr name="otv_cornerRadius" format="dimension|reference" />
+    </declare-styleable>
+
+    <declare-styleable name="ReactionsConversationView">
+      <attr name="rcv_outgoing" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="AdaptiveActionsToolbar">
+        <attr name="aat_max_shown" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="VideoThumbnailsRangeSelectorView">
+        <attr name="thumbWidth" format="dimension" />
+        <attr name="thumbColorEdited" format="color" />
+        <attr name="thumbColor" format="color" />
+        <attr name="cursorWidth" format="dimension" />
+        <attr name="cursorColor" format="color" />
+        <attr name="thumbTouchRadius" format="dimension" />
+        <attr name="thumbHintTextSize" format="dimension" />
+        <attr name="thumbHintTextColor" format="color" />
+        <attr name="thumbHintBackgroundColor" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="GroupMemberListView">
+        <attr name="maxHeight" />
+        <attr name="selectable" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="PopupMenuView">
+        <attr name="background_tint" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="QrView">
+        <attr name="qr_foreground_color" format="color" />
+        <attr name="qr_background_color" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="WebRtcAudioOutputToggleButtonState">
+        <attr name="state_speaker_on" format="boolean" />
+        <attr name="state_speaker_off" format="boolean" />
+        <attr name="state_headset_selected" format="boolean" />
+        <attr name="state_speaker_selected" format="boolean" />
+        <attr name="state_handset_selected" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="ConversationScrollToView">
+        <attr name="cstv_scroll_button_src" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="WarningTextView">
+        <attr name="warning_text_color" format="color|reference" />
+    </declare-styleable>
+</resources>
