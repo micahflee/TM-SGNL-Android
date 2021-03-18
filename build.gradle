@@ -1,0 +1,65 @@
+buildscript {
+
+    ext.kotlinVersion = '1.4.21'
+
+    repositories {
+        google()
+        mavenCentral()
+        jcenter {
+            content {
+                includeVersion 'org.jetbrains.trove4j', 'trove4j', '20160824'
+                includeGroupByRegex "com\\.archinamon.*"
+            }
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.1.1'
+        classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.1.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.31"
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.10'
+    }
+}
+
+ext {
+    BUILD_TOOL_VERSION = '30.0.2'
+
+    COMPILE_SDK = 30
+    TARGET_SDK  = 30
+    MINIMUM_SDK = 19
+
+    JAVA_VERSION = JavaVersion.VERSION_1_8
+}
+
+wrapper {
+    distributionType = Wrapper.DistributionType.ALL
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+subprojects {
+    ext.lib_signal_service_version_number   = "2.15.3"
+    ext.lib_signal_service_group_info       = "org.whispersystems"
+    ext.lib_signal_client_version           = "0.1.0"
+
+    if (JavaVersion.current().isJava8Compatible()) {
+        allprojects {
+            tasks.withType(Javadoc) {
+                options.addStringOption('Xdoclint:none', '-quiet')
+            }
+        }
+    }
+}
+
+task qa {
+    group 'Verification'
+    description 'Quality Assurance. Run before pushing.'
+    dependsOn ':Signal-Android:testPlayProdReleaseUnitTest',
+            ':Signal-Android:lintPlayProdRelease',
+            ':libsignal-service:test',
+            ':Signal-Android:assemblePlayProdDebug'
+}

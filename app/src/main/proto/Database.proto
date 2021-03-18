@@ -1,0 +1,117 @@
+/**
+ * Copyright (C) 2014-2016 Open Whisper Systems
+ *
+ * Licensed according to the LICENSE file in this repository.
+ */
+
+syntax = "proto3";
+
+package signal;
+
+option java_package        = "org.thoughtcrime.securesms.database.model.databaseprotos";
+option java_multiple_files = true;
+
+
+message ReactionList {
+    message Reaction {
+        string emoji        = 1;
+        uint64 author       = 2;
+        uint64 sentTime     = 3;
+        uint64 receivedTime = 4;
+    }
+
+    repeated Reaction reactions = 1;
+}
+
+
+import "SignalService.proto";
+import "DecryptedGroups.proto";
+
+message DecryptedGroupV2Context {
+    signalservice.GroupContextV2 context            = 1;
+    DecryptedGroupChange         change             = 2;
+    DecryptedGroup               groupState         = 3;
+    DecryptedGroup               previousGroupState = 4;
+}
+
+message TemporalAuthCredentialResponse {
+    int32 date                   = 1;
+    bytes authCredentialResponse = 2;
+}
+
+message TemporalAuthCredentialResponses {
+    repeated TemporalAuthCredentialResponse credentialResponse = 1;
+}
+
+message AudioWaveFormData {
+    int64 durationUs = 1;
+    bytes waveForm   = 2;
+}
+
+message ProfileChangeDetails {
+    message StringChange {
+        string previous = 1;
+        string new      = 2;
+    }
+
+    StringChange profileNameChange = 1;
+}
+
+message BodyRangeList {
+    message BodyRange {
+        int32 start  = 1;
+        int32 length = 2;
+
+        oneof associatedValue {
+            string mentionUuid = 3;
+        }
+    }
+
+    repeated BodyRange ranges = 1;
+}
+
+message GroupCallUpdateDetails {
+             string eraId                = 1;
+             string startedCallUuid      = 2;
+             int64  startedCallTimestamp = 3;
+    repeated string inCallUuids          = 4;
+             bool   isCallFull           = 5;
+}
+
+message ProfileKeyCredentialColumnData {
+    bytes profileKey           = 1;
+    bytes profileKeyCredential = 2;
+}
+
+message DeviceLastResetTime {
+    message Pair {
+        int32 deviceId      = 1;
+        int64 lastResetTime = 2;
+    }
+
+    repeated Pair resetTime = 1;
+}
+
+message Wallpaper {
+    message SingleColor {
+        int32 color = 1;
+    }
+
+    message LinearGradient {
+                 float rotation  = 1;
+        repeated int32 colors    = 2;
+        repeated float positions = 3;
+    }
+
+    message File {
+        string uri = 1;
+    }
+
+    oneof wallpaper {
+        SingleColor    singleColor    = 1;
+        LinearGradient linearGradient = 2;
+        File           file           = 3;
+    }
+
+    float dimLevelInDarkTheme = 4;
+}
