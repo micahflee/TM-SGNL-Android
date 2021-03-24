@@ -59,6 +59,7 @@ import android.view.View.OnFocusChangeListener;
 import android.view.View.OnKeyListener;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -68,7 +69,6 @@ import android.widget.Toast;
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -88,11 +88,10 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.button.MaterialButton;
-import com.tm.androidcopysdk.DataGrabber;
 
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveSender;
-import org.archiver.FileUtilTestMoti;
+import org.archiver.ArchiveFileUtil;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -265,7 +264,6 @@ import org.thoughtcrime.securesms.util.DynamicLanguage;
 import org.thoughtcrime.securesms.util.DynamicNoActionBarTheme;
 import org.thoughtcrime.securesms.util.DynamicTheme;
 import org.thoughtcrime.securesms.util.FeatureFlags;
-import org.thoughtcrime.securesms.util.FileUtils;
 import org.thoughtcrime.securesms.util.FullscreenHelper;
 import org.thoughtcrime.securesms.util.IdentityUtil;
 import org.thoughtcrime.securesms.util.MediaUtil;
@@ -295,8 +293,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -2696,7 +2695,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
       inputPanel.releaseRecordingLock();
       return;
     }
-    //Moti Amae send message clicked
+
     try {
       Recipient recipient = getRecipient();
 
@@ -2731,6 +2730,8 @@ public class ConversationActivity extends PassphraseRequiredActivity
       } else {
         sendTextMessage(forceSms, expiresIn, subscriptionId, initiating);
       }
+
+
     } catch (RecipientFormattingException ex) {
       Toast.makeText(ConversationActivity.this,
                      R.string.ConversationActivity_recipient_is_not_a_valid_sms_or_email_address_exclamation,
@@ -2758,7 +2759,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     silentlySetComposeText("");
 
     long id = fragment.stageOutgoingMessage(message);
-    archiveMediaMessage(result, message, id);
+    archiveMediaMessage(result, message);
    // secureMessage.getAttachments().get(0).getUri();
     SimpleTask.run(() -> {
       long resultId = MessageSender.sendPushWithPreUploadedMedia(this, secureMessage, result.getPreUploadResults(), thread, () -> fragment.releaseOutgoingMessage(id));
@@ -2769,14 +2770,33 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }, this::sendComplete);
   }
 
-  private void archiveMediaMessage(MediaSendActivityResult result, OutgoingMediaMessage message, long id) {
-// long length = BlobProvider.getInstance().calculateFileSize(context, writeDetails.uri);
+  private void archiveMediaMessage(MediaSendActivityResult result, OutgoingMediaMessage message) {
+
+    //TODO fix multimedia bugs.
+    // long length = BlobProvider.getInstance().calculateFileSize(context, writeDetails.uri);
     //TODO BlobProvider need to take the file.
     if(checkWriteExternalPermission()) {
+      File tempFileForArchiving = null;
+      for (int i = 0; i < result.getUriList().size(); i++) {
 
-      File tempFileForArchiving = new File(/*Environment.getExternalStorageDirectory(), */URI.create(FileUtilTestMoti.getUriRealPath(this,Uri.parse(result.getUriList().get(0)))).getPath());
-      ArchiveSender.Companion.archiveMessageOutboxMMS(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, id, tempFileForArchiving);
-     ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(this, tempFileForArchiving.getName(), false);
+        if ((MediaUtil.IMAGE_GIF).contains(MimeTypeMap.getSingleton().getExtensionFromMimeType(this.getContentResolver().getType(Uri.parse(result.getUriList().get(i)))))){
+          String path = ArchiveFileUtil.getRealPath(this, Uri.parse(result.getUriList().get(i)));
+          tempFileForArchiving = new File(path);
+
+        }else{
+          try {
+            tempFileForArchiving = new File(URI.create(URLEncoder.encode(ArchiveFileUtil.getUriRealPath(this, Uri.parse(result.getUriList().get(i))), "UTF-8")).getPath());
+          } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+          }
+      }
+
+
+          ArchiveSender.Companion.archiveMessageOutboxMMS(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, /*id*/System.currentTimeMillis(), tempFileForArchiving);
+          ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(this, tempFileForArchiving.getName(), true);
+
+      }
+
 
     }else {
       ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 132);
@@ -2884,6 +2904,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
       outgoingMessage = outgoingMessageCandidate;
     }
 
+    //AA - Archive Message Outbox:
+    ArchiveSender.Companion.archiveMessageOutbox(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), outgoingMessage.getBody() , System.currentTimeMillis());
+
     Permissions.with(this)
                .request(Manifest.permission.SEND_SMS, Manifest.permission.READ_SMS)
                .ifNecessary(!isSecureText || forceSms)
@@ -2930,6 +2953,9 @@ public class ConversationActivity extends PassphraseRequiredActivity
     } else {
       message = new OutgoingTextMessage(recipient.get(), messageBody, expiresIn, subscriptionId);
     }
+
+    //AA - Archive Message Outbox:
+    ArchiveSender.Companion.archiveMessageOutbox(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), messageBody , System.currentTimeMillis());
 
     Permissions.with(this)
                .request(Manifest.permission.SEND_SMS)

@@ -1,7 +1,6 @@
 package org.archiver
 
 import android.content.Context
-import com.klinker.android.send_message.Utils
 import com.tm.androidcopysdk.DataGrabber
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_CHAT_GROUP
@@ -10,19 +9,19 @@ import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_TO_TEXT
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
 import org.archiver.ArchiveConstants.Companion.isTestMode
 import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
-import org.signal.glide.Log
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.sms.IncomingTextMessage
-import org.thoughtcrime.securesms.util.Util
 import java.util.*
 
 class ArchiveUtil {
 
     companion object{
 
-        fun createToRecipientList(context: Context, isInboxArchiveMessage: Boolean, aRecipient: Recipient, from: String): Array<String> {
-            var recipientListFromRecipient: List<String> = if (aRecipient.isGroup) {
-                aRecipient.participants.filter { it.e164.isPresent }.map { it.e164.get()}
+        fun createToRecipientList(context: Context, isInboxArchiveMessage: Boolean, aRecipient: Recipient,  isGroup: Boolean, from: String , recipientList: MutableList<Recipient>? = null): Array<String> {
+            var recipientListFromRecipient: List<String> = if (isGroup) {
+                recipientList?.filter { it.e164.isPresent }?.map { it.e164.get()}
+                        ?: aRecipient.participants.filter { it.e164.isPresent }.map { it.e164.get()}
+
             } else {
                 if(isInboxArchiveMessage){
                     listOf(getPhoneNumberInTestMode(context))
@@ -46,19 +45,18 @@ class ArchiveUtil {
 
 
 
-        fun createSubjectForArchiving(context: Context, isInboxArchiveMessage: Boolean, isGroup: Boolean, recipient: Recipient, inboxRecipient : String = "",forceSms : Boolean) : String{
+        fun createSubjectForArchiving(context: Context, isInboxArchiveMessage: Boolean, isGroup: Boolean, recipient: Recipient, inboxRecipient : String = "",forceSms : Boolean, groupTitle : String = "") : String{
 
             val archiveType: String = getArchiveType(isInboxArchiveMessage, isGroup, forceSms)
-            val to = getToPartForSubject(context, isInboxArchiveMessage, recipient, isGroup)
+            val to = getToPartForSubject(context, isInboxArchiveMessage, recipient, isGroup, groupTitle)
             val from = getFromPartForSubject(context, isInboxArchiveMessage, recipient, inboxRecipient)
             return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT $from $ARCHIVE_SUBJECT_TO_TEXT $to"
-
         }
 
-        private fun getToPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, isGroup: Boolean): String {
+        private fun getToPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, isGroup: Boolean, groupTitle: String): String {
             return when {
                 isGroup -> {
-                    "$ARCHIVE_SUBJECT_CHAT_GROUP ${recipient.getName(context)}"
+                    "$ARCHIVE_SUBJECT_CHAT_GROUP $groupTitle"
                 }
                 isInboxArchiveMessage -> {
                     getPhoneNumberInTestMode(context)
@@ -77,12 +75,14 @@ class ArchiveUtil {
         fun getFromPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, inboxRecipient : String = ""): String {
             return when {
                 isInboxArchiveMessage -> {
-                    if(recipient.isGroup){
-                        inboxRecipient
-                    }else {
-                        if(recipient.e164.isPresent) {
+                    when {
+                        recipient.e164.isPresent -> {
                             recipient.e164.get()
-                        }else{
+                        }
+                        inboxRecipient.isNotEmpty() -> {
+                            inboxRecipient
+                        }
+                        else -> {
                             ""
                         }
                     }
@@ -123,9 +123,13 @@ class ArchiveUtil {
             }
         }
 
-        fun getChatName(context: Context, recipient: Recipient): String {
-            return if(recipient.isGroup){
-                recipient.getName(context).toString()
+        fun getChatName(context: Context, recipient: Recipient, isGroup : Boolean, groupTitle: String = ""): String {
+            return if(isGroup){
+                if(groupTitle.isNotEmpty()){
+                    groupTitle
+                }else {
+                    recipient.getName(context).toString()
+                }
             }else{
                 ""
             }
@@ -141,9 +145,10 @@ class ArchiveUtil {
         fun groupId(recipient: Recipient): String? {
             return if(recipient.isGroup){
                // recipient.groupId.get().toString()
+               // TODO Fix the group id issue in the server.
                 UUID.randomUUID().toString()
             }else{
-                null
+                ""
             }
         }
 
@@ -156,19 +161,25 @@ class ArchiveUtil {
 
         }
 
-        fun createMessageNameList(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean, from: String): Array<String> {
+        fun createMessageNameList(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean, recipientList: MutableList<Recipient>? = null, isGroup: Boolean): Array<String> {
 
-            val rl  = if (!isInboxArchiveMessage) {
-                recipient.participants.filter {
+            val rl = if (!isInboxArchiveMessage) {
+                recipientList?.filter {
                     it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
                 }
-            }else{
-                recipient.participants.filter {
-                    it.e164.isPresent &&  it.e164.get() != from
+                        ?: recipient.participants.filter {
+                            it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
+                        }
+            } else {
+                recipientList?.filter {
+                    it.e164.isPresent && it.e164.get() != null
                 }
+                        ?: recipient.participants.filter {
+                            it.e164.isPresent && it.e164.get() != null
+                        }
             }
 
-            val recipientListFromRecipient: List<String> = if (recipient.isGroup) {
+            val recipientListFromRecipient: List<String> = if (isGroup) {
 
                 rl.map {
                     it.getDisplayName(context)
