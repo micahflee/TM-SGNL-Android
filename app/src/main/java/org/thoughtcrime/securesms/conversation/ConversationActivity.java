@@ -289,10 +289,14 @@ import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalSessionLock;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -2772,28 +2776,26 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   private void archiveMediaMessage(MediaSendActivityResult result, OutgoingMediaMessage message) {
 
-    //TODO fix multimedia bugs.
-    // long length = BlobProvider.getInstance().calculateFileSize(context, writeDetails.uri);
-    //TODO BlobProvider need to take the file.
     if(checkWriteExternalPermission()) {
       File tempFileForArchiving = null;
+      String fileName = "";
       for (int i = 0; i < result.getUriList().size(); i++) {
-
-        if ((MediaUtil.IMAGE_GIF).contains(MimeTypeMap.getSingleton().getExtensionFromMimeType(this.getContentResolver().getType(Uri.parse(result.getUriList().get(i)))))){
-          String path = ArchiveFileUtil.getRealPath(this, Uri.parse(result.getUriList().get(i)));
-          tempFileForArchiving = new File(path);
-
-        }else{
+          String type = MimeTypeMap.getSingleton().getExtensionFromMimeType(this.getContentResolver().getType(Uri.parse(result.getUriList().get(i))));
+          InputStream inputStream = null;
+          String uri = result.getUriList().get(i);
+          fileName = uri.split("/")[uri.split("/").length-1] + "." + type;
+          tempFileForArchiving = new File(getCacheDir(), fileName);
           try {
-            tempFileForArchiving = new File(URI.create(URLEncoder.encode(ArchiveFileUtil.getUriRealPath(this, Uri.parse(result.getUriList().get(i))), "UTF-8")).getPath());
-          } catch (UnsupportedEncodingException e) {
+            inputStream = getContentResolver().openInputStream(Uri.parse(result.getUriList().get(i)));
+            ArchiveFileUtil.copyInputStreamToFile(inputStream,tempFileForArchiving );
+
+          } catch (FileNotFoundException e) {
             e.printStackTrace();
           }
-      }
-
 
           ArchiveSender.Companion.archiveMessageOutboxMMS(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, /*id*/System.currentTimeMillis(), tempFileForArchiving);
           ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(this, tempFileForArchiving.getName(), true);
+          ArchiveFileUtil.deleteFile(this, getCacheDir().getName(), fileName);
 
       }
 
