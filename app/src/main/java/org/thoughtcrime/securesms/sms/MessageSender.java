@@ -110,7 +110,7 @@ public class MessageSender {
 
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
     onMessageSent();
-    //Moti message sender
+
     return allocatedThreadId;
   }
 

@@ -1049,17 +1049,19 @@ public final class MessageContentProcessor {
 
       //Build recipient for sending message
       List<Recipient> recipientList = null;
+      String groupTitle = "";
       if(groupId.isPresent()) {
         recipientList = Recipient.externalGroupExact(context, groupId.get()).getParticipants();
+        groupTitle = DatabaseFactory.getGroupDatabase(context).getGroup(groupId.get()).get().getTitle();
       }
       Recipient recipient = Recipient.resolved(RecipientId.fromHighTrust(content.getSender()));
       //archiveMediaInboxMessage(recipient);
 
       for (DatabaseAttachment attachment : attachments) {
-        archiveInboxMediaMessage(recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), attachment.getAttachmentId());
+        archiveInboxMediaMessage(groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), attachment.getAttachmentId());
         ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), attachment.getAttachmentId(), false));
       }
-      com.tm.logger.Log.d("MNMNC", "Logger");
+
 
       ApplicationDependencies.getMessageNotifier().updateNotification(context, insertResult.get().getThreadId());
       ApplicationDependencies.getJobManager().add(new TrimThreadJob(insertResult.get().getThreadId()));
@@ -1070,15 +1072,12 @@ public final class MessageContentProcessor {
     }
   }
 
-  private void archiveInboxMediaMessage(Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, AttachmentId attachmentId) {
+  private void archiveInboxMediaMessage(String groupTitle, Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, AttachmentId attachmentId) {
 
     if(mediaMessage.getAttachments().size() > 0) {
       for (int i = mediaMessage.getAttachments().size() - 1; i >= 0; i--) {
-
         File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId.getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, mediaMessage.getAttachments().get(i).getContentType()));
-
-        ArchiveSender.Companion.archiveMessageInboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, tempFileForArchiving);
-
+        ArchiveSender.Companion.archiveMessageInboxMMS(context,groupTitle,  ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, /*messageId*/attachmentId.getUniqueId(), tempFileForArchiving);
       }
     }
   }

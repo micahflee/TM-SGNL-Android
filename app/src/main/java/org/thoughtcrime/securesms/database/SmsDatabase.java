@@ -1101,7 +1101,13 @@ public class SmsDatabase extends MessageDatabase {
 
       Optional<InsertResult> optional = Optional.of(new InsertResult(messageId, threadId));
       if(optional.isPresent()) {
-        ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipient, message, messageId);
+        String groupTile = "";
+        if(message.getGroupId() != null &&
+                DatabaseFactory.getGroupDatabase(context).getGroup(message.getGroupId()).isPresent()) {
+          groupTile = DatabaseFactory.getGroupDatabase(context).getGroup(message.getGroupId()).get().getTitle();
+        }
+
+        ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipient, message, messageId, groupTile);
       }
       return optional;
     }
@@ -1192,8 +1198,6 @@ public class SmsDatabase extends MessageDatabase {
     }
 
 
-    //Moti Amar
-    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId);
 
 
     return messageId;
