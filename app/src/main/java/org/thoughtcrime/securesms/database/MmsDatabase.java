@@ -29,14 +29,12 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.google.android.mms.pdu_alt.NotificationInd;
 import com.google.android.mms.pdu_alt.PduHeaders;
-import com.tm.androidcopysdk.DataGrabber;
 
 import net.sqlcipher.database.SQLiteStatement;
 
 import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveFileUtil;
 import org.archiver.ArchiveSender;
-import org.archiver.ArchiveUtil;
-import org.archiver.FileUtilTestMoti;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1518,7 +1516,7 @@ public class MmsDatabase extends MessageDatabase {
 
       for (int i = 0; i < message.getAttachments().size(); i++) {
 
-        File tempFileForArchiving = new File(URI.create(FileUtilTestMoti.getUriRealPath(context, message.getAttachments().get(i).getUri())).getPath());
+        File tempFileForArchiving = new File(URI.create(ArchiveFileUtil.getUriRealPath(context, message.getAttachments().get(i).getUri())).getPath());
         ArchiveSender.Companion.archiveMessageOutboxMMS(context,ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, tempFileForArchiving);
         ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), false);
 
