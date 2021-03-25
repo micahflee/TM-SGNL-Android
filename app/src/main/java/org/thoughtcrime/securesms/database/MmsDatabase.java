@@ -21,6 +21,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.webkit.MimeTypeMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -85,7 +86,9 @@ import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -1509,14 +1512,15 @@ public class MmsDatabase extends MessageDatabase {
     DatabaseFactory.getThreadDatabase(context).setHasSent(threadId, true);
     ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
 
-    //Moti Amar
-    if(message.getAttachments() != null && message.getBody() != null && message.getAttachments().size() == 0 && !message.getBody().isEmpty() ) {
-      ArchiveSender.Companion.archiveMessageOutboxMMS(context,ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, null);
-    }else if(message.getAttachments() != null && message.getAttachments().size() > 0){
+    if (message.getAttachments() != null && message.getBody() != null && message.getAttachments().size() == 0 && !message.getBody().isEmpty()) {
+
+      ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, null);
+
+    } else if (message.getAttachments() != null && message.getAttachments().size() > 0) {
 
       for (int i = 0; i < message.getAttachments().size(); i++) {
 
-        File tempFileForArchiving = new File(URI.create(ArchiveFileUtil.getUriRealPath(context, message.getAttachments().get(i).getUri())).getPath());
+        File tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(context, message.getAttachments().get(i).getUri().toString());
         ArchiveSender.Companion.archiveMessageOutboxMMS(context,ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, tempFileForArchiving);
         ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), false);
 

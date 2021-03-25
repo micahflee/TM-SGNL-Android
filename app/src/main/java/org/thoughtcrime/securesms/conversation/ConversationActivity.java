@@ -2764,7 +2764,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
     long id = fragment.stageOutgoingMessage(message);
     archiveMediaMessage(result, message);
-   // secureMessage.getAttachments().get(0).getUri();
+
     SimpleTask.run(() -> {
       long resultId = MessageSender.sendPushWithPreUploadedMedia(this, secureMessage, result.getPreUploadResults(), thread, () -> fragment.releaseOutgoingMessage(id));
       int deleted = DatabaseFactory.getAttachmentDatabase(this).deleteAbandonedPreuploadedAttachments();
@@ -2776,22 +2776,11 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   private void archiveMediaMessage(MediaSendActivityResult result, OutgoingMediaMessage message) {
 
-    if(checkWriteExternalPermission()) {
+    if(checkWriteExternalPermission(this)) {
       File tempFileForArchiving = null;
       String fileName = "";
       for (int i = 0; i < result.getUriList().size(); i++) {
-          String type = MimeTypeMap.getSingleton().getExtensionFromMimeType(this.getContentResolver().getType(Uri.parse(result.getUriList().get(i))));
-          InputStream inputStream = null;
-          String uri = result.getUriList().get(i);
-          fileName = uri.split("/")[uri.split("/").length-1] + "." + type;
-          tempFileForArchiving = new File(getCacheDir(), fileName);
-          try {
-            inputStream = getContentResolver().openInputStream(Uri.parse(result.getUriList().get(i)));
-            ArchiveFileUtil.copyInputStreamToFile(inputStream,tempFileForArchiving );
-
-          } catch (FileNotFoundException e) {
-            e.printStackTrace();
-          }
+          tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(this,result.getUriList().get(i));
 
           ArchiveSender.Companion.archiveMessageOutboxMMS(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, /*id*/System.currentTimeMillis(), tempFileForArchiving);
           ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(this, tempFileForArchiving.getName(), true);
@@ -2806,10 +2795,10 @@ public class ConversationActivity extends PassphraseRequiredActivity
 
   }
 
-  private boolean checkWriteExternalPermission()
+  public static boolean checkWriteExternalPermission(Context context)
   {
     String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
-    int res = this.checkCallingOrSelfPermission(permission);
+    int res = context.checkCallingOrSelfPermission(permission);
     return (res == PackageManager.PERMISSION_GRANTED);
   }
 
@@ -2907,7 +2896,15 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }
 
     //AA - Archive Message Outbox:
-    ArchiveSender.Companion.archiveMessageOutbox(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), outgoingMessage.getBody() , System.currentTimeMillis());
+
+    if (contacts.size() > 0) {
+      File vcfFile = ArchiveFileUtil.createVCFFileFromContact(context, contacts.get(0));
+      ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), outgoingMessage, System.currentTimeMillis(), vcfFile);
+      ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
+
+    } else {
+      ArchiveSender.Companion.archiveMessageOutbox(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), outgoingMessage.getBody(), System.currentTimeMillis());
+    }
 
     Permissions.with(this)
                .request(Manifest.permission.SEND_SMS, Manifest.permission.READ_SMS)

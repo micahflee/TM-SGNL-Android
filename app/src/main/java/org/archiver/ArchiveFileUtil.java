@@ -9,9 +9,15 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.webkit.MimeTypeMap;
+
+import org.thoughtcrime.securesms.contactshare.Contact;
+import org.thoughtcrime.securesms.conversation.ConversationActivity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -365,6 +371,53 @@ This method can parse out the real local file path from a file URI.
                 }
             }
         }
+    }
+
+    public static File createFileFromContentUri(Context context, String contentUri){
+        if(ConversationActivity.checkWriteExternalPermission(context)) {
+            File resultFile = null;
+            String fileName = "";
+            String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(context.getContentResolver().getType(Uri.parse(contentUri)));
+            InputStream inputStream = null;
+
+            fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
+
+            resultFile = new File(context.getCacheDir(), fileName);
+            try {
+                inputStream = context.getContentResolver().openInputStream(Uri.parse(contentUri));
+                ArchiveFileUtil.copyInputStreamToFile(inputStream, resultFile);
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            return resultFile;
+        }
+        return null;
+    }
+
+    public static File createVCFFileFromContact(Context context, Contact contact){
+
+        File vcfFile = new File(context.getCacheDir(), contact.getName().isEmpty()? "contact" : contact.getName().getDisplayName().replaceAll(" ","_") + ".vcf");
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(vcfFile);
+            fw.write("BEGIN:VCARD\r\n");
+            fw.write("VERSION:3.0\r\n");
+            fw.write("N:" + contact.getName().getFamilyName() + ";" + contact.getName().getGivenName() + "\r\n");
+            fw.write("FN:" + contact.getName().getGivenName() + " " + contact.getName().getFamilyName()  + "\r\n");
+            fw.write("ORG:" + contact.getOrganization() + "\r\n");
+            fw.write("TEL;TYPE=WORK,VOICE:" + contact.getPostalAddresses() + "\r\n");
+            fw.write("TEL;TYPE=HOME,VOICE:" + contact.getPhoneNumbers() + "\r\n");
+            fw.write("ADR;TYPE=WORK:;;" + contact.getPostalAddresses()+ "\r\n");
+            fw.write("EMAIL;TYPE=PREF,INTERNET:" + contact.getEmails() + "\r\n");
+            fw.write("END:VCARD\r\n");
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return vcfFile;
 
     }
 }
