@@ -9,6 +9,7 @@ import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_TO_TEXT
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
 import org.archiver.ArchiveConstants.Companion.isTestMode
 import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
+import org.signal.glide.Log
 import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.sms.IncomingTextMessage
 import java.util.*
@@ -50,7 +51,8 @@ class ArchiveUtil {
             val archiveType: String = getArchiveType(isInboxArchiveMessage, isGroup, forceSms)
             val to = getToPartForSubject(context, isInboxArchiveMessage, recipient, isGroup, groupTitle)
             val from = getFromPartForSubject(context, isInboxArchiveMessage, recipient, inboxRecipient)
-            return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT $from $ARCHIVE_SUBJECT_TO_TEXT $to"
+
+            return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${from.replace("+","")} $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+","")}"
         }
 
         private fun getToPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, isGroup: Boolean, groupTitle: String): String {

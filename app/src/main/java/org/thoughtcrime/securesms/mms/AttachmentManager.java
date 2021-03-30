@@ -404,7 +404,7 @@ public class AttachmentManager {
     activity.startActivityForResult(intent, requestCode);
   }
 
-  private @Nullable Uri getSlideUri() {
+  public @Nullable Uri getSlideUri() {
     return slide.isPresent() ? slide.get().getUri() : null;
   }
 

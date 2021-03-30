@@ -2901,9 +2901,27 @@ public class ConversationActivity extends PassphraseRequiredActivity
       File vcfFile = ArchiveFileUtil.createVCFFileFromContact(context, contacts.get(0));
       ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), outgoingMessage, System.currentTimeMillis(), vcfFile);
       ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
-
     } else {
-      ArchiveSender.Companion.archiveMessageOutbox(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), outgoingMessage.getBody(), System.currentTimeMillis());
+
+      if (attachmentManager.getSlideUri() != null) {
+        File tempFileForArchiving = null;
+        String fileName = "";
+        tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(this, attachmentManager.getSlideUri().toString());
+        ArchiveSender.Companion.archiveMessageOutboxMMS(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, outgoingMessage.getRecipient(), outgoingMessage, System.currentTimeMillis(), tempFileForArchiving);
+        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(this, tempFileForArchiving.getName(), true);
+        ArchiveFileUtil.deleteFile(this, getCacheDir().getName(), fileName);
+      }else{
+
+        //Replay message are saved in outgoing quote.
+        if(outgoingMessage.getOutgoingQuote() != null){
+          //outgoingMessage.outgoingQuote.attachments.get(0).getUri()
+          //outgoingMessage.outgoingQuote. or text
+        }else {
+          ArchiveSender.Companion.archiveMessageOutbox(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), outgoingMessage.getBody(), System.currentTimeMillis());
+        }
+      }
+
+
     }
 
     Permissions.with(this)

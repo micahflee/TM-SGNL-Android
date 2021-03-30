@@ -1430,7 +1430,7 @@ public class MmsDatabase extends MessageDatabase {
       throws MmsException
   {
     long type = Types.BASE_SENDING_TYPE;
-    Log.d("MNMN", "insertMessageOutbox " );
+
     if (message.isSecure()) type |= (Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT);
     if (forceSms)           type |= Types.MESSAGE_FORCE_SMS_BIT;
 
@@ -1511,24 +1511,6 @@ public class MmsDatabase extends MessageDatabase {
     DatabaseFactory.getThreadDatabase(context).setLastSeen(threadId);
     DatabaseFactory.getThreadDatabase(context).setHasSent(threadId, true);
     ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId));
-
-    if (message.getAttachments() != null && message.getBody() != null && message.getAttachments().size() == 0 && !message.getBody().isEmpty()) {
-
-      ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, null);
-
-    } else if (message.getAttachments() != null && message.getAttachments().size() > 0) {
-
-      for (int i = 0; i < message.getAttachments().size(); i++) {
-
-        File tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(context, message.getAttachments().get(i).getUri().toString());
-        ArchiveSender.Companion.archiveMessageOutboxMMS(context,ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, tempFileForArchiving);
-        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), false);
-
-      }
-    }
-
-
-
 
     return messageId;
   }
