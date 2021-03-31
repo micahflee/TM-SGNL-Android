@@ -51,7 +51,7 @@
         app:layout_constraintBottom_toTopOf="@id/selected_list"
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
-    <org.thoughtcrime.securesms.components.SearchToolbar
+    <org.tm.archive.components.SearchToolbar
         android:id="@+id/search_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

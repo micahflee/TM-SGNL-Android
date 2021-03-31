@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.database.model;
+package org.tm.archive.database.model;
 
 import android.app.Application;
 
@@ -23,8 +23,8 @@ import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMember;
-import org.thoughtcrime.securesms.testutil.MainThreadUtil;
-import org.thoughtcrime.securesms.util.Util;
+import org.tm.archive.testutil.MainThreadUtil;
+import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 
 import java.util.Arrays;
@@ -40,9 +40,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.thoughtcrime.securesms.groups.v2.ChangeBuilder.changeBy;
-import static org.thoughtcrime.securesms.groups.v2.ChangeBuilder.changeByUnknown;
-import static org.thoughtcrime.securesms.util.StringUtil.isolateBidi;
+import static org.tm.archive.groups.v2.ChangeBuilder.changeBy;
+import static org.tm.archive.groups.v2.ChangeBuilder.changeByUnknown;
+import static org.tm.archive.util.StringUtil.isolateBidi;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE, application = Application.class)

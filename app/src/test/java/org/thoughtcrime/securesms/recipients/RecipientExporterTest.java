@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.recipients;
+package org.tm.archive.recipients;
 
 import android.app.Application;
 import android.content.Intent;
@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-import org.thoughtcrime.securesms.profiles.ProfileName;
+import org.tm.archive.profiles.ProfileName;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import static android.provider.ContactsContract.Intents.Insert.EMAIL;

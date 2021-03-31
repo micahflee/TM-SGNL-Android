@@ -7,20 +7,20 @@
              android:gravity="center_horizontal"
              android:visibility="gone">
 
-    <org.thoughtcrime.securesms.components.RemovableEditableMediaView
+    <org.tm.archive.components.RemovableEditableMediaView
             android:id="@+id/removable_media_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center">
 
-        <org.thoughtcrime.securesms.components.location.SignalMapView
+        <org.tm.archive.components.location.SignalMapView
                 android:id="@+id/attachment_location"
                 android:layout_width="210dp"
                 android:layout_height="210dp"
                 android:layout_gravity="center_horizontal"
                 android:visibility="gone"/>
 
-        <org.thoughtcrime.securesms.components.ThumbnailView
+        <org.tm.archive.components.ThumbnailView
                 android:id="@+id/attachment_thumbnail"
                 android:layout_width="230dp"
                 android:layout_height="150dp"
@@ -32,7 +32,7 @@
                 app:minHeight="100dp"
                 app:maxHeight="300dp" />
 
-        <org.thoughtcrime.securesms.components.AudioView
+        <org.tm.archive.components.AudioView
                 android:id="@+id/attachment_audio"
                 android:layout_width="210dp"
                 android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
                 app:foregroundTintColor="@color/grey_500"
                 app:backgroundTintColor="@color/signal_background_secondary"/>
 
-        <org.thoughtcrime.securesms.components.DocumentView
+        <org.tm.archive.components.DocumentView
             android:id="@+id/attachment_document"
             android:layout_width="210dp"
             android:layout_height="wrap_content"
@@ -55,7 +55,7 @@
             app:doc_titleColor="@color/signal_text_primary"
             app:doc_captionColor="@color/signal_text_secondary"/>
 
-    </org.thoughtcrime.securesms.components.RemovableEditableMediaView>
+    </org.tm.archive.components.RemovableEditableMediaView>
 
 </FrameLayout>
 

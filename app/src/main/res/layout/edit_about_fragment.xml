@@ -30,7 +30,7 @@
       app:layout_constraintBottom_toBottomOf="@id/edit_about_body"
       app:layout_constraintStart_toStartOf="parent"/>
 
-  <org.thoughtcrime.securesms.components.emoji.EmojiEditText
+  <org.tm.archive.components.emoji.EmojiEditText
       android:id="@+id/edit_about_body"
       android:layout_width="0dp"
       android:layout_height="wrap_content"

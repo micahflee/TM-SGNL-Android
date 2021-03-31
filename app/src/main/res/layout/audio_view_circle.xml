@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.components.AnimatingToggle xmlns:android="http://schemas.android.com/apk/res/android"
+<org.tm.archive.components.AnimatingToggle xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/control_toggle"
@@ -52,4 +52,4 @@
         android:src="@drawable/ic_download_circle_fill_white_48dp"
         android:visibility="gone" />
 
-</org.thoughtcrime.securesms.components.AnimatingToggle>
+</org.tm.archive.components.AnimatingToggle>

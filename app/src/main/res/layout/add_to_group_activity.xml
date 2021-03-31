@@ -7,7 +7,7 @@
     android:layout_gravity="center"
     android:orientation="vertical">
 
-    <org.thoughtcrime.securesms.components.ContactFilterToolbar
+    <org.tm.archive.components.ContactFilterToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -21,7 +21,7 @@
 
     <fragment
         android:id="@+id/contact_selection_list_fragment"
-        android:name="org.thoughtcrime.securesms.ContactSelectionListFragment"
+        android:name="org.tm.archive.ContactSelectionListFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

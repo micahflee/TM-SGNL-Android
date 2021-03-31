@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/createProfileFragment"
-        android:name="org.thoughtcrime.securesms.profiles.edit.EditProfileFragment"
+        android:name="org.tm.archive.profiles.edit.EditProfileFragment"
         android:label="fragment_create_profile"
         tools:layout="@layout/profile_create_fragment">
 
@@ -23,7 +23,7 @@
 
     <fragment
         android:id="@+id/usernameEditFragment"
-        android:name="org.thoughtcrime.securesms.profiles.manage.UsernameEditFragment"
+        android:name="org.tm.archive.profiles.manage.UsernameEditFragment"
         android:label="fragment_edit_username"
         tools:layout="@layout/username_edit_fragment" />
 

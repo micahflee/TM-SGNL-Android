@@ -16,7 +16,7 @@
  * This file has been modified by Signal.
  */
 
-package org.thoughtcrime.securesms.video.videoconverter;
+package org.tm.archive.video.videoconverter;
 
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;

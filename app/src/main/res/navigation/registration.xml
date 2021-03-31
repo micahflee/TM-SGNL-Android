@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/welcomeFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.WelcomeFragment"
+        android:name="org.tm.archive.registration.fragments.WelcomeFragment"
         android:label="fragment_welcome"
         tools:layout="@layout/fragment_registration_welcome">
 
@@ -39,7 +39,7 @@
 
     <fragment
         android:id="@+id/chooseBackupFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.ChooseBackupFragment"
+        android:name="org.tm.archive.registration.fragments.ChooseBackupFragment"
         android:label="fragment_choose_backup"
         tools:layout="@layout/fragment_registration_choose_backup">
 
@@ -65,7 +65,7 @@
 
     <fragment
         android:id="@+id/enterPhoneNumberFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.EnterPhoneNumberFragment"
+        android:name="org.tm.archive.registration.fragments.EnterPhoneNumberFragment"
         android:label="fragment_enter_phone_number"
         tools:layout="@layout/fragment_registration_enter_phone_number">
 
@@ -106,7 +106,7 @@
 
     <fragment
         android:id="@+id/countryPickerFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.CountryPickerFragment"
+        android:name="org.tm.archive.registration.fragments.CountryPickerFragment"
         android:label="fragment_country_picker"
         tools:layout="@layout/fragment_registration_country_picker">
 
@@ -119,7 +119,7 @@
 
     <fragment
         android:id="@+id/enterCodeFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.EnterCodeFragment"
+        android:name="org.tm.archive.registration.fragments.EnterCodeFragment"
         android:label="fragment_enter_code"
         tools:layout="@layout/fragment_registration_enter_code">
 
@@ -165,7 +165,7 @@
 
     <fragment
         android:id="@+id/registrationLockFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.RegistrationLockFragment"
+        android:name="org.tm.archive.registration.fragments.RegistrationLockFragment"
         android:label="fragment_kbs_lock"
         tools:layout="@layout/fragment_registration_lock">
 
@@ -201,13 +201,13 @@
 
     <fragment
         android:id="@+id/accountLockedFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.AccountLockedFragment"
+        android:name="org.tm.archive.registration.fragments.AccountLockedFragment"
         android:label="fragment_account_locked"
         tools:layout="@layout/account_locked_fragment"/>
 
     <fragment
         android:id="@+id/captchaFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.CaptchaFragment"
+        android:name="org.tm.archive.registration.fragments.CaptchaFragment"
         android:label="fragment_captcha"
         tools:layout="@layout/fragment_registration_captcha">
 
@@ -220,7 +220,7 @@
 
     <fragment
         android:id="@+id/restoreBackupFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.RestoreBackupFragment"
+        android:name="org.tm.archive.registration.fragments.RestoreBackupFragment"
         android:label="fragment_restore_backup"
         tools:layout="@layout/fragment_registration_restore_backup">
 
@@ -271,13 +271,13 @@
 
     <fragment
         android:id="@+id/registrationCompletePlaceHolderFragment"
-        android:name="org.thoughtcrime.securesms.registration.fragments.RegistrationCompleteFragment"
+        android:name="org.tm.archive.registration.fragments.RegistrationCompleteFragment"
         android:label="fragment_registration_complete_place_holder"
         tools:layout="@layout/fragment_registration_blank" />
 
     <fragment
         android:id="@+id/registrationProxyFragment"
-        android:name="org.thoughtcrime.securesms.preferences.EditProxyFragment"
+        android:name="org.tm.archive.preferences.EditProxyFragment"
         android:label="fragment_registration_edit_proxy"
         tools:layout="@layout/edit_proxy_fragment" />
 

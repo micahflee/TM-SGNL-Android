@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="org.thoughtcrime.securesms.maps.PlacePickerActivity">
+    tools:context="org.tm.archive.maps.PlacePickerActivity">
 
     <fragment
         android:id="@+id/map"
@@ -44,7 +44,7 @@
         app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/ic_map_marker" />
 
-    <org.thoughtcrime.securesms.maps.SingleAddressBottomSheet
+    <org.tm.archive.maps.SingleAddressBottomSheet
         android:id="@+id/bottom_sheet"
         android:layout_width="0dp"
         android:layout_height="0dp"

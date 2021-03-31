@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     android:background="@color/core_grey_95">
 
-    <org.thoughtcrime.securesms.components.viewpager.HackyViewPager
+    <org.tm.archive.components.viewpager.HackyViewPager
         android:id="@+id/media_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -26,7 +26,7 @@
         android:visibility="gone"
         tools:visibility="visible">
 
-        <org.thoughtcrime.securesms.components.MaxHeightScrollView
+        <org.tm.archive.components.MaxHeightScrollView
             android:id="@+id/media_preview_caption_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,7 +34,7 @@
             android:animateLayoutChanges="true"
             app:scrollView_maxHeight="120dp">
 
-            <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+            <org.tm.archive.components.emoji.EmojiTextView
                 android:id="@+id/media_preview_caption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -46,7 +46,7 @@
                 android:gravity="bottom"
                 tools:text="With great power comes great responsibility." />
 
-        </org.thoughtcrime.securesms.components.MaxHeightScrollView>
+        </org.tm.archive.components.MaxHeightScrollView>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/media_preview_album_rail"

@@ -23,7 +23,7 @@
             android:layout_gravity="start"
             tools:text="Read by" />
 
-        <org.thoughtcrime.securesms.components.DeliveryStatusView
+        <org.tm.archive.components.DeliveryStatusView
             android:id="@+id/recipient_header_delivery_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

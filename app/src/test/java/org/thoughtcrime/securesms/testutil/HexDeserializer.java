@@ -1,10 +1,10 @@
-package org.thoughtcrime.securesms.testutil;
+package org.tm.archive.testutil;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
-import org.thoughtcrime.securesms.util.Hex;
+import org.tm.archive.util.Hex;
 
 import java.io.IOException;
 

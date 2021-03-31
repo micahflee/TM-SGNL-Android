@@ -1,10 +1,10 @@
-package org.thoughtcrime.securesms.groups.v2;
+package org.tm.archive.groups.v2;
 
 import org.junit.Test;
 import org.signal.core.util.logging.Log;
 import org.signal.zkgroup.profiles.ProfileKey;
-import org.thoughtcrime.securesms.crypto.ProfileKeyUtil;
-import org.thoughtcrime.securesms.testutil.LogRecorder;
+import org.tm.archive.crypto.ProfileKeyUtil;
+import org.tm.archive.testutil.LogRecorder;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -12,9 +12,9 @@ import java.util.UUID;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.thoughtcrime.securesms.groups.v2.ChangeBuilder.changeBy;
-import static org.thoughtcrime.securesms.groups.v2.ChangeBuilder.changeByUnknown;
-import static org.thoughtcrime.securesms.testutil.LogRecorder.hasMessages;
+import static org.tm.archive.groups.v2.ChangeBuilder.changeBy;
+import static org.tm.archive.groups.v2.ChangeBuilder.changeByUnknown;
+import static org.tm.archive.testutil.LogRecorder.hasMessages;
 
 public final class ProfileKeySetTest {
 

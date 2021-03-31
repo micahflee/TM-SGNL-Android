@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.util;
+package org.tm.archive.util;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

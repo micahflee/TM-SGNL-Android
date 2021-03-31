@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <org.thoughtcrime.securesms.mediasend.CameraButtonView
+    <org.tm.archive.mediasend.CameraButtonView
         android:id="@+id/camera_capture_button"
         android:layout_width="96dp"
         android:layout_height="96dp"
@@ -18,7 +18,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <org.thoughtcrime.securesms.mediasend.camerax.CameraXFlashToggleView
+    <org.tm.archive.mediasend.camerax.CameraXFlashToggleView
         android:id="@+id/camera_flash_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

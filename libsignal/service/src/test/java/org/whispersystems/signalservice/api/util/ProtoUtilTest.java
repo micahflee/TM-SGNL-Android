@@ -4,14 +4,14 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.thoughtcrime.securesms.util.testprotos.TestInnerMessage;
-import org.thoughtcrime.securesms.util.testprotos.TestInnerMessageWithNewString;
-import org.thoughtcrime.securesms.util.testprotos.TestPerson;
-import org.thoughtcrime.securesms.util.testprotos.TestPersonWithNewFieldOnMessage;
-import org.thoughtcrime.securesms.util.testprotos.TestPersonWithNewMessage;
-import org.thoughtcrime.securesms.util.testprotos.TestPersonWithNewRepeatedString;
-import org.thoughtcrime.securesms.util.testprotos.TestPersonWithNewString;
-import org.thoughtcrime.securesms.util.testprotos.TestPersonWithNewStringAndInt;
+import org.tm.archive.util.testprotos.TestInnerMessage;
+import org.tm.archive.util.testprotos.TestInnerMessageWithNewString;
+import org.tm.archive.util.testprotos.TestPerson;
+import org.tm.archive.util.testprotos.TestPersonWithNewFieldOnMessage;
+import org.tm.archive.util.testprotos.TestPersonWithNewMessage;
+import org.tm.archive.util.testprotos.TestPersonWithNewRepeatedString;
+import org.tm.archive.util.testprotos.TestPersonWithNewString;
+import org.tm.archive.util.testprotos.TestPersonWithNewStringAndInt;
 import org.whispersystems.signalservice.api.util.ProtoUtil;
 
 import static org.junit.Assert.assertEquals;

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.linkpreview;
+package org.tm.archive.linkpreview;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

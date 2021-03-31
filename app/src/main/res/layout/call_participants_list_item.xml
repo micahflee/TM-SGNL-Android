@@ -11,14 +11,14 @@
     android:paddingEnd="16dp"
     android:paddingBottom="8dp">
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/recipient_view_avatar"
         android:layout_width="36dp"
         android:layout_height="36dp"
         app:fallbackImageSize="small"
         tools:src="@tools:sample/avatars" />
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/recipient_view_name"
         style="@style/TextAppearance.Signal.Body1"
         android:layout_width="0dp"

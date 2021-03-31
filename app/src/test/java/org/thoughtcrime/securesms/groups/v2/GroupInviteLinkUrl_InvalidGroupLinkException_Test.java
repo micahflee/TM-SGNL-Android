@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups.v2;
+package org.tm.archive.groups.v2;
 
 import androidx.annotation.NonNull;
 
@@ -8,7 +8,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Test;
 import org.signal.storageservice.protos.groups.GroupInviteLink;
 import org.signal.zkgroup.InvalidInputException;
-import org.thoughtcrime.securesms.util.Util;
+import org.tm.archive.util.Util;
 import org.whispersystems.util.Base64UrlSafe;
 
 import java.io.IOException;

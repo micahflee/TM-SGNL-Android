@@ -7,7 +7,7 @@
     android:layout_marginEnd="2dp"
     android:layout_marginBottom="2dp">
 
-    <org.thoughtcrime.securesms.components.SquareImageView
+    <org.tm.archive.components.SquareImageView
         android:id="@+id/mediapicker_folder_item_thumbnail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

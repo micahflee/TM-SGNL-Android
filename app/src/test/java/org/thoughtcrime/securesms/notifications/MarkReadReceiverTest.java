@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.notifications;
+package org.tm.archive.notifications;
 
 import android.content.Context;
 
@@ -12,14 +12,14 @@ import org.junit.runner.RunWith;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.thoughtcrime.securesms.database.MessageDatabase;
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
-import org.thoughtcrime.securesms.jobmanager.Data;
-import org.thoughtcrime.securesms.jobmanager.Job;
-import org.thoughtcrime.securesms.jobmanager.JobManager;
-import org.thoughtcrime.securesms.jobs.MultiDeviceReadUpdateJob;
-import org.thoughtcrime.securesms.recipients.RecipientId;
-import org.thoughtcrime.securesms.util.Util;
+import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.Job;
+import org.tm.archive.jobmanager.JobManager;
+import org.tm.archive.jobs.MultiDeviceReadUpdateJob;
+import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.util.Pair;
 
 import java.util.HashSet;

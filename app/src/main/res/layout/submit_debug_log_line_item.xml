@@ -1,4 +1,4 @@
-<org.thoughtcrime.securesms.components.ListenableHorizontalScrollView
+<org.tm.archive.components.ListenableHorizontalScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/log_item_scroll"
     android:layout_height="wrap_content"
@@ -12,4 +12,4 @@
       android:fontFamily="monospace"
       android:textSize="@dimen/debug_log_text_size"/>
 
-</org.thoughtcrime.securesms.components.ListenableHorizontalScrollView>
+</org.tm.archive.components.ListenableHorizontalScrollView>

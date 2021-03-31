@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
-    <org.thoughtcrime.securesms.components.webrtc.TextureViewRenderer
+    <org.tm.archive.components.webrtc.TextureViewRenderer
         android:id="@+id/call_screen_large_local_renderer"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

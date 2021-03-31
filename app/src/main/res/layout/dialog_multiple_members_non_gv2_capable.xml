@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <org.thoughtcrime.securesms.groups.ui.GroupMemberListView
+    <org.tm.archive.groups.ui.GroupMemberListView
         android:id="@+id/list_non_gv2_members"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

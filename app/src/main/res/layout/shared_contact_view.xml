@@ -28,7 +28,7 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+                <org.tm.archive.components.emoji.EmojiTextView
                     android:id="@+id/contact_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -54,7 +54,7 @@
 
         </LinearLayout>
 
-        <org.thoughtcrime.securesms.components.ConversationItemFooter
+        <org.tm.archive.components.ConversationItemFooter
             android:id="@+id/contact_footer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

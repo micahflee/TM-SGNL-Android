@@ -1,8 +1,8 @@
-package org.thoughtcrime.securesms.registration.v2;
+package org.tm.archive.registration.v2;
 
 import org.junit.Test;
 import org.signal.core.util.StreamUtil;
-import org.thoughtcrime.securesms.registration.v2.testdata.PinSanitationVector;
+import org.tm.archive.registration.v2.testdata.PinSanitationVector;
 import org.whispersystems.signalservice.internal.registrationpin.PinHasher;
 import org.whispersystems.signalservice.internal.util.Hex;
 import org.whispersystems.signalservice.internal.util.JsonUtil;

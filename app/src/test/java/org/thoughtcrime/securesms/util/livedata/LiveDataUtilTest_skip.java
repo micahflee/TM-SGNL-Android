@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.util.livedata;
+package org.tm.archive.util.livedata;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -9,8 +9,8 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 
 import static org.junit.Assert.assertEquals;
-import static org.thoughtcrime.securesms.util.livedata.LiveDataTestUtil.assertNoValue;
-import static org.thoughtcrime.securesms.util.livedata.LiveDataTestUtil.observeAndGetOneValue;
+import static org.tm.archive.util.livedata.LiveDataTestUtil.assertNoValue;
+import static org.tm.archive.util.livedata.LiveDataTestUtil.observeAndGetOneValue;
 
 public final class LiveDataUtilTest_skip {
 

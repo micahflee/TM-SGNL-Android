@@ -3,4 +3,4 @@
     android:tag="mentions_picker_fragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:name="org.thoughtcrime.securesms.conversation.ui.mentions.MentionsPickerFragment"/>
+    android:name="org.tm.archive.conversation.ui.mentions.MentionsPickerFragment"/>

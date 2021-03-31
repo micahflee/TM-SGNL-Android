@@ -18,7 +18,7 @@
         android:adjustViewBounds="true"
         android:scaleType="fitCenter" />
 
-    <org.thoughtcrime.securesms.components.emoji.AsciiEmojiView
+    <org.tm.archive.components.emoji.AsciiEmojiView
         android:id="@+id/emoji_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

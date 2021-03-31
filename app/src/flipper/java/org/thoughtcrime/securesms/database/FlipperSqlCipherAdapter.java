@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.database;
+package org.tm.archive.database;
 
 import android.app.Application;
 import android.content.Context;
@@ -16,7 +16,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteStatement;
 
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+import org.tm.archive.database.helpers.SQLCipherOpenHelper;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

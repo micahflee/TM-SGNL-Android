@@ -13,7 +13,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <org.thoughtcrime.securesms.components.AudioView
+        <org.tm.archive.components.AudioView
             android:id="@+id/audio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

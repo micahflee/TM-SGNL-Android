@@ -50,7 +50,7 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-    <org.thoughtcrime.securesms.components.ConversationScrollToView
+    <org.tm.archive.components.ConversationScrollToView
         android:id="@+id/scroll_to_mention"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_goneMarginBottom="20dp" />
 
-    <org.thoughtcrime.securesms.components.ConversationScrollToView
+    <org.tm.archive.components.ConversationScrollToView
         android:id="@+id/scroll_to_bottom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

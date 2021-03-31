@@ -17,7 +17,7 @@
       app:navigationIcon="@drawable/ic_arrow_left_24"
       app:title="@string/EditProfileNameFragment_your_name" />
 
-  <org.thoughtcrime.securesms.components.emoji.EmojiEditText
+  <org.tm.archive.components.emoji.EmojiEditText
       android:id="@+id/edit_profile_name_given_name"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -31,7 +31,7 @@
       app:layout_constraintTop_toBottomOf="@id/toolbar"
       app:layout_constraintStart_toStartOf="parent"/>
 
-  <org.thoughtcrime.securesms.components.emoji.EmojiEditText
+  <org.tm.archive.components.emoji.EmojiEditText
       android:id="@+id/edit_profile_name_family_name"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"

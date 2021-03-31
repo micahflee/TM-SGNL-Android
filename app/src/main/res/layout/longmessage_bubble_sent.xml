@@ -10,7 +10,7 @@
     android:visibility="gone"
     tools:visibility="visible">
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/longmessage_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -25,7 +25,7 @@
         app:scaleEmojis="true"
         tools:text="With great power comes great responsibility."/>
 
-    <org.thoughtcrime.securesms.components.ConversationItemFooter
+    <org.tm.archive.components.ConversationItemFooter
         android:id="@+id/longmessage_footer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

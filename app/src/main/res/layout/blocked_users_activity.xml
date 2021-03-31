@@ -20,7 +20,7 @@
             app:navigationIcon="@drawable/ic_arrow_left_24"
             app:title="@string/BlockedUsersActivity__blocked_users" />
 
-        <org.thoughtcrime.securesms.components.ContactFilterToolbar
+        <org.tm.archive.components.ContactFilterToolbar
             android:id="@+id/filter_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"

@@ -11,8 +11,8 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.webkit.MimeTypeMap;
 
-import org.thoughtcrime.securesms.contactshare.Contact;
-import org.thoughtcrime.securesms.conversation.ConversationActivity;
+import org.tm.archive.contactshare.Contact;
+import org.tm.archive.conversation.ConversationActivity;
 
 import java.io.File;
 import java.io.FileNotFoundException;

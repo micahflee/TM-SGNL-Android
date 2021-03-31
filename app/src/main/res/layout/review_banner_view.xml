@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.profiles.spoofing.ReviewBannerView
+<org.tm.archive.profiles.spoofing.ReviewBannerView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -29,7 +29,7 @@
             android:layout_height="40dp"
             android:scaleType="centerInside" />
 
-        <org.thoughtcrime.securesms.components.AvatarImageView
+        <org.tm.archive.components.AvatarImageView
             android:id="@+id/banner_avatar_1"
             android:layout_width="24dp"
             android:layout_height="24dp"
@@ -51,7 +51,7 @@
             tools:backgroundTint="@color/red"
             tools:visibility="visible" />
 
-        <org.thoughtcrime.securesms.components.AvatarImageView
+        <org.tm.archive.components.AvatarImageView
             android:id="@+id/banner_avatar_2"
             android:layout_width="24dp"
             android:layout_height="24dp"
@@ -107,4 +107,4 @@
         android:background="@drawable/toolbar_shadow"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
-</org.thoughtcrime.securesms.profiles.spoofing.ReviewBannerView>
+</org.tm.archive.profiles.spoofing.ReviewBannerView>

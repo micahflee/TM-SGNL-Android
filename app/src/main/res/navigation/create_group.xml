@@ -7,13 +7,13 @@
 
     <fragment
         android:id="@+id/addGroupDetailsFragment"
-        android:name="org.thoughtcrime.securesms.groups.ui.creategroup.details.AddGroupDetailsFragment"
+        android:name="org.tm.archive.groups.ui.creategroup.details.AddGroupDetailsFragment"
         android:label="add_group_details_fragment"
         tools:layout="@layout/add_group_details_fragment">
 
         <argument
             android:name="recipient_ids"
-            app:argType="org.thoughtcrime.securesms.recipients.RecipientId[]"
+            app:argType="org.tm.archive.recipients.RecipientId[]"
             app:nullable="false" />
 
     </fragment>

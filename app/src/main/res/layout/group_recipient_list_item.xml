@@ -8,7 +8,7 @@
     android:clickable="true"
     android:focusable="true">
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/recipient_avatar"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -30,7 +30,7 @@
         app:layout_constraintEnd_toEndOf="@+id/recipient_avatar"
         tools:checked="true" />
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/recipient_name"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -46,7 +46,7 @@
         app:layout_constraintTop_toTopOf="@+id/recipient_avatar"
         tools:text="Miles Morales" />
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/recipient_about"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -94,7 +94,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible">
 
-        <org.thoughtcrime.securesms.groups.ui.PopupMenuView
+        <org.tm.archive.groups.ui.PopupMenuView
             android:id="@+id/popupMenu"
             android:layout_width="24dp"
             android:layout_height="24dp"

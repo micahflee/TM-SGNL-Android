@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.recipients;
+package org.tm.archive.recipients;
 
 import android.content.Context;
 
@@ -8,11 +8,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.thoughtcrime.securesms.database.DatabaseFactory;
-import org.thoughtcrime.securesms.database.MmsSmsDatabase;
-import org.thoughtcrime.securesms.database.RecipientDatabase;
-import org.thoughtcrime.securesms.database.ThreadDatabase;
-import org.thoughtcrime.securesms.util.FeatureFlags;
+import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.util.FeatureFlags;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

@@ -1,0 +1,55 @@
+package org.tm.archive.conversation;
+
+import android.content.Context;
+
+import androidx.annotation.NonNull;
+
+import org.signal.core.util.concurrent.SignalExecutors;
+import org.signal.core.util.logging.Log;
+import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.notifications.MarkReadReceiver;
+import org.tm.archive.util.Debouncer;
+import org.tm.archive.util.concurrent.SerialMonoLifoExecutor;
+
+import java.util.List;
+import java.util.concurrent.Executor;
+
+class MarkReadHelper {
+  private static final String TAG = Log.tag(MarkReadHelper.class);
+
+  private static final long     DEBOUNCE_TIMEOUT = 100;
+  private static final Executor EXECUTOR         = new SerialMonoLifoExecutor(SignalExecutors.BOUNDED);
+
+  private final long      threadId;
+  private final Context   context;
+  private final Debouncer debouncer = new Debouncer(DEBOUNCE_TIMEOUT);
+  private       long      latestTimestamp;
+
+  MarkReadHelper(long threadId, @NonNull Context context) {
+    this.threadId = threadId;
+    this.context  = context.getApplicationContext();
+  }
+
+  public void onViewsRevealed(long timestamp) {
+    if (timestamp <= latestTimestamp) {
+      return;
+    }
+
+    latestTimestamp = timestamp;
+
+    debouncer.publish(() -> {
+      EXECUTOR.execute(() -> {
+        ThreadDatabase                          threadDatabase = DatabaseFactory.getThreadDatabase(context);
+        List<MessageDatabase.MarkedMessageInfo> infos          = threadDatabase.setReadSince(threadId, false, timestamp);
+
+        Log.d(TAG, "Marking " + infos.size() + " messages as read.");
+
+        ApplicationDependencies.getMessageNotifier().updateNotification(context);
+        MarkReadReceiver.process(context, infos);
+      });
+    });
+  }
+}

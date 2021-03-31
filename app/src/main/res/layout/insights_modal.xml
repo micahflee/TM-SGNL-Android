@@ -45,7 +45,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/insights_modal_title" />
 
-    <org.thoughtcrime.securesms.components.ArcProgressBar
+    <org.tm.archive.components.ArcProgressBar
         android:id="@+id/insights_modal_progress"
         style="@style/Widget.Signal.ArcProgressBar"
         android:layout_width="@dimen/insights_modal_progress_size"
@@ -55,7 +55,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/insights_modal_description" />
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/insights_modal_avatar"
         android:layout_width="@dimen/insights_modal_avatar_size"
         android:layout_height="@dimen/insights_modal_avatar_size"

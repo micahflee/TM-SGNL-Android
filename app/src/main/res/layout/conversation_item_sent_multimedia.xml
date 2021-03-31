@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.conversation.ConversationItem xmlns:android="http://schemas.android.com/apk/res/android"
+<org.tm.archive.conversation.ConversationItem xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/conversation_item"
@@ -33,7 +33,7 @@
 
     </FrameLayout>
 
-    <org.thoughtcrime.securesms.conversation.ConversationItemBodyBubble
+    <org.tm.archive.conversation.ConversationItemBodyBubble
         android:id="@+id/body_bubble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -46,7 +46,7 @@
         android:orientation="vertical"
         tools:backgroundTint="@color/core_grey_05">
 
-        <org.thoughtcrime.securesms.components.QuoteView
+        <org.tm.archive.components.QuoteView
             android:id="@+id/quote_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -115,7 +115,7 @@
             android:layout_marginBottom="@dimen/message_bubble_collapsed_footer_padding"
             android:layout="@layout/conversation_item_sent_revealable" />
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/conversation_item_body"
             style="@style/Signal.Text.Body"
             android:layout_width="wrap_content"
@@ -131,7 +131,7 @@
             app:scaleEmojis="true"
             tools:text="Mango pickle lorem ipsum" />
 
-        <org.thoughtcrime.securesms.components.ConversationItemFooter
+        <org.tm.archive.components.ConversationItemFooter
             android:id="@+id/conversation_item_footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -146,7 +146,7 @@
             app:footer_reveal_dot_color="@color/signal_icon_tint_secondary"
             app:footer_text_color="@color/signal_text_secondary" />
 
-        <org.thoughtcrime.securesms.components.ConversationItemFooter
+        <org.tm.archive.components.ConversationItemFooter
             android:id="@+id/conversation_item_sticker_footer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -163,9 +163,9 @@
             app:footer_icon_color="@color/signal_icon_tint_secondary"
             app:footer_text_color="@color/signal_text_secondary" />
 
-    </org.thoughtcrime.securesms.conversation.ConversationItemBodyBubble>
+    </org.tm.archive.conversation.ConversationItemBodyBubble>
 
-    <org.thoughtcrime.securesms.components.AlertView
+    <org.tm.archive.components.AlertView
         android:id="@+id/indicators_parent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -175,7 +175,7 @@
         android:padding="8dp"
         android:orientation="vertical" />
 
-    <org.thoughtcrime.securesms.reactions.ReactionsConversationView
+    <org.tm.archive.reactions.ReactionsConversationView
         android:id="@+id/reactions_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -185,4 +185,4 @@
         android:orientation="horizontal"
         app:rcv_outgoing="true" />
 
-</org.thoughtcrime.securesms.conversation.ConversationItem>
+</org.tm.archive.conversation.ConversationItem>

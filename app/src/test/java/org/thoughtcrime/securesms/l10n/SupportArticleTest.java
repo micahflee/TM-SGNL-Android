@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.l10n;
+package org.tm.archive.l10n;
 
 import org.junit.Test;
 import org.w3c.dom.Document;

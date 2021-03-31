@@ -1,7 +1,7 @@
-package org.thoughtcrime.securesms.storage;
+package org.tm.archive.storage;
 
 import org.junit.Test;
-import org.thoughtcrime.securesms.storage.StorageSyncHelper.KeyGenerator;
+import org.tm.archive.storage.StorageSyncHelper.KeyGenerator;
 import org.whispersystems.signalservice.api.storage.SignalGroupV2Record;
 
 import java.util.Arrays;
@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.byteArray;
+import static org.tm.archive.testutil.TestHelpers.byteArray;
 
 public final class GroupV2ConflictMergerTest {
 

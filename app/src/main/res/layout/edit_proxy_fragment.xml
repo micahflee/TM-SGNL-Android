@@ -17,7 +17,7 @@
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toStartOf="@id/edit_proxy_switch"/>
 
-  <org.thoughtcrime.securesms.util.views.LearnMoreTextView
+  <org.tm.archive.util.views.LearnMoreTextView
       android:id="@+id/edit_proxy_switch_title_description"
       android:layout_width="0dp"
       android:layout_height="wrap_content"

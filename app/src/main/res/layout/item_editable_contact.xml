@@ -12,7 +12,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/editable_contact_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

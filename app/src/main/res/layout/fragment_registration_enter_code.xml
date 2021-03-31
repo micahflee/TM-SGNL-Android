@@ -64,7 +64,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="@string/RegistrationActivity_enter_the_code_we_sent_to_s" />
 
-            <org.thoughtcrime.securesms.components.registration.CallMeCountDownView
+            <org.tm.archive.components.registration.CallMeCountDownView
                 android:id="@+id/call_me_count_down"
                 style="@style/Button.Borderless.Registration"
                 android:layout_width="wrap_content"
@@ -76,7 +76,7 @@
                 app:layout_constraintTop_toTopOf="@+id/wrong_number"
                 tools:text="@string/RegistrationActivity_call" />
 
-            <org.thoughtcrime.securesms.components.registration.VerificationCodeView
+            <org.tm.archive.components.registration.VerificationCodeView
                 android:id="@+id/code"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -134,7 +134,7 @@
 
     </ScrollView>
 
-    <org.thoughtcrime.securesms.components.registration.VerificationPinKeyboard
+    <org.tm.archive.components.registration.VerificationPinKeyboard
         android:id="@+id/keyboard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

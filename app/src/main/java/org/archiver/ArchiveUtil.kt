@@ -10,8 +10,8 @@ import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLAT
 import org.archiver.ArchiveConstants.Companion.isTestMode
 import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
 import org.signal.glide.Log
-import org.thoughtcrime.securesms.recipients.Recipient
-import org.thoughtcrime.securesms.sms.IncomingTextMessage
+import org.tm.archive.recipients.Recipient
+import org.tm.archive.sms.IncomingTextMessage
 import java.util.*
 
 class ArchiveUtil {

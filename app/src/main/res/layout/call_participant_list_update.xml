@@ -13,7 +13,7 @@
         android:layout_marginEnd="12dp"
         android:background="@drawable/call_participant_update_window_background">
 
-        <org.thoughtcrime.securesms.components.AvatarImageView
+        <org.tm.archive.components.AvatarImageView
             android:id="@+id/avatar"
             android:layout_width="40dp"
             android:layout_height="40dp"

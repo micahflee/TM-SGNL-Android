@@ -4,7 +4,7 @@
 
     <PreferenceCategory android:title="@string/preferences_storage__storage_usage" />
 
-    <org.thoughtcrime.securesms.preferences.widgets.StoragePreferenceCategory android:key="pref_storage_category" />
+    <org.tm.archive.preferences.widgets.StoragePreferenceCategory android:key="pref_storage_category" />
 
     <PreferenceCategory android:layout="@layout/preference_divider" />
 

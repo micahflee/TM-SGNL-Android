@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.database;
+package org.tm.archive.database;
 
 import android.app.Application;
 
@@ -7,8 +7,8 @@ import org.junit.runner.RunWith;
 import org.robolectric.ParameterizedRobolectricTestRunner;
 import org.robolectric.ParameterizedRobolectricTestRunner.Parameters;
 import org.robolectric.annotation.Config;
-import org.thoughtcrime.securesms.database.model.Mention;
-import org.thoughtcrime.securesms.recipients.RecipientId;
+import org.tm.archive.database.model.Mention;
+import org.tm.archive.recipients.RecipientId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
-import static org.thoughtcrime.securesms.database.MentionUtil.MENTION_PLACEHOLDER;
-import static org.thoughtcrime.securesms.database.MentionUtil.MENTION_STARTER;
+import static org.tm.archive.database.MentionUtil.MENTION_PLACEHOLDER;
+import static org.tm.archive.database.MentionUtil.MENTION_STARTER;
 
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @Config(manifest = Config.NONE, application = Application.class)

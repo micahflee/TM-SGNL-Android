@@ -5,14 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <org.thoughtcrime.securesms.imageeditor.ImageEditorView
+    <org.tm.archive.imageeditor.ImageEditorView
         android:id="@+id/image_editor_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:gravity="center" />
 
-    <org.thoughtcrime.securesms.scribbles.ImageEditorHud
+    <org.tm.archive.scribbles.ImageEditorHud
         android:id="@+id/scribble_hud"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

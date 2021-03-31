@@ -34,7 +34,7 @@
         app:layout_constraintStart_toEndOf="@id/sticker_management_cover"
         app:layout_constraintEnd_toStartOf="@id/sticker_management_button_barrier">
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/sticker_management_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
             app:emoji_maxLength="45"
             tools:text="Spider-Man"/>
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/sticker_management_author"
             style="@style/Signal.Text.Body"
             android:layout_width="match_parent"

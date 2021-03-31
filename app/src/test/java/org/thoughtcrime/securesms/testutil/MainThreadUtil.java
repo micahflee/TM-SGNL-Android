@@ -1,6 +1,6 @@
-package org.thoughtcrime.securesms.testutil;
+package org.tm.archive.testutil;
 
-import org.thoughtcrime.securesms.util.Util;
+import org.tm.archive.util.Util;
 
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doCallRealMethod;

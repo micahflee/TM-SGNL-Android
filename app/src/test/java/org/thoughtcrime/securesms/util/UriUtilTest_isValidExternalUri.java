@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.util;
+package org.tm.archive.util;
 
 import android.app.Application;
 import android.content.Context;
@@ -28,9 +28,9 @@ public class UriUtilTest_isValidExternalUri {
     return Arrays.asList(new Object[][]{
         { "content://other.app.package.name.org/path/public.txt",             true  },
         { "file:///sdcard/public.txt",                                        true  },
-        { "file:///data/data/org.thoughtcrime.securesms/private.txt",         false },
-        { "file:///any/path/with/package/name/org.thoughtcrime.securesms",    false },
-        { "file:///org.thoughtcrime.securesms/any/path/with/package/name",    false },
+        { "file:///data/data/org.tm.archive/private.txt",         false },
+        { "file:///any/path/with/package/name/org.tm.archive",    false },
+        { "file:///org.tm.archive/any/path/with/package/name",    false },
         { "file:///any/path/../with/back/references/private.txt",             false },
         { "file:///any/path/with/back/references/../private.txt",             false },
         { "file:///../any/path/with/back/references/private.txt",             false },

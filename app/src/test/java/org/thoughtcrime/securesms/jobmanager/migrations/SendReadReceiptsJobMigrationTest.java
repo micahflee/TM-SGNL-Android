@@ -1,11 +1,11 @@
-package org.thoughtcrime.securesms.jobmanager.migrations;
+package org.tm.archive.jobmanager.migrations;
 
 import org.junit.Test;
-import org.thoughtcrime.securesms.database.MmsSmsDatabase;
-import org.thoughtcrime.securesms.jobmanager.Data;
-import org.thoughtcrime.securesms.jobmanager.JobMigration;
-import org.thoughtcrime.securesms.jobs.SendReadReceiptJob;
-import org.thoughtcrime.securesms.recipients.RecipientId;
+import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JobMigration;
+import org.tm.archive.jobs.SendReadReceiptJob;
+import org.tm.archive.recipients.RecipientId;
 
 import java.util.ArrayList;
 

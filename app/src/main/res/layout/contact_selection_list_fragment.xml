@@ -35,7 +35,7 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <org.thoughtcrime.securesms.components.RecyclerViewFastScroller
+    <org.tm.archive.components.RecyclerViewFastScroller
         android:id="@+id/fast_scroller"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -110,7 +110,7 @@
 
     </LinearLayout>
 
-    <org.thoughtcrime.securesms.components.emoji.WarningTextView
+    <org.tm.archive.components.emoji.WarningTextView
         android:id="@+id/group_limit"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

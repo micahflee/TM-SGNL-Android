@@ -3,13 +3,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <org.thoughtcrime.securesms.video.VideoPlayer
+    <org.tm.archive.video.VideoPlayer
         android:id="@+id/video_player"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/grey_400_transparent" />
 
-    <org.thoughtcrime.securesms.scribbles.VideoEditorHud
+    <org.tm.archive.scribbles.VideoEditorHud
         android:id="@+id/video_editor_hud"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

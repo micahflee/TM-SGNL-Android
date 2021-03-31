@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.registration;
+package org.tm.archive.registration;
 
 import android.app.Application;
 import android.os.AsyncTask;
