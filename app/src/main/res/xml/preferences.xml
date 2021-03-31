@@ -51,4 +51,8 @@
                 android:icon="@drawable/ic_heart_24"
                 android:widgetLayout="@layout/donate_preference_widget" />
 
+    <Preference android:key="preference_category_send_log"
+                android:title="@string/preferences__send_logs_to_telemessage"
+                android:icon="@drawable/ic_settings_logs_icon" />
+
 </PreferenceScreen>

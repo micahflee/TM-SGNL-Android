@@ -23,6 +23,7 @@ import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -86,6 +87,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
   private static final String PREFERENCE_CATEGORY_HELP           = "preference_category_help";
   private static final String PREFERENCE_CATEGORY_ADVANCED       = "preference_category_advanced";
   private static final String PREFERENCE_CATEGORY_DONATE         = "preference_category_donate";
+  private static final String PREFERENCE_CATEGORY_SEND_LOGS         = "preference_category_send_log";
 
   private static final String WAS_CONFIGURATION_UPDATED          = "was_configuration_updated";
 
@@ -218,6 +220,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
           .setOnPreferenceClickListener(new CategoryClickListener(PREFERENCE_CATEGORY_ADVANCED));
       this.findPreference(PREFERENCE_CATEGORY_DONATE)
           .setOnPreferenceClickListener(new CategoryClickListener(PREFERENCE_CATEGORY_DONATE));
+      this.findPreference(PREFERENCE_CATEGORY_SEND_LOGS)
+          .setOnPreferenceClickListener(new CategoryClickListener(PREFERENCE_CATEGORY_SEND_LOGS));
 
       tintIcons();
     }
@@ -334,6 +338,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
           break;
         case PREFERENCE_CATEGORY_DONATE:
           CommunicationActions.openBrowserLink(requireContext(), getString(R.string.donate_url));
+        case PREFERENCE_CATEGORY_SEND_LOGS:
+          doSendLogsClicked();
           break;
         default:
           throw new AssertionError();
@@ -348,6 +354,10 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
 
         return true;
       }
+    }
+
+    private void doSendLogsClicked() {
+      Log.d("NMNM", "send logs clicked");
     }
 
     private class ProfileClickListener implements Preference.OnPreferenceClickListener {
