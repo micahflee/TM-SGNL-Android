@@ -1107,7 +1107,12 @@ public class SmsDatabase extends MessageDatabase {
           groupTile = DatabaseFactory.getGroupDatabase(context).getGroup(message.getGroupId()).get().getTitle();
         }
 
-        ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipient, message, messageId, groupTile);
+        if(message instanceof IncomingGroupUpdateMessage && ((IncomingGroupUpdateMessage) message).isUpdate()){
+         //TODO Update group name/remove user/ add user etc... #phase2
+          Log.d("MNMN", "IncomingGroupUpdateMessage");
+        }else {
+          ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipient, message, messageId, groupTile);
+        }
       }
       return optional;
     }
