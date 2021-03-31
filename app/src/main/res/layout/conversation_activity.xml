@@ -3,9 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/ic_bg_tm"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
+    
     <include layout="@layout/system_ui_guidelines" />
 
     <ImageView
