@@ -90,6 +90,7 @@ import org.tm.archive.ringrtc.RemotePeer;
 import org.tm.archive.service.WebRtcCallService;
 import org.tm.archive.sms.IncomingEncryptedMessage;
 import org.tm.archive.sms.IncomingEndSessionMessage;
+import org.tm.archive.sms.IncomingGroupUpdateMessage;
 import org.tm.archive.sms.IncomingTextMessage;
 import org.tm.archive.sms.OutgoingEncryptedMessage;
 import org.tm.archive.sms.OutgoingEndSessionMessage;
@@ -201,6 +202,7 @@ public final class MessageContentProcessor {
   private void handleMessage(@Nullable SignalServiceContent content, long timestamp, @NonNull Optional<Long> smsMessageId)
       throws IOException, GroupChangeBusyException
   {
+    Log.d("MNMNDDHAN", "handleMessage");
     try {
       GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
 
@@ -212,6 +214,7 @@ public final class MessageContentProcessor {
       log(String.valueOf(content.getTimestamp()), "Beginning message processing.");
 
       if (content.getDataMessage().isPresent()) {
+        Log.d("MNMNDDHAN", "content.getDataMessage()");
         SignalServiceDataMessage message        = content.getDataMessage().get();
         boolean                  isMediaMessage = message.getAttachments().isPresent() || message.getQuote().isPresent() || message.getSharedContacts().isPresent() || message.getPreviews().isPresent() || message.getSticker().isPresent() || message.getMentions().isPresent();
         Optional<GroupId>        groupId        = GroupUtil.idFromGroupContext(message.getGroupContext());
@@ -236,15 +239,24 @@ public final class MessageContentProcessor {
             return;
           }
         }
-
+        Pair<IncomingMediaMessage,Long>  mediaMessage = null;
+        Pair<IncomingTextMessage,Long> textMessage = null;
         if      (isInvalidMessage(message))                                               handleInvalidMessage(content.getSender(), content.getSenderDevice(), groupId, content.getTimestamp(), smsMessageId);
         else if (message.isEndSession())                                                  handleEndSessionMessage(content, smsMessageId);
         else if (message.isGroupV1Update())                                               handleGroupV1Message(content, message, smsMessageId, groupId.get().requireV1());
         else if (message.isExpirationUpdate())                                            handleExpirationUpdate(content, message, smsMessageId, groupId);
         else if (message.getReaction().isPresent())                                       handleReaction(content, message);
         else if (message.getRemoteDelete().isPresent())                                   handleRemoteDelete(content, message);
-        else if (isMediaMessage)                                                          handleMediaMessage(content, message, smsMessageId, groupId);
-        else if (message.getBody().isPresent())                                           handleTextMessage(content, message, smsMessageId, groupId);
+        else if (isMediaMessage) {
+          //TODO Incoming media archived in this method!
+          Log.d("MNMNDDHAN", "content.getDataMessage() isMediaMessage 1");
+          mediaMessage = handleMediaMessage(content, message, smsMessageId, groupId);
+        }
+        else if (message.getBody().isPresent()) {
+          Log.d("MNMNDDHAN", "content.getDataMessage() textMessage 2");
+          textMessage = handleTextMessage(content, message, smsMessageId, groupId);
+
+        }
         else if (FeatureFlags.groupCalling() && message.getGroupCallUpdate().isPresent()) handleGroupCallUpdateMessage(content, message, groupId);
 
         if (groupId.isPresent() && groupDatabase.isUnknownGroup(groupId.get())) {
@@ -258,7 +270,8 @@ public final class MessageContentProcessor {
         if (content.isNeedsReceipt()) {
           handleNeedsDeliveryReceipt(content, message);
         }
-      } else if (content.getSyncMessage().isPresent()) {
+    } else if (content.getSyncMessage().isPresent()) {
+        Log.d("MNMNDDHAN", "content.getSyncMessage()");
         TextSecurePreferences.setMultiDevice(context, true);
 
         SignalServiceSyncMessage syncMessage = content.getSyncMessage().get();
@@ -275,6 +288,7 @@ public final class MessageContentProcessor {
         else if (syncMessage.getMessageRequestResponse().isPresent()) handleSynchronizeMessageRequestResponse(syncMessage.getMessageRequestResponse().get());
         else                                                          warn(String.valueOf(content.getTimestamp()), "Contains no known sync types...");
       } else if (content.getCallMessage().isPresent()) {
+        Log.d("MNMNDDHAN", "content.getCallMessage()");
         log(String.valueOf(content.getTimestamp()), "Got call message...");
 
         SignalServiceCallMessage message             = content.getCallMessage().get();
@@ -292,14 +306,17 @@ public final class MessageContentProcessor {
         else if (message.getBusyMessage().isPresent())       handleCallBusyMessage(content, message.getBusyMessage().get());
         else if (message.getOpaqueMessage().isPresent())     handleCallOpaqueMessage(content, message.getOpaqueMessage().get());
       } else if (content.getReceiptMessage().isPresent()) {
+        Log.d("MNMNDDHAN", "content.getReceiptMessage()");
         SignalServiceReceiptMessage message = content.getReceiptMessage().get();
 
         if      (message.isReadReceipt())     handleReadReceipt(content, message);
         else if (message.isDeliveryReceipt()) handleDeliveryReceipt(content, message);
         else if (message.isViewedReceipt())   handleViewedReceipt(content, message);
       } else if (content.getTypingMessage().isPresent()) {
+        Log.d("MNMNDDHAN", "content.getTypingMessage()");
         handleTypingMessage(content, content.getTypingMessage().get());
       } else {
+        Log.d("MNMNDDHAN", "Got unrecognized message!");
         warn(String.valueOf(content.getTimestamp()), "Got unrecognized message!");
       }
 
@@ -989,7 +1006,7 @@ public final class MessageContentProcessor {
     messageNotifier.updateNotification(context);
   }
 
-  private void handleMediaMessage(@NonNull SignalServiceContent content,
+  private Pair<IncomingMediaMessage,Long>  handleMediaMessage(@NonNull SignalServiceContent content,
                                   @NonNull SignalServiceDataMessage message,
                                   @NonNull Optional<Long> smsMessageId, Optional<GroupId> groupId)
       throws StorageFailedException, BadGroupIdException
@@ -1070,6 +1087,7 @@ public final class MessageContentProcessor {
         ApplicationContext.getInstance(context).getViewOnceMessageManager().scheduleIfNecessary();
       }
     }
+    return new Pair<>(mediaMessage,insertResult.get().getMessageId());
   }
 
   private void archiveInboxMediaMessage(String groupTitle, Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, AttachmentId attachmentId) {
@@ -1077,7 +1095,7 @@ public final class MessageContentProcessor {
     if(mediaMessage.getAttachments().size() > 0) {
       for (int i = mediaMessage.getAttachments().size() - 1; i >= 0; i--) {
         File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId.getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, mediaMessage.getAttachments().get(i).getContentType()));
-        ArchiveSender.Companion.archiveMessageInboxMMS(context,groupTitle,  ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, /*messageId*/attachmentId.getUniqueId(), tempFileForArchiving);
+        ArchiveSender.Companion.archiveMessageInboxMMS(context,groupTitle,  ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, attachmentId.getUniqueId(), tempFileForArchiving);
       }
     }
   }
@@ -1233,7 +1251,7 @@ public final class MessageContentProcessor {
     receiptDatabase.setUnidentified(unidentifiedStatus, messageId);
   }
 
-  private void handleTextMessage(@NonNull SignalServiceContent content,
+  private Pair<IncomingTextMessage, Long> handleTextMessage(@NonNull SignalServiceContent content,
                                  @NonNull SignalServiceDataMessage message,
                                  @NonNull Optional<Long> smsMessageId,
                                  @NonNull Optional<GroupId> groupId)
@@ -1242,6 +1260,8 @@ public final class MessageContentProcessor {
     MessageDatabase database  = DatabaseFactory.getSmsDatabase(context);
     String          body      = message.getBody().isPresent() ? message.getBody().get() : "";
     Recipient       recipient = getMessageDestination(content, message);
+    IncomingTextMessage textMessage = null;
+    Optional<InsertResult> insertResult = null;
 
     if (message.getExpiresInSeconds() != recipient.getExpireMessages()) {
       handleExpirationUpdate(content, message, Optional.absent(), groupId);
@@ -1254,7 +1274,7 @@ public final class MessageContentProcessor {
     } else {
       notifyTypingStoppedFromIncomingMessage(recipient, content.getSender(), content.getSenderDevice());
 
-      IncomingTextMessage textMessage = new IncomingTextMessage(RecipientId.fromHighTrust(content.getSender()),
+      textMessage = new IncomingTextMessage(RecipientId.fromHighTrust(content.getSender()),
           content.getSenderDevice(),
           message.getTimestamp(),
           content.getServerReceivedTimestamp(),
@@ -1264,7 +1284,7 @@ public final class MessageContentProcessor {
           content.isNeedsReceipt());
 
       textMessage = new IncomingEncryptedMessage(textMessage, body);
-      Optional<InsertResult> insertResult = database.insertMessageInbox(textMessage);
+      insertResult = database.insertMessageInbox(textMessage);
 
       if (insertResult.isPresent()) threadId = insertResult.get().getThreadId();
       else                          threadId = null;
@@ -1275,6 +1295,24 @@ public final class MessageContentProcessor {
     if (threadId != null) {
       ApplicationDependencies.getMessageNotifier().updateNotification(context, threadId);
     }
+
+    String groupTitle = "";
+    Recipient recipientSender = Recipient.resolved(textMessage.getSender());
+    Recipient groupRecipient;
+
+    if (textMessage.getGroupId() == null) {
+      groupRecipient = null;
+    } else {
+      RecipientId id = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromPossiblyMigratedGroupId(textMessage.getGroupId());
+      groupRecipient = Recipient.resolved(id);
+    }
+
+    if(groupId.isPresent()) {
+      groupTitle = DatabaseFactory.getGroupDatabase(context).getGroup(groupId.get()).get().getTitle();
+    }
+    ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipientSender, textMessage,insertResult.get().getMessageId() , groupTitle);
+
+    return new Pair<>(textMessage, insertResult.get().getMessageId());
   }
 
   private long handleSynchronizeSentTextMessage(@NonNull SentTranscriptMessage message)

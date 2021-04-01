@@ -1100,20 +1100,6 @@ public class SmsDatabase extends MessageDatabase {
 
 
       Optional<InsertResult> optional = Optional.of(new InsertResult(messageId, threadId));
-      if(optional.isPresent()) {
-        String groupTile = "";
-        if(message.getGroupId() != null &&
-                DatabaseFactory.getGroupDatabase(context).getGroup(message.getGroupId()).isPresent()) {
-          groupTile = DatabaseFactory.getGroupDatabase(context).getGroup(message.getGroupId()).get().getTitle();
-        }
-
-        if(message instanceof IncomingGroupUpdateMessage && ((IncomingGroupUpdateMessage) message).isUpdate()){
-         //TODO Update group name/remove user/ add user etc... #phase2
-          Log.d("MNMN", "IncomingGroupUpdateMessage");
-        }else {
-          ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipient, message, messageId, groupTile);
-        }
-      }
       return optional;
     }
   }

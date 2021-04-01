@@ -26,6 +26,9 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
+import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveFileUtil;
+import org.archiver.ArchiveSender;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
@@ -74,6 +77,7 @@ import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,6 +113,9 @@ public class MessageSender {
     long messageId         = database.insertMessageOutbox(allocatedThreadId, message, forceSms, System.currentTimeMillis(), insertListener);
 
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
+
+    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getMessageBody(), messageId);
+
     onMessageSent();
 
     return allocatedThreadId;
@@ -130,12 +137,47 @@ public class MessageSender {
       long      messageId         = database.insertMessageOutbox(message, allocatedThreadId, forceSms, insertListener);
 
       sendMediaMessage(context, recipient, forceSms, messageId, Collections.emptyList());
+
+      archiveMediaOrGroupMessage(context, message, recipient, messageId);
+
       onMessageSent();
 
       return allocatedThreadId;
     } catch (MmsException e) {
       Log.w(TAG, e);
       return threadId;
+    }
+  }
+
+  private static void archiveMediaOrGroupMessage(Context context, OutgoingMediaMessage message, Recipient recipient, long messageId) {
+    if (message.getSharedContacts().size() > 0) {
+      File vcfFile = ArchiveFileUtil.createVCFFileFromContact(context, message.getSharedContacts().get(0));
+      ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, vcfFile);
+      ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
+    } else {
+
+      if (message.getAttachments() != null && message.getAttachments().size() > 0) {
+        for (int i = 0; i < message.getAttachments().size(); i++) {
+          File tempFileForArchiving = null;
+          String fileName = "";
+          tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(context, message.getAttachments().get(i).getUri().toString());
+          ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, tempFileForArchiving);
+          ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), true);
+          ArchiveFileUtil.deleteFile(context, context.getCacheDir().getName(), fileName);
+        }
+
+      } else {
+
+        //TODO - Archiving of "replay messages" (the original message is in "message.getQuote")
+        if (message.getOutgoingQuote() != null) {
+          ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, null);
+
+        } else {
+          ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getBody(), messageId);
+        }
+      }
+
+
     }
   }
 
