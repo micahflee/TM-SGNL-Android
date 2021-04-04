@@ -616,7 +616,7 @@ final class GroupManagerV2 {
       final DecryptedGroupChange            decryptedChange;
       final DecryptedGroup                  decryptedGroupState;
       final DecryptedGroup                  previousGroupState;
-
+      Log.d("MNMNDDHAN", "Group event!");
       try {
         previousGroupState  = v2GroupProperties.getDecryptedGroup();
         decryptedChange     = groupOperations.decryptChange(changeActions, selfUuid);
