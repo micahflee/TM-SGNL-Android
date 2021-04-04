@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups.v2;
+package org.tm.archive.groups.v2;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,7 +18,7 @@ import org.signal.storageservice.protos.groups.local.DecryptedString;
 import org.signal.storageservice.protos.groups.local.DecryptedTimer;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.profiles.ProfileKey;
-import org.thoughtcrime.securesms.util.Util;
+import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 
 import java.util.UUID;

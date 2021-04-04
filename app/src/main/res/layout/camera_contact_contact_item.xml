@@ -11,12 +11,12 @@
     android:gravity="center_vertical"
     android:background="?selectableItemBackground">
     
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/camera_contact_item_avatar"
         android:layout_width="44dp"
         android:layout_height="44dp" />
     
-    <org.thoughtcrime.securesms.components.FromTextView
+    <org.tm.archive.components.FromTextView
         android:id="@+id/camera_contact_item_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

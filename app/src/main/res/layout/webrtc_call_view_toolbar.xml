@@ -18,7 +18,7 @@
             android:orientation="horizontal"
             app:layout_constraintGuide_begin="?actionBarSize" />
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/call_screen_recipient_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

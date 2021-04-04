@@ -36,7 +36,7 @@
                     android:layout_height="128dp"
                     android:layout_gravity="center_horizontal" />
 
-                <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+                <org.tm.archive.components.emoji.EmojiTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
@@ -54,7 +54,7 @@
                     android:textColor="@color/signal_text_secondary"
                     tools:text="12 members (4 invited)" />
 
-                <org.thoughtcrime.securesms.util.views.LearnMoreTextView
+                <org.tm.archive.util.views.LearnMoreTextView
                     android:id="@+id/manage_group_info_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -89,7 +89,7 @@
                     android:layout_gravity="center_vertical|start"
                     android:layout_marginEnd="10dp" />
 
-                <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+                <org.tm.archive.components.emoji.EmojiTextView
                     android:id="@+id/name_target"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -105,7 +105,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/group_avatar"
         android:layout_width="128dp"
         android:layout_height="128dp"
@@ -113,9 +113,9 @@
         android:layout_marginTop="16dp"
         android:elevation="8dp"
         android:transitionName="avatar"
-        app:layout_behavior="org.thoughtcrime.securesms.recipients.ui.RecipientSettingsCoordinatorLayoutBehavior" />
+        app:layout_behavior="org.tm.archive.recipients.ui.RecipientSettingsCoordinatorLayoutBehavior" />
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -394,7 +394,7 @@
 
                     </LinearLayout>
 
-                    <org.thoughtcrime.securesms.components.ThreadPhotoRailView
+                    <org.tm.archive.components.ThreadPhotoRailView
                         android:id="@+id/recent_photos"
                         android:layout_width="match_parent"
                         android:layout_height="90dp"
@@ -625,7 +625,7 @@
                         android:visibility="gone"
                         tools:visibility="visible" />
 
-                    <org.thoughtcrime.securesms.groups.ui.GroupMemberListView
+                    <org.tm.archive.groups.ui.GroupMemberListView
                         android:id="@+id/group_members"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

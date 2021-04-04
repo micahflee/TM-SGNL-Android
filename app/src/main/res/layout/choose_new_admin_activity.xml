@@ -29,7 +29,7 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <org.thoughtcrime.securesms.groups.ui.GroupMemberListView
+        <org.tm.archive.groups.ui.GroupMemberListView
             android:id="@+id/choose_new_admin_group_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

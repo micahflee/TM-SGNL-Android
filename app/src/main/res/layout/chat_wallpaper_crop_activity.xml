@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.components.InsetAwareConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<org.tm.archive.components.InsetAwareConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -19,7 +19,7 @@
         android:orientation="horizontal"
         tools:layout_constraintGuide_end="48dp" />
 
-    <org.thoughtcrime.securesms.imageeditor.ImageEditorView
+    <org.tm.archive.imageeditor.ImageEditorView
         android:id="@+id/image_editor"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -172,4 +172,4 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/navigation_bar_guideline" />
 
-</org.thoughtcrime.securesms.components.InsetAwareConstraintLayout>
+</org.tm.archive.components.InsetAwareConstraintLayout>

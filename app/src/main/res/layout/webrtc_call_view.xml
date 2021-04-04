@@ -2,7 +2,7 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:parentTag="org.thoughtcrime.securesms.components.webrtc.WebRtcCallView">
+    tools:parentTag="org.tm.archive.components.webrtc.WebRtcCallView">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/call_screen_participants_parent"
@@ -89,7 +89,7 @@
             app:reverseLayout="true"
             tools:listitem="@layout/webrtc_call_participant_recycler_item" />
 
-        <org.thoughtcrime.securesms.util.views.TouchInterceptingFrameLayout
+        <org.tm.archive.util.views.TouchInterceptingFrameLayout
             android:id="@+id/call_screen_pip_area"
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -119,7 +119,7 @@
                     android:layout_height="match_parent" />
 
             </androidx.cardview.widget.CardView>
-        </org.thoughtcrime.securesms.util.views.TouchInterceptingFrameLayout>
+        </org.tm.archive.util.views.TouchInterceptingFrameLayout>
 
         <include
             android:id="@+id/call_screen_toolbar"
@@ -130,7 +130,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/call_screen_status_bar_guideline" />
 
-        <org.thoughtcrime.securesms.components.webrtc.WebRtcAudioOutputToggleButton
+        <org.tm.archive.components.webrtc.WebRtcAudioOutputToggleButton
             android:id="@+id/call_screen_speaker_toggle"
             android:layout_width="56dp"
             android:layout_height="56dp"
@@ -161,7 +161,7 @@
             app:srcCompat="@drawable/webrtc_call_screen_camera_toggle"
             tools:visibility="visible" />
 
-        <org.thoughtcrime.securesms.components.AccessibleToggleButton
+        <org.tm.archive.components.AccessibleToggleButton
             android:id="@+id/call_screen_video_toggle"
             style="@style/WebRtcCallV2CompoundButton"
             android:layout_marginEnd="16dp"
@@ -176,7 +176,7 @@
             tools:checked="true"
             tools:visibility="visible" />
 
-        <org.thoughtcrime.securesms.components.AccessibleToggleButton
+        <org.tm.archive.components.AccessibleToggleButton
             android:id="@+id/call_screen_audio_mic_toggle"
             style="@style/WebRtcCallV2CompoundButton"
             android:layout_marginEnd="16dp"

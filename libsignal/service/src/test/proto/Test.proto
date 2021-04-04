@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package signal;
 
-option java_package        = "org.thoughtcrime.securesms.util.testprotos";
+option java_package        = "org.tm.archive.util.testprotos";
 option java_multiple_files = true;
 
 message TestPerson {

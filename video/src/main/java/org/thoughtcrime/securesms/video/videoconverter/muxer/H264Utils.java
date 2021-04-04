@@ -25,7 +25,7 @@
  *
  * This file has been modified by Signal.
  */
-package org.thoughtcrime.securesms.video.videoconverter.muxer;
+package org.tm.archive.video.videoconverter.muxer;
 
 import androidx.annotation.NonNull;
 

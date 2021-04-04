@@ -8,14 +8,14 @@
     android:paddingTop="10dp"
     android:paddingBottom="10dp">
 
-  <org.thoughtcrime.securesms.components.AvatarImageView
+  <org.tm.archive.components.AvatarImageView
       android:id="@+id/member_item_avatar"
       android:layout_width="28dp"
       android:layout_height="28dp"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent"/>
 
-  <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+  <org.tm.archive.components.emoji.EmojiTextView
       android:id="@+id/member_item_name"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"

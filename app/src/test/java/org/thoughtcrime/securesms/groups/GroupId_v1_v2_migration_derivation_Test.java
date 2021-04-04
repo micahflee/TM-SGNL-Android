@@ -1,18 +1,18 @@
-package org.thoughtcrime.securesms.groups;
+package org.tm.archive.groups;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.signal.zkgroup.groups.GroupMasterKey;
-import org.thoughtcrime.securesms.util.Hex;
+import org.tm.archive.util.Hex;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
-import static org.thoughtcrime.securesms.testutil.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
-import static org.thoughtcrime.securesms.testutil.ZkGroupLibraryUtil.assumeZkGroupSupportedOnOS;
+import static org.tm.archive.testutil.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
+import static org.tm.archive.testutil.ZkGroupLibraryUtil.assumeZkGroupSupportedOnOS;
 
 @RunWith(Parameterized.class)
 public final class GroupId_v1_v2_migration_derivation_Test {

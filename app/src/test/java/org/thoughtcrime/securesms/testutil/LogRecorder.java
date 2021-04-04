@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.testutil;
+package org.tm.archive.testutil;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;

@@ -93,7 +93,7 @@
           app:layout_constraintTop_toTopOf="@id/manage_profile_name"
           app:layout_constraintBottom_toBottomOf="@id/manage_profile_name_subtitle"/>
 
-      <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+      <org.tm.archive.components.emoji.EmojiTextView
           android:id="@+id/manage_profile_name"
           android:layout_width="0dp"
           android:layout_height="wrap_content"
@@ -138,7 +138,7 @@
           app:layout_constraintTop_toTopOf="@id/manage_profile_username"
           app:layout_constraintBottom_toBottomOf="@id/manage_profile_username_subtitle"/>
 
-      <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+      <org.tm.archive.components.emoji.EmojiTextView
           android:id="@+id/manage_profile_username"
           android:layout_width="0dp"
           android:layout_height="wrap_content"
@@ -183,7 +183,7 @@
           app:layout_constraintBottom_toBottomOf="@id/manage_profile_about_subtitle"
           app:layout_constraintStart_toStartOf="parent"/>
 
-      <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+      <org.tm.archive.components.emoji.EmojiTextView
           android:id="@+id/manage_profile_about"
           android:layout_width="0dp"
           android:layout_height="wrap_content"
@@ -208,7 +208,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <org.thoughtcrime.securesms.util.views.LearnMoreTextView
+    <org.tm.archive.util.views.LearnMoreTextView
         android:id="@+id/description_text"
         style="@style/Signal.Text.Preview"
         android:layout_width="match_parent"

@@ -1,8 +1,8 @@
-package org.thoughtcrime.securesms.jobmanager.impl;
+package org.tm.archive.jobmanager.impl;
 
 import org.junit.Test;
 import org.signal.core.util.StreamUtil;
-import org.thoughtcrime.securesms.jobmanager.Data;
+import org.tm.archive.jobmanager.Data;
 
 import java.io.IOException;
 

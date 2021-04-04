@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <org.thoughtcrime.securesms.components.AvatarImageView
+        <org.tm.archive.components.AvatarImageView
             android:id="@+id/message_details_recipient_avatar"
             android:foreground="@drawable/contact_photo_background"
             android:layout_width="36dp"
@@ -27,7 +27,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <org.thoughtcrime.securesms.components.FromTextView
+        <org.tm.archive.components.FromTextView
             android:id="@+id/message_details_recipient_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

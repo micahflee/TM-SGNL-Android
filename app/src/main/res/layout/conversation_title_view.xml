@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.conversation.ConversationTitleView xmlns:android="http://schemas.android.com/apk/res/android"
+<org.tm.archive.conversation.ConversationTitleView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/conversation_title_view"
@@ -9,7 +9,7 @@
     android:gravity="center_vertical"
     tools:layout_height="?actionBarSize">
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/contact_photo_image"
         android:layout_width="36dp"
         android:layout_height="36dp"
@@ -32,7 +32,7 @@
         android:layout_toEndOf="@id/contact_photo_image"
         android:orientation="vertical">
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/title"
             style="@style/TextSecure.TitleTextStyle"
             android:layout_width="wrap_content"
@@ -79,7 +79,7 @@
                 android:text="@string/ConversationTitleView_verified"
                 android:textDirection="ltr" />
 
-            <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+            <org.tm.archive.components.emoji.EmojiTextView
                 android:id="@+id/subtitle"
                 style="@style/TextSecure.SubtitleTextStyle"
                 android:layout_width="wrap_content"
@@ -96,4 +96,4 @@
 
     </LinearLayout>
 
-</org.thoughtcrime.securesms.conversation.ConversationTitleView>
+</org.tm.archive.conversation.ConversationTitleView>

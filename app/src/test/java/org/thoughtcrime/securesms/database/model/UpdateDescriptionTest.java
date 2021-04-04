@@ -1,11 +1,11 @@
-package org.thoughtcrime.securesms.database.model;
+package org.tm.archive.database.model;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.thoughtcrime.securesms.util.Util;
+import org.tm.archive.util.Util;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,7 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.thoughtcrime.securesms.testutil.MainThreadUtil.setMainThread;
+import static org.tm.archive.testutil.MainThreadUtil.setMainThread;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Util.class)

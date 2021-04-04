@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.video.videoconverter.muxer;
+package org.tm.archive.video.videoconverter.muxer;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -6,7 +6,7 @@ import android.media.MediaFormat;
 import androidx.annotation.NonNull;
 
 import org.mp4parser.streaming.StreamingTrack;
-import org.thoughtcrime.securesms.video.videoconverter.Muxer;
+import org.tm.archive.video.videoconverter.Muxer;
 
 import java.io.IOException;
 import java.io.OutputStream;

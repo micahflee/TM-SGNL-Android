@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="52dp">
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/reactions_bottom_view_recipient_avatar"
         android:layout_width="36dp"
         android:layout_height="36dp"
@@ -29,7 +29,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="@tools:sample/full_names" />
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/reactions_bottom_view_recipient_emoji"
         android:layout_width="wrap_content"
         android:layout_height="0dp"

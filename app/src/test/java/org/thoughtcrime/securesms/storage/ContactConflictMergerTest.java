@@ -1,9 +1,9 @@
-package org.thoughtcrime.securesms.storage;
+package org.tm.archive.storage;
 
 import org.junit.Test;
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.recipients.Recipient;
-import org.thoughtcrime.securesms.storage.StorageSyncHelper.KeyGenerator;
+import org.tm.archive.recipients.Recipient;
+import org.tm.archive.storage.StorageSyncHelper.KeyGenerator;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.storage.SignalContactRecord;
@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.assertContentsEqual;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.byteArray;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.setOf;
+import static org.tm.archive.testutil.TestHelpers.assertContentsEqual;
+import static org.tm.archive.testutil.TestHelpers.byteArray;
+import static org.tm.archive.testutil.TestHelpers.setOf;
 
 public class ContactConflictMergerTest {
 

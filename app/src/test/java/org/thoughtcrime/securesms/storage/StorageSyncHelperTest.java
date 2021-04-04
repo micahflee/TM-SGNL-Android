@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.storage;
+package org.tm.archive.storage;
 
 import androidx.annotation.NonNull;
 
@@ -13,10 +13,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.recipients.Recipient;
-import org.thoughtcrime.securesms.storage.StorageSyncHelper.KeyDifferenceResult;
-import org.thoughtcrime.securesms.storage.StorageSyncHelper.MergeResult;
-import org.thoughtcrime.securesms.util.FeatureFlags;
+import org.tm.archive.recipients.Recipient;
+import org.tm.archive.storage.StorageSyncHelper.KeyDifferenceResult;
+import org.tm.archive.storage.StorageSyncHelper.MergeResult;
+import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.storage.SignalAccountRecord;
@@ -44,12 +44,12 @@ import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.thoughtcrime.securesms.testutil.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.assertByteListEquals;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.assertContentsEqual;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.byteArray;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.byteListOf;
-import static org.thoughtcrime.securesms.testutil.TestHelpers.setOf;
+import static org.tm.archive.testutil.LibSignalLibraryUtil.assumeLibSignalSupportedOnOS;
+import static org.tm.archive.testutil.TestHelpers.assertByteListEquals;
+import static org.tm.archive.testutil.TestHelpers.assertContentsEqual;
+import static org.tm.archive.testutil.TestHelpers.byteArray;
+import static org.tm.archive.testutil.TestHelpers.byteListOf;
+import static org.tm.archive.testutil.TestHelpers.setOf;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Recipient.class, FeatureFlags.class})

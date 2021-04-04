@@ -4,7 +4,7 @@
              android:layout_height="wrap_content"
              xmlns:tools="http://schemas.android.com/tools">
 
-    <org.thoughtcrime.securesms.giph.ui.AspectRatioImageView
+    <org.tm.archive.giph.ui.AspectRatioImageView
             android:id="@+id/thumbnail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

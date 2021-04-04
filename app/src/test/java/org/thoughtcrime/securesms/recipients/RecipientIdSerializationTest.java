@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.recipients;
+package org.tm.archive.recipients;
 
 import org.junit.Test;
 

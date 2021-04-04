@@ -1,8 +1,8 @@
-package org.thoughtcrime.securesms.service;
+package org.tm.archive.service;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.thoughtcrime.securesms.BaseUnitTest;
+import org.tm.archive.BaseUnitTest;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Arrays;

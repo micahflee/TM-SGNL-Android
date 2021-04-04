@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversationlist;
+package org.tm.archive.conversationlist;
 
 import android.app.Application;
 import android.database.Cursor;
@@ -14,12 +14,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-import org.thoughtcrime.securesms.conversationlist.model.ConversationReader;
-import org.thoughtcrime.securesms.database.DatabaseFactory;
-import org.thoughtcrime.securesms.database.DatabaseObserver;
-import org.thoughtcrime.securesms.database.ThreadDatabase;
-import org.thoughtcrime.securesms.dependencies.ApplicationDependencies;
-import org.thoughtcrime.securesms.util.paging.Invalidator;
+import org.tm.archive.conversationlist.model.ConversationReader;
+import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.DatabaseObserver;
+import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.util.paging.Invalidator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

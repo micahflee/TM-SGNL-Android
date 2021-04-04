@@ -1,9 +1,9 @@
-package org.thoughtcrime.securesms.util;
+package org.tm.archive.util;
 
 import junit.framework.AssertionFailedError;
 
 import org.junit.Test;
-import org.thoughtcrime.securesms.BaseUnitTest;
+import org.tm.archive.BaseUnitTest;
 import org.whispersystems.signalservice.api.util.InvalidNumberException;
 import org.whispersystems.signalservice.api.util.PhoneNumberFormatter;
 

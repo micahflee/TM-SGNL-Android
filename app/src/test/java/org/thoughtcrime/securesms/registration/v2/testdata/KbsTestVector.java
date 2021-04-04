@@ -1,9 +1,9 @@
-package org.thoughtcrime.securesms.registration.v2.testdata;
+package org.tm.archive.registration.v2.testdata;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import org.thoughtcrime.securesms.testutil.HexDeserializer;
+import org.tm.archive.testutil.HexDeserializer;
 
 public final class KbsTestVector {
 

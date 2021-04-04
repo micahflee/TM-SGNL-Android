@@ -21,7 +21,7 @@
             android:titleTextColor="@color/media_overview_toolbar_foreground"
             app:layout_scrollFlags="scroll|enterAlways" />
 
-        <org.thoughtcrime.securesms.components.ControllableTabLayout
+        <org.tm.archive.components.ControllableTabLayout
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -65,7 +65,7 @@
         app:layout_constraintTop_toTopOf="@+id/sort_order"
         app:srcCompat="@drawable/ic_arrow_down_14" />
 
-    <org.thoughtcrime.securesms.components.AnimatingToggle
+    <org.tm.archive.components.AnimatingToggle
         android:id="@+id/grid_list_toggle"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -105,9 +105,9 @@
             android:visibility="gone"
             app:srcCompat="@drawable/ic_list_20" />
 
-    </org.thoughtcrime.securesms.components.AnimatingToggle>
+    </org.tm.archive.components.AnimatingToggle>
 
-    <org.thoughtcrime.securesms.components.ControllableViewPager
+    <org.tm.archive.components.ControllableViewPager
         android:id="@+id/pager"
         android:layout_width="0dp"
         android:layout_height="0dp"

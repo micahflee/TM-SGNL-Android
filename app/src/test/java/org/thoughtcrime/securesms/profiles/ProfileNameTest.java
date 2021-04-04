@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.profiles;
+package org.tm.archive.profiles;
 
 import org.junit.Test;
 

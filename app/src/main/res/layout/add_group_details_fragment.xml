@@ -24,7 +24,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiEditText
+    <org.tm.archive.components.emoji.EmojiEditText
         android:id="@+id/name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -75,7 +75,7 @@
 
     </LinearLayout>
 
-    <org.thoughtcrime.securesms.util.views.LearnMoreTextView
+    <org.tm.archive.util.views.LearnMoreTextView
         android:id="@+id/gv2_warning"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -119,7 +119,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/member_list_header" />
 
-    <org.thoughtcrime.securesms.groups.ui.GroupMemberListView
+    <org.tm.archive.groups.ui.GroupMemberListView
         android:id="@+id/member_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"

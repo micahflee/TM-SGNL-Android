@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/chatWallpaperFragment"
-        android:name="org.thoughtcrime.securesms.wallpaper.ChatWallpaperFragment"
+        android:name="org.tm.archive.wallpaper.ChatWallpaperFragment"
         android:label="chat_wallpaper_fragment"
         tools:layout="@layout/chat_wallpaper_fragment">
 
@@ -21,7 +21,7 @@
     </fragment>
     <fragment
         android:id="@+id/chatWallpaperSelectionFragment"
-        android:name="org.thoughtcrime.securesms.wallpaper.ChatWallpaperSelectionFragment"
+        android:name="org.tm.archive.wallpaper.ChatWallpaperSelectionFragment"
         android:label="chat_wallpaper_selection_fragment"
         tools:layout="@layout/chat_wallpaper_selection_fragment">
     </fragment>

@@ -1,12 +1,12 @@
-package org.thoughtcrime.securesms.jobmanager;
+package org.tm.archive.jobmanager;
 
 import androidx.annotation.NonNull;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.jobmanager.persistence.JobSpec;
-import org.thoughtcrime.securesms.jobmanager.persistence.JobStorage;
+import org.tm.archive.jobmanager.persistence.JobSpec;
+import org.tm.archive.jobmanager.persistence.JobStorage;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:gravity="center_vertical|end"
     android:orientation="horizontal"
-    tools:parentTag="org.thoughtcrime.securesms.components.ConversationItemFooter">
+    tools:parentTag="org.tm.archive.components.ConversationItemFooter">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/footer_audio_duration"
@@ -46,7 +46,7 @@
         android:textColor="@color/signal_text_secondary"
         tools:text="30m" />
 
-    <org.thoughtcrime.securesms.components.ExpirationTimerView
+    <org.tm.archive.components.ExpirationTimerView
         android:id="@+id/footer_expiration_timer"
         android:layout_width="12dp"
         android:layout_height="12dp"
@@ -83,7 +83,7 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
-    <org.thoughtcrime.securesms.components.DeliveryStatusView
+    <org.tm.archive.components.DeliveryStatusView
         android:id="@+id/footer_delivery_status"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups.v2.processing;
+package org.tm.archive.groups.v2.processing;
 
 import org.junit.Test;
 

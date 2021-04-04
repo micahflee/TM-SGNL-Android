@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.logsubmit.util;
+package org.tm.archive.logsubmit.util;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,8 +22,8 @@ public final class ScrubberTest {
     { "A UK number +447700900000",
       "A UK number +**********00" },
 
-    { "An avatar filename: file:///data/user/0/org.thoughtcrime.securesms/files/avatars/%2B447700900099",
-      "An avatar filename: file:///data/user/0/org.thoughtcrime.securesms/files/avatars/%2B**********99" },
+    { "An avatar filename: file:///data/user/0/org.tm.archive/files/avatars/%2B447700900099",
+      "An avatar filename: file:///data/user/0/org.tm.archive/files/avatars/%2B**********99" },
 
     { "Multiple numbers +447700900001 +447700900002",
       "Multiple numbers +**********01 +**********02" },
@@ -52,8 +52,8 @@ public final class ScrubberTest {
     { "A email with multiple parts before the @ d.c+b.a@mulitpart.domain.com and a multipart domain",
       "A email with multiple parts before the @ d...@... and a multipart domain" },
 
-    { "An avatar email filename: file:///data/user/0/org.thoughtcrime.securesms/files/avatars/abc@signal.org",
-      "An avatar email filename: file:///data/user/0/org.thoughtcrime.securesms/files/avatars/a...@..." },
+    { "An avatar email filename: file:///data/user/0/org.tm.archive/files/avatars/abc@signal.org",
+      "An avatar email filename: file:///data/user/0/org.tm.archive/files/avatars/a...@..." },
 
     { "An email and a number abc@def.com +155556789012345",
       "An email and a number a...@... +*************45" },

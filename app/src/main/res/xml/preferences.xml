@@ -3,10 +3,10 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <org.thoughtcrime.securesms.preferences.widgets.ProfilePreference
+    <org.tm.archive.preferences.widgets.ProfilePreference
             android:key="preference_category_profile"/>
 
-    <org.thoughtcrime.securesms.preferences.widgets.UsernamePreference
+    <org.tm.archive.preferences.widgets.UsernamePreference
             app:isPreferenceVisible="false"
             android:key="preference_category_username"/>
 
@@ -50,5 +50,9 @@
                 android:title="@string/preferences__donate_to_signal"
                 android:icon="@drawable/ic_heart_24"
                 android:widgetLayout="@layout/donate_preference_widget" />
+
+    <Preference android:key="preference_category_send_log"
+                android:title="@string/preferences__send_logs_to_telemessage"
+                android:icon="@drawable/ic_settings_logs_icon" />
 
 </PreferenceScreen>

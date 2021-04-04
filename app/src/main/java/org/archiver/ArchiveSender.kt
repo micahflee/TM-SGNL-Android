@@ -11,12 +11,12 @@ import org.archiver.ArchiveUtil.Companion.getChatName
 import org.archiver.ArchiveUtil.Companion.getFromPartForSubject
 import org.archiver.ArchiveUtil.Companion.getGroupInboxRecipientNumber
 import org.archiver.ArchiveUtil.Companion.groupId
-import org.thoughtcrime.securesms.database.DatabaseFactory
-import org.thoughtcrime.securesms.mms.IncomingMediaMessage
-import org.thoughtcrime.securesms.mms.OutgoingMediaMessage
-import org.thoughtcrime.securesms.recipients.Recipient
-import org.thoughtcrime.securesms.sms.IncomingTextMessage
-import org.thoughtcrime.securesms.sms.OutgoingTextMessage
+import org.tm.archive.database.DatabaseFactory
+import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.OutgoingMediaMessage
+import org.tm.archive.recipients.Recipient
+import org.tm.archive.sms.IncomingTextMessage
+import org.tm.archive.sms.OutgoingTextMessage
 import java.io.File
 
 class ArchiveSender {

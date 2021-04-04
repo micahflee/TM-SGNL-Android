@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/core_black">
 
-    <org.thoughtcrime.securesms.components.ControllableViewPager
+    <org.tm.archive.components.ControllableViewPager
         android:id="@+id/mediasend_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

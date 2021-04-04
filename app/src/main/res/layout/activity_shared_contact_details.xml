@@ -32,7 +32,7 @@
                     app:layout_collapseMode="parallax"
                     app:layout_collapseParallaxMultiplier="0.7"/>
 
-                <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+                <org.tm.archive.components.emoji.EmojiTextView
                     android:id="@+id/contact_details_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

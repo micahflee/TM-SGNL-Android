@@ -15,7 +15,7 @@
         app:navigationIcon="@drawable/ic_arrow_left_24"
         app:title="@string/GroupLinkShareQrDialogFragment__qr_code" />
 
-    <org.thoughtcrime.securesms.components.qr.QrView
+    <org.tm.archive.components.qr.QrView
         android:id="@+id/group_link_share_qr_image"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.testutil;
+package org.tm.archive.testutil;
 
 import org.signal.core.util.logging.Log;
 

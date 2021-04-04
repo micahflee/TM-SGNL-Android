@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
-          package="org.thoughtcrime.securesms">
+          package="org.tm.archive">
 
     <uses-sdk tools:overrideLibrary="androidx.camera.core,androidx.camera.camera2,androidx.camera.lifecycle,androidx.camera.view" />
 
@@ -20,7 +20,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
 
     <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
-    <uses-permission android:name="org.thoughtcrime.securesms.ACCESS_SECRETS"/>
+    <uses-permission android:name="org.tm.archive.ACCESS_SECRETS"/>
     <uses-permission android:name="android.permission.READ_PROFILE"/>
     <uses-permission android:name="android.permission.WRITE_PROFILE"/>
     <uses-permission android:name="android.permission.BROADCAST_WAP_PUSH"
@@ -276,7 +276,7 @@
               android:parentActivityName=".MainActivity">
         <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.thoughtcrime.securesms.MainActivity" />
+                android:value="org.tm.archive.MainActivity" />
     </activity>
 
     <activity android:name=".conversation.BubbleConversationActivity"
@@ -452,11 +452,11 @@
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
-            <data android:mimeType="vnd.android.cursor.item/vnd.org.thoughtcrime.securesms.contact" />
+            <data android:mimeType="vnd.android.cursor.item/vnd.org.tm.archive.contact" />
         </intent-filter>
     </activity>
 
-    <activity android:name="org.thoughtcrime.securesms.webrtc.VoiceCallShare"
+    <activity android:name="org.tm.archive.webrtc.VoiceCallShare"
               android:excludeFromRecents="true"
               android:theme="@style/NoAnimation.Theme.BlackScreen"
               android:launchMode="singleTask"
@@ -465,7 +465,7 @@
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
-            <data android:mimeType="vnd.android.cursor.item/vnd.org.thoughtcrime.securesms.call" />
+            <data android:mimeType="vnd.android.cursor.item/vnd.org.tm.archive.call" />
         </intent-filter>
 
     </activity>
@@ -651,7 +651,7 @@
     <receiver android:name=".service.SmsDeliveryListener"
               android:exported="true">
         <intent-filter>
-            <action android:name="org.thoughtcrime.securesms.services.MESSAGE_SENT"/>
+            <action android:name="org.tm.archive.services.MESSAGE_SENT"/>
         </intent-filter>
     </receiver>
 
@@ -673,7 +673,7 @@
               android:enabled="true"
               android:exported="false">
         <intent-filter>
-            <action android:name="org.thoughtcrime.securesms.notifications.CLEAR"/>
+            <action android:name="org.tm.archive.notifications.CLEAR"/>
         </intent-filter>
     </receiver>
 
@@ -681,21 +681,21 @@
               android:enabled="true"
               android:exported="false">
         <intent-filter>
-            <action android:name="org.thoughtcrime.securesms.notifications.WEAR_REPLY"/>
+            <action android:name="org.tm.archive.notifications.WEAR_REPLY"/>
         </intent-filter>
     </receiver>
 
     <receiver android:name=".notifications.AndroidAutoHeardReceiver"
               android:exported="false">
         <intent-filter>
-          <action android:name="org.thoughtcrime.securesms.notifications.ANDROID_AUTO_HEARD"/>
+          <action android:name="org.tm.archive.notifications.ANDROID_AUTO_HEARD"/>
         </intent-filter>
     </receiver>
 
     <receiver android:name=".notifications.AndroidAutoReplyReceiver"
               android:exported="false">
         <intent-filter>
-          <action android:name="org.thoughtcrime.securesms.notifications.ANDROID_AUTO_REPLY"/>
+          <action android:name="org.tm.archive.notifications.ANDROID_AUTO_REPLY"/>
         </intent-filter>
     </receiver>
 
@@ -752,7 +752,7 @@
     <receiver android:name=".service.BootReceiver">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            <action android:name="org.thoughtcrime.securesms.RESTART"/>
+            <action android:name="org.tm.archive.RESTART"/>
         </intent-filter>
     </receiver>
 
@@ -777,7 +777,7 @@
     <receiver android:name=".messageprocessingalarm.MessageProcessReceiver">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
-            <action android:name="org.thoughtcrime.securesms.action.PROCESS_MESSAGES" />
+            <action android:name="org.tm.archive.action.PROCESS_MESSAGES" />
         </intent-filter>
     </receiver>
 
@@ -803,7 +803,7 @@
 
     <receiver android:name=".notifications.DeleteNotificationReceiver">
         <intent-filter>
-            <action android:name="org.thoughtcrime.securesms.DELETE_NOTIFICATION"/>
+            <action android:name="org.tm.archive.DELETE_NOTIFICATION"/>
         </intent-filter>
     </receiver>
 

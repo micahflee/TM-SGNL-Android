@@ -42,7 +42,7 @@
           app:layout_constraintTop_toTopOf="parent"
           app:srcCompat="@drawable/ic_megaphone_link_previews" />
 
-      <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+      <org.tm.archive.components.emoji.EmojiTextView
           android:id="@+id/linkpreview_megaphone_title"
           style="@style/Signal.Text.Body"
           android:layout_width="0dp"
@@ -55,7 +55,7 @@
           app:layout_constraintStart_toEndOf="@id/linkpreview_megaphone_image"
           app:layout_constraintTop_toTopOf="@id/linkpreview_megaphone_image" />
 
-      <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+      <org.tm.archive.components.emoji.EmojiTextView
           android:id="@+id/linkpreview_megaphone_body"
           style="@style/Signal.Text.Preview"
           android:layout_width="0dp"

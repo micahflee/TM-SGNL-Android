@@ -1,17 +1,17 @@
-package org.thoughtcrime.securesms.jobmanager.migrations;
+package org.tm.archive.jobmanager.migrations;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.thoughtcrime.securesms.jobmanager.Data;
-import org.thoughtcrime.securesms.jobmanager.Job;
-import org.thoughtcrime.securesms.jobmanager.JobMigration.JobData;
-import org.thoughtcrime.securesms.jobs.FailingJob;
-import org.thoughtcrime.securesms.jobs.RequestGroupInfoJob;
-import org.thoughtcrime.securesms.jobs.SendDeliveryReceiptJob;
-import org.thoughtcrime.securesms.recipients.Recipient;
+import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.Job;
+import org.tm.archive.jobmanager.JobMigration.JobData;
+import org.tm.archive.jobs.FailingJob;
+import org.tm.archive.jobs.RequestGroupInfoJob;
+import org.tm.archive.jobs.SendDeliveryReceiptJob;
+import org.tm.archive.recipients.Recipient;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;

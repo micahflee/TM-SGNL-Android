@@ -9,7 +9,7 @@
     android:layout_marginBottom="2dp"
     android:animateLayoutChanges="true">
 
-    <org.thoughtcrime.securesms.components.SquareImageView
+    <org.tm.archive.components.SquareImageView
         android:id="@+id/mediapicker_image_item_thumbnail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

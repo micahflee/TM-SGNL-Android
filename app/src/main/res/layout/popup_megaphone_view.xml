@@ -36,7 +36,7 @@
           app:layout_constraintTop_toTopOf="parent"
           tools:src="@tools:sample/avatars" />
 
-      <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+      <org.tm.archive.components.emoji.EmojiTextView
           android:id="@+id/popup_megaphone_title"
           style="@style/Signal.Text.Body"
           android:layout_width="0dp"
@@ -48,7 +48,7 @@
           app:layout_constraintTop_toTopOf="@id/popup_megaphone_image"
           tools:text="Avengers HQ Destroyed!" />
 
-      <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+      <org.tm.archive.components.emoji.EmojiTextView
           android:id="@+id/popup_megaphone_body"
           style="@style/Signal.Text.Preview"
           android:layout_width="0dp"

@@ -94,7 +94,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/delete_account_fragment_country_spinner_frame">
 
-            <org.thoughtcrime.securesms.components.LabeledEditText
+            <org.tm.archive.components.LabeledEditText
                 android:id="@+id/delete_account_fragment_country_code"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -103,7 +103,7 @@
                 app:labeledEditText_background="@color/white"
                 app:labeledEditText_textLayout="@layout/delete_account_country_code_text" />
 
-            <org.thoughtcrime.securesms.components.LabeledEditText
+            <org.tm.archive.components.LabeledEditText
                 android:id="@+id/delete_account_fragment_number"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

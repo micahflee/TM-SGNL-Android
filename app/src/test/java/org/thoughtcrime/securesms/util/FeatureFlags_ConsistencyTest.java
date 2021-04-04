@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.util;
+package org.tm.archive.util;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;

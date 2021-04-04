@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.thoughtcrime.securesms.util;
+package org.tm.archive.util;
 
 import junit.framework.AssertionFailedError;
 
 import org.junit.Test;
-import org.thoughtcrime.securesms.BaseUnitTest;
+import org.tm.archive.BaseUnitTest;
 
 import java.net.URISyntaxException;
 

@@ -11,7 +11,7 @@
         android:padding="6dp"
         android:background="@color/signal_background_primary">
 
-        <org.thoughtcrime.securesms.components.OutlinedThumbnailView
+        <org.tm.archive.components.OutlinedThumbnailView
             android:id="@+id/linkpreview_thumbnail"
             android:layout_width="72dp"
             android:layout_height="0dp"
@@ -25,7 +25,7 @@
             tools:src="@drawable/ic_contact_picture"
             tools:visibility="visible" />
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/linkpreview_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="J. Jonah Jameson on Twitter" />
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/linkpreview_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -58,7 +58,7 @@
             app:layout_constraintTop_toBottomOf="@id/linkpreview_title"
             tools:text="Wall crawler strikes again!" />
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/linkpreview_site"
             style="@style/Signal.Text.Caption"
             android:layout_width="wrap_content"

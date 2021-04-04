@@ -1,13 +1,13 @@
-package org.thoughtcrime.securesms.service.webrtc.collections;
+package org.tm.archive.service.webrtc.collections;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.Test;
-import org.thoughtcrime.securesms.components.webrtc.BroadcastVideoSink;
-import org.thoughtcrime.securesms.events.CallParticipant;
-import org.thoughtcrime.securesms.events.CallParticipantId;
-import org.thoughtcrime.securesms.recipients.Recipient;
-import org.thoughtcrime.securesms.recipients.RecipientId;
+import org.tm.archive.components.webrtc.BroadcastVideoSink;
+import org.tm.archive.events.CallParticipant;
+import org.tm.archive.events.CallParticipantId;
+import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
 
 import java.util.Arrays;
 import java.util.Collections;

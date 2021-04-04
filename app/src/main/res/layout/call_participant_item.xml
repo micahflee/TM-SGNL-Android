@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.components.webrtc.CallParticipantView xmlns:android="http://schemas.android.com/apk/res/android"
+<org.tm.archive.components.webrtc.CallParticipantView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
@@ -18,7 +18,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:src="@tools:sample/backgrounds/scenic" />
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/call_participant_item_avatar"
         android:layout_width="112dp"
         android:layout_height="112dp"
@@ -39,7 +39,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@tools:sample/avatars" />
 
-    <org.thoughtcrime.securesms.components.webrtc.TextureViewRenderer
+    <org.tm.archive.components.webrtc.TextureViewRenderer
         android:id="@+id/call_participant_renderer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -81,7 +81,7 @@
             tools:drawableTint="@color/core_white"
             tools:srcCompat="@drawable/ic_block_tinted_24" />
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/call_participant_info_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -103,4 +103,4 @@
 
     </LinearLayout>
 
-</org.thoughtcrime.securesms.components.webrtc.CallParticipantView>
+</org.tm.archive.components.webrtc.CallParticipantView>

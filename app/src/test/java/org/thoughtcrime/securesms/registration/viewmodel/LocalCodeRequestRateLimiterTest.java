@@ -1,7 +1,7 @@
-package org.thoughtcrime.securesms.registration.viewmodel;
+package org.tm.archive.registration.viewmodel;
 
 import org.junit.Test;
-import org.thoughtcrime.securesms.registration.service.RegistrationCodeRequest;
+import org.tm.archive.registration.service.RegistrationCodeRequest;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

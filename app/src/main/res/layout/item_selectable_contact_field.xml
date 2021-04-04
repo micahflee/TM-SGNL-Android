@@ -30,7 +30,7 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+        <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/contact_field_value"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

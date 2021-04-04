@@ -35,7 +35,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Member" />
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/card_avatar"
         android:layout_width="52dp"
         android:layout_height="52dp"

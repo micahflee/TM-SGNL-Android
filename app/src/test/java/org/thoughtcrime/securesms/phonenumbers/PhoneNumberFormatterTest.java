@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.phonenumbers;
+package org.tm.archive.phonenumbers;
 
 
 import org.junit.Before;

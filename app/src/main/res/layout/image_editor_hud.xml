@@ -116,7 +116,7 @@
 
         </LinearLayout>
 
-        <org.thoughtcrime.securesms.scribbles.widget.VerticalSlideColorPicker
+        <org.tm.archive.scribbles.widget.VerticalSlideColorPicker
             android:id="@+id/scribble_color_picker"
             android:layout_width="32dp"
             android:layout_height="250dp"

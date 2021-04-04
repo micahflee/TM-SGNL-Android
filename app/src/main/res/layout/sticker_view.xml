@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:parentTag="org.thoughtcrime.securesms.components.BorderlessImageView">
+    tools:parentTag="org.tm.archive.components.BorderlessImageView">
 
     <View
         android:id="@+id/sticker_missing_shade"
@@ -13,7 +13,7 @@
         android:visibility="gone"
         tools:visibility="visible"/>
 
-    <org.thoughtcrime.securesms.components.ThumbnailView
+    <org.tm.archive.components.ThumbnailView
         android:id="@+id/sticker_thumbnail"
         android:layout_width="@dimen/media_bubble_sticker_dimens"
         android:layout_height="@dimen/media_bubble_sticker_dimens"

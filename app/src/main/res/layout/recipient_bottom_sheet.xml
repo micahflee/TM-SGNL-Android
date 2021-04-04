@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:theme="@style/Theme.Signal.RoundedBottomSheet.Light">
 
-    <org.thoughtcrime.securesms.components.AvatarImageView
+    <org.tm.archive.components.AvatarImageView
         android:id="@+id/rbs_recipient_avatar"
         android:layout_width="96dp"
         android:layout_height="96dp"
@@ -28,7 +28,7 @@
         app:layout_constraintTop_toTopOf="@+id/rbs_recipient_avatar"
         tools:visibility="visible" />
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/rbs_full_name"
         style="@style/TextAppearance.Signal.Body1.Bold"
         android:layout_width="wrap_content"
@@ -41,7 +41,7 @@
         app:layout_constraintTop_toBottomOf="@id/rbs_recipient_avatar"
         tools:text="Gwen Stacy" />
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/rbs_about"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -54,7 +54,7 @@
         app:emoji_forceCustom="true"
         tools:text="🕷🕷🕷Hangin' on the web🕷🕷"/>
 
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/rbs_username_number"
         style="@style/Signal.Text.Body"
         android:layout_width="wrap_content"

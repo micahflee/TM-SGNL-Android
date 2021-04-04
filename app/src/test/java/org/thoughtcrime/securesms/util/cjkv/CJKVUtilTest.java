@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.util.cjkv;
+package org.tm.archive.util.cjkv;
 
 import android.app.Application;
 

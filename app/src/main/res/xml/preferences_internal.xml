@@ -26,7 +26,7 @@
         android:key="internal_display"
         android:title="@string/preferences__internal_display">
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.tm.archive.components.SwitchPreferenceCompat
             android:key="internal.recipient_details"
             android:defaultValue="false"
             android:summary="@string/preferences__internal_user_details_description"
@@ -49,25 +49,25 @@
         android:key="internal_groupsV2"
         android:title="@string/preferences__internal_preferences_groups_v2">
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.tm.archive.components.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="internal.gv2.do_not_create_gv2"
             android:summary="@string/preferences__internal_do_not_create_gv2_description"
             android:title="@string/preferences__internal_do_not_create_gv2" />
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.tm.archive.components.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="internal.gv2.force_invites"
             android:summary="@string/preferences__internal_force_gv2_invites_description"
             android:title="@string/preferences__internal_force_gv2_invites" />
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.tm.archive.components.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="internal.gv2.ignore_server_changes"
             android:summary="@string/preferences__internal_ignore_gv2_server_changes_description"
             android:title="@string/preferences__internal_ignore_gv2_server_changes" />
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.tm.archive.components.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="internal.gv2.ignore_p2p_changes"
             android:summary="@string/preferences__internal_ignore_gv2_p2p_changes_description"
@@ -79,13 +79,13 @@
         android:key="internal_groupsV1Migration"
         android:title="@string/preferences__internal_preferences_groups_v1_migration">
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.tm.archive.components.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="internal.gv2.disable_automigrate_initiation"
             android:summary="@string/preferences__internal_do_not_initiate_automigrate_description"
             android:title="@string/preferences__internal_do_not_initiate_automigrate" />
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.tm.archive.components.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="internal.gv2.disable_automigrate_notification"
             android:summary="@string/preferences__internal_do_not_notify_automigrate_description"
@@ -96,7 +96,7 @@
     <PreferenceCategory
         android:title="@string/preferences__internal_network">
 
-        <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
+        <org.tm.archive.components.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="internal.force_censorship"
             android:summary="@string/preferences__internal_force_censorship_description"

@@ -16,7 +16,7 @@
         app:layout_constraintTop_toTopOf="@id/sticker_management_empty_text"
         app:layout_constraintBottom_toBottomOf="@id/sticker_management_empty_text"/>
     
-    <org.thoughtcrime.securesms.components.emoji.EmojiTextView
+    <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/sticker_management_empty_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

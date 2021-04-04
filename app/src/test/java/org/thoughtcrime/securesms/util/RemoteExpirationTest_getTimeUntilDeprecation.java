@@ -1,11 +1,11 @@
-package org.thoughtcrime.securesms.util;
+package org.tm.archive.util;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.testutil.EmptyLogger;
+import org.tm.archive.testutil.EmptyLogger;
 
 import java.util.Arrays;
 import java.util.Collection;
