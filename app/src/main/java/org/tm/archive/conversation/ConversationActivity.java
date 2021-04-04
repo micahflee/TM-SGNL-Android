@@ -2942,9 +2942,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
       message = new OutgoingTextMessage(recipient.get(), messageBody, expiresIn, subscriptionId);
     }
 
-    //AA - Archive Message Outbox:
-    ArchiveSender.Companion.archiveMessageOutbox(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), messageBody , System.currentTimeMillis());
-
     Permissions.with(this)
                .request(Manifest.permission.SEND_SMS)
                .ifNecessary(forceSms || !isSecureText)

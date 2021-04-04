@@ -203,4 +203,9 @@ class ArchiveUtil {
         }
 
     }
+
+    enum class InboxArchiveTypes{
+        MEDIA,
+        CONTACT
+    }
 }

@@ -67,6 +67,7 @@ import org.tm.archive.jobs.ResumableUploadSpecJob;
 import org.tm.archive.jobs.SmsSendJob;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mms.MmsException;
+import org.tm.archive.mms.OutgoingGroupUpdateMessage;
 import org.tm.archive.mms.OutgoingMediaMessage;
 import org.tm.archive.mms.OutgoingSecureMediaMessage;
 import org.tm.archive.recipients.Recipient;
@@ -172,7 +173,9 @@ public class MessageSender {
         if (message.getOutgoingQuote() != null) {
           ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, null);
 
-        } else {
+        }if(message instanceof OutgoingGroupUpdateMessage){
+         //TODO - Group updates!!
+        }else {
           ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getBody(), messageId);
         }
       }
