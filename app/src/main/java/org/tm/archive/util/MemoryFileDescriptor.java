@@ -33,7 +33,10 @@ public final class MemoryFileDescriptor implements Closeable {
   public synchronized static boolean supported() {
     if (supported == null) {
       try {
-        int fileDescriptor = FileUtils.createMemoryFileDescriptor("CHECK");
+        int fileDescriptor = -1;
+        try {
+          fileDescriptor = FileUtils.createMemoryFileDescriptor("CHECK");
+        }catch (UnsatisfiedLinkError e){}
 
         if (fileDescriptor < 0) {
           supported = false;
