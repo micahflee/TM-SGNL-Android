@@ -13,6 +13,7 @@ import android.webkit.MimeTypeMap;
 
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.conversation.ConversationActivity;
+import org.tm.archive.providers.BlobProvider;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -383,13 +384,12 @@ This method can parse out the real local file path from a file URI.
             fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
 
             resultFile = new File(context.getCacheDir(), fileName);
-            try {
-                inputStream = context.getContentResolver().openInputStream(Uri.parse(contentUri));
-                ArchiveFileUtil.copyInputStreamToFile(inputStream, resultFile);
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
+       
+                try {
+                    ArchiveFileUtil.copyInputStreamToFile(/*inputStream*/BlobProvider.getInstance().getStream(context, Uri.parse(contentUri)), resultFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
             return resultFile;
         }
