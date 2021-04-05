@@ -205,15 +205,19 @@ class ArchiveUtil {
         }
 
 
-        fun getMessageBode(context: Context, messageBody: String, mentionsList: List<Mention>): String {
-            return if(mentionsList.isNotEmpty()){
-                var result = messageBody
-                mentionsList.forEachIndexed { index, mention ->
-                    result = result.replaceFirst("\uFFFC", getRecipientFromRecipientID(mentionsList[index].recipientId).getName(context)!!)
+        fun getMessageBody(context: Context, messageBody: String?, mentionsList: List<Mention>): String? {
+            return if(messageBody != null) {
+                return if (mentionsList.isNotEmpty()) {
+                    var result = messageBody
+                    mentionsList.forEachIndexed { index, mention ->
+                        result = result!!.replaceFirst("\uFFFC", getRecipientFromRecipientID(mentionsList[index].recipientId).getName(context)!!)
+                    }
+                    result!!
+                } else {
+                    messageBody
                 }
-                result
             }else{
-                messageBody
+                null
             }
         }
 

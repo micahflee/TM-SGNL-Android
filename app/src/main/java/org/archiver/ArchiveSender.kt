@@ -10,7 +10,7 @@ import org.archiver.ArchiveUtil.Companion.getChatMode
 import org.archiver.ArchiveUtil.Companion.getChatName
 import org.archiver.ArchiveUtil.Companion.getFromPartForSubject
 import org.archiver.ArchiveUtil.Companion.getGroupInboxRecipientNumber
-import org.archiver.ArchiveUtil.Companion.getMessageBode
+import org.archiver.ArchiveUtil.Companion.getMessageBody
 import org.archiver.ArchiveUtil.Companion.groupId
 import org.tm.archive.database.DatabaseFactory
 import org.tm.archive.mms.IncomingMediaMessage
@@ -114,7 +114,7 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox,  recipientList, isGroup)
-            val messageBody = getMessageBode(context, message.body, message.mentions)
+            val messageBody = getMessageBody(context, message.body, message.mentions)
             sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
         }
 

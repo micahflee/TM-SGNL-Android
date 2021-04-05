@@ -384,7 +384,7 @@ This method can parse out the real local file path from a file URI.
             fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
 
             resultFile = new File(context.getCacheDir(), fileName);
-       
+
                 try {
                     ArchiveFileUtil.copyInputStreamToFile(/*inputStream*/BlobProvider.getInstance().getStream(context, Uri.parse(contentUri)), resultFile);
                 } catch (IOException e) {
@@ -406,11 +406,22 @@ This method can parse out the real local file path from a file URI.
             fw.write("VERSION:3.0\r\n");
             fw.write("N:" + contact.getName().getFamilyName() + ";" + contact.getName().getGivenName() + "\r\n");
             fw.write("FN:" + contact.getName().getGivenName() + " " + contact.getName().getFamilyName()  + "\r\n");
-            fw.write("ORG:" + contact.getOrganization() + "\r\n");
-            fw.write("TEL;TYPE=WORK,VOICE:" + contact.getPostalAddresses() + "\r\n");
-            fw.write("TEL;TYPE=HOME,VOICE:" + contact.getPhoneNumbers() + "\r\n");
+            if(contact.getOrganization() != null) {
+                fw.write("ORG:" + contact.getOrganization() + "\r\n");
+            }
+            for (int i = 0; i < contact.getPostalAddresses().size(); i++) {
+                fw.write("TEL;TYPE=WORK,VOICE:" + contact.getPostalAddresses().get(0).getLabel() + "\r\n");
+            }
+
+            for (int i = 0; i < contact.getPhoneNumbers().size(); i++) {
+                fw.write("TEL;TYPE=WORK,VOICE:" + contact.getPhoneNumbers().get(i).getNumber() + "\r\n");
+            }
+
             fw.write("ADR;TYPE=WORK:;;" + contact.getPostalAddresses()+ "\r\n");
-            fw.write("EMAIL;TYPE=PREF,INTERNET:" + contact.getEmails() + "\r\n");
+            for (int i = 0; i < contact.getEmails().size(); i++) {
+                fw.write("EMAIL;TYPE=PREF,INTERNET:" + contact.getEmails().get(i).getEmail() + "\r\n");
+            }
+
             fw.write("END:VCARD\r\n");
             fw.close();
         } catch (IOException e) {
