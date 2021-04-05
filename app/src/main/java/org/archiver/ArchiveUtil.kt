@@ -9,8 +9,10 @@ import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_TO_TEXT
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
 import org.archiver.ArchiveConstants.Companion.isTestMode
 import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
-import org.signal.glide.Log
+import org.tm.archive.database.model.Mention
+import org.tm.archive.mms.IncomingMediaMessage
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.IncomingTextMessage
 import java.util.*
 
@@ -18,7 +20,7 @@ class ArchiveUtil {
 
     companion object{
 
-        fun createToRecipientList(context: Context, isInboxArchiveMessage: Boolean, aRecipient: Recipient,  isGroup: Boolean, from: String , recipientList: MutableList<Recipient>? = null): Array<String> {
+        fun createToRecipientList(context: Context, isInboxArchiveMessage: Boolean, aRecipient: Recipient, isGroup: Boolean, from: String, recipientList: MutableList<Recipient>? = null): Array<String> {
             var recipientListFromRecipient: List<String> = if (isGroup) {
                 recipientList?.filter { it.e164.isPresent }?.map { it.e164.get()}
                         ?: aRecipient.participants.filter { it.e164.isPresent }.map { it.e164.get()}
@@ -46,13 +48,13 @@ class ArchiveUtil {
 
 
 
-        fun createSubjectForArchiving(context: Context, isInboxArchiveMessage: Boolean, isGroup: Boolean, recipient: Recipient, inboxRecipient : String = "",forceSms : Boolean, groupTitle : String = "") : String{
+        fun createSubjectForArchiving(context: Context, isInboxArchiveMessage: Boolean, isGroup: Boolean, recipient: Recipient, inboxRecipient: String = "", forceSms: Boolean, groupTitle: String = "") : String{
 
             val archiveType: String = getArchiveType(isInboxArchiveMessage, isGroup, forceSms)
             val to = getToPartForSubject(context, isInboxArchiveMessage, recipient, isGroup, groupTitle)
             val from = getFromPartForSubject(context, isInboxArchiveMessage, recipient, inboxRecipient)
 
-            return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${from.replace("+","")} $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+","")}"
+            return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${from.replace("+", "")} $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+", "")}"
         }
 
         private fun getToPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, isGroup: Boolean, groupTitle: String): String {
@@ -74,7 +76,7 @@ class ArchiveUtil {
         }
 
 
-        fun getFromPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, inboxRecipient : String = ""): String {
+        fun getFromPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, inboxRecipient: String = ""): String {
             return when {
                 isInboxArchiveMessage -> {
                     when {
@@ -125,7 +127,7 @@ class ArchiveUtil {
             }
         }
 
-        fun getChatName(context: Context, recipient: Recipient, isGroup : Boolean, groupTitle: String = ""): String {
+        fun getChatName(context: Context, recipient: Recipient, isGroup: Boolean, groupTitle: String = ""): String {
             return if(isGroup){
                 if(groupTitle.isNotEmpty()){
                     groupTitle
@@ -154,7 +156,7 @@ class ArchiveUtil {
             }
         }
 
-        fun fromContactName(context: Context,recipient: Recipient, isInboxArchiveMessage: Boolean ): String {
+        fun fromContactName(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean): String {
             return if(isInboxArchiveMessage){
                 recipient.getDisplayName(context)
             }else{
@@ -202,10 +204,28 @@ class ArchiveUtil {
             return SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX + attachmentId + "_" + messageId
         }
 
+
+        fun getMessageBode(context: Context, messageBody: String, mentionsList: List<Mention>): String {
+            return if(mentionsList.isNotEmpty()){
+                var result = messageBody
+                mentionsList.forEachIndexed { index, mention ->
+                    result = result.replaceFirst("\uFFFC", getRecipientFromRecipientID(mentionsList[index].recipientId).getName(context)!!)
+                }
+                result
+            }else{
+                messageBody
+            }
+        }
+
+        fun getRecipientFromRecipientID(recipientId : RecipientId) : Recipient{
+            return Recipient.resolved(recipientId)
+        }
+
     }
 
     enum class InboxArchiveTypes{
         MEDIA,
-        CONTACT
+        CONTACT,
+        MENTIONS;
     }
 }

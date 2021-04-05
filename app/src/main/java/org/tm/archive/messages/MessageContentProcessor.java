@@ -1075,15 +1075,16 @@ public final class MessageContentProcessor {
       Recipient recipient = Recipient.resolved(RecipientId.fromHighTrust(content.getSender()));
       //archiveMediaInboxMessage(recipient);
 
+
       if(mediaMessage.getSharedContacts() != null && mediaMessage.getSharedContacts().size() > 0){
         archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.CONTACT, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(),new AttachmentId(0,0), null);
-      }
-
-      if(attachments != null && attachments.size() > 0){
+      }else if(attachments != null && attachments.size() > 0){
         for (DatabaseAttachment attachment : attachments) {
           archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MEDIA, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), attachment.getAttachmentId(), attachment);
           ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), attachment.getAttachmentId(), false));
         }
+      }else if(mediaMessage.getMentions().size() > 0){
+        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MENTIONS, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), new AttachmentId(0,0), null);
       }
 
 
@@ -1109,6 +1110,8 @@ public final class MessageContentProcessor {
           ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient,recipientList,  mediaMessage, messageId, vcfFile);
           ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
       }
+    }else if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.MENTIONS) {
+      ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, attachmentId.getUniqueId(), null);
     }
   }
 
