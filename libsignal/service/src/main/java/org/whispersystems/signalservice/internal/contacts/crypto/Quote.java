@@ -1,5 +1,6 @@
 package org.whispersystems.signalservice.internal.contacts.crypto;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -102,7 +103,7 @@ public class Quote {
   }
 
   private void read(ByteBuffer quoteBuf, int pos, byte[] buf) {
-    quoteBuf.position(pos);
+    ((Buffer)quoteBuf).position(pos);
     quoteBuf.get(buf);
   }
 
