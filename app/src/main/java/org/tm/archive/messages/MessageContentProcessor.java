@@ -1111,7 +1111,7 @@ public final class MessageContentProcessor {
           ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
       }
     }else if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.MENTIONS) {
-      ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, attachmentId.getUniqueId(), null);
+      ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, null);
     }
   }
 
@@ -1325,7 +1325,9 @@ public final class MessageContentProcessor {
     if(groupId.isPresent()) {
       groupTitle = DatabaseFactory.getGroupDatabase(context).getGroup(groupId.get()).get().getTitle();
     }
-    ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipientSender, textMessage,insertResult.get().getMessageId() , groupTitle);
+    if(insertResult.isPresent()) {
+      ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipientSender, textMessage, insertResult.get().getMessageId(), groupTitle);
+    }
 
     return new Pair<>(textMessage, insertResult.get().getMessageId());
   }
