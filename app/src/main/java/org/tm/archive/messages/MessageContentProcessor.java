@@ -1389,6 +1389,8 @@ public final class MessageContentProcessor {
       DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
     }
 
+    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getMessage().getBody().get(), messageId);
+
     return threadId;
   }
 
