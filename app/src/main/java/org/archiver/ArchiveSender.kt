@@ -114,7 +114,7 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox,  recipientList, isGroup)
-            val messageBody = getMessageBody(context, message.body, message.mentions)
+            val messageBody = getMessageBody(message.body, message.mentions)
             sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
         }
 

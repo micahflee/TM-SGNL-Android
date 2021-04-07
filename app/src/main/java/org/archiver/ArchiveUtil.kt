@@ -205,17 +205,17 @@ class ArchiveUtil {
         }
 
 
-        fun getMessageBody(context: Context, messageBody: String?, mentionsList: List<Mention>): String? {
+        fun getMessageBody(messageBody: String?, mentionsList: List<Mention>): String? {
             return if(messageBody != null) {
-                return if (mentionsList.isNotEmpty()) {
-                    var result = messageBody
-                    mentionsList.forEachIndexed { index, mention ->
-                        result = result!!.replaceFirst("\uFFFC", getRecipientFromRecipientID(mentionsList[index].recipientId).getName(context)!!)
+                var result = messageBody?: ""
+                    return if (mentionsList.isNotEmpty()) {
+                        mentionsList.forEachIndexed { index, mention ->
+                            result = result.replaceFirst("\uFFFC", getRecipientFromRecipientID(mentionsList[index].recipientId).profileName.givenName)
+                        }
+                        result
+                    } else {
+                        messageBody
                     }
-                    result!!
-                } else {
-                    messageBody
-                }
             }else{
                 null
             }
