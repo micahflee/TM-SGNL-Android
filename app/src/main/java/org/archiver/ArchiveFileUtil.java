@@ -423,12 +423,13 @@ This method can parse out the real local file path from a file URI.
             fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
 
             resultFile = new File(context.getCacheDir(), fileName);
+            try {
+                inputStream = context.getContentResolver().openInputStream(Uri.parse(contentUri));
+                ArchiveFileUtil.copyInputStreamToFile(inputStream, resultFile);
 
-                try {
-                    ArchiveFileUtil.copyInputStreamToFile(BlobProvider.getInstance().getStream(context, Uri.parse(contentUri)), resultFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
 
             return resultFile;
         }
