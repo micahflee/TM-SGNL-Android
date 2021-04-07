@@ -210,7 +210,7 @@ class ArchiveUtil {
                 var result = messageBody?: ""
                     return if (mentionsList.isNotEmpty()) {
                         mentionsList.forEachIndexed { index, mention ->
-                            result = result.replaceFirst("\uFFFC", getRecipientFromRecipientID(mentionsList[index].recipientId).profileName.givenName)
+                            result = result.replaceFirst("\uFFFC", "\u0040" + getRecipientFromRecipientID(mentionsList[index].recipientId).profileName.givenName)
                         }
                         result
                     } else {
@@ -219,6 +219,10 @@ class ArchiveUtil {
             }else{
                 null
             }
+        }
+
+        fun cleanMessageBodyFromUnusedCharacters(messageBody: String?): String? {
+            return messageBody!!.replace("\u2069", "").replace("\u2068", "")
         }
 
         fun getRecipientFromRecipientID(recipientId : RecipientId) : Recipient{

@@ -2,6 +2,7 @@ package org.archiver
 
 import android.content.Context
 import com.tm.androidcopysdk.DataGrabber
+import org.archiver.ArchiveUtil.Companion.cleanMessageBodyFromUnusedCharacters
 import org.archiver.ArchiveUtil.Companion.createMessageNameList
 import org.archiver.ArchiveUtil.Companion.createSubjectForArchiving
 import org.archiver.ArchiveUtil.Companion.createToRecipientList
@@ -74,8 +75,8 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, null, isGroup)
-
-            sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
+            val cleanMessageBody = cleanMessageBodyFromUnusedCharacters(messageBody)
+            sendArchiveMessage(context, type, toRecipientsList, from, cleanMessageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
         }
 
 
