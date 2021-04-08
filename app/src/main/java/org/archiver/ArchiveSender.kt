@@ -2,6 +2,7 @@ package org.archiver
 
 import android.content.Context
 import com.tm.androidcopysdk.DataGrabber
+import org.archiver.ArchiveUtil.Companion.cleanMessageBodyFromUnusedCharacters
 import org.archiver.ArchiveUtil.Companion.createMessageNameList
 import org.archiver.ArchiveUtil.Companion.createSubjectForArchiving
 import org.archiver.ArchiveUtil.Companion.createToRecipientList
@@ -10,13 +11,13 @@ import org.archiver.ArchiveUtil.Companion.getChatMode
 import org.archiver.ArchiveUtil.Companion.getChatName
 import org.archiver.ArchiveUtil.Companion.getFromPartForSubject
 import org.archiver.ArchiveUtil.Companion.getGroupInboxRecipientNumber
+import org.archiver.ArchiveUtil.Companion.getMessageBody
 import org.archiver.ArchiveUtil.Companion.groupId
 import org.tm.archive.database.DatabaseFactory
 import org.tm.archive.mms.IncomingMediaMessage
 import org.tm.archive.mms.OutgoingMediaMessage
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.sms.IncomingTextMessage
-import org.tm.archive.sms.OutgoingTextMessage
 import java.io.File
 
 class ArchiveSender {
@@ -74,8 +75,8 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, null, isGroup)
-
-            sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
+            val cleanMessageBody = cleanMessageBodyFromUnusedCharacters(messageBody)
+            sendArchiveMessage(context, type, toRecipientsList, from, cleanMessageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
         }
 
 
@@ -97,6 +98,7 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, null, isGroup)
+            
             sendArchiveMessage(context, type, toRecipientsList, from, message.body, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
         }
 
@@ -113,10 +115,9 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox,  recipientList, isGroup)
-            sendArchiveMessage(context, type, toRecipientsList, from, message.body, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
+            val messageBody = getMessageBody(message.body, message.mentions)
+            sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
         }
-
-
 
     }
 }

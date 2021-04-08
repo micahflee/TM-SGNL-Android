@@ -35,6 +35,9 @@ class ArchiveConstants {
 
         const val SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX = SIGNAL_ARCHIVE_VERSION + "_" + "Signal" + "_"
 
+        const val SIGNAL_PART_PATH = "content://org.tm.archive/part/"
+        const val SIGNAL_BLOB_PATH = "org.tm.archive.blob"
+
     }
 
     enum class ProtocolType(val type: String) {

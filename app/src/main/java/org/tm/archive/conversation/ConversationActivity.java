@@ -2942,9 +2942,6 @@ public class ConversationActivity extends PassphraseRequiredActivity
       message = new OutgoingTextMessage(recipient.get(), messageBody, expiresIn, subscriptionId);
     }
 
-    //AA - Archive Message Outbox:
-    ArchiveSender.Companion.archiveMessageOutbox(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, getRecipient(), messageBody , System.currentTimeMillis());
-
     Permissions.with(this)
                .request(Manifest.permission.SEND_SMS)
                .ifNecessary(forceSms || !isSecureText)
@@ -3030,7 +3027,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
   @Override
   public void onRecorderPermissionRequired() {
     Permissions.with(this)
-               .request(Manifest.permission.RECORD_AUDIO)
+               .request(Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_EXTERNAL_STORAGE)
                .ifNecessary()
                .withRationaleDialog(getString(R.string.ConversationActivity_to_send_audio_messages_allow_signal_access_to_your_microphone), R.drawable.ic_mic_solid_24)
                .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_requires_the_microphone_permission_in_order_to_send_audio_messages))

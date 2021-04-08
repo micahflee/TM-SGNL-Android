@@ -11,8 +11,14 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.webkit.MimeTypeMap;
 
+import org.jetbrains.annotations.Nullable;
+import org.tm.archive.attachments.AttachmentId;
+import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.conversation.ConversationActivity;
+import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.providers.BlobProvider;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -374,6 +380,60 @@ This method can parse out the real local file path from a file URI.
     }
 
     public static File createFileFromContentUri(Context context, String contentUri){
+        File resultFile = null;
+        if(contentUri.contains(ArchiveConstants.SIGNAL_PART_PATH)) {
+            resultFile = getFileFromDataBaseUri(context, contentUri);
+        }else if(contentUri.contains(ArchiveConstants.SIGNAL_BLOB_PATH)){
+            resultFile = getFileFromBlobProvider(context, contentUri);
+        }else {
+            resultFile = getFileFromDeviceUri(context, contentUri);
+        }
+        return resultFile;
+    }
+
+    private static File getFileFromDataBaseUri(Context context, String contentUri) {
+        if(ConversationActivity.checkWriteExternalPermission(context)) {
+            String[] splitUri = contentUri.split("/");
+            int splitLength = splitUri.length;
+            DatabaseAttachment databaseAttachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
+            String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
+            InputStream attachmentInputStream = null;
+            try {
+                attachmentInputStream = DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(databaseAttachment.getAttachmentId(),0);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
+            File resultFile = new File(context.getCacheDir(), fileName);
+            ArchiveFileUtil.copyInputStreamToFile(attachmentInputStream, resultFile);
+
+            return resultFile;
+        }
+        return null;
+    }
+
+    private static File getFileFromBlobProvider(Context context, String contentUri) {
+        File resultFile = null;
+        String fileName = "";
+        String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(context.getContentResolver().getType(Uri.parse(contentUri)));
+        InputStream stream = null;
+        try {
+            stream = BlobProvider.getInstance().getStream(ApplicationDependencies.getApplication(), Uri.parse(contentUri));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
+
+        resultFile = new File(context.getCacheDir(), fileName);
+
+        ArchiveFileUtil.copyInputStreamToFile(stream, resultFile);
+
+        return resultFile;
+    }
+
+
+    @Nullable
+    private static File getFileFromDeviceUri(Context context, String contentUri) {
         if(ConversationActivity.checkWriteExternalPermission(context)) {
             File resultFile = null;
             String fileName = "";
@@ -406,11 +466,22 @@ This method can parse out the real local file path from a file URI.
             fw.write("VERSION:3.0\r\n");
             fw.write("N:" + contact.getName().getFamilyName() + ";" + contact.getName().getGivenName() + "\r\n");
             fw.write("FN:" + contact.getName().getGivenName() + " " + contact.getName().getFamilyName()  + "\r\n");
-            fw.write("ORG:" + contact.getOrganization() + "\r\n");
-            fw.write("TEL;TYPE=WORK,VOICE:" + contact.getPostalAddresses() + "\r\n");
-            fw.write("TEL;TYPE=HOME,VOICE:" + contact.getPhoneNumbers() + "\r\n");
+            if(contact.getOrganization() != null) {
+                fw.write("ORG:" + contact.getOrganization() + "\r\n");
+            }
+            for (int i = 0; i < contact.getPostalAddresses().size(); i++) {
+                fw.write("TEL;TYPE=WORK,VOICE:" + contact.getPostalAddresses().get(0).getLabel() + "\r\n");
+            }
+
+            for (int i = 0; i < contact.getPhoneNumbers().size(); i++) {
+                fw.write("TEL;TYPE=WORK,VOICE:" + contact.getPhoneNumbers().get(i).getNumber() + "\r\n");
+            }
+
             fw.write("ADR;TYPE=WORK:;;" + contact.getPostalAddresses()+ "\r\n");
-            fw.write("EMAIL;TYPE=PREF,INTERNET:" + contact.getEmails() + "\r\n");
+            for (int i = 0; i < contact.getEmails().size(); i++) {
+                fw.write("EMAIL;TYPE=PREF,INTERNET:" + contact.getEmails().get(i).getEmail() + "\r\n");
+            }
+
             fw.write("END:VCARD\r\n");
             fw.close();
         } catch (IOException e) {

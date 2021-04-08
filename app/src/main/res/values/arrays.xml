@@ -272,6 +272,8 @@
   <string-array name="pref_media_download_mobile_data_default">
       <item>image</item>
       <item>audio</item>
+      <item>video</item>
+      <item>documents</item>
   </string-array>
 
   <string-array name="pref_media_download_wifi_default">

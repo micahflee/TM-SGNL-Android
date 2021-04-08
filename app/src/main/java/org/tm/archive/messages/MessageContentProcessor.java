@@ -14,6 +14,7 @@ import com.annimon.stream.Stream;
 import com.tm.androidcopysdk.DataGrabber;
 
 import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveFileUtil;
 import org.archiver.ArchiveSender;
 import org.archiver.ArchiveUtil;
 import org.signal.core.util.logging.Log;
@@ -1074,9 +1075,16 @@ public final class MessageContentProcessor {
       Recipient recipient = Recipient.resolved(RecipientId.fromHighTrust(content.getSender()));
       //archiveMediaInboxMessage(recipient);
 
-      for (DatabaseAttachment attachment : attachments) {
-        archiveInboxMediaMessage(groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), attachment.getAttachmentId());
-        ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), attachment.getAttachmentId(), false));
+
+      if(mediaMessage.getSharedContacts() != null && mediaMessage.getSharedContacts().size() > 0){
+        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.CONTACT, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(),new AttachmentId(0,0), null);
+      }else if(attachments != null && attachments.size() > 0){
+        for (DatabaseAttachment attachment : attachments) {
+          archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MEDIA, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), attachment.getAttachmentId(), attachment);
+          ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), attachment.getAttachmentId(), false));
+        }
+      }else if(mediaMessage.getMentions().size() > 0){
+        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MENTIONS, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), new AttachmentId(0,0), null);
       }
 
 
@@ -1090,13 +1098,20 @@ public final class MessageContentProcessor {
     return new Pair<>(mediaMessage,insertResult.get().getMessageId());
   }
 
-  private void archiveInboxMediaMessage(String groupTitle, Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, AttachmentId attachmentId) {
-
-    if(mediaMessage.getAttachments().size() > 0) {
-      for (int i = mediaMessage.getAttachments().size() - 1; i >= 0; i--) {
-        File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId.getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, mediaMessage.getAttachments().get(i).getContentType()));
-        ArchiveSender.Companion.archiveMessageInboxMMS(context,groupTitle,  ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, attachmentId.getUniqueId(), tempFileForArchiving);
+  private void archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes aInboxArchiveTypes, String groupTitle, Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, AttachmentId attachmentId, DatabaseAttachment attachment) {
+    if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.MEDIA) {
+      if (attachment != null) {
+          File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId.getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, attachment.getContentType()));
+          ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, attachmentId.getUniqueId(), tempFileForArchiving);
+        }
+    }else if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.CONTACT) {
+      if (mediaMessage.getSharedContacts().size() > 0) {
+          File vcfFile = ArchiveFileUtil.createVCFFileFromContact(context, mediaMessage.getSharedContacts().get(0));
+          ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient,recipientList,  mediaMessage, messageId, vcfFile);
+          ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
       }
+    }else if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.MENTIONS) {
+      ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, null);
     }
   }
 
@@ -1310,7 +1325,9 @@ public final class MessageContentProcessor {
     if(groupId.isPresent()) {
       groupTitle = DatabaseFactory.getGroupDatabase(context).getGroup(groupId.get()).get().getTitle();
     }
-    ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipientSender, textMessage,insertResult.get().getMessageId() , groupTitle);
+    if(insertResult.isPresent()) {
+      ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipientSender, textMessage, insertResult.get().getMessageId(), groupTitle);
+    }
 
     return new Pair<>(textMessage, insertResult.get().getMessageId());
   }
@@ -1373,6 +1390,8 @@ public final class MessageContentProcessor {
       DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCount(id, System.currentTimeMillis());
       DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
     }
+
+    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getMessage().getBody().get(), messageId);
 
     return threadId;
   }

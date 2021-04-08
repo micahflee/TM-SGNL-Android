@@ -1,5 +1,6 @@
 package org.whispersystems.signalservice.internal.contacts.crypto;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -102,13 +103,18 @@ public class Quote {
   }
 
   private void read(ByteBuffer quoteBuf, int pos, byte[] buf) {
+    ((Buffer)quoteBuf).position(pos);
+    quoteBuf.get(buf);
+  }
+
+  private void readFromBuffer(ByteBuffer quoteBuf, int pos, byte[] buf){
     quoteBuf.position(pos);
     quoteBuf.get(buf);
   }
 
   private void readZero(ByteBuffer quoteBuf, int pos, int count) {
     byte[] zeroBuf = new byte[count];
-    read(quoteBuf, pos, zeroBuf);
+    readFromBuffer(quoteBuf, pos, zeroBuf);
     for (int zeroBufIdx = 0; zeroBufIdx < count; zeroBufIdx++) {
       if (zeroBuf[zeroBufIdx] != 0) {
         throw new IllegalArgumentException("quote_reserved_mismatch "+pos);

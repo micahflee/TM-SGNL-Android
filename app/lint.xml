@@ -32,11 +32,11 @@
     <issue id="LogTagInlined" severity="error" />
 
     <issue id="RestrictedApi" severity="error">
-        <ignore path="*/org/thoughtcrime/securesms/mediasend/camerax/VideoCapture.java" />
-        <ignore path="*/org/thoughtcrime/securesms/mediasend/camerax/CameraXModule.java" />
-        <ignore path="*/org/thoughtcrime/securesms/conversation/*.java" />
-        <ignore path="*/org/thoughtcrime/securesms/lock/v2/CreateKbsPinViewModel.java" />
-        <ignore path="*/org/thoughtcrime/securesms/jobs/StickerPackDownloadJob.java" />
+        <ignore path="*/org/tm/archive/mediasend/camerax/VideoCapture.java" />
+        <ignore path="*/org/tm/archive/mediasend/camerax/CameraXModule.java" />
+        <ignore path="*/org/tm/archive/conversation/*.java" />
+        <ignore path="*/org/tm/archive/lock/v2/CreateKbsPinViewModel.java" />
+        <ignore path="*/org/tm/archive/jobs/StickerPackDownloadJob.java" />
     </issue>
 
 </lint>
