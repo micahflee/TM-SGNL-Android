@@ -148,9 +148,7 @@ class ArchiveUtil {
 
         fun groupId(recipient: Recipient): String? {
             return if(recipient.isGroup){
-               // recipient.groupId.get().toString()
-               // TODO Fix the group id issue in the server.
-                UUID.randomUUID().toString()
+                recipient.groupId.get().toString()
             }else{
                 ""
             }
