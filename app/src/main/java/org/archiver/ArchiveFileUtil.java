@@ -17,6 +17,7 @@ import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.conversation.ConversationActivity;
 import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.providers.BlobProvider;
 
 import java.io.File;
@@ -26,8 +27,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import static org.archiver.ArchiveConstants.SIGNAL_PART_PATH;
 
 public class ArchiveFileUtil {
 
@@ -382,10 +381,12 @@ This method can parse out the real local file path from a file URI.
 
     public static File createFileFromContentUri(Context context, String contentUri){
         File resultFile = null;
-        if(!contentUri.contains(SIGNAL_PART_PATH)) {
-            resultFile = getFileFromDeviceUri(context, contentUri);
-        }else {
+        if(contentUri.contains(ArchiveConstants.SIGNAL_PART_PATH)) {
             resultFile = getFileFromDataBaseUri(context, contentUri);
+        }else if(contentUri.contains(ArchiveConstants.SIGNAL_BLOB_PATH)){
+            resultFile = getFileFromBlobProvider(context, contentUri);
+        }else {
+            resultFile = getFileFromDeviceUri(context, contentUri);
         }
         return resultFile;
     }
@@ -396,7 +397,6 @@ This method can parse out the real local file path from a file URI.
             int splitLength = splitUri.length;
             DatabaseAttachment databaseAttachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
             String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
-            //contentUri = databaseAttachment.getUri().toString();
             InputStream attachmentInputStream = null;
             try {
                 attachmentInputStream = DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(databaseAttachment.getAttachmentId(),0);
@@ -411,6 +411,26 @@ This method can parse out the real local file path from a file URI.
         }
         return null;
     }
+
+    private static File getFileFromBlobProvider(Context context, String contentUri) {
+        File resultFile = null;
+        String fileName = "";
+        String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(context.getContentResolver().getType(Uri.parse(contentUri)));
+        InputStream stream = null;
+        try {
+            stream = BlobProvider.getInstance().getStream(ApplicationDependencies.getApplication(), Uri.parse(contentUri));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
+
+        resultFile = new File(context.getCacheDir(), fileName);
+
+        ArchiveFileUtil.copyInputStreamToFile(stream, resultFile);
+
+        return resultFile;
+    }
+
 
     @Nullable
     private static File getFileFromDeviceUri(Context context, String contentUri) {
