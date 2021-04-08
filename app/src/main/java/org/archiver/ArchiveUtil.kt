@@ -221,8 +221,12 @@ class ArchiveUtil {
             }
         }
 
-        fun cleanMessageBodyFromUnusedCharacters(messageBody: String?): String? {
-            return messageBody!!.replace("\u2069", "").replace("\u2068", "")
+        fun cleanMessageBodyFromUnusedCharacters(messageBody: String?): String {
+            return if(messageBody != null && messageBody.isNotEmpty()) {
+                messageBody.replace("\u2069", "").replace("\u2068", "")
+            }else{
+                ""
+            }
         }
 
         fun getRecipientFromRecipientID(recipientId : RecipientId) : Recipient{
