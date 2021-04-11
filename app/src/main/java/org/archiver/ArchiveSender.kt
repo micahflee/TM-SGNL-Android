@@ -24,7 +24,7 @@ class ArchiveSender {
 
     companion object{
 
-        private fun sendArchiveMessage(context: Context, aProtocolType: ArchiveConstants.ProtocolType, toRecipientsList: Array<String>, from: String,  messageBody: String?, messageId: String, dateInTimeStamp: Long, subject: String, chatMode: DataGrabber.CHAT_MODE, chatName: String, chatId: String?, fromNameString: String, toRecipientsListNames: Array<String>, archiveFile: File? = null){
+        private fun sendArchiveMessage(context: Context, aProtocolType: ArchiveConstants.ProtocolType, toRecipientsList: Array<String>, from: String,  messageBody: String?, messageId: String, dateInTimeStamp: Long, subject: String, chatMode: DataGrabber.CHAT_MODE, chatName: String, chatId: String?, fromNameString: String, toRecipientsListNames: Array<String>, archiveFile: Array<File?>? = null){
 
             if(archiveFile == null) {
                 DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, messageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, ArchiveUtil.getPhoneNumberInTestMode(context), toRecipientsListNames, toRecipientsList)
@@ -52,7 +52,7 @@ class ArchiveSender {
             val chatName = getChatName(context, archiveRecipient, isGroup)
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
-            val toName = createMessageNameList(context, archiveRecipient, isInbox, null, isGroup)
+            val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup)
             val messageBody = if(message.messageBody != null){
                 message.messageBody
             }else{
@@ -74,14 +74,14 @@ class ArchiveSender {
 
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
-            val toName = createMessageNameList(context, archiveRecipient, isInbox, null, isGroup)
+            val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup)
             val cleanMessageBody = cleanMessageBodyFromUnusedCharacters(messageBody)
             sendArchiveMessage(context, type, toRecipientsList, from, cleanMessageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
         }
 
 
         //This method also sent sms if attachments list size is 0
-        fun archiveMessageOutboxMMS(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, message: OutgoingMediaMessage, messageId: Long, archiveFile: File? = null) {
+        fun archiveMessageOutboxMMS(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, message: OutgoingMediaMessage, messageId: Long, archiveFile: Array<File?>? = null) {
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = archiveRecipient.isGroup
             val inboxRecipient = ""
@@ -97,13 +97,17 @@ class ArchiveSender {
             val chatName = getChatName(context, archiveRecipient, isGroup)
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
-            val toName = createMessageNameList(context, archiveRecipient, isInbox, null, isGroup)
+            val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup)
             
             sendArchiveMessage(context, type, toRecipientsList, from, message.body, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
         }
 
-        //This method also sent sms if attachments list size is 0
-        fun archiveMessageInboxMMS(context: Context, groupTitle: String, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, recipientList: MutableList<Recipient>?, message: IncomingMediaMessage, messageId: Long, archiveFile: File? = null) {
+        fun archiveMessageInboxMMS(aContext: Context, aGroupTitle: String, aType: ArchiveConstants.ProtocolType, aArchiveRecipient: Recipient, aRecipientList: MutableList<Recipient>?, aMessage: IncomingMediaMessage, aMessageId: Long, aArchiveFile:  File? = null) {
+            val listOfFile = Array(1){aArchiveFile}
+            archiveMessageInboxMMS(aContext, aGroupTitle, aType, aArchiveRecipient, aRecipientList, aMessage,aMessageId, listOfFile)
+        }
+
+        fun archiveMessageInboxMMS(context: Context, groupTitle: String, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, recipientList: MutableList<Recipient>?, message: IncomingMediaMessage, messageId: Long, archiveFile:  Array<File?>? = null) {
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = message.isGroupMessage
             val inboxRecipient = ""

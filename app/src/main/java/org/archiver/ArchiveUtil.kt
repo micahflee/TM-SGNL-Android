@@ -38,7 +38,12 @@ class ArchiveUtil {
             }
 
             recipientListFromRecipient = if (!isInboxArchiveMessage) {
-                recipientListFromRecipient.filter { it != getPhoneNumberInTestMode(context) }
+                if(recipientListFromRecipient.size > 1) {
+                    recipientListFromRecipient.filter { it != getPhoneNumberInTestMode(context) }
+                }else{
+                    //Sending message in group that contains only me
+                    recipientListFromRecipient
+                }
             }else{
                 recipientListFromRecipient.filter { it != from }
             }
@@ -166,12 +171,16 @@ class ArchiveUtil {
         fun createMessageNameList(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean, recipientList: MutableList<Recipient>? = null, isGroup: Boolean): Array<String> {
 
             val rl = if (!isInboxArchiveMessage) {
-                recipientList?.filter {
-                    it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
+                if(recipientList!!.size > 1) {
+                    recipientList!!.filter {
+                        it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
+                    } ?: recipient.participants.filter {
+                                it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
+                            }
+                }else{
+                    //Sending message in group that contains only me
+                    recipientList
                 }
-                        ?: recipient.participants.filter {
-                            it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
-                        }
             } else {
                 recipientList?.filter {
                     it.e164.isPresent && it.e164.get() != null

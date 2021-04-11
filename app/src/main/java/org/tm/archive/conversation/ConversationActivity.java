@@ -2763,29 +2763,33 @@ public class ConversationActivity extends PassphraseRequiredActivity
     silentlySetComposeText("");
 
     long id = fragment.stageOutgoingMessage(message);
-    archiveMediaMessage(result, message);
 
     SimpleTask.run(() -> {
-      long resultId = MessageSender.sendPushWithPreUploadedMedia(this, secureMessage, result.getPreUploadResults(), thread, () -> fragment.releaseOutgoingMessage(id));
+
+      Pair<Long,Long> resultId = MessageSender.sendPushWithPreUploadedMedia(this, secureMessage, result.getPreUploadResults(), thread, () -> fragment.releaseOutgoingMessage(id));
+      archiveMediaMessage(result, message,resultId.second());
       int deleted = DatabaseFactory.getAttachmentDatabase(this).deleteAbandonedPreuploadedAttachments();
       Log.i(TAG, "Deleted " + deleted + " abandoned attachments.");
 
-      return resultId;
+      return resultId.first();
     }, this::sendComplete);
   }
 
-  private void archiveMediaMessage(MediaSendActivityResult result, OutgoingMediaMessage message) {
+  private void archiveMediaMessage(MediaSendActivityResult result, OutgoingMediaMessage message, Long messageId) {
 
     if(checkWriteExternalPermission(this)) {
       File tempFileForArchiving = null;
+      File [] filesToSend = new File[result.getUriList().size()];
       String fileName = "";
       for (int i = 0; i < result.getUriList().size(); i++) {
           tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(this,result.getUriList().get(i));
+          filesToSend[i] = tempFileForArchiving;
+      }
 
-          ArchiveSender.Companion.archiveMessageOutboxMMS(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, /*id*/System.currentTimeMillis(), tempFileForArchiving);
-          ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(this, tempFileForArchiving.getName(), true);
-          ArchiveFileUtil.deleteFile(this, getCacheDir().getName(), fileName);
-
+      ArchiveSender.Companion.archiveMessageOutboxMMS(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, filesToSend);
+      for (int i = 0; i < result.getUriList().size(); i++) {
+        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(this, filesToSend[i].getName(), true);
+        ArchiveFileUtil.deleteFile(this, getCacheDir().getName(), filesToSend[i].getName());
       }
 
 
