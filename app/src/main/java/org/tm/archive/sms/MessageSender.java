@@ -78,6 +78,7 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.service.ExpiringMessageManager;
 import org.tm.archive.util.ParcelUtil;
 import org.tm.archive.util.TextSecurePreferences;
+import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.libsignal.util.guava.Preconditions;
 
@@ -156,21 +157,29 @@ public class MessageSender {
   private static void archiveMediaOrGroupMessage(Context context, OutgoingMediaMessage message, Recipient recipient, long messageId) {
 
       if (message.getSharedContacts().size() > 0) {
+        File [] filesToSend = new File[1];
+
         File vcfFile = ArchiveFileUtil.createVCFFileFromContact(context, message.getSharedContacts().get(0));
-        ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, vcfFile);
+        filesToSend[0] = vcfFile;
+        ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, filesToSend);
         ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
       } else {
 
         if (message.getAttachments() != null && message.getAttachments().size() > 0) {
+          File [] filesToSend = new File[message.getAttachments().size()];
           for (int i = 0; i < message.getAttachments().size(); i++) {
             File tempFileForArchiving = null;
-            String fileName = "";
+            //String fileName = "";
             tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(context, message.getAttachments().get(i).getUri().toString());
-            ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, tempFileForArchiving);
-            ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), true);
-            ArchiveFileUtil.deleteFile(context, context.getCacheDir().getName(), fileName);
+            filesToSend[i] = tempFileForArchiving;
+
           }
 
+          ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, filesToSend);
+          for (int i = 0; i < message.getAttachments().size(); i++) {
+            ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, filesToSend[i].getName(), true);
+            ArchiveFileUtil.deleteFile(context, context.getCacheDir().getName(), filesToSend[i].getName());
+          }
         } else {
 
           //TODO - Archiving of "replay messages" (the original message is in "message.getQuote")
@@ -188,15 +197,15 @@ public class MessageSender {
   }
 
 
-  public static long sendPushWithPreUploadedMedia(final Context context,
-                                                  final OutgoingMediaMessage message,
-                                                  final Collection<PreUploadResult> preUploadResults,
-                                                  final long threadId,
-                                                  final SmsDatabase.InsertListener insertListener)
+  public static Pair<Long,Long> sendPushWithPreUploadedMedia(final Context context,
+                                    final OutgoingMediaMessage message,
+                                    final Collection<PreUploadResult> preUploadResults,
+                                    final long threadId,
+                                    final SmsDatabase.InsertListener insertListener)
   {
     Log.i(TAG, "Sending media message with pre-uploads to " + message.getRecipient().getId() + ", thread: " + threadId);
     Preconditions.checkArgument(message.getAttachments().isEmpty(), "If the media is pre-uploaded, there should be no attachments on the message.");
-
+    long      messageId = 0;
     try {
       ThreadDatabase     threadDatabase     = DatabaseFactory.getThreadDatabase(context);
       MessageDatabase    mmsDatabase        = DatabaseFactory.getMmsDatabase(context);
@@ -211,7 +220,7 @@ public class MessageSender {
       }
 
       Recipient recipient = message.getRecipient();
-      long      messageId = mmsDatabase.insertMessageOutbox(message, allocatedThreadId, false, insertListener);
+                messageId = mmsDatabase.insertMessageOutbox(message, allocatedThreadId, false, insertListener);
 
       List<AttachmentId> attachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
       List<String>       jobIds        = Stream.of(preUploadResults).map(PreUploadResult::getJobIds).flatMap(Stream::of).toList();
@@ -221,10 +230,10 @@ public class MessageSender {
       sendMediaMessage(context, recipient, false, messageId, jobIds);
       onMessageSent();
 
-      return allocatedThreadId;
+      return new Pair<>(allocatedThreadId,messageId);
     } catch (MmsException e) {
       Log.w(TAG, e);
-      return threadId;
+      return new Pair<>(threadId,messageId) ;
     }
   }
 

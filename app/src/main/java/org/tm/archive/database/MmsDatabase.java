@@ -1327,7 +1327,7 @@ public class MmsDatabase extends MessageDatabase {
     */
     if(retrieved.getQuote() != null) {
       Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
-      ArchiveSender.Companion.archiveMessageInboxMMS(context, recipient.getName(context), ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, Recipient.resolved(retrieved.getFrom()), recipient.getParticipants(), retrieved, messageId, null);
+      ArchiveSender.Companion.archiveMessageInboxMMS(context, recipient.getName(context), ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, Recipient.resolved(retrieved.getFrom()), recipient.getParticipants(), retrieved, messageId, (File) null);
     }
 
     return Optional.of(new InsertResult(messageId, threadId));

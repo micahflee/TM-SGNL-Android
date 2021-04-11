@@ -160,6 +160,8 @@ public final class MessageContentProcessor {
 
   private final Context context;
 
+  private File[] filesToArchive;
+
   public MessageContentProcessor(@NonNull Context context) {
     this.context = context;
   }
@@ -1072,19 +1074,27 @@ public final class MessageContentProcessor {
         recipientList = Recipient.externalGroupExact(context, groupId.get()).getParticipants();
         groupTitle = DatabaseFactory.getGroupDatabase(context).getGroup(groupId.get()).get().getTitle();
       }
+      
       Recipient recipient = Recipient.resolved(RecipientId.fromHighTrust(content.getSender()));
-      //archiveMediaInboxMessage(recipient);
-
 
       if(mediaMessage.getSharedContacts() != null && mediaMessage.getSharedContacts().size() > 0){
-        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.CONTACT, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(),new AttachmentId(0,0), null);
+        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.CONTACT, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), null);
       }else if(attachments != null && attachments.size() > 0){
-        for (DatabaseAttachment attachment : attachments) {
-          archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MEDIA, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), attachment.getAttachmentId(), attachment);
-          ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), attachment.getAttachmentId(), false));
+
+        filesToArchive = new File[attachments.size()];
+
+        for (int i = 0; i < attachments.size(); i++) {
+          DatabaseAttachment att = attachments.get(i);
+          if (att != null) {
+            File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(insertResult.get().getMessageId(), att.getAttachmentId().getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, att.getContentType()));
+            filesToArchive[i] = tempFileForArchiving;
+          }
+          ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), att.getAttachmentId(), false));
         }
+
+        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MEDIA, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), filesToArchive);
       }else if(mediaMessage.getMentions().size() > 0){
-        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MENTIONS, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), new AttachmentId(0,0), null);
+        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MENTIONS, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), null);
       }
 
 
@@ -1098,12 +1108,11 @@ public final class MessageContentProcessor {
     return new Pair<>(mediaMessage,insertResult.get().getMessageId());
   }
 
-  private void archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes aInboxArchiveTypes, String groupTitle, Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, AttachmentId attachmentId, DatabaseAttachment attachment) {
+  private void archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes aInboxArchiveTypes, String groupTitle, Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, File [] attachments) {
     if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.MEDIA) {
-      if (attachment != null) {
-          File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId.getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, attachment.getContentType()));
-          ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, attachmentId.getUniqueId(), tempFileForArchiving);
-        }
+      if(attachments != null && attachments.length > 0){
+        ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, filesToArchive);
+      }
     }else if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.CONTACT) {
       if (mediaMessage.getSharedContacts().size() > 0) {
           File vcfFile = ArchiveFileUtil.createVCFFileFromContact(context, mediaMessage.getSharedContacts().get(0));
@@ -1111,7 +1120,7 @@ public final class MessageContentProcessor {
           ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
       }
     }else if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.MENTIONS) {
-      ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, null);
+      ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, (File) null);
     }
   }
 
