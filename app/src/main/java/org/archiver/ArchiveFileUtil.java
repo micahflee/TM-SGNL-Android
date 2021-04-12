@@ -381,8 +381,10 @@ This method can parse out the real local file path from a file URI.
 
     public static File createFileFromContentUri(Context context, String contentUri){
         File resultFile = null;
-        if(contentUri.contains(ArchiveConstants.SIGNAL_PART_PATH)) {
+        if(contentUri.contains(ArchiveConstants.SIGNAL_PART_PATH) ) {
             resultFile = getFileFromDataBaseUri(context, contentUri);
+        }else if(contentUri.contains(ArchiveConstants.SIGNAL_STICKER_PATH)){
+            resultFile = getStickerFileFromBlobProvider(context, contentUri);
         }else if(contentUri.contains(ArchiveConstants.SIGNAL_BLOB_PATH)){
             resultFile = getFileFromBlobProvider(context, contentUri);
         }else {
@@ -431,6 +433,24 @@ This method can parse out the real local file path from a file URI.
         return resultFile;
     }
 
+    private static File getStickerFileFromBlobProvider(Context context, String contentUri) {
+        File resultFile = null;
+        String fileName = "";
+        InputStream stream = null;
+        try {
+            stream = DatabaseFactory.getStickerDatabase(context).getStickerStream(ContentUris.parseId(Uri.parse(contentUri)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + "webp";
+
+        resultFile = new File(context.getCacheDir(), fileName);
+
+        ArchiveFileUtil.copyInputStreamToFile(stream, resultFile);
+
+        return resultFile;
+    }
 
     @Nullable
     private static File getFileFromDeviceUri(Context context, String contentUri) {
