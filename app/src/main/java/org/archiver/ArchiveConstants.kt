@@ -39,6 +39,8 @@ class ArchiveConstants {
         const val SIGNAL_STICKER_PATH = "content://org.tm.archive/sticker/"
         const val SIGNAL_BLOB_PATH = "org.tm.archive.blob"
 
+        const val isNeedToSetTeleMessageBackgroundAsDefault = true
+
     }
 
     enum class ProtocolType(val type: String) {
