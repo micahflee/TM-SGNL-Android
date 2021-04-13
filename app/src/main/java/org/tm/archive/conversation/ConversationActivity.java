@@ -2033,11 +2033,15 @@ public class ConversationActivity extends PassphraseRequiredActivity
         WindowUtil.setStatusBarColor(getWindow(), toolbarColor);
       }
     } else {
-      wallpaper.setImageDrawable(null);
-      wallpaperDim.setVisibility(View.GONE);
-      inputPanel.setWallpaperEnabled(false);
-      if (attachmentKeyboardStub.resolved()) {
-        attachmentKeyboardStub.get().setWallpaperEnabled(false);
+      if (ArchiveConstants.isNeedToSetTeleMessageBackgroundAsDefault) {
+        wallpaper.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_bg_tm));
+      } else {
+        wallpaper.setImageDrawable(null);
+        wallpaperDim.setVisibility(View.GONE);
+        inputPanel.setWallpaperEnabled(false);
+        if (attachmentKeyboardStub.resolved()) {
+          attachmentKeyboardStub.get().setWallpaperEnabled(false);
+        }
       }
 
       int toolbarColor = getResources().getColor(R.color.conversation_toolbar_color);

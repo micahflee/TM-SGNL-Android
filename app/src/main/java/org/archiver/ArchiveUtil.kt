@@ -244,6 +244,7 @@ class ArchiveUtil {
 
     enum class InboxArchiveTypes{
         MEDIA,
+        STICKER,
         CONTACT,
         MENTIONS;
     }
