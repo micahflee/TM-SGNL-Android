@@ -123,5 +123,21 @@ class ArchiveSender {
             sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
         }
 
+        fun archiveMessageOutboxSyncMMS(context: Context, groupTitle: String, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, recipientList: MutableList<Recipient>?, message: OutgoingMediaMessage, messageId: Long, archiveFile:  Array<File?>? = null) {
+            val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
+            val isGroup = archiveRecipient.isGroup
+            val inboxRecipient = ""
+            val from = getFromPartForSubject(context, isInbox, archiveRecipient, inboxRecipient)
+            val toRecipientsList = createToRecipientList(context, isInbox, archiveRecipient, isGroup, from, recipientList)
+            val subject = createSubjectForArchiving(context, isInbox, isGroup, archiveRecipient, inboxRecipient, false, groupTitle)
+            val chatMode = getChatMode(isGroup)
+            val chatName = getChatName(context, archiveRecipient, isGroup)
+            val chatId = groupId(archiveRecipient)
+            val fromContactName = fromContactName(context, archiveRecipient, isInbox)
+            val toName = createMessageNameList(context, archiveRecipient, isInbox,  recipientList, isGroup)
+            val messageBody = getMessageBody(message.body, message.mentions)
+            sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
+        }
+
     }
 }

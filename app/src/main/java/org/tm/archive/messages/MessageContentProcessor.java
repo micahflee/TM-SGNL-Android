@@ -1,8 +1,9 @@
-package org.tm.archive.messages;
+ package org.tm.archive.messages;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.text.TextUtils;
 
@@ -93,6 +94,7 @@ import org.tm.archive.sms.IncomingEncryptedMessage;
 import org.tm.archive.sms.IncomingEndSessionMessage;
 import org.tm.archive.sms.IncomingGroupUpdateMessage;
 import org.tm.archive.sms.IncomingTextMessage;
+import org.tm.archive.sms.MessageSender;
 import org.tm.archive.sms.OutgoingEncryptedMessage;
 import org.tm.archive.sms.OutgoingEndSessionMessage;
 import org.tm.archive.sms.OutgoingTextMessage;
@@ -141,6 +143,7 @@ import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -858,6 +861,7 @@ public final class MessageContentProcessor {
     }
   }
 
+  //All sync type from desktop app.
   private void handleSynchronizeSentMessage(@NonNull SignalServiceContent content,
                                             @NonNull SentTranscriptMessage message)
       throws StorageFailedException, BadGroupIdException, IOException, GroupChangeBusyException
@@ -1167,6 +1171,7 @@ public final class MessageContentProcessor {
   private long handleSynchronizeSentMediaMessage(@NonNull SentTranscriptMessage message)
       throws MmsException, BadGroupIdException
   {
+    long messageId = 0;
     MessageDatabase             database        = DatabaseFactory.getMmsDatabase(context);
     Recipient                   recipients      = getSyncMessageDestination(message);
     Optional<QuoteModel>        quote           = getValidatedQuote(message.getMessage().getQuote());
@@ -1204,7 +1209,7 @@ public final class MessageContentProcessor {
     database.beginTransaction();
 
     try {
-      long messageId = database.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptDatabase.STATUS_UNKNOWN, null);
+      messageId = database.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptDatabase.STATUS_UNKNOWN, null);
 
       if (recipients.isGroup()) {
         updateGroupReceiptStatus(message, messageId, recipients.requireGroupId());
@@ -1216,12 +1221,40 @@ public final class MessageContentProcessor {
 
       List<DatabaseAttachment> allAttachments     = DatabaseFactory.getAttachmentDatabase(context).getAttachmentsForMessage(messageId);
       List<DatabaseAttachment> stickerAttachments = Stream.of(allAttachments).filter(Attachment::isSticker).toList();
-      List<DatabaseAttachment> attachments        = Stream.of(allAttachments).filterNot(Attachment::isSticker).toList();
+      List<DatabaseAttachment> attachments = Stream.of(allAttachments).filterNot(Attachment::isSticker).toList();
 
       forceStickerDownloadIfNecessary(messageId, stickerAttachments);
 
-      for (DatabaseAttachment attachment : attachments) {
-        ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(messageId, attachment.getAttachmentId(), false));
+
+      File tempFileForArchiving = null;
+
+      if(attachments.size() > 0) {
+        filesToArchive = new File[attachments.size()];
+        for (int i = 0; i < attachments.size(); i++) {
+          DatabaseAttachment att = attachments.get(i);
+          if (att != null) {
+            tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, att.getAttachmentId().getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, att.getContentType()));
+            filesToArchive[i] = tempFileForArchiving;
+            ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(messageId, att.getAttachmentId(), false));
+          }
+        }
+
+      ArchiveSender.Companion.archiveMessageOutboxSyncMMS(context, recipients.getName(context) == null ? "" : recipients.getName(context), ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipients, recipients.getParticipants(), mediaMessage, messageId, filesToArchive);
+
+      }else if(stickerAttachments.size() > 0) {
+        filesToArchive = new File[stickerAttachments.size()];
+        for (int i = 0; i < stickerAttachments.size(); i++) {
+          DatabaseAttachment att = stickerAttachments.get(i);
+          if (att != null && att.getUri() != null) {
+            tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(context, att.getUri().toString());
+            filesToArchive[attachments.size()] = tempFileForArchiving;
+
+            ArchiveSender.Companion.archiveMessageOutboxSyncMMS(context, recipients.getName(context) == null ? "" : recipients.getName(context), ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipients, recipients.getParticipants(), mediaMessage, messageId, filesToArchive);
+
+            ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), false);
+          }
+        }
+
       }
 
       if (message.getMessage().getExpiresInSeconds() > 0) {
