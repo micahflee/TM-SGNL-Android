@@ -37,6 +37,7 @@ import com.tm.androidcopysdk.events.PeriodicEventChecker;
 import com.tm.androidcopysdk.utils.PrefManager;
 
 
+import org.archiver.ArchiveLogger;
 import org.archiver.ArchiveUtil;
 import org.conscrypt.Conscrypt;
 import org.signal.aesgcmprovider.AesGcmProvider;
@@ -181,24 +182,27 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     Tracer.getInstance().end("Application#onCreate()");
 
     com.tm.logger.Log.createInstance(getApplicationContext());
+    ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
 
     initArchiveUrlsAndStartArchive();
 
   }
 
   private void initArchiveUrlsAndStartArchive() {
-
+    ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive \nsetUrl: \nchosenUrl =" + ArchiveConstants.charlieProduction+ "\nKeeperUrl =" + ArchiveConstants.prodKeeper);
     CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.charlieProduction, ArchiveConstants.prodKeeper);
   //  CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.integration, ArchiveConstants.integrationKeeper);
     CommonUtils.setSqlInfo(getApplicationContext(), ArchiveConstants.isTestMode ? ArchiveConstants.signalTestPassword : ArchiveConstants.signalCurrentPassword);
 
     boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(),R.string.installation_event_sent,false);
 
-    if(/*isTestMode*/true || !installationEventSent) {
+    if(isTestMode || !installationEventSent) {
       initializeTMAndroidArchive();
+      ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive");
     }
 
     CommonUtils.startBackupService(getApplicationContext());
+    ArchiveLogger.Companion.sendArchiveLog("Backup service started");
   }
 
   private void initializeTMAndroidArchive() {
@@ -209,10 +213,8 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     mSettings.setData(AndroidCopySettings.DataSaving.WIFI3G);
 
-   // AndroidCopySDK.getInstance(getApplicationContext()).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(this));
-
-    AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"","");
-
+    AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"",ArchiveConstants.signalCurrentPassword);
+    ArchiveLogger.Companion.sendArchiveLog("User name = " + "Password = ");
 
     boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);
     // InstallEvent should be sent only once

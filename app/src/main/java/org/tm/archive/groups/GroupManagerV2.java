@@ -11,6 +11,7 @@ import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import org.archiver.ArchiveLogger;
 import org.signal.core.util.logging.Log;
 import org.signal.storageservice.protos.groups.AccessControl;
 import org.signal.storageservice.protos.groups.GroupChange;
@@ -616,7 +617,8 @@ final class GroupManagerV2 {
       final DecryptedGroupChange            decryptedChange;
       final DecryptedGroup                  decryptedGroupState;
       final DecryptedGroup                  previousGroupState;
-      Log.d("MNMNDDHAN", "Group event!");
+
+      ArchiveLogger.Companion.sendArchiveLog("Group event!");
       try {
         previousGroupState  = v2GroupProperties.getDecryptedGroup();
         decryptedChange     = groupOperations.decryptChange(changeActions, selfUuid);

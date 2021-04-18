@@ -1144,7 +1144,7 @@ public class SmsDatabase extends MessageDatabase {
                                   boolean forceSms, long date, InsertListener insertListener)
   {
     long type = Types.BASE_SENDING_TYPE;
-    Log.d("MNMN", "insertMessageOutbox = " + message.getMessageBody());
+
     if      (message.isKeyExchange())   type |= Types.KEY_EXCHANGE_BIT;
     else if (message.isSecureMessage()) type |= (Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT);
     else if (message.isEndSession())    type |= Types.END_SESSION_BIT;

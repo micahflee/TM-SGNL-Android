@@ -154,7 +154,7 @@ public class MessageSender {
     }
   }
 
-  private static void archiveMediaOrGroupMessage(Context context, OutgoingMediaMessage message, Recipient recipient, long messageId) {
+  public static void archiveMediaOrGroupMessage(Context context, OutgoingMediaMessage message, Recipient recipient, long messageId) {
 
       if (message.getSharedContacts().size() > 0) {
         File [] filesToSend = new File[1];
