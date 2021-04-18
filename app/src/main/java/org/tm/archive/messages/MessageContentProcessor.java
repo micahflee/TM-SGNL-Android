@@ -16,6 +16,7 @@ import com.tm.androidcopysdk.DataGrabber;
 
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveFileUtil;
+import org.archiver.ArchiveLogger;
 import org.archiver.ArchiveSender;
 import org.archiver.ArchiveUtil;
 import org.signal.core.util.logging.Log;
@@ -208,7 +209,8 @@ public final class MessageContentProcessor {
   private void handleMessage(@Nullable SignalServiceContent content, long timestamp, @NonNull Optional<Long> smsMessageId)
       throws IOException, GroupChangeBusyException
   {
-    Log.d("MNMNDDHAN", "handleMessage");
+
+    ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called");
     try {
       GroupDatabase groupDatabase = DatabaseFactory.getGroupDatabase(context);
 
@@ -220,7 +222,8 @@ public final class MessageContentProcessor {
       log(String.valueOf(content.getTimestamp()), "Beginning message processing.");
 
       if (content.getDataMessage().isPresent()) {
-        Log.d("MNMNDDHAN", "content.getDataMessage()");
+
+        ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > getDataMessage()");
         SignalServiceDataMessage message        = content.getDataMessage().get();
         boolean                  isMediaMessage = message.getAttachments().isPresent() || message.getQuote().isPresent() || message.getSharedContacts().isPresent() || message.getPreviews().isPresent() || message.getSticker().isPresent() || message.getMentions().isPresent();
         Optional<GroupId>        groupId        = GroupUtil.idFromGroupContext(message.getGroupContext());
@@ -255,11 +258,11 @@ public final class MessageContentProcessor {
         else if (message.getRemoteDelete().isPresent())                                   handleRemoteDelete(content, message);
         else if (isMediaMessage) {
           //TODO Incoming media archived in this method!
-          Log.d("MNMNDDHAN", "content.getDataMessage() isMediaMessage 1");
+          ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > Media -->getDataMessage()");
           mediaMessage = handleMediaMessage(content, message, smsMessageId, groupId);
         }
         else if (message.getBody().isPresent()) {
-          Log.d("MNMNDDHAN", "content.getDataMessage() textMessage 2");
+          ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > Text -->getDataMessage()");
           textMessage = handleTextMessage(content, message, smsMessageId, groupId);
 
         }
@@ -277,7 +280,8 @@ public final class MessageContentProcessor {
           handleNeedsDeliveryReceipt(content, message);
         }
     } else if (content.getSyncMessage().isPresent()) {
-        Log.d("MNMNDDHAN", "content.getSyncMessage()");
+
+        ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > getSyncMessage()");
         TextSecurePreferences.setMultiDevice(context, true);
 
         SignalServiceSyncMessage syncMessage = content.getSyncMessage().get();
@@ -294,7 +298,7 @@ public final class MessageContentProcessor {
         else if (syncMessage.getMessageRequestResponse().isPresent()) handleSynchronizeMessageRequestResponse(syncMessage.getMessageRequestResponse().get());
         else                                                          warn(String.valueOf(content.getTimestamp()), "Contains no known sync types...");
       } else if (content.getCallMessage().isPresent()) {
-        Log.d("MNMNDDHAN", "content.getCallMessage()");
+        ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > getCallMessage()");
         log(String.valueOf(content.getTimestamp()), "Got call message...");
 
         SignalServiceCallMessage message             = content.getCallMessage().get();
@@ -312,17 +316,19 @@ public final class MessageContentProcessor {
         else if (message.getBusyMessage().isPresent())       handleCallBusyMessage(content, message.getBusyMessage().get());
         else if (message.getOpaqueMessage().isPresent())     handleCallOpaqueMessage(content, message.getOpaqueMessage().get());
       } else if (content.getReceiptMessage().isPresent()) {
-        Log.d("MNMNDDHAN", "content.getReceiptMessage()");
+
+        ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > getReceiptMessage()");
         SignalServiceReceiptMessage message = content.getReceiptMessage().get();
 
         if      (message.isReadReceipt())     handleReadReceipt(content, message);
         else if (message.isDeliveryReceipt()) handleDeliveryReceipt(content, message);
         else if (message.isViewedReceipt())   handleViewedReceipt(content, message);
       } else if (content.getTypingMessage().isPresent()) {
-        Log.d("MNMNDDHAN", "content.getTypingMessage()");
+
+        ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > getTypingMessage()");
         handleTypingMessage(content, content.getTypingMessage().get());
       } else {
-        Log.d("MNMNDDHAN", "Got unrecognized message!");
+        ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > Got unrecognized message!");
         warn(String.valueOf(content.getTimestamp()), "Got unrecognized message!");
       }
 
