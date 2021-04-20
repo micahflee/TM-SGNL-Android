@@ -92,7 +92,7 @@ android {
         javaMaxHeapSize "4g"
     }
 
-    signingConfigs {
+    signingConfigs { 
         /*if (keystores.debug != null) {
             debug {
                 storeFile file("${project.rootDir}/${keystores.debug.storeFile}")
