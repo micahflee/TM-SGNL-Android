@@ -70,7 +70,7 @@ protobuf {
 
 def canonicalVersionCode = 797
 def canonicalVersionName = "5.4.11"
-def signal_teleMessage_version = "1.0.1"
+def signal_teleMessage_version = "1.0.4"
 
 def postFixSize = 100
 def abiPostFix = ['universal'   : 0,
@@ -93,20 +93,20 @@ android {
     }
 
     signingConfigs {
-        if (keystores.debug != null) {
+        /*if (keystores.debug != null) {
             debug {
                 storeFile file("${project.rootDir}/${keystores.debug.storeFile}")
                 storePassword keystores.debug.storePassword
                 keyAlias keystores.debug.keyAlias
                 keyPassword keystores.debug.keyPassword
             }
-        }
-        /*release {
+        }*/
+        release {
             keyAlias 'telemessage brand'
             keyPassword 'Granit08'
             storeFile file('../../KeyStore/TelemessageBrand/telemessagebrand.keystore')
             storePassword 'Granit08'
-        }*/
+        }
     }
 
     defaultConfig {
