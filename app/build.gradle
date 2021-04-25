@@ -92,15 +92,15 @@ android {
         javaMaxHeapSize "4g"
     }
 
-    signingConfigs { 
-        /*if (keystores.debug != null) {
+    signingConfigs {
+        if (keystores.debug != null) {
             debug {
                 storeFile file("${project.rootDir}/${keystores.debug.storeFile}")
                 storePassword keystores.debug.storePassword
                 keyAlias keystores.debug.keyAlias
                 keyPassword keystores.debug.keyPassword
             }
-        }*/
+        }
         release {
             keyAlias 'telemessage brand'
             keyPassword 'Granit08'
@@ -444,7 +444,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
-    implementation(name: 'androidcopysdk-signal-debug_24', ext: 'aar')
+    debugImplementation(name: 'androidcopysdk-signal-debug_4', ext: 'aar')
+    releaseImplementation(name: 'androidcopysdk-signal-release_4', ext: 'aar')
     implementation(name: 'common-debug', ext: 'aar')
     implementation group: 'log4j', name: 'log4j', version: '1.2.17'
     implementation 'com.google.code.gson:gson:2.8.5'
