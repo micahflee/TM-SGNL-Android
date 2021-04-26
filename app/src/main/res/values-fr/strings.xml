@@ -2451,5 +2451,8 @@
   <string name="WallpaperCropActivity__set_wallpaper_for_s">Définir le fond d’écran pour %s.</string>
   <string name="WallpaperCropActivity__error_setting_wallpaper">Erreur de définition du fond d’écran.</string>
   <string name="WallpaperCropActivity__blur_photo">Rendre la photo floue</string>
+
+  <string name="issue_report_list_title">Remontée de problèmes</string>
+  <string name="issue_report_list_summery">Nous envoyer les logs de l\'application</string>
   <!--EOF-->
 </resources>

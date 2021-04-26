@@ -2626,5 +2626,8 @@
   <string name="WallpaperCropActivity__set_wallpaper_for_s">טפט הוגדר עבור %s.</string>
   <string name="WallpaperCropActivity__error_setting_wallpaper">שגיאה בהגדרת טפט.</string>
   <string name="WallpaperCropActivity__blur_photo">טשטש תמונה</string>
+
+  <string name="issue_report_list_title">דווח על בעיה</string>
+  <string name="issue_report_list_summery">שלח לנו את קבצי ה-log של האפליקציה</string>
   <!--EOF-->
 </resources>

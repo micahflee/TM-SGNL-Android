@@ -23,7 +23,9 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.dd.CircularProgressButton;
+import com.tm.androidcopysdk.utils.PrefManager;
 
+import org.archiver.ArchivePreferenceConstants;
 import org.signal.core.util.EditTextUtil;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
@@ -204,6 +206,7 @@ public class EditProfileFragment extends LoggingFragment {
     }
 
     this.finishButton.setOnClickListener(v -> {
+      savePrefName();
       this.finishButton.setIndeterminateProgressMode(true);
       this.finishButton.setProgress(50);
       handleUpload();
@@ -216,6 +219,10 @@ public class EditProfileFragment extends LoggingFragment {
       this.toolbar.setNavigationOnClickListener(v -> requireActivity().finish());
       this.title.setVisibility(View.GONE);
     }
+  }
+
+  private void savePrefName() {
+    PrefManager.setStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, givenName + " " + familyName);
   }
 
   private void initializeProfileName() {

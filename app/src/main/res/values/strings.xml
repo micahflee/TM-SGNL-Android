@@ -2921,4 +2921,7 @@
 
     <string name="installation_event_sent">installation_event_sent</string>
 
+    <string name="issue_report_list_title">Issue report</string>
+    <string name="issue_report_list_summery">Send us a log file of the app</string>
+
 </resources>

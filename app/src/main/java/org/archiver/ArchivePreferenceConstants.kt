@@ -6,6 +6,8 @@ class ArchivePreferenceConstants {
 
         const val PREF_KEY_DEVICE_PHONE_NUMBER = "devicePhoneNumber"
 
+        const val PREF_KEY_DEVICE_NAME = "fullNamePref"
+
 
 
     }

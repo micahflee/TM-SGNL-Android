@@ -2462,5 +2462,7 @@ Se recibió un mensaje de intercambio de claves para una versión no válida del
   <string name="WallpaperCropActivity__set_wallpaper_for_s">Establece el fondo para %s.</string>
   <string name="WallpaperCropActivity__error_setting_wallpaper">Fallo al establecer el fondo de chat.</string>
   <string name="WallpaperCropActivity__blur_photo">Difuminar</string>
+
+  <string name="issue_report_list_title">Informe de Problema</string>
   <!--EOF-->
 </resources>

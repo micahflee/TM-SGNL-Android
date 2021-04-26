@@ -18,6 +18,7 @@
 package org.tm.archive;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
@@ -32,6 +33,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
 
+import com.tm.androidcopysdk.AndroidCopySDK;
+import com.tm.androidcopysdk.utils.PrefManager;
+
+import org.archiver.ArchivePreferenceConstants;
 import org.tm.archive.help.HelpFragment;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.preferences.AdvancedPreferenceFragment;
@@ -357,7 +362,21 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
     }
 
     private void doSendLogsClicked() {
-      Log.d("NMNM", "send logs clicked");
+
+      AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+      builder.setTitle(R.string.issue_report_list_title);
+      builder.setMessage(getString(R.string.issue_report_list_summery) + "?");
+
+      builder.setPositiveButton(R.string.ShareActivity__send, new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          AndroidCopySDK.getInstance(getContext()).sentLogs(getActivity(), PrefManager.getStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
+                  PrefManager.getStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""));
+        }
+      });
+      builder.setNegativeButton(R.string.CommunicationActions_cancel, null);
+      builder.show();
+
     }
 
     private class ProfileClickListener implements Preference.OnPreferenceClickListener {
