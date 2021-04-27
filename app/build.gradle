@@ -70,7 +70,7 @@ protobuf {
 
 def canonicalVersionCode = 797
 def canonicalVersionName = "5.4.11"
-def signal_teleMessage_version = "1.0.8"
+def signal_teleMessage_version = "1.0.8" 
 
 def postFixSize = 100
 def abiPostFix = ['universal'   : 0,
