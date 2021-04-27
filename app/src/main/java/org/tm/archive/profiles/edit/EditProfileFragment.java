@@ -222,7 +222,7 @@ public class EditProfileFragment extends LoggingFragment {
   }
 
   private void savePrefName() {
-    PrefManager.setStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, givenName + " " + familyName);
+    PrefManager.setStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, givenName.getText() + " " + familyName.getText());
   }
 
   private void initializeProfileName() {
