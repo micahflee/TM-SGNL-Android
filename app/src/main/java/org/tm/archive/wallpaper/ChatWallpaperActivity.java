@@ -26,7 +26,7 @@ public final class ChatWallpaperActivity extends PassphraseRequiredActivity {
 
   public static @NonNull Intent createIntent(@NonNull Context context) {
     return createIntent(context, null);
-    
+
   }
 
   public static @NonNull Intent createIntent(@NonNull Context context, @Nullable RecipientId recipientId) {
