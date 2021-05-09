@@ -113,12 +113,15 @@ class ArchiveSender {
 
         }
 
-        fun archiveMessageInboxMMS(aContext: Context, aGroupTitle: String, aType: ArchiveConstants.ProtocolType, aArchiveRecipient: Recipient, aRecipientList: MutableList<Recipient>?, aMessage: IncomingMediaMessage, aMessageId: Long, aArchiveFile: File? = null) {
-            val listOfFile = Array(1){aArchiveFile}
+        fun archiveMessageInboxMMS(aContext: Context, aGroupTitle: String?, aType: ArchiveConstants.ProtocolType, aArchiveRecipient: Recipient, aRecipientList: MutableList<Recipient>?, aMessage: IncomingMediaMessage, aMessageId: Long, aArchiveFile: File? = null) {
+            var listOfFile: Array<File?>? = null
+            if(aArchiveFile != null) {
+                listOfFile = Array(1) { aArchiveFile }
+            }
             archiveMessageInboxMMS(aContext, aGroupTitle, aType, aArchiveRecipient, aRecipientList, aMessage, aMessageId, listOfFile)
         }
 
-        fun archiveMessageInboxMMS(context: Context, groupTitle: String, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, recipientList: MutableList<Recipient>?, message: IncomingMediaMessage, messageId: Long, archiveFile: Array<File?>? = null) {
+        fun archiveMessageInboxMMS(context: Context, groupTitle: String?, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, recipientList: MutableList<Recipient>?, message: IncomingMediaMessage, messageId: Long, archiveFile: Array<File?>? = null) {
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = message.isGroupMessage
             val inboxRecipient = ""
