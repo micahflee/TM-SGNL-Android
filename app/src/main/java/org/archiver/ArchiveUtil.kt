@@ -53,7 +53,7 @@ class ArchiveUtil {
 
 
 
-        fun createSubjectForArchiving(context: Context, isInboxArchiveMessage: Boolean, isGroup: Boolean, recipient: Recipient, inboxRecipient: String = "", forceSms: Boolean, groupTitle: String = "") : String{
+        fun createSubjectForArchiving(context: Context, isInboxArchiveMessage: Boolean, isGroup: Boolean, recipient: Recipient, inboxRecipient: String = "", forceSms: Boolean, groupTitle: String? = "") : String{
 
             val archiveType: String = getArchiveType(isInboxArchiveMessage, isGroup, forceSms)
             val to = getToPartForSubject(context, isInboxArchiveMessage, recipient, isGroup, groupTitle)
@@ -62,7 +62,7 @@ class ArchiveUtil {
             return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${from.replace("+", "")} $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+", "")}"
         }
 
-        private fun getToPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, isGroup: Boolean, groupTitle: String): String {
+        private fun getToPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, isGroup: Boolean, groupTitle: String?): String {
             return when {
                 isGroup -> {
                     "$ARCHIVE_SUBJECT_CHAT_GROUP $groupTitle"
