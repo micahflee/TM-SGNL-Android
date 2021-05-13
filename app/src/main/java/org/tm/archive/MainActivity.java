@@ -5,10 +5,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.tm.androidcopysdk.utils.PrefManager;
+
+import org.archiver.ArchivePreferenceConstants;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.util.AppStartup;
 import org.tm.archive.util.CachedInflater;
 import org.tm.archive.util.CommunicationActions;
@@ -70,6 +76,32 @@ public class MainActivity extends PassphraseRequiredActivity {
   protected void onResume() {
     super.onResume();
     dynamicTheme.onResume(this);
+
+    notifyMessageIfNeeded();
+
+  }
+
+  private void notifyMessageIfNeeded() {
+    boolean isAlreadyRestarted = PrefManager.getBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, false);
+
+    if(!isAlreadyRestarted){
+      PrefManager.setBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, true);
+
+      final Handler handler = new Handler(Looper.getMainLooper());
+      handler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          notifyMessage();
+        }
+      }, 4000);
+    }
+  }
+
+
+  public synchronized void notifyMessage(){
+    synchronized (ApplicationDependencies.getIncomingMessageObserver()) {
+      ApplicationDependencies.getIncomingMessageObserver().notifyAll();
+    }
   }
 
   @Override

@@ -8,6 +8,8 @@ class ArchivePreferenceConstants {
 
         const val PREF_KEY_DEVICE_NAME = "fullNamePref"
 
+        const val PREF_KEY_MAIN_ACTIVITY_RESTART = "isMainActivityAlreadyRestarted4"
+
 
 
     }
