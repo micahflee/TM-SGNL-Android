@@ -108,7 +108,7 @@ public class Quote {
   }
 
   private void readFromBuffer(ByteBuffer quoteBuf, int pos, byte[] buf){
-    quoteBuf.position(pos);
+    (((Buffer)quoteBuf).position(pos);
     quoteBuf.get(buf);
   }
 
