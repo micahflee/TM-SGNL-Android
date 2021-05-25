@@ -364,7 +364,15 @@ public class AttachmentManager {
   }
 
   public static void selectDocument(Activity activity, int requestCode) {
-    selectMediaType(activity, "*/*", null, requestCode);
+    Permissions.with(activity)
+            .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+            .ifNecessary()
+            .withPermanentDenialDialog(activity.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
+            .onAllGranted(() -> selectMediaType(activity, "*/*", null, requestCode))
+            .execute();
+
+
+
   }
 
   public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull TransportOption transport) {
