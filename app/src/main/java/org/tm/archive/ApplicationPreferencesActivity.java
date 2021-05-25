@@ -18,12 +18,14 @@
 package org.tm.archive;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -39,6 +41,7 @@ import com.tm.androidcopysdk.utils.PrefManager;
 import org.archiver.ArchivePreferenceConstants;
 import org.tm.archive.help.HelpFragment;
 import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.preferences.AboutPreferenceFragment;
 import org.tm.archive.preferences.AdvancedPreferenceFragment;
 import org.tm.archive.preferences.AppProtectionPreferenceFragment;
 import org.tm.archive.preferences.AppearancePreferenceFragment;
@@ -93,6 +96,7 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
   private static final String PREFERENCE_CATEGORY_ADVANCED       = "preference_category_advanced";
   private static final String PREFERENCE_CATEGORY_DONATE         = "preference_category_donate";
   private static final String PREFERENCE_CATEGORY_SEND_LOGS         = "preference_category_send_log";
+  private static final String PREFERENCE_CATEGORY_ABOUT         = "preference_category_about";
 
   private static final String WAS_CONFIGURATION_UPDATED          = "was_configuration_updated";
 
@@ -227,6 +231,8 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
           .setOnPreferenceClickListener(new CategoryClickListener(PREFERENCE_CATEGORY_DONATE));
       this.findPreference(PREFERENCE_CATEGORY_SEND_LOGS)
           .setOnPreferenceClickListener(new CategoryClickListener(PREFERENCE_CATEGORY_SEND_LOGS));
+      this.findPreference(PREFERENCE_CATEGORY_ABOUT)
+          .setOnPreferenceClickListener(new CategoryClickListener(PREFERENCE_CATEGORY_ABOUT));
 
       tintIcons();
     }
@@ -343,8 +349,12 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
           break;
         case PREFERENCE_CATEGORY_DONATE:
           CommunicationActions.openBrowserLink(requireContext(), getString(R.string.donate_url));
+          break;
         case PREFERENCE_CATEGORY_SEND_LOGS:
           doSendLogsClicked();
+          break;
+        case PREFERENCE_CATEGORY_ABOUT:
+          fragment = new AboutPreferenceFragment();
           break;
         default:
           throw new AssertionError();

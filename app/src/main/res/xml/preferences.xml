@@ -55,4 +55,8 @@
                 android:title="@string/preferences__send_logs_to_telemessage"
                 android:icon="@drawable/ic_settings_logs_icon" />
 
+    <Preference android:key="preference_category_about"
+        android:title="@string/ManageProfileFragment_about"
+        android:icon="@drawable/ic_about_icon" />
+
 </PreferenceScreen>
