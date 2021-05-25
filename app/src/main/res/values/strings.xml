@@ -2087,7 +2087,7 @@
     <string name="AndroidManifest__select_contacts">Select contacts</string>
     <string name="AndroidManifest__change_passphrase">Change passphrase</string>
     <string name="AndroidManifest__verify_safety_number">Verify safety number</string>
-    <string name="AndroidManifest__log_submit">Submit debug log</string>
+    <string name="AndroidManifest__log_submit">Submit debug log to Signal</string>
     <string name="AndroidManifest__media_preview">Media preview</string>
     <string name="AndroidManifest__message_details">Message details</string>
     <string name="AndroidManifest__linked_devices">Linked devices</string>
