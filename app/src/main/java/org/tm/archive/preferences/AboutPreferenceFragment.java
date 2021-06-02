@@ -59,6 +59,7 @@ import java.io.IOException;
 public class AboutPreferenceFragment extends Fragment {
   private static final String TAG = AboutPreferenceFragment.class.getSimpleName();
 
+  private TextView fullAppName;
   private TextView version;
   private TextView doNotSell;
   private TextView policy;
@@ -94,6 +95,7 @@ public class AboutPreferenceFragment extends Fragment {
 
   private void initResources(View view){
 
+    fullAppName = view.findViewById(R.id.full_app_name);
     version = view.findViewById(R.id.version);
     terms = view.findViewById(R.id.terms);
     center = view.findViewById(R.id.privacy_center);
@@ -101,6 +103,7 @@ public class AboutPreferenceFragment extends Fragment {
 
     version.setText("version" + " " + getVersionString(getActivity()));
 
+    setString(fullAppName,R.string.settings_about_title,null);
     setString(terms,R.string.terms_about,null);
     setString(center,R.string.privacy_center_about,null);
 
