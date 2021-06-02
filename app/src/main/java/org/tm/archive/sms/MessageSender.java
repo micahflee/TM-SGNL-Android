@@ -70,6 +70,7 @@ import org.tm.archive.jobs.ResumableUploadSpecJob;
 import org.tm.archive.jobs.SmsSendJob;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mms.MmsException;
+import org.tm.archive.mms.OutgoingExpirationUpdateMessage;
 import org.tm.archive.mms.OutgoingGroupUpdateMessage;
 import org.tm.archive.mms.OutgoingMediaMessage;
 import org.tm.archive.mms.OutgoingSecureMediaMessage;
@@ -187,7 +188,8 @@ public class MessageSender {
             ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, null);
 
           }
-          if (message instanceof OutgoingGroupUpdateMessage) {
+          if (message instanceof OutgoingGroupUpdateMessage
+          || message instanceof OutgoingExpirationUpdateMessage) {
             //TODO - Group updates!!
           } else {
             ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getBody(), messageId);
