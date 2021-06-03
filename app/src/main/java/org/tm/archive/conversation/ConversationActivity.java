@@ -109,6 +109,7 @@ import org.tm.archive.ShortcutLauncherActivity;
 import org.tm.archive.TransportOption;
 import org.tm.archive.VerifyIdentityActivity;
 import org.tm.archive.attachments.Attachment;
+import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.TombstoneAttachment;
 import org.tm.archive.audio.AudioRecorder;
 import org.tm.archive.components.AnimatingToggle;
@@ -150,6 +151,7 @@ import org.tm.archive.conversation.ui.mentions.MentionsPickerViewModel;
 import org.tm.archive.conversationlist.model.MessageResult;
 import org.tm.archive.crypto.DatabaseSessionLock;
 import org.tm.archive.crypto.SecurityEvent;
+import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.DraftDatabase;
 import org.tm.archive.database.DraftDatabase.Draft;
@@ -2771,36 +2773,12 @@ public class ConversationActivity extends PassphraseRequiredActivity
     SimpleTask.run(() -> {
 
       Pair<Long,Long> resultId = MessageSender.sendPushWithPreUploadedMedia(this, secureMessage, result.getPreUploadResults(), thread, () -> fragment.releaseOutgoingMessage(id));
-      archiveMediaMessage(result, message,resultId.second());
+
       int deleted = DatabaseFactory.getAttachmentDatabase(this).deleteAbandonedPreuploadedAttachments();
       Log.i(TAG, "Deleted " + deleted + " abandoned attachments.");
 
       return resultId.first();
     }, this::sendComplete);
-  }
-
-  private void archiveMediaMessage(MediaSendActivityResult result, OutgoingMediaMessage message, Long messageId) {
-
-    if(checkWriteExternalPermission(this)) {
-      File tempFileForArchiving = null;
-      File [] filesToSend = new File[result.getUriList().size()];
-      String fileName = "";
-      for (int i = 0; i < result.getUriList().size(); i++) {
-          tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(this,result.getUriList().get(i));
-          filesToSend[i] = tempFileForArchiving;
-      }
-
-      ArchiveSender.Companion.archiveMessageOutboxMMS(this, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, filesToSend);
-      for (int i = 0; i < result.getUriList().size(); i++) {
-        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(this, filesToSend[i].getName(), true);
-        ArchiveFileUtil.deleteFile(this, getCacheDir().getName(), filesToSend[i].getName());
-      }
-
-
-    }else {
-      ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 132);
-    }
-
   }
 
   public static boolean checkWriteExternalPermission(Context context)

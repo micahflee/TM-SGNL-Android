@@ -393,7 +393,7 @@ This method can parse out the real local file path from a file URI.
         return resultFile;
     }
 
-    private static File getFileFromDataBaseUri(Context context, String contentUri) {
+    public static File getFileFromDataBaseUri(Context context, String contentUri) {
         if(ConversationActivity.checkWriteExternalPermission(context)) {
             String[] splitUri = contentUri.split("/");
             int splitLength = splitUri.length;

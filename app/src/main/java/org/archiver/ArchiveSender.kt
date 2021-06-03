@@ -14,6 +14,7 @@ import org.archiver.ArchiveUtil.Companion.getFromPartForSubject
 import org.archiver.ArchiveUtil.Companion.getGroupInboxRecipientNumber
 import org.archiver.ArchiveUtil.Companion.getMessageBody
 import org.archiver.ArchiveUtil.Companion.groupId
+import org.signal.glide.Log
 import org.tm.archive.database.DatabaseFactory
 import org.tm.archive.mms.IncomingMediaMessage
 import org.tm.archive.mms.OutgoingMediaMessage
@@ -26,11 +27,12 @@ class ArchiveSender {
     companion object{
 
         private fun sendArchiveMessage(context: Context, aProtocolType: ArchiveConstants.ProtocolType, toRecipientsList: Array<String>, from: String, messageBody: String?, messageId: String, dateInTimeStamp: Long, subject: String, chatMode: DataGrabber.CHAT_MODE, chatName: String, chatId: String?, fromNameString: String, toRecipientsListNames: Array<String>, archiveFile: Array<File?>? = null){
+            Log.d("MNMNMDD", "messageId = " + messageId + " message text " + messageBody)
 
             if(archiveFile == null) {
-                DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, messageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, ArchiveUtil.getPhoneNumberInTestMode(context), toRecipientsListNames, toRecipientsList)
+                DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, dateInTimeStamp.toString() + messageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, ArchiveUtil.getPhoneNumberInTestMode(context), toRecipientsListNames, toRecipientsList)
             }else {
-                DataGrabber.getInstance(context).setMmsMessage(aProtocolType.type, toRecipientsList, from, messageBody, messageId + "M", dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, ArchiveUtil.getPhoneNumberInTestMode(context), toRecipientsListNames, toRecipientsList, archiveFile)
+                DataGrabber.getInstance(context).setMmsMessage(aProtocolType.type, toRecipientsList, from, messageBody, dateInTimeStamp.toString() + messageId + "M", dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, ArchiveUtil.getPhoneNumberInTestMode(context), toRecipientsListNames, toRecipientsList, archiveFile)
             }
         }
 
