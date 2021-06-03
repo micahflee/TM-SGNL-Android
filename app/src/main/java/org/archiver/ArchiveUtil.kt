@@ -204,6 +204,10 @@ class ArchiveUtil {
                 }
             }
 
+            if(recipientListFromRecipient.toTypedArray().isEmpty()){
+                return arrayOf("")
+            }
+            
             return recipientListFromRecipient.toTypedArray()
         }
 
