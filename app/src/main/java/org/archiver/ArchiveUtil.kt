@@ -10,11 +10,12 @@ import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLAT
 import org.archiver.ArchiveConstants.Companion.isTestMode
 import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
 import org.tm.archive.database.model.Mention
+import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.OutgoingMediaMessage
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.IncomingTextMessage
-import java.util.*
 
 class ArchiveUtil {
 
@@ -232,6 +233,48 @@ class ArchiveUtil {
             }
         }
 
+        fun createPreviewLinkBody(incomingMediaMessage: IncomingMediaMessage?, outComingMediaMessage: OutgoingMediaMessage?) : String? {
+            var body = ""
+            if(incomingMediaMessage != null){
+                return if(incomingMediaMessage.linkPreviews.isEmpty()){
+                    getMessageBody(incomingMediaMessage.body, incomingMediaMessage.mentions)
+                }else{
+                    generateBodyFromLinkPreview(incomingMediaMessage.linkPreviews[0])
+                }
+            }else if(outComingMediaMessage != null){
+                return if(outComingMediaMessage.linkPreviews.isEmpty()){
+                    getMessageBody(outComingMediaMessage.body, outComingMediaMessage.mentions)
+                }else{
+                    generateBodyFromLinkPreview(outComingMediaMessage.linkPreviews[0])
+                }
+            }
+            return ""
+        }
+
+        private fun generateBodyFromLinkPreview(linkPreview: LinkPreview?): String {
+            var body = ""
+            if (linkPreview!!.title.isNotEmpty()) {
+                body += """
+                Site title: ${linkPreview.title}
+                
+                """.trimIndent()
+            }
+            if (linkPreview.url.isNotEmpty()) {
+                body += """
+                Site url: ${linkPreview.url}
+                
+                """.trimIndent()
+            }
+
+            if (linkPreview.description.isNotEmpty()) {
+                body += """
+                Site description: ${linkPreview.description}
+                
+                """.trimIndent()
+            }
+            return body
+        }
+
         fun cleanMessageBodyFromUnusedCharacters(messageBody: String?): String {
             return if(messageBody != null && messageBody.isNotEmpty()) {
                 messageBody.replace("\u2069", "").replace("\u2068", "")
@@ -240,7 +283,7 @@ class ArchiveUtil {
             }
         }
 
-        fun getRecipientFromRecipientID(recipientId : RecipientId) : Recipient{
+        fun getRecipientFromRecipientID(recipientId: RecipientId) : Recipient{
             return Recipient.resolved(recipientId)
         }
 
@@ -248,6 +291,7 @@ class ArchiveUtil {
 
     enum class InboxArchiveTypes{
         MEDIA,
+        HYPER_LINK,
         STICKER,
         CONTACT,
         MENTIONS;

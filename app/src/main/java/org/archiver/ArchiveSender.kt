@@ -108,8 +108,9 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup)
-            
-            sendArchiveMessage(context, type, toRecipientsList, from, message.body, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
+            val messageBody = ArchiveUtil.createPreviewLinkBody(null, message)
+
+            sendArchiveMessage(context, type, toRecipientsList, from, messageBody , messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
 
             sendArchiveLog("archiveMessageOutboxMMS --> type = $type subject = $subject  Message ID = $messageId")
 
@@ -135,7 +136,7 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, recipientList, isGroup)
-            val messageBody = getMessageBody(message.body, message.mentions)
+            val messageBody = ArchiveUtil.createPreviewLinkBody(message, null)
             sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
 
             sendArchiveLog("archiveMessageInboxMMS --> type = $type subject = $subject recipientList $recipientList  Message ID = $messageId")
@@ -155,7 +156,7 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, recipientList, isGroup)
-            val messageBody = getMessageBody(message.body, message.mentions)
+            val messageBody = ArchiveUtil.createPreviewLinkBody( null, message)
             sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
 
             sendArchiveLog("archiveMessageOutboxSyncMMS --> type = $type subject = $subject  Message ID = $messageId")

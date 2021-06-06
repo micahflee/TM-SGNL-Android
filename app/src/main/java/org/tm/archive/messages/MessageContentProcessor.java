@@ -1101,8 +1101,11 @@ public final class MessageContentProcessor {
           }
           ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), att.getAttachmentId(), false));
         }
-
-        archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MEDIA, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), filesToArchive);
+        if(mediaMessage != null && mediaMessage.getLinkPreviews().size() == 0) {
+          archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MEDIA, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), filesToArchive);
+        }else{
+          archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.HYPER_LINK, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), filesToArchive);
+        }
       }if(stickerAttachments != null && stickerAttachments.size() > 0){
 
         File [] filesToArchive = new File[stickerAttachments.size()];
@@ -1134,6 +1137,10 @@ public final class MessageContentProcessor {
 
   private void archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes aInboxArchiveTypes, String groupTitle, Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, File [] attachments) {
     if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.MEDIA) {
+      if(attachments != null && attachments.length > 0){
+        ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, attachments);
+      }
+    }else if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.HYPER_LINK) {
       if(attachments != null && attachments.length > 0){
         ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, attachments);
       }

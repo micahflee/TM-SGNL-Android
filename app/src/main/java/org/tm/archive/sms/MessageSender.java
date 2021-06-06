@@ -18,6 +18,7 @@ package org.tm.archive.sms;
 
 import android.Manifest;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -31,6 +32,7 @@ import com.annimon.stream.Stream;
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveFileUtil;
 import org.archiver.ArchiveSender;
+import org.archiver.ArchiveUtil;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
@@ -74,6 +76,7 @@ import org.tm.archive.mms.OutgoingExpirationUpdateMessage;
 import org.tm.archive.mms.OutgoingGroupUpdateMessage;
 import org.tm.archive.mms.OutgoingMediaMessage;
 import org.tm.archive.mms.OutgoingSecureMediaMessage;
+import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.service.ExpiringMessageManager;
@@ -143,8 +146,9 @@ public class MessageSender {
       long      messageId         = database.insertMessageOutbox(message, allocatedThreadId, forceSms, insertListener);
 
       sendMediaMessage(context, recipient, forceSms, messageId, Collections.emptyList());
-
-      archiveMediaOrGroupMessage(context, message, recipient, messageId);
+      if(message.getLinkPreviews().isEmpty()) {
+        archiveMediaOrGroupMessage(context, message, recipient, messageId);
+      }
 
       onMessageSent();
 
@@ -187,10 +191,9 @@ public class MessageSender {
           if (message.getOutgoingQuote() != null) {
             ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, null);
 
-          }
-          if (message instanceof OutgoingGroupUpdateMessage
+          }else if (message instanceof OutgoingGroupUpdateMessage
           || message instanceof OutgoingExpirationUpdateMessage) {
-            //TODO - Group updates!!
+            //TODO - Group events/updates!!
           } else {
             ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getBody(), messageId);
           }

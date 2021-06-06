@@ -191,12 +191,18 @@ public class PushMediaSendJob extends PushSendJob {
         tempFileForArchiving = ArchiveFileUtil.getFileFromDataBaseUri(context,message.getAttachments().get(i).getUri().toString());
         filesToSend[i] = tempFileForArchiving;
       }
+      if(!message.getLinkPreviews().isEmpty()){
+        if(!message.getLinkPreviews().get(0).getThumbnail().get().getUri().toString().isEmpty()){
+          filesToSend = new File[1];
+          filesToSend[0] = ArchiveFileUtil.createFileFromContentUri(context,message.getLinkPreviews().get(0).getThumbnail().get().getUri().toString());
+        }
 
-      ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, filesToSend);
-      for (int i = 0; i < message.getAttachments().size(); i++) {
-        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, filesToSend[i].getName(), true);
       }
 
+      ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, filesToSend);
+      for (int i = 0; i < filesToSend.length; i++) {
+        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, filesToSend[i].getName(), true);
+      }
   }
 
 
