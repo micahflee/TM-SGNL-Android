@@ -392,26 +392,24 @@ This method can parse out the real local file path from a file URI.
         }
         return resultFile;
     }
-
+    
     public static File getFileFromDataBaseUri(Context context, String contentUri) {
-        if(ConversationActivity.checkWriteExternalPermission(context)) {
-            String[] splitUri = contentUri.split("/");
-            int splitLength = splitUri.length;
-            DatabaseAttachment databaseAttachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
-            String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
-            InputStream attachmentInputStream = null;
-            try {
-                attachmentInputStream = DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(databaseAttachment.getAttachmentId(),0);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            String fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
-            File resultFile = new File(context.getCacheDir(), fileName);
-            ArchiveFileUtil.copyInputStreamToFile(attachmentInputStream, resultFile);
 
-            return resultFile;
+        String[] splitUri = contentUri.split("/");
+        int splitLength = splitUri.length;
+        DatabaseAttachment databaseAttachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
+        String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
+        InputStream attachmentInputStream = null;
+        try {
+            attachmentInputStream = DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(databaseAttachment.getAttachmentId(),0);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return null;
+        String fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
+        File resultFile = new File(context.getCacheDir(), fileName);
+        ArchiveFileUtil.copyInputStreamToFile(attachmentInputStream, resultFile);
+
+        return resultFile;
     }
 
     private static File getFileFromBlobProvider(Context context, String contentUri) {
