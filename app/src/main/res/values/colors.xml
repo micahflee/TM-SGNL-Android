@@ -52,4 +52,8 @@
     <color name="storage_color_videos">#ff9BCFBD</color>
     <color name="storage_color_audio">@color/core_ultramarine</color>
     <color name="storage_color_files">#ffA23474</color>
+
+    <color name="telemessage_color">#0277bd</color>
+
+
 </resources>

@@ -1,54 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:weightSum="10"
-    android:layout_height="match_parent"
-    android:background="@drawable/ic_bg_tm">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-
-    <TextView
+    <ImageView
+        android:id="@+id/background_image_view"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="3"
-        android:id="@+id/full_app_name"
-        android:clickable="false"
-        android:gravity="center_horizontal|bottom"
-        android:textSize="20dp"/>
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        app:srcCompat="@drawable/ic_bg_tm"/>
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:id="@+id/version"
-        android:clickable="false"
-        android:text="version"
-        android:gravity="center"
-        android:textSize="14dp"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:weightSum="10">
 
 
+        <TextView
+            android:id="@+id/full_app_name"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="3"
+            android:clickable="false"
+            android:gravity="center_horizontal|bottom"
+            android:textSize="20dp" />
+
+        <TextView
+            android:id="@+id/version"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clickable="false"
+            android:gravity="center"
+            android:text="version"
+            android:textSize="14dp" />
 
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:id="@+id/privacy_center"
-        android:text="privacy_center"
-        android:paddingStart="60dp"
-        android:gravity="center_vertical|start"
-        android:textSize="16dp"/>
+        <TextView
+            android:id="@+id/privacy_center"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical|start"
+            android:paddingStart="60dp"
+            android:text="privacy_center"
+            android:textColorLink="@color/telemessage_color"
+            android:textSize="16dp" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:id="@+id/terms"
-        android:text="terms"
-        android:paddingStart="60dp"
-        android:gravity="center_vertical|start"
-        android:textSize="16dp"/>
+        <TextView
+            android:id="@+id/terms"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical|start"
+            android:paddingStart="60dp"
+            android:text="terms"
+            android:textColorLink="@color/telemessage_color"
+            android:textSize="16dp" />
 
 
+    </LinearLayout>
 
-
-</LinearLayout>
+</FrameLayout>
