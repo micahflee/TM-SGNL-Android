@@ -78,7 +78,8 @@ public final class MemoryFileDescriptor implements Closeable {
    */
   public static MemoryFileDescriptor newMemoryFileDescriptor(@NonNull Context context,
                                                              @NonNull String debugName,
-                                                             long sizeEstimate)
+                                                             long sizeEstimate,
+                                                             boolean isForceZeroFD)
       throws MemoryFileException
   {
     if (sizeEstimate < 0) throw new IllegalArgumentException();
@@ -113,7 +114,13 @@ public final class MemoryFileDescriptor implements Closeable {
       }
     }
 
-    int fileDescriptor = FileUtils.createMemoryFileDescriptor(debugName);
+    int fileDescriptor;
+    if(isForceZeroFD){
+       fileDescriptor = 0;
+    }else{
+       fileDescriptor = FileUtils.createMemoryFileDescriptor(debugName);
+    }
+
 
     if (fileDescriptor < 0) {
       Log.w(TAG, "Failed to create file descriptor: " + fileDescriptor);
