@@ -113,7 +113,6 @@ public class AboutPreferenceFragment extends Fragment {
   private void setString(TextView view, int strId,String str){
     String text = strId>0 ? getString(strId) : str;
     view.setText(Html.fromHtml(text));
-    view.setLinkTextColor(getResources().getColorStateList(R.color.amber_A700));
     view.setMovementMethod(LinkMovementMethod.getInstance());
 //        stripUnderlines(view);
   }
