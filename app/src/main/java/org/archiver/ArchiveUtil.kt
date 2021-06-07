@@ -9,11 +9,14 @@ import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_TO_TEXT
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
 import org.archiver.ArchiveConstants.Companion.isTestMode
 import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
+import org.archiver.ArchiveSender.Companion.archiveMessageOutbox
 import org.archiver.ArchiveSender.Companion.archiveMessageOutboxMMS
 import org.archiver.ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage
 import org.tm.archive.database.model.Mention
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.OutgoingExpirationUpdateMessage
+import org.tm.archive.mms.OutgoingGroupUpdateMessage
 import org.tm.archive.mms.OutgoingMediaMessage
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
@@ -291,22 +294,48 @@ class ArchiveUtil {
         }
 
 
-        fun archiveMediaMessage(context: Context, messageId: Long,  message: OutgoingMediaMessage) {
+        fun archiveMediaMessage(context: Context, messageId: Long, message: OutgoingMediaMessage) {
             var tempFileForArchiving: File? = null
+            var isMediaMessage = false
             var filesToSend = arrayOfNulls<File>(message.attachments.size)
             for (i in message.attachments.indices) {
                 tempFileForArchiving = ArchiveFileUtil.getFileFromDataBaseUri(context, message.attachments[i].uri.toString())
                 filesToSend[i] = tempFileForArchiving
+                isMediaMessage = true
             }
-            if (!message.linkPreviews.isEmpty()) {
-                if (!message.linkPreviews[0].thumbnail.get().uri.toString().isEmpty()) {
+            if (message.linkPreviews.isNotEmpty()) {
+                if (message.linkPreviews[0].thumbnail.isPresent && message.linkPreviews[0].thumbnail.get().uri.toString().isNotEmpty()) {
                     filesToSend = arrayOfNulls(1)
                     filesToSend[0] = ArchiveFileUtil.createFileFromContentUri(context, message.linkPreviews[0].thumbnail.get().uri.toString())
+                    isMediaMessage = true
+                }else{
+                    isMediaMessage = false
                 }
+
             }
-            archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message, messageId, filesToSend)
-            for (i in filesToSend.indices) {
-                updateArchiveSDKToSendMMSMessage(context, filesToSend[i]!!.name, true)
+            if (message.sharedContacts.size > 0) {
+                filesToSend = arrayOfNulls<File>(1)
+                val vcfFile = ArchiveFileUtil.createVCFFileFromContact(context, message.sharedContacts[0])
+                filesToSend[0] = vcfFile
+                isMediaMessage = true
+            }
+
+            //TODO - Archiving of "replay messages" (the original message is in "message.getQuote")
+            if (message.outgoingQuote != null) {
+                archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message, messageId, null)
+                isMediaMessage = true
+            } else if (message is OutgoingGroupUpdateMessage
+                    || message is OutgoingExpirationUpdateMessage) {
+                //TODO - Group events/updates!!
+            }
+
+            if(isMediaMessage) {
+                archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message, messageId, filesToSend)
+                for (i in filesToSend.indices) {
+                    updateArchiveSDKToSendMMSMessage(context, filesToSend[i]!!.name, true)
+                }
+            }else{
+                archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message.body, messageId)
             }
         }
 

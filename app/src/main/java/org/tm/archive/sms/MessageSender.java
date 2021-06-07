@@ -146,9 +146,6 @@ public class MessageSender {
       long      messageId         = database.insertMessageOutbox(message, allocatedThreadId, forceSms, insertListener);
 
       sendMediaMessage(context, recipient, forceSms, messageId, Collections.emptyList());
-      if(message.getLinkPreviews().isEmpty()) {
-        archiveMediaOrGroupMessage(context, message, recipient, messageId);
-      }
 
       onMessageSent();
 
@@ -157,48 +154,6 @@ public class MessageSender {
       Log.w(TAG, e);
       return threadId;
     }
-  }
-
-  public static void archiveMediaOrGroupMessage(Context context, OutgoingMediaMessage message, Recipient recipient, long messageId) {
-
-      if (message.getSharedContacts().size() > 0) {
-        File [] filesToSend = new File[1];
-
-        File vcfFile = ArchiveFileUtil.createVCFFileFromContact(context, message.getSharedContacts().get(0));
-        filesToSend[0] = vcfFile;
-        ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, filesToSend);
-        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, vcfFile.getName(), false);
-      } else {
-
-        if (message.getAttachments() != null && message.getAttachments().size() > 0) {
-          File [] filesToSend = new File[message.getAttachments().size()];
-          for (int i = 0; i < message.getAttachments().size(); i++) {
-            File tempFileForArchiving = null;
-            //String fileName = "";
-            tempFileForArchiving = ArchiveFileUtil.createFileFromContentUri(context, message.getAttachments().get(i).getUri().toString());
-            filesToSend[i] = tempFileForArchiving;
-
-          }
-
-          ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, filesToSend);
-          for (int i = 0; i < message.getAttachments().size(); i++) {
-            ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, filesToSend[i].getName(), true);
-            ArchiveFileUtil.deleteFile(context, context.getCacheDir().getName(), filesToSend[i].getName());
-          }
-        } else {
-
-          //TODO - Archiving of "replay messages" (the original message is in "message.getQuote")
-          if (message.getOutgoingQuote() != null) {
-            ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, null);
-
-          }else if (message instanceof OutgoingGroupUpdateMessage
-          || message instanceof OutgoingExpirationUpdateMessage) {
-            //TODO - Group events/updates!!
-          } else {
-            ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getBody(), messageId);
-          }
-        }
-      }
   }
 
 
