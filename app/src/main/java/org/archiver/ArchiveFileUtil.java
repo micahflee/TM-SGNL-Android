@@ -398,7 +398,13 @@ This method can parse out the real local file path from a file URI.
         String[] splitUri = contentUri.split("/");
         int splitLength = splitUri.length;
         DatabaseAttachment databaseAttachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
-        String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
+        String fileType = "";
+        try {
+            fileType = databaseAttachment.getFileName().split("\\.")[1];
+        }catch (Exception e){
+            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
+        }
+
         InputStream attachmentInputStream = null;
         try {
             attachmentInputStream = DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(databaseAttachment.getAttachmentId(),0);
