@@ -10,6 +10,10 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 import com.google.protobuf.ByteString;
 
+import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveFileUtil;
+import org.archiver.ArchiveSender;
+import org.archiver.ArchiveUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
 import org.tm.archive.attachments.Attachment;
@@ -59,6 +63,7 @@ import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedExcept
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContext;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContextV2;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -105,6 +110,7 @@ public final class PushGroupSendJob extends PushSendJob {
                              @NonNull RecipientId destination,
                              @Nullable RecipientId filterAddress)
   {
+    Log.d(TAG, "PushGroupSendJob enqueue");
     try {
       Recipient group = Recipient.resolved(destination);
       if (!group.isPushGroup()) {
@@ -153,6 +159,8 @@ public final class PushGroupSendJob extends PushSendJob {
   public void onPushSend()
       throws IOException, MmsException, NoSuchMessageException,  RetryLaterException
   {
+
+    Log.d(TAG, "PushGroupSendJob onPushSend");
     MessageDatabase           database                   = DatabaseFactory.getMmsDatabase(context);
     OutgoingMediaMessage      message                    = database.getOutgoingMessage(messageId);
     List<NetworkFailure>      existingNetworkFailures    = message.getNetworkFailures();
@@ -160,6 +168,8 @@ public final class PushGroupSendJob extends PushSendJob {
 
     long threadId = DatabaseFactory.getThreadDatabase(context).getThreadIdFor(message.getRecipient());
     ApplicationDependencies.getJobManager().cancelAllInQueue(TypingSendJob.getQueue(threadId));
+
+    ArchiveUtil.Companion.archiveMediaMessage(context, messageId, message);
 
     if (database.isSent(messageId)) {
       log(TAG, String.valueOf(message.getSentTimeMillis()),  "Message " + messageId + " was already sent. Ignoring.");

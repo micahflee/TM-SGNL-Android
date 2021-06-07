@@ -9,6 +9,8 @@ import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_TO_TEXT
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
 import org.archiver.ArchiveConstants.Companion.isTestMode
 import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
+import org.archiver.ArchiveSender.Companion.archiveMessageOutboxMMS
+import org.archiver.ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage
 import org.tm.archive.database.model.Mention
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mms.IncomingMediaMessage
@@ -16,6 +18,7 @@ import org.tm.archive.mms.OutgoingMediaMessage
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.IncomingTextMessage
+import java.io.File
 
 class ArchiveUtil {
 
@@ -285,6 +288,26 @@ class ArchiveUtil {
 
         fun getRecipientFromRecipientID(recipientId: RecipientId) : Recipient{
             return Recipient.resolved(recipientId)
+        }
+
+
+        fun archiveMediaMessage(context: Context, messageId: Long,  message: OutgoingMediaMessage) {
+            var tempFileForArchiving: File? = null
+            var filesToSend = arrayOfNulls<File>(message.attachments.size)
+            for (i in message.attachments.indices) {
+                tempFileForArchiving = ArchiveFileUtil.getFileFromDataBaseUri(context, message.attachments[i].uri.toString())
+                filesToSend[i] = tempFileForArchiving
+            }
+            if (!message.linkPreviews.isEmpty()) {
+                if (!message.linkPreviews[0].thumbnail.get().uri.toString().isEmpty()) {
+                    filesToSend = arrayOfNulls(1)
+                    filesToSend[0] = ArchiveFileUtil.createFileFromContentUri(context, message.linkPreviews[0].thumbnail.get().uri.toString())
+                }
+            }
+            archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message, messageId, filesToSend)
+            for (i in filesToSend.indices) {
+                updateArchiveSDKToSendMMSMessage(context, filesToSend[i]!!.name, true)
+            }
         }
 
     }

@@ -10,6 +10,7 @@ import com.annimon.stream.Stream;
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveFileUtil;
 import org.archiver.ArchiveSender;
+import org.archiver.ArchiveUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
 import org.tm.archive.attachments.Attachment;
@@ -73,7 +74,7 @@ public class PushMediaSendJob extends PushSendJob {
 
   @WorkerThread
   public static void enqueue(@NonNull Context context, @NonNull JobManager jobManager, long messageId, @NonNull Recipient recipient) {
-    Log.d("MNMNMNMSSSEEEENNNDDD", "enqueue messageId = " + messageId);
+    Log.d(TAG, "enqueue messageId = " + messageId);
     try {
       if (!recipient.hasServiceIdentifier()) {
         throw new AssertionError();
@@ -104,7 +105,7 @@ public class PushMediaSendJob extends PushSendJob {
 
   @Override
   public void onAdded() {
-    Log.d("MNMNMNMSSSEEEENNNDDD", "onAdded");
+    Log.d(TAG, "onAdded");
     DatabaseFactory.getMmsDatabase(context).markAsSending(messageId);
   }
 
@@ -113,7 +114,7 @@ public class PushMediaSendJob extends PushSendJob {
       throws IOException, MmsException, NoSuchMessageException, UndeliverableMessageException
   {
 
-    Log.d("MNMNMNMSSSEEEENNNDDD", "onPushSend");
+    Log.d(TAG, "onPushSend");
     ExpiringMessageManager expirationManager = ApplicationContext.getInstance(context).getExpiringMessageManager();
     MessageDatabase        database          = DatabaseFactory.getMmsDatabase(context);
     OutgoingMediaMessage   message           = database.getOutgoingMessage(messageId);
@@ -132,7 +133,7 @@ public class PushMediaSendJob extends PushSendJob {
       byte[]                 profileKey = recipient.getProfileKey();
       UnidentifiedAccessMode accessMode = recipient.getUnidentifiedAccessMode();
 
-      archiveMediaMessage(message);
+      ArchiveUtil.Companion.archiveMediaMessage(context, messageId, message);
 
       boolean unidentified = deliver(message);
 
@@ -182,29 +183,6 @@ public class PushMediaSendJob extends PushSendJob {
       RetrieveProfileJob.enqueue(recipientId);
     }
   }
-
-  private void archiveMediaMessage(OutgoingMediaMessage message) {
-
-      File tempFileForArchiving = null;
-      File [] filesToSend = new File[message.getAttachments().size()];
-      for (int i = 0; i < message.getAttachments().size(); i++) {
-        tempFileForArchiving = ArchiveFileUtil.getFileFromDataBaseUri(context,message.getAttachments().get(i).getUri().toString());
-        filesToSend[i] = tempFileForArchiving;
-      }
-      if(!message.getLinkPreviews().isEmpty()){
-        if(!message.getLinkPreviews().get(0).getThumbnail().get().getUri().toString().isEmpty()){
-          filesToSend = new File[1];
-          filesToSend[0] = ArchiveFileUtil.createFileFromContentUri(context,message.getLinkPreviews().get(0).getThumbnail().get().getUri().toString());
-        }
-
-      }
-
-      ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.getRecipient(), message, messageId, filesToSend);
-      for (int i = 0; i < filesToSend.length; i++) {
-        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, filesToSend[i].getName(), true);
-      }
-  }
-
 
   @Override
   public void onFailure() {

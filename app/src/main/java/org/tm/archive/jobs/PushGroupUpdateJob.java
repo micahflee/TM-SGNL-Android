@@ -76,6 +76,7 @@ public class PushGroupUpdateJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException, UntrustedIdentityException {
+    Log.d("MNMNMNMSSSEEEENNNDDD", "PushGroupUpdateJob onRun");
     GroupDatabase           groupDatabase = DatabaseFactory.getGroupDatabase(context);
     Optional<GroupRecord>   record        = groupDatabase.getGroup(groupId);
     SignalServiceAttachment avatar        = null;
