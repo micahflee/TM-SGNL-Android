@@ -324,9 +324,6 @@ class ArchiveUtil {
             if (message.outgoingQuote != null) {
                 archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message, messageId, null)
                 isMediaMessage = true
-            } else if (message is OutgoingGroupUpdateMessage
-                    || message is OutgoingExpirationUpdateMessage) {
-                //TODO - Group events/updates!!
             }
 
             if(isMediaMessage) {
@@ -335,7 +332,14 @@ class ArchiveUtil {
                     updateArchiveSDKToSendMMSMessage(context, filesToSend[i]!!.name, true)
                 }
             }else{
-                archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message.body, messageId)
+                if (message !is OutgoingGroupUpdateMessage
+                        && message !is OutgoingExpirationUpdateMessage) {
+
+                    archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message.body, messageId)
+                }else{
+                    //TODO - Group events/updates!!
+                }
+
             }
         }
 
