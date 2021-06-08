@@ -399,7 +399,6 @@ This method can parse out the real local file path from a file URI.
         String[] splitUri = contentUri.split("/");
         int splitLength = splitUri.length;
         DatabaseAttachment databaseAttachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
-        String fileType = getFileType(databaseAttachment);
 
         InputStream attachmentInputStream = null;
         try {
@@ -407,8 +406,9 @@ This method can parse out the real local file path from a file URI.
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
-        File resultFile = new File(context.getCacheDir(), "signal_" + fileName);
+
+        String fileName = getFileNameWithType(databaseAttachment.getFileName(),databaseAttachment.getAttachmentId().getRowId(),databaseAttachment.getAttachmentId().getUniqueId(),databaseAttachment.getContentType());
+        File resultFile = new File(context.getCacheDir(),  fileName);
         ArchiveFileUtil.copyInputStreamToFile(attachmentInputStream, resultFile);
 
         return resultFile;
@@ -420,6 +420,20 @@ This method can parse out the real local file path from a file URI.
             fileType = databaseAttachment.getFileName().split("\\.")[1];
         }catch (Exception e){
             fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
+        }
+        return fileType;
+    }
+
+    public static String getFileType(String fileName, String contentType) {
+        String fileType;
+        try {
+            if(fileName != null) {
+                fileType = fileName.split("\\.")[1];
+            }else{
+                fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(contentType);
+            }
+        }catch (Exception e){
+            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(contentType);
         }
         return fileType;
     }
@@ -530,5 +544,13 @@ This method can parse out the real local file path from a file URI.
 
         return vcfFile;
 
+    }
+
+    public static String getFileNameWithType(String fileName, long messageId, long uniqueId, String contentType) {
+        if(fileName == null){
+            return ArchiveUtil.Companion.generateAttachmentName(messageId, uniqueId) + "." + ArchiveFileUtil.getFileType(fileName, contentType);
+        }else{
+            return fileName;
+        }
     }
 }

@@ -187,7 +187,8 @@ public final class AttachmentDownloadJob extends BaseJob {
       InputStream                    stream          = messageReceiver.retrieveAttachment(pointer, attachmentFile, MAX_ATTACHMENT_SIZE, (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
 
       Pair<InputStream, InputStream> inputStreamPair = FileUtils.duplicateInputStream(stream);
-      File tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId.getUniqueId()) + "." + ArchiveFileUtil.getFileType(attachment),inputStreamPair.first);
+      String fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.getFileName(), messageId, attachmentId.getUniqueId(), attachment.getContentType());
+      File tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, fileNameWithType,inputStreamPair.first);
 
       ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileWithData.getName(), false);
 
