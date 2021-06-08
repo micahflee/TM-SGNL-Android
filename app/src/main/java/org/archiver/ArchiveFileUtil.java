@@ -12,6 +12,7 @@ import android.provider.MediaStore;
 import android.webkit.MimeTypeMap;
 
 import org.jetbrains.annotations.Nullable;
+import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.contactshare.Contact;
@@ -398,12 +399,7 @@ This method can parse out the real local file path from a file URI.
         String[] splitUri = contentUri.split("/");
         int splitLength = splitUri.length;
         DatabaseAttachment databaseAttachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
-        String fileType = "";
-        try {
-            fileType = databaseAttachment.getFileName().split("\\.")[1];
-        }catch (Exception e){
-            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
-        }
+        String fileType = getFileType(databaseAttachment);
 
         InputStream attachmentInputStream = null;
         try {
@@ -412,10 +408,30 @@ This method can parse out the real local file path from a file URI.
             e.printStackTrace();
         }
         String fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
-        File resultFile = new File(context.getCacheDir(), fileName);
+        File resultFile = new File(context.getCacheDir(), "signal_" + fileName);
         ArchiveFileUtil.copyInputStreamToFile(attachmentInputStream, resultFile);
 
         return resultFile;
+    }
+
+    public static String getFileType(DatabaseAttachment databaseAttachment) {
+        String fileType;
+        try {
+            fileType = databaseAttachment.getFileName().split("\\.")[1];
+        }catch (Exception e){
+            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
+        }
+        return fileType;
+    }
+
+    public static String getFileType(Attachment attachment) {
+        String fileType;
+        try {
+            fileType = attachment.getFileName().split("\\.")[1];
+        }catch (Exception e){
+            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(attachment.getContentType());
+        }
+        return fileType;
     }
 
     private static File getFileFromBlobProvider(Context context, String contentUri) {

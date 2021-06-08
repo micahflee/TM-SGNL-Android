@@ -12,6 +12,7 @@ import androidx.annotation.VisibleForTesting;
 import com.tm.androidcopysdk.DataGrabber;
 
 import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveFileUtil;
 import org.archiver.ArchiveSender;
 import org.archiver.ArchiveUtil;
 import org.greenrobot.eventbus.EventBus;
@@ -186,7 +187,7 @@ public final class AttachmentDownloadJob extends BaseJob {
       InputStream                    stream          = messageReceiver.retrieveAttachment(pointer, attachmentFile, MAX_ATTACHMENT_SIZE, (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
 
       Pair<InputStream, InputStream> inputStreamPair = FileUtils.duplicateInputStream(stream);
-      File tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId.getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, attachment.getContentType()),inputStreamPair.first);
+      File tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId.getUniqueId()) + "." + ArchiveFileUtil.getFileType(attachment),inputStreamPair.first);
 
       ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileWithData.getName(), false);
 

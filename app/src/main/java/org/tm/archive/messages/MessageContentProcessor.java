@@ -1096,7 +1096,7 @@ public final class MessageContentProcessor {
         for (int i = 0; i < attachments.size(); i++) {
           DatabaseAttachment att = attachments.get(i);
           if (att != null) {
-            File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(insertResult.get().getMessageId(), att.getAttachmentId().getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, att.getContentType()));
+            File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(insertResult.get().getMessageId(), att.getAttachmentId().getUniqueId()) + "." + ArchiveFileUtil.getFileType(att));
             filesToArchive[i] = tempFileForArchiving;
           }
           ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), att.getAttachmentId(), false));
@@ -1113,7 +1113,7 @@ public final class MessageContentProcessor {
         for (int i = 0; i < stickerAttachments.size(); i++) {
           DatabaseAttachment att = stickerAttachments.get(i);
           if (att != null) {
-            File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(insertResult.get().getMessageId(), att.getAttachmentId().getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, att.getContentType()));
+            File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(insertResult.get().getMessageId(), att.getAttachmentId().getUniqueId()) + "." + ArchiveFileUtil.getFileType(att));
             filesToArchive[i] = tempFileForArchiving;
           }
           ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), att.getAttachmentId(), false));
@@ -1246,7 +1246,7 @@ public final class MessageContentProcessor {
         for (int i = 0; i < attachments.size(); i++) {
           DatabaseAttachment att = attachments.get(i);
           if (att != null) {
-            tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, att.getAttachmentId().getUniqueId()) + "." + FileUtils.getExtensionFromMimeType(context, att.getContentType()));
+            tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, att.getAttachmentId().getUniqueId()) + "." + ArchiveFileUtil.getFileType(att));
             filesToArchive[i] = tempFileForArchiving;
             ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(messageId, att.getAttachmentId(), false));
           }
