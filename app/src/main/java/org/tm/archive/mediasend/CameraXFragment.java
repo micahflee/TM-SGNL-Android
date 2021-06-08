@@ -220,6 +220,7 @@ public class CameraXFragment extends LoggingFragment implements CameraFragment {
     galleryButton.setOnClickListener(v -> controller.onGalleryClicked());
     countButton.setOnClickListener(v -> controller.onCameraCountButtonClicked());
 
+    //TODO Moti Amar- Fix the C++ native method (Java_org_tm_archive_util_FileUtils_createMemoryFileDescriptor)
     if (isVideoRecordingSupported(requireContext())) {
       try {
         closeVideoFileDescriptor();
@@ -275,7 +276,7 @@ public class CameraXFragment extends LoggingFragment implements CameraFragment {
 
   private boolean isVideoRecordingSupported(@NonNull Context context) {
     return Build.VERSION.SDK_INT >= 26                           &&
-           requireArguments().getBoolean(IS_VIDEO_ENABLED, true) &&
+           requireArguments().getBoolean(IS_VIDEO_ENABLED, false) && //TODO Moti Amar. - Change the default value to true and fix the video capture bug.
            MediaConstraints.isVideoTranscodeAvailable()          &&
            CameraXUtil.isMixedModeSupported(context)             &&
            VideoUtil.getMaxVideoRecordDurationInSeconds(context, viewModel.getMediaConstraints()) > 0;
