@@ -245,13 +245,13 @@ class ArchiveUtil {
                 return if(incomingMediaMessage.linkPreviews.isEmpty()){
                     getMessageBody(incomingMediaMessage.body, incomingMediaMessage.mentions)
                 }else{
-                    generateBodyFromLinkPreview(incomingMediaMessage.linkPreviews[0])
+                    generateBodyFromLinkPreview(incomingMediaMessage.linkPreviews[0]) + "\n" + incomingMediaMessage.body
                 }
             }else if(outComingMediaMessage != null){
                 return if(outComingMediaMessage.linkPreviews.isEmpty()){
                     getMessageBody(outComingMediaMessage.body, outComingMediaMessage.mentions)
                 }else{
-                    generateBodyFromLinkPreview(outComingMediaMessage.linkPreviews[0])
+                    generateBodyFromLinkPreview(outComingMediaMessage.linkPreviews[0]) + "\n" + outComingMediaMessage.body
                 }
             }
             return ""
