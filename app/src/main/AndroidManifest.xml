@@ -92,7 +92,8 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
 
     <application android:name=".ApplicationContext"
-                 android:icon="@mipmap/ic_launcher"
+                 android:icon="@mipmap/ic_launcher_round"
+                    android:roundIcon="@mipmap/ic_launcher_round"
                     android:requestLegacyExternalStorage="true"
                      android:usesCleartextTraffic="true"
 
@@ -231,9 +232,9 @@
         </intent-filter>
 
         <meta-data android:name="com.sec.minimode.icon.portrait.normal"
-                   android:resource="@mipmap/ic_launcher" />
+                   android:resource="@mipmap/ic_launcher_round" />
         <meta-data android:name="com.sec.minimode.icon.landscape.normal"
-                   android:resource="@mipmap/ic_launcher" />
+                   android:resource="@mipmap/ic_launcher_round" />
 
     </activity-alias>
 
