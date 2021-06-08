@@ -449,8 +449,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
-    releaseImplementation(name: 'androidcopysdk-signal-release_3', ext: 'aar')
-    debugImplementation(name: 'androidcopysdk-signal-debug_3', ext: 'aar')
+    releaseImplementation(name: 'androidcopysdk-signal-release_1', ext: 'aar')
+    debugImplementation(name: 'androidcopysdk-signal-debug_1', ext: 'aar')
     implementation(name: 'common-debug', ext: 'aar')
     implementation group: 'log4j', name: 'log4j', version: '1.2.17'
     implementation 'com.google.code.gson:gson:2.8.5'
