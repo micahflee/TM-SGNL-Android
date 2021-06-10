@@ -73,8 +73,8 @@ protobuf {
 //(Signal "5.4.11" and our version "1.0.16" will be =  "5.4.11.16" )
 
 def canonicalVersionCode = 797
-def canonicalVersionName = "5.4.11.19"
-def signal_teleMessage_version = "5.4.11.19"//Change this param in Jenkins builder and delete it.
+def canonicalVersionName = "5.4.11.20"
+def signal_teleMessage_version = "5.4.11.20"//Change this param in Jenkins builder and delete it.
 
 def postFixSize = 100
 def abiPostFix = ['universal'   : 0,
@@ -449,8 +449,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
-    releaseImplementation(name: 'androidcopysdk-signal-release_3', ext: 'aar')
-    debugImplementation(name: 'androidcopysdk-signal-debug_3', ext: 'aar')
+    releaseImplementation(name: 'androidcopysdk-signal-release_13', ext: 'aar')
+    debugImplementation(name: 'androidcopysdk-signal-debug_13', ext: 'aar')
     implementation(name: 'common-debug', ext: 'aar')
     implementation group: 'log4j', name: 'log4j', version: '1.2.17'
     implementation 'com.google.code.gson:gson:2.8.5'

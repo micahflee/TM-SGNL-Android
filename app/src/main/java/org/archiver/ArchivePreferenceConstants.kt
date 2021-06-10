@@ -10,6 +10,9 @@ class ArchivePreferenceConstants {
 
         const val PREF_KEY_MAIN_ACTIVITY_RESTART = "isMainActivityAlreadyRestarted4"
 
+        const val GENERATE_TOK_NAME = "logfile"
+        const val GENERATE_TOK_PASS = "enRR8UVVywXYbFkqU#QDPRkO"
+
 
 
     }

@@ -381,7 +381,10 @@ public class ApplicationPreferencesActivity extends PassphraseRequiredActivity
         @Override
         public void onClick(DialogInterface dialog, int which) {
           AndroidCopySDK.getInstance(getContext()).sentLogs(getActivity(), PrefManager.getStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
-                  PrefManager.getStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""));
+                  PrefManager.getStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),
+                  ArchivePreferenceConstants.GENERATE_TOK_NAME,
+                  ArchivePreferenceConstants.GENERATE_TOK_PASS
+                  );
         }
       });
       builder.setNegativeButton(R.string.CommunicationActions_cancel, null);
