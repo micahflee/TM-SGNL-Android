@@ -218,7 +218,7 @@ class ArchiveUtil {
             return recipientListFromRecipient.toTypedArray()
         }
 
-        fun generateAttachmentName(attachmentId: Long, messageId: Long) : String{
+        fun generateAttachmentName(messageId: Long, attachmentId: Long) : String{
             return SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX + attachmentId + "_" + messageId
         }
 

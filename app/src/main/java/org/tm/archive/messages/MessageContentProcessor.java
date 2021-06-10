@@ -1247,7 +1247,7 @@ public final class MessageContentProcessor {
         for (int i = 0; i < attachments.size(); i++) {
           DatabaseAttachment att = attachments.get(i);
           if (att != null) {
-            tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveUtil.Companion.generateAttachmentName(messageId, att.getAttachmentId().getUniqueId()) + "." + ArchiveFileUtil.getFileType(att));
+            tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, ArchiveFileUtil.getFileNameWithType(att.getFileName(), messageId, att.getAttachmentId().getUniqueId(),att.getContentType()));
             filesToArchive[i] = tempFileForArchiving;
             ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(messageId, att.getAttachmentId(), false));
           }

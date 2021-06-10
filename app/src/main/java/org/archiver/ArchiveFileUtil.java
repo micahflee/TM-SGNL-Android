@@ -546,9 +546,9 @@ This method can parse out the real local file path from a file URI.
 
     }
 
-    public static String getFileNameWithType(String fileName, long messageId, long uniqueId, String contentType) {
+    public static String getFileNameWithType(String fileName, long messageId, long attachmentId, String contentType) {
         if(fileName == null){
-            return ArchiveUtil.Companion.generateAttachmentName(messageId, uniqueId) + "." + ArchiveFileUtil.getFileType(fileName, contentType);
+            return ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId) + "." + ArchiveFileUtil.getFileType(fileName, contentType);
         }else{
             return fileName;
         }
