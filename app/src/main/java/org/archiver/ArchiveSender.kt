@@ -133,7 +133,7 @@ class ArchiveSender {
             val subject = createSubjectForArchiving(context, isInbox, isGroup, archiveRecipient, inboxRecipient, false, groupTitle)
             val chatMode = getChatMode(isGroup)
             val chatName = getChatName(context, archiveRecipient, isGroup)
-            val chatId = groupId(archiveRecipient)
+            val chatId = groupId(archiveRecipient, message.groupId.toString())
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, recipientList, isGroup)
             val messageBody = ArchiveUtil.createPreviewLinkBody(message, null)

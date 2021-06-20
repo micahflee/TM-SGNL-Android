@@ -12,6 +12,7 @@ import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
 import org.archiver.ArchiveSender.Companion.archiveMessageOutbox
 import org.archiver.ArchiveSender.Companion.archiveMessageOutboxMMS
 import org.archiver.ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage
+import org.signal.glide.Log
 import org.tm.archive.database.model.Mention
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mms.IncomingMediaMessage
@@ -158,11 +159,18 @@ class ArchiveUtil {
             return recipientList[0].e164.get()
         }
 
-        fun groupId(recipient: Recipient): String? {
-            return if(recipient.isGroup){
-                recipient.groupId.get().toString()
-            }else{
-                ""
+        fun groupId(recipient: Recipient, groupId: String = ""): String? {
+            return when {
+                recipient.isGroup -> {
+                    recipient.groupId.get().toString()
+                }
+                groupId.isNotEmpty() -> {
+                    groupId
+                }
+
+                else -> {
+                    ""
+                }
             }
         }
 
