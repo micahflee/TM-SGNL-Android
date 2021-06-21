@@ -44,7 +44,7 @@ class ArchiveConstants {
     }
 
     enum class ProtocolType(val type: String) {
-        ARCHIVE_PARAM_PROTOCOL_SEND("0"),
-        ARCHIVE_PARAM_PROTOCOL_INBOX("1")
+        ARCHIVE_PARAM_PROTOCOL_SEND("1"),
+        ARCHIVE_PARAM_PROTOCOL_INBOX("0")
     }
 }
