@@ -12,7 +12,6 @@ import org.archiver.ArchiveUtil.Companion.getChatMode
 import org.archiver.ArchiveUtil.Companion.getChatName
 import org.archiver.ArchiveUtil.Companion.getFromPartForSubject
 import org.archiver.ArchiveUtil.Companion.getGroupInboxRecipientNumber
-import org.archiver.ArchiveUtil.Companion.getMessageBody
 import org.archiver.ArchiveUtil.Companion.groupId
 import org.signal.glide.Log
 import org.tm.archive.database.DatabaseFactory
@@ -132,8 +131,8 @@ class ArchiveSender {
             val toRecipientsList = createToRecipientList(context, isInbox, archiveRecipient, isGroup, from, recipientList)
             val subject = createSubjectForArchiving(context, isInbox, isGroup, archiveRecipient, inboxRecipient, false, groupTitle)
             val chatMode = getChatMode(isGroup)
-            val chatName = getChatName(context, archiveRecipient, isGroup)
-            val chatId = groupId(archiveRecipient, message.groupId.toString())
+            val chatName = getChatName(context, archiveRecipient, isGroup,groupTitle?: "")
+            val chatId = groupId(archiveRecipient, message.groupId)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, recipientList, isGroup)
             val messageBody = ArchiveUtil.createPreviewLinkBody(message, null)
