@@ -183,7 +183,7 @@ class ArchiveUtil {
 
         }
 
-        fun createMessageNameList(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean, recipientList: MutableList<Recipient>? = null, isGroup: Boolean): Array<String> {
+        fun createMessageNameList(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean, recipientList: MutableList<Recipient>? = null, isGroup: Boolean, from : String = ""): Array<String> {
 
             val rl = if (!isInboxArchiveMessage) {
                 if(recipientList!!.size > 1) {
@@ -198,10 +198,10 @@ class ArchiveUtil {
                 }
             } else {
                 recipientList?.filter {
-                    it.e164.isPresent && it.e164.get() != null
+                    it.e164.isPresent && it.e164.get() != null && it.e164.get() != from
                 }
                         ?: recipient.participants.filter {
-                            it.e164.isPresent && it.e164.get() != null
+                            it.e164.isPresent && it.e164.get() != null && it.e164.get() != from
                         }
             }
 
