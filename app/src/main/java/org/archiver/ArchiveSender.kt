@@ -29,9 +29,9 @@ class ArchiveSender {
             Log.d("MNMNMDD", "messageId = " + messageId + " message text " + messageBody)
 
             if(archiveFile == null) {
-                DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, dateInTimeStamp.toString() + messageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, ArchiveUtil.getPhoneNumberInTestMode(context), toRecipientsListNames, toRecipientsList)
+                DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, dateInTimeStamp.toString() + messageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, from, toRecipientsListNames, toRecipientsList)
             }else {
-                DataGrabber.getInstance(context).setMmsMessage(aProtocolType.type, toRecipientsList, from, messageBody, dateInTimeStamp.toString() + messageId + "M", dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, ArchiveUtil.getPhoneNumberInTestMode(context), toRecipientsListNames, toRecipientsList, archiveFile)
+                DataGrabber.getInstance(context).setMmsMessage(aProtocolType.type, toRecipientsList, from, messageBody, dateInTimeStamp.toString() + messageId + "M", dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, from, toRecipientsListNames, toRecipientsList, archiveFile)
             }
         }
 
