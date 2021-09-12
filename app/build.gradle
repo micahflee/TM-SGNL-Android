@@ -72,7 +72,7 @@ protobuf {
 //So the prefix of the version name is the official version code and the suffix is our version.
 //(Signal "5.4.11" and our version "1.0.16" will be =  "5.4.11.16" )
 
-def canonicalVersionCode = 780
+def canonicalVersionCode = 798
 def canonicalVersionName = "5.4.11.26"
 def signal_teleMessage_version = "5.4.11.26"//Change this param in Jenkins builder and delete it.
 
