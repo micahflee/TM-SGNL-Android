@@ -9,17 +9,20 @@ import androidx.core.util.Consumer;
 
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.MultiDeviceProfileContentUpdateJob;
 import org.tm.archive.jobs.MultiDeviceProfileKeyUpdateJob;
 import org.tm.archive.jobs.ProfileUploadJob;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.profiles.AvatarHelper;
 import org.tm.archive.profiles.ProfileMediaConstraints;
 import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.profiles.SystemProfileUtil;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.registration.RegistrationUtil;
 import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.concurrent.SimpleTask;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -39,6 +42,11 @@ public class EditSelfProfileRepository implements EditProfileRepository {
   EditSelfProfileRepository(@NonNull Context context, boolean excludeSystem) {
     this.context        = context.getApplicationContext();
     this.excludeSystem  = excludeSystem;
+  }
+
+  @Override
+  public void getCurrentAvatarColor(@NonNull Consumer<AvatarColor> avatarColorConsumer) {
+    SimpleTask.run(() -> Recipient.self().getAvatarColor(), avatarColorConsumer::accept);
   }
 
   @Override
@@ -107,10 +115,16 @@ public class EditSelfProfileRepository implements EditProfileRepository {
     nameConsumer.accept("");
   }
 
+  @Override public void getCurrentDescription(@NonNull Consumer<String> descriptionConsumer) {
+    descriptionConsumer.accept("");
+  }
+
   @Override
   public void uploadProfile(@NonNull ProfileName profileName,
                             @NonNull String displayName,
                             boolean displayNameChanged,
+                            @NonNull String description,
+                            boolean descriptionChanged,
                             @Nullable byte[] avatar,
                             boolean avatarChanged,
                             @NonNull Consumer<UploadResult> uploadResultConsumer)
@@ -130,6 +144,12 @@ public class EditSelfProfileRepository implements EditProfileRepository {
                              .startChain(new ProfileUploadJob())
                              .then(Arrays.asList(new MultiDeviceProfileKeyUpdateJob(), new MultiDeviceProfileContentUpdateJob()))
                              .enqueue();
+
+      RegistrationUtil.maybeMarkRegistrationComplete(context);
+
+      if (avatar != null) {
+        SignalStore.misc().markHasEverHadAnAvatar();
+      }
 
       return UploadResult.SUCCESS;
     }, uploadResultConsumer::accept);

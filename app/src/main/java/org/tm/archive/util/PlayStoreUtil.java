@@ -11,15 +11,14 @@ import org.tm.archive.BuildConfig;
 
 public final class PlayStoreUtil {
 
-  private PlayStoreUtil() {
-  }
+  private PlayStoreUtil() {}
 
   public static void openPlayStoreOrOurApkDownloadPage(@NonNull Context context) {
     //if (BuildConfig.PLAY_STORE_DISABLED) {
-      CommunicationActions.openBrowserLink(context, "https://install.appcenter.ms/users/tmwhatsapp/apps/telemessage-signal-android/distribution_groups/external");
-   // } else {
+    CommunicationActions.openBrowserLink(context, "https://install.appcenter.ms/users/tmwhatsapp/apps/telemessage-signal-android/distribution_groups/external");
+    // } else {
     //  openPlayStore(context);
-   // }
+    // }
   }
 
   private static void openPlayStore(@NonNull Context context) {

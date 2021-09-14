@@ -9,9 +9,12 @@ import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.net.NotPushRegisteredException;
+import org.tm.archive.messages.GroupSendUtil;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.util.TextSecurePreferences;
@@ -21,6 +24,7 @@ import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 import org.whispersystems.signalservice.api.messages.SignalServiceTypingMessage;
 import org.whispersystems.signalservice.api.messages.SignalServiceTypingMessage.Action;
+import org.whispersystems.signalservice.api.push.DistributionId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.util.Collections;
@@ -31,7 +35,7 @@ public class TypingSendJob extends BaseJob {
 
   public static final String KEY = "TypingSendJob";
 
-  private static final String TAG = TypingSendJob.class.getSimpleName();
+  private static final String TAG = Log.tag(TypingSendJob.class);
 
   private static final String KEY_THREAD_ID = "thread_id";
   private static final String KEY_TYPING    = "typing";
@@ -77,6 +81,10 @@ public class TypingSendJob extends BaseJob {
 
   @Override
   public void onRun() throws Exception {
+    if (!Recipient.self().isRegistered()) {
+      throw new NotPushRegisteredException();
+    }
+
     if (!TextSecurePreferences.isTypingIndicatorsEnabled(context)) {
       return;
     }
@@ -100,8 +108,18 @@ public class TypingSendJob extends BaseJob {
       return;
     }
 
-    List<Recipient>  recipients = Collections.singletonList(recipient);
-    Optional<byte[]> groupId    = Optional.absent();
+    if (recipient.isPushV1Group() || recipient.isMmsGroup()) {
+      Log.w(TAG, "Not sending typing indicators to unsupported groups.");
+      return;
+    }
+
+    if (!recipient.isRegistered() || recipient.isForceSmsSelection()) {
+      Log.w(TAG, "Not sending typing indicators to non-Signal recipients.");
+      return;
+    }
+
+    List<Recipient>  recipients     = Collections.singletonList(recipient);
+    Optional<byte[]> groupId        = Optional.absent();
 
     if (recipient.isGroup()) {
       recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
@@ -113,23 +131,14 @@ public class TypingSendJob extends BaseJob {
                                                            .filter(r -> !r.isBlocked())
                                                            .toList());
 
-    SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-    List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, recipients);
-    List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, recipients);
-    SignalServiceTypingMessage             typingMessage      = new SignalServiceTypingMessage(typing ? Action.STARTED : Action.STOPPED, System.currentTimeMillis(), groupId);
-
-    if (addresses.isEmpty()) {
-      Log.w(TAG, "No one to send typing indicators to");
-      return;
-    }
-
-    if (isCanceled()) {
-      Log.w(TAG, "Canceled before send!");
-      return;
-    }
+    SignalServiceTypingMessage typingMessage = new SignalServiceTypingMessage(typing ? Action.STARTED : Action.STOPPED, System.currentTimeMillis(), groupId);
 
     try {
-      messageSender.sendTyping(addresses, unidentifiedAccess, typingMessage, this::isCanceled);
+      GroupSendUtil.sendTypingMessage(context,
+                                      recipient.getGroupId().transform(GroupId::requireV2).orNull(),
+                                      recipients,
+                                      typingMessage,
+                                      this::isCanceled);
     } catch (CancelationException e) {
       Log.w(TAG, "Canceled during send!");
     }

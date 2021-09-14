@@ -7,9 +7,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import org.signal.core.util.ThreadUtil;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.SingleLiveEvent;
-import org.tm.archive.util.Util;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -34,7 +34,7 @@ class CameraContactSelectionViewModel extends ViewModel {
     this.selected   = new LinkedHashSet<>();
 
     repository.getCameraContacts(cameraContacts -> {
-      Util.runOnMain(() -> {
+      ThreadUtil.runOnMain(() -> {
         contacts.postValue(new ContactState(cameraContacts, new ArrayList<>(selected), currentQuery));
       });
     });
@@ -56,7 +56,7 @@ class CameraContactSelectionViewModel extends ViewModel {
     this.currentQuery = query;
 
     repository.getCameraContacts(query, cameraContacts -> {
-      Util.runOnMain(() -> {
+      ThreadUtil.runOnMain(() -> {
         contacts.postValue(new ContactState(cameraContacts, new ArrayList<>(selected), query));
       });
     });
@@ -64,7 +64,7 @@ class CameraContactSelectionViewModel extends ViewModel {
 
   void onRefresh() {
     repository.getCameraContacts(cameraContacts -> {
-      Util.runOnMain(() -> {
+      ThreadUtil.runOnMain(() -> {
         contacts.postValue(new ContactState(cameraContacts, new ArrayList<>(selected), currentQuery));
       });
     });

@@ -7,16 +7,15 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.WebRtcCallActivity;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.ringrtc.RemotePeer;
-import org.tm.archive.service.WebRtcCallService;
 import org.tm.archive.util.concurrent.SimpleTask;
-import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 
 public class VoiceCallShare extends Activity {
   
-  private static final String TAG = VoiceCallShare.class.getSimpleName();
+  private static final String TAG = Log.tag(VoiceCallShare.class);
   
   @Override
   public void onCreate(Bundle icicle) {
@@ -33,11 +32,7 @@ public class VoiceCallShare extends Activity {
 
           SimpleTask.run(() -> Recipient.external(this, destination), recipient -> {
             if (!TextUtils.isEmpty(destination)) {
-              Intent serviceIntent = new Intent(this, WebRtcCallService.class);
-              serviceIntent.setAction(WebRtcCallService.ACTION_OUTGOING_CALL)
-                           .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER, new RemotePeer(recipient.getId()))
-                           .putExtra(WebRtcCallService.EXTRA_OFFER_TYPE, OfferMessage.Type.AUDIO_CALL.getCode());
-              startService(serviceIntent);
+              ApplicationDependencies.getSignalCallManager().startOutgoingAudioCall(recipient);
 
               Intent activityIntent = new Intent(this, WebRtcCallActivity.class);
               activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

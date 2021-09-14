@@ -11,6 +11,9 @@ import org.tm.archive.jobs.MultiDeviceKeysUpdateJob;
 import org.tm.archive.jobs.StorageSyncJob;
 import org.tm.archive.util.TextSecurePreferences;
 
+/**
+ * Just runs a storage sync. Useful if you've started syncing a new field to storage service.
+ */
 public class StorageServiceMigrationJob extends MigrationJob {
 
   private static final String TAG = Log.tag(StorageServiceMigrationJob.class);

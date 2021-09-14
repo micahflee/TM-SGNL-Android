@@ -8,6 +8,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.insights.InsightsOptOut;
 import org.tm.archive.jobmanager.JobManager;
+import org.tm.archive.jobs.EmojiSearchIndexDownloadJob;
 import org.tm.archive.jobs.StickerPackDownloadJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.migrations.ApplicationMigrations;
@@ -54,11 +55,13 @@ public final class AppInitialization {
     ApplicationDependencies.getMegaphoneRepository().onFirstEverAppLaunch();
     SignalStore.onFirstEverAppLaunch();
     SignalStore.onboarding().clearAll();
+    TextSecurePreferences.onPostBackupRestore(context);
     ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.ZOZO.getPackId(), BlessedPacks.ZOZO.getPackKey(), false));
     ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.BANDIT.getPackId(), BlessedPacks.BANDIT.getPackKey(), false));
     ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forInstall(BlessedPacks.DAY_BY_DAY.getPackId(), BlessedPacks.DAY_BY_DAY.getPackKey(), false));
     ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_HANDS.getPackId(), BlessedPacks.SWOON_HANDS.getPackKey()));
     ApplicationDependencies.getJobManager().add(StickerPackDownloadJob.forReference(BlessedPacks.SWOON_FACES.getPackId(), BlessedPacks.SWOON_FACES.getPackKey()));
+    EmojiSearchIndexDownloadJob.scheduleImmediately();
   }
 
   /**

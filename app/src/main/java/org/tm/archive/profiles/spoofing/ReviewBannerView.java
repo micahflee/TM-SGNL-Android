@@ -21,6 +21,7 @@ import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.FallbackPhoto20dp;
 import org.tm.archive.contacts.avatars.GeneratedContactPhoto;
+import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.ViewUtil;
 
@@ -122,7 +123,7 @@ public class ReviewBannerView extends LinearLayout {
     }
 
     @Override
-    protected Drawable newFallbackDrawable(@NonNull Context context, int color, boolean inverted) {
+    protected Drawable newFallbackDrawable(@NonNull Context context, @NonNull AvatarColor color, boolean inverted) {
       return new FallbackPhoto20dp(getFallbackResId()).asDrawable(context, color, inverted);
     }
   }

@@ -1,0 +1,781 @@
+package org.tm.archive.components.settings.conversation
+
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.graphics.Rect
+import android.os.Bundle
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
+import androidx.core.view.doOnPreDraw
+import androidx.fragment.app.viewModels
+import androidx.navigation.Navigation
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import app.cash.exhaustive.Exhaustive
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import org.tm.archive.AvatarPreviewActivity
+import org.tm.archive.BlockUnblockDialog
+import org.tm.archive.InviteActivity
+import org.tm.archive.MediaPreviewActivity
+import org.tm.archive.MuteDialog
+import org.tm.archive.PushContactSelectionActivity
+import org.tm.archive.R
+import org.tm.archive.VerifyIdentityActivity
+import org.tm.archive.components.AvatarImageView
+import org.tm.archive.components.recyclerview.OnScrollAnimationHelper
+import org.tm.archive.components.recyclerview.ToolbarShadowAnimationHelper
+import org.tm.archive.components.settings.DSLConfiguration
+import org.tm.archive.components.settings.DSLSettingsAdapter
+import org.tm.archive.components.settings.DSLSettingsFragment
+import org.tm.archive.components.settings.DSLSettingsIcon
+import org.tm.archive.components.settings.DSLSettingsText
+import org.tm.archive.components.settings.NO_TINT
+import org.tm.archive.components.settings.configure
+import org.tm.archive.components.settings.conversation.preferences.AvatarPreference
+import org.tm.archive.components.settings.conversation.preferences.BioTextPreference
+import org.tm.archive.components.settings.conversation.preferences.ButtonStripPreference
+import org.tm.archive.components.settings.conversation.preferences.GroupDescriptionPreference
+import org.tm.archive.components.settings.conversation.preferences.InternalPreference
+import org.tm.archive.components.settings.conversation.preferences.LargeIconClickPreference
+import org.tm.archive.components.settings.conversation.preferences.LegacyGroupPreference
+import org.tm.archive.components.settings.conversation.preferences.RecipientPreference
+import org.tm.archive.components.settings.conversation.preferences.SharedMediaPreference
+import org.tm.archive.components.settings.conversation.preferences.Utils.formatMutedUntil
+import org.tm.archive.contacts.ContactsCursorLoader
+import org.tm.archive.conversation.ConversationIntents
+import org.tm.archive.groups.ParcelableGroupId
+import org.tm.archive.groups.ui.GroupErrors
+import org.tm.archive.groups.ui.GroupLimitDialog
+import org.tm.archive.groups.ui.LeaveGroupDialog
+import org.tm.archive.groups.ui.addmembers.AddMembersActivity
+import org.tm.archive.groups.ui.addtogroup.AddToGroupsActivity
+import org.tm.archive.groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity
+import org.tm.archive.groups.ui.managegroup.dialogs.GroupDescriptionDialog
+import org.tm.archive.groups.ui.managegroup.dialogs.GroupInviteSentDialog
+import org.tm.archive.groups.ui.managegroup.dialogs.GroupsLearnMoreBottomSheetDialogFragment
+import org.tm.archive.groups.ui.migration.GroupsV1MigrationInitiationBottomSheetDialogFragment
+import org.tm.archive.mediaoverview.MediaOverviewActivity
+import org.tm.archive.profiles.edit.EditProfileActivity
+import org.tm.archive.recipients.Recipient
+import org.tm.archive.recipients.RecipientExporter
+import org.tm.archive.recipients.RecipientId
+import org.tm.archive.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment
+import org.tm.archive.recipients.ui.sharablegrouplink.ShareableGroupLinkDialogFragment
+import org.tm.archive.util.CommunicationActions
+import org.tm.archive.util.ContextUtil
+import org.tm.archive.util.ExpirationUtil
+import org.tm.archive.util.ThemeUtil
+import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.views.SimpleProgressDialog
+import org.tm.archive.wallpaper.ChatWallpaperActivity
+
+private const val REQUEST_CODE_VIEW_CONTACT = 1
+private const val REQUEST_CODE_ADD_CONTACT = 2
+private const val REQUEST_CODE_ADD_MEMBERS_TO_GROUP = 3
+private const val REQUEST_CODE_RETURN_FROM_MEDIA = 4
+
+class ConversationSettingsFragment : DSLSettingsFragment(
+  layoutId = R.layout.conversation_settings_fragment,
+  menuId = R.menu.conversation_settings
+) {
+
+  private val alertTint by lazy { ContextCompat.getColor(requireContext(), R.color.signal_alert_primary) }
+  private val blockIcon by lazy {
+    ContextUtil.requireDrawable(requireContext(), R.drawable.ic_block_tinted_24).apply {
+      colorFilter = PorterDuffColorFilter(alertTint, PorterDuff.Mode.SRC_IN)
+    }
+  }
+
+  private val unblockIcon by lazy {
+    ContextUtil.requireDrawable(requireContext(), R.drawable.ic_block_tinted_24)
+  }
+
+  private val leaveIcon by lazy {
+    ContextUtil.requireDrawable(requireContext(), R.drawable.ic_leave_tinted_24).apply {
+      colorFilter = PorterDuffColorFilter(alertTint, PorterDuff.Mode.SRC_IN)
+    }
+  }
+
+  private val viewModel by viewModels<ConversationSettingsViewModel>(
+    factoryProducer = {
+      val args = ConversationSettingsFragmentArgs.fromBundle(requireArguments())
+      val groupId = args.groupId as? ParcelableGroupId
+
+      ConversationSettingsViewModel.Factory(
+        recipientId = args.recipientId,
+        groupId = ParcelableGroupId.get(groupId),
+        repository = ConversationSettingsRepository(requireContext())
+      )
+    }
+  )
+
+  private lateinit var callback: Callback
+
+  private lateinit var toolbar: Toolbar
+  private lateinit var toolbarAvatar: AvatarImageView
+  private lateinit var toolbarTitle: TextView
+  private lateinit var toolbarBackground: View
+
+  private val navController get() = Navigation.findNavController(requireView())
+
+  override fun onAttach(context: Context) {
+    super.onAttach(context)
+
+    callback = context as Callback
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    toolbar = view.findViewById(R.id.toolbar)
+    toolbarAvatar = view.findViewById(R.id.toolbar_avatar)
+    toolbarTitle = view.findViewById(R.id.toolbar_title)
+    toolbarBackground = view.findViewById(R.id.toolbar_background)
+
+    super.onViewCreated(view, savedInstanceState)
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    when (requestCode) {
+      REQUEST_CODE_ADD_MEMBERS_TO_GROUP -> if (data != null) {
+        val selected: List<RecipientId> = requireNotNull(data.getParcelableArrayListExtra(PushContactSelectionActivity.KEY_SELECTED_RECIPIENTS))
+        val progress: SimpleProgressDialog.DismissibleDialog = SimpleProgressDialog.showDelayed(requireContext())
+
+        viewModel.onAddToGroupComplete(selected) {
+          progress.dismiss()
+        }
+      }
+      REQUEST_CODE_RETURN_FROM_MEDIA -> viewModel.refreshSharedMedia()
+      REQUEST_CODE_ADD_CONTACT -> viewModel.refreshRecipient()
+      REQUEST_CODE_VIEW_CONTACT -> viewModel.refreshRecipient()
+    }
+  }
+
+  override fun getOnScrollAnimationHelper(toolbarShadow: View): OnScrollAnimationHelper {
+    return ConversationSettingsOnUserScrolledAnimationHelper(toolbarAvatar, toolbarTitle, toolbarBackground, toolbarShadow)
+  }
+
+  override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    return if (item.itemId == R.id.action_edit) {
+      val args = ConversationSettingsFragmentArgs.fromBundle(requireArguments())
+      val groupId = args.groupId as ParcelableGroupId
+
+      startActivity(EditProfileActivity.getIntentForGroupProfile(requireActivity(), requireNotNull(ParcelableGroupId.get(groupId))))
+      true
+    } else {
+      super.onOptionsItemSelected(item)
+    }
+  }
+
+  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+    BioTextPreference.register(adapter)
+    AvatarPreference.register(adapter)
+    ButtonStripPreference.register(adapter)
+    LargeIconClickPreference.register(adapter)
+    SharedMediaPreference.register(adapter)
+    RecipientPreference.register(adapter)
+    InternalPreference.register(adapter)
+    GroupDescriptionPreference.register(adapter)
+    LegacyGroupPreference.register(adapter)
+
+    viewModel.state.observe(viewLifecycleOwner) { state ->
+
+      if (state.recipient != Recipient.UNKNOWN) {
+        toolbarAvatar.buildOptions()
+          .withQuickContactEnabled(false)
+          .withUseSelfProfileAvatar(false)
+          .withFixedSize(ViewUtil.dpToPx(80))
+          .load(state.recipient)
+
+        state.withRecipientSettingsState {
+          toolbarTitle.text = state.recipient.getDisplayName(requireContext())
+        }
+
+        state.withGroupSettingsState {
+          toolbarTitle.text = it.groupTitle
+          toolbar.menu.findItem(R.id.action_edit).isVisible = it.canEditGroupAttributes
+        }
+      }
+
+      adapter.submitList(getConfiguration(state).toMappingModelList()) {
+        if (state.isLoaded) {
+          (view?.parent as? ViewGroup)?.doOnPreDraw {
+            callback.onContentWillRender()
+          }
+        }
+      }
+    }
+
+    viewModel.events.observe(viewLifecycleOwner) { event ->
+      @Exhaustive
+      when (event) {
+        is ConversationSettingsEvent.AddToAGroup -> handleAddToAGroup(event)
+        is ConversationSettingsEvent.AddMembersToGroup -> handleAddMembersToGroup(event)
+        ConversationSettingsEvent.ShowGroupHardLimitDialog -> showGroupHardLimitDialog()
+        is ConversationSettingsEvent.ShowAddMembersToGroupError -> showAddMembersToGroupError(event)
+        is ConversationSettingsEvent.ShowGroupInvitesSentDialog -> showGroupInvitesSentDialog(event)
+        is ConversationSettingsEvent.ShowMembersAdded -> showMembersAdded(event)
+        is ConversationSettingsEvent.InitiateGroupMigration -> GroupsV1MigrationInitiationBottomSheetDialogFragment.showForInitiation(parentFragmentManager, event.recipientId)
+      }
+    }
+  }
+
+  private fun getConfiguration(state: ConversationSettingsState): DSLConfiguration {
+    return configure {
+      if (state.recipient == Recipient.UNKNOWN) {
+        return@configure
+      }
+
+      customPref(
+        AvatarPreference.Model(
+          recipient = state.recipient,
+          onAvatarClick = { avatar ->
+            if (!state.recipient.isSelf) {
+              requireActivity().apply {
+                startActivity(
+                  AvatarPreviewActivity.intentFromRecipientId(this, state.recipient.id),
+                  AvatarPreviewActivity.createTransitionBundle(this, avatar)
+                )
+              }
+            }
+          }
+        )
+      )
+
+      state.withRecipientSettingsState {
+        customPref(BioTextPreference.RecipientModel(recipient = state.recipient))
+      }
+
+      state.withGroupSettingsState { groupState ->
+
+        val groupMembershipDescription = if (groupState.groupId.isV1) {
+          String.format("%s · %s", groupState.membershipCountDescription, getString(R.string.ManageGroupActivity_legacy_group))
+        } else if (!groupState.canEditGroupAttributes && groupState.groupDescription.isNullOrEmpty()) {
+          groupState.membershipCountDescription
+        } else {
+          null
+        }
+
+        customPref(
+          BioTextPreference.GroupModel(
+            groupTitle = groupState.groupTitle,
+            groupMembershipDescription = groupMembershipDescription
+          )
+        )
+
+        if (groupState.groupId.isV2) {
+          customPref(
+            GroupDescriptionPreference.Model(
+              groupId = groupState.groupId,
+              groupDescription = groupState.groupDescription,
+              descriptionShouldLinkify = groupState.groupDescriptionShouldLinkify,
+              canEditGroupAttributes = groupState.canEditGroupAttributes,
+              onEditGroupDescription = {
+                startActivity(EditProfileActivity.getIntentForGroupProfile(requireActivity(), groupState.groupId))
+              },
+              onViewGroupDescription = {
+                GroupDescriptionDialog.show(childFragmentManager, groupState.groupId, null, groupState.groupDescriptionShouldLinkify)
+              }
+            )
+          )
+        } else if (groupState.legacyGroupState != LegacyGroupPreference.State.NONE) {
+          customPref(
+            LegacyGroupPreference.Model(
+              state = groupState.legacyGroupState,
+              onLearnMoreClick = { GroupsLearnMoreBottomSheetDialogFragment.show(parentFragmentManager) },
+              onUpgradeClick = { viewModel.initiateGroupUpgrade() },
+              onMmsWarningClick = { startActivity(Intent(requireContext(), InviteActivity::class.java)) }
+            )
+          )
+        }
+      }
+
+      state.withRecipientSettingsState { recipientState ->
+        if (recipientState.displayInternalRecipientDetails) {
+          customPref(
+            InternalPreference.Model(
+              recipient = state.recipient,
+              onDisableProfileSharingClick = {
+                viewModel.disableProfileSharing()
+              },
+              onDeleteSessionClick = {
+                viewModel.deleteSession()
+              }
+            )
+          )
+        }
+      }
+
+      customPref(
+        ButtonStripPreference.Model(
+          state = state.buttonStripState,
+          onVideoClick = {
+            if (state.recipient.isPushV2Group && state.requireGroupSettingsState().isAnnouncementGroup && !state.requireGroupSettingsState().isSelfAdmin) {
+              MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.ConversationActivity_cant_start_group_call)
+                .setMessage(R.string.ConversationActivity_only_admins_of_this_group_can_start_a_call)
+                .setPositiveButton(android.R.string.ok) { d, _ -> d.dismiss() }
+                .show()
+            } else {
+              CommunicationActions.startVideoCall(requireActivity(), state.recipient)
+            }
+          },
+          onAudioClick = {
+            CommunicationActions.startVoiceCall(requireActivity(), state.recipient)
+          },
+          onMuteClick = {
+            if (!state.buttonStripState.isMuted) {
+              MuteDialog.show(requireContext(), viewModel::setMuteUntil)
+            } else {
+              MaterialAlertDialogBuilder(requireContext())
+                .setMessage(state.recipient.muteUntil.formatMutedUntil(requireContext()))
+                .setPositiveButton(R.string.ConversationSettingsFragment__unmute) { dialog, _ ->
+                  viewModel.unmute()
+                  dialog.dismiss()
+                }
+                .setNegativeButton(android.R.string.cancel) { dialog, _ -> dialog.dismiss() }
+                .show()
+            }
+          },
+          onSearchClick = {
+            val intent = ConversationIntents.createBuilder(requireContext(), state.recipient.id, state.threadId)
+              .withSearchOpen(true)
+              .build()
+
+            startActivity(intent)
+            requireActivity().finish()
+          }
+        )
+      )
+
+      dividerPref()
+
+      val summary = DSLSettingsText.from(formatDisappearingMessagesLifespan(state.disappearingMessagesLifespan))
+      val icon = if (state.disappearingMessagesLifespan <= 0) {
+        R.drawable.ic_update_timer_disabled_16
+      } else {
+        R.drawable.ic_update_timer_16
+      }
+
+      var enabled = true
+      state.withGroupSettingsState {
+        enabled = it.canEditGroupAttributes
+      }
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.ConversationSettingsFragment__disappearing_messages),
+        summary = summary,
+        icon = DSLSettingsIcon.from(icon),
+        isEnabled = enabled,
+        onClick = {
+          val action = ConversationSettingsFragmentDirections.actionConversationSettingsFragmentToAppSettingsExpireTimer()
+            .setInitialValue(state.disappearingMessagesLifespan)
+            .setRecipientId(state.recipient.id)
+            .setForResultMode(false)
+
+          navController.navigate(action)
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__chat_color_and_wallpaper),
+        icon = DSLSettingsIcon.from(R.drawable.ic_color_24),
+        onClick = {
+          startActivity(ChatWallpaperActivity.createIntent(requireContext(), state.recipient.id))
+        }
+      )
+
+      if (!state.recipient.isSelf) {
+        clickPref(
+          title = DSLSettingsText.from(R.string.ConversationSettingsFragment__sounds_and_notifications),
+          icon = DSLSettingsIcon.from(R.drawable.ic_speaker_24),
+          onClick = {
+            val action = ConversationSettingsFragmentDirections.actionConversationSettingsFragmentToSoundsAndNotificationsSettingsFragment(state.recipient.id)
+
+            navController.navigate(action)
+          }
+        )
+      }
+
+      state.withRecipientSettingsState { recipientState ->
+        when (recipientState.contactLinkState) {
+          ContactLinkState.OPEN -> {
+            clickPref(
+              title = DSLSettingsText.from(R.string.ConversationSettingsFragment__contact_details),
+              icon = DSLSettingsIcon.from(R.drawable.ic_profile_circle_24),
+              onClick = {
+                startActivityForResult(Intent(Intent.ACTION_VIEW, state.recipient.contactUri), REQUEST_CODE_VIEW_CONTACT)
+              }
+            )
+          }
+          ContactLinkState.ADD -> {
+            clickPref(
+              title = DSLSettingsText.from(R.string.ConversationSettingsFragment__add_as_a_contact),
+              icon = DSLSettingsIcon.from(R.drawable.ic_plus_24),
+              onClick = {
+                startActivityForResult(RecipientExporter.export(state.recipient).asAddContactIntent(), REQUEST_CODE_ADD_CONTACT)
+              }
+            )
+          }
+          ContactLinkState.NONE -> {
+          }
+        }
+
+        if (recipientState.identityRecord != null) {
+          clickPref(
+            title = DSLSettingsText.from(R.string.ConversationSettingsFragment__view_safety_number),
+            icon = DSLSettingsIcon.from(R.drawable.ic_safety_number_24),
+            onClick = {
+              startActivity(VerifyIdentityActivity.newIntent(requireActivity(), recipientState.identityRecord))
+            }
+          )
+        }
+      }
+
+      if (state.sharedMedia != null && state.sharedMedia.count > 0) {
+        dividerPref()
+
+        sectionHeaderPref(R.string.recipient_preference_activity__shared_media)
+
+        customPref(
+          SharedMediaPreference.Model(
+            mediaCursor = state.sharedMedia,
+            mediaIds = state.sharedMediaIds,
+            onMediaRecordClick = { mediaRecord, isLtr ->
+              startActivityForResult(
+                MediaPreviewActivity.intentFromMediaRecord(requireContext(), mediaRecord, isLtr),
+                REQUEST_CODE_RETURN_FROM_MEDIA
+              )
+            }
+          )
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.ConversationSettingsFragment__see_all),
+          onClick = {
+            startActivity(MediaOverviewActivity.forThread(requireContext(), state.threadId))
+          }
+        )
+      }
+
+      state.withRecipientSettingsState { groupState ->
+        if (groupState.selfHasGroups) {
+
+          dividerPref()
+
+          val groupsInCommonCount = groupState.allGroupsInCommon.size
+          sectionHeaderPref(
+            DSLSettingsText.from(
+              if (groupsInCommonCount == 0) {
+                getString(R.string.ManageRecipientActivity_no_groups_in_common)
+              } else {
+                resources.getQuantityString(
+                  R.plurals.ManageRecipientActivity_d_groups_in_common,
+                  groupsInCommonCount,
+                  groupsInCommonCount
+                )
+              }
+            )
+          )
+
+          customPref(
+            LargeIconClickPreference.Model(
+              title = DSLSettingsText.from(R.string.ConversationSettingsFragment__add_to_a_group),
+              icon = DSLSettingsIcon.from(R.drawable.add_to_a_group, NO_TINT),
+              onClick = {
+                viewModel.onAddToGroup()
+              }
+            )
+          )
+
+          for (group in groupState.groupsInCommon) {
+            customPref(
+              RecipientPreference.Model(
+                recipient = group,
+                onClick = {
+                  CommunicationActions.startConversation(requireActivity(), group, null)
+                  requireActivity().finish()
+                }
+              )
+            )
+          }
+
+          if (groupState.canShowMoreGroupsInCommon) {
+            customPref(
+              LargeIconClickPreference.Model(
+                title = DSLSettingsText.from(R.string.ConversationSettingsFragment__see_all),
+                icon = DSLSettingsIcon.from(R.drawable.show_more, NO_TINT),
+                onClick = {
+                  viewModel.revealAllMembers()
+                }
+              )
+            )
+          }
+        }
+      }
+
+      state.withGroupSettingsState { groupState ->
+        val memberCount = groupState.allMembers.size
+
+        if (groupState.canAddToGroup || memberCount > 0) {
+          dividerPref()
+
+          sectionHeaderPref(DSLSettingsText.from(resources.getQuantityString(R.plurals.ContactSelectionListFragment_d_members, memberCount, memberCount)))
+        }
+
+        if (groupState.canAddToGroup) {
+          customPref(
+            LargeIconClickPreference.Model(
+              title = DSLSettingsText.from(R.string.ConversationSettingsFragment__add_members),
+              icon = DSLSettingsIcon.from(R.drawable.add_to_a_group, NO_TINT),
+              onClick = {
+                viewModel.onAddToGroup()
+              }
+            )
+          )
+        }
+
+        for (member in groupState.members) {
+          customPref(
+            RecipientPreference.Model(
+              recipient = member.member,
+              isAdmin = member.isAdmin,
+              onClick = {
+                RecipientBottomSheetDialogFragment.create(member.member.id, groupState.groupId).show(parentFragmentManager, "BOTTOM")
+              }
+            )
+          )
+        }
+
+        if (groupState.canShowMoreGroupMembers) {
+          customPref(
+            LargeIconClickPreference.Model(
+              title = DSLSettingsText.from(R.string.ConversationSettingsFragment__see_all),
+              icon = DSLSettingsIcon.from(R.drawable.show_more, NO_TINT),
+              onClick = {
+                viewModel.revealAllMembers()
+              }
+            )
+          )
+        }
+
+        if (state.recipient.isPushV2Group) {
+          dividerPref()
+
+          clickPref(
+            title = DSLSettingsText.from(R.string.ConversationSettingsFragment__group_link),
+            summary = DSLSettingsText.from(if (groupState.groupLinkEnabled) R.string.preferences_on else R.string.preferences_off),
+            icon = DSLSettingsIcon.from(R.drawable.ic_link_16),
+            onClick = {
+              ShareableGroupLinkDialogFragment.create(groupState.groupId.requireV2()).show(parentFragmentManager, "DIALOG")
+            }
+          )
+
+          clickPref(
+            title = DSLSettingsText.from(R.string.ConversationSettingsFragment__requests_and_invites),
+            icon = DSLSettingsIcon.from(R.drawable.ic_update_group_add_16),
+            onClick = {
+              startActivity(ManagePendingAndRequestingMembersActivity.newIntent(requireContext(), groupState.groupId.requireV2()))
+            }
+          )
+
+          if (groupState.isSelfAdmin) {
+            clickPref(
+              title = DSLSettingsText.from(R.string.ConversationSettingsFragment__permissions),
+              icon = DSLSettingsIcon.from(R.drawable.ic_lock_24),
+              onClick = {
+                val action = ConversationSettingsFragmentDirections.actionConversationSettingsFragmentToPermissionsSettingsFragment(ParcelableGroupId.from(groupState.groupId))
+                navController.navigate(action)
+              }
+            )
+          }
+        }
+
+        if (groupState.canLeave) {
+          dividerPref()
+
+          clickPref(
+            title = DSLSettingsText.from(R.string.conversation__menu_leave_group, alertTint),
+            icon = DSLSettingsIcon.from(leaveIcon),
+            onClick = {
+              LeaveGroupDialog.handleLeavePushGroup(requireActivity(), groupState.groupId.requirePush(), null)
+            }
+          )
+        }
+      }
+
+      if (state.canModifyBlockedState) {
+        state.withRecipientSettingsState {
+          dividerPref()
+        }
+
+        state.withGroupSettingsState {
+          if (!it.canLeave) {
+            dividerPref()
+          }
+        }
+
+        val isBlocked = state.recipient.isBlocked
+        val isGroup = state.recipient.isPushGroup
+
+        val title = when {
+          isBlocked && isGroup -> R.string.ConversationSettingsFragment__unblock_group
+          isBlocked -> R.string.ConversationSettingsFragment__unblock
+          isGroup -> R.string.ConversationSettingsFragment__block_group
+          else -> R.string.ConversationSettingsFragment__block
+        }
+
+        val titleTint = if (isBlocked) null else alertTint
+        val blockUnblockIcon = if (isBlocked) unblockIcon else blockIcon
+
+        clickPref(
+          title = DSLSettingsText.from(title, titleTint),
+          icon = DSLSettingsIcon.from(blockUnblockIcon),
+          onClick = {
+            if (state.recipient.isBlocked) {
+              BlockUnblockDialog.showUnblockFor(requireContext(), viewLifecycleOwner.lifecycle, state.recipient) {
+                viewModel.unblock()
+              }
+            } else {
+              BlockUnblockDialog.showBlockFor(requireContext(), viewLifecycleOwner.lifecycle, state.recipient) {
+                viewModel.block()
+              }
+            }
+          }
+        )
+      }
+    }
+  }
+
+  private fun formatDisappearingMessagesLifespan(disappearingMessagesLifespan: Int): String {
+    return if (disappearingMessagesLifespan <= 0) {
+      getString(R.string.preferences_off)
+    } else {
+      ExpirationUtil.getExpirationDisplayValue(requireContext(), disappearingMessagesLifespan)
+    }
+  }
+
+  private fun handleAddToAGroup(addToAGroup: ConversationSettingsEvent.AddToAGroup) {
+    startActivity(AddToGroupsActivity.newIntent(requireContext(), addToAGroup.recipientId, addToAGroup.groupMembership))
+  }
+
+  private fun handleAddMembersToGroup(addMembersToGroup: ConversationSettingsEvent.AddMembersToGroup) {
+    startActivityForResult(
+      AddMembersActivity.createIntent(
+        requireContext(),
+        addMembersToGroup.groupId,
+        ContactsCursorLoader.DisplayMode.FLAG_PUSH,
+        addMembersToGroup.selectionWarning,
+        addMembersToGroup.selectionLimit,
+        addMembersToGroup.isAnnouncementGroup,
+        addMembersToGroup.groupMembersWithoutSelf
+      ),
+      REQUEST_CODE_ADD_MEMBERS_TO_GROUP
+    )
+  }
+
+  private fun showGroupHardLimitDialog() {
+    GroupLimitDialog.showHardLimitMessage(requireContext())
+  }
+
+  private fun showAddMembersToGroupError(showAddMembersToGroupError: ConversationSettingsEvent.ShowAddMembersToGroupError) {
+    Toast.makeText(requireContext(), GroupErrors.getUserDisplayMessage(showAddMembersToGroupError.failureReason), Toast.LENGTH_LONG).show()
+  }
+
+  private fun showGroupInvitesSentDialog(showGroupInvitesSentDialog: ConversationSettingsEvent.ShowGroupInvitesSentDialog) {
+    GroupInviteSentDialog.showInvitesSent(requireContext(), showGroupInvitesSentDialog.invitesSentTo)
+  }
+
+  private fun showMembersAdded(showMembersAdded: ConversationSettingsEvent.ShowMembersAdded) {
+    val string = resources.getQuantityString(
+      R.plurals.ManageGroupActivity_added,
+      showMembersAdded.membersAddedCount,
+      showMembersAdded.membersAddedCount
+    )
+
+    Snackbar.make(requireView(), string, Snackbar.LENGTH_SHORT).setTextColor(Color.WHITE).show()
+  }
+
+  private class ConversationSettingsOnUserScrolledAnimationHelper(
+    private val toolbarAvatar: View,
+    private val toolbarTitle: View,
+    private val toolbarBackground: View,
+    toolbarShadow: View
+  ) : ToolbarShadowAnimationHelper(toolbarShadow) {
+
+    override val duration: Long = 200L
+
+    private val actionBarSize = ThemeUtil.getThemedDimen(toolbarShadow.context, R.attr.actionBarSize)
+    private val rect = Rect()
+
+    override fun getAnimationState(recyclerView: RecyclerView): AnimationState {
+      val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+
+      return if (layoutManager.findFirstVisibleItemPosition() == 0) {
+        val firstChild = requireNotNull(layoutManager.getChildAt(0))
+        firstChild.getLocalVisibleRect(rect)
+
+        if (rect.height() <= actionBarSize) {
+          AnimationState.SHOW
+        } else {
+          AnimationState.HIDE
+        }
+      } else {
+        AnimationState.SHOW
+      }
+    }
+
+    override fun show(duration: Long) {
+      super.show(duration)
+
+      toolbarAvatar
+        .animate()
+        .setDuration(duration)
+        .translationY(0f)
+        .alpha(1f)
+
+      toolbarTitle
+        .animate()
+        .setDuration(duration)
+        .translationY(0f)
+        .alpha(1f)
+
+      toolbarBackground
+        .animate()
+        .setDuration(duration)
+        .alpha(1f)
+    }
+
+    override fun hide(duration: Long) {
+      super.hide(duration)
+
+      toolbarAvatar
+        .animate()
+        .setDuration(duration)
+        .translationY(ViewUtil.dpToPx(56).toFloat())
+        .alpha(0f)
+
+      toolbarTitle
+        .animate()
+        .setDuration(duration)
+        .translationY(ViewUtil.dpToPx(56).toFloat())
+        .alpha(0f)
+
+      toolbarBackground
+        .animate()
+        .setDuration(duration)
+        .alpha(0f)
+    }
+  }
+
+  interface Callback {
+    fun onContentWillRender()
+  }
+}

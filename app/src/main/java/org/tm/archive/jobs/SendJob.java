@@ -8,6 +8,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.TextSecureExpiredException;
 import org.tm.archive.attachments.Attachment;
+import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.database.DatabaseFactory;
@@ -20,11 +21,12 @@ import org.tm.archive.util.Util;
 import java.lang.reflect.Array;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class SendJob extends BaseJob {
 
   @SuppressWarnings("unused")
-  private final static String TAG = SendJob.class.getSimpleName();
+  private final static String TAG = Log.tag(SendJob.class);
 
   public SendJob(Job.Parameters parameters) {
     super(parameters);
@@ -61,5 +63,19 @@ public abstract class SendJob extends BaseJob {
     for (Attachment attachment : attachments) {
       database.markAttachmentUploaded(messageId, attachment);
     }
+  }
+
+  protected String buildAttachmentString(@NonNull List<Attachment> attachments) {
+    List<String> strings = attachments.stream().map(attachment -> {
+      if (attachment instanceof DatabaseAttachment) {
+        return ((DatabaseAttachment) attachment).getAttachmentId().toString();
+      } else if (attachment.getUri() != null) {
+        return attachment.getUri().toString();
+      } else {
+        return attachment.toString();
+      }
+    }).collect(Collectors.toList());
+
+    return Util.join(strings, ", ");
   }
 }

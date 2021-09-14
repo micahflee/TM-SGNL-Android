@@ -13,6 +13,7 @@ import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.MarkReadReceiver;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.concurrent.SimpleTask;
@@ -57,7 +58,7 @@ public class TurnOffContactJoinedNotificationsActivity extends AppCompatActivity
       List<MessageDatabase.MarkedMessageInfo> marked = threadDatabase.setRead(getIntent().getLongExtra(EXTRA_THREAD_ID, -1), false);
       MarkReadReceiver.process(this, marked);
 
-      TextSecurePreferences.setNewContactsNotificationEnabled(this, false);
+      SignalStore.settings().setNotifyWhenContactJoinsSignal(false);
       ApplicationDependencies.getMessageNotifier().updateNotification(this);
 
       return null;

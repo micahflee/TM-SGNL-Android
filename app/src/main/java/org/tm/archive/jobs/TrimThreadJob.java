@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2014 Open Whisper Systems
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,11 @@ package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
 
+import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.KeepMessagesDuration;
@@ -30,14 +32,23 @@ public class TrimThreadJob extends BaseJob {
 
   public static final String KEY = "TrimThreadJob";
 
-  private static final String TAG = TrimThreadJob.class.getSimpleName();
-
+  private static final String TAG           = Log.tag(TrimThreadJob.class);
+  private static final String QUEUE_PREFIX  = "TrimThreadJob_";
   private static final String KEY_THREAD_ID = "thread_id";
 
-  private long threadId;
+  private final long threadId;
 
-  public TrimThreadJob(long threadId) {
-    this(new Job.Parameters.Builder().setQueue("TrimThreadJob").build(), threadId);
+  public static void enqueueAsync(long threadId) {
+    if (SignalStore.settings().getKeepMessagesDuration() != KeepMessagesDuration.FOREVER || SignalStore.settings().isTrimByLengthEnabled()) {
+      SignalExecutors.BOUNDED.execute(() -> ApplicationDependencies.getJobManager().add(new TrimThreadJob(threadId)));
+    }
+  }
+
+  private TrimThreadJob(long threadId) {
+    this(new Job.Parameters.Builder().setQueue(QUEUE_PREFIX + threadId)
+                                     .setMaxInstancesForQueue(2)
+                                     .build(),
+         threadId);
   }
 
   private TrimThreadJob(@NonNull Job.Parameters parameters, long threadId) {

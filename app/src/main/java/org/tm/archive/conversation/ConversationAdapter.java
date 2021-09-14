@@ -16,6 +16,7 @@
  */
 package org.tm.archive.conversation;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,27 +37,37 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.exoplayer2.source.MediaSource;
+
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.signal.paging.PagingController;
 import org.tm.archive.BindableConversationItem;
 import org.tm.archive.R;
+import org.tm.archive.conversation.colors.Colorizable;
+import org.tm.archive.conversation.colors.Colorizer;
+import org.tm.archive.conversation.mutiselect.MultiselectPart;
 import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.giph.mp4.GiphyMp4Playable;
+import org.tm.archive.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.recipients.RecipientUtil;
+import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.CachedInflater;
 import org.tm.archive.util.DateUtils;
+import org.tm.archive.util.MessageRecordUtil;
+import org.tm.archive.util.Projection;
 import org.tm.archive.util.StickyHeaderDecoration;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
+import org.tm.archive.video.exo.AttachmentMediaSourceFactory;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -91,20 +102,24 @@ public class ConversationAdapter
   private static final int MESSAGE_TYPE_FOOTER              = 6;
   private static final int MESSAGE_TYPE_PLACEHOLDER         = 7;
 
+  private static final int PAYLOAD_TIMESTAMP = 0;
+
   private static final long HEADER_ID = Long.MIN_VALUE;
   private static final long FOOTER_ID = Long.MIN_VALUE + 1;
 
   private final ItemClickListener clickListener;
+  private final Context           context;
   private final LifecycleOwner    lifecycleOwner;
   private final GlideRequests     glideRequests;
   private final Locale            locale;
   private final Recipient         recipient;
 
-  private final Set<ConversationMessage>  selected;
-  private final List<ConversationMessage> fastRecords;
-  private final Set<Long>                 releasedFastRecords;
-  private final Calendar                  calendar;
-  private final MessageDigest             digest;
+  private final Set<MultiselectPart>         selected;
+  private final List<ConversationMessage>    fastRecords;
+  private final Set<Long>                    releasedFastRecords;
+  private final Calendar                     calendar;
+  private final MessageDigest                digest;
+  private final AttachmentMediaSourceFactory attachmentMediaSourceFactory;
 
   private String              searchQuery;
   private ConversationMessage recordToPulse;
@@ -113,12 +128,17 @@ public class ConversationAdapter
   private PagingController    pagingController;
   private boolean             hasWallpaper;
   private boolean             isMessageRequestAccepted;
+  private ConversationMessage inlineContent;
+  private Colorizer           colorizer;
 
-  ConversationAdapter(@NonNull LifecycleOwner lifecycleOwner,
+  ConversationAdapter(@NonNull Context context,
+                      @NonNull LifecycleOwner lifecycleOwner,
                       @NonNull GlideRequests glideRequests,
                       @NonNull Locale locale,
                       @Nullable ItemClickListener clickListener,
-                      @NonNull Recipient recipient)
+                      @NonNull Recipient recipient,
+                      @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
+                      @NonNull Colorizer colorizer)
   {
     super(new DiffUtil.ItemCallback<ConversationMessage>() {
       @Override
@@ -133,18 +153,21 @@ public class ConversationAdapter
     });
 
     this.lifecycleOwner = lifecycleOwner;
+    this.context        = context;
 
-    this.glideRequests            = glideRequests;
-    this.locale                   = locale;
-    this.clickListener            = clickListener;
-    this.recipient                = recipient;
-    this.selected                 = new HashSet<>();
-    this.fastRecords              = new ArrayList<>();
-    this.releasedFastRecords      = new HashSet<>();
-    this.calendar                 = Calendar.getInstance();
-    this.digest                   = getMessageDigestOrThrow();
-    this.hasWallpaper             = recipient.hasWallpaper();
-    this.isMessageRequestAccepted = true;
+    this.glideRequests                = glideRequests;
+    this.locale                       = locale;
+    this.clickListener                = clickListener;
+    this.recipient                    = recipient;
+    this.selected                     = new HashSet<>();
+    this.fastRecords                  = new ArrayList<>();
+    this.releasedFastRecords          = new HashSet<>();
+    this.calendar                     = Calendar.getInstance();
+    this.digest                       = getMessageDigestOrThrow();
+    this.hasWallpaper                 = recipient.hasWallpaper();
+    this.isMessageRequestAccepted     = true;
+    this.attachmentMediaSourceFactory = attachmentMediaSourceFactory;
+    this.colorizer                    = colorizer;
 
     setHasStableIds(true);
   }
@@ -167,9 +190,9 @@ public class ConversationAdapter
     } else if (messageRecord.isUpdate()) {
       return MESSAGE_TYPE_UPDATE;
     } else if (messageRecord.isOutgoing()) {
-      return messageRecord.isMms() ? MESSAGE_TYPE_OUTGOING_MULTIMEDIA : MESSAGE_TYPE_OUTGOING_TEXT;
+      return MessageRecordUtil.isTextOnly(messageRecord, context) ? MESSAGE_TYPE_OUTGOING_TEXT : MESSAGE_TYPE_OUTGOING_MULTIMEDIA;
     } else {
-      return messageRecord.isMms() ? MESSAGE_TYPE_INCOMING_MULTIMEDIA : MESSAGE_TYPE_INCOMING_TEXT;
+      return MessageRecordUtil.isTextOnly(messageRecord, context) ? MESSAGE_TYPE_INCOMING_TEXT : MESSAGE_TYPE_INCOMING_MULTIMEDIA;
     }
   }
 
@@ -192,6 +215,7 @@ public class ConversationAdapter
     return message.getUniqueId(digest);
   }
 
+  @SuppressLint("ClickableViewAccessibility")
   @Override
   public @NonNull RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
     switch (viewType) {
@@ -200,19 +224,20 @@ public class ConversationAdapter
       case MESSAGE_TYPE_OUTGOING_TEXT:
       case MESSAGE_TYPE_OUTGOING_MULTIMEDIA:
       case MESSAGE_TYPE_UPDATE:
-        View                     itemView = CachedInflater.from(parent.getContext()).inflate(getLayoutForViewType(viewType), parent, false);
-        BindableConversationItem bindable = (BindableConversationItem) itemView;
+        View                          itemView        = CachedInflater.from(parent.getContext()).inflate(getLayoutForViewType(viewType), parent, false);
+        BindableConversationItem      bindable        = (BindableConversationItem) itemView;
 
-        itemView.setOnClickListener(view -> {
+        itemView.setOnClickListener((v) -> {
           if (clickListener != null) {
-            clickListener.onItemClick(bindable.getConversationMessage());
+            clickListener.onItemClick(bindable.getMultiselectPartForLatestTouch());
           }
         });
 
-        itemView.setOnLongClickListener(view -> {
+        itemView.setOnLongClickListener((v) -> {
           if (clickListener != null) {
-            clickListener.onItemLongClick(itemView, bindable.getConversationMessage());
+            clickListener.onItemLongClick(itemView, bindable.getMultiselectPartForLatestTouch());
           }
+
           return true;
         });
 
@@ -228,6 +253,24 @@ public class ConversationAdapter
         return new HeaderFooterViewHolder(CachedInflater.from(parent.getContext()).inflate(R.layout.cursor_adapter_header_footer_view, parent, false));
       default:
         throw new IllegalStateException("Cannot create viewholder for type: " + viewType);
+    }
+  }
+
+  @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+    if (payloads.contains(PAYLOAD_TIMESTAMP)) {
+      switch (getItemViewType(position)) {
+        case MESSAGE_TYPE_INCOMING_TEXT:
+        case MESSAGE_TYPE_INCOMING_MULTIMEDIA:
+        case MESSAGE_TYPE_OUTGOING_TEXT:
+        case MESSAGE_TYPE_OUTGOING_MULTIMEDIA:
+        case MESSAGE_TYPE_UPDATE:
+          ConversationViewHolder conversationViewHolder = (ConversationViewHolder) holder;
+          conversationViewHolder.getBindable().updateTimestamps();
+        default:
+          return;
+      }
+    } else {
+      super.onBindViewHolder(holder, position, payloads);
     }
   }
 
@@ -257,7 +300,10 @@ public class ConversationAdapter
                                                   searchQuery,
                                                   conversationMessage == recordToPulse,
                                                   hasWallpaper,
-                                                  isMessageRequestAccepted);
+                                                  isMessageRequestAccepted,
+                                                  attachmentMediaSourceFactory,
+                                                  conversationMessage == inlineContent,
+                                                  colorizer);
 
         if (conversationMessage == recordToPulse) {
           recordToPulse = null;
@@ -299,8 +345,8 @@ public class ConversationAdapter
 
     if (conversationMessage == null) return -1;
 
-    calendar.setTime(new Date(conversationMessage.getMessageRecord().getDateSent()));
-    return Util.hashCode(calendar.get(Calendar.YEAR), calendar.get(Calendar.DAY_OF_YEAR));
+    calendar.setTimeInMillis(conversationMessage.getMessageRecord().getDateReceived());
+    return calendar.get(Calendar.YEAR) * 1000L + calendar.get(Calendar.DAY_OF_YEAR);
   }
 
   @Override
@@ -313,7 +359,7 @@ public class ConversationAdapter
     Context             context             = viewHolder.itemView.getContext();
     ConversationMessage conversationMessage = Objects.requireNonNull(getItem(position));
 
-    viewHolder.setText(DateUtils.getRelativeDate(viewHolder.itemView.getContext(), locale, conversationMessage.getMessageRecord().getDateReceived()));
+    viewHolder.setText(DateUtils.getConversationDateHeaderString(viewHolder.itemView.getContext(), locale, conversationMessage.getMessageRecord().getDateReceived()));
 
     if (type == HEADER_TYPE_POPOVER_DATE) {
       if (hasWallpaper) {
@@ -348,7 +394,13 @@ public class ConversationAdapter
       if (pagingController != null) {
         pagingController.onDataNeededAroundIndex(correctedPosition);
       }
-      return super.getItem(correctedPosition);
+
+      if (correctedPosition < getItemCount()) {
+        return super.getItem(correctedPosition);
+      } else {
+        Log.d(TAG, "Could not access corrected position " + correctedPosition + " as it is out of bounds.");
+        return null;
+      }
     }
   }
 
@@ -359,6 +411,10 @@ public class ConversationAdapter
 
   public void setPagingController(@Nullable PagingController pagingController) {
     this.pagingController = pagingController;
+  }
+
+  public boolean isForRecipientId(@NonNull RecipientId recipientId) {
+    return recipient.getId().equals(recipientId);
   }
 
   void onBindLastSeenViewHolder(StickyHeaderViewHolder viewHolder, int position) {
@@ -506,8 +562,12 @@ public class ConversationAdapter
   /**
    * Returns set of records that are selected in multi-select mode.
    */
-  Set<ConversationMessage> getSelectedItems() {
+  public Set<MultiselectPart> getSelectedItems() {
     return new HashSet<>(selected);
+  }
+
+  public void removeFromSelection(@NonNull Set<MultiselectPart> parts) {
+    selected.removeAll(parts);
   }
 
   /**
@@ -520,11 +580,11 @@ public class ConversationAdapter
   /**
    * Toggles the selected state of a record in multi-select mode.
    */
-  void toggleSelection(ConversationMessage conversationMessage) {
-    if (selected.contains(conversationMessage)) {
-      selected.remove(conversationMessage);
+  void toggleSelection(MultiselectPart multiselectPart) {
+    if (selected.contains(multiselectPart)) {
+      selected.remove(multiselectPart);
     } else {
-      selected.add(conversationMessage);
+      selected.add(multiselectPart);
     }
   }
 
@@ -533,9 +593,9 @@ public class ConversationAdapter
    */
   @MainThread
   static void initializePool(@NonNull RecyclerView.RecycledViewPool pool) {
-    pool.setMaxRecycledViews(MESSAGE_TYPE_INCOMING_TEXT, 15);
+    pool.setMaxRecycledViews(MESSAGE_TYPE_INCOMING_TEXT, 25);
     pool.setMaxRecycledViews(MESSAGE_TYPE_INCOMING_MULTIMEDIA, 15);
-    pool.setMaxRecycledViews(MESSAGE_TYPE_OUTGOING_TEXT, 15);
+    pool.setMaxRecycledViews(MESSAGE_TYPE_OUTGOING_TEXT, 25);
     pool.setMaxRecycledViews(MESSAGE_TYPE_OUTGOING_MULTIMEDIA, 15);
     pool.setMaxRecycledViews(MESSAGE_TYPE_PLACEHOLDER, 15);
     pool.setMaxRecycledViews(MESSAGE_TYPE_HEADER, 1);
@@ -545,7 +605,7 @@ public class ConversationAdapter
 
   @MainThread
   private void cleanFastRecords() {
-    Util.assertMainThread();
+    ThreadUtil.assertMainThread();
 
     synchronized (releasedFastRecords) {
       Iterator<ConversationMessage> messageIterator = fastRecords.iterator();
@@ -595,7 +655,12 @@ public class ConversationAdapter
   }
 
   public @Nullable ConversationMessage getLastVisibleConversationMessage(int position) {
-    return getItem(position - ((hasFooter() && position == getItemCount() - 1) ? 1 : 0));
+    try {
+      return getItem(position - ((hasFooter() && position == getItemCount() - 1) ? 1 : 0));
+    } catch (IndexOutOfBoundsException e) {
+      Log.w(TAG, "Race condition changed size of conversation", e);
+      return null;
+    }
   }
 
   public void setMessageRequestAccepted(boolean messageRequestAccepted) {
@@ -605,13 +670,59 @@ public class ConversationAdapter
     }
   }
 
-  static class ConversationViewHolder extends RecyclerView.ViewHolder {
+  public void playInlineContent(@Nullable ConversationMessage conversationMessage) {
+    if (this.inlineContent != conversationMessage) {
+      this.inlineContent = conversationMessage;
+      notifyDataSetChanged();
+    }
+  }
+
+  public void updateTimestamps() {
+    notifyItemRangeChanged(0, getItemCount(), PAYLOAD_TIMESTAMP);
+  }
+
+  final static class ConversationViewHolder extends RecyclerView.ViewHolder implements GiphyMp4Playable, Colorizable {
     public ConversationViewHolder(final @NonNull View itemView) {
       super(itemView);
     }
 
     public BindableConversationItem getBindable() {
       return (BindableConversationItem) itemView;
+    }
+
+    @Override
+    public void showProjectionArea() {
+      getBindable().showProjectionArea();
+    }
+
+    @Override
+    public void hideProjectionArea() {
+      getBindable().hideProjectionArea();
+    }
+
+    @Override
+    public @Nullable MediaSource getMediaSource() {
+      return getBindable().getMediaSource();
+    }
+
+    @Override
+    public @Nullable GiphyMp4PlaybackPolicyEnforcer getPlaybackPolicyEnforcer() {
+      return getBindable().getPlaybackPolicyEnforcer();
+    }
+
+    @NonNull
+    public @Override Projection getGiphyMp4PlayableProjection(@NonNull ViewGroup recyclerView) {
+      return getBindable().getGiphyMp4PlayableProjection(recyclerView);
+    }
+
+    @Override
+    public boolean canPlayContent() {
+      return getBindable().canPlayContent();
+    }
+
+    @Override
+    public @NonNull List<Projection> getColorizerProjections() {
+      return getBindable().getColorizerProjections();
     }
   }
 
@@ -682,7 +793,7 @@ public class ConversationAdapter
   }
 
   interface ItemClickListener extends BindableConversationItem.EventListener {
-    void onItemClick(ConversationMessage item);
-    void onItemLongClick(View maskTarget, ConversationMessage item);
+    void onItemClick(MultiselectPart item);
+    void onItemLongClick(View itemView, MultiselectPart item);
   }
 }

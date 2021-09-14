@@ -7,13 +7,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.crypto.DatabaseSessionLock;
+import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.MessageDatabase.SyncMessageId;
 import org.tm.archive.database.MmsSmsDatabase;
-import org.tm.archive.database.PushDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupChangeBusyException;
@@ -25,7 +24,6 @@ import org.tm.archive.jobs.PushProcessMessageJob;
 import org.tm.archive.messages.MessageDecryptionUtil.DecryptionResult;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.GroupUtil;
 import org.tm.archive.util.SetUtil;
 import org.tm.archive.util.Stopwatch;
@@ -84,14 +82,14 @@ public class IncomingMessageProcessor {
      *         one was created. Otherwise null.
      */
     public @Nullable String processEnvelope(@NonNull SignalServiceEnvelope envelope) {
-      if (envelope.hasSource()) {
+      if (envelope.hasSourceUuid()) {
         Recipient.externalHighTrustPush(context, envelope.getSourceAddress());
       }
 
       if (envelope.isReceipt()) {
         processReceipt(envelope);
         return null;
-      } else if (envelope.isPreKeySignalMessage() || envelope.isSignalMessage() || envelope.isUnidentifiedSender()) {
+      } else if (envelope.isPreKeySignalMessage() || envelope.isSignalMessage() || envelope.isUnidentifiedSender() || envelope.isPlaintextContent()) {
         return processMessage(envelope);
       } else {
         Log.w(TAG, "Received envelope of unknown type: " + envelope.getType());
@@ -100,11 +98,7 @@ public class IncomingMessageProcessor {
     }
 
     private @Nullable String processMessage(@NonNull SignalServiceEnvelope envelope) {
-      if (FeatureFlags.internalUser()) {
-        return processMessageInline(envelope);
-      } else {
-        return processMessageDeferred(envelope);
-      }
+      return processMessageDeferred(envelope);
     }
 
     private @Nullable String processMessageDeferred(@NonNull SignalServiceEnvelope envelope) {
@@ -127,12 +121,7 @@ public class IncomingMessageProcessor {
 
       stopwatch.split("queue-check");
 
-      long ownerThreadId = DatabaseSessionLock.INSTANCE.getLikeyOwnerThreadId();
-      if (ownerThreadId != DatabaseSessionLock.NO_OWNER && ownerThreadId != Thread.currentThread().getId()) {
-        Log.i(TAG, "It is likely that some other thread has this lock. Owner: " + ownerThreadId + ", Us: " + Thread.currentThread().getId());
-      }
-
-      try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+      try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
         Log.i(TAG, "Acquired lock while processing message " + envelope.getTimestamp() + ".");
 
         DecryptionResult result = MessageDecryptionUtil.decrypt(context, envelope);
@@ -170,9 +159,11 @@ public class IncomingMessageProcessor {
     }
 
     private void processReceipt(@NonNull SignalServiceEnvelope envelope) {
-      Log.i(TAG, "Received server receipt for " + envelope.getTimestamp());
-      mmsSmsDatabase.incrementDeliveryReceiptCount(new SyncMessageId(Recipient.externalHighTrustPush(context, envelope.getSourceAddress()).getId(), envelope.getTimestamp()),
-                                                   System.currentTimeMillis());
+      Recipient sender = Recipient.externalHighTrustPush(context, envelope.getSourceAddress());
+      Log.i(TAG, "Received server receipt. Sender: " + sender.getId() + ", Device: " + envelope.getSourceDevice() + ", Timestamp: " + envelope.getTimestamp());
+
+      mmsSmsDatabase.incrementDeliveryReceiptCount(new SyncMessageId(sender.getId(), envelope.getTimestamp()), System.currentTimeMillis());
+      DatabaseFactory.getMessageLogDatabase(context).deleteEntryForRecipient(envelope.getTimestamp(), sender.getId(), envelope.getSourceDevice());
     }
 
     private boolean needsToEnqueueDecryption() {

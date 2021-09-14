@@ -8,8 +8,8 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.backup.BackupFileIOError;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.BackupUtil;
-import org.tm.archive.util.TextSecurePreferences;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -43,13 +43,13 @@ public final class BackupNotificationMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    if (Build.VERSION.SDK_INT >= 29 && !TextSecurePreferences.isBackupEnabled(context) && BackupUtil.hasBackupFiles(context)) {
+    if (Build.VERSION.SDK_INT >= 29 && !SignalStore.settings().isBackupEnabled() && BackupUtil.hasBackupFiles(context)) {
       Log.w(TAG, "Stranded backup! Notifying.");
       BackupFileIOError.UNKNOWN.postNotification(context);
     } else {
       Log.w(TAG, String.format(Locale.US, "Does not meet criteria. API: %d, BackupsEnabled: %s, HasFiles: %s",
                                Build.VERSION.SDK_INT,
-                               TextSecurePreferences.isBackupEnabled(context),
+                               SignalStore.settings().isBackupEnabled(),
                                BackupUtil.hasBackupFiles(context)));
     }
   }

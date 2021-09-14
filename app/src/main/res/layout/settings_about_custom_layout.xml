@@ -34,7 +34,7 @@
             android:layout_weight="1"
             android:clickable="false"
             android:gravity="center"
-            android:text="version"
+            android:text="@string/version"
             android:textSize="14dp" />
 
 
@@ -45,7 +45,7 @@
             android:layout_weight="1"
             android:gravity="center_vertical|start"
             android:paddingStart="60dp"
-            android:text="privacy_center"
+            android:text="@string/privacy_center"
             android:textColorLink="@color/telemessage_color"
             android:textSize="16dp" />
 
@@ -56,7 +56,7 @@
             android:layout_weight="1"
             android:gravity="center_vertical|start"
             android:paddingStart="60dp"
-            android:text="terms"
+            android:text="@string/terms"
             android:textColorLink="@color/telemessage_color"
             android:textSize="16dp" />
 

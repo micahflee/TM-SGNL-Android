@@ -31,9 +31,12 @@ import org.tm.archive.registration.service.RegistrationCodeRequest;
 import org.tm.archive.registration.service.RegistrationService;
 import org.tm.archive.registration.viewmodel.RegistrationViewModel;
 import org.tm.archive.util.CommunicationActions;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.SupportEmailUtil;
 import org.tm.archive.util.concurrent.AssertedSuccessListener;
+import org.tm.archive.util.concurrent.SimpleTask;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -128,11 +131,22 @@ public final class EnterCodeFragment extends BaseRegistrationFragment
 
           @Override
           public void onSuccessfulRegistration() {
-            keyboard.displaySuccess().addListener(new AssertedSuccessListener<Boolean>() {
-              @Override
-              public void onSuccess(Boolean result) {
-                handleSuccessfulRegistration();
+            SimpleTask.run(() -> {
+              long startTime = System.currentTimeMillis();
+              try {
+                FeatureFlags.refreshSync();
+                Log.i(TAG, "Took " + (System.currentTimeMillis() - startTime) + " ms to get feature flags.");
+              } catch (IOException e) {
+                Log.w(TAG, "Failed to refresh flags after " + (System.currentTimeMillis() - startTime) + " ms.", e);
               }
+              return null;
+            }, none -> {
+              keyboard.displaySuccess().addListener(new AssertedSuccessListener<Boolean>() {
+                @Override
+                public void onSuccess(Boolean result) {
+                  handleSuccessfulRegistration();
+                }
+              });
             });
           }
 

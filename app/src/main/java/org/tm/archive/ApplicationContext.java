@@ -18,43 +18,42 @@ package org.tm.archive;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.multidex.MultiDexApplication;
 
 import com.google.android.gms.security.ProviderInstaller;
 import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.AndroidCopySettings;
 import com.tm.androidcopysdk.CommonUtils;
-import com.tm.androidcopysdk.events.EventAbsObj;
-import com.tm.androidcopysdk.events.PeriodicEventChecker;
 import com.tm.androidcopysdk.utils.PrefManager;
 
-
+import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveLogger;
-import org.archiver.ArchiveUtil;
 import org.conscrypt.Conscrypt;
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.AndroidLogger;
 import org.signal.core.util.logging.Log;
-import org.signal.core.util.logging.PersistentLogger;
 import org.signal.core.util.tracing.Tracer;
 import org.signal.glide.SignalGlideCodecs;
 import org.signal.ringrtc.CallManager;
-import org.archiver.ArchiveConstants;
+import org.tm.archive.avatar.AvatarPickerStorage;
 import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.LogDatabase;
+import org.tm.archive.database.SqlCipherLibraryLoader;
 import org.tm.archive.database.helpers.SQLCipherOpenHelper;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.dependencies.ApplicationDependencyProvider;
+import org.tm.archive.emoji.EmojiSource;
 import org.tm.archive.gcm.FcmJobService;
 import org.tm.archive.jobs.CreateSignedPreKeyJob;
+import org.tm.archive.jobs.DownloadLatestEmojiDataJob;
+import org.tm.archive.jobs.EmojiSearchIndexDownloadJob;
 import org.tm.archive.jobs.FcmRefreshJob;
 import org.tm.archive.jobs.GroupV1MigrationJob;
 import org.tm.archive.jobs.MultiDeviceContactUpdateJob;
@@ -63,25 +62,27 @@ import org.tm.archive.jobs.RefreshPreKeysJob;
 import org.tm.archive.jobs.RetrieveProfileJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.logging.CustomSignalProtocolLogger;
-import org.tm.archive.logging.LogSecretProvider;
+import org.tm.archive.logging.PersistentLogger;
+import org.tm.archive.messageprocessingalarm.MessageProcessReceiver;
 import org.tm.archive.migrations.ApplicationMigrations;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.push.SignalServiceNetworkAccess;
+import org.tm.archive.ratelimit.RateLimitUtil;
 import org.tm.archive.registration.RegistrationUtil;
-import org.tm.archive.revealable.ViewOnceMessageManager;
 import org.tm.archive.ringrtc.RingRtcLogger;
 import org.tm.archive.service.DirectoryRefreshListener;
-import org.tm.archive.service.ExpiringMessageManager;
 import org.tm.archive.service.KeyCachingService;
 import org.tm.archive.service.LocalBackupListener;
 import org.tm.archive.service.RotateSenderCertificateListener;
 import org.tm.archive.service.RotateSignedPreKeyListener;
 import org.tm.archive.service.UpdateApkRefreshListener;
 import org.tm.archive.storage.StorageSyncHelper;
+import org.tm.archive.util.AppForegroundObserver;
 import org.tm.archive.util.AppStartup;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.FeatureFlags;
+import org.tm.archive.util.SignalLocalMetrics;
 import org.tm.archive.util.SignalUncaughtExceptionHandler;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
@@ -92,9 +93,10 @@ import org.webrtc.voiceengine.WebRtcAudioUtils;
 import org.whispersystems.libsignal.logging.SignalProtocolLoggerProvider;
 
 import java.security.Security;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import io.reactivex.rxjava3.plugins.RxJavaPlugins;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 import static org.archiver.ArchiveConstants.isTestMode;
 
@@ -106,15 +108,11 @@ import static org.archiver.ArchiveConstants.isTestMode;
  *
  * @author Moxie Marlinspike
  */
-public class ApplicationContext extends MultiDexApplication implements DefaultLifecycleObserver {
+public class ApplicationContext extends MultiDexApplication implements AppForegroundObserver.Listener {
 
-  private static final String TAG = ApplicationContext.class.getSimpleName();
+  private static final String TAG = Log.tag(ApplicationContext.class);
 
-  private ExpiringMessageManager expiringMessageManager;
-  private ViewOnceMessageManager viewOnceMessageManager;
-  private PersistentLogger       persistentLogger;
-
-  private volatile boolean isAppVisible;
+  private PersistentLogger persistentLogger;
 
   public static ApplicationContext getInstance(Context context) {
     return (ApplicationContext)context.getApplicationContext();
@@ -124,6 +122,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   public void onCreate() {
     Tracer.getInstance().start("Application#onCreate()");
     AppStartup.getInstance().onApplicationCreate();
+    SignalLocalMetrics.ColdStart.start();
 
     long startTime = System.currentTimeMillis();
 
@@ -134,51 +133,62 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     super.onCreate();
 
     AppStartup.getInstance().addBlocking("security-provider", this::initializeSecurityProvider)
-            .addBlocking("logging", () -> {
-              initializeLogging();
-              Log.i(TAG, "onCreate()");
-            })
-            .addBlocking("crash-handling", this::initializeCrashHandling)
-            .addBlocking("eat-db", () -> DatabaseFactory.getInstance(this))
-            .addBlocking("app-dependencies", this::initializeAppDependencies)
-            .addBlocking("first-launch", this::initializeFirstEverAppLaunch)
-            .addBlocking("app-migrations", this::initializeApplicationMigrations)
-            .addBlocking("ring-rtc", this::initializeRingRtc)
-            .addBlocking("mark-registration", () -> RegistrationUtil.maybeMarkRegistrationComplete(this))
-            .addBlocking("lifecycle-observer", () -> ProcessLifecycleOwner.get().getLifecycle().addObserver(this))
-            .addBlocking("message-retriever", this::initializeMessageRetrieval)
-            .addBlocking("dynamic-theme", () -> DynamicTheme.setDefaultDayNightMode(this))
-            .addBlocking("vector-compat", () -> {
-              if (Build.VERSION.SDK_INT < 21) {
-                AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-              }
-            })
-            .addBlocking("proxy-init", () -> {
-              if (SignalStore.proxy().isProxyEnabled()) {
-                Log.w(TAG, "Proxy detected. Enabling Conscrypt.setUseEngineSocketByDefault()");
-                Conscrypt.setUseEngineSocketByDefault(true);
-              }
-            })
-            .addNonBlocking(this::initializeRevealableMessageManager)
-            .addNonBlocking(this::initializeGcmCheck)
-            .addNonBlocking(this::initializeSignedPreKeyCheck)
-            .addNonBlocking(this::initializePeriodicTasks)
-            .addNonBlocking(this::initializeCircumvention)
-            .addNonBlocking(this::initializePendingMessages)
-            .addNonBlocking(this::initializeCleanup)
-            .addNonBlocking(this::initializeGlideCodecs)
-            .addNonBlocking(FeatureFlags::init)
-            .addNonBlocking(RefreshPreKeysJob::scheduleIfNecessary)
-            .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)
-            .addNonBlocking(() -> ApplicationDependencies.getJobManager().beginJobLoop())
-            .addPostRender(this::initializeExpiringMessageManager)
-            .addPostRender(this::initializeBlobProvider)
-            .addPostRender(() -> NotificationChannels.create(this))
-            .execute();
-
-    ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+                            .addBlocking("sqlcipher-init", () -> SqlCipherLibraryLoader.load(this))
+                            .addBlocking("logging", () -> {
+                              initializeLogging();
+                              Log.i(TAG, "onCreate()");
+                            })
+                            .addBlocking("crash-handling", this::initializeCrashHandling)
+                            .addBlocking("rx-init", () -> {
+                              RxJavaPlugins.setInitIoSchedulerHandler(schedulerSupplier -> Schedulers.from(SignalExecutors.BOUNDED_IO, true, false));
+                              RxJavaPlugins.setInitComputationSchedulerHandler(schedulerSupplier -> Schedulers.from(SignalExecutors.BOUNDED, true, false));
+                            })
+                            .addBlocking("app-dependencies", this::initializeAppDependencies)
+                            .addBlocking("notification-channels", () -> NotificationChannels.create(this))
+                            .addBlocking("first-launch", this::initializeFirstEverAppLaunch)
+                            .addBlocking("app-migrations", this::initializeApplicationMigrations)
+                            .addBlocking("ring-rtc", this::initializeRingRtc)
+                            .addBlocking("mark-registration", () -> RegistrationUtil.maybeMarkRegistrationComplete(this))
+                            .addBlocking("lifecycle-observer", () -> ApplicationDependencies.getAppForegroundObserver().addListener(this))
+                            .addBlocking("message-retriever", this::initializeMessageRetrieval)
+                            .addBlocking("dynamic-theme", () -> DynamicTheme.setDefaultDayNightMode(this))
+                            .addBlocking("vector-compat", () -> {
+                              if (Build.VERSION.SDK_INT < 21) {
+                                AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+                              }
+                            })
+                            .addBlocking("proxy-init", () -> {
+                              if (SignalStore.proxy().isProxyEnabled()) {
+                                Log.w(TAG, "Proxy detected. Enabling Conscrypt.setUseEngineSocketByDefault()");
+                                Conscrypt.setUseEngineSocketByDefault(true);
+                              }
+                            })
+                            .addBlocking("blob-provider", this::initializeBlobProvider)
+                            .addBlocking("feature-flags", FeatureFlags::init)
+                            .addNonBlocking(this::cleanAvatarStorage)
+                            .addNonBlocking(this::initializeRevealableMessageManager)
+                            .addNonBlocking(this::initializePendingRetryReceiptManager)
+                            .addNonBlocking(this::initializeGcmCheck)
+                            .addNonBlocking(this::initializeSignedPreKeyCheck)
+                            .addNonBlocking(this::initializePeriodicTasks)
+                            .addNonBlocking(this::initializeCircumvention)
+                            .addNonBlocking(this::initializePendingMessages)
+                            .addNonBlocking(this::initializeCleanup)
+                            .addNonBlocking(this::initializeGlideCodecs)
+                            .addNonBlocking(RefreshPreKeysJob::scheduleIfNecessary)
+                            .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)
+                            .addNonBlocking(() -> ApplicationDependencies.getJobManager().beginJobLoop())
+                            .addNonBlocking(EmojiSource::refresh)
+                            .addPostRender(() -> RateLimitUtil.retryAllRateLimitedMessages(this))
+                            .addPostRender(this::initializeExpiringMessageManager)
+                            .addPostRender(() -> SignalStore.settings().setDefaultSms(Util.isDefaultSmsProvider(this)))
+                            .addPostRender(() -> DownloadLatestEmojiDataJob.scheduleIfNecessary(this))
+                            .addPostRender(EmojiSearchIndexDownloadJob::scheduleIfNecessary)
+                            .addPostRender(() -> DatabaseFactory.getMessageLogDatabase(this).trimOldMessages(System.currentTimeMillis(), FeatureFlags.retryRespondMaxAge()))
+                            .execute();
 
     Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
+    SignalLocalMetrics.ColdStart.onApplicationCreateFinished();
     Tracer.getInstance().end("Application#onCreate()");
 
     com.tm.logger.Log.createInstance(getApplicationContext());
@@ -189,12 +199,12 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   }
 
   private void initArchiveUrlsAndStartArchive() {
-    ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive \nsetUrl: \nchosenUrl =" + ArchiveConstants.charlieProduction+ "\nKeeperUrl =" + ArchiveConstants.prodKeeper);
+    ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive \nsetUrl: \nchosenUrl =" + ArchiveConstants.charlieProduction + "\nKeeperUrl =" + ArchiveConstants.prodKeeper);
     CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.charlieProduction, ArchiveConstants.prodKeeper);
-  //  CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.integration, ArchiveConstants.integrationKeeper);
+    //  CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.integration, ArchiveConstants.integrationKeeper);
     CommonUtils.setSqlInfo(getApplicationContext(), ArchiveConstants.isTestMode ? ArchiveConstants.signalTestPassword : ArchiveConstants.signalCurrentPassword);
 
-    boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(),R.string.installation_event_sent,false);
+    boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);
 
     if(isTestMode || !installationEventSent) {
       initializeTMAndroidArchive();
@@ -213,26 +223,19 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
     mSettings.setData(AndroidCopySettings.DataSaving.WIFI3G);
 
-    AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"",ArchiveConstants.signalCurrentPassword);
+    AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"", ArchiveConstants.signalCurrentPassword);
     ArchiveLogger.Companion.sendArchiveLog("User name = " + "Password = ");
 
     boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);
     // InstallEvent should be sent only once
     if(!installationEventSent) {
-/*
-      CommonUtils.addUpdateVersionEvent(getApplicationContext(), EventAbsObj.EventType.InstallEvent);
-*/
       PrefManager.setBooleanPref(getApplicationContext(),R.string.installation_event_sent,true);
-/*
-      PeriodicEventChecker.startService(getApplicationContext(), -1);
-*/
     }
   }
 
   @Override
-  public void onStart(@NonNull LifecycleOwner owner) {
+  public void onForeground() {
     long startTime = System.currentTimeMillis();
-    isAppVisible = true;
     Log.i(TAG, "App is now visible.");
 
     ApplicationDependencies.getFrameRateTracker().begin();
@@ -253,28 +256,12 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   }
 
   @Override
-  public void onStop(@NonNull LifecycleOwner owner) {
-    isAppVisible = false;
+  public void onBackground() {
     Log.i(TAG, "App is no longer visible.");
     KeyCachingService.onAppBackgrounded(this);
     ApplicationDependencies.getMessageNotifier().clearVisibleThread();
     ApplicationDependencies.getFrameRateTracker().end();
     ApplicationDependencies.getShakeToReport().disable();
-  }
-
-  public ExpiringMessageManager getExpiringMessageManager() {
-    if (expiringMessageManager == null) {
-      initializeExpiringMessageManager();
-    }
-    return expiringMessageManager;
-  }
-
-  public ViewOnceMessageManager getViewOnceMessageManager() {
-    return viewOnceMessageManager;
-  }
-
-  public boolean isAppVisible() {
-    return isAppVisible;
   }
 
   public PersistentLogger getPersistentLogger() {
@@ -313,10 +300,12 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   }
 
   private void initializeLogging() {
-    persistentLogger = new PersistentLogger(this, LogSecretProvider.getOrCreateAttachmentSecret(this), BuildConfig.VERSION_NAME);
-    org.signal.core.util.logging.Log.initialize(new AndroidLogger(), persistentLogger);
+    persistentLogger = new PersistentLogger(this);
+    org.signal.core.util.logging.Log.initialize(FeatureFlags::internalUser, new AndroidLogger(), persistentLogger);
 
     SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
+
+    SignalExecutors.UNBOUNDED.execute(() -> LogDatabase.getInstance(this).trimToSize());
   }
 
   private void initializeCrashHandling() {
@@ -371,11 +360,15 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   }
 
   private void initializeExpiringMessageManager() {
-    this.expiringMessageManager = new ExpiringMessageManager(this);
+    ApplicationDependencies.getExpiringMessageManager().checkSchedule();
   }
 
   private void initializeRevealableMessageManager() {
-    this.viewOnceMessageManager = new ViewOnceMessageManager(this);
+    ApplicationDependencies.getViewOnceMessageManager().scheduleIfNecessary();
+  }
+
+  private void initializePendingRetryReceiptManager() {
+    ApplicationDependencies.getPendingRetryReceiptManager().scheduleIfNecessary();
   }
 
   private void initializePeriodicTasks() {
@@ -383,6 +376,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     DirectoryRefreshListener.schedule(this);
     LocalBackupListener.schedule(this);
     RotateSenderCertificateListener.schedule(this);
+    MessageProcessReceiver.startOrUpdateAlarm(this);
 
     if (BuildConfig.PLAY_STORE_DISABLED) {
       UpdateApkRefreshListener.schedule(this);
@@ -391,31 +385,11 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
 
   private void initializeRingRtc() {
     try {
-      Set<String> HARDWARE_AEC_BLACKLIST = new HashSet<String>() {{
-        add("Pixel");
-        add("Pixel XL");
-        add("Moto G5");
-        add("Moto G (5S) Plus");
-        add("Moto G4");
-        add("TA-1053");
-        add("Mi A1");
-        add("Mi A2");
-        add("E5823"); // Sony z5 compact
-        add("Redmi Note 5");
-        add("FP2"); // Fairphone FP2
-        add("MI 5");
-      }};
-
-      Set<String> OPEN_SL_ES_WHITELIST = new HashSet<String>() {{
-        add("Pixel");
-        add("Pixel XL");
-      }};
-
-      if (HARDWARE_AEC_BLACKLIST.contains(Build.MODEL)) {
+      if (RtcDeviceLists.hardwareAECBlocked()) {
         WebRtcAudioUtils.setWebRtcBasedAcousticEchoCanceler(true);
       }
 
-      if (!OPEN_SL_ES_WHITELIST.contains(Build.MODEL)) {
+      if (!RtcDeviceLists.openSLESAllowed()) {
         WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(true);
       }
 
@@ -457,6 +431,11 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   @WorkerThread
   private void initializeBlobProvider() {
     BlobProvider.getInstance().initialize(this);
+  }
+
+  @WorkerThread
+  private void cleanAvatarStorage() {
+    AvatarPickerStorage.cleanOrphans(this);
   }
 
   @WorkerThread

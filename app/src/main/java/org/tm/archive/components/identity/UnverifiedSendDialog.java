@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import org.tm.archive.R;
-import org.tm.archive.crypto.DatabaseSessionLock;
+import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.IdentityDatabase;
 import org.tm.archive.database.IdentityDatabase.IdentityRecord;
@@ -44,7 +44,7 @@ public class UnverifiedSendDialog extends AlertDialog.Builder implements DialogI
     new AsyncTask<Void, Void, Void>() {
       @Override
       protected Void doInBackground(Void... params) {
-        try(SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+        try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
           for (IdentityRecord identityRecord : untrustedRecords) {
             identityDatabase.setVerified(identityRecord.getRecipientId(),
                                          identityRecord.getIdentityKey(),

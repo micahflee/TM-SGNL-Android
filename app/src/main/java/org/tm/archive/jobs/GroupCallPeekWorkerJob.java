@@ -1,14 +1,11 @@
 package org.tm.archive.jobs;
 
-import android.content.Intent;
-
 import androidx.annotation.NonNull;
 
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.ringrtc.RemotePeer;
-import org.tm.archive.service.WebRtcCallService;
 
 /**
  * Runs in the same queue as messages for the group.
@@ -36,11 +33,7 @@ final class GroupCallPeekWorkerJob extends BaseJob {
 
   @Override
   protected void onRun() {
-    Intent intent = new Intent(context, WebRtcCallService.class);
-    intent.setAction(WebRtcCallService.ACTION_GROUP_CALL_PEEK)
-          .putExtra(WebRtcCallService.EXTRA_REMOTE_PEER, new RemotePeer(groupRecipientId));
-
-    context.startService(intent);
+    ApplicationDependencies.getSignalCallManager().peekGroupCall(groupRecipientId);
   }
 
   @Override

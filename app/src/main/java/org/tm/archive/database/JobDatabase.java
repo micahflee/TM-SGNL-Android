@@ -2,15 +2,18 @@ package org.tm.archive.database;
 
 import android.app.Application;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
+import net.sqlcipher.database.SQLiteDatabaseHook;
 import net.sqlcipher.database.SQLiteOpenHelper;
 import net.sqlcipher.database.SQLiteDatabase;
 
+import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.DatabaseSecret;
 import org.tm.archive.crypto.DatabaseSecretProvider;
@@ -93,6 +96,7 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
     if (instance == null) {
       synchronized (JobDatabase.class) {
         if (instance == null) {
+          SqlCipherLibraryLoader.load(context);
           instance = new JobDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context));
         }
       }
@@ -101,7 +105,7 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
   }
 
   public JobDatabase(@NonNull Application application, @NonNull DatabaseSecret databaseSecret) {
-    super(application, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook());
+    super(application, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook(), new SqlCipherErrorHandler(DATABASE_NAME));
 
     this.application    = application;
     this.databaseSecret = databaseSecret;
@@ -140,9 +144,14 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
   public void onOpen(SQLiteDatabase db) {
     Log.i(TAG, "onOpen()");
 
-    dropTableIfPresent("job_spec");
-    dropTableIfPresent("constraint_spec");
-    dropTableIfPresent("dependency_spec");
+    db.enableWriteAheadLogging();
+    db.setForeignKeyConstraintsEnabled(true);
+
+    SignalExecutors.BOUNDED.execute(() -> {
+      dropTableIfPresent("job_spec");
+      dropTableIfPresent("constraint_spec");
+      dropTableIfPresent("dependency_spec");
+    });
   }
 
   public synchronized void insertJobs(@NonNull List<FullSpec> fullSpecs) {
@@ -362,14 +371,6 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
                               false);
   }
 
-  private @NonNull SQLiteDatabase getReadableDatabase() {
-    return getWritableDatabase(databaseSecret.asString());
-  }
-
-  private @NonNull SQLiteDatabase getWritableDatabase() {
-    return getWritableDatabase(databaseSecret.asString());
-  }
-
   @Override
   public @NonNull SQLiteDatabase getSqlCipherDatabase() {
     return getWritableDatabase();
@@ -378,7 +379,7 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
   private void dropTableIfPresent(@NonNull String table) {
     if (DatabaseFactory.getInstance(application).hasTable(table)) {
       Log.i(TAG, "Dropping original " + table + " table from the main database.");
-      DatabaseFactory.getInstance(application).getRawDatabase().rawExecSQL("DROP TABLE " + table);
+      DatabaseFactory.getInstance(application).getRawDatabase().execSQL("DROP TABLE " + table);
     }
   }
 
@@ -428,5 +429,13 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
         newDb.insert(Dependencies.TABLE_NAME, null, values);
       }
     }
+  }
+
+  private SQLiteDatabase getReadableDatabase() {
+    return super.getReadableDatabase(databaseSecret.asString());
+  }
+
+  private SQLiteDatabase getWritableDatabase() {
+    return super.getWritableDatabase(databaseSecret.asString());
   }
 }

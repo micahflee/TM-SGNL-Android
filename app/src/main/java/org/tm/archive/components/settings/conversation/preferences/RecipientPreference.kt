@@ -1,0 +1,65 @@
+package org.tm.archive.components.settings.conversation.preferences
+
+import android.view.View
+import android.widget.TextView
+import org.tm.archive.R
+import org.tm.archive.components.AvatarImageView
+import org.tm.archive.components.settings.PreferenceModel
+import org.tm.archive.recipients.Recipient
+import org.tm.archive.util.MappingAdapter
+import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.visible
+
+/**
+ * Renders a Recipient as a row item with an icon, avatar, status, and admin state
+ */
+object RecipientPreference {
+
+  fun register(adapter: MappingAdapter) {
+    adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory(::ViewHolder, R.layout.group_recipient_list_item))
+  }
+
+  class Model(
+    val recipient: Recipient,
+    val isAdmin: Boolean = false,
+    val onClick: () -> Unit
+  ) : PreferenceModel<Model>() {
+    override fun areItemsTheSame(newItem: Model): Boolean {
+      return recipient.id == newItem.recipient.id
+    }
+
+    override fun areContentsTheSame(newItem: Model): Boolean {
+      return super.areContentsTheSame(newItem) &&
+        recipient.hasSameContent(newItem.recipient) &&
+        isAdmin == newItem.isAdmin
+    }
+  }
+
+  private class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
+    private val avatar: AvatarImageView = itemView.findViewById(R.id.recipient_avatar)
+    private val name: TextView = itemView.findViewById(R.id.recipient_name)
+    private val about: TextView = itemView.findViewById(R.id.recipient_about)
+    private val admin: View = itemView.findViewById(R.id.admin)
+
+    override fun bind(model: Model) {
+      itemView.setOnClickListener { model.onClick() }
+
+      avatar.setRecipient(model.recipient)
+      name.text = if (model.recipient.isSelf) {
+        context.getString(R.string.Recipient_you)
+      } else {
+        model.recipient.getDisplayName(context)
+      }
+
+      val aboutText = model.recipient.combinedAboutAndEmoji
+      if (aboutText.isNullOrEmpty()) {
+        about.visibility = View.GONE
+      } else {
+        about.text = model.recipient.combinedAboutAndEmoji
+        about.visibility = View.VISIBLE
+      }
+
+      admin.visible = model.isAdmin
+    }
+  }
+}

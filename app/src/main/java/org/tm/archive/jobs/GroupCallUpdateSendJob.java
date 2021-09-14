@@ -9,8 +9,11 @@ import com.annimon.stream.Stream;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.messages.GroupSendUtil;
+import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
@@ -18,6 +21,7 @@ import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
+import org.whispersystems.signalservice.api.crypto.ContentHint;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
@@ -104,6 +108,10 @@ public class GroupCallUpdateSendJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
+    if (!Recipient.self().isRegistered()) {
+      throw new NotPushRegisteredException();
+    }
+
     Recipient conversationRecipient = Recipient.resolved(recipientId);
 
     if (!conversationRecipient.isPushV2Group()) {
@@ -145,20 +153,20 @@ public class GroupCallUpdateSendJob extends BaseJob {
   private @NonNull List<Recipient> deliver(@NonNull Recipient conversationRecipient, @NonNull List<Recipient> destinations)
       throws IOException, UntrustedIdentityException
   {
-    SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-    List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, destinations);
-    List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, destinations);;
-    SignalServiceDataMessage.Builder       dataMessage        = SignalServiceDataMessage.newBuilder()
-                                                                                        .withTimestamp(System.currentTimeMillis())
-                                                                                        .withGroupCallUpdate(new SignalServiceDataMessage.GroupCallUpdate(eraId));
+    SignalServiceDataMessage.Builder dataMessage = SignalServiceDataMessage.newBuilder()
+                                                                           .withTimestamp(System.currentTimeMillis())
+                                                                           .withGroupCallUpdate(new SignalServiceDataMessage.GroupCallUpdate(eraId));
 
-    if (conversationRecipient.isGroup()) {
-      GroupUtil.setDataMessageGroupContext(context, dataMessage, conversationRecipient.requireGroupId().requirePush());
-    }
+    GroupUtil.setDataMessageGroupContext(context, dataMessage, conversationRecipient.requireGroupId().requirePush());
 
-    List<SendMessageResult> results = messageSender.sendMessage(addresses, unidentifiedAccess, false, dataMessage.build());
+    List<SendMessageResult> results = GroupSendUtil.sendUnresendableDataMessage(context,
+                                                                                conversationRecipient.requireGroupId().requireV2(),
+                                                                                destinations,
+                                                                                false,
+                                                                                ContentHint.DEFAULT,
+                                                                                dataMessage.build());
 
-    return GroupSendJobHelper.getCompletedSends(context, results);
+    return GroupSendJobHelper.getCompletedSends(destinations, results);
   }
 
   public static class Factory implements Job.Factory<GroupCallUpdateSendJob> {

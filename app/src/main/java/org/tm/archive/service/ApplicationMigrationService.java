@@ -17,6 +17,7 @@ import android.os.PowerManager.WakeLock;
 
 import androidx.core.app.NotificationCompat;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.MainActivity;
 import org.tm.archive.R;
 import org.tm.archive.database.SmsMigrator;
@@ -32,7 +33,7 @@ import java.util.concurrent.Executors;
 public class ApplicationMigrationService extends Service
     implements SmsMigrator.SmsMigrationProgressListener
 {
-  private static final String TAG               = ApplicationMigrationService.class.getSimpleName();
+  private static final String TAG               = Log.tag(ApplicationMigrationService.class);
   public  static final String MIGRATE_DATABASE  = "org.tm.archive.ApplicationMigration.MIGRATE_DATABSE";
   public  static final String COMPLETED_ACTION  = "org.tm.archive.ApplicationMigrationService.COMPLETED";
   private static final String PREFERENCES_NAME  = "SecureSMS";

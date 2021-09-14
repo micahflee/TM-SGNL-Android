@@ -10,10 +10,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.DatabaseContentProviders;
 import org.tm.archive.database.model.MmsMessageRecord;
-import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 class ViewOnceMessageViewModel extends ViewModel {
@@ -59,7 +59,7 @@ class ViewOnceMessageViewModel extends ViewModel {
   }
 
   private void onMessageRetrieved(@NonNull Optional<MmsMessageRecord> optionalMessage) {
-    Util.runOnMain(() -> {
+    ThreadUtil.runOnMain(() -> {
       MmsMessageRecord current  = message.getValue() != null ? message.getValue().orNull() : null;
       MmsMessageRecord proposed = optionalMessage.orNull();
 

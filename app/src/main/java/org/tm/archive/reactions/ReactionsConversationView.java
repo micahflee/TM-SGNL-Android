@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat;
 import com.annimon.stream.Stream;
 
 import org.tm.archive.R;
+import org.tm.archive.components.emoji.EmojiImageView;
 import org.tm.archive.components.emoji.EmojiUtil;
 import org.tm.archive.database.model.ReactionRecord;
 import org.tm.archive.recipients.Recipient;
@@ -137,13 +138,13 @@ public class ReactionsConversationView extends LinearLayout {
   }
 
   private static View buildPill(@NonNull Context context, @NonNull ViewGroup parent, @NonNull Reaction reaction) {
-    View     root      = LayoutInflater.from(context).inflate(R.layout.reactions_pill, parent, false);
-    TextView emojiView = root.findViewById(R.id.reactions_pill_emoji);
-    TextView countView = root.findViewById(R.id.reactions_pill_count);
-    View     spacer    = root.findViewById(R.id.reactions_pill_spacer);
+    View           root      = LayoutInflater.from(context).inflate(R.layout.reactions_pill, parent, false);
+    EmojiImageView emojiView = root.findViewById(R.id.reactions_pill_emoji);
+    TextView       countView = root.findViewById(R.id.reactions_pill_count);
+    View           spacer    = root.findViewById(R.id.reactions_pill_spacer);
 
     if (reaction.displayEmoji != null) {
-      emojiView.setText(reaction.displayEmoji);
+      emojiView.setImageEmoji(reaction.displayEmoji);
 
       if (reaction.count > 1) {
         countView.setText(String.valueOf(reaction.count));

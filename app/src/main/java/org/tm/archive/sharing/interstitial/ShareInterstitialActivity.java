@@ -8,6 +8,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.annimon.stream.Stream;
@@ -23,10 +24,13 @@ import org.tm.archive.mms.GlideApp;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.sharing.MultiShareDialogs;
+import org.tm.archive.sharing.ShareFlowConstants;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.text.AfterTextChanged;
+
+import java.util.Objects;
 
 /**
  * Handles display and editing of a text message (with possible link preview) before it is forwarded
@@ -125,6 +129,9 @@ public class ShareInterstitialActivity extends PassphraseRequiredActivity {
 
     contactsRecycler = findViewById(R.id.selected_list);
     contactsRecycler.setAdapter(adapter);
+
+    RecyclerView.ItemAnimator itemAnimator = Objects.requireNonNull(contactsRecycler.getItemAnimator());
+    ShareFlowConstants.applySelectedContactsRecyclerAnimationSpeeds(itemAnimator);
 
     confirm.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
       int pad = Math.abs(v.getWidth() + ViewUtil.dpToPx(16));

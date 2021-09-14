@@ -38,7 +38,7 @@ public class UpdateApkJob extends BaseJob {
 
   public static final String KEY = "UpdateApkJob";
 
-  private static final String TAG = UpdateApkJob.class.getSimpleName();
+  private static final String TAG = Log.tag(UpdateApkJob.class);
 
   public UpdateApkJob() {
     this(new Job.Parameters.Builder()
@@ -187,8 +187,7 @@ public class UpdateApkJob extends BaseJob {
       fin.close();
 
       return digest;
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       Log.w(TAG, e);
       return null;
     }

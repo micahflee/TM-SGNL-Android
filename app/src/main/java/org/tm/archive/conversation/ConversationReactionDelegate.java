@@ -3,11 +3,11 @@ package org.tm.archive.conversation;
 import android.app.Activity;
 import android.graphics.PointF;
 import android.view.MotionEvent;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 
+import org.tm.archive.components.MaskView;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.views.Stub;
@@ -38,15 +38,16 @@ final class ConversationReactionDelegate {
   }
 
   void show(@NonNull Activity activity,
-            @NonNull View maskTarget,
+            @NonNull MaskView.MaskTarget maskTarget,
             @NonNull Recipient conversationRecipient,
-            @NonNull MessageRecord messageRecord,
-            int maskPaddingBottom)
+            @NonNull ConversationMessage conversationMessage,
+            int maskPaddingBottom,
+            boolean isNonAdminInAnnouncementGroup)
   {
-    resolveOverlay().show(activity, maskTarget, conversationRecipient, messageRecord, maskPaddingBottom, lastSeenDownPoint);
+    resolveOverlay().show(activity, maskTarget, conversationRecipient, conversationMessage, maskPaddingBottom, lastSeenDownPoint, isNonAdminInAnnouncementGroup);
   }
 
-  void showMask(@NonNull View maskTarget, int maskPaddingTop, int maskPaddingBottom) {
+  void showMask(@NonNull MaskView.MaskTarget maskTarget, int maskPaddingTop, int maskPaddingBottom) {
     resolveOverlay().showMask(maskTarget, maskPaddingTop, maskPaddingBottom);
   }
 
@@ -54,8 +55,8 @@ final class ConversationReactionDelegate {
     overlayStub.get().hide();
   }
 
-  void hideAllButMask() {
-    overlayStub.get().hideAllButMask();
+  void hideForReactWithAny() {
+    overlayStub.get().hideForReactWithAny();
   }
 
   void hideMask() {

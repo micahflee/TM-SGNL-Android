@@ -8,7 +8,6 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.signal.ringrtc.GroupCall;
-import org.tm.archive.BuildConfig;
 import org.tm.archive.events.WebRtcViewModel;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.ringrtc.RemotePeer;
@@ -44,8 +43,8 @@ class GroupNetworkUnavailableActionProcessor extends WebRtcActionProcessor {
 
     byte[]    groupId   = currentState.getCallInfoState().getCallRecipient().requireGroupId().getDecodedId();
     GroupCall groupCall = webRtcInteractor.getCallManager().createGroupCall(groupId,
-                                                                            BuildConfig.SIGNAL_SFU_URL,
-                                                                            currentState.getVideoState().requireEglBase(),
+                                                                            SignalStore.internalValues().groupCallingServer(),
+                                                                            currentState.getVideoState().getLockableEglBase().require(),
                                                                             webRtcInteractor.getGroupCallObserver());
 
     return currentState.builder()

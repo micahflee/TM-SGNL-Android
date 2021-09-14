@@ -182,6 +182,7 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
     PlayServicesUtil.PlayServicesStatus fcmStatus = PlayServicesUtil.getPlayServicesStatus(context);
 
     if (fcmStatus == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
+
       ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
       PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
 
@@ -189,13 +190,10 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
 
       confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, e164number, true));
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
-      ArchiveLogger.Companion.sendArchiveLog("Register missing");
       confirmNumberPrompt(context, e164number, () -> handlePromptForNoPlayServices(context, e164number));
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.NEEDS_UPDATE) {
-      ArchiveLogger.Companion.sendArchiveLog("Register needs update");
       GoogleApiAvailability.getInstance().getErrorDialog(requireActivity(), ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED, 0).show();
     } else {
-      ArchiveLogger.Companion.sendArchiveLog("Register play service error");
       Dialogs.showAlertDialog(context, getString(R.string.RegistrationActivity_play_services_error),
         getString(R.string.RegistrationActivity_google_play_services_is_updating_or_unavailable));
     }

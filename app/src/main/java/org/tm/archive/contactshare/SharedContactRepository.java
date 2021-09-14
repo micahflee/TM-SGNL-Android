@@ -38,7 +38,7 @@ import static org.tm.archive.contactshare.Contact.Avatar;
 
 public class SharedContactRepository {
 
-  private static final String TAG = SharedContactRepository.class.getSimpleName();
+  private static final String TAG = Log.tag(SharedContactRepository.class);
 
   private final Context          context;
   private final Executor         executor;

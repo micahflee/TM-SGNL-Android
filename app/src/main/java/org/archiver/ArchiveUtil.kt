@@ -145,7 +145,7 @@ class ArchiveUtil {
                 if(groupTitle.isNotEmpty()){
                     groupTitle
                 }else {
-                    recipient.getName(context).toString()
+                    recipient.getGroupName(context)!!
                 }
             }else{
                 ""

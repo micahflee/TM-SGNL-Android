@@ -109,7 +109,8 @@ public final class InMemoryTranscoder implements Closeable {
 
     memoryFile = MemoryFileDescriptor.newMemoryFileDescriptor(context,
                                                               "TRANSCODE",
-                                                              memoryFileEstimate, false);
+                                                              memoryFileEstimate,
+                                                              false);
     final long startTime = System.currentTimeMillis();
 
     final FileDescriptor memoryFileFileDescriptor = memoryFile.getFileDescriptor();

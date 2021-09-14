@@ -20,6 +20,7 @@ import androidx.exifinterface.media.ExifInterface;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.MediaConstraints;
@@ -40,7 +41,7 @@ import javax.microedition.khronos.egl.EGLDisplay;
 
 public class BitmapUtil {
 
-  private static final String TAG = BitmapUtil.class.getSimpleName();
+  private static final String TAG = Log.tag(BitmapUtil.class);
 
   private static final int MAX_COMPRESSION_QUALITY          = 90;
   private static final int MIN_COMPRESSION_QUALITY          = 45;
@@ -410,7 +411,7 @@ public class BitmapUtil {
       }
     };
 
-    Util.runOnMain(runnable);
+    ThreadUtil.runOnMain(runnable);
 
     synchronized (result) {
       while (!created.get()) Util.wait(result, 0);

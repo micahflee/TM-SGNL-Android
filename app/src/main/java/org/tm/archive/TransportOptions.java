@@ -6,6 +6,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.util.CharacterCalculator;
 import org.tm.archive.util.MmsCharacterCalculator;
@@ -25,7 +26,7 @@ import static org.tm.archive.TransportOption.Type;
 
 public class TransportOptions {
 
-  private static final String TAG = TransportOptions.class.getSimpleName();
+  private static final String TAG = Log.tag(TransportOptions.class);
 
   private final List<OnTransportChangedListener> listeners = new LinkedList<>();
   private final Context                          context;

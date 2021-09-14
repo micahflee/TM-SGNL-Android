@@ -1,5 +1,7 @@
 package org.tm.archive.sms;
 
+import androidx.annotation.NonNull;
+
 import org.tm.archive.recipients.Recipient;
 
 public class OutgoingEncryptedMessage extends OutgoingTextMessage {
@@ -16,6 +18,11 @@ public class OutgoingEncryptedMessage extends OutgoingTextMessage {
   public boolean isSecureMessage() {
     return true;
   }
+
+  @Override
+  public @NonNull OutgoingTextMessage withExpiry(long expiresIn) {
+    return new OutgoingEncryptedMessage(getRecipient(), getMessageBody(), expiresIn);
+  };
 
   @Override
   public OutgoingTextMessage withBody(String body) {

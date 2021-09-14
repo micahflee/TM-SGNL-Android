@@ -9,6 +9,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import org.tm.archive.components.settings.DSLSettingsActivity;
+import org.tm.archive.components.settings.app.AppSettingsActivity;
 import org.tm.archive.conversation.ConversationIntents;
 import org.tm.archive.conversationlist.ConversationListArchiveFragment;
 import org.tm.archive.conversationlist.ConversationListFragment;
@@ -69,8 +71,7 @@ public class MainNavigator {
   }
 
   public void goToAppSettings() {
-    Intent intent = new Intent(activity, ApplicationPreferencesActivity.class);
-    activity.startActivityForResult(intent, REQUEST_CONFIG_CHANGES);
+    activity.startActivityForResult(AppSettingsActivity.home(activity), REQUEST_CONFIG_CHANGES);
   }
 
   public void goToArchiveList() {

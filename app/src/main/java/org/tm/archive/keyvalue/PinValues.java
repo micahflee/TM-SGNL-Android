@@ -9,6 +9,9 @@ import org.tm.archive.lock.SignalPinReminders;
 import org.tm.archive.lock.v2.PinKeyboardType;
 import org.tm.archive.util.TextSecurePreferences;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Specifically handles just the UI/UX state around PINs. For actual keys, see {@link KbsValues}.
  */
@@ -28,6 +31,11 @@ public final class PinValues extends SignalStoreValues {
 
   @Override
   void onFirstEverAppLaunch() {
+  }
+
+  @Override
+  @NonNull List<String> getKeysToIncludeInBackup() {
+    return Collections.singletonList(PIN_REMINDERS_ENABLED);
   }
 
   public void onEntrySuccess(@NonNull String pin) {

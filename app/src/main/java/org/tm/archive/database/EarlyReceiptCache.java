@@ -2,6 +2,7 @@ package org.tm.archive.database;
 
 import androidx.annotation.NonNull;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.LRUCache;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 
 public class EarlyReceiptCache {
 
-  private static final String TAG = EarlyReceiptCache.class.getSimpleName();
+  private static final String TAG = Log.tag(EarlyReceiptCache.class);
 
   private final LRUCache<Long, Map<RecipientId, Long>> cache = new LRUCache<>(100);
   private final String name;

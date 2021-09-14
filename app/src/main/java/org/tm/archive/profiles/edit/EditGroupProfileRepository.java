@@ -9,6 +9,7 @@ import androidx.core.util.Consumer;
 
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.groups.GroupChangeException;
 import org.tm.archive.groups.GroupId;
@@ -32,6 +33,11 @@ class EditGroupProfileRepository implements EditProfileRepository {
   EditGroupProfileRepository(@NonNull Context context, @NonNull GroupId groupId) {
     this.context = context.getApplicationContext();
     this.groupId = groupId;
+  }
+
+  @Override
+  public void getCurrentAvatarColor(@NonNull Consumer<AvatarColor> avatarColorConsumer) {
+    SimpleTask.run(() -> Recipient.resolved(getRecipientId()).getAvatarColor(), avatarColorConsumer::accept);
   }
 
   @Override
@@ -74,21 +80,38 @@ class EditGroupProfileRepository implements EditProfileRepository {
                               String title = groupRecord.getTitle();
                               return title == null ? "" : title;
                             })
-                            .or(() -> recipient.getName(context));
+                            .or(() -> recipient.getGroupName(context));
     }, nameConsumer::accept);
+  }
+
+  @Override
+  public void getCurrentDescription(@NonNull Consumer<String> descriptionConsumer) {
+    SimpleTask.run(() -> {
+      RecipientId recipientId = getRecipientId();
+
+      return DatabaseFactory.getGroupDatabase(context)
+                            .getGroup(recipientId)
+                            .transform(groupRecord -> {
+                              String description = groupRecord.getDescription();
+                              return description == null ? "" : description;
+                            })
+                            .or("");
+    }, descriptionConsumer::accept);
   }
 
   @Override
   public void uploadProfile(@NonNull ProfileName profileName,
                             @NonNull String displayName,
                             boolean displayNameChanged,
+                            @NonNull String description,
+                            boolean descriptionChanged,
                             @Nullable byte[] avatar,
                             boolean avatarChanged,
                             @NonNull Consumer<UploadResult> uploadResultConsumer)
   {
     SimpleTask.run(() -> {
       try {
-        GroupManager.updateGroupDetails(context, groupId, avatar, avatarChanged, displayName, displayNameChanged);
+        GroupManager.updateGroupDetails(context, groupId, avatar, avatarChanged, displayName, displayNameChanged, description, descriptionChanged);
 
         return UploadResult.SUCCESS;
       } catch (GroupChangeException | IOException e) {

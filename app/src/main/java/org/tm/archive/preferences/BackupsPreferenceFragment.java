@@ -28,12 +28,12 @@ import org.tm.archive.R;
 import org.tm.archive.backup.BackupDialog;
 import org.tm.archive.backup.FullBackupBase;
 import org.tm.archive.database.NoExternalStorageException;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.LocalBackupJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.util.BackupUtil;
 import org.tm.archive.util.StorageUtil;
-import org.tm.archive.util.TextSecurePreferences;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -82,7 +82,6 @@ public class BackupsPreferenceFragment extends Fragment {
   @Override
   public void onResume() {
     super.onResume();
-    ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.BackupsPreferenceFragment__chat_backups);
 
     setBackupStatus();
     setBackupSummary();
@@ -132,7 +131,7 @@ public class BackupsPreferenceFragment extends Fragment {
   }
 
   private void setBackupStatus() {
-    if (TextSecurePreferences.isBackupEnabled(requireContext())) {
+    if (SignalStore.settings().isBackupEnabled()) {
       if (BackupUtil.canUserAccessBackupDirectory(requireContext())) {
         setBackupsEnabled();
       } else {
@@ -190,7 +189,7 @@ public class BackupsPreferenceFragment extends Fragment {
 
   @RequiresApi(29)
   private void onToggleClickedApi29() {
-    if (!TextSecurePreferences.isBackupEnabled(requireContext())) {
+    if (!SignalStore.settings().isBackupEnabled()) {
       BackupDialog.showChooseBackupLocationDialog(this, CHOOSE_BACKUPS_LOCATION_REQUEST_CODE);
     } else {
       BackupDialog.showDisableBackupDialog(requireContext(), this::setBackupsDisabled);
@@ -202,7 +201,7 @@ public class BackupsPreferenceFragment extends Fragment {
                .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                .ifNecessary()
                .onAllGranted(() -> {
-                 if (!TextSecurePreferences.isBackupEnabled(requireContext())) {
+                 if (!SignalStore.settings().isBackupEnabled()) {
                    BackupDialog.showEnableBackupDialog(requireContext(), null, null, this::setBackupsEnabled);
                  } else {
                    BackupDialog.showDisableBackupDialog(requireContext(), this::setBackupsDisabled);
@@ -250,5 +249,6 @@ public class BackupsPreferenceFragment extends Fragment {
     create.setVisibility(View.GONE);
     folder.setVisibility(View.GONE);
     verify.setVisibility(View.GONE);
+    ApplicationDependencies.getJobManager().cancelAllInQueue(LocalBackupJob.QUEUE);
   }
 }

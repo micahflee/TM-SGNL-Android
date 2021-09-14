@@ -9,10 +9,15 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MmsDatabase;
+import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.jobs.MultiDeviceViewedUpdateJob;
 import org.tm.archive.jobs.SendViewedReceiptJob;
+import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.util.Collections;
 
 class ViewOnceMessageRepository {
 
@@ -28,12 +33,16 @@ class ViewOnceMessageRepository {
     SignalExecutors.BOUNDED.execute(() -> {
       try (MmsDatabase.Reader reader = MmsDatabase.readerFor(mmsDatabase.getMessageCursor(messageId))) {
         MmsMessageRecord record = (MmsMessageRecord) reader.getNext();
+
         MessageDatabase.MarkedMessageInfo info = mmsDatabase.setIncomingMessageViewed(record.getId());
         if (info != null) {
           ApplicationDependencies.getJobManager().add(new SendViewedReceiptJob(record.getThreadId(),
                                                                                info.getSyncMessageId().getRecipientId(),
-                                                                               info.getSyncMessageId().getTimetamp()));
+                                                                               info.getSyncMessageId().getTimetamp(),
+                                                                               info.getMessageId()));
+          MultiDeviceViewedUpdateJob.enqueue(Collections.singletonList(info.getSyncMessageId()));
         }
+
         callback.onComplete(Optional.fromNullable(record));
       }
     });

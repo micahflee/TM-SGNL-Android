@@ -12,10 +12,14 @@ import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.NoSuchMessageException;
+import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.net.NotPushRegisteredException;
+import org.tm.archive.messages.GroupSendUtil;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
@@ -23,6 +27,7 @@ import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.GroupUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
+import org.whispersystems.signalservice.api.crypto.ContentHint;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
@@ -112,8 +117,12 @@ public class RemoteDeleteSendJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
+    if (!Recipient.self().isRegistered()) {
+      throw new NotPushRegisteredException();
+    }
+
     MessageDatabase db;
-    MessageRecord     message;
+    MessageRecord   message;
 
     if (isMms) {
       db      = DatabaseFactory.getMmsDatabase(context);
@@ -154,6 +163,7 @@ public class RemoteDeleteSendJob extends BaseJob {
   @Override
   protected boolean onShouldRetry(@NonNull Exception e) {
     if (e instanceof ServerRejectedException) return false;
+    if (e instanceof NotPushRegisteredException) return false;
     return e instanceof IOException ||
            e instanceof RetryLaterException;
   }
@@ -166,20 +176,24 @@ public class RemoteDeleteSendJob extends BaseJob {
   private @NonNull List<Recipient> deliver(@NonNull Recipient conversationRecipient, @NonNull List<Recipient> destinations, long targetSentTimestamp)
       throws IOException, UntrustedIdentityException
   {
-    SignalServiceMessageSender             messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-    List<SignalServiceAddress>             addresses          = RecipientUtil.toSignalServiceAddressesFromResolved(context, destinations);
-    List<Optional<UnidentifiedAccessPair>> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, destinations);
-    SignalServiceDataMessage.Builder       dataMessage        = SignalServiceDataMessage.newBuilder()
-                                                                                        .withTimestamp(System.currentTimeMillis())
-                                                                                        .withRemoteDelete(new SignalServiceDataMessage.RemoteDelete(targetSentTimestamp));
+    SignalServiceDataMessage.Builder dataMessageBuilder = SignalServiceDataMessage.newBuilder()
+                                                                                  .withTimestamp(System.currentTimeMillis())
+                                                                                  .withRemoteDelete(new SignalServiceDataMessage.RemoteDelete(targetSentTimestamp));
 
     if (conversationRecipient.isGroup()) {
-      GroupUtil.setDataMessageGroupContext(context, dataMessage, conversationRecipient.requireGroupId().requirePush());
+      GroupUtil.setDataMessageGroupContext(context, dataMessageBuilder, conversationRecipient.requireGroupId().requirePush());
     }
 
-    List<SendMessageResult> results = messageSender.sendMessage(addresses, unidentifiedAccess, false, dataMessage.build());
+    SignalServiceDataMessage dataMessage = dataMessageBuilder.build();
+    List<SendMessageResult>  results     = GroupSendUtil.sendResendableDataMessage(context,
+                                                                                   conversationRecipient.getGroupId().transform(GroupId::requireV2).orNull(),
+                                                                                   destinations,
+                                                                                   false,
+                                                                                   ContentHint.RESENDABLE,
+                                                                                   new MessageId(messageId, isMms),
+                                                                                   dataMessage);
 
-    return GroupSendJobHelper.getCompletedSends(context, results);
+    return GroupSendJobHelper.getCompletedSends(destinations, results);
   }
 
   public static class Factory implements Job.Factory<RemoteDeleteSendJob> {

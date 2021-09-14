@@ -17,6 +17,7 @@ import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.recipients.RecipientId;
@@ -63,7 +64,7 @@ public class UserNotificationMigrationJob extends MigrationJob {
       return;
     }
 
-    if (!TextSecurePreferences.isNewContactsNotificationEnabled(context)) {
+    if (!SignalStore.settings().isNotifyWhenContactJoinsSignal()) {
       Log.w(TAG, "New contact notifications disabled! Skipping.");
       return;
     }

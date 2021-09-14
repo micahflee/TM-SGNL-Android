@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.MappingModel;
 
 import java.util.Objects;
@@ -27,5 +28,19 @@ public abstract class RecipientMappingModel<T extends RecipientMappingModel<T>> 
   public boolean areContentsTheSame(@NonNull T newItem) {
     Context context = ApplicationDependencies.getApplication();
     return getName(context).equals(newItem.getName(context)) && Objects.equals(getRecipient().getContactPhoto(), newItem.getRecipient().getContactPhoto());
+  }
+
+  public static class RecipientIdMappingModel extends RecipientMappingModel<RecipientIdMappingModel> {
+
+    private final RecipientId recipientId;
+
+    public RecipientIdMappingModel(@NonNull RecipientId recipientId) {
+      this.recipientId = recipientId;
+    }
+
+    @Override
+    public @NonNull Recipient getRecipient() {
+      return Recipient.resolved(recipientId);
+    }
   }
 }

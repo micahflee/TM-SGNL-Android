@@ -1,6 +1,7 @@
 package org.archiver
 
-import com.tm.logger.Log
+import android.util.Log
+
 
 class ArchiveLogger {
 

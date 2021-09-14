@@ -14,6 +14,7 @@ import org.tm.archive.AppCapabilities;
 import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.crypto.PreKeyUtil;
 import org.tm.archive.crypto.ProfileKeyUtil;
+import org.tm.archive.crypto.SenderKeyUtil;
 import org.tm.archive.crypto.SessionUtil;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.IdentityDatabase;
@@ -202,7 +203,8 @@ public final class CodeVerificationRequest {
     byte[] unidentifiedAccessKey = UnidentifiedAccess.deriveAccessKeyFrom(profileKey);
 
     TextSecurePreferences.setLocalRegistrationId(context, registrationId);
-    SessionUtil.archiveAllSessions(context);
+    SessionUtil.archiveAllSessions();
+    SenderKeyUtil.clearAllState(context);
 
     SignalServiceAccountManager accountManager     = AccountManagerFactory.createUnauthenticated(context, credentials.getE164number(), credentials.getPassword());
     KbsPinData                  kbsData            = isV2RegistrationLock ? PinState.restoreMasterKey(pin, kbsTokenData.getEnclave(), kbsTokenData.getBasicAuth(), kbsTokenData.getTokenResponse()) : null;
@@ -238,7 +240,7 @@ public final class CodeVerificationRequest {
     }
 
     RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    RecipientId       selfId            = recipientDatabase.getOrInsertFromE164(credentials.getE164number());
+    RecipientId       selfId            = Recipient.externalPush(context, uuid, credentials.getE164number(), true).getId();
 
     recipientDatabase.setProfileSharing(selfId, true);
     recipientDatabase.markRegisteredOrThrow(selfId, uuid);

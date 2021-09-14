@@ -29,6 +29,7 @@ import org.tm.archive.mms.DecryptableStreamUriLoader;
 import org.tm.archive.mms.MediaConstraints;
 import org.tm.archive.mms.MediaStream;
 import org.tm.archive.mms.MmsException;
+import org.tm.archive.mms.SentMediaQuality;
 import org.tm.archive.service.GenericForegroundService;
 import org.tm.archive.service.NotificationController;
 import org.tm.archive.transport.UndeliverableMessageException;
@@ -141,7 +142,7 @@ public final class AttachmentCompressionJob extends BaseJob {
     }
 
     MediaConstraints mediaConstraints = mms ? MediaConstraints.getMmsMediaConstraints(mmsSubscriptionId)
-                                            : MediaConstraints.getPushMediaConstraints();
+                                            : MediaConstraints.getPushMediaConstraints(SentMediaQuality.fromCode(databaseAttachment.getTransformProperties().getSentMediaQuality()));
 
     compress(database, mediaConstraints, databaseAttachment);
   }
@@ -319,7 +320,7 @@ public final class AttachmentCompressionJob extends BaseJob {
                                                                 new DecryptableStreamUriLoader.DecryptableUri(uri),
                                                                 size,
                                                                 mediaConstraints.getImageMaxSize(context),
-                                                                70);
+                                                                mediaConstraints.getImageCompressionQualitySetting(context));
         if (result != null) {
           break;
         }

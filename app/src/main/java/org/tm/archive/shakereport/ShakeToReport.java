@@ -8,17 +8,19 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.signal.core.util.ShakeDetector;
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.signal.core.util.tracing.Tracer;
-import org.tm.archive.ApplicationContext;
 import org.tm.archive.R;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.logsubmit.SubmitDebugLogRepository;
 import org.tm.archive.sharing.ShareIntents;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ServiceUtil;
-import org.tm.archive.util.Util;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 import java.lang.ref.WeakReference;
@@ -43,25 +45,27 @@ public final class ShakeToReport implements ShakeDetector.Listener {
   }
 
   public void enable() {
-    if (!FeatureFlags.internalUser()) return;
+    if (!SignalStore.internalValues().shakeToReport()) return;
 
     detector.start(ServiceUtil.getSensorManager(application));
   }
 
   public void disable() {
-    if (!FeatureFlags.internalUser()) return;
+    if (!SignalStore.internalValues().shakeToReport()) return;
 
     detector.stop();
   }
 
   public void registerActivity(@NonNull Activity activity) {
-    if (!FeatureFlags.internalUser()) return;
+    if (!SignalStore.internalValues().shakeToReport()) return;
 
     this.weakActivity = new WeakReference<>(activity);
   }
 
   @Override
   public void onShakeDetected() {
+    if (!SignalStore.internalValues().shakeToReport()) return;
+
     Activity activity = weakActivity.get();
     if (activity == null) {
       Log.w(TAG, "No registered activity!");
@@ -70,18 +74,18 @@ public final class ShakeToReport implements ShakeDetector.Listener {
 
     disable();
 
-    new AlertDialog.Builder(activity)
-                   .setTitle(R.string.ShakeToReport_shake_detected)
-                   .setMessage(R.string.ShakeToReport_submit_debug_log)
-                   .setNegativeButton(android.R.string.cancel, (d, i) -> {
-                     d.dismiss();
-                     enableIfVisible();
-                   })
-                   .setPositiveButton(R.string.ShakeToReport_submit, (d, i) -> {
-                     d.dismiss();
-                     submitLog(activity);
-                   })
-                   .show();
+    new MaterialAlertDialogBuilder(activity)
+        .setTitle(R.string.ShakeToReport_shake_detected)
+        .setMessage(R.string.ShakeToReport_submit_debug_log)
+        .setNegativeButton(android.R.string.cancel, (d, i) -> {
+          d.dismiss();
+          enableIfVisible();
+        })
+        .setPositiveButton(R.string.ShakeToReport_submit, (d, i) -> {
+          d.dismiss();
+          submitLog(activity);
+        })
+        .show();
   }
 
   private void submitLog(@NonNull Activity activity) {
@@ -90,43 +94,39 @@ public final class ShakeToReport implements ShakeDetector.Listener {
 
     Log.i(TAG, "Submitting log...");
 
-    repo.getLogLines(lines -> {
-      Log.i(TAG, "Retrieved log lines...");
+    repo.buildAndSubmitLog(url -> {
+      Log.i(TAG, "Logs uploaded!");
 
-      repo.submitLog(lines, Tracer.getInstance().serialize(), url -> {
-        Log.i(TAG, "Logs uploaded!");
+      ThreadUtil.runOnMain(() -> {
+        spinner.dismiss();
 
-        Util.runOnMain(() -> {
-          spinner.dismiss();
-
-          if (url.isPresent()) {
-            showPostSubmitDialog(activity, url.get());
-          } else {
-            Toast.makeText(activity, R.string.ShakeToReport_failed_to_submit, Toast.LENGTH_SHORT).show();
-            enableIfVisible();
-          }
-        });
+        if (url.isPresent()) {
+          showPostSubmitDialog(activity, url.get());
+        } else {
+          Toast.makeText(activity, R.string.ShakeToReport_failed_to_submit, Toast.LENGTH_SHORT).show();
+          enableIfVisible();
+        }
       });
     });
   }
 
   private void showPostSubmitDialog(@NonNull Activity activity, @NonNull String url) {
-    AlertDialog dialog = new AlertDialog.Builder(activity)
-                                        .setTitle(R.string.ShakeToReport_success)
-                                        .setMessage(url)
-                                        .setNegativeButton(android.R.string.cancel, (d, i) -> {
-                                          d.dismiss();
-                                          enableIfVisible();
-                                        })
-                                        .setPositiveButton(R.string.ShakeToReport_share, (d, i) -> {
-                                          d.dismiss();
-                                          enableIfVisible();
+    AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
+        .setTitle(R.string.ShakeToReport_success)
+        .setMessage(url)
+        .setNegativeButton(android.R.string.cancel, (d, i) -> {
+          d.dismiss();
+          enableIfVisible();
+        })
+        .setPositiveButton(R.string.ShakeToReport_share, (d, i) -> {
+          d.dismiss();
+          enableIfVisible();
 
-                                          activity.startActivity(new ShareIntents.Builder(activity)
-                                                                                 .setText(url)
-                                                                                 .build());
-                                        })
-                                        .show();
+          activity.startActivity(new ShareIntents.Builder(activity)
+                                                 .setText(url)
+                                                 .build());
+        })
+        .show();
 
     ((TextView) dialog.findViewById(android.R.id.message)).setTextIsSelectable(true);
   }

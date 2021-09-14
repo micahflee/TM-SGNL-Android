@@ -6,12 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 
-import com.tm.androidcopysdk.CommonUtils;
-import com.tm.androidcopysdk.utils.PrefManager;
-
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.profiles.AvatarHelper;
 import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.recipients.Recipient;
@@ -56,6 +54,7 @@ final class ManageProfileRepository {
       try {
         ProfileUtil.uploadProfileWithAvatar(context, new StreamDetails(new ByteArrayInputStream(data), contentType, data.length));
         AvatarHelper.setAvatar(context, Recipient.self().getId(), new ByteArrayInputStream(data));
+        SignalStore.misc().markHasEverHadAnAvatar();
         callback.accept(Result.SUCCESS);
       } catch (IOException e) {
         Log.w(TAG, "Failed to upload profile during avatar change.", e);

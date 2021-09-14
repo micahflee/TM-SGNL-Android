@@ -4,15 +4,24 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constraint_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:windowBackground">
+
+  <ViewStub
+      android:id="@+id/voice_note_player"
+      android:inflatedId="@+id/voice_note_player"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout="@layout/voice_note_player_stub"
+      app:layout_constraintTop_toBottomOf="@id/toolbar_barrier" />
 
   <org.tm.archive.util.views.DarkOverflowToolbar
       android:id="@+id/toolbar"
       android:layout_width="match_parent"
       android:layout_height="?attr/actionBarSize"
-      android:background="@null"
+      android:background="@color/signal_background_primary"
       android:minHeight="?attr/actionBarSize"
       android:theme="?attr/actionBarStyle"
       android:visibility="gone"
@@ -37,6 +46,18 @@
           app:layout_constraintStart_toStartOf="parent"
           app:layout_constraintTop_toTopOf="parent"
           tools:src="@drawable/ic_contact_picture" />
+
+      <View
+          android:id="@+id/unread_payments_indicator"
+          android:layout_width="13dp"
+          android:layout_height="13dp"
+          android:layout_marginStart="30dp"
+          android:layout_marginBottom="29dp"
+          android:background="@drawable/unread_count_background"
+          android:alpha="0"
+          app:layout_constraintBottom_toBottomOf="@id/toolbar_icon"
+          app:layout_constraintStart_toStartOf="@id/toolbar_icon"
+          tools:alpha="1" />
 
       <TextView
           android:id="@+id/conversation_list_title"
@@ -142,10 +163,26 @@
 
   <ViewStub
       android:id="@+id/reminder"
+      android:inflatedId="@+id/reminder"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout="@layout/conversation_list_reminder_view"
       app:layout_constraintTop_toBottomOf="@id/toolbar_barrier" />
+
+  <ViewStub
+      android:id="@+id/payments_notification"
+      android:inflatedId="@+id/payments_notification"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout="@layout/payment_notification_view"
+      app:layout_constraintTop_toBottomOf="@id/toolbar_barrier" />
+
+  <androidx.constraintlayout.widget.Barrier
+      android:id="@+id/banner_barrier"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      app:barrierDirection="bottom"
+      app:constraint_referenced_ids="reminder,payments_notification,voice_note_player" />
 
   <androidx.recyclerview.widget.RecyclerView
       android:id="@+id/list"
@@ -157,17 +194,18 @@
       android:paddingBottom="160dp"
       android:scrollbars="vertical"
       app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintTop_toBottomOf="@id/reminder"
+      app:layout_constraintTop_toBottomOf="@id/banner_barrier"
       tools:listitem="@layout/conversation_list_item_view"
-      tools:visibility="gone" />
+      tools:visibility="visible" />
 
   <androidx.coordinatorlayout.widget.CoordinatorLayout
       android:id="@+id/coordinator"
       app:layout_constraintBottom_toBottomOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/banner_barrier"
       android:layout_width="0dp"
-      android:layout_height="500dp"
+      android:layout_height="0dp"
       android:clipToPadding="false"
       android:clipChildren="false">
 

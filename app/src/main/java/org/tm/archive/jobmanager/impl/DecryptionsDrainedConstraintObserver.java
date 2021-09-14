@@ -2,6 +2,7 @@ package org.tm.archive.jobmanager.impl;
 
 import androidx.annotation.NonNull;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.ConstraintObserver;
 
@@ -11,7 +12,7 @@ import org.tm.archive.jobmanager.ConstraintObserver;
  */
 public class DecryptionsDrainedConstraintObserver implements ConstraintObserver {
 
-  private static final String REASON = DecryptionsDrainedConstraintObserver.class.getSimpleName();
+  private static final String REASON = Log.tag(DecryptionsDrainedConstraintObserver.class);
 
   @Override
   public void register(@NonNull Notifier notifier) {

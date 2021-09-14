@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import org.tm.archive.R;
-import org.tm.archive.components.emoji.EmojiKeyboardProvider.EmojiEventListener;
 
 import java.util.List;
 
@@ -42,7 +41,7 @@ public class EmojiVariationSelectorPopup extends PopupWindow {
 
     for (String variation : variations) {
       ImageView imageView = (ImageView) LayoutInflater.from(context).inflate(R.layout.emoji_variation_selector_item, list, false);
-      imageView.setImageDrawable(EmojiProvider.getInstance(context).getEmojiDrawable(variation));
+      imageView.setImageDrawable(EmojiProvider.getEmojiDrawable(context, variation));
       imageView.setOnClickListener(v -> {
         listener.onEmojiSelected(variation);
         dismiss();

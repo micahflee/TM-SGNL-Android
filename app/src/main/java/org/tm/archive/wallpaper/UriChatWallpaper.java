@@ -15,7 +15,10 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
+import org.jetbrains.annotations.NotNull;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.conversation.colors.ChatColors;
+import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.database.model.databaseprotos.Wallpaper;
 import org.tm.archive.mms.DecryptableStreamUriLoader;
 import org.tm.archive.mms.GlideApp;
@@ -37,6 +40,11 @@ final class UriChatWallpaper implements ChatWallpaper, Parcelable {
   @Override
   public float getDimLevelForDarkTheme() {
     return dimLevelInDarkTheme;
+  }
+
+  @Override
+  public boolean isPhoto() {
+    return true;
   }
 
   @Override
@@ -76,6 +84,15 @@ final class UriChatWallpaper implements ChatWallpaper, Parcelable {
   public void writeToParcel(Parcel dest, int flags) {
     dest.writeString(uri.toString());
     dest.writeFloat(dimLevelInDarkTheme);
+  }
+
+  @Override
+  public boolean isSameSource(@NonNull ChatWallpaper chatWallpaper) {
+    if (this == chatWallpaper) return true;
+    if (getClass() != chatWallpaper.getClass()) return false;
+    UriChatWallpaper that = (UriChatWallpaper) chatWallpaper;
+
+    return uri.equals(that.uri);
   }
 
   @Override

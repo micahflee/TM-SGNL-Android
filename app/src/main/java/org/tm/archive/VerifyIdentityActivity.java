@@ -29,7 +29,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -60,11 +59,11 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.color.MaterialColor;
 import org.tm.archive.components.camera.CameraView;
-import org.tm.archive.crypto.DatabaseSessionLock;
+import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.crypto.IdentityKeyParcelable;
 import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.database.DatabaseFactory;
@@ -86,16 +85,13 @@ import org.tm.archive.util.IdentityUtil;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
-import org.tm.archive.util.WindowUtil;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.fingerprint.Fingerprint;
-import org.whispersystems.libsignal.fingerprint.FingerprintParsingException;
 import org.whispersystems.libsignal.fingerprint.FingerprintVersionMismatchException;
 import org.whispersystems.libsignal.fingerprint.NumericFingerprintGenerator;
 import org.whispersystems.signalservice.api.SignalSessionLock;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
@@ -185,7 +181,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
 
   @Override
   public void onQrDataFound(final String data) {
-    Util.runOnMain(() -> {
+    ThreadUtil.runOnMain(() -> {
       ((Vibrator)getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
 
       getSupportFragmentManager().popBackStack();
@@ -212,15 +208,10 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
                .execute();
   }
 
+  @SuppressLint("MissingSuperCall")
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
-  }
-
-  private void setActionBarNotificationBarColor(MaterialColor color) {
-    getSupportActionBar().setBackgroundDrawable(new ColorDrawable(color.toActionBarColor(this)));
-
-    WindowUtil.setStatusBarColor(getWindow(), color.toStatusBarColor(this));
   }
 
   public static class VerifyDisplayFragment extends Fragment implements CompoundButton.OnCheckedChangeListener {
@@ -419,11 +410,9 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
         } else {
           Toast.makeText(getActivity(), R.string.VerifyIdentityActivity_your_contact_is_running_an_old_version_of_signal, Toast.LENGTH_LONG).show();
         }
-      } catch (FingerprintParsingException e) {
+      } catch (Exception e) {
         Log.w(TAG, e);
         Toast.makeText(getActivity(), R.string.VerifyIdentityActivity_the_scanned_qr_code_is_not_a_correctly_formatted_safety_number, Toast.LENGTH_LONG).show();
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError(e);
       }
     }
 
@@ -622,7 +611,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity implement
       final RecipientId recipientId = recipient.getId();
 
       SignalExecutors.BOUNDED.execute(() -> {
-        try (SignalSessionLock.Lock unused = DatabaseSessionLock.INSTANCE.acquire()) {
+        try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
           if (isChecked) {
             Log.i(TAG, "Saving identity: " + recipientId);
             DatabaseFactory.getIdentityDatabase(getActivity())

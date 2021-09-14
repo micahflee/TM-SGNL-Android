@@ -6,25 +6,18 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import com.annimon.stream.Stream;
-
-import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.crypto.AttachmentSecret;
-import org.tm.archive.crypto.AttachmentSecretProvider;
-import org.tm.archive.crypto.ModernDecryptingPartInputStream;
-import org.tm.archive.crypto.ModernEncryptingPartOutputStream;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.PartAuthority;
+import org.tm.archive.util.storage.FileStorage;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Manages the storage of custom wallpaper files.
@@ -41,36 +34,23 @@ public final class WallpaperStorage {
    */
   @WorkerThread
   public static @NonNull ChatWallpaper save(@NonNull Context context, @NonNull InputStream wallpaperStream, @NonNull String extension) throws IOException {
-    File directory = context.getDir(DIRECTORY, Context.MODE_PRIVATE);
-    File file      = File.createTempFile(FILENAME_BASE, "." + extension, directory);
+    String name = FileStorage.save(context, wallpaperStream, DIRECTORY, FILENAME_BASE, extension);
 
-    StreamUtil.copy(wallpaperStream, getOutputStream(context, file));
-
-    return ChatWallpaperFactory.create(PartAuthority.getWallpaperUri(file.getName()));
+    return ChatWallpaperFactory.create(PartAuthority.getWallpaperUri(name));
   }
 
   @WorkerThread
   public static @NonNull InputStream read(@NonNull Context context, String filename) throws IOException {
-    File directory     = context.getDir(DIRECTORY, Context.MODE_PRIVATE);
-    File wallpaperFile = new File(directory, filename);
-
-    return getInputStream(context, wallpaperFile);
+    return FileStorage.read(context, DIRECTORY, filename);
   }
 
   @WorkerThread
   public static @NonNull List<ChatWallpaper> getAll(@NonNull Context context) {
-    File   directory = context.getDir(DIRECTORY, Context.MODE_PRIVATE);
-    File[] allFiles  = directory.listFiles(pathname -> pathname.getName().contains(FILENAME_BASE));
-
-    if (allFiles != null) {
-      return Stream.of(allFiles)
-                   .map(File::getName)
-                   .map(PartAuthority::getWallpaperUri)
-                   .map(ChatWallpaperFactory::create)
-                   .toList();
-    } else {
-      return Collections.emptyList();
-    }
+    return FileStorage.getAll(context, DIRECTORY, FILENAME_BASE)
+                      .stream()
+                      .map(PartAuthority::getWallpaperUri)
+                      .map(ChatWallpaperFactory::create)
+                      .collect(Collectors.toList());
   }
 
   /**
@@ -96,15 +76,5 @@ public final class WallpaperStorage {
     if (!wallpaperFile.delete()) {
       Log.w(TAG, "Failed to delete " + filename + "!");
     }
-  }
-
-  private static @NonNull OutputStream getOutputStream(@NonNull Context context, File outputFile) throws IOException {
-    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
-    return ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;
-  }
-
-  private static @NonNull InputStream getInputStream(@NonNull Context context, File inputFile) throws IOException {
-    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
-    return ModernDecryptingPartInputStream.createFor(attachmentSecret, inputFile, 0);
   }
 }

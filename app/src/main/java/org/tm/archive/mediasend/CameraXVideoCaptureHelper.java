@@ -200,8 +200,7 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
     return MemoryFileDescriptor.newMemoryFileDescriptor(
         context,
         VIDEO_DEBUG_LABEL,
-        VIDEO_SIZE,
-            true
+        VIDEO_SIZE, true
     );
   }
 

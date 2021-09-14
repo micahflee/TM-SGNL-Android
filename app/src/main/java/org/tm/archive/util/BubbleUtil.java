@@ -17,9 +17,9 @@ import com.annimon.stream.Stream;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.notifications.DefaultMessageNotifier;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationIds;
-import org.tm.archive.notifications.SingleRecipientNotificationBuilder;
+import org.tm.archive.notifications.v2.NotificationFactory;
 import org.tm.archive.preferences.widgets.NotificationPrivacyPreference;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -51,8 +51,8 @@ public final class BubbleUtil {
       return false;
     }
 
-    NotificationPrivacyPreference privacyPreference = TextSecurePreferences.getNotificationPrivacy(context);
-    if (!privacyPreference.isDisplayMessage()) {
+    NotificationPrivacyPreference privacyPreference = SignalStore.settings().getMessageNotificationsPrivacy();
+    if (!privacyPreference.isDisplayContact()) {
       Log.i(TAG, "Bubbles are not available when notification privacy settings are enabled.");
       return false;
     }
@@ -89,16 +89,8 @@ public final class BubbleUtil {
           if (activeThreadNotification != null && activeThreadNotification.deleteIntent != null) {
             ApplicationDependencies.getMessageNotifier().updateNotification(context, threadId, BubbleState.SHOWN);
           } else {
-            Recipient                          recipient = Recipient.resolved(recipientId);
-            SingleRecipientNotificationBuilder builder   = new SingleRecipientNotificationBuilder(context, TextSecurePreferences.getNotificationPrivacy(context));
-
-            builder.addMessageBody(recipient, recipient, "", System.currentTimeMillis(), null);
-            builder.setThread(recipient);
-            builder.setDefaultBubbleState(BubbleState.SHOWN);
-            builder.setGroup(DefaultMessageNotifier.NOTIFICATION_GROUP);
-
-            Log.d(TAG, "Posting Notification for requested bubble");
-            notificationManager.notify(NotificationIds.getNotificationIdForThread(threadId), builder.build());
+            Recipient recipient = Recipient.resolved(recipientId);
+            NotificationFactory.notifyToBubbleConversation(context, recipient, threadId);
           }
         }
       });

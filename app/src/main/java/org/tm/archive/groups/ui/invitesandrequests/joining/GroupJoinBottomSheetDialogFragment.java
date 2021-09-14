@@ -2,6 +2,7 @@ package org.tm.archive.groups.ui.invitesandrequests.joining;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,16 +21,21 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.color.MaterialColor;
 import org.tm.archive.components.AvatarImageView;
+import org.tm.archive.components.emoji.EmojiTextView;
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.ResourceContactPhoto;
 import org.tm.archive.conversation.ConversationIntents;
+import org.tm.archive.conversation.colors.AvatarColor;
+import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.groups.ui.managegroup.dialogs.GroupDescriptionDialog;
+import org.tm.archive.groups.v2.GroupDescriptionUtil;
 import org.tm.archive.groups.v2.GroupInviteLinkUrl;
 import org.tm.archive.jobs.RetrieveProfileJob;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.BottomSheetUtil;
+import org.tm.archive.util.LongClickMovementMethod;
 import org.tm.archive.util.ThemeUtil;
 
 public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogFragment {
@@ -42,6 +48,7 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
   private AvatarImageView avatar;
   private TextView        groupName;
   private TextView        groupDetails;
+  private EmojiTextView   groupDescription;
   private TextView        groupJoinExplain;
   private Button          groupJoinButton;
   private Button          groupCancelButton;
@@ -76,12 +83,13 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
     busy              = view.findViewById(R.id.group_join_busy);
     avatar            = view.findViewById(R.id.group_join_recipient_avatar);
     groupName         = view.findViewById(R.id.group_join_group_name);
+    groupDescription  = view.findViewById(R.id.group_join_group_description);
     groupDetails      = view.findViewById(R.id.group_join_group_details);
     groupJoinExplain  = view.findViewById(R.id.group_join_explain);
 
     groupCancelButton.setOnClickListener(v -> dismiss());
 
-    avatar.setImageBytesForGroup(null, new FallbackPhotoProvider(), MaterialColor.STEEL);
+    avatar.setImageBytesForGroup(null, new FallbackPhotoProvider(), AvatarColor.UNKNOWN);
 
     return view;
   }
@@ -97,6 +105,10 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
     viewModel.getGroupDetails().observe(getViewLifecycleOwner(), details -> {
       groupName.setText(details.getGroupName());
       groupDetails.setText(requireContext().getResources().getQuantityString(R.plurals.GroupJoinBottomSheetDialogFragment_group_dot_d_members, details.getGroupMembershipCount(), details.getGroupMembershipCount()));
+
+      if (!TextUtils.isEmpty(details.getGroupDescription())) {
+        updateGroupDescription(details.getGroupName(), details.getGroupDescription());
+      }
 
       switch (getGroupJoinStatus()) {
         case UPDATE_LINKED_DEVICE_TO_JOIN:
@@ -119,7 +131,7 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
           break;
       }
 
-      avatar.setImageBytesForGroup(details.getAvatarBytes(), new FallbackPhotoProvider(), MaterialColor.STEEL);
+      avatar.setImageBytesForGroup(details.getAvatarBytes(), new FallbackPhotoProvider(), AvatarColor.UNKNOWN);
 
       groupCancelButton.setVisibility(View.VISIBLE);
     });
@@ -143,6 +155,16 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
         dismiss();
       }
     );
+  }
+
+  private void updateGroupDescription(@NonNull String name, @NonNull String description) {
+    groupDescription.setVisibility(View.VISIBLE);
+    groupDescription.setMovementMethod(LongClickMovementMethod.getInstance(requireContext()));
+    GroupDescriptionUtil.setText(requireContext(),
+                                 groupDescription,
+                                 description,
+                                 true,
+                                 () -> GroupDescriptionDialog.show(getChildFragmentManager(), name, description, true));
   }
 
   private static ExtendedGroupJoinStatus getGroupJoinStatus() {

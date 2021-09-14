@@ -11,10 +11,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.signal.core.util.tracing.Tracer;
+import org.signal.devicetransfer.TransferStatus;
 import org.tm.archive.crypto.MasterSecretUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.devicetransfer.olddevice.OldDeviceTransferActivity;
 import org.tm.archive.jobs.PushNotificationReceiveJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.lock.v2.CreateKbsPinActivity;
@@ -32,7 +35,7 @@ import org.tm.archive.util.TextSecurePreferences;
 import java.util.Locale;
 
 public abstract class PassphraseRequiredActivity extends BaseActivity implements MasterSecretListener {
-  private static final String TAG = PassphraseRequiredActivity.class.getSimpleName();
+  private static final String TAG = Log.tag(PassphraseRequiredActivity.class);
 
   public static final String LOCALE_EXTRA      = "locale_extra";
   public static final String NEXT_INTENT_EXTRA = "next_intent";
@@ -45,6 +48,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   private static final int STATE_ENTER_SIGNAL_PIN    = 5;
   private static final int STATE_CREATE_PROFILE_NAME = 6;
   private static final int STATE_CREATE_SIGNAL_PIN   = 7;
+  private static final int STATE_TRANSFER_ONGOING    = 8;
+  private static final int STATE_TRANSFER_LOCKED     = 9;
 
   private SignalServiceNetworkAccess networkAccess;
   private BroadcastReceiver          clearKeyReceiver;
@@ -146,6 +151,8 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       case STATE_ENTER_SIGNAL_PIN:    return getEnterSignalPinIntent();
       case STATE_CREATE_SIGNAL_PIN:   return getCreateSignalPinIntent();
       case STATE_CREATE_PROFILE_NAME: return getCreateProfileNameIntent();
+      case STATE_TRANSFER_ONGOING:    return getOldDeviceTransferIntent();
+      case STATE_TRANSFER_LOCKED:     return getOldDeviceTransferLockedIntent();
       default:                        return null;
     }
   }
@@ -159,12 +166,16 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       return STATE_UI_BLOCKING_UPGRADE;
     } else if (!TextSecurePreferences.hasPromptedPushRegistration(this)) {
       return STATE_WELCOME_PUSH_SCREEN;
-    } else if (SignalStore.storageServiceValues().needsAccountRestore()) {
+    } else if (SignalStore.storageService().needsAccountRestore()) {
       return STATE_ENTER_SIGNAL_PIN;
     } else if (userMustSetProfileName()) {
       return STATE_CREATE_PROFILE_NAME;
     } else if (userMustCreateSignalPin()) {
       return STATE_CREATE_SIGNAL_PIN;
+    } else if (EventBus.getDefault().getStickyEvent(TransferStatus.class) != null && getClass() != OldDeviceTransferActivity.class) {
+      return STATE_TRANSFER_ONGOING;
+    } else if (SignalStore.misc().isOldDeviceTransferLocked()) {
+      return STATE_TRANSFER_LOCKED;
     } else {
       return STATE_NORMAL;
     }
@@ -217,6 +228,19 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
 
   private Intent getCreateProfileNameIntent() {
     return getRoutedIntent(EditProfileActivity.class, getIntent());
+  }
+
+  private Intent getOldDeviceTransferIntent() {
+    Intent intent = new Intent(this, OldDeviceTransferActivity.class);
+    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    return intent;
+  }
+
+  private @Nullable Intent getOldDeviceTransferLockedIntent() {
+    if (getClass() == MainActivity.class) {
+      return null;
+    }
+    return MainActivity.clearTop(this);
   }
 
   private Intent getRoutedIntent(Class<?> destination, @Nullable Intent nextIntent) {

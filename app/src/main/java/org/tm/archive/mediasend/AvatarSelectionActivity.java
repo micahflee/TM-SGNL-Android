@@ -93,6 +93,7 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
                               data.length,
                               0,
                               false,
+                              false,
                               Optional.of(Media.ALL_MEDIA_BUCKET_ID),
                               Optional.absent(),
                               Optional.absent()));
@@ -156,7 +157,7 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
     currentMedia = media;
 
     getSupportFragmentManager().beginTransaction()
-                               .replace(R.id.fragment_container, ImageEditorFragment.newInstanceForAvatar(media.getUri()), IMAGE_EDITOR)
+                               .replace(R.id.fragment_container, ImageEditorFragment.newInstanceForAvatarCapture(media.getUri()), IMAGE_EDITOR)
                                .addToBackStack(IMAGE_EDITOR)
                                .commit();
   }

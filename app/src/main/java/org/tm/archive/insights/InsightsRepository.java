@@ -9,10 +9,10 @@ import androidx.core.util.Consumer;
 import com.annimon.stream.Stream;
 
 import org.tm.archive.R;
-import org.tm.archive.color.MaterialColor;
-import org.tm.archive.contacts.avatars.ContactColors;
 import org.tm.archive.contacts.avatars.GeneratedContactPhoto;
 import org.tm.archive.contacts.avatars.ProfileContactPhoto;
+import org.tm.archive.conversation.colors.ChatColors;
+import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MmsSmsDatabase;
 import org.tm.archive.database.RecipientDatabase;
@@ -65,16 +65,11 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
   @Override
   public void getUserAvatar(@NonNull Consumer<InsightsUserAvatar> avatarConsumer) {
     SimpleTask.run(() -> {
-      Recipient     self          = Recipient.self().resolve();
-      String        name          = Optional.fromNullable(self.getName(context)).or("");
-      MaterialColor fallbackColor = self.getColor();
-
-      if (fallbackColor == ContactColors.UNKNOWN_COLOR && !TextUtils.isEmpty(name)) {
-        fallbackColor = ContactColors.generateFor(name);
-      }
+      Recipient self = Recipient.self().resolve();
+      String    name = Optional.fromNullable(self.getDisplayName(context)).or("");
 
       return new InsightsUserAvatar(new ProfileContactPhoto(self, self.getProfileAvatar()),
-                                    fallbackColor,
+                                    self.getAvatarColor(),
                                     new GeneratedContactPhoto(name, R.drawable.ic_profile_outline_40));
     }, avatarConsumer::accept);
   }
@@ -86,7 +81,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
       int       subscriptionId = resolved.getDefaultSubscriptionId().or(-1);
       String    message        = context.getString(R.string.InviteActivity_lets_switch_to_signal, context.getString(R.string.install_url));
 
-      MessageSender.send(context, new OutgoingTextMessage(resolved, message, subscriptionId), -1L, true, null);
+      MessageSender.send(context, new OutgoingTextMessage(resolved, message, subscriptionId), -1L, true, null, null);
 
       RecipientDatabase database = DatabaseFactory.getRecipientDatabase(context);
       database.setHasSentInvite(recipient.getId());

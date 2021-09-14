@@ -14,6 +14,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.profiles.AvatarHelper;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -31,7 +32,7 @@ public class RetrieveProfileAvatarJob extends BaseJob {
 
   public static final String KEY = "RetrieveProfileAvatarJob";
 
-  private static final String TAG = RetrieveProfileAvatarJob.class.getSimpleName();
+  private static final String TAG = Log.tag(RetrieveProfileAvatarJob.class);
 
   private static final int MAX_PROFILE_SIZE_BYTES = 20 * 1024 * 1024;
 
@@ -100,6 +101,10 @@ public class RetrieveProfileAvatarJob extends BaseJob {
 
       try {
         AvatarHelper.setAvatar(context, recipient.getId(), avatarStream);
+
+        if (recipient.isSelf()) {
+          SignalStore.misc().markHasEverHadAnAvatar();
+        }
       } catch (AssertionError e) {
         throw new IOException("Failed to copy stream. Likely a Conscrypt issue.", e);
       }

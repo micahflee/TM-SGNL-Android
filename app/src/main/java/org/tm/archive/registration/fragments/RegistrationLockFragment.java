@@ -23,6 +23,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.StorageAccountRestoreJob;
+import org.tm.archive.jobs.StorageSyncJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.lock.v2.PinKeyboardType;
 import org.tm.archive.pin.PinRestoreRepository.TokenData;
@@ -30,10 +31,13 @@ import org.tm.archive.registration.service.CodeVerificationRequest;
 import org.tm.archive.registration.service.RegistrationService;
 import org.tm.archive.registration.viewmodel.RegistrationViewModel;
 import org.tm.archive.util.CommunicationActions;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ServiceUtil;
+import org.tm.archive.util.Stopwatch;
 import org.tm.archive.util.SupportEmailUtil;
 import org.tm.archive.util.concurrent.SimpleTask;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public final class RegistrationLockFragment extends BaseRegistrationFragment {
@@ -310,18 +314,28 @@ public final class RegistrationLockFragment extends BaseRegistrationFragment {
   private void handleSuccessfulPinEntry() {
     SignalStore.pinValues().setKeyboardType(getPinEntryKeyboardType());
 
-    long startTime = System.currentTimeMillis();
     SimpleTask.run(() -> {
       SignalStore.onboarding().clearAll();
-      return ApplicationDependencies.getJobManager().runSynchronously(new StorageAccountRestoreJob(), StorageAccountRestoreJob.LIFESPAN);
-    }, result -> {
-      long elapsedTime = System.currentTimeMillis() - startTime;
 
-      if (result.isPresent()) {
-        Log.i(TAG, "Storage Service account restore completed: " + result.get().name() + ". (Took " + elapsedTime + " ms)");
-      } else {
-        Log.i(TAG, "Storage Service account restore failed to complete in the allotted time. (" + elapsedTime + " ms elapsed)");
+      Stopwatch stopwatch = new Stopwatch("RegistrationLockRestore");
+
+      ApplicationDependencies.getJobManager().runSynchronously(new StorageAccountRestoreJob(), StorageAccountRestoreJob.LIFESPAN);
+      stopwatch.split("AccountRestore");
+
+      ApplicationDependencies.getJobManager().runSynchronously(new StorageSyncJob(), TimeUnit.SECONDS.toMillis(10));
+      stopwatch.split("ContactRestore");
+
+      try {
+        FeatureFlags.refreshSync();
+      } catch (IOException e) {
+        Log.w(TAG, "Failed to refresh flags.", e);
       }
+      stopwatch.split("FeatureFlags");
+
+      stopwatch.stop(TAG);
+
+      return null;
+    }, none -> {
       cancelSpinning(pinButton);
       Navigation.findNavController(requireView()).navigate(RegistrationLockFragmentDirections.actionSuccessfulRegistration());
     });

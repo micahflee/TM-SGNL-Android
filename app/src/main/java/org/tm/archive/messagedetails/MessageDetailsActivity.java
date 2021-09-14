@@ -2,9 +2,9 @@ package org.tm.archive.messagedetails;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProviders;
@@ -12,17 +12,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
-import org.tm.archive.color.MaterialColor;
+import org.tm.archive.conversation.colors.Colorizer;
+import org.tm.archive.conversation.colors.ColorizerView;
+import org.tm.archive.conversation.ui.error.SafetyNumberChangeDialog;
 import org.tm.archive.database.MmsSmsDatabase;
 import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.giph.mp4.GiphyMp4PlaybackController;
+import org.tm.archive.giph.mp4.GiphyMp4ProjectionPlayerHolder;
+import org.tm.archive.giph.mp4.GiphyMp4ProjectionRecycler;
 import org.tm.archive.messagedetails.MessageDetailsAdapter.MessageDetailsViewState;
 import org.tm.archive.messagedetails.MessageDetailsViewModel.Factory;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.DynamicDarkActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
-import org.tm.archive.util.WindowUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +41,7 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
   private GlideRequests           glideRequests;
   private MessageDetailsViewModel viewModel;
   private MessageDetailsAdapter   adapter;
+  private Colorizer               colorizer;
 
   private DynamicTheme dynamicTheme = new DynamicTheme();
 
@@ -65,6 +69,7 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
     initializeList();
     initializeViewModel();
     initializeActionBar();
+    initializeVideoPlayer();
   }
 
   @Override
@@ -90,11 +95,15 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
   }
 
   private void initializeList() {
-    RecyclerView list = findViewById(R.id.message_details_list);
-    adapter           = new MessageDetailsAdapter(this, glideRequests);
+    RecyclerView  list          = findViewById(R.id.message_details_list);
+    ColorizerView colorizerView = findViewById(R.id.message_details_colorizer);
+
+    colorizer = new Colorizer(colorizerView);
+    adapter   = new MessageDetailsAdapter(this, glideRequests, colorizer, this::onErrorClicked);
 
     list.setAdapter(adapter);
     list.setItemAnimator(null);
+    colorizer.attachToRecyclerView(list);
   }
 
   private void initializeViewModel() {
@@ -111,6 +120,16 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
         adapter.submitList(convertToRows(details));
       }
     });
+    viewModel.getRecipient().observe(this, recipient -> colorizer.onChatColorsChanged(recipient.getChatColors()));
+  }
+
+  private void initializeVideoPlayer() {
+    FrameLayout                          videoContainer = findViewById(R.id.video_container);
+    RecyclerView                         recyclerView   = findViewById(R.id.message_details_list);
+    List<GiphyMp4ProjectionPlayerHolder> holders        = GiphyMp4ProjectionPlayerHolder.injectVideoViews(this, getLifecycle(), videoContainer, 1);
+    GiphyMp4ProjectionRecycler           callback       = new GiphyMp4ProjectionRecycler(holders);
+
+    GiphyMp4PlaybackController.attach(recyclerView, callback, 1);
   }
 
   private void initializeActionBar() {
@@ -125,6 +144,7 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
 
     if (details.getConversationMessage().getMessageRecord().isOutgoing()) {
       addRecipients(list, RecipientHeader.NOT_SENT, details.getNotSent());
+      addRecipients(list, RecipientHeader.VIEWED, details.getViewed());
       addRecipients(list, RecipientHeader.READ, details.getRead());
       addRecipients(list, RecipientHeader.DELIVERED, details.getDelivered());
       addRecipients(list, RecipientHeader.SENT_TO, details.getSent());
@@ -146,5 +166,9 @@ public final class MessageDetailsActivity extends PassphraseRequiredActivity {
       list.add(new MessageDetailsViewState<>(status, MessageDetailsViewState.RECIPIENT));
     }
     return true;
+  }
+
+  private void onErrorClicked(@NonNull MessageRecord messageRecord) {
+    SafetyNumberChangeDialog.show(this, messageRecord);
   }
 }

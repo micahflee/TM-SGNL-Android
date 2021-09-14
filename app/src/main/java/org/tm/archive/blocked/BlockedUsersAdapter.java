@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.tm.archive.R;
 import org.tm.archive.components.AvatarImageView;
+import org.tm.archive.phonenumbers.PhoneNumberFormatter;
 import org.tm.archive.recipients.Recipient;
 
 import java.util.Objects;
@@ -63,7 +64,7 @@ final class BlockedUsersAdapter extends ListAdapter<Recipient, BlockedUsersAdapt
       displayName.setText(recipient.getDisplayName(itemView.getContext()));
 
       if (recipient.hasAUserSetDisplayName(itemView.getContext())) {
-        String identifier = recipient.getE164().or(recipient.getUsername()).orNull();
+        String identifier = recipient.getE164().transform(PhoneNumberFormatter::prettyPrint).or(recipient.getUsername()).orNull();
 
         if (identifier != null) {
           numberOrUsername.setText(identifier);

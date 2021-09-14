@@ -1,8 +1,11 @@
 package org.tm.archive.database.model;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -19,6 +22,7 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.SpanUtil;
 import org.tm.archive.util.ThemeUtil;
+import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.whispersystems.libsignal.util.guava.Function;
 
@@ -71,7 +75,13 @@ public final class LiveUpdateMessage {
       drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
       drawable.setColorFilter(tint, PorterDuff.Mode.SRC_ATOP);
 
-      Spannable stringWithImage = new SpannableStringBuilder().append(SpanUtil.buildImageSpan(drawable)).append("  ").append(string);
+      InsetDrawable insetDrawable = new InsetDrawable(drawable, 0, 0, 0, ViewUtil.dpToPx(-3));
+      insetDrawable.setBounds(0, 0, drawable.getIntrinsicWidth(), insetDrawable.getIntrinsicHeight());
+
+      Drawable spaceDrawable = new ColorDrawable(Color.TRANSPARENT);
+      spaceDrawable.setBounds(0, 0, ViewUtil.dpToPx(8), drawable.getIntrinsicHeight());
+
+      Spannable stringWithImage = new SpannableStringBuilder().append(SpanUtil.buildImageSpanBottomAligned(drawable)).append(SpanUtil.buildImageSpan(spaceDrawable)).append(string);
 
       return new SpannableString(SpanUtil.color(tint, stringWithImage));
     }

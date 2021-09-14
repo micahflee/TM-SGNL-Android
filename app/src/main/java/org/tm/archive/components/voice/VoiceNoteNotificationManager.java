@@ -19,6 +19,9 @@ import org.tm.archive.R;
 import org.tm.archive.color.MaterialColor;
 import org.tm.archive.contacts.avatars.ContactColors;
 import org.tm.archive.conversation.ConversationIntents;
+import org.tm.archive.conversation.colors.ChatColors;
+import org.tm.archive.conversation.colors.ChatColorsPalette;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -98,14 +101,13 @@ class VoiceNoteNotificationManager {
       int         startingPosition = (int) controller.getMetadata().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_MESSAGE_POSITION);
       long        threadId         = controller.getMetadata().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_THREAD_ID);
 
-      MaterialColor color;
-      try {
-        color = MaterialColor.fromSerialized(controller.getMetadata().getString(VoiceNoteMediaDescriptionCompatFactory.EXTRA_COLOR));
-      } catch (MaterialColor.UnknownColorException e) {
-        color = ContactColors.UNKNOWN_COLOR;
+      int color = (int) controller.getMetadata().getLong(VoiceNoteMediaDescriptionCompatFactory.EXTRA_COLOR);
+
+      if (color == 0) {
+        color = ChatColorsPalette.UNKNOWN_CONTACT.asSingleColor();
       }
 
-      notificationManager.setColor(color.toNotificationColor(context));
+      notificationManager.setColor(color);
 
       Intent conversationActivity = ConversationIntents.createBuilder(context, recipientId, threadId)
                                                        .withStartingPosition(startingPosition)
@@ -130,7 +132,7 @@ class VoiceNoteNotificationManager {
 
     @Override
     public @Nullable Bitmap getCurrentLargeIcon(Player player, PlayerNotificationManager.BitmapCallback callback) {
-      if (!hasMetadata() || !TextSecurePreferences.getNotificationPrivacy(context).isDisplayContact()) {
+      if (!hasMetadata() || !SignalStore.settings().getMessageNotificationsPrivacy().isDisplayContact()) {
         cachedBitmap      = null;
         cachedRecipientId = null;
         return null;

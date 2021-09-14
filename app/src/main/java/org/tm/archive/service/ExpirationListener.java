@@ -7,12 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.tm.archive.ApplicationContext;
+import org.tm.archive.dependencies.ApplicationDependencies;
 
 public class ExpirationListener extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    ApplicationContext.getInstance(context).getExpiringMessageManager().checkSchedule();
+    ApplicationDependencies.getExpiringMessageManager().checkSchedule();
   }
 
   public static void setAlarm(Context context, long waitTimeMillis) {

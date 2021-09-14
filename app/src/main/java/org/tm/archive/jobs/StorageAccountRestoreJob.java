@@ -3,6 +3,7 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
+import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -12,6 +13,7 @@ import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.storage.StorageSyncHelper;
+import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
@@ -64,7 +66,7 @@ public class StorageAccountRestoreJob extends BaseJob {
   @Override
   protected void onRun() throws Exception {
     SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
-    StorageKey                  storageServiceKey = SignalStore.storageServiceValues().getOrCreateStorageKey();
+    StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
     Log.i(TAG, "Retrieving manifest...");
     Optional<SignalStorageManifest> manifest = accountManager.getStorageManifest(storageServiceKey);
@@ -74,6 +76,9 @@ public class StorageAccountRestoreJob extends BaseJob {
       ApplicationDependencies.getJobManager().add(new StorageForcePushJob());
       return;
     }
+
+    Log.i(TAG, "Resetting the local manifest to an empty state so that it will sync later.");
+    SignalStore.storageService().setManifest(SignalStorageManifest.EMPTY);
 
     Optional<StorageId> accountId = manifest.get().getAccountStorageId();
 
@@ -99,8 +104,13 @@ public class StorageAccountRestoreJob extends BaseJob {
 
 
     Log.i(TAG, "Applying changes locally...");
-    StorageId selfStorageId = StorageId.forAccount(Recipient.self().getStorageServiceId());
-    StorageSyncHelper.applyAccountStorageSyncUpdates(context, selfStorageId, accountRecord, false);
+    DatabaseFactory.getInstance(context).getRawDatabase().beginTransaction();
+    try {
+      StorageSyncHelper.applyAccountStorageSyncUpdates(context, Recipient.self(), accountRecord, false);
+      DatabaseFactory.getInstance(context).getRawDatabase().setTransactionSuccessful();
+    } finally {
+      DatabaseFactory.getInstance(context).getRawDatabase().endTransaction();
+    }
 
     JobManager jobManager = ApplicationDependencies.getJobManager();
 

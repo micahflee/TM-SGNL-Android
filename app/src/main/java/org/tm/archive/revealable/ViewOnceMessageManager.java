@@ -15,6 +15,7 @@ import org.tm.archive.ApplicationContext;
 import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.service.TimedEventManager;
 
 /**
@@ -79,7 +80,7 @@ public class ViewOnceMessageManager extends TimedEventManager<ViewOnceExpiration
     @Override
     public void onReceive(Context context, Intent intent) {
       Log.d(TAG, "onReceive()");
-      ApplicationContext.getInstance(context).getViewOnceMessageManager().scheduleIfNecessary();
+      ApplicationDependencies.getViewOnceMessageManager().scheduleIfNecessary();
     }
   }
 }

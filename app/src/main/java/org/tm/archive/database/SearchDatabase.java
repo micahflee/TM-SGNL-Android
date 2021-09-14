@@ -1,13 +1,12 @@
 package org.tm.archive.database;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
-
-import net.sqlcipher.Cursor;
 
 import org.tm.archive.database.helpers.SQLCipherOpenHelper;
 
@@ -126,35 +125,28 @@ public class SearchDatabase extends Database {
   }
 
   public Cursor queryMessages(@NonNull String query) {
-    SQLiteDatabase db                  = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db                  = databaseHelper.getSignalReadableDatabase();
     String         fullTextSearchQuery = createFullTextSearchQuery(query);
 
     if (TextUtils.isEmpty(fullTextSearchQuery)) {
       return null;
     }
 
-    Cursor cursor = db.rawQuery(MESSAGES_QUERY, new String[] { fullTextSearchQuery,
-                                                               fullTextSearchQuery });
-
-    setNotifyConversationListListeners(cursor);
-    return cursor;
+    return db.rawQuery(MESSAGES_QUERY, new String[] { fullTextSearchQuery, fullTextSearchQuery });
   }
 
   public Cursor queryMessages(@NonNull String query, long threadId) {
-    SQLiteDatabase db                  = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db                  = databaseHelper.getSignalReadableDatabase();
     String         fullTextSearchQuery = createFullTextSearchQuery(query);
 
     if (TextUtils.isEmpty(fullTextSearchQuery)) {
       return null;
     }
 
-    Cursor cursor = db.rawQuery(MESSAGES_FOR_THREAD_QUERY, new String[] { fullTextSearchQuery,
-                                                                          String.valueOf(threadId),
-                                                                          fullTextSearchQuery,
-                                                                          String.valueOf(threadId) });
-
-    setNotifyConversationListListeners(cursor);
-    return cursor;
+    return db.rawQuery(MESSAGES_FOR_THREAD_QUERY, new String[] { fullTextSearchQuery,
+                                                                 String.valueOf(threadId),
+                                                                 fullTextSearchQuery,
+                                                                 String.valueOf(threadId) });
   }
 
   private static String createFullTextSearchQuery(@NonNull String query) {

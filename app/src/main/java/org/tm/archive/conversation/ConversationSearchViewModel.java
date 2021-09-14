@@ -7,11 +7,11 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import org.tm.archive.conversationlist.model.MessageResult;
+import org.signal.core.util.ThreadUtil;
+import org.tm.archive.search.MessageResult;
 import org.tm.archive.database.CursorList;
 import org.tm.archive.search.SearchRepository;
 import org.tm.archive.util.Debouncer;
-import org.tm.archive.util.Util;
 
 import java.util.List;
 
@@ -101,7 +101,7 @@ public class ConversationSearchViewModel extends AndroidViewModel {
       firstSearch = false;
 
       searchRepository.query(query, threadId, messages -> {
-        Util.runOnMain(() -> {
+        ThreadUtil.runOnMain(() -> {
           if (searchOpen && query.equals(activeQuery)) {
             result.setValue(new SearchResult(messages, 0));
           }

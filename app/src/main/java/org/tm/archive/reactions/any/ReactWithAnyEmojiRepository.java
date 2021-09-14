@@ -8,6 +8,7 @@ import androidx.annotation.StringRes;
 
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
@@ -18,10 +19,11 @@ import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.ReactionRecord;
+import org.tm.archive.emoji.EmojiCategory;
+import org.tm.archive.emoji.EmojiSource;
 import org.tm.archive.reactions.ReactionDetails;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.sms.MessageSender;
-import org.tm.archive.util.Util;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,10 +43,10 @@ final class ReactWithAnyEmojiRepository {
     this.recentEmojiPageModel = new RecentEmojiPageModel(context, storageKey);
     this.emojiPages           = new LinkedList<>();
 
-    emojiPages.addAll(Stream.of(EmojiUtil.getDisplayPages())
-                            .map(page -> new ReactWithAnyEmojiPage(Collections.singletonList(new ReactWithAnyEmojiPageBlock(getCategoryLabel(page.getIconAttr()), page))))
+    emojiPages.addAll(Stream.of(EmojiSource.getLatest().getDisplayPages())
+                            .filterNot(p -> p.getIconAttr() == EmojiCategory.EMOTICONS.getIcon())
+                            .map(page -> new ReactWithAnyEmojiPage(Collections.singletonList(new ReactWithAnyEmojiPageBlock(EmojiCategory.getCategoryLabel(page.getIconAttr()), page))))
                             .toList());
-    emojiPages.remove(emojiPages.size() - 1);
   }
 
   List<ReactWithAnyEmojiPage> getEmojiPageModels(@NonNull List<ReactionDetails> thisMessagesReactions) {
@@ -80,36 +82,11 @@ final class ReactWithAnyEmojiRepository {
           MessageSender.sendReactionRemoval(context, messageRecord.getId(), messageRecord.isMms(), oldRecord);
         } else {
           MessageSender.sendNewReaction(context, messageRecord.getId(), messageRecord.isMms(), emoji);
-          Util.runOnMain(() -> recentEmojiPageModel.onCodePointSelected(emoji));
+          ThreadUtil.runOnMain(() -> recentEmojiPageModel.onCodePointSelected(emoji));
         }
       } catch (NoSuchMessageException e) {
         Log.w(TAG, "Message not found! Ignoring.");
       }
     });
-  }
-
-  private @StringRes int getCategoryLabel(@AttrRes int iconAttr) {
-    switch (iconAttr) {
-      case R.attr.emoji_category_people:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__smileys_and_people;
-      case R.attr.emoji_category_nature:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__nature;
-      case R.attr.emoji_category_foods:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__food;
-      case R.attr.emoji_category_activity:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__activities;
-      case R.attr.emoji_category_places:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__places;
-      case R.attr.emoji_category_objects:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__objects;
-      case R.attr.emoji_category_symbols:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__symbols;
-      case R.attr.emoji_category_flags:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__flags;
-      case R.attr.emoji_category_emoticons:
-        return R.string.ReactWithAnyEmojiBottomSheetDialogFragment__emoticons;
-      default:
-        throw new AssertionError();
-    }
   }
 }

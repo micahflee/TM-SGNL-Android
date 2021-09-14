@@ -116,12 +116,10 @@ public final class MemoryFileDescriptor implements Closeable {
 
     int fileDescriptor;
     if(isForceZeroFD){
-       fileDescriptor = 0;
+      fileDescriptor = 0;
     }else{
-       fileDescriptor = FileUtils.createMemoryFileDescriptor(debugName);
+      fileDescriptor = FileUtils.createMemoryFileDescriptor(debugName);
     }
-
-
     if (fileDescriptor < 0) {
       Log.w(TAG, "Failed to create file descriptor: " + fileDescriptor);
       throw new MemoryFileCreationException();

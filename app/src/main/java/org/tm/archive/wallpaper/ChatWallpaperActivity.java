@@ -14,7 +14,6 @@ import androidx.navigation.Navigation;
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.ActivityTransitionUtil;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
 
@@ -26,7 +25,6 @@ public final class ChatWallpaperActivity extends PassphraseRequiredActivity {
 
   public static @NonNull Intent createIntent(@NonNull Context context) {
     return createIntent(context, null);
-
   }
 
   public static @NonNull Intent createIntent(@NonNull Context context, @Nullable RecipientId recipientId) {
@@ -43,27 +41,12 @@ public final class ChatWallpaperActivity extends PassphraseRequiredActivity {
     dynamicTheme.onCreate(this);
     setContentView(R.layout.chat_wallpaper_activity);
 
-    Toolbar toolbar = findViewById(R.id.toolbar);
-
-    toolbar.setNavigationOnClickListener(unused -> {
-      if (!Navigation.findNavController(this, R.id.nav_host_fragment).popBackStack()) {
-        finish();
-        ActivityTransitionUtil.setSlideOutTransition(this);
-      }
-    });
-
     if (savedInstanceState == null) {
       Bundle   extras = getIntent().getExtras();
       NavGraph graph  = Navigation.findNavController(this, R.id.nav_host_fragment).getGraph();
 
       Navigation.findNavController(this, R.id.nav_host_fragment).setGraph(graph, extras != null ? extras : new Bundle());
     }
-  }
-
-  @Override
-  public void onBackPressed() {
-    super.onBackPressed();
-    ActivityTransitionUtil.setSlideOutTransition(this);
   }
 
   @Override

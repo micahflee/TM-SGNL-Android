@@ -11,13 +11,13 @@ import androidx.lifecycle.Observer;
 
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.GroupDatabase.GroupRecord;
 import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.database.RecipientDatabase.RecipientSettings;
-import org.tm.archive.util.Util;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -50,9 +50,11 @@ public final class LiveRecipient {
     this.groupDatabase     = DatabaseFactory.getGroupDatabase(context);
     this.observers         = new CopyOnWriteArraySet<>();
     this.foreverObserver   = recipient -> {
-      for (RecipientForeverObserver o : observers) {
-        o.onRecipientChanged(recipient);
-      }
+      ThreadUtil.postToMain(() -> {
+        for (RecipientForeverObserver o : observers) {
+          o.onRecipientChanged(recipient);
+        }
+      });
     };
     this.refreshForceNotify = new MutableLiveData<>(new Object());
     this.observableLiveData = LiveDataUtil.combineLatest(LiveDataUtil.distinctUntilChanged(liveData, Recipient::hasSameContent),
@@ -79,14 +81,14 @@ public final class LiveRecipient {
    * use {@link #removeObservers(LifecycleOwner)}.
    */
   public void observe(@NonNull LifecycleOwner owner, @NonNull Observer<Recipient> observer) {
-    Util.postToMain(() -> observableLiveData.observe(owner, observer));
+    ThreadUtil.postToMain(() -> observableLiveData.observe(owner, observer));
   }
 
   /**
    * Removes all observers of this data registered for the given LifecycleOwner.
    */
   public void removeObservers(@NonNull LifecycleOwner owner) {
-    Util.runOnMain(() -> observableLiveData.removeObservers(owner));
+    ThreadUtil.runOnMain(() -> observableLiveData.removeObservers(owner));
   }
 
   /**
@@ -95,7 +97,7 @@ public final class LiveRecipient {
    * {@link #observe(LifecycleOwner, Observer<Recipient>)} if possible, as it is lifecycle-safe.
    */
   public void observeForever(@NonNull RecipientForeverObserver observer) {
-    Util.postToMain(() -> {
+    ThreadUtil.postToMain(() -> {
       if (observers.isEmpty()) {
         observableLiveData.observeForever(foreverObserver);
       }
@@ -107,7 +109,7 @@ public final class LiveRecipient {
    * Unsubscribes the provided {@link RecipientForeverObserver} from future changes.
    */
   public void removeForeverObserver(@NonNull RecipientForeverObserver observer) {
-    Util.postToMain(() -> {
+    ThreadUtil.postToMain(() -> {
       observers.remove(observer);
 
       if (observers.isEmpty()) {
@@ -127,7 +129,7 @@ public final class LiveRecipient {
       return current;
     }
 
-    if (Util.isMainThread()) {
+    if (ThreadUtil.isMainThread()) {
       Log.w(TAG, "[Resolve][MAIN] " + getId(), new Throwable());
     }
 
@@ -163,7 +165,7 @@ public final class LiveRecipient {
 
     if (getId().isUnknown()) return;
 
-    if (Util.isMainThread()) {
+    if (ThreadUtil.isMainThread()) {
       Log.w(TAG, "[Refresh][MAIN] " + id, new Throwable());
     }
 
@@ -212,10 +214,10 @@ public final class LiveRecipient {
         avatarId = Optional.of(groupRecord.get().getAvatarId());
       }
 
-      return new RecipientDetails(title, avatarId, false, false, settings, members);
+      return new RecipientDetails(title, null,  avatarId, false, false, settings.getRegistered(), settings, members);
     }
 
-    return new RecipientDetails(null, Optional.absent(), false, false, settings, null);
+    return new RecipientDetails(null, null, Optional.absent(), false, false, settings.getRegistered(), settings, null);
   }
 
   synchronized void set(@NonNull Recipient recipient) {

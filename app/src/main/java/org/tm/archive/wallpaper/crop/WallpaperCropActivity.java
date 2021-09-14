@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModelProviders;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.BaseActivity;
 import org.tm.archive.R;
+import org.tm.archive.conversation.colors.ColorizerView;
 import org.tm.archive.imageeditor.ImageEditorView;
 import org.tm.archive.imageeditor.model.EditorElement;
 import org.tm.archive.imageeditor.model.EditorModel;
@@ -34,10 +35,13 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.scribbles.UriGlideRenderer;
 import org.tm.archive.util.AsynchronousCallback;
 import org.tm.archive.util.DynamicTheme;
+import org.tm.archive.util.Projection;
+import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.views.SimpleProgressDialog;
 import org.tm.archive.wallpaper.ChatWallpaper;
 import org.tm.archive.wallpaper.ChatWallpaperPreviewActivity;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -84,10 +88,11 @@ public final class WallpaperCropActivity extends BaseActivity {
     viewModel = ViewModelProviders.of(this, factory).get(WallpaperCropViewModel.class);
 
     imageEditor = findViewById(R.id.image_editor);
-    View         receivedBubble = findViewById(R.id.preview_bubble_1);
-    TextView     bubble2Text    = findViewById(R.id.chat_wallpaper_bubble2_text);
-    View         setWallPaper   = findViewById(R.id.preview_set_wallpaper);
-    SwitchCompat blur           = findViewById(R.id.preview_blur);
+    View          sentBubble     = findViewById(R.id.preview_bubble_2);
+    TextView      bubble2Text    = findViewById(R.id.chat_wallpaper_bubble2_text);
+    View          setWallPaper   = findViewById(R.id.preview_set_wallpaper);
+    SwitchCompat  blur           = findViewById(R.id.preview_blur);
+    ColorizerView colorizerView  = findViewById(R.id.colorizer);
 
     setupImageEditor(inputImage);
 
@@ -115,9 +120,14 @@ public final class WallpaperCropActivity extends BaseActivity {
                  bubble2Text.setText(R.string.WallpaperCropActivity__set_wallpaper_for_all_chats);
                } else {
                  bubble2Text.setText(getString(R.string.WallpaperCropActivity__set_wallpaper_for_s, r.getDisplayName(this)));
-                 receivedBubble.getBackground().setColorFilter(r.getColor().toConversationColor(this), PorterDuff.Mode.SRC_IN);
+                 sentBubble.getBackground().setColorFilter(r.getChatColors().getChatBubbleColorFilter());
+                 colorizerView.setBackground(r.getChatColors().getChatBubbleMask());
                }
              });
+
+    sentBubble.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+      colorizerView.setProjections(Collections.singletonList(Projection.relativeToViewWithCommonRoot(sentBubble, colorizerView, new Projection.Corners(ViewUtil.dpToPx(18)))));
+    });
   }
 
   @Override

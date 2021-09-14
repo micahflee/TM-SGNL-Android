@@ -107,14 +107,9 @@ public class Quote {
     quoteBuf.get(buf);
   }
 
-  private void readFromBuffer(ByteBuffer quoteBuf, int pos, byte[] buf){
-    ((Buffer)quoteBuf).position(pos);
-    quoteBuf.get(buf);
-  }
-
   private void readZero(ByteBuffer quoteBuf, int pos, int count) {
     byte[] zeroBuf = new byte[count];
-    readFromBuffer(quoteBuf, pos, zeroBuf);
+    read(quoteBuf, pos, zeroBuf);
     for (int zeroBufIdx = 0; zeroBufIdx < count; zeroBufIdx++) {
       if (zeroBuf[zeroBufIdx] != 0) {
         throw new IllegalArgumentException("quote_reserved_mismatch "+pos);

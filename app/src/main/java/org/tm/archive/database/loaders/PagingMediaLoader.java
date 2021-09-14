@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.database.DatabaseFactory;
@@ -19,7 +20,7 @@ import org.tm.archive.util.AsyncLoader;
 public final class PagingMediaLoader extends AsyncLoader<Pair<Cursor, Integer>> {
 
   @SuppressWarnings("unused")
-  private static final String TAG = PagingMediaLoader.class.getSimpleName();
+  private static final String TAG = Log.tag(PagingMediaLoader.class);
 
   private final Uri     uri;
   private final boolean leftIsRecent;

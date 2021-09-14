@@ -8,53 +8,25 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import org.signal.core.util.logging.Log;
-import org.signal.libsignal.metadata.InvalidMetadataMessageException;
-import org.signal.libsignal.metadata.InvalidMetadataVersionException;
-import org.signal.libsignal.metadata.ProtocolDuplicateMessageException;
-import org.signal.libsignal.metadata.ProtocolException;
-import org.signal.libsignal.metadata.ProtocolInvalidKeyException;
-import org.signal.libsignal.metadata.ProtocolInvalidKeyIdException;
-import org.signal.libsignal.metadata.ProtocolInvalidMessageException;
-import org.signal.libsignal.metadata.ProtocolInvalidVersionException;
-import org.signal.libsignal.metadata.ProtocolLegacyMessageException;
-import org.signal.libsignal.metadata.ProtocolNoSessionException;
-import org.signal.libsignal.metadata.ProtocolUntrustedIdentityException;
-import org.signal.libsignal.metadata.SelfSendException;
 import org.tm.archive.MainActivity;
 import org.tm.archive.R;
 import org.tm.archive.crypto.IdentityKeyUtil;
-import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.crypto.storage.SignalProtocolStoreImpl;
-import org.tm.archive.crypto.DatabaseSessionLock;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.NoSuchMessageException;
-import org.tm.archive.database.PushDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.groups.BadGroupIdException;
-import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
-import org.tm.archive.jobmanager.JobManager;
-import org.tm.archive.messages.MessageContentProcessor;
-import org.tm.archive.messages.MessageContentProcessor.ExceptionMetadata;
 import org.tm.archive.messages.MessageContentProcessor.MessageState;
 import org.tm.archive.messages.MessageDecryptionUtil;
 import org.tm.archive.messages.MessageDecryptionUtil.DecryptionResult;
 import org.tm.archive.notifications.NotificationChannels;
-import org.tm.archive.recipients.Recipient;
+import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.transport.RetryLaterException;
-import org.tm.archive.util.GroupUtil;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.libsignal.state.SignalProtocolStore;
-import org.whispersystems.libsignal.util.guava.Optional;
-import org.whispersystems.signalservice.api.crypto.SignalServiceCipher;
-import org.whispersystems.signalservice.api.messages.SignalServiceContent;
+import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
+import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
-import org.whispersystems.signalservice.internal.push.UnsupportedDataMessageException;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -97,6 +69,11 @@ public final class PushDecryptMessageJob extends BaseJob {
   }
 
   @Override
+  protected boolean shouldTrace() {
+    return true;
+  }
+
+  @Override
   public @NonNull Data serialize() {
     return new Data.Builder().putBlobAsString(KEY_ENVELOPE, envelope.serialize())
                              .putLong(KEY_SMS_MESSAGE_ID, smsMessageId)
@@ -120,6 +97,10 @@ public final class PushDecryptMessageJob extends BaseJob {
     DecryptionResult result = MessageDecryptionUtil.decrypt(context, envelope);
 
     if (result.getContent() != null) {
+      if (result.getContent().getSenderKeyDistributionMessage().isPresent()) {
+        handleSenderKeyDistributionMessage(result.getContent().getSender(), result.getContent().getSenderDevice(), result.getContent().getSenderKeyDistributionMessage().get());
+      }
+
       jobs.add(new PushProcessMessageJob(result.getContent(), smsMessageId, envelope.getTimestamp()));
     } else if (result.getException() != null && result.getState() != MessageState.NOOP) {
       jobs.add(new PushProcessMessageJob(result.getState(), result.getException(), smsMessageId, envelope.getTimestamp()));
@@ -141,12 +122,18 @@ public final class PushDecryptMessageJob extends BaseJob {
   public void onFailure() {
   }
 
+  private void handleSenderKeyDistributionMessage(@NonNull SignalServiceAddress address, int deviceId, @NonNull SenderKeyDistributionMessage message) {
+    Log.i(TAG, "Processing SenderKeyDistributionMessage.");
+    SignalServiceMessageSender sender = ApplicationDependencies.getSignalServiceMessageSender();
+    sender.processSenderKeyDistributionMessage(new SignalProtocolAddress(address.getIdentifier(), deviceId), message);
+  }
+
   private boolean needsMigration() {
     return !IdentityKeyUtil.hasIdentityKey(context) || TextSecurePreferences.getNeedsSqlCipherMigration(context);
   }
 
   private void postMigrationNotification() {
-    NotificationManagerCompat.from(context).notify(494949,
+    NotificationManagerCompat.from(context).notify(NotificationIds.LEGACY_SQLCIPHER_MIGRATION,
                                                    new NotificationCompat.Builder(context, NotificationChannels.getMessagesChannel(context))
                                                                          .setSmallIcon(R.drawable.ic_notification)
                                                                          .setPriority(NotificationCompat.PRIORITY_HIGH)

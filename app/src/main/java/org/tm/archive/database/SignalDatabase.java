@@ -1,7 +1,5 @@
 package org.tm.archive.database;
 
-import androidx.annotation.NonNull;
-
 import net.sqlcipher.database.SQLiteDatabase;
 
 /**

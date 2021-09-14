@@ -7,6 +7,8 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
+import org.signal.core.util.ThreadUtil;
+
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -22,7 +24,7 @@ public final class AppForegroundObserver {
 
   @MainThread
   public void begin() {
-    Util.assertMainThread();
+    ThreadUtil.assertMainThread();
 
     ProcessLifecycleOwner.get().getLifecycle().addObserver(new DefaultLifecycleObserver() {
       @Override
@@ -84,7 +86,7 @@ public final class AppForegroundObserver {
   }
 
   public interface Listener {
-    void onForeground();
-    void onBackground();
+    default void onForeground() {}
+    default void onBackground() {}
   }
 }

@@ -8,28 +8,34 @@ import androidx.lifecycle.ViewModel;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.net.PipeConnectivityListener;
 import org.tm.archive.util.SignalProxyUtil;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
+import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState;
 import org.whispersystems.signalservice.internal.configuration.SignalProxy;
 
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+
+import static androidx.lifecycle.LiveDataReactiveStreams.fromPublisher;
+
 public class EditProxyViewModel extends ViewModel {
 
-  private final SingleLiveEvent<Event>                   events;
-  private final MutableLiveData<UiState>                 uiState;
-  private final MutableLiveData<SaveState>               saveState;
-  private final LiveData<PipeConnectivityListener.State> pipeState;
+  private final SingleLiveEvent<Event>             events;
+  private final MutableLiveData<UiState>           uiState;
+  private final MutableLiveData<SaveState>         saveState;
+  private final LiveData<WebSocketConnectionState> pipeState;
 
   public EditProxyViewModel() {
     this.events    = new SingleLiveEvent<>();
     this.uiState   = new MutableLiveData<>();
     this.saveState = new MutableLiveData<>(SaveState.IDLE);
     this.pipeState = TextSecurePreferences.getLocalNumber(ApplicationDependencies.getApplication()) == null ? new MutableLiveData<>()
-                                                                                                            : ApplicationDependencies.getPipeListener().getState();
+                                                                                                            : fromPublisher(ApplicationDependencies.getSignalWebSocket()
+                                                                                                                                                   .getWebSocketState()
+                                                                                                                                                   .toFlowable(BackpressureStrategy.LATEST));
 
     if (SignalStore.proxy().isProxyEnabled()) {
       uiState.setValue(UiState.ALL_ENABLED);
@@ -81,7 +87,7 @@ public class EditProxyViewModel extends ViewModel {
     return events;
   }
 
-  @NonNull LiveData<PipeConnectivityListener.State> getProxyState() {
+  @NonNull LiveData<WebSocketConnectionState> getProxyState() {
     return pipeState;
   }
 

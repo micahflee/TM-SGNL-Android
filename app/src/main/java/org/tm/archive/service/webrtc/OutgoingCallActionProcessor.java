@@ -9,12 +9,13 @@ import androidx.annotation.Nullable;
 import org.signal.core.util.logging.Log;
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallId;
-import org.tm.archive.components.webrtc.OrientationAwareVideoSink;
+import org.signal.ringrtc.CallManager;
 import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.events.WebRtcViewModel;
-import org.tm.archive.ringrtc.IceCandidateParcel;
+import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.ringrtc.RemotePeer;
 import org.tm.archive.service.webrtc.WebRtcData.CallMetadata;
 import org.tm.archive.service.webrtc.WebRtcData.OfferMetadata;
@@ -23,13 +24,11 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.service.webrtc.state.WebRtcServiceStateBuilder;
 import org.tm.archive.util.NetworkUtil;
 import org.tm.archive.util.ServiceUtil;
-import org.tm.archive.webrtc.audio.OutgoingRinger;
 import org.webrtc.PeerConnection;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 import org.whispersystems.signalservice.api.messages.calls.SignalServiceCallMessage;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -73,11 +72,12 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
 
     webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context));
     webRtcInteractor.initializeAudioForCall();
-    webRtcInteractor.startOutgoingRinger(OutgoingRinger.Type.RINGING);
-    webRtcInteractor.setWantsBluetoothConnection(true);
+    webRtcInteractor.startOutgoingRinger();
 
     webRtcInteractor.setCallInProgressNotification(TYPE_OUTGOING_RINGING, remotePeer);
+    webRtcInteractor.setWantsBluetoothConnection(true);
 
+    RecipientUtil.setAndSendUniversalExpireTimerIfNecessary(context, Recipient.resolved(remotePeer.getId()), DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(remotePeer.getId()));
     DatabaseFactory.getSmsDatabase(context).insertOutgoingCall(remotePeer.getId(), currentState.getCallSetupState().isEnableVideoOnCreate());
 
     webRtcInteractor.retrieveTurnServers(remotePeer);
@@ -85,6 +85,9 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
     return builder.changeCallInfoState()
                   .activePeer(remotePeer)
                   .callState(WebRtcViewModel.State.CALL_OUTGOING)
+                  .commit()
+                  .changeLocalDeviceState()
+                  .wantsBluetooth(true)
                   .build();
   }
 
@@ -96,6 +99,8 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
     Integer                  destinationDeviceId = broadcast ? null : callMetadata.getRemoteDevice();
     SignalServiceCallMessage callMessage         = SignalServiceCallMessage.forOffer(offerMessage, true, destinationDeviceId);
 
+    Recipient callRecipient = currentState.getCallInfoState().getCallRecipient();
+    RecipientUtil.shareProfileIfFirstSecureMessage(context, callRecipient);
     webRtcInteractor.sendCallMessage(callMetadata.getRemotePeer(), callMessage);
 
     return currentState;
@@ -113,9 +118,9 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
 
       webRtcInteractor.getCallManager().proceed(activePeer.getCallId(),
                                                 context,
-                                                videoState.requireEglBase(),
-                                                new OrientationAwareVideoSink(videoState.requireLocalSink()),
-                                                new OrientationAwareVideoSink(callParticipant.getVideoSink()),
+                                                videoState.getLockableEglBase().require(),
+                                                videoState.requireLocalSink(),
+                                                callParticipant.getVideoSink(),
                                                 videoState.requireCamera(),
                                                 iceServers,
                                                 isAlwaysTurn,
@@ -193,6 +198,11 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
   }
 
   @Override
+  protected @NonNull WebRtcServiceState handleScreenSharingEnable(@NonNull WebRtcServiceState currentState, boolean enable) {
+    return activeCallDelegate.handleScreenSharingEnable(currentState, enable);
+  }
+
+  @Override
   protected @NonNull WebRtcServiceState handleLocalHangup(@NonNull WebRtcServiceState currentState) {
     return activeCallDelegate.handleLocalHangup(currentState);
   }
@@ -203,13 +213,13 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull String action, @NonNull RemotePeer remotePeer) {
-    return activeCallDelegate.handleEndedRemote(currentState, action, remotePeer);
+  protected @NonNull WebRtcServiceState handleEndedRemote(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedRemoteEvent, @NonNull RemotePeer remotePeer) {
+    return activeCallDelegate.handleEndedRemote(currentState, endedRemoteEvent, remotePeer);
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull String action, @NonNull RemotePeer remotePeer) {
-    return activeCallDelegate.handleEnded(currentState, action, remotePeer);
+  protected @NonNull WebRtcServiceState handleEnded(@NonNull WebRtcServiceState currentState, @NonNull CallManager.CallEvent endedEvent, @NonNull RemotePeer remotePeer) {
+    return activeCallDelegate.handleEnded(currentState, endedEvent, remotePeer);
   }
 
   @Override
@@ -224,9 +234,9 @@ public class OutgoingCallActionProcessor extends DeviceAwareActionProcessor {
 
   @Override
   protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
-                                                                @NonNull WebRtcData.CallMetadata callMetadata,
+                                                                @NonNull CallMetadata callMetadata,
                                                                 boolean broadcast,
-                                                                @NonNull ArrayList<IceCandidateParcel> iceCandidates)
+                                                                @NonNull List<byte[]> iceCandidates)
   {
     return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
   }

@@ -7,10 +7,12 @@ import com.annimon.stream.Stream;
 
 import androidx.annotation.Nullable;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.net.CustomDns;
 import org.tm.archive.net.DeprecatedClientPreventionInterceptor;
+import org.tm.archive.net.DeviceTransferBlockingInterceptor;
 import org.tm.archive.net.RemoteDeprecationDetectorInterceptor;
 import org.tm.archive.net.SequentialDns;
 import org.tm.archive.net.StandardUserAgentInterceptor;
@@ -43,7 +45,7 @@ import okhttp3.TlsVersion;
 public class SignalServiceNetworkAccess {
 
   @SuppressWarnings("unused")
-  private static final String TAG = SignalServiceNetworkAccess.class.getSimpleName();
+  private static final String TAG = Log.tag(SignalServiceNetworkAccess.class);
 
   public static final Dns DNS = new SequentialDns(Dns.SYSTEM, new CustomDns("1.1.1.1"));
 
@@ -180,7 +182,10 @@ public class SignalServiceNetworkAccess {
 
     final String[] fastUrls = {"https://cdn.sstatic.net", "https://github.githubassets.com", "https://pinterest.com", "https://open.scdn.co", "https://www.redditstatic.com"};
 
-    final List<Interceptor> interceptors = Arrays.asList(new StandardUserAgentInterceptor(), new RemoteDeprecationDetectorInterceptor(), new DeprecatedClientPreventionInterceptor());
+    final List<Interceptor> interceptors = Arrays.asList(new StandardUserAgentInterceptor(),
+                                                         new RemoteDeprecationDetectorInterceptor(),
+                                                         new DeprecatedClientPreventionInterceptor(),
+                                                         DeviceTransferBlockingInterceptor.getInstance());
     final Optional<Dns>     dns          = Optional.of(DNS);
 
     final byte[] zkGroupServerPublicParams;

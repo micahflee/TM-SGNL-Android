@@ -7,7 +7,6 @@ import org.tm.archive.crypto.SessionUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
-import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.database.model.databaseprotos.DeviceLastResetTime;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -16,7 +15,6 @@ import org.tm.archive.jobmanager.impl.DecryptionsDrainedConstraint;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
-import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
@@ -86,7 +84,8 @@ public class AutomaticSessionResetJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    SessionUtil.archiveSession(context, recipientId, deviceId);
+    SessionUtil.archiveSession(recipientId, deviceId);
+    DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(recipientId);
     insertLocalMessage();
 
     if (FeatureFlags.automaticSessionReset()) {
@@ -122,12 +121,18 @@ public class AutomaticSessionResetJob extends BaseJob {
   }
 
   private void insertLocalMessage() {
-    MessageDatabase.InsertResult result = DatabaseFactory.getSmsDatabase(context).insertDecryptionFailedMessage(recipientId, deviceId, sentTimestamp);
+    MessageDatabase.InsertResult result = DatabaseFactory.getSmsDatabase(context).insertChatSessionRefreshedMessage(recipientId, deviceId, sentTimestamp);
     ApplicationDependencies.getMessageNotifier().updateNotification(context, result.getThreadId());
   }
 
   private void sendNullMessage() throws IOException {
-    Recipient                        recipient          = Recipient.resolved(recipientId);
+    Recipient recipient = Recipient.resolved(recipientId);
+
+    if (recipient.isUnregistered()) {
+      Log.w(TAG, recipient.getId() + " not registered!");
+      return;
+    }
+
     SignalServiceMessageSender       messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
     SignalServiceAddress             address            = RecipientUtil.toSignalServiceAddress(context, recipient);
     Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, recipient);

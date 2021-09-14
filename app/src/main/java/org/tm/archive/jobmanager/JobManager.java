@@ -9,8 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.jobmanager.impl.DefaultExecutorFactory;
 import org.tm.archive.jobmanager.impl.JsonDataSerializer;
 import org.tm.archive.jobmanager.persistence.JobStorage;
@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class JobManager implements ConstraintObserver.Notifier {
 
-  private static final String TAG = JobManager.class.getSimpleName();
+  private static final String TAG = Log.tag(JobManager.class);
 
   public static final int CURRENT_VERSION = 8;
 
@@ -58,7 +58,7 @@ public class JobManager implements ConstraintObserver.Notifier {
   public JobManager(@NonNull Application application, @NonNull Configuration configuration) {
     this.application   = application;
     this.configuration = configuration;
-    this.executor      = new FilteredExecutor(configuration.getExecutorFactory().newSingleThreadExecutor("signal-JobManager"), Util::isMainThread);
+    this.executor      = new FilteredExecutor(configuration.getExecutorFactory().newSingleThreadExecutor("signal-JobManager"), ThreadUtil::isMainThread);
     this.jobTracker    = configuration.getJobTracker();
     this.jobController = new JobController(application,
                                            configuration.getJobStorage(),
@@ -221,6 +221,15 @@ public class JobManager implements ConstraintObserver.Notifier {
    */
   public void cancelAllInQueue(@NonNull String queue) {
     runOnExecutor(() -> jobController.cancelAllInQueue(queue));
+  }
+
+  /**
+   * Perform an arbitrary update on enqueued jobs. Will not apply to jobs that are already running.
+   * You shouldn't use this if you can help it. You give yourself an opportunity to really screw
+   * things up.
+   */
+  public void update(@NonNull JobUpdater updater) {
+    runOnExecutor(() -> jobController.update(updater));
   }
 
   /**

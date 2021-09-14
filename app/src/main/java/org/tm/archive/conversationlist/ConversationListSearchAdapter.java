@@ -10,8 +10,8 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.tm.archive.R;
-import org.tm.archive.conversationlist.model.MessageResult;
-import org.tm.archive.conversationlist.model.SearchResult;
+import org.tm.archive.search.MessageResult;
+import org.tm.archive.search.SearchResult;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.Recipient;

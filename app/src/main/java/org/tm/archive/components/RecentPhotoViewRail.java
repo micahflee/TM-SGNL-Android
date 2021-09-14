@@ -28,6 +28,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.signature.MediaStoreSignature;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.database.CursorRecyclerViewAdapter;
 import org.tm.archive.database.loaders.RecentPhotosLoader;
@@ -82,7 +83,7 @@ public class RecentPhotoViewRail extends FrameLayout implements LoaderManager.Lo
   private static class RecentPhotoAdapter extends CursorRecyclerViewAdapter<RecentPhotoAdapter.RecentPhotoViewHolder> {
 
     @SuppressWarnings("unused")
-    private static final String TAG = RecentPhotoAdapter.class.getSimpleName();
+    private static final String TAG = Log.tag(RecentPhotoAdapter.class);
 
     @NonNull  private final Uri baseUri;
     @Nullable private OnItemClickedListener clickedListener;

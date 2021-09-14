@@ -10,6 +10,8 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.color.MaterialColor;
 import org.tm.archive.contacts.avatars.ContactColorsLegacy;
+import org.tm.archive.conversation.colors.ChatColorsMapper;
+import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.crypto.MasterSecret;
 import org.tm.archive.database.AttachmentDatabase;
@@ -231,17 +233,8 @@ public class LegacyMigrationJob extends MigrationJob {
 
     if (lastSeenVersion < COLOR_MIGRATION) {
       long startTime = System.currentTimeMillis();
-      DatabaseFactory.getRecipientDatabase(context).updateSystemContactColors((name, color) -> {
-        if (color != null) {
-          try {
-            return MaterialColor.fromSerialized(color);
-          } catch (MaterialColor.UnknownColorException e) {
-            Log.w(TAG, "Encountered an unknown color during legacy color migration.", e);
-            return ContactColorsLegacy.generateFor(name);
-          }
-        }
-        return ContactColorsLegacy.generateFor(name);
-      });
+      //noinspection deprecation
+      DatabaseFactory.getRecipientDatabase(context).updateSystemContactColors();
       Log.i(TAG, "Color migration took " + (System.currentTimeMillis() - startTime) + " ms");
     }
 

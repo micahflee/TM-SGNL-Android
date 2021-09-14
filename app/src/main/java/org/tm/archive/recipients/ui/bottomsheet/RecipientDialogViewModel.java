@@ -15,9 +15,11 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import org.signal.core.util.ThreadUtil;
 import org.tm.archive.BlockUnblockDialog;
 import org.tm.archive.R;
 import org.tm.archive.VerifyIdentityActivity;
+import org.tm.archive.components.settings.conversation.ConversationSettingsActivity;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.IdentityDatabase;
 import org.tm.archive.groups.GroupId;
@@ -28,9 +30,7 @@ import org.tm.archive.groups.ui.addtogroup.AddToGroupsActivity;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
-import org.tm.archive.recipients.ui.managerecipient.ManageRecipientActivity;
 import org.tm.archive.util.CommunicationActions;
-import org.tm.archive.util.Util;
 import org.tm.archive.util.livedata.LiveDataUtil;
 
 import java.util.Objects;
@@ -138,13 +138,13 @@ final class RecipientDialogViewModel extends ViewModel {
   }
 
   void onAvatarClicked(@NonNull Activity activity) {
-    activity.startActivity(ManageRecipientActivity.newIntent(activity, recipientDialogRepository.getRecipientId()));
+    activity.startActivity(ConversationSettingsActivity.forRecipient(activity, recipientDialogRepository.getRecipientId()));
   }
 
   void onMakeGroupAdminClicked(@NonNull Activity activity) {
     new AlertDialog.Builder(activity)
                    .setMessage(context.getString(R.string.RecipientBottomSheet_s_will_be_able_to_edit_group, Objects.requireNonNull(recipient.getValue()).getDisplayName(context)))
-                   .setPositiveButton(R.string.RecipientBottomSheet_make_group_admin,
+                   .setPositiveButton(R.string.RecipientBottomSheet_make_admin,
                                       (dialog, which) -> {
                                         adminActionBusy.setValue(true);
                                         recipientDialogRepository.setMemberAdmin(true, result -> {
@@ -195,7 +195,7 @@ final class RecipientDialogViewModel extends ViewModel {
                    .show();
   }
 
-  void onAddedToContacts() {
+  void refreshRecipient() {
     recipientDialogRepository.refreshRecipient();
   }
 
@@ -205,7 +205,7 @@ final class RecipientDialogViewModel extends ViewModel {
 
   @WorkerThread
   private void showErrorToast(@NonNull GroupChangeFailureReason e) {
-    Util.runOnMain(() -> Toast.makeText(context, GroupErrors.getUserDisplayMessage(e), Toast.LENGTH_LONG).show());
+    ThreadUtil.runOnMain(() -> Toast.makeText(context, GroupErrors.getUserDisplayMessage(e), Toast.LENGTH_LONG).show());
   }
 
   static class AdminActionStatus {

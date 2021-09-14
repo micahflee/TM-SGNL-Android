@@ -1,20 +1,14 @@
 package org.tm.archive.jobs;
 
-import android.content.ContentResolver;
-import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Pair;
-import android.webkit.MimeTypeMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import com.tm.androidcopysdk.DataGrabber;
-
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveFileUtil;
 import org.archiver.ArchiveSender;
-import org.archiver.ArchiveUtil;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
@@ -29,7 +23,6 @@ import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobLogger;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
-import org.tm.archive.jobmanager.impl.NotInCallConstraint;
 import org.tm.archive.mms.MmsException;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.AttachmentUtil;
@@ -47,13 +40,9 @@ import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulRespons
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.api.push.exceptions.RangeException;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
 public final class AttachmentDownloadJob extends BaseJob {
@@ -61,7 +50,7 @@ public final class AttachmentDownloadJob extends BaseJob {
   public static final String KEY = "AttachmentDownloadJob";
 
   private static final int    MAX_ATTACHMENT_SIZE = 150 * 1024  * 1024;
-  private static final String TAG                  = AttachmentDownloadJob.class.getSimpleName();
+  private static final String TAG                  = Log.tag(AttachmentDownloadJob.class);
 
   private static final String KEY_MESSAGE_ID    = "message_id";
   private static final String KEY_PART_ROW_ID   = "part_row_id";
@@ -186,14 +175,15 @@ public final class AttachmentDownloadJob extends BaseJob {
       SignalServiceAttachmentPointer pointer         = createAttachmentPointer(attachment);
       InputStream                    stream          = messageReceiver.retrieveAttachment(pointer, attachmentFile, MAX_ATTACHMENT_SIZE, (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
 
-      Pair<InputStream, InputStream> inputStreamPair = FileUtils.duplicateInputStream(stream);
-      String fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.getFileName(), messageId, attachmentId.getUniqueId(), attachment.getContentType());
-      File tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, fileNameWithType,inputStreamPair.first);
+
+      Pair<InputStream, InputStream> inputStreamPair  = FileUtils.duplicateInputStream(stream);
+      String                              fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.getFileName(), messageId, attachmentId.getUniqueId(), attachment.getContentType());
+      File                                tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, fileNameWithType, inputStreamPair.first);
 
       ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileWithData.getName(), false);
 
-      database.insertAttachmentsForPlaceholder(messageId, attachmentId, inputStreamPair.second);
 
+      database.insertAttachmentsForPlaceholder(messageId, attachmentId, inputStreamPair.second);
     } catch (RangeException e) {
       Log.w(TAG, "Range exception, file size " + attachmentFile.length(), e);
       if (attachmentFile.delete()) {
@@ -208,7 +198,7 @@ public final class AttachmentDownloadJob extends BaseJob {
     }
   }
 
-    private SignalServiceAttachmentPointer createAttachmentPointer(Attachment attachment) throws InvalidPartException {
+  private SignalServiceAttachmentPointer createAttachmentPointer(Attachment attachment) throws InvalidPartException {
     if (TextUtils.isEmpty(attachment.getLocation())) {
       throw new InvalidPartException("empty content id");
     }
@@ -235,6 +225,7 @@ public final class AttachmentDownloadJob extends BaseJob {
                                                 Optional.fromNullable(attachment.getFileName()),
                                                 attachment.isVoiceNote(),
                                                 attachment.isBorderless(),
+                                                attachment.isVideoGif(),
                                                 Optional.absent(),
                                                 Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash),
                                                 attachment.getUploadTimestamp());

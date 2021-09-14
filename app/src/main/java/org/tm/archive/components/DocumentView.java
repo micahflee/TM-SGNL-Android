@@ -20,6 +20,7 @@ import com.pnikosis.materialishprogress.ProgressWheel;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.events.PartProgressEvent;
@@ -29,7 +30,7 @@ import org.tm.archive.util.Util;
 
 public class DocumentView extends FrameLayout {
 
-  private static final String TAG = DocumentView.class.getSimpleName();
+  private static final String TAG = Log.tag(DocumentView.class);
 
   private final @NonNull AnimatingToggle controlToggle;
   private final @NonNull ImageView       downloadButton;

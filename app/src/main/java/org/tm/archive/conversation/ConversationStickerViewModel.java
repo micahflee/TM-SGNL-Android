@@ -16,6 +16,7 @@ import org.tm.archive.components.emoji.EmojiUtil;
 import org.tm.archive.database.CursorList;
 import org.tm.archive.database.DatabaseContentProviders;
 import org.tm.archive.database.model.StickerRecord;
+import org.tm.archive.emoji.EmojiSource;
 import org.tm.archive.stickers.StickerSearchRepository;
 import org.tm.archive.util.Throttler;
 
@@ -56,7 +57,7 @@ class ConversationStickerViewModel extends ViewModel {
   }
 
   void onInputTextUpdated(@NonNull String text) {
-    if (TextUtils.isEmpty(text) || text.length() > EmojiUtil.MAX_EMOJI_LENGTH) {
+    if (TextUtils.isEmpty(text) || text.length() > EmojiSource.getLatest().getMaxEmojiLength()) {
       stickers.setValue(CursorList.emptyList());
     } else {
       repository.searchByEmoji(text, stickers::postValue);

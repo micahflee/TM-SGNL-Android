@@ -33,11 +33,11 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.Toast;
 
-import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.MediaPreviewActivity;
 import org.tm.archive.R;
@@ -52,13 +52,16 @@ import org.tm.archive.components.location.SignalPlace;
 import org.tm.archive.giph.ui.GiphyActivity;
 import org.tm.archive.maps.PlacePickerActivity;
 import org.tm.archive.mediasend.MediaSendActivity;
+import org.tm.archive.payments.create.CreatePaymentFragmentArgs;
+import org.tm.archive.payments.preferences.PaymentsActivity;
+import org.tm.archive.payments.preferences.model.PayeeParcelable;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.providers.DeprecatedPersistentBlobProvider;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.BitmapUtil;
 import org.tm.archive.util.MediaUtil;
-import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.AssertedSuccessListener;
 import org.tm.archive.util.concurrent.ListenableFuture;
@@ -76,7 +79,7 @@ import java.util.concurrent.ExecutionException;
 
 public class AttachmentManager {
 
-  private final static String TAG = AttachmentManager.class.getSimpleName();
+  private final static String TAG = Log.tag(AttachmentManager.class);
 
   private final @NonNull Context                    context;
   private final @NonNull Stub<View>                 attachmentViewStub;
@@ -207,7 +210,7 @@ public class AttachmentManager {
                                                   .createForSingleSessionInMemory();
         LocationSlide locationSlide = new LocationSlide(context, uri, blob.length, place);
 
-        Util.runOnMain(() -> {
+        ThreadUtil.runOnMain(() -> {
           setSlide(locationSlide);
           attachmentListener.onAttachmentChanged();
           returnResult.set(true);
@@ -310,7 +313,7 @@ public class AttachmentManager {
             }
 
             Log.d(TAG, "remote slide with size " + fileSize + " took " + (System.currentTimeMillis() - start) + "ms");
-            return mediaType.createSlide(context, uri, fileName, mimeType, null, fileSize, width, height);
+            return mediaType.createSlide(context, uri, fileName, mimeType, null, fileSize, width, height, false);
           }
         } finally {
           if (cursor != null) cursor.close();
@@ -324,11 +327,13 @@ public class AttachmentManager {
         Long     mediaSize = null;
         String   fileName  = null;
         String   mimeType  = null;
+        boolean  gif       = false;
 
         if (PartAuthority.isLocalUri(uri)) {
           mediaSize = PartAuthority.getAttachmentSize(context, uri);
           fileName  = PartAuthority.getAttachmentFileName(context, uri);
           mimeType  = PartAuthority.getAttachmentContentType(context, uri);
+          gif       = PartAuthority.getAttachmentIsVideoGif(context, uri);
         }
 
         if (mediaSize == null) {
@@ -346,7 +351,7 @@ public class AttachmentManager {
         }
 
         Log.d(TAG, "local slide with size " + mediaSize + " took " + (System.currentTimeMillis() - start) + "ms");
-        return mediaType.createSlide(context, uri, fileName, mimeType, null, mediaSize, width, height);
+        return mediaType.createSlide(context, uri, fileName, mimeType, null, mediaSize, width, height, gif);
       }
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
@@ -365,14 +370,11 @@ public class AttachmentManager {
 
   public static void selectDocument(Activity activity, int requestCode) {
     Permissions.with(activity)
-            .request(Manifest.permission.READ_EXTERNAL_STORAGE)
-            .ifNecessary()
-            .withPermanentDenialDialog(activity.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
-            .onAllGranted(() -> selectMediaType(activity, "*/*", null, requestCode))
-            .execute();
-
-
-
+               .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+               .ifNecessary()
+               .withPermanentDenialDialog(activity.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
+               .onAllGranted(() -> selectMediaType(activity, "*/*", null, requestCode))
+               .execute();
   }
 
   public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull TransportOption transport) {
@@ -405,11 +407,17 @@ public class AttachmentManager {
                .execute();
   }
 
-  public static void selectGif(Activity activity, int requestCode, boolean isForMms, @ColorInt int color) {
+  public static void selectGif(Activity activity, int requestCode, boolean isForMms) {
     Intent intent = new Intent(activity, GiphyActivity.class);
     intent.putExtra(GiphyActivity.EXTRA_IS_MMS, isForMms);
-    intent.putExtra(GiphyActivity.EXTRA_COLOR, color);
     activity.startActivityForResult(intent, requestCode);
+  }
+
+  public static void selectPayment(@NonNull Activity activity, @NonNull RecipientId recipientId) {
+    Intent intent = new Intent(activity, PaymentsActivity.class);
+    intent.putExtra(PaymentsActivity.EXTRA_PAYMENTS_STARTING_ACTION, R.id.action_directly_to_createPayment);
+    intent.putExtra(PaymentsActivity.EXTRA_STARTING_ARGUMENTS, new CreatePaymentFragmentArgs.Builder(new PayeeParcelable(recipientId)).build().toBundle());
+    activity.startActivity(intent);
   }
 
   public @Nullable Uri getSlideUri() {
