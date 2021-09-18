@@ -3152,6 +3152,7 @@
   <string name="MultiselectForwardFragment__limit_reached">Limite atteinte</string>
   <!--EOF-->
 
+  <!--//**TM_SA**//Start-->
   <string name="issue_report_list_title">Remontée de problèmes</string>
   <string name="issue_report_list_summery">Nous envoyer les logs de l\'application</string>
 </resources>

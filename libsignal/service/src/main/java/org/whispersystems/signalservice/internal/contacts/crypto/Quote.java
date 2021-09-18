@@ -103,13 +103,17 @@ public class Quote {
   }
 
   private void read(ByteBuffer quoteBuf, int pos, byte[] buf) {
+    //**TM_SA**//Start
     ((Buffer)quoteBuf).position(pos);
     quoteBuf.get(buf);
+    //**TM_SA**//Ende
   }
 
   private void readZero(ByteBuffer quoteBuf, int pos, int count) {
     byte[] zeroBuf = new byte[count];
+    //**TM_SA**//Start
     read(quoteBuf, pos, zeroBuf);
+    //**TM_SA**//End
     for (int zeroBufIdx = 0; zeroBufIdx < count; zeroBufIdx++) {
       if (zeroBuf[zeroBufIdx] != 0) {
         throw new IllegalArgumentException("quote_reserved_mismatch "+pos);

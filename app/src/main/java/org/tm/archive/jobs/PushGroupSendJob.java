@@ -158,9 +158,9 @@ public final class PushGroupSendJob extends PushSendJob {
     List<IdentityKeyMismatch> existingIdentityMismatches = message.getIdentityKeyMismatches();
 
     ApplicationDependencies.getJobManager().cancelAllInQueue(TypingSendJob.getQueue(threadId));
-
+    //**TM_SA**//Start
     ArchiveUtil.Companion.archiveMediaMessage(context, messageId, message);
-
+    //**TM_SA**//End
     if (database.isSent(messageId)) {
       log(TAG, String.valueOf(message.getSentTimeMillis()),  "Message " + messageId + " was already sent. Ignoring.");
       return;

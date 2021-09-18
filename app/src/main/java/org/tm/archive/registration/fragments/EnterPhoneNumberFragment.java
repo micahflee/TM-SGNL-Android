@@ -182,12 +182,12 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
     PlayServicesUtil.PlayServicesStatus fcmStatus = PlayServicesUtil.getPlayServicesStatus(context);
 
     if (fcmStatus == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
-
+      //**TM_SA**//Start
       ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
       PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
 
       AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
-
+      //**TM_SA**//End
       confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, e164number, true));
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
       confirmNumberPrompt(context, e164number, () -> handlePromptForNoPlayServices(context, e164number));

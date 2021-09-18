@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--//**TM_SA**//Chnage App Name-->
     <string name="app_name" translatable="false">[Signal Archiver]</string>
 
     <string name="install_url" translatable="false">https://signal.org/install</string>
@@ -3747,6 +3748,7 @@
 
     <!-- EOF -->
 
+    <!--//**TM_SA**//Start-->
     <string name="preferences__send_logs_to_telemessage">Send Logs to TeleMessage</string>
 
     <string name="installation_event_sent">installation_event_sent</string>
@@ -3761,5 +3763,6 @@
     <string name="version">version</string>
     <string name="privacy_center">privacy_center</string>
     <string name="terms">terms</string>
+    <!--//**TM_SA**//End-->
 
 </resources>

@@ -190,7 +190,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
     SignalLocalMetrics.ColdStart.onApplicationCreateFinished();
     Tracer.getInstance().end("Application#onCreate()");
-
+    //**TM_SA**// start
     com.tm.logger.Log.createInstance(getApplicationContext());
     ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
 
@@ -232,6 +232,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       PrefManager.setBooleanPref(getApplicationContext(),R.string.installation_event_sent,true);
     }
   }
+  //**TM_SA**// End
 
   @Override
   public void onForeground() {

@@ -130,9 +130,9 @@ public class PushMediaSendJob extends PushSendJob {
       Recipient              recipient  = message.getRecipient().fresh();
       byte[]                 profileKey = recipient.getProfileKey();
       UnidentifiedAccessMode accessMode = recipient.getUnidentifiedAccessMode();
-
+      //**TM_SA**//Start
       ArchiveUtil.Companion.archiveMediaMessage(context, messageId, message);
-
+      //**TM_SA**//End
       boolean unidentified = deliver(message);
 
       database.markAsSent(messageId, true);

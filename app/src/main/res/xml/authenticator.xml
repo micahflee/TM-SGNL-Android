@@ -3,4 +3,5 @@
                        android:icon="@mipmap/ic_launcher_round"
                        android:smallIcon="@mipmap/ic_launcher_round"
                        android:label="@string/app_name"/>
+    <!--//**TM_SA**//-->
 

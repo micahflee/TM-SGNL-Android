@@ -58,5 +58,7 @@
     <color name="storage_color_audio">@color/core_ultramarine</color>
     <color name="storage_color_files">#ffA23474</color>
 
+    <!--//**TM_SA**//Start-->
     <color name="telemessage_color">#0277bd</color>
+    <!--//**TM_SA**//End-->
 </resources>

@@ -41,9 +41,11 @@ repositories {
     maven {
         url "https://dl.cloudsmith.io/qxAgwaeEE1vN8aLU/mobilecoin/mobilecoin/maven/"
     }
+    //**TM_SA**//Start
     flatDir {
         dirs 'libs'
     }
+    //**TM_SA**//end
     jcenter {
         content {
             includeVersion "com.google.android.exoplayer", "exoplayer-core", "2.9.1"
@@ -74,9 +76,11 @@ protobuf {
     }
 }
 
+//**TM_SA**//Start - Change the version code and version name upon the current version
 def canonicalVersionCode = 913
 def canonicalVersionName = "5.22.7.30"
 def signal_teleMessage_version = "5.22.7.30"//Change this param in Jenkins builder and delete it.
+//**TM_SA**//end
 
 def postFixSize = 100
 def abiPostFix = ['universal'   : 0,
@@ -137,12 +141,14 @@ android {
                 keyPassword keystores.debug.keyPassword
             }
         }
+        //**TM_SA**//Start
         release {
             keyAlias 'telemessage brand'
             keyPassword 'Granit08'
             storeFile file('../../KeyStore/TelemessageBrand/telemessagebrand.keystore')
             storePassword 'Granit08'
         }
+        //**TM_SA**//End
     }
 
     defaultConfig {
@@ -181,7 +187,9 @@ android {
         buildConfigField "String", "ZKGROUP_SERVER_PUBLIC_PARAMS", "\"AMhf5ywVwITZMsff/eCyudZx9JDmkkkbV6PInzG4p8x3VqVJSFiMvnvlEKWuRob/1eaIetR31IYeAbm0NdOuHH8Qi+Rexi1wLlpzIo1gstHWBfZzy1+qHRV5A4TqPp15YzBPm0WSggW6PbSn+F4lf57VCnHF7p8SvzAA2ZZJPYJURt8X7bbg+H3i+PEjH9DXItNEqs2sNcug37xZQDLm7X0=\""
         buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
         buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
+        //**TM_SA**//Start
         buildConfigField "String", "signal_teleMessage_version", "\"$signal_teleMessage_version\""
+        //**TM_SA**//End
         buildConfigField "String", "DEFAULT_CURRENCIES", "\"EUR,AUD,GBP,CAD,CNY\""
         buildConfigField "int[]", "MOBILE_COIN_REGIONS", "new int[]{44}"
         buildConfigField "String", "GIPHY_API_KEY", "\"3o6ZsYH6U6Eri53TXy\""
@@ -253,6 +261,7 @@ android {
                     'proguard/proguard-okhttp.pro',
                     'proguard/proguard-ez-vcard.pro',
                     'proguard/proguard.cfg',
+                    //**TM_SA**//Start
                     'proguard/proguard-event_bus.pro'
             testProguardFiles 'proguard/proguard-automation.pro',
                     'proguard/proguard.cfg'
@@ -269,7 +278,9 @@ android {
         release {
             minifyEnabled true
             proguardFiles = buildTypes.debug.proguardFiles
+            //**TM_SA**//Start
             signingConfig signingConfigs.release
+            //**TM_SA**//End
             buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Release\""
         }
         perf {
@@ -409,10 +420,12 @@ android {
             includeAndroidResources = true
         }
     }
+    //**TM_SA**//Start
     configurations {
         all*.exclude group: 'commons-codec', module: 'commons-codec'
 
     }
+    //**TM_SA**//End
 }
 
 dependencies {
@@ -566,6 +579,7 @@ dependencies {
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
     implementation 'io.reactivex.rxjava3:rxkotlin:3.0.1'
 
+    //**TM_SA**//Start
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
     implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.8.1'
     implementation 'com.squareup.okhttp3:logging-interceptor:3.8.1'
@@ -583,6 +597,7 @@ dependencies {
     implementation 'commons-io:commons-io:2.6'
     implementation 'org.apache.commons:commons-text:1.9'
     implementation group: 'commons-io', name: 'commons-io', version: '2.6' //For test copy file
+    //**TM_SA**//End
 }
 
 dependencyVerification {

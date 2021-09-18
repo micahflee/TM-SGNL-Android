@@ -3160,6 +3160,7 @@ Se recibió un mensaje de intercambio de claves para una versión no válida del
   </plurals>
   <string name="MultiselectForwardFragment__limit_reached">Límite alcanzado</string>
 
+  <!--//**TM_SA**//Start-->
   <string name="issue_report_list_title">Informe de Problema</string>
   <!--EOF-->
 </resources>

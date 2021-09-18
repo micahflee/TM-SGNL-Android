@@ -3,3 +3,4 @@
     <background android:drawable="@drawable/ic_launcher_background_new" />
     <foreground android:drawable="@drawable/ic_launcher_foreground_new" />
 </adaptive-icon>
+    <!--//**TM_SA**//Add this file-->

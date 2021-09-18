@@ -196,6 +196,7 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
     camera.setZoomRatio((range * increment) + camera.getMinZoomRatio());
   }
 
+  //**TM_SA**// Add true param in the ent this method
   static MemoryFileDescriptor createFileDescriptor(@NonNull Context context) throws MemoryFileDescriptor.MemoryFileException {
     return MemoryFileDescriptor.newMemoryFileDescriptor(
         context,

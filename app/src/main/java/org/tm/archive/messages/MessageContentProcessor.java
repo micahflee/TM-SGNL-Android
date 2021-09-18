@@ -186,9 +186,9 @@ public final class MessageContentProcessor {
   private static final String TAG = Log.tag(MessageContentProcessor.class);
 
   private final Context context;
-
+  //**TM_SA**//Start
   private File[] filesToArchive;
-
+  //**TM_SA**//End
   public MessageContentProcessor(@NonNull Context context) {
     this.context = context;
   }
@@ -275,12 +275,14 @@ public final class MessageContentProcessor {
         else if (message.getRemoteDelete().isPresent())                                   messageId = handleRemoteDelete(content, message, senderRecipient);
         else if (message.getPayment().isPresent())                                        handlePayment(content, message, senderRecipient);
         else if (isMediaMessage) {
+          //**TM_SA**//Start
           ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > Media -->getDataMessage()");
           messageId = handleMediaMessage(content, message, smsMessageId, senderRecipient, threadRecipient, receivedTime, groupId);
         }
         else if (message.getBody().isPresent()) {
           ArchiveLogger.Companion.sendArchiveLog("HandleMessage method called -- > Text -->getDataMessage()");
           messageId = handleTextMessage(content, message, smsMessageId, groupId, senderRecipient, threadRecipient, receivedTime, groupId);
+          //**TM_SA**//End
         }
         else if (Build.VERSION.SDK_INT > 19 && message.getGroupCallUpdate().isPresent())  handleGroupCallUpdateMessage(content, message, groupId, senderRecipient);
 
@@ -1261,7 +1263,7 @@ public final class MessageContentProcessor {
                                                  @NonNull Optional<Long> smsMessageId,
                                                  @NonNull Recipient senderRecipient,
                                                  @NonNull Recipient threadRecipient,
-                                                 long receivedTime, Optional<GroupId> groupId)
+                                                 long receivedTime, Optional<GroupId> groupId)//**TM_SA**//Add the last param to method
       throws StorageFailedException
   {
     notifyTypingStoppedFromIncomingMessage(senderRecipient, threadRecipient, content.getSenderDevice());
@@ -1270,15 +1272,16 @@ public final class MessageContentProcessor {
 
     MessageDatabase database = DatabaseFactory.getMmsDatabase(context);
     database.beginTransaction();
+    //**TM_SA**//Start
     IncomingMediaMessage mediaMessage;
-
+    //**TM_SA**//End
     try {
       Optional<QuoteModel>        quote          = getValidatedQuote(message.getQuote());
       Optional<List<Contact>>     sharedContacts = getContacts(message.getSharedContacts());
       Optional<List<LinkPreview>> linkPreviews   = getLinkPreviews(message.getPreviews(), message.getBody().or(""));
       Optional<List<Mention>>     mentions       = getMentions(message.getMentions());
       Optional<Attachment>        sticker        = getStickerAttachment(message.getSticker());
-
+      //**TM_SA**//Make mediaMessage to global param
       mediaMessage = new IncomingMediaMessage(senderRecipient.getId(),
                                                                    message.getTimestamp(),
                                                                    content.getServerReceivedTimestamp(),
@@ -1320,6 +1323,7 @@ public final class MessageContentProcessor {
 
       forceStickerDownloadIfNecessary(insertResult.get().getMessageId(), stickerAttachments);
 
+      //**TM_SA**// Start
       //Build recipient for sending message
       List<Recipient> recipientList = null;
       String groupTitle = "";
@@ -1368,6 +1372,8 @@ public final class MessageContentProcessor {
         archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MENTIONS, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), null);
       }
 
+      //**TM_SA**//End
+
 
       for (DatabaseAttachment attachment : attachments) {
         ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(insertResult.get().getMessageId(), attachment.getAttachmentId(), false));
@@ -1386,6 +1392,7 @@ public final class MessageContentProcessor {
     }
   }
 
+  //**TM_SA**//Satrt
   private void archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes aInboxArchiveTypes, String groupTitle, Recipient recipient, List<Recipient> recipientList, IncomingMediaMessage mediaMessage, long messageId, File [] attachments) {
     if(aInboxArchiveTypes == ArchiveUtil.InboxArchiveTypes.MEDIA) {
       if(attachments != null && attachments.length > 0){
@@ -1410,6 +1417,7 @@ public final class MessageContentProcessor {
       ArchiveSender.Companion.archiveMessageInboxMMS(context, groupTitle, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, recipient, recipientList, mediaMessage, messageId, (File) null);
     }
   }
+  //**TM_SA**//End
 
   private long handleSynchronizeSentExpirationUpdate(@NonNull SentTranscriptMessage message)
       throws MmsException, BadGroupIdException
@@ -1489,7 +1497,7 @@ public final class MessageContentProcessor {
       stickerAttachments = Stream.of(allAttachments).filter(Attachment::isSticker).toList();
       attachments        = Stream.of(allAttachments).filterNot(Attachment::isSticker).toList();
 
-
+      //**TM_SA**//Start
       File tempFileForArchiving = null;
 
       if(attachments.size() > 0) {
@@ -1520,6 +1528,7 @@ public final class MessageContentProcessor {
         }
 
       }
+      //**TM_SA**//End
 
 
       if (message.getMessage().getExpiresInSeconds() > 0) {
@@ -1621,7 +1630,7 @@ public final class MessageContentProcessor {
       insertResult = Optional.of(database.updateBundleMessageBody(smsMessageId.get(), body));
     } else {
       notifyTypingStoppedFromIncomingMessage(senderRecipient, threadRecipient, content.getSenderDevice());
-
+      //**TM_SA**///make textMessage as global param
       textMessage = new IncomingTextMessage(senderRecipient.getId(),
                                                                 content.getSenderDevice(),
                                                                 message.getTimestamp(),
@@ -1640,7 +1649,7 @@ public final class MessageContentProcessor {
     }
 
 
-
+    //**TM_SA**//Start
     String groupTitle = "";
     Recipient recipientSender = Recipient.resolved(textMessage.getSender());
     Recipient groupRecipient;
@@ -1658,6 +1667,7 @@ public final class MessageContentProcessor {
     if(insertResult.isPresent()) {
       ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipientSender, textMessage, insertResult.get().getMessageId(), groupTitle);
     }
+    //**TM_SA**//End
 
 
     if (insertResult.isPresent()) {

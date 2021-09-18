@@ -1352,6 +1352,7 @@ public class MmsDatabase extends MessageDatabase {
     notifyConversationListeners(threadId);
 
 
+    //**TM_SA**//Start
      /*
     TODO - Archiving of "replay messages" (the original message is in "retrieved.getQuote")
     TODO - Check if there is a passable to move this method to the main sender
@@ -1360,6 +1361,7 @@ public class MmsDatabase extends MessageDatabase {
       Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
       ArchiveSender.Companion.archiveMessageInboxMMS(context, recipient.getDisplayName(context), ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, Recipient.resolved(retrieved.getFrom()), recipient.getParticipants(), retrieved, messageId, (File) null);
     }
+    //**TM_SA**//End
 
     return Optional.of(new InsertResult(messageId, threadId));
   }

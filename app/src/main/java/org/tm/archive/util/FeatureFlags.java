@@ -296,6 +296,7 @@ public final class FeatureFlags {
 
   /** Whether to use the custom streaming muxer or built in android muxer. */
   public static boolean useStreamingVideoMuxer() {
+    //**TM_SA**//Change false to true
     return getBoolean(CUSTOM_VIDEO_MUXER, true);
   }
 

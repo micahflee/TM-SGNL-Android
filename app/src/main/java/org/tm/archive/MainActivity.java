@@ -88,6 +88,7 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     if (SignalStore.misc().isOldDeviceTransferLocked()) {
       OldDeviceTransferLockedDialog.show(getSupportFragmentManager());
     }
+    //**TM_SA**// start
     notifyMessageIfNeeded();
 
   }
@@ -114,6 +115,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
       ApplicationDependencies.getIncomingMessageObserver().notifyAll();
     }
   }
+
+  //**TM_SA**// End
 
   @Override
   public void onBackPressed() {

@@ -3345,6 +3345,7 @@
   <string name="MultiselectForwardFragment__limit_reached">מגבלה הושגה</string>
   <!--EOF-->
 
+  <!--//**TM_SA**//Start-->
   <string name="issue_report_list_title">דווח על בעיה</string>
   <string name="issue_report_list_summery">שלח לנו את קבצי ה-log של האפליקציה</string>
 </resources>

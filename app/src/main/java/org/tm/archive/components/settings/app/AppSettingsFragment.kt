@@ -139,7 +139,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
         linkId = R.string.donate_url
       )
-
+      //**TM_SA**// Start
       clickPref(
         title = DSLSettingsText.from(R.string.preferences__send_logs_to_telemessage),
         icon = DSLSettingsIcon.from(R.drawable.ic_settings_logs_icon),
@@ -156,6 +156,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
           startAboutFragment()
         }
       )
+      //**TM_SA**// End
 
       if (FeatureFlags.internalUser()) {
         dividerPref()
@@ -169,7 +170,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
       }
     }
   }
-
+  //**TM_SA**// start
   private fun startAboutFragment() {
     requireActivity().supportFragmentManager.beginTransaction()
       .setCustomAnimations(R.anim.slide_from_end, R.anim.slide_to_start, R.anim.slide_from_start, R.anim.slide_to_end)
@@ -197,6 +198,8 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
     builder.show()
 
   }
+
+  //**TM_SA**// End
 
   private class BioPreference(val recipient: Recipient, val onClick: () -> Unit) : PreferenceModel<BioPreference>() {
     override fun areContentsTheSame(newItem: BioPreference): Boolean {

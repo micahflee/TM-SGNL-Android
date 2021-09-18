@@ -91,6 +91,11 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
 
+   <!-- //**TM_SA**//Change:
+    android:icon="@mipmap/ic_launcher_round"
+    android:roundIcon="@mipmap/ic_launcher_round"
+    tools:replace="android:allowBackup,android:supportsRtl"
+   -->
     <application android:name=".ApplicationContext"
                 android:icon="@mipmap/ic_launcher_round"
                  android:roundIcon="@mipmap/ic_launcher_round"
@@ -102,9 +107,11 @@
                  android:theme="@style/TextSecure.LightTheme"
                  android:largeHeap="true">
 
+    <!--//**TM_SA**// start-->
     <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAVa3EZMZWSbiUAfgiJTb-7Ljo0se6YWys"/>
+    <!--//**TM_SA**// End-->
 
     <meta-data android:name="android.supports_size_changes"
                android:value="true" />
@@ -238,12 +245,12 @@
             <category android:name="android.intent.category.LAUNCHER" />
             <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
         </intent-filter>
-
+        <!--//**TM_SA**// start-->
         <meta-data android:name="com.sec.minimode.icon.portrait.normal"
                    android:resource="@mipmap/ic_launcher_round" />
         <meta-data android:name="com.sec.minimode.icon.landscape.normal"
                    android:resource="@mipmap/ic_launcher_round" />
-
+        <!--//**TM_SA**// End-->
         <meta-data android:name="android.app.shortcuts"
                    android:resource="@xml/shortcuts" />
 

@@ -226,7 +226,9 @@ public class EditProfileFragment extends LoggingFragment {
     }
 
     this.finishButton.setOnClickListener(v -> {
+      //**TM_SA**//Start
       savePrefName();
+      //**TM_SA**//End
       this.finishButton.setIndeterminateProgressMode(true);
       this.finishButton.setProgress(50);
       handleUpload();
@@ -241,9 +243,11 @@ public class EditProfileFragment extends LoggingFragment {
     }
   }
 
+  //**TM_SA**//Start
   private void savePrefName() {
     PrefManager.setStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, givenName.getText() + " " + familyName.getText());
   }
+  //**TM_SA**//End
 
   private void initializeProfileName() {
     viewModel.isFormValid().observe(getViewLifecycleOwner(), isValid -> {

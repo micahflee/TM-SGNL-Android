@@ -2142,6 +2142,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
         WindowUtil.setStatusBarColor(getWindow(), toolbarColor);
       }
     } else {
+      //**TM_SA**//Start
       if (ArchiveConstants.isNeedToSetTeleMessageBackgroundAsDefault) {
         wallpaper.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_bg_tm));
       }else {
@@ -2152,6 +2153,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
           attachmentKeyboardStub.get().setWallpaperEnabled(false);
         }
       }
+      //**TM_SA**//End
 
       int toolbarColor = getResources().getColor(R.color.conversation_toolbar_color);
       toolbar.setBackgroundColor(toolbarColor);
@@ -2790,13 +2792,14 @@ public class ConversationActivity extends PassphraseRequiredActivity
     return getRecipient() != null && getRecipient().isGroup();
   }
 
+  //**TM_SA**//Start
   public static boolean checkWriteExternalPermission(Context context)
   {
     String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
     int res = context.checkCallingOrSelfPermission(permission);
     return (res == PackageManager.PERMISSION_GRANTED);
   }
-
+  //**TM_SA**//End
   private boolean isPushGroupConversation() {
     return getRecipient() != null && getRecipient().isPushGroup();
   }
@@ -3153,6 +3156,7 @@ public class ConversationActivity extends PassphraseRequiredActivity
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
 
+  //**TM_SA**// Add Manifest.permission.READ_EXTERNAL_STORAGE to request
   @Override
   public void onRecorderPermissionRequired() {
     Permissions.with(this)

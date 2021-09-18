@@ -15,7 +15,7 @@ import androidx.fragment.app.Fragment;
 
 import org.tm.archive.BuildConfig;
 import org.tm.archive.R;
-
+//**TM_SA**//Add this class
 public class AboutPreferenceFragment extends Fragment {
   private static final String TAG = AboutPreferenceFragment.class.getSimpleName();
 

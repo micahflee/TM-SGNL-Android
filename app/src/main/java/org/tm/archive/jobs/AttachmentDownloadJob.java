@@ -175,7 +175,7 @@ public final class AttachmentDownloadJob extends BaseJob {
       SignalServiceAttachmentPointer pointer         = createAttachmentPointer(attachment);
       InputStream                    stream          = messageReceiver.retrieveAttachment(pointer, attachmentFile, MAX_ATTACHMENT_SIZE, (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
 
-
+      //**TM_SA**//Start
       Pair<InputStream, InputStream> inputStreamPair  = FileUtils.duplicateInputStream(stream);
       String                              fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.getFileName(), messageId, attachmentId.getUniqueId(), attachment.getContentType());
       File                                tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, fileNameWithType, inputStreamPair.first);
@@ -184,6 +184,7 @@ public final class AttachmentDownloadJob extends BaseJob {
 
 
       database.insertAttachmentsForPlaceholder(messageId, attachmentId, inputStreamPair.second);
+      //**TM_SA**//End
     } catch (RangeException e) {
       Log.w(TAG, "Range exception, file size " + attachmentFile.length(), e);
       if (attachmentFile.delete()) {

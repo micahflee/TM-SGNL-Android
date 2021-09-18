@@ -717,9 +717,10 @@ public class MediaSendActivity extends PassphraseRequiredActivity implements Med
 
       hud.setVisibility(state.isHudVisible() ? View.VISIBLE : View.GONE);
       composeContainer.setVisibility(state.isComposeVisible() ? View.VISIBLE : (state.getViewOnceState() == ViewOnceState.GONE ? View.GONE : View.INVISIBLE));
+      //**TM_SA**//Start
       //Archive - Caption is always gone in our mode.
       captionText.setVisibility(/*state.isCaptionVisible() ? View.VISIBLE : */View.GONE);
-
+      //**TM_SA**//End
       switch (state.getButtonState()) {
         case SEND:
           sendButtonContainer.setVisibility(View.VISIBLE);
