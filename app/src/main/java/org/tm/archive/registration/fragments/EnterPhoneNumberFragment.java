@@ -94,7 +94,14 @@ public final class EnterPhoneNumberFragment extends BaseRegistrationFragment {
 
     setUpNumberInput();
 
-    register.setOnClickListener(v -> handleRegister(requireContext()));
+    register.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        handleRegister(requireContext());
+
+      //  Log.d("MNMNDMD", "register.setOnClickListener");
+      }
+    });
 
     if (isReregister()) {
       cancel.setVisibility(View.VISIBLE);

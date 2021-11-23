@@ -2,6 +2,7 @@ package org.archiver
 
 import android.content.Context
 import com.tm.androidcopysdk.DataGrabber
+import com.tm.androidcopysdk.utils.Contact
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_CHAT_GROUP
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_FROM_TEXT
@@ -67,7 +68,7 @@ class ArchiveUtil {
             val to = getToPartForSubject(context, isInboxArchiveMessage, recipient, isGroup, groupTitle)
             val from = getFromPartForSubject(context, isInboxArchiveMessage, recipient, inboxRecipient)
 
-            return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${from.replace("+", "")} $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+", "")}"
+            return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${from.toString().replace("+", "")} $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+", "")}"
         }
 
         private fun getToPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, isGroup: Boolean, groupTitle: String?): String {
@@ -174,16 +175,16 @@ class ArchiveUtil {
             }
         }
 
-        fun fromContactName(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean): String {
+        fun fromContactName(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean): Contact {
             return if(isInboxArchiveMessage){
-                recipient.getDisplayName(context)
+              Contact(recipient.getDisplayName(context))
             }else{
-                Recipient.self().profileName.toString()
+              Contact(Recipient.self().profileName.toString())
             }
 
         }
 
-        fun createMessageNameList(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean, recipientList: MutableList<Recipient>? = null, isGroup: Boolean, from : String = ""): Array<String> {
+        fun createMessageNameList(context: Context, recipient: Recipient, isInboxArchiveMessage: Boolean, recipientList: MutableList<Recipient>? = null, isGroup: Boolean, from : Contact = Contact("")): Array<Contact> {
 
             val rl = if (!isInboxArchiveMessage) {
                 if(recipientList!!.size > 1) {
@@ -198,29 +199,29 @@ class ArchiveUtil {
                 }
             } else {
                 recipientList?.filter {
-                    it.e164.isPresent && it.e164.get() != null && it.e164.get() != from
+                    it.e164.isPresent && it.e164.get() != null && it.e164.get() != from.toString()
                 }
                         ?: recipient.participants.filter {
-                            it.e164.isPresent && it.e164.get() != null && it.e164.get() != from
+                            it.e164.isPresent && it.e164.get() != null && it.e164.get() != from.toString()
                         }
             }
 
-            val recipientListFromRecipient: List<String> = if (isGroup) {
+            val recipientListFromRecipient: List<Contact> = if (isGroup) {
 
                 rl.map {
-                    it.getDisplayName(context)
+                    Contact(it.getDisplayName(context))
                 }
 
             } else {
                 if(isInboxArchiveMessage){
-                    listOf(Recipient.self().profileName.toString())
+                    listOf(Contact(Recipient.self().profileName.toString()))
                 }else {
-                    listOf(recipient.getDisplayName(context))
+                    listOf(Contact(recipient.getDisplayName(context)))
                 }
             }
 
             if(recipientListFromRecipient.toTypedArray().isEmpty()){
-                return arrayOf("")
+                return arrayOf(Contact())
             }
             
             return recipientListFromRecipient.toTypedArray()

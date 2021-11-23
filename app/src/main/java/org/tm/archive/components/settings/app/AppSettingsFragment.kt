@@ -188,8 +188,12 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
 
     builder.setPositiveButton(R.string.ShareActivity__send) { dialog, which ->
       AndroidCopySDK.getInstance(context).sentLogs(
-        activity, PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
+        activity,
+        null,
+        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
+        "Signal Archiver logs",
         PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),
+        "",
         ArchivePreferenceConstants.GENERATE_TOK_NAME,
         ArchivePreferenceConstants.GENERATE_TOK_PASS
       )
