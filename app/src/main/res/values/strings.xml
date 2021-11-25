@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--//**TM_SA**//Chnage App Name-->
-    <string name="app_name" translatable="false">[Signal Archiver]</string>
+    <string name="app_name" translatable="false">TM SGNL</string>
 
     <string name="install_url" translatable="false">https://signal.org/install</string>
     <string name="donate_url" translatable="false">https://signal.org/donate</string>
@@ -3756,7 +3756,7 @@
     <string name="issue_report_list_title">Issue report</string>
     <string name="issue_report_list_summery">Send us a log file of the app</string>
 
-    <string name="settings_about_title">TeleMessage Signal Archiver</string>
+    <string name="settings_about_title">TM SGNL</string>
 
     <string name="privacy_center_about">&lt;a href=http://www.telemessage.com/Privacy-Policy/&gt;&lt;b>Privacy Center&lt;/b>&lt;/a&gt;</string>
     <string name="terms_about">&lt;a href=http://www.telemessage.com/terms-conditions/&gt;&lt;b>Terms Of Service&lt;/b>&lt;/a&gt;</string>
