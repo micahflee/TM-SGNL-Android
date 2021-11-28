@@ -222,7 +222,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     PrefManager.setStringPref(getApplicationContext(),"wifi3g","WIFI3G");
 
     mSettings.setData(AndroidCopySettings.DataSaving.WIFI3G);
-
+    Log.d("initializeTMAndroidArchive", "signupSucess with emptey password and user name");
     AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"", ArchiveConstants.signalCurrentPassword);
     ArchiveLogger.Companion.sendArchiveLog("User name = " + "Password = ");
 
