@@ -1694,9 +1694,11 @@ public final class MessageContentProcessor {
 
     MessageDatabase database;
     long            messageId;
+    OutgoingMediaMessage outgoingMediaMessage = null;
+    OutgoingTextMessage outgoingTextMessage = null;
 
     if (isGroup) {
-      OutgoingMediaMessage outgoingMediaMessage = new OutgoingMediaMessage(recipient,
+      outgoingMediaMessage = new OutgoingMediaMessage(recipient,
           new SlideDeck(),
           body,
           message.getTimestamp(),
@@ -1715,7 +1717,7 @@ public final class MessageContentProcessor {
 
       updateGroupReceiptStatus(message, messageId, recipient.requireGroupId());
     } else {
-      OutgoingTextMessage outgoingTextMessage = new OutgoingEncryptedMessage(recipient, body, expiresInMillis);
+      outgoingTextMessage = new OutgoingEncryptedMessage(recipient, body, expiresInMillis);
 
       messageId = DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoingTextMessage, false, message.getTimestamp(), null);
       database  = DatabaseFactory.getSmsDatabase(context);
@@ -1737,7 +1739,12 @@ public final class MessageContentProcessor {
       DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
     }
 
-    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getMessage().getBody().get(), messageId);
+    String messageBody = message.getMessage().getBody().get();
+    if(outgoingMediaMessage != null){
+      messageBody = ArchiveUtil.Companion.createPreviewLinkBody(null, outgoingMediaMessage);
+    }
+
+    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, messageBody, messageId);
 
 
     return threadId;

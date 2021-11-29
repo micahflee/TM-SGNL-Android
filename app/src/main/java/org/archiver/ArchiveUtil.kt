@@ -237,7 +237,18 @@ class ArchiveUtil {
                 var result = messageBody?: ""
                     return if (mentionsList.isNotEmpty()) {
                         mentionsList.forEachIndexed { index, mention ->
-                            result = result.replaceFirst("\uFFFC", "\u0040" + getRecipientFromRecipientID(mentionsList[index].recipientId).profileName.givenName)
+                          val givenName = getRecipientFromRecipientID(mentionsList[index].recipientId).profileName.givenName
+                          val e164Object = getRecipientFromRecipientID(mentionsList[index].recipientId).e164
+                            val name = if(givenName.isEmpty()){
+                              if(e164Object.isPresent){
+                                e164Object.get()
+                              }else{
+                                ""
+                              }
+                            }else{
+                              givenName
+                            }
+                            result = result.replaceFirst("\uFFFC", "\u0040" + name)
                         }
                         result
                     } else {
@@ -344,7 +355,8 @@ class ArchiveUtil {
                 if (message !is OutgoingGroupUpdateMessage
                         && message !is OutgoingExpirationUpdateMessage) {
 
-                    archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, message.body, messageId)
+                  val messageBody = createPreviewLinkBody(null, message)
+                    archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, message.recipient, messageBody!!, messageId)
                 }else{
                     //TODO - Group events/updates!!
                 }

@@ -29,6 +29,7 @@ import com.annimon.stream.Stream;
 
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveSender;
+import org.archiver.ArchiveUtil;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
