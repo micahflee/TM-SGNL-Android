@@ -77,9 +77,9 @@ protobuf {
 }
 
 //**TM_SA**//Start - Change the version code and version name upon the current version
-def canonicalVersionCode = 918
-def canonicalVersionName = "5.22.7.35"
-def signal_teleMessage_version = "5.22.7.35"//Change this param in Jenkins builder and delete it.
+def canonicalVersionCode = 919
+def canonicalVersionName = "5.22.7.36"
+def signal_teleMessage_version = "5.22.7.36"//Change this param in Jenkins builder and delete it.
 //**TM_SA**//end
 
 def postFixSize = 100
