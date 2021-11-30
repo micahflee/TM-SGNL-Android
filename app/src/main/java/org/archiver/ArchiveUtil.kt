@@ -68,7 +68,8 @@ class ArchiveUtil {
             val to = getToPartForSubject(context, isInboxArchiveMessage, recipient, isGroup, groupTitle)
             val from = getFromPartForSubject(context, isInboxArchiveMessage, recipient, inboxRecipient)
 
-            return "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${from.toString().replace("+", "")} $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+", "")}"
+            val clearSubject =  "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${from.toString().replace("+", "")} $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+", "")}"
+          return clearSubject.replace("\u2069","").replace("\u2068","")
         }
 
         private fun getToPartForSubject(context: Context, isInboxArchiveMessage: Boolean, recipient: Recipient, isGroup: Boolean, groupTitle: String?): String {
