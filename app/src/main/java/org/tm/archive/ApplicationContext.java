@@ -34,6 +34,7 @@ import com.tm.androidcopysdk.utils.PrefManager;
 
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveLogger;
+import org.archiver.ArchiveUtil;
 import org.conscrypt.Conscrypt;
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.signal.core.util.concurrent.SignalExecutors;
@@ -190,12 +191,17 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
     SignalLocalMetrics.ColdStart.onApplicationCreateFinished();
     Tracer.getInstance().end("Application#onCreate()");
+
+
     //**TM_SA**// start
     com.tm.logger.Log.createInstance(getApplicationContext());
     ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
 
     initArchiveUrlsAndStartArchive();
 
+    if(ArchiveUtil.Companion.getFCMTokenIfExists(this) == null || ArchiveUtil.Companion.getFCMTokenIfExists(this).isEmpty()){
+      ArchiveUtil.Companion.fetchFCMToken(this);
+    }
   }
 
   private void initArchiveUrlsAndStartArchive() {

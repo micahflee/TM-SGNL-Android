@@ -1,9 +1,19 @@
 package org.archiver
 
 import android.content.Context
+import android.content.SharedPreferences
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.gson.Gson
 import com.tm.androidcopysdk.DataGrabber
+import com.tm.androidcopysdk.network.NetworkManager
+import com.tm.androidcopysdk.network.keepAlive.KeepALiveResponse
+import com.tm.androidcopysdk.network.keepAlive.KeepAliveRequest
 import com.tm.androidcopysdk.utils.Contact
 import com.tm.androidcopysdk.utils.PrefManager
+import com.tm.authenticatorsdk.selfAuthenticator.AuthenticationAppType
+import com.tm.logger.Log
+import com.tm.utils.Definitions
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_CHAT_GROUP
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_FROM_TEXT
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_TO_TEXT
@@ -13,6 +23,7 @@ import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
 import org.archiver.ArchiveSender.Companion.archiveMessageOutbox
 import org.archiver.ArchiveSender.Companion.archiveMessageOutboxMMS
 import org.archiver.ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage
+import org.tm.archive.BuildConfig
 import org.tm.archive.database.model.Mention
 import org.tm.archive.groups.GroupId
 import org.tm.archive.linkpreview.LinkPreview
@@ -28,6 +39,9 @@ import java.io.File
 class ArchiveUtil {
 
     companion object{
+
+      const val TAG = "ArchiveUtil"
+
 
         fun createToRecipientList(context: Context, isInboxArchiveMessage: Boolean, aRecipient: Recipient, isGroup: Boolean, from: String, recipientList: MutableList<Recipient>? = null): Array<String> {
             var recipientListFromRecipient: List<String> = if (isGroup) {
@@ -365,6 +379,72 @@ class ArchiveUtil {
             }
         }
 
+
+      fun fetchFCMToken(context: Context) {
+        Log.d("ArchiverUtil","Starting fetch FCM token..")
+        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+          if (!task.isSuccessful) {
+            Log.d("ArchiverUtil","Fetching FCM registration token failed  ${task.exception}")
+            return@OnCompleteListener
+          }
+
+          // Get new FCM registration token
+          val token = task.result
+          Log.d("ArchiverUtil","FCM token is = $token")
+          PrefManager.setStringPref(context, ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, token)
+
+        })
+
+      }
+
+      fun getFCMTokenIfExists(context: Context): String?{
+        return PrefManager.getStringPref(context, ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, "")
+      }
+
+
+      fun doTeleMessageKeepAlivePing(context: Context) {
+
+        object : Thread() {
+          override fun run() {
+            try {
+              val nm = NetworkManager(
+                context,
+                PrefManager.getStringPref(context, "baseurl", Definitions.BaseUrl)
+              )
+              var sr: KeepAliveRequest? = null
+              sr = if (getFCMTokenIfExists(context) == null || getFCMTokenIfExists(context)!!
+                  .isEmpty()
+              ) {
+                Log.d(TAG, "KeepAliveRequest with 1 param")
+                KeepAliveRequest(AuthenticationAppType.TELEGRAM.aAppServerId.toString())
+              } else {
+                Log.d(TAG, "KeepAliveRequest with 4 param")
+                KeepAliveRequest(
+                  AuthenticationAppType.SIGNAL.aAppServerId.toString(),
+                  BuildConfig.VERSION_NAME,
+                  BuildConfig.VERSION_CODE.toString(),
+                  getFCMTokenIfExists(context)
+                )
+              }
+              Log.d(TAG, "request KeepAlive: " + Gson().toJson(sr))
+              //Log.d(TAG, "send message:" + sr.getTextContent());
+              val res = nm.start<KeepALiveResponse>(sr, null, context)
+              //        Log.d(TAG, "response KeepAlive: " + new Gson().toJson(res));
+              if (res == null) {
+                Log.d(TAG, "response is null")
+              } else if (res.isSuccessful) {
+                Log.d(TAG, "response.isSuccessful() = true")
+              } else {
+                Log.d(TAG, "response.isSuccessful() = false")
+              }
+            } catch (e: Exception) {
+              e.printStackTrace()
+            }
+          }
+        }.start()
+
+
+      }
     }
 
     enum class InboxArchiveTypes{

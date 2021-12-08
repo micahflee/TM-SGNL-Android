@@ -3,6 +3,9 @@ package org.archiver
 class ArchivePreferenceConstants {
 
     companion object{
+        const val FCM_TOKEN_SHARED_PREFERENCE_NAME = "archiveConfig"
+        const val FCM_TOKEN_PREFERENCE_KEY = "FCMTokenPreferenceKey"
+
 
         const val PREF_KEY_DEVICE_PHONE_NUMBER = "devicePhoneNumber"
 
