@@ -7,7 +7,9 @@ import androidx.annotation.NonNull;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.tm.androidcopysdk.utils.PrefManager;
 
+import org.archiver.ArchivePreferenceConstants;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.FcmRefreshJob;
@@ -52,6 +54,10 @@ public class FcmReceiveService extends FirebaseMessagingService {
   @Override
   public void onNewToken(String token) {
     Log.i(TAG, "onNewToken()");
+
+    //**TM_SA**//
+    PrefManager.setStringPref(getApplicationContext(), ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, token);
+    //**TM_SA**//
 
     if (!TextSecurePreferences.isPushRegistered(ApplicationDependencies.getApplication())) {
       Log.i(TAG, "Got a new FCM token, but the user isn't registered.");
