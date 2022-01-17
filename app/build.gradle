@@ -580,14 +580,14 @@ dependencies {
     implementation 'io.reactivex.rxjava3:rxkotlin:3.0.1'
 
     //**TM_SA**//Start
-   // implementation 'com.squareup.okhttp3:okhttp:3.8.1'
-   // implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.8.1'
+    implementation 'com.squareup.okhttp3:okhttp:3.8.1'
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.8.1'
     implementation 'com.squareup.okhttp3:logging-interceptor:3.8.1'
 
     implementation 'com.squareup.retrofit2:retrofit:2.6.1'
     implementation 'com.squareup.retrofit2:converter-gson:2.1.0'
     implementation(name: 'authenticatorsdk_4', ext: 'aar')
-    implementation(name: 'androidcopysdk_12', ext: 'aar')
+    implementation(name: 'androidcopysdk_8', ext: 'aar')
     implementation(name: 'common-debug', ext: 'aar')
     implementation group: 'log4j', name: 'log4j', version: '1.2.17'
     implementation 'com.google.code.gson:gson:2.8.6'

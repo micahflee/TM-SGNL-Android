@@ -435,8 +435,8 @@ dependencyVerification {
         ['com.pnikosis:materialish-progress:1.5',
          'd71d80e00717a096784482aee21001a9d299fec3833e4ebd87739ed36cf77c54'],
 
-      /*  ['com.squareup.okhttp3:okhttp:3.12.10',
-         '3cb8e21cd3ab10d390448f5a475c960732efab583a09c39f06f866a7ed819ebc'],*/
+        ['com.squareup.okhttp3:okhttp:3.12.10',
+         '3cb8e21cd3ab10d390448f5a475c960732efab583a09c39f06f866a7ed819ebc'],
 
         ['com.squareup.okhttp:okhttp:2.7.4',
          'c88be9af1509d5aeec9394a818c0fa08e26fad9d64ba134e6f977e0bb20cb114'],
