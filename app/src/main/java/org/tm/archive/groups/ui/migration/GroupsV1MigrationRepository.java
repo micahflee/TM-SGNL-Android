@@ -20,7 +20,6 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.transport.RetryLaterException;
-import org.tm.archive.util.Util;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -96,8 +95,8 @@ final class GroupsV1MigrationRepository {
     group = group.fresh();
 
     List<Recipient> ineligible = Stream.of(group.getParticipants())
-                                       .filter(r -> !r.hasUuid()                                                         ||
-                                                    r.getGroupsV2Capability() != Recipient.Capability.SUPPORTED          ||
+                                       .filter(r -> !r.hasAci() ||
+                                                    r.getGroupsV2Capability() != Recipient.Capability.SUPPORTED ||
                                                     r.getGroupsV1MigrationCapability() != Recipient.Capability.SUPPORTED ||
                                                     r.getRegistered() != RecipientDatabase.RegisteredState.REGISTERED)
                                        .toList();

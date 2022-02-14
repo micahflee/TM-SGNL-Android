@@ -20,7 +20,7 @@ import org.signal.core.util.logging.Log
 import org.tm.archive.MainActivity
 import org.tm.archive.R
 import org.tm.archive.conversation.ConversationIntents
-import org.tm.archive.database.DatabaseFactory
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.InMemoryMessageRecord
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.notifications.NotificationChannels
@@ -188,6 +188,7 @@ object NotificationFactory {
       setLargeIcon(conversation.getContactLargeIcon(context).toLargeBitmap(context))
       addPerson(conversation.recipient)
       setShortcutId(ConversationUtil.getShortcutId(conversation.recipient))
+      setLocusId(ConversationUtil.getShortcutId(conversation.recipient))
       setContentInfo(conversation.messageCount.toString())
       setNumber(conversation.messageCount)
       setContentText(conversation.getContentText(context))
@@ -368,6 +369,7 @@ object NotificationFactory {
       setLargeIcon(conversation.getContactLargeIcon(context).toLargeBitmap(context))
       addPerson(conversation.recipient)
       setShortcutId(ConversationUtil.getShortcutId(conversation.recipient))
+      setLocusId(ConversationUtil.getShortcutId(conversation.recipient))
       addMessages(conversation)
       setBubbleMetadata(conversation, BubbleUtil.BubbleState.SHOWN)
     }
@@ -384,7 +386,7 @@ object NotificationFactory {
       Log.i(TAG, "Security exception when posting notification, clearing ringtone")
       if (threadRecipient != null) {
         SignalExecutors.BOUNDED.execute {
-          DatabaseFactory.getRecipientDatabase(context).setMessageRingtone(threadRecipient.id, null)
+          SignalDatabase.recipients.setMessageRingtone(threadRecipient.id, null)
           NotificationChannels.updateMessageRingtone(context, threadRecipient, null)
         }
       }

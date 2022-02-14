@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;

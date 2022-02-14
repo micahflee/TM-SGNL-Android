@@ -9,7 +9,7 @@ import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.payments.preferences.PaymentsHomeAdapter;
 import org.tm.archive.payments.preferences.model.IntroducingPayments;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 import org.tm.archive.util.views.LearnMoreTextView;
 
 public class IntroducingPaymentViewHolder extends MappingViewHolder<IntroducingPayments> {

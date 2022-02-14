@@ -7,12 +7,9 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.Base64;
 import org.tm.archive.util.SetUtil;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
-import org.whispersystems.signalservice.api.storage.SignalRecord;
 import org.whispersystems.signalservice.api.storage.SignalStorageManifest;
 import org.whispersystems.signalservice.api.storage.SignalStorageRecord;
 import org.whispersystems.signalservice.api.storage.StorageId;
@@ -145,7 +142,7 @@ public final class StorageSyncValidations {
 
       if (insert.getContact().isPresent()) {
         SignalServiceAddress address = insert.getContact().get().getAddress();
-        if (self.getE164().get().equals(address.getNumber().or("")) || self.getUuid().get().equals(address.getUuid())) {
+        if (self.getE164().get().equals(address.getNumber().or("")) || self.requireAci().equals(address.getAci())) {
           throw new SelfAddedAsContactError();
         }
       }

@@ -10,8 +10,8 @@ import org.signal.core.util.logging.Log;
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.CallManager;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.events.WebRtcViewModel;
@@ -25,8 +25,6 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.util.NetworkUtil;
 import org.tm.archive.webrtc.locks.LockManager;
 import org.webrtc.PeerConnection;
-import org.whispersystems.signalservice.api.messages.calls.AnswerMessage;
-import org.whispersystems.signalservice.api.messages.calls.SignalServiceCallMessage;
 
 import java.util.List;
 import java.util.Objects;
@@ -57,23 +55,6 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleSendAnswer(@NonNull WebRtcServiceState currentState,
-                                                         @NonNull WebRtcData.CallMetadata callMetadata,
-                                                         @NonNull WebRtcData.AnswerMetadata answerMetadata,
-                                                         boolean broadcast)
-  {
-    Log.i(TAG, "handleSendAnswer(): id: " + callMetadata.getCallId().format(callMetadata.getRemoteDevice()));
-
-    AnswerMessage            answerMessage       = new AnswerMessage(callMetadata.getCallId().longValue(), answerMetadata.getSdp(), answerMetadata.getOpaque());
-    Integer                  destinationDeviceId = broadcast ? null : callMetadata.getRemoteDevice();
-    SignalServiceCallMessage callMessage         = SignalServiceCallMessage.forAnswer(answerMessage, true, destinationDeviceId);
-
-    webRtcInteractor.sendCallMessage(callMetadata.getRemotePeer(), callMessage);
-
-    return currentState;
-  }
-
-  @Override
   public @NonNull WebRtcServiceState handleTurnServerUpdate(@NonNull WebRtcServiceState currentState,
                                                             @NonNull List<PeerConnection.IceServer> iceServers,
                                                             boolean isAlwaysTurn)
@@ -87,6 +68,7 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
       webRtcInteractor.getCallManager().proceed(activePeer.getCallId(),
                                                 context,
                                                 videoState.getLockableEglBase().require(),
+                                                AudioProcessingMethodSelector.get(),
                                                 videoState.requireLocalSink(),
                                                 callParticipant.getVideoSink(),
                                                 videoState.requireCamera(),
@@ -110,10 +92,10 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
 
     Log.i(TAG, "handleAcceptCall(): call_id: " + activePeer.getCallId());
 
-    DatabaseFactory.getSmsDatabase(context).insertReceivedCall(activePeer.getId(), currentState.getCallSetupState().isRemoteVideoOffer());
+    SignalDatabase.sms().insertReceivedCall(activePeer.getId(), currentState.getCallSetupState(activePeer).isRemoteVideoOffer());
 
     currentState = currentState.builder()
-                               .changeCallSetupState()
+                               .changeCallSetupState(activePeer.getCallId())
                                .acceptWithVideo(answerWithVideo)
                                .build();
 
@@ -138,7 +120,7 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
 
     try {
       webRtcInteractor.getCallManager().hangup();
-      DatabaseFactory.getSmsDatabase(context).insertMissedCall(activePeer.getId(), System.currentTimeMillis(), currentState.getCallSetupState().isRemoteVideoOffer());
+      SignalDatabase.sms().insertMissedCall(activePeer.getId(), System.currentTimeMillis(), currentState.getCallSetupState(activePeer).isRemoteVideoOffer());
       return terminate(currentState, activePeer);
     } catch  (CallException e) {
       return callFailure(currentState, "hangup() failed: ", e);
@@ -219,20 +201,6 @@ public class IncomingCallActionProcessor extends DeviceAwareActionProcessor {
   @Override
   protected  @NonNull WebRtcServiceState handleSetupFailure(@NonNull WebRtcServiceState currentState, @NonNull CallId callId) {
     return activeCallDelegate.handleSetupFailure(currentState, callId);
-  }
-
-  @Override
-  protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @Nullable RemotePeer remotePeer) {
-    return activeCallDelegate.handleCallConcluded(currentState, remotePeer);
-  }
-
-  @Override
-  protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
-                                                                @NonNull WebRtcData.CallMetadata callMetadata,
-                                                                boolean broadcast,
-                                                                @NonNull List<byte[]> iceCandidates)
-  {
-    return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
   }
 
   @Override

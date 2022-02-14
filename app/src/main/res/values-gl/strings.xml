@@ -38,6 +38,7 @@
   <string name="ApplicationPreferencesActivity_pin_disabled">PIN desactivado.</string>
   <string name="ApplicationPreferencesActivity_hide">Agochar</string>
   <string name="ApplicationPreferencesActivity_hide_reminder">¿Agochar o recordatorio?</string>
+  <string name="ApplicationPreferencesActivity_before_you_can_disable_your_pin">Antes de poder desactivar o PIN, tes que gardar a túa frase de recuperación de pagamentos para asegurarte de que podes recuperar a conta de pagamentos.</string>
   <!--AppProtectionPreferenceFragment-->
   <plurals name="AppProtectionPreferenceFragment_minutes">
     <item quantity="one">%d minuto</item>
@@ -86,6 +87,8 @@
   <string name="BlockUnblockDialog_group_members_will_be_able_to_add_you">Os membros do grupo poderán engadirte de volta.</string>
   <string name="BlockUnblockDialog_you_will_be_able_to_call_and_message_each_other">Poderás enviar mensaxes e facer chamadas e o teu nome e foto compartirase con eles.</string>
   <string name="BlockUnblockDialog_blocked_people_wont_be_able_to_call_you_or_send_you_messages">As persoas bloqueadas non poderán chamarte ou enviarche mensaxes.</string>
+  <!--Message shown on block dialog when blocking the Signal release notes recipient-->
+  <!--Message shown on unblock dialog when unblocking the Signal release notes recipient-->
   <string name="BlockUnblockDialog_unblock_s">Desbloquear a %1$s?</string>
   <string name="BlockUnblockDialog_block">Bloquear</string>
   <string name="BlockUnblockDialog_block_and_leave">Bloquear e saír</string>
@@ -180,9 +183,6 @@
   <string name="ConversationItem_this_message_was_deleted">Eliminouse a mensaxe.</string>
   <string name="ConversationItem_you_deleted_this_message">Eliminaches esta mensaxe.</string>
   <!--ConversationActivity-->
-  <string name="ConversationActivity_reset_secure_session_question">Restablecer sesión segura?</string>
-  <string name="ConversationActivity_this_may_help_if_youre_having_encryption_problems">Isto pode resultar de axuda en caso de haber problemas de cifraxe nesta conversa. As mensaxes manteranse.</string>
-  <string name="ConversationActivity_reset">Restablecer</string>
   <string name="ConversationActivity_add_attachment">Engadir anexo</string>
   <string name="ConversationActivity_select_contact_info">Seleccionar información de contacto</string>
   <string name="ConversationActivity_compose_message">Redactar mensaxe</string>
@@ -198,7 +198,7 @@
   <string name="ConversationActivity_transport_insecure_sms">SMS insegura</string>
   <string name="ConversationActivity_transport_insecure_mms">MMS insegura</string>
   <string name="ConversationActivity_transport_signal">Signal</string>
-  <string name="ConversationActivity_lets_switch_to_signal">Imos cambiar a Signal %1$s</string>
+  <string name="ConversationActivity_lets_switch_to_signal">Conversa comigo en Signal %1$s</string>
   <string name="ConversationActivity_specify_recipient">Por favor, elixe un contacto</string>
   <string name="ConversationActivity_unblock">Desbloquear</string>
   <string name="ConversationActivity_attachment_exceeds_size_limits">O anexo excede o límite para o tipo de mensaxe que estás a enviar.</string>
@@ -291,6 +291,7 @@
   <string name="ConversationFragment_not_now">Agora non</string>
   <string name="ConversationFragment_your_safety_number_with_s_changed">O teu número de seguridade con %s cambiou</string>
   <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">O teu número de seguranza con %s cambiou probablemente porque reinstalou Signal ou mudou de dispositivo. Toca Verificar para confirmar o novo número. Isto é opcional.</string>
+  <!--Message shown to indicate which notification profile is on/active-->
   <plurals name="ConversationListFragment_delete_selected_conversations">
     <item quantity="one">Borrar a conversa seleccionada?</item>
     <item quantity="other">Borrar as conversas seleccionadas?</item>
@@ -310,6 +311,11 @@
     <item quantity="one">Conversa movida á caixa de entrada</item>
     <item quantity="other">%d conversas movidas á caixa de entrada</item>
   </plurals>
+  <string name="ConversationListFragment_select">Seleccionar</string>
+  <string name="ConversationListFragment_select_all">Seleccionar todo</string>
+  <!--Show in conversation list overflow menu to open selection bottom sheet-->
+  <!--Tooltip shown after you have created your first notification profile-->
+  <!--Message shown in top toast to indicate the named profile is on-->
   <!--ConversationListItem-->
   <string name="ConversationListItem_key_exchange_message">Mensaxe de intercambio de chaves</string>
   <!--ConversationListItemAction-->
@@ -355,6 +361,7 @@
   <string name="BackupsPreferenceFragment__learn_more">Saber máis</string>
   <string name="BackupsPreferenceFragment__in_progress">En progreso…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$d por agora…</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Signal require permiso de almacenamento para poder crear copias de seguranza, pero este foi denegado de forma permanente. Vai aos axustes da aplicación, selecciona \"Permisos\" e activa \"Almacenamento\".</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">Uso personalizado: %s</string>
@@ -390,14 +397,6 @@
   <string name="DeviceListItem_today">Hoxe</string>
   <!--DocumentView-->
   <string name="DocumentView_unnamed_file">Ficheiro sen nome</string>
-  <!--DonateMegaphone-->
-  <string name="DonateMegaphone_donate_to_signal">Doar a Signal</string>
-  <string name="DonateMegaphone_Signal_is_powered_by_people_like_you_show_your_support_today">Signal funciona grazas a persoas coma ti. Demostra o teu apoio!</string>
-  <string name="DonateMegaphone_donate">Doar</string>
-  <string name="DonateMegaphone_no_thanks">Non, grazas</string>
-  <!--GroupCallingMegaphone-->
-  <string name="GroupCallingMegaphone__introducing_group_calls">Presentando as Chamadas en Grupo</string>
-  <string name="GroupCallingMegaphone__open_a_new_group_to_start">Abre un Novo Grupo para iniciar unha chamada en grupo cifrada</string>
   <!--DozeReminder-->
   <string name="DozeReminder_optimize_for_missing_play_services">Optimizar cando falte Servizos Play.</string>
   <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">Este dispositivo non é compatible con Servizos Play. Toca para desactivar as optimizacións da batería do sistema que evitan que Signal recupere mensaxes mentres está inactivo.</string>
@@ -514,10 +513,6 @@
   <string name="LeaveGroupDialog_choose_new_admin">Escolle novo admin</string>
   <string name="LeaveGroupDialog_before_you_leave_you_must_choose_at_least_one_new_admin_for_this_group">Antes de saír, debes escoller polo menos un novo administrador para o grupo.</string>
   <string name="LeaveGroupDialog_choose_admin">Escolle admin</string>
-  <!--LinkPreviewsMegaphone-->
-  <string name="LinkPreviewsMegaphone_disable">Desactivar</string>
-  <string name="LinkPreviewsMegaphone_preview_any_link">Vista previa de ligazóns</string>
-  <string name="LinkPreviewsMegaphone_you_can_now_retrieve_link_previews_directly_from_any_website">Podes obter directamente vistas previas das ligazóns a sitios web para as mensaxes que envías.</string>
   <!--LinkPreviewView-->
   <string name="LinkPreviewView_no_link_preview_available">Vista previa non dispoñible</string>
   <string name="LinkPreviewView_this_group_link_is_not_active">A ligazón deste grupo non está activa</string>
@@ -648,7 +643,7 @@
   <string name="ManageProfileFragment_profile_name">Nome do perfil</string>
   <string name="ManageProfileFragment_username">Nome de usuario</string>
   <string name="ManageProfileFragment_about">Acerca de</string>
-  <string name="ManageProfileFragment_write_a_few_words_about_yourself">Escriba unhas palabras de si mesmo</string>
+  <string name="ManageProfileFragment_write_a_few_words_about_yourself">Escribe unhas palabras acerca de ti</string>
   <string name="ManageProfileFragment_your_name">O teu nome</string>
   <string name="ManageProfileFragment_your_username">O seu nome de usuario</string>
   <string name="ManageProfileFragment_failed_to_set_avatar">Fallou a configuración do avatar</string>
@@ -673,6 +668,7 @@
   <string name="CustomNotificationsDialogFragment__enabled">Activado</string>
   <string name="CustomNotificationsDialogFragment__disabled">Desactivado</string>
   <string name="CustomNotificationsDialogFragment__default">Por defecto</string>
+  <string name="CustomNotificationsDialogFragment__unknown">Descoñecido</string>
   <!--ShareableGroupLinkDialogFragment-->
   <string name="ShareableGroupLinkDialogFragment__shareable_group_link">Ligazon pública ao grupo</string>
   <string name="ShareableGroupLinkDialogFragment__manage_and_share">Xestionar &amp; compartir</string>
@@ -737,6 +733,7 @@
   <!--InviteActivity-->
   <string name="InviteActivity_share">Compartir</string>
   <string name="InviteActivity_share_with_contacts">Compartir con contactos</string>
+  <string name="InviteActivity_share_via">Comparte en…</string>
   <string name="InviteActivity_cancel">Cancelar</string>
   <string name="InviteActivity_sending">A enviar…</string>
   <string name="InviteActivity_invitations_sent">Convites enviados!</string>
@@ -745,7 +742,7 @@
     <item quantity="one">Enviar %d SMS de convite?</item>
     <item quantity="other">Enviar %d SMS de convite?</item>
   </plurals>
-  <string name="InviteActivity_lets_switch_to_signal">Imos cambiar a Signal: %1$s</string>
+  <string name="InviteActivity_lets_switch_to_signal">Conversa comigo en Signal: %1$s</string>
   <string name="InviteActivity_no_app_to_share_to">Semella que non hai ningunha que permita compartir.</string>
   <!--LearnMoreTextView-->
   <string name="LearnMoreTextView_learn_more">Saber máis</string>
@@ -783,14 +780,7 @@
   <string name="MediaOverviewActivity_Grid_view_description">Vista de grella</string>
   <string name="MediaOverviewActivity_List_view_description">Vista de lista</string>
   <string name="MediaOverviewActivity_Selected_description">Seleccionado</string>
-  <plurals name="MediaOverviewActivity_d_items_s">
-    <item quantity="one">%1$d elemento %2$s</item>
-    <item quantity="other">%1$d elementos %2$s</item>
-  </plurals>
-  <plurals name="MediaOverviewActivity_d_items">
-    <item quantity="one">%1$d elemento</item>
-    <item quantity="other">%1$d elementos</item>
-  </plurals>
+  <string name="MediaOverviewActivity_select_all">Seleccionar todo</string>
   <string name="MediaOverviewActivity_file">Ficheiro</string>
   <string name="MediaOverviewActivity_audio">Audio</string>
   <string name="MediaOverviewActivity_video">Vídeo</string>
@@ -801,8 +791,6 @@
   <string name="MediaOverviewActivity_sent_by_s_to_s">Enviado por%1$s a %2$s</string>
   <string name="MediaOverviewActivity_sent_by_you_to_s">Enviado por ti a %1$s</string>
   <!--Megaphones-->
-  <string name="Megaphones_introducing_reactions">Introdución ás Reaccións</string>
-  <string name="Megaphones_tap_and_hold_any_message_to_quicky_share_how_you_feel">Toque longo sobre calquera mensaxe para compartir o que che inspira.</string>
   <string name="Megaphones_remind_me_later">Lembrarmo máis tarde</string>
   <string name="Megaphones_verify_your_signal_pin">Verifica o teu PIN Signal</string>
   <string name="Megaphones_well_occasionally_ask_you_to_verify_your_pin">Ocasionalmente pedirémosche que verifiques o PIN para axudarche a memorizalo.</string>
@@ -1016,6 +1004,8 @@
   <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified">Marcaches como sen verificar o teu número de seguranza con %s </string>
   <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device">Marcaches como sen verificar o teu número de seguranza con %s desde outro dispositivo</string>
   <string name="MessageRecord_a_message_from_s_couldnt_be_delivered">Non se puido entregar a mensaxe de %s</string>
+  <!--Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost.-->
+  <!--Update item message shown in the release channel when someone is not a sustainer so we ask them to consider becoming one-->
   <!--Group Calling update messages-->
   <string name="MessageRecord_s_started_a_group_call_s">%1$s iniciou unha chamada en grupo · %2$s</string>
   <string name="MessageRecord_s_is_in_the_group_call_s">%1$s está na chamada en grupo · %2$s</string>
@@ -1169,6 +1159,9 @@
   <string name="RedPhone_number_not_registered">Número non rexistrado!</string>
   <string name="RedPhone_the_number_you_dialed_does_not_support_secure_voice">O número que marcaches non admite chamadas de voz seguras!</string>
   <string name="RedPhone_got_it">Entendo</string>
+  <!--Valentine\'s Day Megaphone-->
+  <!--Title text for the Valentine\'s Day donation megaphone. The placeholder will always be a heart emoji. Needs to be a placeholder for Android reasons.-->
+  <!--Body text for the Valentine\'s Day donation megaphone.-->
   <!--WebRtcCallActivity-->
   <string name="WebRtcCallActivity__tap_here_to_turn_on_your_video">Toca aquí para activar o teu vídeo</string>
   <string name="WebRtcCallActivity__to_call_s_signal_needs_access_to_your_camera">Para chamar a %1$s, Signal necesita acceder á túa cámara</string>
@@ -1242,10 +1235,10 @@
   <string name="RegistrationActivity_play_services_error">Erro de Servizos Play</string>
   <string name="RegistrationActivity_google_play_services_is_updating_or_unavailable">Servizos de Google Play está actualizándose ou non está temporalmente dispoñible. Volve tentalo.</string>
   <string name="RegistrationActivity_terms_and_privacy">Termos e política de privacidade</string>
-  <string name="RegistrationActivity_signal_needs_access_to_your_contacts_and_media_in_order_to_connect_with_friends">Signal necesita acceder aos teus contactos e ficheiros multimedia para contactar coas túas amizades, intercambiar mensaxes e facer chamadas seguras</string>
-  <string name="RegistrationActivity_signal_needs_access_to_your_contacts_in_order_to_connect_with_friends">Signal necesita acceder aos teus contactos para contactar coas túas amizades, intercambiar mensaxes e facer chamadas seguras</string>
   <string name="RegistrationActivity_rate_limited_to_service">Levas demasiados intentos para rexistrar este número. Téntao máis tarde.</string>
   <string name="RegistrationActivity_unable_to_connect_to_service">Non é posible contactar co servizo. Comproba a túa conexión de rede e téntao de novo.</string>
+  <string name="RegistrationActivity_non_standard_number_format">Número con formato non-estándar</string>
+  <string name="RegistrationActivity_the_number_you_entered_appears_to_be_a_non_standard">O número escrito (%1$s) non semella estar nun formato estándar.\n\nSerá máis ben %2$s?</string>
   <plurals name="RegistrationActivity_debug_log_hint">
     <item quantity="one">Estás a %d pasos de enviar un informe de depuración.</item>
     <item quantity="other">Estás a %d pasos de enviar un informe de depuración.</item>
@@ -1288,6 +1281,8 @@
   <string name="SharedContactView_add_to_contacts">Engadir a contactos</string>
   <string name="SharedContactView_invite_to_signal">Convidar a Signal</string>
   <string name="SharedContactView_message">Mensaxe de Signal</string>
+  <!--SignalBottomActionBar-->
+  <string name="SignalBottomActionBar_more">Máis</string>
   <!--SignalPinReminders-->
   <string name="SignalPinReminders_well_remind_you_again_later">Lembrarémoscho máis tarde.</string>
   <string name="SignalPinReminders_well_remind_you_again_tomorrow">Lembrarémoscho mañá.</string>
@@ -1610,7 +1605,10 @@
   <string name="ConversationUpdateItem_call_is_full">A chamada está completa</string>
   <string name="ConversationUpdateItem_invite_friends">Convidar amizades</string>
   <string name="ConversationUpdateItem_enable_call_notifications">Activar notificacións de chamadas</string>
+  <string name="ConversationUpdateItem_update_contact">Actualizar contacto</string>
   <string name="ConversationUpdateItem_view">Ver</string>
+  <!--Update item button text to show to boost a feature-->
+  <!--Update item button text to show to become a sustainer in the release notes channel-->
   <!--audio_view-->
   <string name="audio_view__play_pause_accessibility_description">Reproducir … Deter</string>
   <string name="audio_view__download_accessibility_description">Descargar</string>
@@ -1618,12 +1616,19 @@
   <string name="QuoteView_audio">Audio</string>
   <string name="QuoteView_video">Vídeo</string>
   <string name="QuoteView_photo">Fotografía</string>
+  <string name="QuoteView_gif">GIF</string>
   <string name="QuoteView_view_once_media">Multimedia dunha soa visualización</string>
   <string name="QuoteView_sticker">Adhesivo</string>
   <string name="QuoteView_you">Ti</string>
   <string name="QuoteView_original_missing">Non se atopou a mensaxe orixinal</string>
   <!--conversation_fragment-->
   <string name="conversation_fragment__scroll_to_the_bottom_content_description">Desprazarse ata o final</string>
+  <!--BubbleOptOutTooltip-->
+  <!--Message to inform the user of what Android chat bubbles are-->
+  <!--Button to dismiss the tooltip for opting out of using Android bubbles-->
+  <string name="BubbleOptOutTooltip__not_now">Agora non</string>
+  <!--Button to move to the system settings to control the use of Android bubbles-->
+  <string name="BubbleOptOutTooltip__turn_off">Apagar</string>
   <!--safety_number_change_dialog-->
   <string name="safety_number_change_dialog__safety_number_changes">Cambios no número de seguranza</string>
   <string name="safety_number_change_dialog__accept">Aceptar</string>
@@ -1737,7 +1742,7 @@
   <string name="CreateProfileActivity_custom_mms_group_names_and_photos_will_only_be_visible_to_you">Os nomes de grupos MMS personalizados e fotos só serán visibles para ti.</string>
   <!--EditAboutFragment-->
   <string name="EditAboutFragment_about">Acerca de</string>
-  <string name="EditAboutFragment_write_a_few_words_about_yourself">Escriba unhas palabras sobre si mesmo</string>
+  <string name="EditAboutFragment_write_a_few_words_about_yourself">Escribe unhas palabras acerca de ti…</string>
   <string name="EditAboutFragment_count">%1$d/%2$d</string>
   <string name="EditAboutFragment_speak_freely">Fale libremente</string>
   <string name="EditAboutFragment_encrypted">Cifrado</string>
@@ -1760,21 +1765,18 @@
   <!--recipients_panel-->
   <string name="recipients_panel__to"><small>Inserir un nome ou número</small></string>
   <!--verify_display_fragment-->
-  <string name="verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[Se queres comprobar a seguranza da túa cifraxe con %s, compara o número superior co número do seu dispositivo. Outra opción é escanear o código do seu teléfono ou pedirlles que escaneen o teu código. <a href="https://signal.org/redirect/safety-numbers">Saber máis.</a>]]></string>
   <string name="verify_display_fragment__tap_to_scan">Toca para escanear</string>
   <string name="verify_display_fragment__loading">Cargando…</string>
-  <string name="verify_display_fragment__verified">Verificado</string>
+  <string name="verify_display_fragment__mark_as_verified">Marcar como verificado</string>
   <!--verify_identity-->
   <string name="verify_identity__share_safety_number">Compartir número de seguranza</string>
+  <!--verity_scan_fragment-->
+  <string name="verify_scan_fragment__scan_the_qr_code_on_your_contact">Escanear o código QR no dispositivo do teu contacto.</string>
   <!--webrtc_answer_decline_button-->
   <string name="webrtc_answer_decline_button__swipe_up_to_answer">Pasa o dedo cara a arriba para responder</string>
   <string name="webrtc_answer_decline_button__swipe_down_to_reject">Pasa o dedo cara a abaixo para rexeitar</string>
   <!--message_details_header-->
   <string name="message_details_header__issues_need_your_attention">Algúns problemas requiren a túa atención.</string>
-  <string name="message_details_header__sent">Enviada</string>
-  <string name="message_details_header__received">Recibida</string>
-  <string name="message_details_header__disappears">Desaparece</string>
-  <string name="message_details_header__via">Vía</string>
   <!--message_details_recipient_header-->
   <string name="message_details_recipient_header__pending_send">Pendente</string>
   <string name="message_details_recipient_header__sent_to">Enviada a</string>
@@ -1923,6 +1925,8 @@
   <string name="preferences__request_a_delivery_report_for_each_sms_message_you_send">Solicita un informe de entrega para cada SMS que envías</string>
   <string name="preferences__data_and_storage">Datos e almacenamento</string>
   <string name="preferences__storage">Almacenamento</string>
+  <string name="preferences__payments">Pagamentos</string>
+  <string name="preferences__payments_beta">Pagamentos (Beta)</string>
   <string name="preferences__conversation_length_limit">Lonxitude máxima das conversas</string>
   <string name="preferences__keep_messages">Manter as mensaxes</string>
   <string name="preferences__clear_message_history">Baleirar historial de mensaxes</string>
@@ -1951,6 +1955,8 @@
   <string name="preferences__if_read_receipts_are_disabled_you_wont_be_able_to_see_read_receipts">Se desactivas as confirmacións de lectura, non poderás ver as confirmacións dos demais.</string>
   <string name="preferences__typing_indicators">Indicador de escritura</string>
   <string name="preferences__if_typing_indicators_are_disabled_you_wont_be_able_to_see_typing_indicators">Se os indicadores de escritura están desactivados non verás cando outras persoas está a escribir.</string>
+  <string name="preferences__request_keyboard_to_disable">Pedirlle ao teclado que desactive a aprendizaxe personalizada.</string>
+  <string name="preferences__this_setting_is_not_a_guarantee">Este axuste non é garantía ningunha e o teclado podería ignoralo.</string>
   <string name="preferences_app_protection__blocked_users">Usuarios bloqueados</string>
   <string name="preferences_chats__when_using_mobile_data">Usando datos móbiles</string>
   <string name="preferences_chats__when_using_wifi">Usando conexión wifi</string>
@@ -2033,14 +2039,22 @@
   <string name="PaymentsAllActivityFragment__all">Todo</string>
   <string name="PaymentsAllActivityFragment__sent">Enviada</string>
   <string name="PaymentsAllActivityFragment__received">Recibida</string>
+  <string name="PaymentsHomeFragment__introducing_payments">Presentámosche pagamentos (Beta)</string>
+  <string name="PaymentsHomeFragment__activate_payments">Activar Pagamentos</string>
+  <string name="PaymentsHomeFragment__activating_payments">Activando pagamentos…</string>
+  <string name="PaymentsHomeFragment__restore_payments_account">Restablecer conta de pagamentos</string>
   <string name="PaymentsHomeFragment__see_all">Ver todo</string>
   <string name="PaymentsHomeFragment__send">Enviar</string>
+  <string name="PaymentsHomeFragment__deactivate_payments">Desactivar pagamentos</string>
   <string name="PaymentsHomeFragment__help">Axuda</string>
+  <string name="PaymentsHomeFragment__payments_is_not_available_in_your_region">O servizo de pagamentos non está dispoñible na túa rexión.</string>
+  <string name="PaymentsHomeFragment__could_not_enable_payments">Non se activou pagamentos. Inténtao máis tarde.</string>
   <string name="PaymentsHomeFragment__continue">Continuar</string>
   <string name="PaymentsHomeFragment__details">Detalles</string>
   <!--PaymentsAddMoneyFragment-->
   <string name="PaymentsAddMoneyFragment__copy">Copiar</string>
   <string name="PaymentsAddMoneyFragment__copied_to_clipboard">Copiado ao portapapeis</string>
+  <string name="PaymentsAddMoneyFragment__to_add_funds">Para engadir fondos envía MobileCoin ao enderezo da túa carteira. Comeza unha transacción desde a túa conta nun intercambio que soporte MobileCoin, despois escanea o código QR ou copia o endereo da túa carteira.</string>
   <!--PaymentsDetailsFragment-->
   <string name="PaymentsDetailsFragment__details">Detalles</string>
   <string name="PaymentsDetailsFragment__status">Estado</string>
@@ -2071,18 +2085,29 @@
   <string name="conversation_callable_secure__menu_call">Chamada de Signal</string>
   <string name="conversation_callable_secure__menu_video">Videochamada Signal</string>
   <!--conversation_context-->
-  <string name="conversation_context__menu_message_details">Detalles da mensaxe</string>
-  <string name="conversation_context__menu_copy_text">Copiar texto</string>
-  <string name="conversation_context__menu_delete_message">Borrar mensaxe</string>
-  <string name="conversation_context__menu_forward_message">Reenviar mensaxe</string>
-  <string name="conversation_context__menu_resend_message">Reenviar mensaxe</string>
-  <string name="conversation_context__menu_reply_to_message">Responder a mensaxe</string>
-  <!--conversation_context_reacction-->
-  <string name="conversation_context__reaction_multi_select">Selección múltiple</string>
+  <!--Heading which shows how many messages are currently selected-->
   <!--conversation_context_image-->
-  <string name="conversation_context_image__save_attachment">Gardar anexo</string>
+  <!--Button to save a message attachment (image, file etc.)-->
+  <string name="conversation_context_image__save_attachment">Gardar</string>
   <!--conversation_expiring_off-->
   <string name="conversation_expiring_off__disappearing_messages">Desaparición das mensaxes</string>
+  <!--conversation_selection-->
+  <!--Button to view detailed information for a message-->
+  <string name="conversation_selection__menu_message_details">Información</string>
+  <!--Button to copy a message\'s text to the clipboard-->
+  <string name="conversation_selection__menu_copy">Copiar</string>
+  <!--Button to delete a message-->
+  <string name="conversation_selection__menu_delete">Eliminar</string>
+  <!--Button to forward a message to another person or group chat-->
+  <string name="conversation_selection__menu_forward">Reenviar</string>
+  <!--Button to reply to a message-->
+  <string name="conversation_selection__menu_reply">Responder</string>
+  <!--Button to save a message attachment (image, file etc.)-->
+  <string name="conversation_selection__menu_save">Gardar</string>
+  <!--Button to retry sending a message-->
+  <string name="conversation_selection__menu_resend_message">Reenviar</string>
+  <!--Button to select a message and enter selection mode-->
+  <string name="conversation_selection__menu_multi_select">Seleccionar</string>
   <!--conversation_expiring_on-->
   <!--conversation_insecure-->
   <string name="conversation_insecure__invite">Convidar</string>
@@ -2161,7 +2186,6 @@
   <string name="Insights__title">Estatísticas</string>
   <string name="InsightsDashboardFragment__title">Estatísticas</string>
   <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">O Protocolo Signal protexeu de xeito automático o %1$d%% das túas mensaxes enviadas nos últimos %2$d días. As conversas entre usuarios Signal están sempre cifradas de extremo-a-extremo.</string>
-  <string name="InsightsDashboardFragment__boost_your_signal">Pular polo Signal</string>
   <string name="InsightsDashboardFragment__not_enough_data">Non hai suficientes datos</string>
   <string name="InsightsDashboardFragment__your_insights_percentage_is_calculated_based_on">O teu porcentaxe Insights calcúlase en función das mensaxes enviadas nos últimos %1$d días e que non desapareceron ou foron eliminados.</string>
   <string name="InsightsDashboardFragment__start_a_conversation">Iniciar unha conversa</string>
@@ -2266,16 +2290,6 @@
   <string name="KbsMegaphone__create_a_pin">Crea un PIN</string>
   <string name="KbsMegaphone__pins_keep_information_thats_stored_with_signal_encrytped">Os números PIN cifran a información que gardas con Signal.</string>
   <string name="KbsMegaphone__create_pin">Crear PIN</string>
-  <!--Research Megaphone-->
-  <string name="ResearchMegaphone_tell_signal_what_you_think">Di que che parece Signal</string>
-  <string name="ResearchMegaphone_to_make_signal_the_best_messaging_app_on_the_planet">Para facer de Signal a mellor aplicación de mensaxaría encántanos escoitar as túas suxestións.</string>
-  <string name="ResearchMegaphone_learn_more">Saber máis</string>
-  <string name="ResearchMegaphone_dismiss">Rexeitar</string>
-  <string name="ResearchMegaphoneDialog_signal_research">Investigación en Signal</string>
-  <string name="ResearchMegaphoneDialog_we_believe_in_privacy"><![CDATA[<p><b>Cremos na privacidade.</b></p><p>Signal non rastrexa nin recompila os teus datos. Para mellorar Signal, confiamos nas suxestións dos nosos usuarios; <b>encántanos escoitarvos.</b></p><p>Preparamos unha enquisa para entender como usades Signal que tampouco recolle ningún dato identificativo. Se tes interese en compartir ideas ou suxestións adicionais, tes a opción de facilitarnos información de contacto.</p><p>Se tes uns minutiños e ideas que achegar, gustaríanos moito escoitalas.</p>]]></string>
-  <string name="ResearchMegaphoneDialog_take_the_survey">Fai a enquisa</string>
-  <string name="ResearchMegaphoneDialog_no_thanks">Non, grazas</string>
-  <string name="ResearchMegaphoneDialog_the_survey_is_hosted_by_alchemer_at_the_secure_domain">A enquisa está aloxada en Alchemer, no dominio seguro surveys.signalusers.org</string>
   <!--transport_selection_list_item-->
   <string name="transport_selection_list_item__transport_icon">Icona do tráfico</string>
   <string name="ConversationListFragment_loading">Cargando…</string>
@@ -2325,7 +2339,6 @@
   <string name="BackupDialog_verify">Comprobar</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">Inseriches satisfactoriamente a túa frase de acceso</string>
   <string name="BackupDialog_passphrase_was_not_correct">Frase de acceso incorrecta</string>
-  <string name="LocalBackupJob_creating_backup">Creando copia de seguranza…</string>
   <string name="LocalBackupJobApi29_backup_failed">Erro na copia de seguranza</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">O directorio da túa copia de seguranza foi eliminado ou movido.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">O ficheiro da túa copia de seguranza é demasiado grande para almacenalo neste volume.</string>
@@ -2336,6 +2349,7 @@
   <string name="RegistrationActivity_call_me_instead_available_in">Chámame mellor \n (Dispoñible en%1$02d:%2$02d)</string>
   <string name="RegistrationActivity_contact_signal_support">Contacta co Centro de Axuda de Signal</string>
   <string name="RegistrationActivity_code_support_subject">Rexistrarse en Signal - Código de verificación para Android</string>
+  <string name="RegistrationActivity_incorrect_code">Código incorrecto</string>
   <string name="BackupUtil_never">Nunca</string>
   <string name="BackupUtil_unknown">Descoñecido</string>
   <string name="preferences_app_protection__see_my_phone_number">Ver o meu número de teléfono</string>
@@ -2445,6 +2459,7 @@
   <string name="DeviceTransfer__transferring_data">Transferindo datos</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">Mantén ambos dispositivos preto un do outro. Non apagues os dispositivos e mantén Signal aberta. As transferencias están cifradas de extremo-a-extremo.</string>
   <string name="DeviceTransfer__d_messages_so_far">%1$d das mensaxes ata agora…</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">Cancelar</string>
   <string name="DeviceTransfer__try_again">Volver tentar</string>
   <string name="DeviceTransfer__stop_transfer_question">Deter transferencia?</string>
@@ -2490,6 +2505,7 @@
   <string name="RecipientBottomSheet_block">Bloquear</string>
   <string name="RecipientBottomSheet_unblock">Desbloquear</string>
   <string name="RecipientBottomSheet_add_to_contacts">Engadir a contactos</string>
+  <!--Error message that displays when a user tries to tap to view system contact details but has no app that supports it-->
   <string name="RecipientBottomSheet_add_to_a_group">Engadir ao grupo</string>
   <string name="RecipientBottomSheet_add_to_another_group">Engadir a outro grupo</string>
   <string name="RecipientBottomSheet_view_safety_number">Ver número de seguranza</string>
@@ -2527,8 +2543,8 @@
   <!--VoiceNotePlaybackPreparer-->
   <string name="VoiceNotePlaybackPreparer__failed_to_play_voice_message">Fallou a reprodución da mensaxe</string>
   <!--VoiceNoteMediaDescriptionCompatFactory-->
-  <string name="VoiceNoteMediaDescriptionCompatFactory__voice_message">Mensaxe de voz · %1$s</string>
-  <string name="VoiceNoteMediaDescriptionCompatFactory__s_to_s">%1$s a %2$s</string>
+  <string name="VoiceNoteMediaItemFactory__voice_message">Mensaxe de voz · %1$s</string>
+  <string name="VoiceNoteMediaItemFactory__s_to_s">%1$s a %2$s</string>
   <!--StorageUtil-->
   <string name="StorageUtil__s_s">%1$s/%2$s</string>
   <string name="BlockedUsersActivity__s_has_been_blocked">\"%1$s\" foi bloqueado.</string>
@@ -2587,6 +2603,12 @@
   <string name="DeleteAccountFragment__failed_to_delete_account">Fallou a eliminación da conta. Tes conexión á rede?</string>
   <string name="DeleteAccountFragment__failed_to_delete_local_data">Fallou a eliminación dos datos locais. Podes eliminalos manualmente nos axustes de aplicacións do dispositivo.</string>
   <string name="DeleteAccountFragment__launch_app_settings">Abrir Axustes da App</string>
+  <!--Title of progress dialog shown when a user deletes their account and the process is leaving all groups-->
+  <!--Title of progress dialog shown when a user deletes their account and the process has left all groups-->
+  <!--Message of progress dialog shown when a user deletes their account and the process is leaving groups-->
+  <!--Message of progress dialog shown when a user deletes their account and the process has left all groups-->
+  <!--Title of error dialog shown when a network error occurs during account deletion-->
+  <!--Message of error dialog shown when a network error occurs during account deletion-->
   <!--DeleteAccountCountryPickerFragment-->
   <string name="DeleteAccountCountryPickerFragment__search_countries">Buscar paises</string>
   <!--CreateGroupActivity-->
@@ -2609,12 +2631,18 @@
   <string name="ChatWallpaperActivity__chat_wallpaper">Fondo de pantalla do chat</string>
   <!--ChatWallpaperFragment-->
   <string name="ChatWallpaperFragment__chat_color">Cor do chat</string>
+  <string name="ChatWallpaperFragment__reset_chat_colors">Restablecer cores do chat</string>
   <string name="ChatWallpaperFragment__set_wallpaper">Estabelecer o fondo de pantalla</string>
+  <string name="ChatWallpaperFragment__dark_mode_dims_wallpaper">O modo escuro atenúa o fondo</string>
   <string name="ChatWallpaperFragment__contact_name">Nome de contacto</string>
   <string name="ChatWallpaperFragment__reset">Restablecer</string>
   <string name="ChatWallpaperFragment__clear">Despexar</string>
   <string name="ChatWallpaperFragment__wallpaper_preview_description">Visualización do fondo de pantalla</string>
+  <string name="ChatWallpaperFragment__reset_default_wallpaper">Fondo de pantalla por defecto</string>
   <string name="ChatWallpaperFragment__reset_all_wallpapers">Reestabelecer todos os fondos de pantalla</string>
+  <string name="ChatWallpaperFragment__reset_wallpapers">Restablecer fondos de pantalla</string>
+  <string name="ChatWallpaperFragment__reset_wallpaper">Restablecer fondo de pantalla</string>
+  <string name="ChatWallpaperFragment__reset_wallpaper_question">Restablecer fondo?</string>
   <!--ChatWallpaperSelectionFragment-->
   <string name="ChatWallpaperSelectionFragment__choose_from_photos">Escoller de entre as fotos</string>
   <string name="ChatWallpaperSelectionFragment__presets">Preestabelecidos</string>
@@ -2658,21 +2686,64 @@
   <string name="GroupsInCommonMessageRequest__okay">De acordo</string>
   <!--GroupDescriptionDialog-->
   <!--QualitySelectorBottomSheetDialog-->
+  <string name="QualitySelectorBottomSheetDialog__standard">Estándar</string>
   <string name="QualitySelectorBottomSheetDialog__high">Alta</string>
   <!--AppSettingsFragment-->
+  <string name="AppSettingsFragment__invite_your_friends">Convida ás túas amizades</string>
   <!--AccountSettingsFragment-->
+  <string name="AccountSettingsFragment__account">Conta</string>
+  <!--ChangeNumberFragment-->
+  <string name="ChangeNumberFragment__continue">Continuar</string>
+  <!--Message shown on dialog after your number has been changed successfully.-->
+  <!--Confirmation button to dismiss number changed dialog-->
+  <string name="ChangeNumber__okay">De acordo</string>
+  <!--ChangeNumberEnterPhoneNumberFragment-->
+  <string name="ChangeNumberEnterPhoneNumberFragment__change_number">Cambiar número</string>
+  <string name="ChangeNumberEnterPhoneNumberFragment__the_phone_number_you_entered_doesnt_match_your_accounts">O número de teléfono escrito non concorda co da túa conta.</string>
+  <!--ChangeNumberVerifyFragment-->
+  <string name="ChangeNumberVerifyFragment__change_number">Cambiar número</string>
+  <!--ChangeNumberConfirmFragment-->
+  <string name="ChangeNumberConfirmFragment__you_are_about_to_change_your_phone_number_from_s_to_s">Vas cambiar o teu número de teléfono de %1$s a %2$s.\n\nAntes de seguir, comproba que o número inferior é correcto.</string>
+  <string name="ChangeNumberConfirmFragment__edit_number">Editar número</string>
+  <!--ChangeNumberRegistrationLockFragment-->
+  <!--ChangeNumberPinDiffersFragment-->
+  <string name="ChangeNumberPinDiffersFragment__update_pin">Actualizar PIN</string>
+  <!--ChangeNumberLockActivity-->
+  <!--Info message shown to user if something crashed the app during the change number attempt and we were unable to confirm the change so we force them into this screen to check before letting them use the app-->
+  <!--Dialog title shown if we were able to confirm your change number status (meaning we now know what the server thinks our number is) after a crash during the regular flow-->
+  <!--Dialog message shown if we were able to confirm your change number status (meaning we now know what the server thinks our number is) after a crash during the regular flow-->
+  <!--Dialog title shown if we were not able to confirm your phone number with the server and thus cannot let leave the change flow yet after a crash during the regular flow-->
+  <!--Dialog message shown when we can\'t verify the phone number on the server, only shown if there was a network error communicating with the server after a crash during the regular flow-->
+  <!--Dialog button to retry confirming the number on the server-->
+  <string name="ChangeNumberLockActivity__retry">Tentar de novo</string>
+  <!--Dialog button shown to leave the app when in the unconfirmed change status after a crash in the regular flow-->
+  <string name="ChangeNumberLockActivity__leave">Abandonar</string>
+  <string name="ChangeNumberLockActivity__submit_debug_log">Enviar rexistro de depuración</string>
   <!--ChatsSettingsFragment-->
+  <string name="ChatsSettingsFragment__keyboard">Teclado</string>
   <string name="ChatsSettingsFragment__enter_key_sends">Tecla Intro para enviar</string>
   <!--SmsSettingsFragment-->
   <string name="SmsSettingsFragment__use_as_default_sms_app">Aplicación predefinida das SMS</string>
   <!--NotificationsSettingsFragment-->
   <string name="NotificationsSettingsFragment__messages">Mensaxes</string>
   <string name="NotificationsSettingsFragment__calls">Chamadas</string>
+  <!--Notification preference header-->
+  <!--Notification preference option header-->
+  <!--Notification preference summary text-->
+  <!--NotificationProfilesFragment-->
+  <!--Title for notification profiles screen that shows all existing profiles-->
+  <!--Button text to create a notification profile-->
   <!--PrivacySettingsFragment-->
   <string name="PrivacySettingsFragment__blocked">Bloqueado</string>
+  <string name="PrivacySettingsFragment__messaging">Mensaxería</string>
   <string name="PrivacySettingsFragment__disappearing_messages">Desaparición das mensaxes</string>
+  <string name="PrivacySettingsFragment__app_security">Seguranza da app</string>
   <string name="PrivacySettingsFragment__block_screenshots_in_the_recents_list_and_inside_the_app">Bloquea as capturas na listaxe de recentes e no interior da aplicación.</string>
+  <string name="PrivacySettingsFragment__signal_message_and_calls">Mensaxes e chamadas Signal, redirección de chamadas e remitente selado</string>
+  <string name="PrivacySettingsFragment__default_timer_for_new_changes">Establecer caducidade para os novos chats</string>
+  <string name="PrivacySettingsFragment__set_a_default_disappearing_message_timer_for_all_new_chats_started_by_you">Establece o período após o cal desaparecerán as mensaxes en novos chats que ti inicies.</string>
   <!--AdvancedPrivacySettingsFragment-->
+  <string name="AdvancedPrivacySettingsFragment__show_status_icon">Mostrar icona de estado</string>
   <!--ExpireTimerSettingsFragment-->
   <string name="ExpireTimerSettingsFragment__off">Off</string>
   <string name="ExpireTimerSettingsFragment__1_week">1 semana</string>
@@ -2689,6 +2760,11 @@
   <string name="HelpSettingsFragment__debug_log">Rexistro de depuración</string>
   <string name="HelpSettingsFragment__terms_amp_privacy_policy">Termos e política de privacidade</string>
   <!--DataAndStorageSettingsFragment-->
+  <string name="DataAndStorageSettingsFragment__media_quality">Calidade multimedia</string>
+  <string name="DataAndStorageSettingsFragment__sent_media_quality">Calidade dos envíos</string>
+  <string name="DataAndStorageSettingsFragment__sending_high_quality_media_will_use_more_data">Enviando multimedia con alta calidade usarás máis datos</string>
+  <string name="DataAndStorageSettingsFragment__high">Alta</string>
+  <string name="DataAndStorageSettingsFragment__standard">Estándar</string>
   <string name="DataAndStorageSettingsFragment__calls">Chamadas</string>
   <!--ChatColorSelectionFragment-->
   <string name="ChatColorSelectionFragment__chat_color">Cor do chat</string>
@@ -2715,6 +2791,8 @@
   <string name="AddAProfilePhotoMegaphone__choose_a_look_and_color">Elixe o aspecto e cor ou personaliza as túas iniciais.</string>
   <string name="AddAProfilePhotoMegaphone__not_now">Agora non</string>
   <string name="AddAProfilePhotoMegaphone__add_photo">Engadir foto</string>
+  <!--BecomeASustainerMegaphone-->
+  <string name="BecomeASustainerMegaphone__no_thanks">Non, grazas</string>
   <!--KeyboardPagerFragment-->
   <string name="KeyboardPagerFragment_emoji">Emoji</string>
   <string name="KeyboardPagerFragment_open_emoji_search">Abrir busca de emojis</string>
@@ -2773,12 +2851,15 @@
   <string name="SoundsAndNotificationsSettingsFragment__custom_notifications">Personalizar notificacións</string>
   <!--StickerKeyboard-->
   <!--PlaybackSpeedToggleTextView-->
+  <string name="PlaybackSpeedToggleTextView__p5x">.5x</string>
+  <string name="PlaybackSpeedToggleTextView__1x">1x</string>
+  <string name="PlaybackSpeedToggleTextView__1p5x">1.5x</string>
+  <string name="PlaybackSpeedToggleTextView__2x">2x</string>
   <!--PaymentRecipientSelectionFragment-->
   <!--NewConversationActivity-->
   <string name="NewConversationActivity__new_message">Nova mensaxe</string>
   <!--ContactFilterView-->
   <!--VoiceNotePlayerView-->
-  <string name="VoiceNotePlayerView__s_dot_s">%1$s · %2$s</string>
   <!--AvatarPickerFragment-->
   <string name="AvatarPickerFragment__camera">Cámara</string>
   <string name="AvatarPickerFragment__photo">Fotografía</string>
@@ -2792,5 +2873,115 @@
   <!--ContactSelectionListItem-->
   <string name="ContactSelectionListItem__sms">SMS</string>
   <!--DSLSettingsToolbar-->
+  <!--Media V2-->
+  <string name="ImageEditorHud__cancel">Cancelar</string>
+  <string name="ImageEditorHud__undo">Desfacer</string>
+  <string name="ImageEditorHud__delete">Eliminar</string>
+  <string name="MediaCountIndicatorButton__send">Enviar</string>
+  <string name="MediaReviewSelectedItem__tap_to_select">Toca para seleccionar</string>
+  <string name="MediaReviewImagePageFragment__discard">Descartar</string>
+  <string name="SelectFeaturedBadgeFragment__preview">Visualización</string>
+  <string name="SubscribeFragment__not_now">Agora non</string>
+  <string name="SubscribeFragment__confirm">Confirmar</string>
+  <string name="SubscribeFragment__update">Actualizar</string>
+  <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__done">Feito</string>
+  <!--Displayed on "My Support" screen when user badge failed to be added to their account-->
+  <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">Agora non</string>
+  <string name="Subscription__contact_support">Contactar coa Axuda</string>
+  <!--Displayed in notification when user payment fails to process on Stripe-->
+  <!--Displayed on "My Support" screen when user subscription payment method failed.-->
+  <string name="NetworkFailure__retry">Tentar de novo</string>
+  <!--Title of create notification profile screen-->
+  <!--Hint text for create/edit notification profile name-->
+  <string name="EditNotificationProfileFragment__profile_name">Nome do perfil</string>
+  <!--Name has a max length, this shows how many characters are used out of the max-->
+  <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
+  <!--Call to action button to continue to the next step-->
+  <string name="EditNotificationProfileFragment__next">Seguinte</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">Crear</string>
+  <!--Call to action button once the profile name is edited-->
+  <string name="EditNotificationProfileFragment__save">Gardar</string>
+  <!--Title of edit notification profile screen-->
+  <!--Error message shown when attempting to create or edit a profile name to an existing profile name-->
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <string name="EditNotificationProfileFragment__work">Traballo</string>
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <!--Error message shown when attempting to next/save without a profile name-->
+  <!--Title for add recipients to notification profile screen in create flow-->
+  <!--Description of what the user should be doing with this screen-->
+  <!--Button text that launches the contact picker to select from-->
+  <!--Call to action button on contact picker for adding to profile-->
+  <string name="SelectRecipientsFragment__add">Engadir</string>
+  <!--Notification profiles home fragment, shown when no profiles have been created yet-->
+  <!--Header shown above list of all notification profiles-->
+  <!--Button that starts the create new notification profile flow-->
+  <!--Profile active status, indicating the current profile is on for an unknown amount of time-->
+  <string name="NotificationProfilesFragment__on">On</string>
+  <!--Button use to permanently delete a notification profile-->
+  <!--Snakbar message shown when removing a recipient from a profile-->
+  <!--Snackbar button text that will undo the recipient remove-->
+  <string name="NotificationProfileDetails__undo">Desfacer</string>
+  <!--Dialog message shown to confirm deleting a profile-->
+  <!--Dialog button to delete profile-->
+  <string name="NotificationProfileDetails__delete">Eliminar</string>
+  <!--Title/accessibility text for edit icon to edit profile emoji/name-->
+  <!--Schedule description if all days are selected-->
+  <!--Profile status on if it is the active profile-->
+  <string name="NotificationProfileDetails__on">On</string>
+  <!--Profile status on if it is not the active profile-->
+  <string name="NotificationProfileDetails__off">Off</string>
+  <!--Description of hours for schedule (start to end) times-->
+  <string name="NotificationProfileDetails__s_to_s">%1$s a %2$s</string>
+  <!--Section header for exceptions to the notification profile-->
+  <!--Profile exception to allow all calls through the profile restrictions-->
+  <!--Profile exception to allow all @mentions through the profile restrictions-->
+  <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">Ver todo</string>
+  <!--Title for add schedule to profile in create flow-->
+  <!--Descriptor text indicating what the user can do with this screen-->
+  <!--Text shown next to toggle switch to enable/disable schedule-->
+  <!--Label for showing the start time for the schedule-->
+  <!--Label for showing the end time for the schedule-->
+  <string name="EditNotificationProfileSchedule__end">Finalizar</string>
+  <!--First letter of Sunday-->
+  <!--First letter of Monday-->
+  <!--First letter of Tuesday-->
+  <!--First letter of Wednesday-->
+  <!--First letter of Thursday-->
+  <!--First letter of Friday-->
+  <!--First letter of Saturday-->
+  <!--Title of select time dialog shown when setting start time for schedule-->
+  <!--Title of select time dialog shown when setting end time for schedule-->
+  <!--If in edit mode, call to action button text show to save schedule to profile-->
+  <string name="EditNotificationProfileSchedule__save">Gardar</string>
+  <!--If in create mode, call to action button text to show to skip enabling a schedule-->
+  <string name="EditNotificationProfileSchedule__skip">Omitir</string>
+  <!--If in create mode, call to action button text to show to use the enabled schedule and move to the next screen-->
+  <string name="EditNotificationProfileSchedule__next">Seguinte</string>
+  <!--Error message shown if trying to save/use a schedule with no days selected-->
+  <!--Title for final screen shown after completing a profile creation-->
+  <!--Call to action button to press to close the created screen and move to the profile details screen-->
+  <string name="NotificationProfileCreated__done">Feito</string>
+  <!--Descriptor text shown to indicate how to manually turn a profile on/off-->
+  <!--Descriptor text shown to indicate you can add a schedule later since you did not add one during create flow-->
+  <!--Descriptor text shown to indicate your profile will follow the schedule set during create flow-->
+  <!--Button text shown in profile selection bottom sheet to create a new profile-->
+  <!--Manual enable option to manually enable a profile for 1 hour-->
+  <!--Manual enable option to manually enable a profile until a set time (currently 6pm or 8am depending on what is next)-->
+  <string name="NotificationProfileSelection__until_s">Ata %1$s</string>
+  <!--Option to view profile details-->
+  <!--Descriptor text indicating how long a profile will be on when there is a time component associated with it-->
+  <!--Title for notification profile megaphone-->
+  <!--Description for notification profile megaphone-->
+  <!--Call to action button to create a profile from megaphone-->
+  <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">Agora non</string>
+  <!--Displayed in a toast when we fail to open the ringtone picker-->
+  <!--Description shown for the Signal Release Notes channel-->
   <!--EOF-->
 </resources>

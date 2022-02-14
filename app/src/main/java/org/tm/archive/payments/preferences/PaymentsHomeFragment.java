@@ -36,6 +36,7 @@ import org.tm.archive.payments.MoneyView;
 import org.tm.archive.payments.preferences.model.PaymentItem;
 import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.SpanUtil;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 public class PaymentsHomeFragment extends LoggingFragment {
 
@@ -70,14 +71,14 @@ public class PaymentsHomeFragment extends LoggingFragment {
 
     addMoney.setOnClickListener(v -> {
       if (SignalStore.paymentsValues().getPaymentsAvailability().isSendAllowed()) {
-        Navigation.findNavController(v).navigate(PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentsAddMoney());
+        SafeNavigation.safeNavigate(Navigation.findNavController(v), PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentsAddMoney());
       } else {
         showPaymentsDisabledDialog();
       }
     });
     sendMoney.setOnClickListener(v -> {
       if (SignalStore.paymentsValues().getPaymentsAvailability().isSendAllowed()) {
-        Navigation.findNavController(v).navigate(PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentRecipientSelectionFragment());
+        SafeNavigation.safeNavigate(Navigation.findNavController(v), PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentRecipientSelectionFragment());
       } else {
         showPaymentsDisabledDialog();
       }
@@ -168,7 +169,7 @@ public class PaymentsHomeFragment extends LoggingFragment {
         case DEACTIVATE_WITH_BALANCE:
           builder.setPositiveButton(getString(R.string.PaymentsHomeFragment__continue), (dialog, which) -> {
             dialog.dismiss();
-            NavHostFragment.findNavController(this).navigate(R.id.deactivateWallet);
+            SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.deactivateWallet);
           });
           break;
         case ACTIVATED:
@@ -210,16 +211,16 @@ public class PaymentsHomeFragment extends LoggingFragment {
 
   private boolean onMenuItemSelected(@NonNull MenuItem item) {
     if (item.getItemId() == R.id.payments_home_fragment_menu_transfer_to_exchange) {
-      NavHostFragment.findNavController(this).navigate(R.id.action_paymentsHome_to_paymentsTransfer);
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_paymentsHome_to_paymentsTransfer);
       return true;
     } else if (item.getItemId() == R.id.payments_home_fragment_menu_set_currency) {
-      NavHostFragment.findNavController(this).navigate(R.id.action_paymentsHome_to_setCurrency);
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_paymentsHome_to_setCurrency);
       return true;
     } else if (item.getItemId() == R.id.payments_home_fragment_menu_deactivate_wallet) {
       viewModel.deactivatePayments();
       return true;
     } else if (item.getItemId() == R.id.payments_home_fragment_menu_view_recovery_phrase) {
-      NavHostFragment.findNavController(this).navigate(R.id.action_paymentsHome_to_paymentsBackup);
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_paymentsHome_to_paymentsBackup);
       return true;
     } else if (item.getItemId() == R.id.payments_home_fragment_menu_help) {
       startActivity(AppSettingsActivity.help(requireContext(), HelpFragment.PAYMENT_INDEX));
@@ -254,20 +255,20 @@ public class PaymentsHomeFragment extends LoggingFragment {
 
     @Override
     public void onRestorePaymentsAccount() {
-      NavHostFragment.findNavController(PaymentsHomeFragment.this)
-                     .navigate(PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentsBackup().setIsRestore(true));
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(PaymentsHomeFragment.this),
+                                  PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentsBackup().setIsRestore(true));
     }
 
     @Override
     public void onSeeAll(@NonNull PaymentType paymentType) {
-      NavHostFragment.findNavController(PaymentsHomeFragment.this)
-                     .navigate(PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentsAllActivity(paymentType));
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(PaymentsHomeFragment.this),
+                                  PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentsAllActivity(paymentType));
     }
 
     @Override
     public void onPaymentItem(@NonNull PaymentItem model) {
-      NavHostFragment.findNavController(PaymentsHomeFragment.this)
-                     .navigate(PaymentPreferencesDirections.actionDirectlyToPaymentDetails(model.getPaymentDetailsParcelable()));
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(PaymentsHomeFragment.this),
+                                  PaymentPreferencesDirections.actionDirectlyToPaymentDetails(model.getPaymentDetailsParcelable()));
     }
 
     @Override
@@ -282,7 +283,7 @@ public class PaymentsHomeFragment extends LoggingFragment {
 
     @Override
     public void onViewRecoveryPhrase() {
-      NavHostFragment.findNavController(PaymentsHomeFragment.this).navigate(R.id.action_paymentsHome_to_paymentsBackup);
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(PaymentsHomeFragment.this), R.id.action_paymentsHome_to_paymentsBackup);
     }
   }
 

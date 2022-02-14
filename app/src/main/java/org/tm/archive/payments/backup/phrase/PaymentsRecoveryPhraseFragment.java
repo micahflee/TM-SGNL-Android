@@ -27,6 +27,7 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.payments.Mnemonic;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.Util;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -125,7 +126,7 @@ public class PaymentsRecoveryPhraseFragment extends Fragment {
                                @NonNull PaymentsRecoveryPhraseFragmentArgs args)
   {
     message.setText(getString(R.string.PaymentsRecoveryPhraseFragment__write_down_the_following_d_words, words.size()));
-    next.setOnClickListener(v -> Navigation.findNavController(v).navigate(PaymentsRecoveryPhraseFragmentDirections.actionPaymentsRecoveryPhraseToPaymentsRecoveryPhraseConfirm(args.getFinishOnConfirm())));
+    next.setOnClickListener(v -> SafeNavigation.safeNavigate(Navigation.findNavController(v), PaymentsRecoveryPhraseFragmentDirections.actionPaymentsRecoveryPhraseToPaymentsRecoveryPhraseConfirm(args.getFinishOnConfirm())));
     edit.setVisibility(View.GONE);
     copy.setVisibility(View.VISIBLE);
     copy.setOnClickListener(v -> confirmCopy(words));

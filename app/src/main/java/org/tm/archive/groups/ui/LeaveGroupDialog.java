@@ -12,8 +12,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupChangeException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
@@ -54,10 +54,10 @@ public final class LeaveGroupDialog {
     }
 
     SimpleTask.run(activity.getLifecycle(), () -> {
-      GroupDatabase.V2GroupProperties groupProperties = DatabaseFactory.getGroupDatabase(activity)
-                                                                       .getGroup(groupId)
-                                                                       .transform(GroupDatabase.GroupRecord::requireV2GroupProperties)
-                                                                       .orNull();
+      GroupDatabase.V2GroupProperties groupProperties = SignalDatabase.groups()
+                                                                      .getGroup(groupId)
+                                                                      .transform(GroupDatabase.GroupRecord::requireV2GroupProperties)
+                                                                      .orNull();
 
       if (groupProperties != null && groupProperties.isAdmin(Recipient.self())) {
         List<Recipient> otherMemberRecipients = groupProperties.getMemberRecipients(GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);

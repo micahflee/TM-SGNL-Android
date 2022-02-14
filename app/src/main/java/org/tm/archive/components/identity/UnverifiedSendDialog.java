@@ -2,16 +2,16 @@ package org.tm.archive.components.identity;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import org.tm.archive.R;
 import org.tm.archive.crypto.ReentrantSessionLock;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.IdentityDatabase;
-import org.tm.archive.database.IdentityDatabase.IdentityRecord;
+import org.tm.archive.database.model.IdentityRecord;
+import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.util.concurrent.SimpleTask;
 import org.whispersystems.signalservice.api.SignalSessionLock;
 
 import java.util.List;
@@ -39,27 +39,16 @@ public class UnverifiedSendDialog extends AlertDialog.Builder implements DialogI
 
   @Override
   public void onClick(DialogInterface dialog, int which) {
-    final IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(getContext());
-
-    new AsyncTask<Void, Void, Void>() {
-      @Override
-      protected Void doInBackground(Void... params) {
-        try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-          for (IdentityRecord identityRecord : untrustedRecords) {
-            identityDatabase.setVerified(identityRecord.getRecipientId(),
-                                         identityRecord.getIdentityKey(),
-                                         IdentityDatabase.VerifiedStatus.DEFAULT);
-          }
+    SimpleTask.run(() -> {
+      try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
+        for (IdentityRecord identityRecord : untrustedRecords) {
+          ApplicationDependencies.getProtocolStore().aci().identities().setVerified(identityRecord.getRecipientId(),
+                                                                                    identityRecord.getIdentityKey(),
+                                                                                    IdentityDatabase.VerifiedStatus.DEFAULT);
         }
-
-        return null;
       }
-
-      @Override
-      protected void onPostExecute(Void result) {
-        resendListener.onResendMessage();
-      }
-    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+      return null;
+    }, nothing -> resendListener.onResendMessage());
   }
 
   public interface ResendListener {

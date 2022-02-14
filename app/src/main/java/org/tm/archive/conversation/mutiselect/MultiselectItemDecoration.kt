@@ -1,5 +1,7 @@
 package org.tm.archive.conversation.mutiselect
 
+import android.animation.ArgbEvaluator
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -9,16 +11,18 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.Region
 import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
 import androidx.core.view.children
+import androidx.core.view.forEach
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.lottie.SimpleColorFilter
 import org.tm.archive.R
 import org.tm.archive.conversation.ConversationAdapter
-import org.tm.archive.util.Projection
 import org.tm.archive.util.SetUtil
 import org.tm.archive.util.ThemeUtil
 import org.tm.archive.util.ViewUtil
@@ -30,9 +34,7 @@ import java.lang.Integer.max
  */
 class MultiselectItemDecoration(
   context: Context,
-  private val chatWallpaperProvider: () -> ChatWallpaper?,
-  private val selectedAnimationProgressProvider: (MultiselectPart) -> Float,
-  private val isInitialAnimation: () -> Boolean
+  private val chatWallpaperProvider: () -> ChatWallpaper?
 ) : RecyclerView.ItemDecoration(), DefaultLifecycleObserver {
 
   private val path = Path()
@@ -52,7 +54,18 @@ class MultiselectItemDecoration(
   private val ultramarine30 = ContextCompat.getColor(context, R.color.core_ultramarine_33)
   private val ultramarine = ContextCompat.getColor(context, R.color.signal_accent_primary)
 
+  private val selectedParts: MutableSet<MultiselectPart> = mutableSetOf()
+  private var enterExitAnimation: ValueAnimator? = null
+  private var hideShadeAnimation: ValueAnimator? = null
+  private val multiselectPartAnimatorMap: MutableMap<MultiselectPart, ValueAnimator> = mutableMapOf()
+
   private var checkedBitmap: Bitmap? = null
+
+  private var focusedItem: MultiselectPart? = null
+
+  fun setFocusedItem(multiselectPart: MultiselectPart?) {
+    this.focusedItem = multiselectPart
+  }
 
   override fun onCreate(owner: LifecycleOwner) {
     val bitmap = Bitmap.createBitmap(circleRadius * 2, circleRadius * 2, Bitmap.Config.ARGB_8888)
@@ -66,6 +79,11 @@ class MultiselectItemDecoration(
     checkedBitmap?.recycle()
     checkedBitmap = null
   }
+
+  private val darkShadeColor = ContextCompat.getColor(context, R.color.reactions_screen_dark_shade_color)
+  private val lightShadeColor = ContextCompat.getColor(context, R.color.reactions_screen_light_shade_color)
+
+  private val argbEvaluator = ArgbEvaluator()
 
   private val unselectedPaint = Paint().apply {
     isAntiAlias = true
@@ -89,7 +107,36 @@ class MultiselectItemDecoration(
     style = Paint.Style.FILL
   }
 
+  private fun getCurrentSelection(parent: RecyclerView): Set<MultiselectPart> {
+    return (parent.adapter as ConversationAdapter).selectedItems
+  }
+
   override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+    val currentSelection = getCurrentSelection(parent)
+    if (selectedParts.isEmpty() && currentSelection.isNotEmpty()) {
+      val wasRunning = enterExitAnimation?.isRunning ?: false
+      enterExitAnimation?.end()
+      val startValue = if (wasRunning) enterExitAnimation?.animatedFraction else 0f
+      enterExitAnimation = ValueAnimator.ofFloat(startValue ?: 0f, 1f).apply {
+        duration = 150L
+        start()
+      }
+    } else if (selectedParts.isNotEmpty() && currentSelection.isEmpty()) {
+      enterExitAnimation?.end()
+      enterExitAnimation = ValueAnimator.ofFloat(enterExitAnimation?.animatedFraction ?: 1f, 0f).apply {
+        duration = 150L
+        start()
+      }
+    }
+
+    if (view is Multiselectable) {
+      val parts = view.conversationMessage.multiselectCollection.toSet()
+      parts.forEach { updateMultiselectPartAnimator(currentSelection, it) }
+    }
+
+    selectedParts.clear()
+    selectedParts.addAll(currentSelection)
+
     outRect.setEmpty()
     updateChildOffsets(parent, view)
   }
@@ -102,7 +149,11 @@ class MultiselectItemDecoration(
     val adapter = parent.adapter as ConversationAdapter
 
     if (adapter.selectedItems.isEmpty()) {
-      return
+      drawFocusShadeUnderIfNecessary(canvas, parent)
+
+      if (enterExitAnimation == null || !isInitialAnimation()) {
+        return
+      }
     }
 
     shadePaint.color = when {
@@ -116,9 +167,17 @@ class MultiselectItemDecoration(
 
       val parts: MultiselectCollection = child.conversationMessage.multiselectCollection
 
-      val projections: List<Projection> = child.colorizerProjections
+      val projections = child.getColorizerProjections(parent)
+      if (child.canPlayContent()) {
+        projections.add(child.getGiphyMp4PlayableProjection(parent))
+      }
+
       path.reset()
-      projections.forEach { it.applyToPath(path) }
+      projections.use { list ->
+        list.forEach {
+          it.applyToPath(path)
+        }
+      }
 
       canvas.save()
       canvas.clipPath(path, Region.Op.DIFFERENCE)
@@ -140,6 +199,10 @@ class MultiselectItemDecoration(
 
       canvas.restore()
     }
+
+    if (adapter.selectedItems.isNotEmpty()) {
+      drawChecks(parent, canvas, adapter)
+    }
   }
 
   /**
@@ -148,9 +211,13 @@ class MultiselectItemDecoration(
   override fun onDrawOver(canvas: Canvas, parent: RecyclerView, state: RecyclerView.State) {
     val adapter = parent.adapter as ConversationAdapter
     if (adapter.selectedItems.isEmpty()) {
-      return
+      drawFocusShadeOverIfNecessary(canvas, parent)
     }
 
+    invalidateIfAnimatorsAreRunning(parent)
+  }
+
+  private fun drawChecks(parent: RecyclerView, canvas: Canvas, adapter: ConversationAdapter) {
     val drawCircleBehindSelector = chatWallpaperProvider()?.isPhoto == true
     val multiselectChildren: Sequence<Multiselectable> = parent.children.filterIsInstance(Multiselectable::class.java)
 
@@ -178,7 +245,7 @@ class MultiselectItemDecoration(
           drawPhotoCircle(canvas, parent, topBoundary, bottomBoundary)
         }
 
-        val alphaProgress = selectedAnimationProgressProvider(it)
+        val alphaProgress = selectedAnimationProgress(it)
         if (adapter.selectedItems.contains(it)) {
           drawUnselectedCircle(canvas, parent, topBoundary, bottomBoundary, 1f - alphaProgress)
           drawSelectedCircle(canvas, parent, topBoundary, bottomBoundary, alphaProgress)
@@ -258,8 +325,8 @@ class MultiselectItemDecoration(
     val adapter = parent.adapter as ConversationAdapter
     val isLtr = ViewUtil.isLtr(child)
 
-    if (adapter.selectedItems.isNotEmpty() && child is Multiselectable) {
-      val firstPart = child.conversationMessage.multiselectCollection.toSet().first()
+    val isAnimatingSelection = enterExitAnimation != null && isInitialAnimation()
+    if ((isAnimatingSelection || adapter.selectedItems.isNotEmpty()) && child is Multiselectable) {
       val target = child.getHorizontalTranslationTarget()
 
       if (target != null) {
@@ -270,7 +337,7 @@ class MultiselectItemDecoration(
         }
 
         val translation: Float = if (isInitialAnimation()) {
-          max(0, gutter - start) * selectedAnimationProgressProvider(firstPart)
+          max(0, gutter - start) * (enterExitAnimation?.animatedValue as Float? ?: 1f)
         } else {
           max(0, gutter - start).toFloat()
         }
@@ -284,5 +351,141 @@ class MultiselectItemDecoration(
     } else if (child is Multiselectable) {
       child.translationX = 0f
     }
+  }
+
+  private fun drawFocusShadeUnderIfNecessary(canvas: Canvas, parent: RecyclerView) {
+    val inFocus = focusedItem
+    if (inFocus != null) {
+      path.reset()
+      canvas.save()
+
+      parent.forEach { child ->
+        if (child is Multiselectable && child.conversationMessage == inFocus.conversationMessage) {
+          path.addRect(child.left.toFloat(), child.top.toFloat(), child.right.toFloat(), child.bottom.toFloat(), Path.Direction.CW)
+          child.getColorizerProjections(parent).use { list ->
+            list.forEach {
+              path.op(it.path, Path.Op.DIFFERENCE)
+            }
+          }
+
+          if (child.canPlayContent() && child.shouldProjectContent()) {
+            val mp4GifProjection = child.getGiphyMp4PlayableProjection(child.rootView as ViewGroup)
+            path.op(mp4GifProjection.path, Path.Op.DIFFERENCE)
+            mp4GifProjection.release()
+          }
+        }
+      }
+
+      canvas.clipPath(path)
+      canvas.drawShade()
+      canvas.restore()
+    }
+  }
+
+  private fun drawFocusShadeOverIfNecessary(canvas: Canvas, parent: RecyclerView) {
+    val inFocus = focusedItem
+    if (inFocus != null) {
+      path.reset()
+      canvas.save()
+
+      parent.forEach { child ->
+        if (child is Multiselectable && child.conversationMessage == inFocus.conversationMessage) {
+          path.addRect(child.left.toFloat(), child.top.toFloat(), child.right.toFloat(), child.bottom.toFloat(), Path.Direction.CW)
+        }
+      }
+
+      canvas.clipPath(path, Region.Op.DIFFERENCE)
+      canvas.drawShade()
+      canvas.restore()
+    }
+  }
+
+  private fun Canvas.drawShade() {
+    val progress = hideShadeAnimation?.animatedValue as? Float
+    if (progress == null) {
+      drawColor(lightShadeColor)
+      drawColor(darkShadeColor)
+      return
+    }
+
+    drawColor(argbEvaluator.evaluate(progress, lightShadeColor, Color.TRANSPARENT) as Int)
+    drawColor(argbEvaluator.evaluate(progress, darkShadeColor, Color.TRANSPARENT) as Int)
+  }
+
+  fun hideShade(list: RecyclerView) {
+    hideShadeAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
+      duration = 150L
+
+      addUpdateListener {
+        invalidateIfAnimatorsAreRunning(list)
+      }
+
+      doOnEnd {
+        hideShadeAnimation = null
+      }
+
+      start()
+    }
+  }
+
+  private fun isInitialAnimation(): Boolean {
+    return (enterExitAnimation?.animatedFraction ?: 0f) < 1f
+  }
+
+  // This is reentrant
+  private fun updateMultiselectPartAnimator(currentSelection: Set<MultiselectPart>, multiselectPart: MultiselectPart) {
+    val difference: Difference = getDifferenceForPart(currentSelection, multiselectPart)
+    val animator: ValueAnimator? = multiselectPartAnimatorMap[multiselectPart]
+
+    when (difference) {
+      Difference.SAME -> Unit
+      Difference.ADDED -> {
+        val newAnimator = ValueAnimator.ofFloat(animator?.animatedFraction ?: 0f, 1f).apply {
+          duration = 150L
+          start()
+        }
+        animator?.end()
+        multiselectPartAnimatorMap[multiselectPart] = newAnimator
+      }
+      Difference.REMOVED -> {
+        val newAnimator = ValueAnimator.ofFloat(animator?.animatedFraction ?: 1f, 0f).apply {
+          duration = 150L
+          start()
+        }
+        animator?.end()
+        multiselectPartAnimatorMap[multiselectPart] = newAnimator
+      }
+    }
+  }
+
+  private fun selectedAnimationProgress(multiselectPart: MultiselectPart): Float {
+    val animator = multiselectPartAnimatorMap[multiselectPart]
+    return animator?.animatedFraction ?: 1f
+  }
+
+  private fun getDifferenceForPart(currentSelection: Set<MultiselectPart>, multiselectPart: MultiselectPart): Difference {
+    val isSelected = currentSelection.contains(multiselectPart)
+    val wasSelected = selectedParts.contains(multiselectPart)
+
+    return when {
+      isSelected && !wasSelected -> Difference.ADDED
+      !isSelected && wasSelected -> Difference.REMOVED
+      else -> Difference.SAME
+    }
+  }
+
+  private fun invalidateIfAnimatorsAreRunning(parent: RecyclerView) {
+    if (enterExitAnimation?.isRunning == true ||
+      multiselectPartAnimatorMap.values.any { it.isRunning } ||
+      hideShadeAnimation?.isRunning == true
+    ) {
+      parent.invalidate()
+    }
+  }
+
+  private enum class Difference {
+    REMOVED,
+    ADDED,
+    SAME
   }
 }

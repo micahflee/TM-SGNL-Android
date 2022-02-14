@@ -15,7 +15,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.util.BottomSheetUtil;
-import org.tm.archive.util.ThemeUtil;
 
 /**
  * A bottom sheet to be shown when we need to prompt the user to fill out a reCAPTCHA.
@@ -48,6 +47,8 @@ public final class RecaptchaProofBottomSheetFragment extends BottomSheetDialogFr
 
   @Override
   public void show(@NonNull FragmentManager manager, @Nullable String tag) {
+    Log.i(TAG, "Showing reCAPTCHA proof bottom sheet.");
+
     if (manager.findFragmentByTag(tag) == null) {
       BottomSheetUtil.show(manager, tag, this);
     } else {

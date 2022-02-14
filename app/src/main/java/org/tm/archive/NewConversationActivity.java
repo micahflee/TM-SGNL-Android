@@ -26,12 +26,12 @@ import androidx.appcompat.app.AlertDialog;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.contacts.sync.DirectoryHelper;
 import org.tm.archive.conversation.ConversationIntents;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.ui.creategroup.CreateGroupActivity;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.concurrent.SimpleTask;
 import org.tm.archive.util.views.SimpleProgressDialog;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -67,7 +67,7 @@ public class NewConversationActivity extends ContactSelectionActivity
     } else {
       Log.i(TAG, "[onContactSelected] Maybe creating a new recipient.");
 
-      if (TextSecurePreferences.isPushRegistered(this) && NetworkConstraint.isMet(this)) {
+      if (SignalStore.account().isRegistered() && NetworkConstraint.isMet(getApplication())) {
         Log.i(TAG, "[onContactSelected] Doing contact refresh.");
 
         AlertDialog progress = SimpleProgressDialog.show(this);
@@ -75,7 +75,7 @@ public class NewConversationActivity extends ContactSelectionActivity
         SimpleTask.run(getLifecycle(), () -> {
           Recipient resolved = Recipient.external(this, number);
 
-          if (!resolved.isRegistered() || !resolved.hasUuid()) {
+          if (!resolved.isRegistered() || !resolved.hasAci()) {
             Log.i(TAG, "[onContactSelected] Not registered or no UUID. Doing a directory refresh.");
             try {
               DirectoryHelper.refreshDirectoryFor(this, resolved, false);
@@ -103,7 +103,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   private void launch(Recipient recipient) {
-    long   existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
+    long   existingThread = SignalDatabase.threads().getThreadIdIfExistsFor(recipient.getId());
     Intent intent         = ConversationIntents.createBuilder(this, recipient.getId(), existingThread)
                                                .withDraftText(getIntent().getStringExtra(Intent.EXTRA_TEXT))
                                                .withDataUri(getIntent().getData())

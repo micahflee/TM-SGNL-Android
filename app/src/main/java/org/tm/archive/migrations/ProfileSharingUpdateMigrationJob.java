@@ -2,7 +2,7 @@ package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
@@ -35,7 +35,7 @@ public class ProfileSharingUpdateMigrationJob extends MigrationJob {
   @Override
   public void performMigration() {
     long messageRequestEnableTime = SignalStore.misc().getMessageRequestEnableTime();
-    DatabaseFactory.getRecipientDatabase(context).markPreMessageRequestRecipientsAsProfileSharingEnabled(messageRequestEnableTime);
+    SignalDatabase.recipients().markPreMessageRequestRecipientsAsProfileSharingEnabled(messageRequestEnableTime);
   }
 
   @Override

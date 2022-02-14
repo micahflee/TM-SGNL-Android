@@ -7,9 +7,10 @@ import org.tm.archive.components.ThreadPhotoRailView
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.database.MediaDatabase
 import org.tm.archive.mms.GlideApp
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingViewHolder
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 
 /**
  * Renders the shared media photo rail.
@@ -17,7 +18,7 @@ import org.tm.archive.util.ViewUtil
 object SharedMediaPreference {
 
   fun register(adapter: MappingAdapter) {
-    adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory(::ViewHolder, R.layout.conversation_settings_shared_media))
+    adapter.registerFactory(Model::class.java, LayoutFactory(::ViewHolder, R.layout.conversation_settings_shared_media))
   }
 
   class Model(

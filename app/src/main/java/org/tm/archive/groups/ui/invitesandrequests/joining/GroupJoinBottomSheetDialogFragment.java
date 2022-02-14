@@ -27,7 +27,6 @@ import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.ResourceContactPhoto;
 import org.tm.archive.conversation.ConversationIntents;
 import org.tm.archive.conversation.colors.AvatarColor;
-import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.ui.managegroup.dialogs.GroupDescriptionDialog;
 import org.tm.archive.groups.v2.GroupDescriptionUtil;

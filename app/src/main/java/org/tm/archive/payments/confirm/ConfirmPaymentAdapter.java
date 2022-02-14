@@ -11,9 +11,9 @@ import com.airbnb.lottie.LottieAnimationView;
 
 import org.tm.archive.R;
 import org.tm.archive.payments.confirm.ConfirmPaymentState.Status;
-import org.tm.archive.util.MappingAdapter;
-import org.tm.archive.util.MappingModel;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 import org.tm.archive.util.SpanUtil;
 import org.whispersystems.signalservice.api.payments.FormatterOptions;
 import org.whispersystems.signalservice.api.payments.Money;

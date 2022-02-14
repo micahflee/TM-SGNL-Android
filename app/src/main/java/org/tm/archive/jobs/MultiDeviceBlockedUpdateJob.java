@@ -4,9 +4,9 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.database.RecipientDatabase.RecipientReader;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -71,7 +71,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
       return;
     }
 
-    RecipientDatabase database = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase database = SignalDatabase.recipients();
 
     try (RecipientReader reader = database.readerForBlocked(database.getBlocked())) {
       List<SignalServiceAddress> blockedIndividuals = new LinkedList<>();
@@ -82,7 +82,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
       while ((recipient = reader.getNext()) != null) {
         if (recipient.isPushGroup()) {
           blockedGroups.add(recipient.requireGroupId().getDecodedId());
-        } else if (recipient.isMaybeRegistered() && (recipient.hasUuid() || recipient.hasE164())) {
+        } else if (recipient.isMaybeRegistered() && (recipient.hasAci() || recipient.hasE164())) {
           blockedIndividuals.add(RecipientUtil.toSignalServiceAddress(context, recipient));
         }
       }

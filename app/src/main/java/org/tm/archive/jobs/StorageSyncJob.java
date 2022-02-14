@@ -6,12 +6,13 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.database.RecipientDatabase;
-import org.tm.archive.database.RecipientDatabase.RecipientSettings;
+import org.tm.archive.database.model.RecipientRecord;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.UnknownStorageIdDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -37,6 +38,9 @@ import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
+import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
+import org.whispersystems.signalservice.api.messages.multidevice.RequestMessage;
+import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.api.storage.SignalAccountRecord;
 import org.whispersystems.signalservice.api.storage.SignalContactRecord;
@@ -47,6 +51,7 @@ import org.whispersystems.signalservice.api.storage.SignalStorageManifest;
 import org.whispersystems.signalservice.api.storage.SignalStorageRecord;
 import org.whispersystems.signalservice.api.storage.StorageId;
 import org.whispersystems.signalservice.api.storage.StorageKey;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 import org.whispersystems.signalservice.internal.storage.protos.ManifestRecord;
 
 import java.io.IOException;
@@ -160,14 +165,19 @@ public class StorageSyncJob extends BaseJob {
   }
 
   @Override
-  protected void onRun() throws IOException, RetryLaterException {
+  protected void onRun() throws IOException, RetryLaterException, UntrustedIdentityException {
     if (!SignalStore.kbsValues().hasPin() && !SignalStore.kbsValues().hasOptedOut()) {
       Log.i(TAG, "Doesn't have a PIN. Skipping.");
       return;
     }
 
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       Log.i(TAG, "Not registered. Skipping.");
+      return;
+    }
+
+    if (SignalStore.internalValues().storageServiceDisabled()) {
+      Log.w(TAG, "Storage service has been manually disabled. Skipping.");
       return;
     }
 
@@ -180,12 +190,18 @@ public class StorageSyncJob extends BaseJob {
 
       SignalStore.storageService().onSyncCompleted();
     } catch (InvalidKeyException e) {
-      Log.w(TAG, "Failed to decrypt remote storage! Force-pushing and syncing the storage key to linked devices.", e);
+      if (SignalStore.account().isPrimaryDevice()) {
+        Log.w(TAG, "Failed to decrypt remote storage! Force-pushing and syncing the storage key to linked devices.", e);
 
-      ApplicationDependencies.getJobManager().startChain(new MultiDeviceKeysUpdateJob())
-                                             .then(new StorageForcePushJob())
-                                             .then(new MultiDeviceStorageSyncRequestJob())
-                                             .enqueue();
+        ApplicationDependencies.getJobManager().startChain(new MultiDeviceKeysUpdateJob())
+                               .then(new StorageForcePushJob())
+                               .then(new MultiDeviceStorageSyncRequestJob())
+                               .enqueue();
+      } else {
+        Log.w(TAG, "Failed to decrypt remote storage! Requesting new keys from primary.", e);
+        SignalStore.storageService().clearStorageKeyFromPrimary();
+        ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forRequest(RequestMessage.forType(SignalServiceProtos.SyncMessage.Request.Type.KEYS)), UnidentifiedAccessUtil.getAccessForSync(context));
+      }
     }
   }
 
@@ -200,9 +216,9 @@ public class StorageSyncJob extends BaseJob {
 
   private boolean performSync() throws IOException, RetryLaterException, InvalidKeyException {
     final Stopwatch                   stopwatch         = new Stopwatch("StorageSync");
-    final SQLiteDatabase              db                = DatabaseFactory.getInstance(context).getRawDatabase();
+    final SQLiteDatabase              db                = SignalDatabase.getRawDatabase();
     final SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
-    final UnknownStorageIdDatabase    storageIdDatabase = DatabaseFactory.getUnknownStorageIdDatabase(context);
+    final UnknownStorageIdDatabase    storageIdDatabase = SignalDatabase.unknownStorageIds();
     final StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
     final SignalStorageManifest localManifest  = SignalStore.storageService().getManifest();
@@ -216,7 +232,7 @@ public class StorageSyncJob extends BaseJob {
 
     if (self.getStorageServiceId() == null) {
       Log.w(TAG, "No storageId for self. Generating.");
-      DatabaseFactory.getRecipientDatabase(context).updateStorageId(self.getId(), StorageSyncHelper.generateKey());
+      SignalDatabase.recipients().updateStorageId(self.getId(), StorageSyncHelper.generateKey());
       self = freshSelf();
     }
 
@@ -228,7 +244,7 @@ public class StorageSyncJob extends BaseJob {
       List<StorageId>    localStorageIdsBeforeMerge = getAllLocalStorageIds(context, self);
       IdDifferenceResult idDifference               = StorageSyncHelper.findIdDifference(remoteManifest.getStorageIds(), localStorageIdsBeforeMerge);
 
-      if (idDifference.hasTypeMismatches()) {
+      if (idDifference.hasTypeMismatches() && SignalStore.account().isPrimaryDevice()) {
         Log.w(TAG, "[Remote Sync] Found type mismatches in the ID sets! Scheduling a force push after this sync completes.");
         needsForcePush = true;
       }
@@ -356,7 +372,7 @@ public class StorageSyncJob extends BaseJob {
       Log.i(TAG, "No remote writes needed. Still at version: " + remoteManifest.getVersion());
     }
 
-    if (needsForcePush) {
+    if (needsForcePush && SignalStore.account().isPrimaryDevice()) {
       Log.w(TAG, "Scheduling a force push.");
       ApplicationDependencies.getJobManager().add(new StorageForcePushJob());
     }
@@ -366,9 +382,9 @@ public class StorageSyncJob extends BaseJob {
   }
 
   private static @NonNull List<StorageId> getAllLocalStorageIds(@NonNull Context context, @NonNull Recipient self) {
-    return Util.concatenatedList(DatabaseFactory.getRecipientDatabase(context).getContactStorageSyncIds(),
+    return Util.concatenatedList(SignalDatabase.recipients().getContactStorageSyncIds(),
                                  Collections.singletonList(StorageId.forAccount(self.getStorageServiceId())),
-                                 DatabaseFactory.getUnknownStorageIdDatabase(context).getAllUnknownIds());
+                                 SignalDatabase.unknownStorageIds().getAllUnknownIds());
   }
 
   private static @NonNull List<SignalStorageRecord> buildLocalStorageRecords(@NonNull Context context, @NonNull Recipient self, @NonNull Collection<StorageId> ids) {
@@ -376,8 +392,8 @@ public class StorageSyncJob extends BaseJob {
       return Collections.emptyList();
     }
 
-    RecipientDatabase        recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    UnknownStorageIdDatabase storageIdDatabase = DatabaseFactory.getUnknownStorageIdDatabase(context);
+    RecipientDatabase        recipientDatabase = SignalDatabase.recipients();
+    UnknownStorageIdDatabase storageIdDatabase = SignalDatabase.unknownStorageIds();
 
     List<SignalStorageRecord> records = new ArrayList<>(ids.size());
 
@@ -386,7 +402,7 @@ public class StorageSyncJob extends BaseJob {
         case ManifestRecord.Identifier.Type.CONTACT_VALUE:
         case ManifestRecord.Identifier.Type.GROUPV1_VALUE:
         case ManifestRecord.Identifier.Type.GROUPV2_VALUE:
-          RecipientSettings settings = recipientDatabase.getByStorageId(id.getRaw());
+          RecipientRecord settings = recipientDatabase.getByStorageId(id.getRaw());
           if (settings != null) {
             if (settings.getGroupType() == RecipientDatabase.GroupType.SIGNAL_V2 && settings.getSyncExtras().getGroupMasterKey() == null) {
               throw new MissingGv2MasterKeyError();

@@ -4,10 +4,11 @@ import android.content.Context
 import androidx.core.util.Consumer
 import io.reactivex.rxjava3.core.Single
 import org.signal.core.util.concurrent.SignalExecutors
-import org.tm.archive.database.DatabaseFactory
-import org.tm.archive.database.IdentityDatabase
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.ThreadDatabase
 import org.tm.archive.database.identity.IdentityRecordList
+import org.tm.archive.database.model.IdentityRecord
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sharing.MultiShareArgs
@@ -26,11 +27,10 @@ class MultiselectForwardRepository(context: Context) {
     val onAllMessagesFailed: () -> Unit
   )
 
-  fun checkForBadIdentityRecords(shareContacts: List<ShareContact>, consumer: Consumer<List<IdentityDatabase.IdentityRecord>>) {
+  fun checkForBadIdentityRecords(shareContacts: List<ShareContact>, consumer: Consumer<List<IdentityRecord>>) {
     SignalExecutors.BOUNDED.execute {
-      val identityDatabase: IdentityDatabase = DatabaseFactory.getIdentityDatabase(context)
       val recipients: List<Recipient> = shareContacts.map { Recipient.resolved(it.recipientId.get()) }
-      val identityRecordList: IdentityRecordList = identityDatabase.getIdentities(recipients)
+      val identityRecordList: IdentityRecordList = ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecords(recipients)
 
       consumer.accept(identityRecordList.untrustedRecords)
     }
@@ -44,7 +44,7 @@ class MultiselectForwardRepository(context: Context) {
     return Single.fromCallable {
       val recipient = Recipient.resolved(recipientId.get())
       if (recipient.isPushV2Group) {
-        val record = DatabaseFactory.getGroupDatabase(context).getGroup(recipient.requireGroupId())
+        val record = SignalDatabase.groups.getGroup(recipient.requireGroupId())
         !(record.isPresent && record.get().isAnnouncementGroup && !record.get().isAdmin(Recipient.self()))
       } else {
         true
@@ -59,7 +59,7 @@ class MultiselectForwardRepository(context: Context) {
     resultHandlers: MultiselectForwardResultHandlers
   ) {
     SignalExecutors.BOUNDED.execute {
-      val threadDatabase: ThreadDatabase = DatabaseFactory.getThreadDatabase(context)
+      val threadDatabase: ThreadDatabase = SignalDatabase.threads
 
       val sharedContactsAndThreads: Set<ShareContactAndThread> = shareContacts
         .asSequence()

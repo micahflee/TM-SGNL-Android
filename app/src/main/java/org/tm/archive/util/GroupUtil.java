@@ -12,8 +12,8 @@ import org.signal.core.util.logging.Log;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.groups.GroupMasterKey;
 import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.mms.MessageGroupContext;
@@ -120,7 +120,7 @@ public final class GroupUtil {
                                                 @NonNull GroupId.Push groupId)
   {
     if (groupId.isV2()) {
-        GroupDatabase                   groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+        GroupDatabase                   groupDatabase     = SignalDatabase.groups();
         GroupDatabase.GroupRecord       groupRecord       = groupDatabase.requireGroup(groupId);
         GroupDatabase.V2GroupProperties v2GroupProperties = groupRecord.requireV2GroupProperties();
         SignalServiceGroupV2            group             = SignalServiceGroupV2.newBuilder(v2GroupProperties.getGroupMasterKey())

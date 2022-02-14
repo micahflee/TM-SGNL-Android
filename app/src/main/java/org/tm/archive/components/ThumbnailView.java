@@ -5,11 +5,8 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RoundRectShape;
-import android.graphics.drawable.shapes.Shape;
 import android.net.Uri;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +15,6 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
-import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -32,7 +28,6 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.blurhash.BlurHash;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.giph.mp4.GiphyMp4PlaybackPolicy;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.mms.GlideRequest;
 import org.tm.archive.mms.GlideRequests;
@@ -44,11 +39,8 @@ import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.concurrent.SettableFuture;
-import org.tm.archive.util.views.Stub;
-import org.tm.archive.video.VideoPlayer;
 import org.whispersystems.libsignal.util.guava.Optional;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
@@ -438,8 +430,10 @@ public class ThumbnailView extends FrameLayout {
                                           .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                                           .transition(withCrossFade()), fit);
 
-    if (slide.isInProgress()) return request;
-    else                      return request.apply(RequestOptions.errorOf(R.drawable.ic_missing_thumbnail_picture));
+    boolean doNotShowMissingThumbnailImage = Build.VERSION.SDK_INT < 23;
+
+    if (slide.isInProgress() || doNotShowMissingThumbnailImage) return request;
+    else                                                        return request.apply(RequestOptions.errorOf(R.drawable.ic_missing_thumbnail_picture));
   }
 
   private RequestBuilder buildPlaceholderGlideRequest(@NonNull GlideRequests glideRequests, @NonNull Slide slide) {

@@ -1,14 +1,5 @@
 package org.tm.archive.webrtc;
 
-import android.content.Context;
-
-import androidx.annotation.NonNull;
-
-import org.signal.core.util.logging.Log;
-import org.signal.ringrtc.CallException;
-import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.util.NetworkUtil;
-
 /**
  * Represents the user's desired bandwidth mode for calls.
  */

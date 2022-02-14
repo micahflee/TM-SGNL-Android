@@ -6,9 +6,8 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.tm.archive.database.helpers.SQLCipherOpenHelper;
 import org.tm.archive.database.model.PendingRetryReceiptModel;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.CursorUtil;
@@ -41,7 +40,7 @@ public final class PendingRetryReceiptDatabase extends Database {
                                                                                  THREAD_ID          + " INTEGER NOT NULL, " +
                                                                                  "UNIQUE(" + AUTHOR + "," + SENT_TIMESTAMP + ") ON CONFLICT REPLACE);";
 
-  PendingRetryReceiptDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  PendingRetryReceiptDatabase(Context context, SignalDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

@@ -29,7 +29,6 @@ import org.tm.archive.conversation.ConversationFragment;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.util.DeviceProperties;
-import org.tm.archive.util.TextSecurePreferences;
 
 /**
  * Provide basic steps to fix potential call notification issues based on what we can detect on the system

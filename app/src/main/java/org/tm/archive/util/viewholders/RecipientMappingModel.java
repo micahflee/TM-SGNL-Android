@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 
 import java.util.Objects;
 

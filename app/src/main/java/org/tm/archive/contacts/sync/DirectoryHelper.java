@@ -24,11 +24,12 @@ import org.tm.archive.R;
 import org.tm.archive.contacts.ContactAccessor;
 import org.tm.archive.contacts.ContactsDatabase;
 import org.tm.archive.crypto.SessionUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase.InsertResult;
 import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.database.RecipientDatabase.BulkOperationsHandle;
 import org.tm.archive.database.RecipientDatabase.RegisteredState;
+import org.tm.archive.database.SignalDatabase;
+import org.whispersystems.signalservice.api.push.ACI;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.MultiDeviceContactUpdateJob;
 import org.tm.archive.jobs.RetrieveProfileJob;
@@ -43,6 +44,7 @@ import org.tm.archive.registration.RegistrationUtil;
 import org.tm.archive.sms.IncomingJoinedMessage;
 import org.tm.archive.storage.StorageSyncHelper;
 import org.tm.archive.util.CursorUtil;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ProfileUtil;
 import org.tm.archive.util.SetUtil;
 import org.tm.archive.util.Stopwatch;
@@ -52,7 +54,6 @@ import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.profiles.ProfileAndCredential;
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile;
-import org.whispersystems.signalservice.api.push.exceptions.NotFoundException;
 import org.whispersystems.signalservice.api.services.ProfileService;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.signalservice.internal.ServiceResponse;
@@ -66,7 +67,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.rxjava3.core.Observable;
@@ -81,7 +81,7 @@ public class DirectoryHelper {
 
   @WorkerThread
   public static void refreshDirectory(@NonNull Context context, boolean notifyOfNewUsers) throws IOException {
-    if (TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
+    if (TextUtils.isEmpty(SignalStore.account().getE164())) {
       Log.w(TAG, "Have not yet set our own local number. Skipping.");
       return;
     }
@@ -97,7 +97,7 @@ public class DirectoryHelper {
       return;
     }
 
-    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase recipientDatabase = SignalDatabase.recipients();
     Set<String>       databaseNumbers   = sanitizeNumbers(recipientDatabase.getAllPhoneNumbers());
     Set<String>       systemNumbers     = sanitizeNumbers(ContactAccessor.getInstance().getAllContactsWithNumbers(context));
 
@@ -108,12 +108,12 @@ public class DirectoryHelper {
 
   @WorkerThread
   public static void refreshDirectoryFor(@NonNull Context context, @NonNull List<Recipient> recipients, boolean notifyOfNewUsers) throws IOException {
-    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase recipientDatabase = SignalDatabase.recipients();
 
     for (Recipient recipient : recipients) {
-      if (recipient.hasUuid() && !recipient.hasE164()) {
-        if (isUuidRegistered(context, recipient)) {
-          recipientDatabase.markRegistered(recipient.getId(), recipient.requireUuid());
+      if (recipient.hasAci() && !recipient.hasE164()) {
+        if (ApplicationDependencies.getSignalServiceAccountManager().isIdentifierRegistered(recipient.requireAci())) {
+          recipientDatabase.markRegistered(recipient.getId(), recipient.requireAci());
         } else {
           recipientDatabase.markUnregistered(recipient.getId());
         }
@@ -131,15 +131,15 @@ public class DirectoryHelper {
   @WorkerThread
   public static RegisteredState refreshDirectoryFor(@NonNull Context context, @NonNull Recipient recipient, boolean notifyOfNewUsers) throws IOException {
     Stopwatch         stopwatch               = new Stopwatch("single");
-    RecipientDatabase recipientDatabase       = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase recipientDatabase       = SignalDatabase.recipients();
     RegisteredState   originalRegisteredState = recipient.resolve().getRegistered();
     RegisteredState   newRegisteredState;
 
-    if (recipient.hasUuid() && !recipient.hasE164()) {
-      boolean isRegistered = isUuidRegistered(context, recipient);
-      stopwatch.split("uuid-network");
+    if (recipient.hasAci() && !recipient.hasE164()) {
+      boolean isRegistered = ApplicationDependencies.getSignalServiceAccountManager().isIdentifierRegistered(recipient.requireAci());
+      stopwatch.split("aci-network");
       if (isRegistered) {
-        boolean idChanged = recipientDatabase.markRegistered(recipient.getId(), recipient.getUuid().get());
+        boolean idChanged = recipientDatabase.markRegistered(recipient.getId(), recipient.requireAci());
         if (idChanged) {
           Log.w(TAG, "ID changed during refresh by UUID.");
         }
@@ -147,14 +147,14 @@ public class DirectoryHelper {
         recipientDatabase.markUnregistered(recipient.getId());
       }
 
-      stopwatch.split("uuid-disk");
+      stopwatch.split("aci-disk");
       stopwatch.stop(TAG);
 
       return isRegistered ? RegisteredState.REGISTERED : RegisteredState.NOT_REGISTERED;
     }
 
     if (!recipient.getE164().isPresent()) {
-      Log.w(TAG, "No UUID or E164?");
+      Log.w(TAG, "No ACI or E164?");
       return RegisteredState.NOT_REGISTERED;
     }
 
@@ -168,18 +168,18 @@ public class DirectoryHelper {
     }
 
     if (result.getRegisteredNumbers().size() > 0) {
-      UUID uuid = result.getRegisteredNumbers().values().iterator().next();
-      if (uuid != null) {
-        boolean idChanged = recipientDatabase.markRegistered(recipient.getId(), uuid);
+      ACI aci = result.getRegisteredNumbers().values().iterator().next();
+      if (aci != null) {
+        boolean idChanged = recipientDatabase.markRegistered(recipient.getId(), aci);
         if (idChanged) {
-          recipient = Recipient.resolved(recipientDatabase.getByUuid(uuid).get());
+          recipient = Recipient.resolved(recipientDatabase.getByAci(aci).get());
         }
       } else {
-        Log.w(TAG, "Registered number set had a null UUID!");
+        Log.w(TAG, "Registered number set had a null ACI!");
       }
-    } else if (recipient.hasUuid() && recipient.isRegistered() && hasCommunicatedWith(context, recipient)) {
-      if (isUuidRegistered(context, recipient)) {
-        recipientDatabase.markRegistered(recipient.getId(), recipient.requireUuid());
+    } else if (recipient.hasAci() && recipient.isRegistered() && hasCommunicatedWith(context, recipient)) {
+      if (ApplicationDependencies.getSignalServiceAccountManager().isIdentifierRegistered(recipient.requireAci())) {
+        recipientDatabase.markRegistered(recipient.getId(), recipient.requireAci());
       } else {
         recipientDatabase.markUnregistered(recipient.getId());
       }
@@ -220,7 +220,7 @@ public class DirectoryHelper {
 
   @WorkerThread
   private static void refreshNumbers(@NonNull Context context, @NonNull Set<String> databaseNumbers, @NonNull Set<String> systemNumbers, boolean notifyOfNewUsers, boolean removeSystemContactEntryForMissing) throws IOException {
-    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase recipientDatabase = SignalDatabase.recipients();
     Set<String>       allNumbers        = SetUtil.union(databaseNumbers, systemNumbers);
 
     if (allNumbers.isEmpty()) {
@@ -230,7 +230,12 @@ public class DirectoryHelper {
 
     Stopwatch stopwatch = new Stopwatch("refresh");
 
-    DirectoryResult result = ContactDiscoveryV2.getDirectoryResult(context, databaseNumbers, systemNumbers);
+    DirectoryResult result;
+    if (FeatureFlags.cdsh()) {
+      result = ContactDiscoveryV3.getDirectoryResult(databaseNumbers, systemNumbers);
+    } else {
+      result = ContactDiscoveryV2.getDirectoryResult(context, databaseNumbers, systemNumbers);
+    }
 
     stopwatch.split("network");
 
@@ -239,10 +244,10 @@ public class DirectoryHelper {
       recipientDatabase.updatePhoneNumbers(result.getNumberRewrites());
     }
 
-    Map<RecipientId, String> uuidMap       = recipientDatabase.bulkProcessCdsResult(result.getRegisteredNumbers());
-    Set<String>              activeNumbers = result.getRegisteredNumbers().keySet();
-    Set<RecipientId>         activeIds     = uuidMap.keySet();
-    Set<RecipientId>         inactiveIds   = Stream.of(allNumbers)
+    Map<RecipientId, ACI> aciMap        = recipientDatabase.bulkProcessCdsResult(result.getRegisteredNumbers());
+    Set<String>           activeNumbers = result.getRegisteredNumbers().keySet();
+    Set<RecipientId>      activeIds     = aciMap.keySet();
+    Set<RecipientId>      inactiveIds   = Stream.of(allNumbers)
                                                    .filterNot(activeNumbers::contains)
                                                    .filterNot(n -> result.getNumberRewrites().containsKey(n))
                                                    .filterNot(n -> result.getIgnoredNumbers().contains(n))
@@ -264,7 +269,7 @@ public class DirectoryHelper {
 
     Set<RecipientId> preExistingRegisteredUsers = new HashSet<>(recipientDatabase.getRegistered());
 
-    recipientDatabase.bulkUpdatedRegisteredStatus(uuidMap, inactiveIds);
+    recipientDatabase.bulkUpdatedRegisteredStatus(aciMap, inactiveIds);
 
     stopwatch.split("update-registered");
 
@@ -291,16 +296,6 @@ public class DirectoryHelper {
     stopwatch.stop(TAG);
   }
 
-
-  private static boolean isUuidRegistered(@NonNull Context context, @NonNull Recipient recipient) throws IOException {
-    try {
-      ProfileUtil.retrieveProfileSync(context, recipient, SignalServiceProfile.RequestType.PROFILE);
-      return true;
-    } catch (NotFoundException e) {
-      return false;
-    }
-  }
-
   private static void updateContactsDatabase(@NonNull Context context,
                                              @NonNull Collection<RecipientId> activeIds,
                                              boolean removeMissing,
@@ -319,7 +314,7 @@ public class DirectoryHelper {
     }
 
     try {
-      ContactsDatabase  contactsDatabase = DatabaseFactory.getContactsDatabase(context);
+      ContactsDatabase  contactsDatabase = SignalDatabase.contacts();
       List<String>      activeAddresses  = Stream.of(activeIds)
                                                  .map(Recipient::resolved)
                                                  .filter(Recipient::hasE164)
@@ -336,7 +331,7 @@ public class DirectoryHelper {
   }
 
   private static void syncRecipientInfoWithSystemContacts(@NonNull Context context, @NonNull Map<String, String> rewrites) {
-    RecipientDatabase     recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase     recipientDatabase = SignalDatabase.recipients();
     BulkOperationsHandle  handle            = recipientDatabase.beginBulkSystemContactUpdate();
 
     try (Cursor cursor = ContactAccessor.getInstance().getAllSystemContacts(context)) {
@@ -400,7 +395,7 @@ public class DirectoryHelper {
     }
 
     if (NotificationChannels.supported()) {
-      try (RecipientDatabase.RecipientReader recipients = DatabaseFactory.getRecipientDatabase(context).getRecipientsWithNotificationChannels()) {
+      try (RecipientDatabase.RecipientReader recipients = SignalDatabase.recipients().getRecipientsWithNotificationChannels()) {
         Recipient recipient;
         while ((recipient = recipients.getNext()) != null) {
           NotificationChannels.updateContactChannelName(context, recipient);
@@ -474,7 +469,7 @@ public class DirectoryHelper {
           recipient.hasAUserSetDisplayName(context))
       {
         IncomingJoinedMessage  message      = new IncomingJoinedMessage(recipient.getId());
-        Optional<InsertResult> insertResult = DatabaseFactory.getSmsDatabase(context).insertMessageInbox(message);
+        Optional<InsertResult> insertResult = SignalDatabase.sms().insertMessageInbox(message);
 
         if (insertResult.isPresent()) {
           int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
@@ -508,7 +503,7 @@ public class DirectoryHelper {
     List<Recipient> possiblyUnlisted = Stream.of(inactiveIds)
                                              .map(Recipient::resolved)
                                              .filter(Recipient::isRegistered)
-                                             .filter(Recipient::hasUuid)
+                                             .filter(Recipient::hasAci)
                                              .filter(r -> hasCommunicatedWith(context, r))
                                              .toList();
 
@@ -543,17 +538,17 @@ public class DirectoryHelper {
   }
 
   private static boolean hasCommunicatedWith(@NonNull Context context, @NonNull Recipient recipient) {
-    return DatabaseFactory.getThreadDatabase(context).hasThread(recipient.getId())                                                ||
-           (recipient.hasUuid() && DatabaseFactory.getSessionDatabase(context).hasSessionFor(recipient.requireUuid().toString())) ||
-           (recipient.hasE164() && DatabaseFactory.getSessionDatabase(context).hasSessionFor(recipient.requireE164()));
+    return SignalDatabase.threads().hasThread(recipient.getId()) ||
+           (recipient.hasAci() && SignalDatabase.sessions().hasSessionFor(recipient.requireAci().toString())) ||
+           (recipient.hasE164() && SignalDatabase.sessions().hasSessionFor(recipient.requireE164()));
   }
 
   static class DirectoryResult {
-    private final Map<String, UUID>   registeredNumbers;
+    private final Map<String, ACI>    registeredNumbers;
     private final Map<String, String> numberRewrites;
     private final Set<String>         ignoredNumbers;
 
-    DirectoryResult(@NonNull Map<String, UUID> registeredNumbers,
+    DirectoryResult(@NonNull Map<String, ACI> registeredNumbers,
                     @NonNull Map<String, String> numberRewrites,
                     @NonNull Set<String> ignoredNumbers)
     {
@@ -563,7 +558,7 @@ public class DirectoryHelper {
     }
 
 
-    @NonNull Map<String, UUID> getRegisteredNumbers() {
+    @NonNull Map<String, ACI> getRegisteredNumbers() {
       return registeredNumbers;
     }
 

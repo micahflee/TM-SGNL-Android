@@ -47,6 +47,7 @@ import com.google.i18n.phonenumbers.Phonenumber;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.BuildConfig;
+import org.tm.archive.R;
 import org.tm.archive.components.ComposeText;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.OutgoingLegacyMmsConnection;
@@ -444,6 +445,15 @@ public class Util {
     return Math.min(Math.max(value, min), max);
   }
 
+  /**
+   * Returns half of the difference between the given length, and the length when scaled by the
+   * given scale.
+   */
+  public static float halfOffsetFromScale(int length, float scale) {
+    float scaledLength = length * scale;
+    return (length - scaledLength) / 2;
+  }
+
   public static @Nullable String readTextFromClipboard(@NonNull Context context) {
     {
       ClipboardManager clipboardManager = (ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -457,10 +467,13 @@ public class Util {
   }
 
   public static void writeTextToClipboard(@NonNull Context context, @NonNull String text) {
-    {
-      ClipboardManager clipboardManager = (ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
-      clipboardManager.setPrimaryClip(ClipData.newPlainText("Safety numbers", text));
-    }
+    writeTextToClipboard(context, context.getString(R.string.app_name), text);
+  }
+
+  public static void writeTextToClipboard(@NonNull Context context, @NonNull String label, @NonNull String text) {
+    android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+    ClipData clip = ClipData.newPlainText(label, text);
+    clipboard.setPrimaryClip(clip);
   }
 
   public static int toIntExact(long value) {
@@ -483,7 +496,7 @@ public class Util {
     return MemoryUnitFormat.formatBytes(sizeBytes);
   }
 
-  public static void copyToClipboard(@NonNull Context context, @NonNull String text) {
+  public static void copyToClipboard(@NonNull Context context, @NonNull CharSequence text) {
     ServiceUtil.getClipboardManager(context).setPrimaryClip(ClipData.newPlainText("text", text));
   }
 
@@ -513,26 +526,5 @@ public class Util {
     } catch (NumberFormatException e) {
       return defaultValue;
     }
-  }
-
-  /**
-   * Appends the stack trace of the provided throwable onto the provided primary exception. This is
-   * useful for when exceptions are thrown inside of asynchronous systems (like runnables in an
-   * executor) where you'd otherwise lose important parts of the stack trace. This lets you save a
-   * throwable at the entry point, and then combine it with any caught exceptions later.
-   *
-   * @return The provided primary exception, for convenience.
-   */
-  public static RuntimeException appendStackTrace(@NonNull RuntimeException primary, @NonNull Throwable secondary) {
-    StackTraceElement[] now      = primary.getStackTrace();
-    StackTraceElement[] then     = secondary.getStackTrace();
-    StackTraceElement[] combined = new StackTraceElement[now.length + then.length];
-
-    System.arraycopy(now, 0, combined, 0, now.length);
-    System.arraycopy(then, 0, combined, now.length, then.length);
-
-    primary.setStackTrace(combined);
-
-    return primary;
   }
 }

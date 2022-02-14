@@ -21,6 +21,7 @@ import android.content.Context;
 import android.text.SpannableString;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
 
 import org.tm.archive.R;
 import org.tm.archive.database.MmsSmsColumns;
@@ -28,8 +29,9 @@ import org.tm.archive.database.SmsDatabase;
 import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.recipients.Recipient;
 
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The message record model which represents standard SMS messages.
@@ -47,16 +49,16 @@ public class SmsMessageRecord extends MessageRecord {
                           long dateSent, long dateReceived, long dateServer,
                           int deliveryReceiptCount,
                           long type, long threadId,
-                          int status, List<IdentityKeyMismatch> mismatches,
+                          int status, Set<IdentityKeyMismatch> mismatches,
                           int subscriptionId, long expiresIn, long expireStarted,
                           int readReceiptCount, boolean unidentified,
                           @NonNull List<ReactionRecord> reactions, boolean remoteDelete,
-                          long notifiedTimestamp)
+                          long notifiedTimestamp, long receiptTimestamp)
   {
     super(id, body, recipient, individualRecipient, recipientDeviceId,
           dateSent, dateReceived, dateServer, threadId, status, deliveryReceiptCount, type,
-          mismatches, new LinkedList<>(), subscriptionId,
-          expiresIn, expireStarted, readReceiptCount, unidentified, reactions, remoteDelete, notifiedTimestamp, 0);
+          mismatches, new HashSet<>(), subscriptionId,
+          expiresIn, expireStarted, readReceiptCount, unidentified, reactions, remoteDelete, notifiedTimestamp, 0, receiptTimestamp);
   }
 
   public long getType() {
@@ -64,6 +66,7 @@ public class SmsMessageRecord extends MessageRecord {
   }
 
   @Override
+  @WorkerThread
   public SpannableString getDisplayBody(@NonNull Context context) {
     if (SmsDatabase.Types.isChatSessionRefresh(type)) {
       return emphasisAdded(context.getString(R.string.MessageRecord_chat_session_refreshed));
@@ -104,5 +107,12 @@ public class SmsMessageRecord extends MessageRecord {
   @Override
   public boolean isMmsNotification() {
     return false;
+  }
+
+  public @NonNull SmsMessageRecord withReactions(@NonNull List<ReactionRecord> reactions) {
+    return new SmsMessageRecord(getId(), getBody(), getRecipient(), getIndividualRecipient(), getRecipientDeviceId(), getDateSent(), getDateReceived(),
+                                getServerTimestamp(), getDeliveryReceiptCount(), getType(), getThreadId(), getDeliveryStatus(), getIdentityKeyMismatches(),
+                                getSubscriptionId(), getExpiresIn(), getExpireStarted(), getReadReceiptCount(), isUnidentified(), reactions, isRemoteDelete(),
+                                getNotifiedTimestamp(), getReceiptTimestamp());
   }
 }

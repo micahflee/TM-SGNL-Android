@@ -3,11 +3,13 @@ package org.tm.archive.components.settings.conversation.preferences
 import android.view.View
 import android.widget.TextView
 import org.tm.archive.R
+import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.components.AvatarImageView
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 import org.tm.archive.util.visible
 
 /**
@@ -16,13 +18,13 @@ import org.tm.archive.util.visible
 object RecipientPreference {
 
   fun register(adapter: MappingAdapter) {
-    adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory(::ViewHolder, R.layout.group_recipient_list_item))
+    adapter.registerFactory(Model::class.java, LayoutFactory(::ViewHolder, R.layout.group_recipient_list_item))
   }
 
   class Model(
     val recipient: Recipient,
     val isAdmin: Boolean = false,
-    val onClick: () -> Unit
+    val onClick: (() -> Unit)? = null
   ) : PreferenceModel<Model>() {
     override fun areItemsTheSame(newItem: Model): Boolean {
       return recipient.id == newItem.recipient.id
@@ -35,16 +37,22 @@ object RecipientPreference {
     }
   }
 
-  private class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
+  class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
     private val avatar: AvatarImageView = itemView.findViewById(R.id.recipient_avatar)
     private val name: TextView = itemView.findViewById(R.id.recipient_name)
-    private val about: TextView = itemView.findViewById(R.id.recipient_about)
-    private val admin: View = itemView.findViewById(R.id.admin)
+    private val about: TextView? = itemView.findViewById(R.id.recipient_about)
+    private val admin: View? = itemView.findViewById(R.id.admin)
+    private val badge: BadgeImageView = itemView.findViewById(R.id.recipient_badge)
 
     override fun bind(model: Model) {
-      itemView.setOnClickListener { model.onClick() }
+      if (model.onClick != null) {
+        itemView.setOnClickListener { model.onClick.invoke() }
+      } else {
+        itemView.setOnClickListener(null)
+      }
 
       avatar.setRecipient(model.recipient)
+      badge.setBadgeFromRecipient(model.recipient)
       name.text = if (model.recipient.isSelf) {
         context.getString(R.string.Recipient_you)
       } else {
@@ -53,13 +61,13 @@ object RecipientPreference {
 
       val aboutText = model.recipient.combinedAboutAndEmoji
       if (aboutText.isNullOrEmpty()) {
-        about.visibility = View.GONE
+        about?.visibility = View.GONE
       } else {
-        about.text = model.recipient.combinedAboutAndEmoji
-        about.visibility = View.VISIBLE
+        about?.text = model.recipient.combinedAboutAndEmoji
+        about?.visibility = View.VISIBLE
       }
 
-      admin.visible = model.isAdmin
+      admin?.visible = model.isAdmin
     }
   }
 }

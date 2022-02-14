@@ -9,11 +9,12 @@ import androidx.annotation.WorkerThread;
 import org.signal.core.util.logging.Log;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.profiles.ProfileKey;
+import org.tm.archive.badges.models.Badge;
 import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.payments.MobileCoinPublicAddress;
@@ -42,6 +43,9 @@ import org.whispersystems.signalservice.internal.ServiceResponse;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 import io.reactivex.rxjava3.core.Single;
 
@@ -61,11 +65,21 @@ public final class ProfileUtil {
                                                                   @NonNull SignalServiceProfile.RequestType requestType)
       throws IOException
   {
+    return retrieveProfileSync(context, recipient, requestType, true);
+  }
+
+  @WorkerThread
+  public static @NonNull ProfileAndCredential retrieveProfileSync(@NonNull Context context,
+                                                                  @NonNull Recipient recipient,
+                                                                  @NonNull SignalServiceProfile.RequestType requestType,
+                                                                  boolean allowUnidentifiedAccess)
+      throws IOException
+  {
     ProfileService profileService = new ProfileService(ApplicationDependencies.getGroupsV2Operations().getProfileOperations(),
                                                        ApplicationDependencies.getSignalServiceMessageReceiver(),
                                                        ApplicationDependencies.getSignalWebSocket());
 
-    Pair<Recipient, ServiceResponse<ProfileAndCredential>> response = retrieveProfile(context, recipient, requestType, profileService).blockingGet();
+    Pair<Recipient, ServiceResponse<ProfileAndCredential>> response = retrieveProfile(context, recipient, requestType, profileService, allowUnidentifiedAccess).blockingGet();
     return new ProfileService.ProfileResponseProcessor(response.second()).getResultOrThrow();
   }
 
@@ -74,11 +88,20 @@ public final class ProfileUtil {
                                                                                                @NonNull SignalServiceProfile.RequestType requestType,
                                                                                                @NonNull ProfileService profileService)
   {
-    Optional<UnidentifiedAccess> unidentifiedAccess = getUnidentifiedAccess(context, recipient);
+    return retrieveProfile(context, recipient, requestType, profileService, true);
+  }
+
+  private static Single<Pair<Recipient, ServiceResponse<ProfileAndCredential>>> retrieveProfile(@NonNull Context context,
+                                                                                                @NonNull Recipient recipient,
+                                                                                                @NonNull SignalServiceProfile.RequestType requestType,
+                                                                                                @NonNull ProfileService profileService,
+                                                                                                boolean allowUnidentifiedAccess)
+  {
+    Optional<UnidentifiedAccess> unidentifiedAccess = allowUnidentifiedAccess ? getUnidentifiedAccess(context, recipient) : Optional.absent();
     Optional<ProfileKey>         profileKey         = ProfileKeyUtil.profileKeyOptional(recipient.getProfileKey());
 
     return Single.fromCallable(() -> toSignalServiceAddress(context, recipient))
-                 .flatMap(address -> profileService.getProfile(address, profileKey, unidentifiedAccess, requestType).map(p -> new Pair<>(recipient, p)))
+                 .flatMap(address -> profileService.getProfile(address, profileKey, unidentifiedAccess, requestType, Locale.getDefault()).map(p -> new Pair<>(recipient, p)))
                  .onErrorReturn(t -> new Pair<>(recipient, ServiceResponse.forUnknownError(t)));
   }
 
@@ -165,6 +188,23 @@ public final class ProfileUtil {
 
   /**
    * Uploads the profile based on all state that's written to disk, except we'll use the provided
+   * list of badges instead. This is useful when you want to ensure that the profile has been uploaded
+   * successfully before persisting the change to disk.
+   */
+  public static void uploadProfileWithBadges(@NonNull Context context, @NonNull List<Badge> badges) throws IOException {
+    try (StreamDetails avatar = AvatarHelper.getSelfProfileAvatarStream(context)) {
+      uploadProfile(context,
+                    Recipient.self().getProfileName(),
+                    Optional.fromNullable(Recipient.self().getAbout()).or(""),
+                    Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""),
+                    getSelfPaymentsAddressProtobuf(),
+                    avatar,
+                    badges);
+    }
+  }
+
+  /**
+   * Uploads the profile based on all state that's written to disk, except we'll use the provided
    * profile name instead. This is useful when you want to ensure that the profile has been uploaded
    * successfully before persisting the change to disk.
    */
@@ -175,7 +215,8 @@ public final class ProfileUtil {
                     Optional.fromNullable(Recipient.self().getAbout()).or(""),
                     Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""),
                     getSelfPaymentsAddressProtobuf(),
-                    avatar);
+                    avatar,
+                    Recipient.self().getBadges());
     }
   }
 
@@ -191,7 +232,8 @@ public final class ProfileUtil {
                     about,
                     emoji,
                     getSelfPaymentsAddressProtobuf(),
-                    avatar);
+                    avatar,
+                    Recipient.self().getBadges());
     }
   }
 
@@ -215,7 +257,8 @@ public final class ProfileUtil {
                     Optional.fromNullable(Recipient.self().getAbout()).or(""),
                     Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""),
                     getSelfPaymentsAddressProtobuf(),
-                    avatar);
+                    avatar,
+                    Recipient.self().getBadges());
   }
 
   private static void uploadProfile(@NonNull Context context,
@@ -223,24 +266,34 @@ public final class ProfileUtil {
                                     @Nullable String about,
                                     @Nullable String aboutEmoji,
                                     @Nullable SignalServiceProtos.PaymentAddress paymentsAddress,
-                                    @Nullable StreamDetails avatar)
+                                    @Nullable StreamDetails avatar,
+                                    @NonNull List<Badge> badges)
       throws IOException
   {
+
+    List<String> badgeIds = badges.stream()
+                                  .filter(Badge::getVisible)
+                                  .map(Badge::getId)
+                                  .collect(Collectors.toList());
+
     Log.d(TAG, "Uploading " + (!Util.isEmpty(about) ? "non-" : "") + "empty about.");
     Log.d(TAG, "Uploading " + (!Util.isEmpty(aboutEmoji) ? "non-" : "") + "empty emoji.");
     Log.d(TAG, "Uploading " + (paymentsAddress != null ? "non-" : "") + "empty payments address.");
+    Log.d(TAG, "Uploading " + (avatar != null && avatar.getLength() != 0 ? "non-" : "") + "empty avatar.");
+    Log.d(TAG, "Uploading " + ((!badgeIds.isEmpty()) ? "non-" : "") + "empty badge list");
 
     ProfileKey                  profileKey     = ProfileKeyUtil.getSelfProfileKey();
     SignalServiceAccountManager accountManager = ApplicationDependencies.getSignalServiceAccountManager();
-    String                      avatarPath     = accountManager.setVersionedProfile(Recipient.self().getUuid().get(),
+    String                      avatarPath     = accountManager.setVersionedProfile(Recipient.self().requireAci(),
                                                                                     profileKey,
                                                                                     profileName.serialize(),
                                                                                     about,
                                                                                     aboutEmoji,
                                                                                     Optional.fromNullable(paymentsAddress),
-                                                                                    avatar).orNull();
-
-    DatabaseFactory.getRecipientDatabase(context).setProfileAvatar(Recipient.self().getId(), avatarPath);
+                                                                                    avatar,
+                                                                                    badgeIds).orNull();
+    SignalStore.registrationValues().markHasUploadedProfile();
+    SignalDatabase.recipients().setProfileAvatar(Recipient.self().getId(), avatarPath);
   }
 
   private static @Nullable SignalServiceProtos.PaymentAddress getSelfPaymentsAddressProtobuf() {
@@ -268,8 +321,8 @@ public final class ProfileUtil {
 
   private static @NonNull SignalServiceAddress toSignalServiceAddress(@NonNull Context context, @NonNull Recipient recipient) throws IOException {
     if (recipient.getRegistered() == RecipientDatabase.RegisteredState.NOT_REGISTERED) {
-      if (recipient.hasUuid()) {
-        return new SignalServiceAddress(recipient.requireUuid(), recipient.getE164().orNull());
+      if (recipient.hasAci()) {
+        return new SignalServiceAddress(recipient.requireAci(), recipient.getE164().orNull());
       } else {
         throw new IOException(recipient.getId() + " not registered!");
       }

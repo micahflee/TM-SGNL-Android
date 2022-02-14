@@ -70,7 +70,7 @@
   <string name="ConversationItem_to_s">okutuka %s</string>
   <!--ConversationActivity-->
   <!-- Removed by excludeNonTranslatables <string name="ConversationActivity_reset_secure_session_question">Damu ekitundu ekikumibwa?</string> -->
-  <string name="ConversationActivity_reset">Reset</string>
+  <!-- Removed by excludeNonTranslatables <string name="ConversationActivity_reset">Reset</string> -->
   <string name="ConversationActivity_add_attachment">Gatako ekigatiddwako</string>
   <string name="ConversationActivity_select_contact_info">Londako obuubaka bwa kontakiti</string>
   <string name="ConversationActivity_compose_message">Wandika obubaka</string>
@@ -669,11 +669,11 @@ gy\'olonze (%s) sintuufu.</string>
   <!--conversation_callable_secure-->
   <string name="conversation_callable_secure__menu_call">Essimu ya Signal</string>
   <!--conversation_context-->
-  <string name="conversation_context__menu_message_details">Obulambulukufu bw\'obubaka</string>
-  <string name="conversation_context__menu_copy_text">yozaamu obubaka.</string>
-  <string name="conversation_context__menu_delete_message">Siimula obubaka</string>
-  <string name="conversation_context__menu_forward_message">Sindikirako kumulala obubaka.</string>
-  <string name="conversation_context__menu_resend_message">Ddamu osindike obubaka.</string>
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_message_details">Obulambulukufu bw\'obubaka</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_copy_text">yozaamu obubaka.</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_delete_message">Siimula obubaka</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_forward_message">Sindikirako kumulala obubaka.</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_resend_message">Ddamu osindike obubaka.</string> -->
   <!--conversation_context_image-->
   <string name="conversation_context_image__save_attachment">Tereka ekigattiddwako.</string>
   <!--conversation_expiring_off-->

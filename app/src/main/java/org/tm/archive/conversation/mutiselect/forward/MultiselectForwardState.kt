@@ -1,6 +1,7 @@
 package org.tm.archive.conversation.mutiselect.forward
 
-import org.tm.archive.database.IdentityDatabase
+import org.tm.archive.database.model.IdentityRecord
+import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sharing.ShareContact
 
 data class MultiselectForwardState(
@@ -11,10 +12,11 @@ data class MultiselectForwardState(
     object Selection : Stage()
     object FirstConfirmation : Stage()
     object LoadingIdentities : Stage()
-    data class SafetyConfirmation(val identities: List<IdentityDatabase.IdentityRecord>) : Stage()
+    data class SafetyConfirmation(val identities: List<IdentityRecord>) : Stage()
     object SendPending : Stage()
     object SomeFailed : Stage()
     object AllFailed : Stage()
     object Success : Stage()
+    data class SelectionConfirmed(val recipients: List<RecipientId>) : Stage()
   }
 }

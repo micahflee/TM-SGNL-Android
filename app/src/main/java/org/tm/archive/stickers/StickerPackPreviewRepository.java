@@ -10,7 +10,7 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.StickerDatabase;
 import org.tm.archive.database.model.StickerPackRecord;
 import org.tm.archive.database.model.StickerRecord;
@@ -34,7 +34,7 @@ public final class StickerPackPreviewRepository {
 
   public StickerPackPreviewRepository(@NonNull Context context) {
     this.receiver        = ApplicationDependencies.getSignalServiceMessageReceiver();
-    this.stickerDatabase = DatabaseFactory.getStickerDatabase(context);
+    this.stickerDatabase = SignalDatabase.stickers();
   }
 
   public void getStickerManifest(@NonNull String packId,

@@ -6,7 +6,7 @@ import org.tm.archive.components.emoji.RecentEmojiPageModel
 import org.tm.archive.components.emoji.parsing.EmojiTree
 import org.tm.archive.emoji.EmojiCategory
 import org.tm.archive.emoji.EmojiSource
-import org.tm.archive.util.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingModel
 
 fun EmojiPageModel.toMappingModels(): List<MappingModel<*>> {
   val emojiTree: EmojiTree = EmojiSource.latest.emojiTree

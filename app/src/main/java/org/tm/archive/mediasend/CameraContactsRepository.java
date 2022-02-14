@@ -9,15 +9,15 @@ import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.R;
 import org.tm.archive.contacts.ContactRepository;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.FeatureFlags;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,10 +46,10 @@ class CameraContactsRepository {
 
   CameraContactsRepository(@NonNull Context context) {
     this.context           = context.getApplicationContext();
-    this.threadDatabase    = DatabaseFactory.getThreadDatabase(context);
-    this.groupDatabase     = DatabaseFactory.getGroupDatabase(context);
-    this.recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    this.contactRepository = new ContactRepository(context);
+    this.threadDatabase    = SignalDatabase.threads();
+    this.groupDatabase     = SignalDatabase.groups();
+    this.recipientDatabase = SignalDatabase.recipients();
+    this.contactRepository = new ContactRepository(context, context.getString(R.string.note_to_self));
     this.serialExecutor    = SignalExecutors.SERIAL;
     this.parallelExecutor  = SignalExecutors.BOUNDED;
   }

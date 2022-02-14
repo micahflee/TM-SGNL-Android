@@ -26,6 +26,7 @@
 <!-- eu --><item>Euskara</item>
 <!-- tl --><item>Filipino</item>
 <!-- fr --><item>Français</item>
+<!-- fy --><item>Frysk</item>
 <!-- ga --><item>Gaeilge</item>
 <!-- gl --><item>Galego</item>
 <!-- el --><item>Greek ελληνικά</item>
@@ -55,6 +56,7 @@
 <!-- nb --><item>Norsk (bokmål)</item>
 <!-- nn --><item>Norsk (nynorsk)</item>
 <!-- or --><item>Odia ଓଡ଼ିଆ</item>
+<!-- ps --><item>Pashto پښتو</item>
 <!-- fa --><item>Persian فارسی</item>
 <!-- pl --><item>Polski</item>
 <!-- pt --><item>Português</item>
@@ -106,6 +108,7 @@
       <item>eu</item>
       <item>tl</item>
       <item>fr</item>
+      <item>fy</item>
       <item>ga</item>
       <item>gl</item>
       <item>el</item>
@@ -135,6 +138,7 @@
       <item>nb</item>
       <item>nn</item>
       <item>or</item>
+      <item>ps</item>
       <item>fa</item>
       <item>pl</item>
       <item>pt</item>
@@ -410,11 +414,13 @@
 
     <integer-array name="PlaybackSpeedToggleTextView__speeds">
         <item>100</item>
+        <item>150</item>
         <item>200</item>
         <item>50</item>
     </integer-array>
     <string-array name="PlaybackSpeedToggleTextView__speed_labels">
         <item>@string/PlaybackSpeedToggleTextView__1x</item>
+        <item>@string/PlaybackSpeedToggleTextView__1p5x</item>
         <item>@string/PlaybackSpeedToggleTextView__2x</item>
         <item>@string/PlaybackSpeedToggleTextView__p5x</item>
     </string-array>

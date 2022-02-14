@@ -7,8 +7,8 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.ProfileUtil;
-import org.tm.archive.util.TextSecurePreferences;
 
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +36,7 @@ public final class ProfileUploadJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       Log.w(TAG, "Not registered. Skipping.");
       return;
     }

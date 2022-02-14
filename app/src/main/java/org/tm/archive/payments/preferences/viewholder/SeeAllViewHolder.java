@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import org.tm.archive.R;
 import org.tm.archive.payments.preferences.PaymentsHomeAdapter;
 import org.tm.archive.payments.preferences.model.SeeAll;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 public class SeeAllViewHolder extends MappingViewHolder<SeeAll> {
 

@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel;
 
 import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.util.SingleLiveEvent;
+import org.tm.archive.util.StringUtil;
 
 public final class EditProfileNameViewModel extends ViewModel {
 
@@ -22,8 +23,8 @@ public final class EditProfileNameViewModel extends ViewModel {
     this.events     = new SingleLiveEvent<>();
   }
 
-  void onGivenNameLengthChanged(int length) {
-    if (length <= 0) {
+  void onGivenNameChanged(@NonNull String text) {
+    if (StringUtil.isVisuallyEmpty(text.toString())) {
       saveState.setValue(SaveState.DISABLED);
     } else {
       saveState.setValue(SaveState.IDLE);

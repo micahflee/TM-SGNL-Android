@@ -3,7 +3,7 @@ package org.tm.archive.payments.preferences.model;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.payments.preferences.PaymentType;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 
 public class SeeAll implements MappingModel<SeeAll> {
 

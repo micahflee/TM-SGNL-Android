@@ -36,6 +36,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
@@ -51,7 +52,7 @@ import org.tm.archive.components.location.SignalMapView;
 import org.tm.archive.components.location.SignalPlace;
 import org.tm.archive.giph.ui.GiphyActivity;
 import org.tm.archive.maps.PlacePickerActivity;
-import org.tm.archive.mediasend.MediaSendActivity;
+import org.tm.archive.mediasend.v2.MediaSelectionActivity;
 import org.tm.archive.payments.create.CreatePaymentFragmentArgs;
 import org.tm.archive.payments.preferences.PaymentsActivity;
 import org.tm.archive.payments.preferences.model.PayeeParcelable;
@@ -71,6 +72,7 @@ import org.tm.archive.util.views.Stub;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -368,58 +370,58 @@ public class AttachmentManager {
     return deck;
   }
 
-  public static void selectDocument(Activity activity, int requestCode) {
-    //**TM_SA**//Start
-    Permissions.with(activity)
+  public static void selectDocument(Fragment fragment, int requestCode) {
+     //**TM_SA**//Start
+    Permissions.with(fragment)
                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
                .ifNecessary()
-               .withPermanentDenialDialog(activity.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
-               .onAllGranted(() -> selectMediaType(activity, "*/*", null, requestCode))
+               .withPermanentDenialDialog(fragment.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
+               .onAllGranted(() -> selectMediaType(fragment, "*/*", null, requestCode))
                .execute();
-    //Start
+    //**TM_SA**//End
   }
 
-  public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull TransportOption transport) {
-    Permissions.with(activity)
+  public static void selectGallery(Fragment fragment, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull TransportOption transport, boolean hasQuote) {
+    Permissions.with(fragment)
                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
                .ifNecessary()
-               .withPermanentDenialDialog(activity.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
-               .onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, body, transport), requestCode))
+               .withPermanentDenialDialog(fragment.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
+               .onAllGranted(() -> fragment.startActivityForResult(MediaSelectionActivity.gallery(fragment.requireContext(), transport, Collections.emptyList(), recipient.getId(), body, hasQuote), requestCode))
                .execute();
   }
 
-  public static void selectContactInfo(Activity activity, int requestCode) {
-    Permissions.with(activity)
+  public static void selectContactInfo(Fragment fragment, int requestCode) {
+    Permissions.with(fragment)
                .request(Manifest.permission.READ_CONTACTS)
                .ifNecessary()
-               .withPermanentDenialDialog(activity.getString(R.string.AttachmentManager_signal_requires_contacts_permission_in_order_to_attach_contact_information))
+               .withPermanentDenialDialog(fragment.getString(R.string.AttachmentManager_signal_requires_contacts_permission_in_order_to_attach_contact_information))
                .onAllGranted(() -> {
                  Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
-                 activity.startActivityForResult(intent, requestCode);
+                 fragment.startActivityForResult(intent, requestCode);
                })
                .execute();
   }
 
-  public static void selectLocation(Activity activity, int requestCode) {
-    Permissions.with(activity)
+  public static void selectLocation(Fragment fragment, int requestCode) {
+    Permissions.with(fragment)
                .request(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                .ifNecessary()
-               .withPermanentDenialDialog(activity.getString(R.string.AttachmentManager_signal_requires_location_information_in_order_to_attach_a_location))
-               .onAllGranted(() -> PlacePickerActivity.startActivityForResultAtCurrentLocation(activity, requestCode))
+               .withPermanentDenialDialog(fragment.getString(R.string.AttachmentManager_signal_requires_location_information_in_order_to_attach_a_location))
+               .onAllGranted(() -> PlacePickerActivity.startActivityForResultAtCurrentLocation(fragment, requestCode))
                .execute();
   }
 
-  public static void selectGif(Activity activity, int requestCode, boolean isForMms) {
-    Intent intent = new Intent(activity, GiphyActivity.class);
+  public static void selectGif(Fragment fragment, int requestCode, boolean isForMms) {
+    Intent intent = new Intent(fragment.requireContext(), GiphyActivity.class);
     intent.putExtra(GiphyActivity.EXTRA_IS_MMS, isForMms);
-    activity.startActivityForResult(intent, requestCode);
+    fragment.startActivityForResult(intent, requestCode);
   }
 
-  public static void selectPayment(@NonNull Activity activity, @NonNull RecipientId recipientId) {
-    Intent intent = new Intent(activity, PaymentsActivity.class);
+  public static void selectPayment(@NonNull Fragment fragment, @NonNull RecipientId recipientId) {
+    Intent intent = new Intent(fragment.requireContext(), PaymentsActivity.class);
     intent.putExtra(PaymentsActivity.EXTRA_PAYMENTS_STARTING_ACTION, R.id.action_directly_to_createPayment);
     intent.putExtra(PaymentsActivity.EXTRA_STARTING_ARGUMENTS, new CreatePaymentFragmentArgs.Builder(new PayeeParcelable(recipientId)).build().toBundle());
-    activity.startActivity(intent);
+    fragment.startActivity(intent);
   }
 
   //**TM_SA**//Replace private tp public
@@ -431,7 +433,7 @@ public class AttachmentManager {
     return captureUri;
   }
 
-  private static void selectMediaType(Activity activity, @NonNull String type, @Nullable String[] extraMimeType, int requestCode) {
+  private static void selectMediaType(Fragment fragment, @NonNull String type, @Nullable String[] extraMimeType, int requestCode) {
     final Intent intent = new Intent();
     intent.setType(type);
 
@@ -441,7 +443,7 @@ public class AttachmentManager {
 
     intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
     try {
-      activity.startActivityForResult(intent, requestCode);
+      fragment.startActivityForResult(intent, requestCode);
       return;
     } catch (ActivityNotFoundException anfe) {
       Log.w(TAG, "couldn't complete ACTION_OPEN_DOCUMENT, no activity found. falling back.");
@@ -450,10 +452,10 @@ public class AttachmentManager {
     intent.setAction(Intent.ACTION_GET_CONTENT);
 
     try {
-      activity.startActivityForResult(intent, requestCode);
+      fragment.startActivityForResult(intent, requestCode);
     } catch (ActivityNotFoundException anfe) {
       Log.w(TAG, "couldn't complete ACTION_GET_CONTENT intent, no activity found. falling back.");
-      Toast.makeText(activity, R.string.AttachmentManager_cant_open_media_selection, Toast.LENGTH_LONG).show();
+      Toast.makeText(fragment.requireContext(), R.string.AttachmentManager_cant_open_media_selection, Toast.LENGTH_LONG).show();
     }
   }
 

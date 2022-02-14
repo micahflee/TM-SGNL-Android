@@ -44,6 +44,7 @@ import org.tm.archive.util.AvatarUtil;
 import org.tm.archive.util.BlurTransformation;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
+import org.tm.archive.util.ViewUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -207,8 +208,8 @@ public final class AvatarImageView extends AppCompatImageView {
         this.chatColors       = chatColors;
         recipientContactPhoto = photo;
 
-        Drawable fallbackContactPhotoDrawable = size == SIZE_SMALL ? photo.recipient.getSmallFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider)
-                                                                   : photo.recipient.getFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider);
+        Drawable fallbackContactPhotoDrawable = size == SIZE_SMALL ? photo.recipient.getSmallFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider, ViewUtil.getWidth(this))
+                                                                   : photo.recipient.getFallbackContactPhotoDrawable(getContext(), inverted, fallbackPhotoProvider, ViewUtil.getWidth(this));
 
         if (fixedSizeTarget != null) {
           requestManager.clear(fixedSizeTarget);
@@ -224,6 +225,7 @@ public final class AvatarImageView extends AppCompatImageView {
           blurred = shouldBlur;
 
           GlideRequest<Drawable> request = requestManager.load(photo.contactPhoto)
+                                                         .dontAnimate()
                                                          .fallback(fallbackContactPhotoDrawable)
                                                          .error(fallbackContactPhotoDrawable)
                                                          .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -289,6 +291,7 @@ public final class AvatarImageView extends AppCompatImageView {
 
     GlideApp.with(this)
             .load(avatarBytes)
+            .dontAnimate()
             .fallback(fallback)
             .error(fallback)
             .diskCacheStrategy(DiskCacheStrategy.ALL)

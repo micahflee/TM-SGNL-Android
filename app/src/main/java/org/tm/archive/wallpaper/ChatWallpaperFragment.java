@@ -31,6 +31,7 @@ import org.tm.archive.util.DisplayMetricsUtil;
 import org.tm.archive.util.Projection;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.ViewUtil;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 import java.util.Collections;
 
@@ -101,10 +102,10 @@ public class ChatWallpaperFragment extends Fragment {
     });
 
     chatWallpaperPreview.setOnClickListener(unused -> setWallpaper.performClick());
-    setWallpaper.setOnClickListener(unused -> Navigation.findNavController(view)
-                                                        .navigate(R.id.action_chatWallpaperFragment_to_chatWallpaperSelectionFragment));
-    setChatColor.setOnClickListener(unused -> Navigation.findNavController(view)
-                                                        .navigate(ChatWallpaperFragmentDirections.actionChatWallpaperFragmentToChatColorSelectionFragment(viewModel.getRecipientId())));
+    setWallpaper.setOnClickListener(unused -> SafeNavigation.safeNavigate(Navigation.findNavController(view),
+                                                                          R.id.action_chatWallpaperFragment_to_chatWallpaperSelectionFragment));
+    setChatColor.setOnClickListener(unused -> SafeNavigation.safeNavigate(Navigation.findNavController(view),
+                                                                          ChatWallpaperFragmentDirections.actionChatWallpaperFragmentToChatColorSelectionFragment(viewModel.getRecipientId())));
 
     if (viewModel.isGlobal()) {
       resetAllWallpaper.setOnClickListener(unused -> {

@@ -13,8 +13,9 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 
 import org.tm.archive.R;
 import org.tm.archive.util.DisplayMetricsUtil;
-import org.tm.archive.util.MappingAdapter;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.Factory;
+import org.tm.archive.util.adapter.mapping.LayoutFactory;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 class ChatWallpaperViewHolder extends MappingViewHolder<ChatWallpaperSelectionMappingModel> {
 
@@ -50,8 +51,8 @@ class ChatWallpaperViewHolder extends MappingViewHolder<ChatWallpaperSelectionMa
     }
   }
 
-  public static @NonNull MappingAdapter.Factory<ChatWallpaperSelectionMappingModel> createFactory(@LayoutRes int layout, @Nullable EventListener listener, @Nullable DisplayMetrics windowDisplayMetrics) {
-    return new MappingAdapter.LayoutFactory<>(view -> new ChatWallpaperViewHolder(view, listener, windowDisplayMetrics), layout);
+  public static @NonNull Factory<ChatWallpaperSelectionMappingModel> createFactory(@LayoutRes int layout, @Nullable EventListener listener, @Nullable DisplayMetrics windowDisplayMetrics) {
+    return new LayoutFactory<>(view -> new ChatWallpaperViewHolder(view, listener, windowDisplayMetrics), layout);
   }
 
   public interface EventListener {

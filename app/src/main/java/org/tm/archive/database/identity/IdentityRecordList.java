@@ -2,7 +2,7 @@ package org.tm.archive.database.identity;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.database.IdentityDatabase.IdentityRecord;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.IdentityDatabase.VerifiedStatus;
 import org.tm.archive.recipients.Recipient;
 

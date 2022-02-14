@@ -85,6 +85,10 @@
         <item name="android:minHeight">48dp</item>
     </style>
 
+    <style name="Signal.Widget.Button.Large.Secondary.NoOutline">
+        <item name="strokeWidth">0dp</item>
+    </style>
+
     <style name="Signal.Widget.Button.Medium.Secondary" parent="@style/Signal.Widget.Button.Base.Secondary">
         <item name="android:minHeight">36dp</item>
         <item name="strokeWidth">0dp</item>
@@ -122,6 +126,10 @@
         <item name="android:windowAnimationStyle">@style/TextSecure.Animation.FullScreenDialog</item>
     </style>
 
+    <style name="Signal.Media.Dialog.AddMessageDialog" parent="TextSecure.MediaPreview">
+        <item name="android:windowAnimationStyle">@style/TextSecure.Animation.AddMessageDialog</item>
+    </style>
+
     <style name="Signal.ThemeOverlay.Dialog.Rounded" parent="@style/ThemeOverlay.MaterialComponents.MaterialAlertDialog">
         <item name="alertDialogStyle">@style/Signal.MaterialAlertDialog</item>
         <item name="android:background">@color/signal_background_dialog</item>
@@ -131,5 +139,20 @@
         <item name="buttonBarNeutralButtonStyle">@style/Signal.Widget.Button.Dialog</item>
         <item name="buttonBarNegativeButtonStyle">@style/Signal.Widget.Button.Dialog</item>
         <item name="textColorAlertDialogListItem">@color/signal_text_secondary</item>
+    </style>
+
+    <style name="Signal.Widget.TimePicker" parent="Widget.MaterialComponents.TimePicker">
+        <item name="shapeAppearance">@style/Signal.ShapeOverlay.Rounded</item>
+    </style>
+
+    <style name="Signal.Widget.TimePicker.ImageButton" parent="Widget.MaterialComponents.TimePicker.ImageButton">
+        <item name="iconTint">@color/signal_icon_tint_primary</item>
+    </style>
+
+    <style name="Signal.ThemeOverlay.TimePicker" parent="@style/ThemeOverlay.MaterialComponents.TimePicker">
+        <item name="textAppearanceOverline">@style/TextAppearance.Signal.Body2</item>
+        <item name="colorSurface">@color/signal_background_dialog</item>
+        <item name="borderlessButtonStyle">@style/Signal.Widget.Button.Dialog</item>
+        <item name="colorPrimary">@color/signal_accent_primary</item>
     </style>
 </resources>

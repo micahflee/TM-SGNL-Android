@@ -26,7 +26,6 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -572,7 +571,7 @@ public final class ContactSelectionListFragment extends LoggingFragment
           AlertDialog loadingDialog = SimpleProgressDialog.show(requireContext());
 
           SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
-            return UsernameUtil.fetchUuidForUsername(requireContext(), contact.getNumber());
+            return UsernameUtil.fetchAciForUsername(requireContext(), contact.getNumber());
           }, uuid -> {
             loadingDialog.dismiss();
             if (uuid.isPresent()) {
@@ -747,7 +746,11 @@ public final class ContactSelectionListFragment extends LoggingFragment
       return;
     }
 
-    TransitionManager.beginDelayedTransition(constraintLayout, new AutoTransition().setDuration(CHIP_GROUP_REVEAL_DURATION_MS));
+    AutoTransition transition = new AutoTransition();
+    transition.setDuration(CHIP_GROUP_REVEAL_DURATION_MS);
+    transition.excludeChildren(recyclerView, true);
+    transition.excludeTarget(recyclerView, true);
+    TransitionManager.beginDelayedTransition(constraintLayout, transition);
 
     ConstraintSet constraintSet = new ConstraintSet();
     constraintSet.clone(constraintLayout);
@@ -766,8 +769,8 @@ public final class ContactSelectionListFragment extends LoggingFragment
 
   public interface OnContactSelectedListener {
     /** Provides an opportunity to disallow selecting an item. Call the callback with false to disallow, or true to allow it. */
-    void onBeforeContactSelected(Optional<RecipientId> recipientId, String number, Consumer<Boolean> callback);
-    void onContactDeselected(Optional<RecipientId> recipientId, String number);
+    void onBeforeContactSelected(Optional<RecipientId> recipientId, @Nullable String number, Consumer<Boolean> callback);
+    void onContactDeselected(Optional<RecipientId> recipientId, @Nullable String number);
     void onSelectionChanged();
   }
 

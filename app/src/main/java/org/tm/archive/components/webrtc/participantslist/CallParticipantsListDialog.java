@@ -24,7 +24,7 @@ import org.tm.archive.components.webrtc.WebRtcCallViewModel;
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.events.WebRtcViewModel;
 import org.tm.archive.util.BottomSheetUtil;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 
 import java.util.ArrayList;
 import java.util.List;

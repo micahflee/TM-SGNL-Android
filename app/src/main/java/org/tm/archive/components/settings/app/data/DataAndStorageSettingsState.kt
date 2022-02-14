@@ -1,5 +1,6 @@
 package org.tm.archive.components.settings.app.data
 
+import org.tm.archive.mms.SentMediaQuality
 import org.tm.archive.webrtc.CallBandwidthMode
 
 data class DataAndStorageSettingsState(
@@ -8,5 +9,6 @@ data class DataAndStorageSettingsState(
   val wifiAutoDownloadValues: Set<String>,
   val roamingAutoDownloadValues: Set<String>,
   val callBandwidthMode: CallBandwidthMode,
-  val isProxyEnabled: Boolean
+  val isProxyEnabled: Boolean,
+  val sentMediaQuality: SentMediaQuality
 )

@@ -1,7 +1,7 @@
 package org.tm.archive.sharing;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
 
 public class ShareSelectionAdapter extends MappingAdapter {
   public ShareSelectionAdapter() {

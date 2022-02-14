@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.StickerDatabase.StickerPackRecordReader;
 import org.tm.archive.database.model.StickerPackRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -69,7 +69,7 @@ public class MultiDeviceStickerPackSyncJob extends BaseJob {
 
     List<StickerPackOperationMessage> operations = new LinkedList<>();
 
-    try (StickerPackRecordReader reader = new StickerPackRecordReader(DatabaseFactory.getStickerDatabase(context).getInstalledStickerPacks())) {
+    try (StickerPackRecordReader reader = new StickerPackRecordReader(SignalDatabase.stickers().getInstalledStickerPacks())) {
       StickerPackRecord pack;
       while ((pack = reader.getNext()) != null) {
         byte[] packIdBytes  = Hex.fromStringCondensed(pack.getPackId());

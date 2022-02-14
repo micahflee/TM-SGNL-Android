@@ -4,10 +4,9 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.whispersystems.signalservice.api.SignalServiceSenderKeyStore;
 import org.whispersystems.signalservice.api.push.DistributionId;
-import org.tm.archive.recipients.RecipientId;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
 
@@ -34,46 +33,44 @@ public final class SignalSenderKeyStore implements SignalServiceSenderKeyStore {
   @Override
   public void storeSenderKey(@NonNull SignalProtocolAddress sender, @NonNull UUID distributionId, @NonNull SenderKeyRecord record) {
     synchronized (LOCK) {
-      RecipientId recipientId = RecipientId.fromExternalPush(sender.getName());
-      DatabaseFactory.getSenderKeyDatabase(context).store(recipientId, sender.getDeviceId(), DistributionId.from(distributionId), record);
+      SignalDatabase.senderKeys().store(sender, DistributionId.from(distributionId), record);
     }
   }
 
   @Override
   public @Nullable SenderKeyRecord loadSenderKey(@NonNull SignalProtocolAddress sender, @NonNull UUID distributionId) {
     synchronized (LOCK) {
-      RecipientId recipientId = RecipientId.fromExternalPush(sender.getName());
-      return DatabaseFactory.getSenderKeyDatabase(context).load(recipientId, sender.getDeviceId(), DistributionId.from(distributionId));
+      return SignalDatabase.senderKeys().load(sender, DistributionId.from(distributionId));
     }
   }
 
   @Override
   public Set<SignalProtocolAddress> getSenderKeySharedWith(DistributionId distributionId) {
     synchronized (LOCK) {
-      return DatabaseFactory.getSenderKeySharedDatabase(context).getSharedWith(distributionId);
+      return SignalDatabase.senderKeyShared().getSharedWith(distributionId);
     }
   }
 
   @Override
   public void markSenderKeySharedWith(DistributionId distributionId, Collection<SignalProtocolAddress> addresses) {
     synchronized (LOCK) {
-      DatabaseFactory.getSenderKeySharedDatabase(context).markAsShared(distributionId, addresses);
+      SignalDatabase.senderKeyShared().markAsShared(distributionId, addresses);
     }
   }
 
   @Override
   public void clearSenderKeySharedWith(Collection<SignalProtocolAddress> addresses) {
     synchronized (LOCK) {
-      DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(addresses);
+      SignalDatabase.senderKeyShared().deleteAllFor(addresses);
     }
   }
 
   /**
    * Removes all sender key session state for all devices for the provided recipient-distributionId pair.
    */
-  public void deleteAllFor(@NonNull RecipientId recipientId, @NonNull DistributionId distributionId) {
+  public void deleteAllFor(@NonNull String addressName, @NonNull DistributionId distributionId) {
     synchronized (LOCK) {
-      DatabaseFactory.getSenderKeyDatabase(context).deleteAllFor(recipientId, distributionId);
+      SignalDatabase.senderKeys().deleteAllFor(addressName, distributionId);
     }
   }
 
@@ -82,7 +79,7 @@ public final class SignalSenderKeyStore implements SignalServiceSenderKeyStore {
    */
   public void deleteAll() {
     synchronized (LOCK) {
-      DatabaseFactory.getSenderKeyDatabase(context).deleteAll();
+      SignalDatabase.senderKeys().deleteAll();
     }
   }
 }

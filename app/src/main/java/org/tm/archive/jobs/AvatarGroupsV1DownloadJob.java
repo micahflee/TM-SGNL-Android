@@ -3,9 +3,9 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.GroupDatabase.GroupRecord;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
@@ -60,7 +60,7 @@ public final class AvatarGroupsV1DownloadJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    GroupDatabase         database   = DatabaseFactory.getGroupDatabase(context);
+    GroupDatabase         database   = SignalDatabase.groups();
     Optional<GroupRecord> record     = database.getGroup(groupId);
     File                  attachment = null;
 
@@ -89,7 +89,7 @@ public final class AvatarGroupsV1DownloadJob extends BaseJob {
         InputStream                    inputStream = receiver.retrieveAttachment(pointer, attachment, AvatarHelper.AVATAR_DOWNLOAD_FAILSAFE_MAX_SIZE);
 
         AvatarHelper.setAvatar(context, record.get().getRecipientId(), inputStream);
-        DatabaseFactory.getGroupDatabase(context).onAvatarUpdated(groupId, true);
+        SignalDatabase.groups().onAvatarUpdated(groupId, true);
 
         inputStream.close();
       }

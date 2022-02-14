@@ -10,9 +10,10 @@ import org.tm.archive.database.model.StickerRecord
 import org.tm.archive.glide.cache.ApngOptions
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri
 import org.tm.archive.mms.GlideRequests
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingModel
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 
 class KeyboardStickerListAdapter(
   private val glideRequests: GlideRequests,

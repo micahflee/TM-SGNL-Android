@@ -10,9 +10,8 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
-import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.phonenumbers.PhoneNumberFormatter;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.CursorUtil;
@@ -101,9 +100,9 @@ public class ContactRepository {
     }));
   }};
 
-  public ContactRepository(@NonNull Context context) {
-    this.recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    this.noteToSelfTitle   = context.getString(R.string.note_to_self);
+  public ContactRepository(@NonNull Context context, @NonNull String noteToSelfTitle) {
+    this.recipientDatabase = SignalDatabase.recipients();
+    this.noteToSelfTitle   = noteToSelfTitle;
     this.context           = context.getApplicationContext();
   }
 

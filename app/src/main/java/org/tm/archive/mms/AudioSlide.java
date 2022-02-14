@@ -29,10 +29,7 @@ import org.tm.archive.attachments.UriAttachment;
 import org.tm.archive.components.voice.VoiceNoteDraft;
 import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.database.DraftDatabase;
-import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.util.MediaUtil;
-
-import java.util.Objects;
 
 
 public class AudioSlide extends Slide {

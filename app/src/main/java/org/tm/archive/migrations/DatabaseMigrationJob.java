@@ -2,7 +2,7 @@ package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 
@@ -34,7 +34,7 @@ public class DatabaseMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    DatabaseFactory.getInstance(context).triggerDatabaseAccess();
+    SignalDatabase.triggerDatabaseAccess();
   }
 
   @Override

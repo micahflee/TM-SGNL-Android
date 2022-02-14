@@ -5,8 +5,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -136,7 +136,7 @@ public final class PaymentSendJob extends BaseJob {
     Stopwatch stopwatch = new Stopwatch("Payment submission");
 
     Wallet          wallet          = ApplicationDependencies.getPayments().getWallet();
-    PaymentDatabase paymentDatabase = DatabaseFactory.getPaymentDatabase(context);
+    PaymentDatabase paymentDatabase = SignalDatabase.payments();
 
     paymentDatabase.createOutgoingPayment(uuid,
                                           recipientId,

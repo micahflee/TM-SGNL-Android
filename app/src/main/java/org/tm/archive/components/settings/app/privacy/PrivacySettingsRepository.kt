@@ -2,7 +2,7 @@ package org.tm.archive.components.settings.app.privacy
 
 import android.content.Context
 import org.signal.core.util.concurrent.SignalExecutors
-import org.tm.archive.database.DatabaseFactory
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.MultiDeviceConfigurationUpdateJob
 import org.tm.archive.keyvalue.SignalStore
@@ -16,15 +16,15 @@ class PrivacySettingsRepository {
 
   fun getBlockedCount(consumer: (Int) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val recipientDatabase = DatabaseFactory.getRecipientDatabase(context)
+      val recipientDatabase = SignalDatabase.recipients
 
-      consumer(recipientDatabase.blocked.count)
+      consumer(recipientDatabase.getBlocked().count)
     }
   }
 
   fun syncReadReceiptState() {
     SignalExecutors.BOUNDED.execute {
-      DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().id)
+      SignalDatabase.recipients.markNeedsSync(Recipient.self().id)
       StorageSyncHelper.scheduleSyncForDataChange()
       ApplicationDependencies.getJobManager().add(
         MultiDeviceConfigurationUpdateJob(
@@ -40,7 +40,7 @@ class PrivacySettingsRepository {
   fun syncTypingIndicatorsState() {
     val enabled = TextSecurePreferences.isTypingIndicatorsEnabled(context)
 
-    DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().id)
+    SignalDatabase.recipients.markNeedsSync(Recipient.self().id)
     StorageSyncHelper.scheduleSyncForDataChange()
     ApplicationDependencies.getJobManager().add(
       MultiDeviceConfigurationUpdateJob(

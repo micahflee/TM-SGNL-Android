@@ -37,7 +37,6 @@ import org.tm.archive.components.settings.app.privacy.expire.ExpireTimerSettings
 import org.tm.archive.groups.ui.GroupMemberListView;
 import org.tm.archive.groups.ui.creategroup.dialogs.NonGv2MemberDialog;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.mediasend.AvatarSelectionActivity;
 import org.tm.archive.mediasend.Media;
 import org.tm.archive.mms.DecryptableStreamUriLoader;
 import org.tm.archive.mms.GlideApp;
@@ -49,6 +48,7 @@ import org.tm.archive.util.BitmapUtil;
 import org.tm.archive.util.ExpirationUtil;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ViewUtil;
+import org.tm.archive.util.navigation.SafeNavigation;
 import org.tm.archive.util.text.AfterTextChanged;
 import org.tm.archive.util.views.LearnMoreTextView;
 
@@ -104,6 +104,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     View                addLater                 = view.findViewById(R.id.add_later);
     TextView            disappearingMessageValue = view.findViewById(R.id.group_disappearing_messages_value);
 
+    members.initializeAdapter(getViewLifecycleOwner());
     avatarPlaceholder = VectorDrawableCompat.create(getResources(), R.drawable.ic_camera_outline_32_ultramarine, requireActivity().getTheme());
 
     if (savedInstanceState == null) {
@@ -133,7 +134,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
       gv2Warning.setVisibility(nonGv2CapableMembers.isEmpty() ? View.GONE : View.VISIBLE);
       gv2Warning.setText(requireContext().getResources().getQuantityString(R.plurals.AddGroupDetailsFragment__d_members_do_not_support_new_groups_so_this_group_cannot_be_created, nonGv2CapableMembers.size(), nonGv2CapableMembers.size()));
       gv2Warning.setLearnMoreVisible(true);
-      gv2Warning.setOnLinkClickListener(v -> NonGv2MemberDialog.showNonGv2Members(requireContext(), nonGv2CapableMembers));
+      gv2Warning.setOnLinkClickListener(v -> NonGv2MemberDialog.showNonGv2Members(requireContext(), getViewLifecycleOwner(), nonGv2CapableMembers));
     });
     viewModel.getAvatar().observe(getViewLifecycleOwner(), avatarBytes -> {
       if (avatarBytes == null) {
@@ -274,7 +275,7 @@ public class AddGroupDetailsFragment extends LoggingFragment {
   private void showAvatarPicker() {
     Media media = viewModel.getAvatarMedia();
 
-    Navigation.findNavController(requireView()).navigate(AddGroupDetailsFragmentDirections.actionAddGroupDetailsFragmentToAvatarPicker(null, media).setIsNewGroup(true));
+    SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), AddGroupDetailsFragmentDirections.actionAddGroupDetailsFragmentToAvatarPicker(null, media).setIsNewGroup(true));
   }
 
   public interface Callback {

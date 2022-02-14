@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.AppCapabilities;
+import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -13,6 +14,7 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.KbsValues;
 import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.registration.secondary.DeviceNameCipher;
 import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.account.AccountAttributes;
@@ -20,6 +22,7 @@ import org.whispersystems.signalservice.api.crypto.UnidentifiedAccess;
 import org.whispersystems.signalservice.api.push.exceptions.NetworkFailureException;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class RefreshAttributesJob extends BaseJob {
 
@@ -67,7 +70,7 @@ public class RefreshAttributesJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextSecurePreferences.getLocalNumber(context) == null) {
+    if (!SignalStore.account().isRegistered() || SignalStore.account().getE164() == null) {
       Log.w(TAG, "Not yet registered. Skipping.");
       return;
     }
@@ -77,8 +80,8 @@ public class RefreshAttributesJob extends BaseJob {
       return;
     }
 
-    int       registrationId              = TextSecurePreferences.getLocalRegistrationId(context);
-    boolean   fetchesMessages             = TextSecurePreferences.isFcmDisabled(context);
+    int       registrationId              = SignalStore.account().getRegistrationId();
+    boolean   fetchesMessages             = !SignalStore.account().isFcmEnabled();
     byte[]    unidentifiedAccessKey       = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
     boolean   universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
     String    registrationLockV1          = null;
@@ -94,15 +97,20 @@ public class RefreshAttributesJob extends BaseJob {
 
     boolean phoneNumberDiscoverable = SignalStore.phoneNumberPrivacy().getPhoneNumberListingMode().isDiscoverable();
 
+    String deviceName = SignalStore.account().getDeviceName();
+    byte[] encryptedDeviceName = (deviceName == null) ? null : DeviceNameCipher.encryptDeviceName(deviceName.getBytes(StandardCharsets.UTF_8), IdentityKeyUtil.getIdentityKeyPair(context));
+
     AccountAttributes.Capabilities capabilities = AppCapabilities.getCapabilities(kbsValues.hasPin() && !kbsValues.hasOptedOut());
     Log.i(TAG, "Calling setAccountAttributes() reglockV1? " + !TextUtils.isEmpty(registrationLockV1) + ", reglockV2? " + !TextUtils.isEmpty(registrationLockV2) + ", pin? " + kbsValues.hasPin() +
                "\n    Phone number discoverable : " + phoneNumberDiscoverable +
+               "\n    Device Name : " + (encryptedDeviceName != null) +
                "\n  Capabilities:" +
                "\n    Storage? " + capabilities.isStorage() +
                "\n    GV2? " + capabilities.isGv2() +
                "\n    GV1 Migration? " + capabilities.isGv1Migration() +
                "\n    Sender Key? " + capabilities.isSenderKey() +
                "\n    Announcement Groups? " + capabilities.isAnnouncementGroup() +
+               "\n    Change Number? " + capabilities.isChangeNumber() +
                "\n    UUID? " + capabilities.isUuid());
 
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
@@ -110,7 +118,8 @@ public class RefreshAttributesJob extends BaseJob {
                                               registrationLockV1, registrationLockV2,
                                               unidentifiedAccessKey, universalUnidentifiedAccess,
                                               capabilities,
-                                              phoneNumberDiscoverable);
+                                              phoneNumberDiscoverable,
+                                              encryptedDeviceName);
 
     ApplicationDependencies.getJobManager().add(new RefreshOwnProfileJob());
 

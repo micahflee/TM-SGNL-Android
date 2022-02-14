@@ -18,6 +18,7 @@ import androidx.navigation.Navigation;
 import org.tm.archive.R;
 import org.tm.archive.payments.MoneyView;
 import org.tm.archive.util.SpanUtil;
+import org.tm.archive.util.navigation.SafeNavigation;
 import org.tm.archive.util.views.LearnMoreTextView;
 
 public class DeactivateWalletFragment extends Fragment {
@@ -49,7 +50,7 @@ public class DeactivateWalletFragment extends Fragment {
       }
     });
 
-    transferRemainingBalance.setOnClickListener(v -> Navigation.findNavController(requireView()).navigate(R.id.action_deactivateWallet_to_paymentsTransfer));
+    transferRemainingBalance.setOnClickListener(v -> SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), R.id.action_deactivateWallet_to_paymentsTransfer));
 
     toolbar.setNavigationOnClickListener(v -> Navigation.findNavController(requireView()).popBackStack());
 

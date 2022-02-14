@@ -3,7 +3,7 @@ package org.tm.archive.payments.create;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.payments.currency.CurrencyExchange;
-import org.tm.archive.payments.currency.FiatMoney;
+import org.signal.core.util.money.FiatMoney;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.payments.Money;
 

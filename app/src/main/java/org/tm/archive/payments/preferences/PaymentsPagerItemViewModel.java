@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import org.tm.archive.payments.Payment;
 import org.tm.archive.payments.preferences.model.PaymentItem;
-import org.tm.archive.util.MappingModelList;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.livedata.LiveDataUtil;
 
 import java.util.List;

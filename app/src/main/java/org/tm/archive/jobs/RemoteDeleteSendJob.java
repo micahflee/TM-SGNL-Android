@@ -8,31 +8,25 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.NoSuchMessageException;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
-import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
-import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.messages.GroupSendUtil;
+import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.GroupUtil;
-import org.whispersystems.libsignal.util.guava.Optional;
-import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.ContentHint;
-import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
-import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
@@ -62,10 +56,10 @@ public class RemoteDeleteSendJob extends BaseJob {
                                                     boolean isMms)
       throws NoSuchMessageException
   {
-    MessageRecord message = isMms ? DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId)
-                                  : DatabaseFactory.getSmsDatabase(context).getSmsMessage(messageId);
+    MessageRecord message = isMms ? SignalDatabase.mms().getMessageRecord(messageId)
+                                  : SignalDatabase.sms().getSmsMessage(messageId);
 
-    Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
+    Recipient conversationRecipient = SignalDatabase.threads().getRecipientForThreadId(message.getThreadId());
 
     if (conversationRecipient == null) {
       throw new AssertionError("We have a message, but couldn't find the thread!");
@@ -125,15 +119,15 @@ public class RemoteDeleteSendJob extends BaseJob {
     MessageRecord   message;
 
     if (isMms) {
-      db      = DatabaseFactory.getMmsDatabase(context);
-      message = DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
+      db      = SignalDatabase.mms();
+      message = SignalDatabase.mms().getMessageRecord(messageId);
     } else {
-      db      = DatabaseFactory.getSmsDatabase(context);
-      message = DatabaseFactory.getSmsDatabase(context).getSmsMessage(messageId);
+      db      = SignalDatabase.sms();
+      message = SignalDatabase.sms().getSmsMessage(messageId);
     }
 
     long       targetSentTimestamp  = message.getDateSent();
-    Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
+    Recipient conversationRecipient = SignalDatabase.threads().getRecipientForThreadId(message.getThreadId());
 
     if (conversationRecipient == null) {
       throw new AssertionError("We have a message, but couldn't find the thread!");

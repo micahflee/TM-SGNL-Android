@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import org.tm.archive.components.settings.DSLSettingsActivity;
 import org.tm.archive.components.settings.app.AppSettingsActivity;
 import org.tm.archive.conversation.ConversationIntents;
 import org.tm.archive.conversationlist.ConversationListArchiveFragment;

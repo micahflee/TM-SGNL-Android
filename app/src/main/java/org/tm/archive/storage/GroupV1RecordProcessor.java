@@ -6,9 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.recipients.RecipientId;
@@ -28,7 +28,7 @@ public final class GroupV1RecordProcessor extends DefaultStorageRecordProcessor<
   private final RecipientDatabase recipientDatabase;
 
   public GroupV1RecordProcessor(@NonNull Context context) {
-    this(DatabaseFactory.getGroupDatabase(context), DatabaseFactory.getRecipientDatabase(context));
+    this(SignalDatabase.groups(), SignalDatabase.recipients());
   }
 
   GroupV1RecordProcessor(@NonNull GroupDatabase groupDatabase, @NonNull RecipientDatabase recipientDatabase) {
@@ -67,7 +67,7 @@ public final class GroupV1RecordProcessor extends DefaultStorageRecordProcessor<
 
     Optional<RecipientId> recipientId = recipientDatabase.getByGroupId(groupId);
 
-    return recipientId.transform(recipientDatabase::getRecipientSettingsForSync)
+    return recipientId.transform(recipientDatabase::getRecordForSync)
                       .transform(StorageSyncModels::localToRemoteRecord)
                       .transform(r -> r.getGroupV1().get());
   }

@@ -8,7 +8,6 @@ import com.annimon.stream.Stream;
 
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.events.CallParticipantId;
-import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.SetUtil;
 
 import java.util.List;

@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.signal.ringrtc.GroupCall;
+import org.tm.archive.components.webrtc.EglBaseWrapper;
 import org.tm.archive.events.WebRtcViewModel;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.ringrtc.RemotePeer;
@@ -44,7 +45,8 @@ class GroupNetworkUnavailableActionProcessor extends WebRtcActionProcessor {
     byte[]    groupId   = currentState.getCallInfoState().getCallRecipient().requireGroupId().getDecodedId();
     GroupCall groupCall = webRtcInteractor.getCallManager().createGroupCall(groupId,
                                                                             SignalStore.internalValues().groupCallingServer(),
-                                                                            currentState.getVideoState().getLockableEglBase().require(),
+                                                                            new byte[0],
+                                                                            AudioProcessingMethodSelector.get(),
                                                                             webRtcInteractor.getGroupCallObserver());
 
     return currentState.builder()
@@ -60,6 +62,7 @@ class GroupNetworkUnavailableActionProcessor extends WebRtcActionProcessor {
     Log.i(TAG, "handleCancelPreJoinCall():");
 
     WebRtcVideoUtil.deinitializeVideo(currentState);
+    EglBaseWrapper.releaseEglBase(RemotePeer.GROUP_CALL_ID.longValue());
 
     return new WebRtcServiceState(new IdleActionProcessor(webRtcInteractor));
   }

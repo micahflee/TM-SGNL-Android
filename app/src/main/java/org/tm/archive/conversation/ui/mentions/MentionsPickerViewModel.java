@@ -15,7 +15,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.livedata.LiveDataUtil;
 

@@ -5,7 +5,6 @@ import android.content.res.Configuration;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.TextSecurePreferences;
 
 import java.util.Locale;

@@ -3,7 +3,8 @@ package org.tm.archive.components.settings;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.LayoutFactory;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
 
 /**
  * Reusable adapter for generic settings list.

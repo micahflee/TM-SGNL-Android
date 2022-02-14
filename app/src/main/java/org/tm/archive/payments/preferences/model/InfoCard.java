@@ -7,7 +7,7 @@ import androidx.annotation.StringRes;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.PaymentsValues;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 
 import java.util.ArrayList;
 import java.util.List;

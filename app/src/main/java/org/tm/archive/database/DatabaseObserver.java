@@ -3,8 +3,11 @@ package org.tm.archive.database;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
+import org.jetbrains.annotations.NotNull;
 import org.signal.core.util.concurrent.SignalExecutors;
+import org.tm.archive.database.model.MessageId;
 import org.tm.archive.util.concurrent.SerialExecutor;
 
 import java.util.HashMap;
@@ -12,6 +15,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
 /**
@@ -19,18 +23,36 @@ import java.util.concurrent.Executor;
  *
  * A replacement for the observer system in {@link Database}. We should move to this over time.
  */
-public final class DatabaseObserver {
+public class DatabaseObserver {
+
+  private static final String KEY_CONVERSATION          = "Conversation:";
+  private static final String KEY_VERBOSE_CONVERSATION  = "VerboseConversation:";
+  private static final String KEY_CONVERSATION_LIST     = "ConversationList";
+  private static final String KEY_PAYMENT               = "Payment:";
+  private static final String KEY_ALL_PAYMENTS          = "AllPayments";
+  private static final String KEY_CHAT_COLORS           = "ChatColors";
+  private static final String KEY_STICKERS              = "Stickers";
+  private static final String KEY_STICKER_PACKS         = "StickerPacks";
+  private static final String KEY_ATTACHMENTS           = "Attachments";
+  private static final String KEY_MESSAGE_UPDATE        = "MessageUpdate:";
+  private static final String KEY_MESSAGE_INSERT        = "MessageInsert:";
+  private static final String KEY_NOTIFICATION_PROFILES = "NotificationProfiles";
 
   private final Application application;
   private final Executor    executor;
 
-  private final Set<Observer>            conversationListObservers;
-  private final Map<Long, Set<Observer>> conversationObservers;
-  private final Map<Long, Set<Observer>> verboseConversationObservers;
-  private final Map<UUID, Set<Observer>> paymentObservers;
-  private final Set<Observer>            allPaymentsObservers;
-  private final Set<Observer>            chatColorsObservers;
-  private final Set<Observer>            stickerPackObservers;
+  private final Set<Observer>                   conversationListObservers;
+  private final Map<Long, Set<Observer>>        conversationObservers;
+  private final Map<Long, Set<Observer>>        verboseConversationObservers;
+  private final Map<UUID, Set<Observer>>        paymentObservers;
+  private final Set<Observer>                   allPaymentsObservers;
+  private final Set<Observer>                   chatColorsObservers;
+  private final Set<Observer>                   stickerObservers;
+  private final Set<Observer>                   stickerPackObservers;
+  private final Set<Observer>                   attachmentObservers;
+  private final Set<MessageObserver>            messageUpdateObservers;
+  private final Map<Long, Set<MessageObserver>> messageInsertObservers;
+  private final Set<Observer>                   notificationProfileObservers;
 
   public DatabaseObserver(Application application) {
     this.application                  = application;
@@ -41,7 +63,12 @@ public final class DatabaseObserver {
     this.paymentObservers             = new HashMap<>();
     this.allPaymentsObservers         = new HashSet<>();
     this.chatColorsObservers          = new HashSet<>();
+    this.stickerObservers             = new HashSet<>();
     this.stickerPackObservers         = new HashSet<>();
+    this.attachmentObservers          = new HashSet<>();
+    this.messageUpdateObservers       = new HashSet<>();
+    this.messageInsertObservers       = new HashMap<>();
+    this.notificationProfileObservers = new HashSet<>();
   }
 
   public void registerConversationListObserver(@NonNull Observer listener) {
@@ -80,9 +107,39 @@ public final class DatabaseObserver {
     });
   }
 
+  public void registerStickerObserver(@NonNull Observer listener) {
+    executor.execute(() -> {
+      stickerObservers.add(listener);
+    });
+  }
+
   public void registerStickerPackObserver(@NonNull Observer listener) {
     executor.execute(() -> {
       stickerPackObservers.add(listener);
+    });
+  }
+
+  public void registerAttachmentObserver(@NonNull Observer listener) {
+    executor.execute(() -> {
+      attachmentObservers.add(listener);
+    });
+  }
+
+  public void registerMessageUpdateObserver(@NonNull MessageObserver listener) {
+    executor.execute(() -> {
+      messageUpdateObservers.add(listener);
+    });
+  }
+
+  public void registerMessageInsertObserver(long threadId, @NonNull MessageObserver listener) {
+    executor.execute(() -> {
+      registerMapped(messageInsertObservers, threadId, listener);
+    });
+  }
+
+  public void registerNotificationProfileObserver(@NotNull Observer listener) {
+    executor.execute(() -> {
+      notificationProfileObservers.add(listener);
     });
   }
 
@@ -93,56 +150,43 @@ public final class DatabaseObserver {
       unregisterMapped(verboseConversationObservers, listener);
       unregisterMapped(paymentObservers, listener);
       chatColorsObservers.remove(listener);
+      stickerObservers.remove(listener);
       stickerPackObservers.remove(listener);
+      attachmentObservers.remove(listener);
+      notificationProfileObservers.remove(listener);
+    });
+  }
+
+  public void unregisterObserver(@NonNull MessageObserver listener) {
+    executor.execute(() -> {
+      messageUpdateObservers.remove(listener);
+      unregisterMapped(messageInsertObservers, listener);
     });
   }
 
   public void notifyConversationListeners(Set<Long> threadIds) {
-    executor.execute(() -> {
-      for (long threadId : threadIds) {
-        notifyMapped(conversationObservers, threadId);
-        notifyMapped(verboseConversationObservers, threadId);
-      }
-
-      for (long threadId : threadIds) {
-        application.getContentResolver().notifyChange(DatabaseContentProviders.Conversation.getUriForThread(threadId), null);
-        application.getContentResolver().notifyChange(DatabaseContentProviders.Conversation.getVerboseUriForThread(threadId), null);
-      }
-    });
+    for (long threadId : threadIds) {
+      notifyConversationListeners(threadId);
+    }
   }
 
   public void notifyConversationListeners(long threadId) {
-    executor.execute(() -> {
+    runPostSuccessfulTransaction(KEY_CONVERSATION + threadId, () -> {
       notifyMapped(conversationObservers, threadId);
       notifyMapped(verboseConversationObservers, threadId);
-
-      application.getContentResolver().notifyChange(DatabaseContentProviders.Conversation.getUriForThread(threadId), null);
-      application.getContentResolver().notifyChange(DatabaseContentProviders.Conversation.getVerboseUriForThread(threadId), null);
     });
   }
 
   public void notifyVerboseConversationListeners(Set<Long> threadIds) {
-    executor.execute(() -> {
-      for (long threadId : threadIds) {
+    for (long threadId : threadIds) {
+      runPostSuccessfulTransaction(KEY_VERBOSE_CONVERSATION + threadId, () -> {
         notifyMapped(verboseConversationObservers, threadId);
-      }
-
-      for (long threadId : threadIds) {
-        application.getContentResolver().notifyChange(DatabaseContentProviders.Conversation.getVerboseUriForThread(threadId), null);
-      }
-    });
-  }
-
-  public void notifyVerboseConversationListeners(long threadId) {
-    executor.execute(() -> {
-      notifyMapped(verboseConversationObservers, threadId);
-
-      application.getContentResolver().notifyChange(DatabaseContentProviders.Conversation.getVerboseUriForThread(threadId), null);
-    });
+      });
+    }
   }
 
   public void notifyConversationListListeners() {
-    executor.execute(() -> {
+    runPostSuccessfulTransaction(KEY_CONVERSATION_LIST, () -> {
       for (Observer listener : conversationListObservers) {
         listener.onChanged();
       }
@@ -150,35 +194,73 @@ public final class DatabaseObserver {
   }
 
   public void notifyPaymentListeners(@NonNull UUID paymentId) {
-    executor.execute(() -> {
+    runPostSuccessfulTransaction(KEY_PAYMENT + paymentId.toString(), () -> {
       notifyMapped(paymentObservers, paymentId);
     });
   }
 
   public void notifyAllPaymentsListeners() {
-    executor.execute(() -> {
+    runPostSuccessfulTransaction(KEY_ALL_PAYMENTS, () -> {
       notifySet(allPaymentsObservers);
     });
   }
 
   public void notifyChatColorsListeners() {
-    executor.execute(() -> {
+    runPostSuccessfulTransaction(KEY_CHAT_COLORS, () -> {
       for (Observer chatColorsObserver : chatColorsObservers) {
         chatColorsObserver.onChanged();
       }
     });
   }
 
-  public void notifyStickerPackObservers() {
-    executor.execute(() -> {
-      notifySet(stickerPackObservers);
-
-      application.getContentResolver().notifyChange(DatabaseContentProviders.StickerPack.CONTENT_URI, null);
+  public void notifyStickerObservers() {
+    runPostSuccessfulTransaction(KEY_STICKERS, () -> {
+      notifySet(stickerObservers);
     });
   }
 
-  private <K> void registerMapped(@NonNull Map<K, Set<Observer>> map, @NonNull K key, @NonNull Observer listener) {
-    Set<Observer> listeners = map.get(key);
+  public void notifyStickerPackObservers() {
+    runPostSuccessfulTransaction(KEY_STICKER_PACKS, () -> {
+      notifySet(stickerPackObservers);
+    });
+  }
+
+  public void notifyAttachmentObservers() {
+    runPostSuccessfulTransaction(KEY_ATTACHMENTS, () -> {
+      notifySet(attachmentObservers);
+    });
+  }
+
+  public void notifyMessageUpdateObservers(@NonNull MessageId messageId) {
+    runPostSuccessfulTransaction(KEY_MESSAGE_UPDATE + messageId.toString(), () -> {
+      messageUpdateObservers.stream().forEach(l -> l.onMessageChanged(messageId));
+    });
+  }
+
+  public void notifyMessageInsertObservers(long threadId, @NonNull MessageId messageId) {
+    runPostSuccessfulTransaction(KEY_MESSAGE_INSERT + messageId, () -> {
+      Set<MessageObserver> listeners = messageInsertObservers.get(threadId);
+
+      if (listeners != null) {
+        listeners.stream().forEach(l -> l.onMessageChanged(messageId));
+      }
+    });
+  }
+
+  public void notifyNotificationProfileObservers() {
+    runPostSuccessfulTransaction(KEY_NOTIFICATION_PROFILES, () -> {
+      notifySet(notificationProfileObservers);
+    });
+  }
+
+  private void runPostSuccessfulTransaction(@NonNull String dedupeKey, @NonNull Runnable runnable) {
+    SignalDatabase.runPostSuccessfulTransaction(dedupeKey, () -> {
+      executor.execute(runnable);
+    });
+  }
+
+  private <K, V> void registerMapped(@NonNull Map<K, Set<V>> map, @NonNull K key, @NonNull V listener) {
+    Set<V> listeners = map.get(key);
 
     if (listeners == null) {
       listeners = new HashSet<>();
@@ -188,8 +270,8 @@ public final class DatabaseObserver {
     map.put(key, listeners);
   }
 
-  private <K> void unregisterMapped(@NonNull Map<K, Set<Observer>> map, @NonNull Observer listener) {
-    for (Map.Entry<K, Set<Observer>> entry : map.entrySet()) {
+  private <K, V> void unregisterMapped(@NonNull Map<K, Set<V>> map, @NonNull V listener) {
+    for (Map.Entry<K, Set<V>> entry : map.entrySet()) {
       entry.getValue().remove(listener);
     }
   }
@@ -204,9 +286,24 @@ public final class DatabaseObserver {
     }
   }
 
-  public static void notifySet(@NonNull Set<Observer> set) {
+  private static void notifySet(@NonNull Set<Observer> set) {
     for (final Observer observer : set) {
       observer.onChanged();
+    }
+  }
+
+  /**
+   * Blocks until the executor is empty. Only intended to be used for testing.
+   */
+  @VisibleForTesting
+  void flush() {
+    CountDownLatch latch = new CountDownLatch(1);
+    executor.execute(latch::countDown);
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      throw new AssertionError();
     }
   }
 
@@ -216,5 +313,9 @@ public final class DatabaseObserver {
      * long-running tasks!
      */
     void onChanged();
+  }
+
+  public interface MessageObserver {
+    void onMessageChanged(@NonNull MessageId messageId);
   }
 }

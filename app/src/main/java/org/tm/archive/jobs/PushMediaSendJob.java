@@ -11,16 +11,17 @@ import org.archiver.ArchiveUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MessageDatabase.SyncMessageId;
 import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.RecipientDatabase.UnidentifiedAccessMode;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.MmsException;
 import org.tm.archive.mms.OutgoingMediaMessage;
 import org.tm.archive.recipients.Recipient;
@@ -30,7 +31,6 @@ import org.tm.archive.service.ExpiringMessageManager;
 import org.tm.archive.transport.InsecureFallbackApprovalException;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.transport.UndeliverableMessageException;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
@@ -42,7 +42,6 @@ import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage.Preview;
-import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import org.whispersystems.signalservice.api.messages.shared.SharedContact;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.ProofRequiredException;
@@ -64,8 +63,8 @@ public class PushMediaSendJob extends PushSendJob {
 
   private long messageId;
 
-  public PushMediaSendJob(long messageId, @NonNull Recipient recipient) {
-    this(constructParameters(recipient, true), messageId);
+  public PushMediaSendJob(long messageId, @NonNull Recipient recipient, boolean hasMedia) {
+    this(constructParameters(recipient, hasMedia), messageId);
   }
 
   private PushMediaSendJob(Job.Parameters parameters, long messageId) {
@@ -80,15 +79,15 @@ public class PushMediaSendJob extends PushSendJob {
         throw new AssertionError();
       }
 
-      MessageDatabase      database            = DatabaseFactory.getMmsDatabase(context);
+      MessageDatabase      database            = SignalDatabase.mms();
       OutgoingMediaMessage message             = database.getOutgoingMessage(messageId);
       Set<String>          attachmentUploadIds = enqueueCompressingAndUploadAttachmentsChains(jobManager, message);
 
-      jobManager.add(new PushMediaSendJob(messageId, recipient), attachmentUploadIds, recipient.getId().toQueueKey());
+      jobManager.add(new PushMediaSendJob(messageId, recipient, attachmentUploadIds.size() > 0), attachmentUploadIds, recipient.getId().toQueueKey());
 
     } catch (NoSuchMessageException | MmsException e) {
       Log.w(TAG, "Failed to enqueue message.", e);
-      DatabaseFactory.getMmsDatabase(context).markAsSentFailed(messageId);
+      SignalDatabase.mms().markAsSentFailed(messageId);
       notifyMediaMessageDeliveryFailed(context, messageId);
     }
   }
@@ -105,7 +104,7 @@ public class PushMediaSendJob extends PushSendJob {
 
   @Override
   public void onAdded() {
-    DatabaseFactory.getMmsDatabase(context).markAsSending(messageId);
+    SignalDatabase.mms().markAsSending(messageId);
   }
 
   @Override
@@ -113,7 +112,7 @@ public class PushMediaSendJob extends PushSendJob {
       throws IOException, MmsException, NoSuchMessageException, UndeliverableMessageException, RetryLaterException
   {
     ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
-    MessageDatabase        database          = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase        database          = SignalDatabase.mms();
     OutgoingMediaMessage   message           = database.getOutgoingMessage(messageId);
     long                   threadId          = database.getMessageRecord(messageId).getThreadId();
 
@@ -141,20 +140,20 @@ public class PushMediaSendJob extends PushSendJob {
 
       if (recipient.isSelf()) {
         SyncMessageId id = new SyncMessageId(recipient.getId(), message.getSentTimeMillis());
-        DatabaseFactory.getMmsSmsDatabase(context).incrementDeliveryReceiptCount(id, System.currentTimeMillis());
-        DatabaseFactory.getMmsSmsDatabase(context).incrementReadReceiptCount(id, System.currentTimeMillis());
-        DatabaseFactory.getMmsSmsDatabase(context).incrementViewedReceiptCount(id, System.currentTimeMillis());
+        SignalDatabase.mmsSms().incrementDeliveryReceiptCount(id, System.currentTimeMillis());
+        SignalDatabase.mmsSms().incrementReadReceiptCount(id, System.currentTimeMillis());
+        SignalDatabase.mmsSms().incrementViewedReceiptCount(id, System.currentTimeMillis());
       }
 
       if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN && profileKey == null) {
         log(TAG, String.valueOf(message.getSentTimeMillis()), "Marking recipient as UD-unrestricted following a UD send.");
-        DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
+        SignalDatabase.recipients().setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.UNRESTRICTED);
       } else if (unidentified && accessMode == UnidentifiedAccessMode.UNKNOWN) {
         log(TAG, String.valueOf(message.getSentTimeMillis()), "Marking recipient as UD-enabled following a UD send.");
-        DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
+        SignalDatabase.recipients().setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.ENABLED);
       } else if (!unidentified && accessMode != UnidentifiedAccessMode.DISABLED) {
         log(TAG, String.valueOf(message.getSentTimeMillis()), "Marking recipient as UD-disabled following a non-UD send.");
-        DatabaseFactory.getRecipientDatabase(context).setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
+        SignalDatabase.recipients().setUnidentifiedAccessMode(recipient.getId(), UnidentifiedAccessMode.DISABLED);
       }
 
       if (message.getExpiresIn() > 0 && !message.isExpirationUpdate()) {
@@ -163,7 +162,7 @@ public class PushMediaSendJob extends PushSendJob {
       }
 
       if (message.isViewOnce()) {
-        DatabaseFactory.getAttachmentDatabase(context).deleteAttachmentFilesForViewOnceMessage(messageId);
+        SignalDatabase.attachments().deleteAttachmentFilesForViewOnceMessage(messageId);
       }
 
       log(TAG, String.valueOf(message.getSentTimeMillis()), "Sent message: " + messageId);
@@ -180,13 +179,13 @@ public class PushMediaSendJob extends PushSendJob {
       database.markAsSentFailed(messageId);
       RetrieveProfileJob.enqueue(recipientId);
     } catch (ProofRequiredException e) {
-      handleProofRequiredException(e, DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId), threadId, messageId, true);
+      handleProofRequiredException(e, SignalDatabase.threads().getRecipientForThreadId(threadId), threadId, messageId, true);
     }
   }
 
   @Override
   public void onFailure() {
-    DatabaseFactory.getMmsDatabase(context).markAsSentFailed(messageId);
+    SignalDatabase.mms().markAsSentFailed(messageId);
     notifyMediaMessageDeliveryFailed(context, messageId);
   }
 
@@ -229,16 +228,14 @@ public class PushMediaSendJob extends PushSendJob {
                                                                                             .asExpirationUpdate(message.isExpirationUpdate())
                                                                                             .build();
 
-      if (Util.equals(TextSecurePreferences.getLocalUuid(context), address.getUuid())) {
-        Optional<UnidentifiedAccessPair> syncAccess  = UnidentifiedAccessUtil.getAccessForSync(context);
-        SignalServiceSyncMessage         syncMessage = buildSelfSendSyncMessage(context, mediaMessage, syncAccess);
-
-        SendMessageResult result = messageSender.sendSyncMessage(syncMessage, syncAccess);
-        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, new MessageId(messageId, true));
+      if (Util.equals(SignalStore.account().getAci(), address.getAci())) {
+        Optional<UnidentifiedAccessPair> syncAccess = UnidentifiedAccessUtil.getAccessForSync(context);
+        SendMessageResult                result     = messageSender.sendSyncMessage(mediaMessage);
+        SignalDatabase.messageLog().insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, new MessageId(messageId, true));
         return syncAccess.isPresent();
       } else {
         SendMessageResult result = messageSender.sendDataMessage(address, UnidentifiedAccessUtil.getAccessFor(context, messageRecipient), ContentHint.RESENDABLE, mediaMessage, IndividualSendEvents.EMPTY);
-        DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, new MessageId(messageId, true));
+        SignalDatabase.messageLog().insertIfPossible(messageRecipient.getId(), message.getSentTimeMillis(), result, ContentHint.RESENDABLE, new MessageId(messageId, true));
         return result.getSuccess().isUnidentified();
       }
     } catch (UnregisteredUserException e) {

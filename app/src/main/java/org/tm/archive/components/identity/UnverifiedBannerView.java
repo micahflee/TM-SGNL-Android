@@ -16,7 +16,7 @@ import androidx.annotation.RequiresApi;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.database.IdentityDatabase.IdentityRecord;
+import org.tm.archive.database.model.IdentityRecord;
 
 import java.util.List;
 

@@ -15,8 +15,8 @@ import androidx.fragment.app.FragmentManager;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.ParcelableGroupId;
 import org.tm.archive.groups.ui.GroupMemberListView;
@@ -30,7 +30,6 @@ import java.util.List;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
@@ -68,6 +67,7 @@ public final class ShowAdminsBottomSheetDialog extends BottomSheetDialogFragment
     disposables.bindTo(getViewLifecycleOwner().getLifecycle());
 
     GroupMemberListView list = view.findViewById(R.id.show_admin_list);
+    list.initializeAdapter(getViewLifecycleOwner());
     list.setDisplayOnlyMembers(Collections.emptyList());
 
     list.setRecipientClickListener(recipient -> {
@@ -92,9 +92,9 @@ public final class ShowAdminsBottomSheetDialog extends BottomSheetDialogFragment
 
   @WorkerThread
   private static @NonNull List<Recipient> getAdmins(@NonNull Context context, @NonNull GroupId groupId) {
-    return DatabaseFactory.getGroupDatabase(context)
-                          .getGroup(groupId)
-                          .transform(GroupDatabase.GroupRecord::getAdmins)
-                          .or(Collections.emptyList());
+    return SignalDatabase.groups()
+                         .getGroup(groupId)
+                         .transform(GroupDatabase.GroupRecord::getAdmins)
+                         .or(Collections.emptyList());
   }
 }

@@ -96,8 +96,7 @@
     android:roundIcon="@mipmap/ic_launcher_round"
     tools:replace="android:allowBackup,android:supportsRtl"
    -->
-    <application android:name=".ApplicationContext"
-                android:icon="@mipmap/ic_launcher_round"
+    <application android:name="org.tm.archive.ApplicationContext"                android:icon="@mipmap/ic_launcher_round"
                  android:roundIcon="@mipmap/ic_launcher_round"
                  android:label="@string/app_name"
                  android:supportsRtl="true"
@@ -107,11 +106,14 @@
                  android:theme="@style/TextSecure.LightTheme"
                  android:largeHeap="true">
 
-    <!--//**TM_SA**// start-->
+    <meta-data
+            android:name="com.google.android.gms.wallet.api.enabled"
+            android:value="true" />
+        <!--//**TM_SA**// start-->
     <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAVa3EZMZWSbiUAfgiJTb-7Ljo0se6YWys"/>
-    <!--//**TM_SA**// End-->
+        <!--//**TM_SA**// End-->
 
     <meta-data android:name="android.supports_size_changes"
                android:value="true" />
@@ -126,7 +128,7 @@
     <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
     <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
 
-    <activity android:name=".WebRtcCallActivity"
+    <activity android:name="org.tm.archive.WebRtcCallActivity"
               android:theme="@style/TextSecure.DarkTheme.WebRTCCall"
               android:excludeFromRecents="true"
               android:supportsPictureInPicture="true"
@@ -136,27 +138,27 @@
               android:resizeableActivity="true"
               android:launchMode="singleTask"/>
 
-    <activity android:name=".messagerequests.CalleeMustAcceptMessageRequestActivity"
+    <activity android:name="org.tm.archive.messagerequests.CalleeMustAcceptMessageRequestActivity"
               android:theme="@style/TextSecure.DarkNoActionBar"
               android:noHistory="true"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".InviteActivity"
+    <activity android:name="org.tm.archive.InviteActivity"
               android:theme="@style/Signal.Light.NoActionBar.Invite"
               android:windowSoftInputMode="stateHidden"
-              android:parentActivityName=".MainActivity"
+              android:parentActivityName="org.tm.archive.MainActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
         <meta-data
             android:name="android.support.PARENT_ACTIVITY"
-            android:value=".MainActivity" />
+            android:value="org.tm.archive.MainActivity" />
     </activity>
 
-    <activity android:name=".PromptMmsActivity"
+    <activity android:name="org.tm.archive.PromptMmsActivity"
               android:label="Configure MMS Settings"
               android:windowSoftInputMode="stateUnchanged"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".DeviceProvisioningActivity"
+    <activity android:name="org.tm.archive.DeviceProvisioningActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
@@ -174,17 +176,16 @@
         </intent-filter>
     </activity>
 
-    <activity android:name=".preferences.MmsPreferencesActivity"
+    <activity android:name="org.tm.archive.preferences.MmsPreferencesActivity"
                android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".sharing.interstitial.ShareInterstitialActivity"
+    <activity android:name="org.tm.archive.sharing.interstitial.ShareInterstitialActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:windowSoftInputMode="adjustResize" />
 
-    <activity android:name=".sharing.ShareActivity"
+    <activity android:name="org.tm.archive.sharing.ShareActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:excludeFromRecents="true"
-              android:launchMode="singleTask"
               android:taskAffinity=""
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize">
@@ -213,7 +214,7 @@
 
     </activity>
 
-    <activity android:name=".stickers.StickerPackPreviewActivity"
+    <activity android:name="org.tm.archive.stickers.StickerPackPreviewActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:launchMode="singleTask"
               android:noHistory="true"
@@ -237,7 +238,7 @@
     </activity>
 
     <activity-alias android:name=".RoutingActivity"
-                    android:targetActivity=".MainActivity"
+                    android:targetActivity="org.tm.archive.MainActivity"
                     android:exported="true">
 
         <intent-filter>
@@ -256,7 +257,7 @@
 
     </activity-alias>
 
-    <activity android:name=".deeplinks.DeepLinkEntryActivity"
+    <activity android:name="org.tm.archive.deeplinks.DeepLinkEntryActivity"
               android:noHistory="true"
               android:theme="@style/Signal.Transparent">
 
@@ -298,24 +299,24 @@
         </intent-filter>
     </activity>
 
-    <activity android:name=".conversation.ConversationActivity"
+    <activity android:name="org.tm.archive.conversation.ConversationActivity"
               android:windowSoftInputMode="stateUnchanged"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-              android:parentActivityName=".MainActivity">
+              android:parentActivityName="org.tm.archive.MainActivity">
         <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="org.tm.archive.MainActivity" />
     </activity>
 
-    <activity android:name=".conversation.BubbleConversationActivity"
+    <activity android:name="org.tm.archive.conversation.BubbleConversationActivity"
               android:theme="@style/Signal.DayNight"
               android:allowEmbedded="true"
               android:resizeableActivity="true" />
 
-    <activity android:name=".longmessage.LongMessageActivity" />
+    <activity android:name="org.tm.archive.longmessage.LongMessageActivity" />
 
-    <activity android:name=".conversation.ConversationPopupActivity"
+    <activity android:name="org.tm.archive.conversation.ConversationPopupActivity"
               android:windowSoftInputMode="stateVisible"
               android:launchMode="singleTask"
               android:taskAffinity=""
@@ -323,71 +324,73 @@
               android:theme="@style/TextSecure.LightTheme.Popup"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-    <activity android:name=".messagedetails.MessageDetailsActivity"
+    <activity android:name="org.tm.archive.messagedetails.MessageDetailsActivity"
               android:windowSoftInputMode="stateHidden"
               android:launchMode="singleTask"
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+              android:theme="@style/Signal.DayNight.NoActionBar" />
 
-    <activity android:name=".groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity"
+    <activity android:name="org.tm.archive.groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize|uiMode"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar" />
 
-    <activity android:name=".recipients.ui.disappearingmessages.RecipientDisappearingMessagesActivity"
+    <activity android:name="org.tm.archive.recipients.ui.disappearingmessages.RecipientDisappearingMessagesActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:theme="@style/Signal.DayNight.NoActionBar"
               android:windowSoftInputMode="adjustResize"/>
 
-    <activity android:name=".DatabaseMigrationActivity"
+    <activity android:name="org.tm.archive.DatabaseMigrationActivity"
               android:theme="@style/NoAnimation.Theme.AppCompat.Light.DarkActionBar"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".migrations.ApplicationMigrationActivity"
+    <activity android:name="org.tm.archive.migrations.ApplicationMigrationActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-      <activity android:name=".PassphraseCreateActivity"
+      <activity android:name="org.tm.archive.PassphraseCreateActivity"
               android:label="@string/AndroidManifest__create_passphrase"
               android:windowSoftInputMode="stateUnchanged"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".PassphrasePromptActivity"
+    <activity android:name="org.tm.archive.PassphrasePromptActivity"
               android:launchMode="singleTask"
               android:theme="@style/TextSecure.LightIntroTheme"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".NewConversationActivity"
+    <activity android:name="org.tm.archive.NewConversationActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:windowSoftInputMode="stateAlwaysVisible"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".PushContactSelectionActivity"
+    <activity android:name="org.tm.archive.PushContactSelectionActivity"
           android:label="@string/AndroidManifest__select_contacts"
           android:windowSoftInputMode="stateHidden"
           android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".giph.ui.GiphyActivity"
+    <activity android:name="org.tm.archive.giph.ui.GiphyActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".mediasend.MediaSendActivity"
-              android:theme="@style/TextSecure.FullScreenMedia"
-              android:windowSoftInputMode="stateHidden"
-              android:launchMode="singleTop"
-              android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+        <activity android:name="org.tm.archive.mediasend.v2.MediaSelectionActivity"
+            android:theme="@style/TextSecure.FullScreenMedia"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustNothing"
+            android:launchMode="singleTop"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".PassphraseChangeActivity"
+    <activity android:name="org.tm.archive.PassphraseChangeActivity"
               android:label="@string/AndroidManifest__change_passphrase"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".VerifyIdentityActivity"
+    <activity android:name="org.tm.archive.verify.VerifyIdentityActivity"
+              android:theme="@style/Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".components.settings.app.AppSettingsActivity"
+    <activity android:name="org.tm.archive.components.settings.app.AppSettingsActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:theme="@style/Signal.DayNight.NoActionBar"
               android:windowSoftInputMode="adjustResize">
@@ -397,77 +400,81 @@
         </intent-filter>
     </activity>
 
-        <activity android:name=".components.settings.conversation.ConversationSettingsActivity"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
+        <activity android:name="org.tm.archive.components.settings.app.changenumber.ChangeNumberLockActivity"
+            android:theme="@style/Signal.DayNight.NoActionBar"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
+        <activity android:name="org.tm.archive.components.settings.conversation.ConversationSettingsActivity"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|screenLayout|screenSize"
             android:theme="@style/Signal.DayNight.ConversationSettings"
             android:windowSoftInputMode="stateAlwaysHidden">
         </activity>
 
 
-        <activity android:name=".wallpaper.ChatWallpaperActivity"
+        <activity android:name="org.tm.archive.wallpaper.ChatWallpaperActivity"
                   android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
                   android:windowSoftInputMode="stateAlwaysHidden">
         </activity>
 
-        <activity android:name=".wallpaper.ChatWallpaperPreviewActivity"
+        <activity android:name="org.tm.archive.wallpaper.ChatWallpaperPreviewActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:windowSoftInputMode="stateAlwaysHidden">
         </activity>
 
-        <activity android:name=".devicetransfer.olddevice.OldDeviceTransferActivity"
+        <activity android:name="org.tm.archive.devicetransfer.olddevice.OldDeviceTransferActivity"
             android:theme="@style/TextSecure.LightRegistrationTheme"
             android:launchMode="singleTask"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-        <activity android:name=".devicetransfer.olddevice.OldDeviceExitActivity"
+        <activity android:name="org.tm.archive.devicetransfer.olddevice.OldDeviceExitActivity"
             android:noHistory="true"
             android:excludeFromRecents="true"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".registration.RegistrationNavigationActivity"
+    <activity android:name="org.tm.archive.registration.RegistrationNavigationActivity"
               android:launchMode="singleTask"
               android:theme="@style/TextSecure.LightRegistrationTheme"
-              android:windowSoftInputMode="stateUnchanged"
+              android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".revealable.ViewOnceMessageActivity"
+    <activity android:name="org.tm.archive.revealable.ViewOnceMessageActivity"
               android:launchMode="singleTask"
               android:theme="@style/TextSecure.FullScreenMedia"
               android:windowSoftInputMode="stateHidden"
               android:excludeFromRecents="true"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".stickers.StickerManagementActivity"
+    <activity android:name="org.tm.archive.stickers.StickerManagementActivity"
               android:launchMode="singleTask"
               android:theme="@style/TextSecure.LightTheme"
               android:windowSoftInputMode="stateUnchanged"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-     <activity android:name=".DeviceActivity"
+     <activity android:name="org.tm.archive.DeviceActivity"
                android:label="@string/AndroidManifest__linked_devices"
                android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".logsubmit.SubmitDebugLogActivity"
+    <activity android:name="org.tm.archive.logsubmit.SubmitDebugLogActivity"
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".MediaPreviewActivity"
+    <activity android:name="org.tm.archive.MediaPreviewActivity"
               android:label="@string/AndroidManifest__media_preview"
               android:windowSoftInputMode="stateHidden"
               android:launchMode="singleTask"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".AvatarPreviewActivity"
+    <activity android:name="org.tm.archive.AvatarPreviewActivity"
               android:label="@string/AndroidManifest__media_preview"
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".mediaoverview.MediaOverviewActivity"
+    <activity android:name="org.tm.archive.mediaoverview.MediaOverviewActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:windowSoftInputMode="stateHidden"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".DummyActivity"
+    <activity android:name="org.tm.archive.DummyActivity"
               android:theme="@android:style/Theme.NoDisplay"
               android:enabled="true"
               android:allowTaskReparenting="true"
@@ -478,11 +485,11 @@
               android:clearTaskOnLaunch="true"
               android:finishOnTaskLaunch="true" />
 
-    <activity android:name=".PlayServicesProblemActivity"
+    <activity android:name="org.tm.archive.PlayServicesProblemActivity"
               android:theme="@style/TextSecure.DialogActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".SmsSendtoActivity">
+    <activity android:name="org.tm.archive.SmsSendtoActivity">
         <intent-filter>
             <action android:name="android.intent.action.SENDTO" />
             <action android:name="android.intent.action.VIEW" />
@@ -496,7 +503,7 @@
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
-            <data android:mimeType="vnd.android.cursor.item/vnd.org.tm.archive.contact" />
+            <data android:mimeType="vnd.android.cursor.item/vnd.archive.contact" />
         </intent-filter>
     </activity>
 
@@ -510,133 +517,133 @@
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
-            <data android:mimeType="vnd.android.cursor.item/vnd.org.tm.archive.call" />
+            <data android:mimeType="vnd.android.cursor.item/vnd.archive.call" />
         </intent-filter>
 
     </activity>
 
-    <activity android:name=".mediasend.AvatarSelectionActivity"
+    <activity android:name="org.tm.archive.mediasend.AvatarSelectionActivity"
               android:theme="@style/TextSecure.FullScreenMedia"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".blocked.BlockedUsersActivity"
+    <activity android:name="org.tm.archive.blocked.BlockedUsersActivity"
               android:theme="@style/TextSecure.LightTheme"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".scribbles.ImageEditorStickerSelectActivity"
+    <activity android:name="org.tm.archive.scribbles.ImageEditorStickerSelectActivity"
               android:theme="@style/Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".profiles.edit.EditProfileActivity"
+    <activity android:name="org.tm.archive.profiles.edit.EditProfileActivity"
               android:theme="@style/TextSecure.LightRegistrationTheme"
               android:windowSoftInputMode="stateVisible|adjustResize" />
 
-    <activity android:name=".profiles.manage.ManageProfileActivity"
+    <activity android:name="org.tm.archive.profiles.manage.ManageProfileActivity"
               android:theme="@style/TextSecure.LightTheme"
               android:windowSoftInputMode="stateVisible|adjustResize" />
 
-    <activity android:name=".payments.preferences.PaymentsActivity"
+    <activity android:name="org.tm.archive.payments.preferences.PaymentsActivity"
             android:theme="@style/TextSecure.LightRegistrationTheme"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".lock.v2.CreateKbsPinActivity"
-            android:theme="@style/TextSecure.LightRegistrationTheme"
-            android:windowSoftInputMode="adjustResize"
-            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
-
-    <activity android:name=".lock.v2.KbsMigrationActivity"
+    <activity android:name="org.tm.archive.lock.v2.CreateKbsPinActivity"
             android:theme="@style/TextSecure.LightRegistrationTheme"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".ClearAvatarPromptActivity"
+    <activity android:name="org.tm.archive.lock.v2.KbsMigrationActivity"
+            android:theme="@style/TextSecure.LightRegistrationTheme"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
+
+    <activity android:name="org.tm.archive.ClearAvatarPromptActivity"
               android:theme="@style/Theme.AppCompat.Dialog.Alert"
               android:icon="@drawable/clear_profile_avatar"
               android:label="@string/AndroidManifest_remove_photo"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".contacts.TurnOffContactJoinedNotificationsActivity"
+    <activity android:name="org.tm.archive.contacts.TurnOffContactJoinedNotificationsActivity"
               android:theme="@style/Theme.AppCompat.Dialog.Alert" />
 
-    <activity android:name=".messagerequests.MessageRequestMegaphoneActivity"
+    <activity android:name="org.tm.archive.messagerequests.MessageRequestMegaphoneActivity"
               android:theme="@style/TextSecure.LightRegistrationTheme"
               android:windowSoftInputMode="adjustResize"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".contactshare.ContactShareEditActivity"
+    <activity android:name="org.tm.archive.contactshare.ContactShareEditActivity"
               android:theme="@style/TextSecure.LightTheme"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".contactshare.ContactNameEditActivity"
+    <activity android:name="org.tm.archive.contactshare.ContactNameEditActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".contactshare.SharedContactDetailsActivity"
+    <activity android:name="org.tm.archive.contactshare.SharedContactDetailsActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".ShortcutLauncherActivity"
+    <activity android:name="org.tm.archive.ShortcutLauncherActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:exported="true"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
     <activity
-            android:name=".maps.PlacePickerActivity"
+            android:name="org.tm.archive.maps.PlacePickerActivity"
             android:label="@string/PlacePickerActivity_title"
             android:theme="@style/Theme.Signal.DayNight.NoActionBar"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <activity android:name=".MainActivity"
+    <activity android:name="org.tm.archive.MainActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-    <activity android:name=".pin.PinRestoreActivity"
+    <activity android:name="org.tm.archive.pin.PinRestoreActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-    <activity android:name=".groups.ui.creategroup.CreateGroupActivity"
+    <activity android:name="org.tm.archive.groups.ui.creategroup.CreateGroupActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar" />
 
-    <activity android:name=".groups.ui.addtogroup.AddToGroupsActivity"
+    <activity android:name="org.tm.archive.groups.ui.addtogroup.AddToGroupsActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar" />
 
-    <activity android:name=".groups.ui.addmembers.AddMembersActivity"
+    <activity android:name="org.tm.archive.groups.ui.addmembers.AddMembersActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar" />
 
-    <activity android:name=".groups.ui.creategroup.details.AddGroupDetailsActivity"
+    <activity android:name="org.tm.archive.groups.ui.creategroup.details.AddGroupDetailsActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar" />
 
-    <activity android:name=".groups.ui.chooseadmin.ChooseNewAdminActivity"
+    <activity android:name="org.tm.archive.groups.ui.chooseadmin.ChooseNewAdminActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize" />
 
-    <activity android:name=".megaphone.ClientDeprecatedActivity"
+    <activity android:name="org.tm.archive.megaphone.ClientDeprecatedActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize|uiMode"
               android:launchMode="singleTask" />
 
-    <activity android:name=".ratelimit.RecaptchaProofActivity"
+    <activity android:name="org.tm.archive.ratelimit.RecaptchaProofActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize|uiMode" />
 
-    <activity android:name=".wallpaper.crop.WallpaperImageSelectionActivity"
+    <activity android:name="org.tm.archive.wallpaper.crop.WallpaperImageSelectionActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:theme="@style/TextSecure.FullScreenMedia" />
 
-    <activity android:name=".wallpaper.crop.WallpaperCropActivity"
+    <activity android:name="org.tm.archive.wallpaper.crop.WallpaperCropActivity"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:screenOrientation="portrait"
               android:theme="@style/Theme.Signal.WallpaperCropper" />
 
-    <activity android:name=".reactions.edit.EditReactionsActivity"
+    <activity android:name="org.tm.archive.reactions.edit.EditReactionsActivity"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"/>
 
-    <service android:enabled="true" android:name=".service.webrtc.WebRtcCallService"/>
-    <service android:enabled="true" android:name=".service.ApplicationMigrationService"/>
-    <service android:enabled="true" android:exported="false" android:name=".service.KeyCachingService"/>
-    <service android:enabled="true" android:name=".messages.IncomingMessageObserver$ForegroundService"/>
+    <service android:enabled="true" android:name="org.tm.archive.service.webrtc.WebRtcCallService"/>
+    <service android:enabled="true" android:name="org.tm.archive.service.ApplicationMigrationService"/>
+    <service android:enabled="true" android:exported="false" android:name="org.tm.archive.service.KeyCachingService"/>
+    <service android:enabled="true" android:name="org.tm.archive.messages.IncomingMessageObserver$ForegroundService"/>
 
-    <service android:name=".components.voice.VoiceNotePlaybackService">
+    <service android:name="org.tm.archive.components.voice.VoiceNotePlaybackService">
         <intent-filter>
             <action android:name="android.media.browse.MediaBrowserService" />
         </intent-filter>
@@ -648,7 +655,7 @@
         </intent-filter>
     </receiver>
 
-    <service android:name=".service.QuickResponseService"
+    <service android:name="org.tm.archive.service.QuickResponseService"
              android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"
              android:exported="true" >
         <intent-filter>
@@ -661,14 +668,14 @@
         </intent-filter>
     </service>
 
-    <service android:name=".service.AccountAuthenticatorService" android:exported="true">
+    <service android:name="org.tm.archive.service.AccountAuthenticatorService" android:exported="true">
         <intent-filter>
             <action android:name="android.accounts.AccountAuthenticator" />
         </intent-filter>
         <meta-data android:name="android.accounts.AccountAuthenticator" android:resource="@xml/authenticator" />
     </service>
 
-    <service android:name=".service.ContactsSyncAdapterService" android:exported="true">
+    <service android:name="org.tm.archive.service.ContactsSyncAdapterService" android:exported="true">
         <intent-filter>
             <action android:name="android.content.SyncAdapter"/>
         </intent-filter>
@@ -676,17 +683,17 @@
         <meta-data android:name="android.provider.CONTACTS_STRUCTURE" android:resource="@xml/contactsformat" />
     </service>
 
-    <service android:name=".service.GenericForegroundService"/>
+    <service android:name="org.tm.archive.service.GenericForegroundService"/>
 
-    <service android:name=".gcm.FcmFetchService" />
+    <service android:name="org.tm.archive.gcm.FcmFetchService" />
 
-    <service android:name=".gcm.FcmReceiveService">
+    <service android:name="org.tm.archive.gcm.FcmReceiveService">
         <intent-filter>
             <action android:name="com.google.firebase.MESSAGING_EVENT" />
         </intent-filter>
     </service>
 
-    <receiver android:name=".service.SmsListener"
+    <receiver android:name="org.tm.archive.service.SmsListener"
               android:permission="android.permission.BROADCAST_SMS"
               android:enabled="true"
               android:exported="true">
@@ -698,14 +705,14 @@
              </intent-filter>
     </receiver>
 
-    <receiver android:name=".service.SmsDeliveryListener"
+    <receiver android:name="org.tm.archive.service.SmsDeliveryListener"
               android:exported="true">
         <intent-filter>
-            <action android:name="org.tm.archive.services.MESSAGE_SENT"/>
+            <action android:name="archive.services.MESSAGE_SENT"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".service.MmsListener"
+    <receiver android:name="org.tm.archive.service.MmsListener"
               android:enabled="true"
               android:exported="true"
               android:permission="android.permission.BROADCAST_WAP_PUSH">
@@ -719,43 +726,43 @@
              </intent-filter>
     </receiver>
 
-    <receiver android:name=".notifications.MarkReadReceiver"
+    <receiver android:name="org.tm.archive.notifications.MarkReadReceiver"
               android:enabled="true"
               android:exported="false">
         <intent-filter>
-            <action android:name="org.tm.archive.notifications.CLEAR"/>
+            <action android:name="archive.notifications.CLEAR"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".notifications.RemoteReplyReceiver"
+    <receiver android:name="org.tm.archive.notifications.RemoteReplyReceiver"
               android:enabled="true"
               android:exported="false">
         <intent-filter>
-            <action android:name="org.tm.archive.notifications.WEAR_REPLY"/>
+            <action android:name="archive.notifications.WEAR_REPLY"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".service.ExpirationListener" />
+    <receiver android:name="org.tm.archive.service.ExpirationListener" />
 
-    <receiver android:name=".revealable.ViewOnceMessageManager$ViewOnceAlarm" />
+    <receiver android:name="org.tm.archive.revealable.ViewOnceMessageManager$ViewOnceAlarm" />
 
-    <receiver android:name=".service.PendingRetryReceiptManager$PendingRetryReceiptAlarm" />
+    <receiver android:name="org.tm.archive.service.PendingRetryReceiptManager$PendingRetryReceiptAlarm" />
 
-    <receiver android:name=".service.TrimThreadsByDateManager$TrimThreadsByDateAlarm" />
+    <receiver android:name="org.tm.archive.service.TrimThreadsByDateManager$TrimThreadsByDateAlarm" />
 
-    <receiver android:name=".payments.backup.phrase.ClearClipboardAlarmReceiver" />
+    <receiver android:name="org.tm.archive.payments.backup.phrase.ClearClipboardAlarmReceiver" />
 
-    <provider android:name=".providers.PartProvider"
+    <provider android:name="org.tm.archive.providers.PartProvider"
               android:grantUriPermissions="true"
               android:exported="false"
               android:authorities="${applicationId}.part" />
 
-    <provider android:name=".providers.BlobContentProvider"
+    <provider android:name="org.tm.archive.providers.BlobContentProvider"
               android:authorities="${applicationId}.blob"
               android:exported="false"
               android:grantUriPermissions="true" />
 
-    <provider android:name=".providers.MmsBodyProvider"
+    <provider android:name="org.tm.archive.providers.MmsBodyProvider"
               android:grantUriPermissions="true"
               android:exported="false"
               android:authorities="${applicationId}.mms" />
@@ -769,82 +776,66 @@
 
     </provider>
 
-    <provider android:name=".database.DatabaseContentProviders$Conversation"
-              android:authorities="${applicationId}.database.conversation"
-              android:exported="false" />
-
-    <provider android:name=".database.DatabaseContentProviders$Attachment"
-              android:authorities="${applicationId}.database.attachment"
-              android:exported="false" />
-
-    <provider android:name=".database.DatabaseContentProviders$Sticker"
-              android:authorities="${applicationId}.database.sticker"
-              android:exported="false" />
-
-    <provider android:name=".database.DatabaseContentProviders$StickerPack"
-              android:authorities="${applicationId}.database.stickerpack"
-              android:exported="false" />
-
-    <receiver android:name=".service.BootReceiver">
+    <receiver android:name="org.tm.archive.service.BootReceiver">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            <action android:name="org.tm.archive.RESTART"/>
+            <action android:name="archive.RESTART"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".service.DirectoryRefreshListener">
+    <receiver android:name="org.tm.archive.service.DirectoryRefreshListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".service.RotateSignedPreKeyListener">
+    <receiver android:name="org.tm.archive.service.RotateSignedPreKeyListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".service.RotateSenderCertificateListener">
+    <receiver android:name="org.tm.archive.service.RotateSenderCertificateListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".messageprocessingalarm.MessageProcessReceiver">
+    <receiver android:name="org.tm.archive.messageprocessingalarm.MessageProcessReceiver">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
-            <action android:name="org.tm.archive.action.PROCESS_MESSAGES" />
+            <action android:name="archive.action.PROCESS_MESSAGES" />
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".service.LocalBackupListener">
+    <receiver android:name="org.tm.archive.service.LocalBackupListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".service.PersistentConnectionBootListener">
+    <receiver android:name="org.tm.archive.service.PersistentConnectionBootListener">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".notifications.LocaleChangedReceiver">
+    <receiver android:name="org.tm.archive.notifications.LocaleChangedReceiver">
         <intent-filter>
             <action android:name="android.intent.action.LOCALE_CHANGED"/>
         </intent-filter>
     </receiver>
 
-    <receiver android:name=".notifications.MessageNotifier$ReminderReceiver"/>
+    <receiver android:name="org.tm.archive.notifications.MessageNotifier$ReminderReceiver"/>
 
-    <receiver android:name=".notifications.DeleteNotificationReceiver">
+    <receiver android:name="org.tm.archive.notifications.DeleteNotificationReceiver">
         <intent-filter>
             <action android:name="org.tm.archive.DELETE_NOTIFICATION"/>
         </intent-filter>
     </receiver>
 
     <receiver
-        android:name=".service.PanicResponderListener"
+        android:name="org.tm.archive.service.PanicResponderListener"
         android:exported="true">
         <intent-filter>
             <action android:name="info.guardianproject.panic.action.TRIGGER" />
@@ -852,28 +843,28 @@
     </receiver>
 
     <service
-        android:name=".gcm.FcmJobService"
+        android:name="org.tm.archive.gcm.FcmJobService"
         android:permission="android.permission.BIND_JOB_SERVICE"
         android:enabled="@bool/enable_job_service"
         tools:targetApi="26" />
 
     <service
-        android:name=".jobmanager.JobSchedulerScheduler$SystemService"
+        android:name="org.tm.archive.jobmanager.JobSchedulerScheduler$SystemService"
         android:permission="android.permission.BIND_JOB_SERVICE"
         android:enabled="@bool/enable_job_service"
         tools:targetApi="26" />
 
     <service
-        android:name=".jobmanager.KeepAliveService"
+        android:name="org.tm.archive.jobmanager.KeepAliveService"
         android:enabled="@bool/enable_alarm_manager" />
 
     <receiver
-        android:name=".jobmanager.AlarmManagerScheduler$RetryReceiver"
+        android:name="org.tm.archive.jobmanager.AlarmManagerScheduler$RetryReceiver"
         android:enabled="@bool/enable_alarm_manager" />
 
     <!-- Probably don't need this one -->
     <receiver
-        android:name=".jobmanager.BootReceiver"
+        android:name="org.tm.archive.jobmanager.BootReceiver"
         android:enabled="true">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED" />

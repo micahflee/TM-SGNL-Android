@@ -13,8 +13,8 @@ import androidx.core.content.ContextCompat
 import me.leolin.shortcutbadger.ShortcutBadger
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
-import org.tm.archive.database.DatabaseFactory
 import org.tm.archive.database.MessageDatabase
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.messages.IncomingMessageObserver
@@ -22,6 +22,8 @@ import org.tm.archive.notifications.MessageNotifier
 import org.tm.archive.notifications.MessageNotifier.ReminderReceiver
 import org.tm.archive.notifications.NotificationCancellationHelper
 import org.tm.archive.notifications.NotificationIds
+import org.tm.archive.notifications.profiles.NotificationProfile
+import org.tm.archive.notifications.profiles.NotificationProfiles
 import org.tm.archive.preferences.widgets.NotificationPrivacyPreference
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.service.KeyCachingService
@@ -115,10 +117,6 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
     reminderCount: Int,
     defaultBubbleState: BubbleState
   ) {
-    if (!SignalStore.settings().isMessageNotificationsEnabled) {
-      return
-    }
-
     val currentLockStatus: Boolean = KeyCachingService.isLocked(context)
     val currentPrivacyPreference: NotificationPrivacyPreference = SignalStore.settings().messageNotificationsPrivacy
     val notificationConfigurationChanged: Boolean = currentLockStatus != previousLockedStatus || currentPrivacyPreference != previousPrivacyPreference
@@ -129,9 +127,38 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
       stickyThreads.clear()
     }
 
-    Log.internal().i(TAG, "sticky thread: $stickyThreads")
-    var state: NotificationStateV2 = NotificationStateProvider.constructNotificationState(context, stickyThreads)
+    val notificationProfile: NotificationProfile? = NotificationProfiles.getActiveProfile(SignalDatabase.notificationProfiles.getProfiles())
+
+    Log.internal().i(TAG, "sticky thread: $stickyThreads active profile: ${notificationProfile?.id ?: "none" }")
+    var state: NotificationStateV2 = NotificationStateProvider.constructNotificationState(stickyThreads, notificationProfile)
     Log.internal().i(TAG, "state: $state")
+
+    if (state.muteFilteredMessages.isNotEmpty()) {
+      Log.i(TAG, "Marking ${state.muteFilteredMessages.size} muted messages as notified to skip notification")
+      state.muteFilteredMessages.forEach { item ->
+        val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
+        messageDatabase.markAsNotified(item.id)
+      }
+    }
+
+    if (state.profileFilteredMessages.isNotEmpty()) {
+      Log.i(TAG, "Marking ${state.profileFilteredMessages.size} profile filtered messages as notified to skip notification")
+      state.profileFilteredMessages.forEach { item ->
+        val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
+        messageDatabase.markAsNotified(item.id)
+      }
+    }
+
+    if (!SignalStore.settings().isMessageNotificationsEnabled) {
+      Log.i(TAG, "Marking ${state.conversations.size} conversations as notified to skip notification")
+      state.conversations.forEach { conversation ->
+        conversation.notificationItems.forEach { item ->
+          val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
+          messageDatabase.markAsNotified(item.id)
+        }
+      }
+      return
+    }
 
     val displayedNotifications: Set<Int>? = ServiceUtil.getNotificationManager(context).getDisplayedNotificationIds().getOrNull()
     if (displayedNotifications != null) {
@@ -140,13 +167,13 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
         .forEach { conversation ->
           cleanedUpThreadIds += conversation.threadId
           conversation.notificationItems.forEach { item ->
-            val messageDatabase: MessageDatabase = if (item.isMms) DatabaseFactory.getMmsDatabase(context) else DatabaseFactory.getSmsDatabase(context)
+            val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
             messageDatabase.markAsNotified(item.id)
           }
         }
       if (cleanedUpThreadIds.isNotEmpty()) {
         Log.i(TAG, "Cleaned up ${cleanedUpThreadIds.size} thread(s) with dangling notifications")
-        state = NotificationStateV2(state.conversations.filterNot { cleanedUpThreadIds.contains(it.threadId) })
+        state = state.copy(conversations = state.conversations.filterNot { cleanedUpThreadIds.contains(it.threadId) })
       }
     }
 
@@ -192,7 +219,7 @@ class MessageNotifierV2(context: Application) : MessageNotifier {
         smsIds.add(item.id)
       }
     }
-    DatabaseFactory.getMmsSmsDatabase(context).setNotifiedTimestamp(System.currentTimeMillis(), smsIds, mmsIds)
+    SignalDatabase.mmsSms.setNotifiedTimestamp(System.currentTimeMillis(), smsIds, mmsIds)
 
     Log.i(TAG, "threads: ${state.threadCount} messages: ${state.messageCount}")
   }

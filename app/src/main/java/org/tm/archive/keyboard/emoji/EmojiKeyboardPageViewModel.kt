@@ -13,8 +13,8 @@ import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.emoji.EmojiCategory
 import org.tm.archive.keyboard.emoji.EmojiKeyboardPageCategoryMappingModel.EmojiCategoryMappingModel
 import org.tm.archive.util.DefaultValueLiveData
-import org.tm.archive.util.MappingModelList
 import org.tm.archive.util.TextSecurePreferences
+import org.tm.archive.util.adapter.mapping.MappingModelList
 import org.tm.archive.util.livedata.LiveDataUtil
 
 class EmojiKeyboardPageViewModel(repository: EmojiKeyboardPageRepository) : ViewModel() {

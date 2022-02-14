@@ -6,7 +6,6 @@ import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A nice interface for {@link LocalMetrics} that gives us a place to define string constants and nicer method names.
@@ -116,74 +115,80 @@ public final class SignalLocalMetrics {
     public static void onInsertedIntoDatabase(long messageId, String id) {
       if (id != null) {
         ID_MAP.put(messageId, id);
-        LocalMetrics.getInstance().split(requireId(messageId), SPLIT_DB_INSERT);
+        split(messageId, SPLIT_DB_INSERT);
       }
     }
 
     public static void onJobStarted(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_JOB_ENQUEUE);
+      split(messageId, SPLIT_JOB_ENQUEUE);
     }
 
     public static void onDeliveryStarted(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_JOB_PRE_NETWORK);
+      split(messageId, SPLIT_JOB_PRE_NETWORK);
     }
 
     public static void onMessageEncrypted(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_ENCRYPT);
+      split(messageId, SPLIT_ENCRYPT);
     }
 
     public static void onMessageSent(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_NETWORK_MAIN);
+      split(messageId, SPLIT_NETWORK_MAIN);
     }
 
     public static void onSyncMessageSent(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_NETWORK_SYNC);
+      split(messageId, SPLIT_NETWORK_SYNC);
     }
 
     public static void onJobFinished(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_JOB_POST_NETWORK);
+      split(messageId, SPLIT_JOB_POST_NETWORK);
     }
 
     public static void onUiUpdated(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_UI_UPDATE);
-      LocalMetrics.getInstance().end(requireId(messageId));
+      split(messageId, SPLIT_UI_UPDATE);
+      end(messageId);
 
       ID_MAP.remove(messageId);
     }
 
-    public static void cancel(@Nullable String id) {
-      if (id != null) {
-        LocalMetrics.getInstance().cancel(id);
+    public static void cancel(long messageId) {
+      String splitId = ID_MAP.get(messageId);
+      if (splitId != null) {
+        LocalMetrics.getInstance().cancel(splitId);
+      }
+
+      ID_MAP.remove(messageId);
+    }
+
+    private static void split(long messageId, @NonNull String event) {
+      String splitId = ID_MAP.get(messageId);
+      if (splitId != null) {
+        LocalMetrics.getInstance().split(splitId, event);
       }
     }
 
-    public static void cancel(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().cancel(requireId(messageId));
-    }
-
-
-    private static @NonNull String requireId(long messageId) {
-      return Objects.requireNonNull(ID_MAP.get(messageId));
+    private static void end(long messageId) {
+      String splitId = ID_MAP.get(messageId);
+      if (splitId != null) {
+        LocalMetrics.getInstance().end(splitId);
+      }
     }
   }
 
   public static final class GroupMessageSend {
     private static final String NAME = "group-message-send";
 
-    private static final String SPLIT_DB_INSERT        = "db-insert";
-    private static final String SPLIT_JOB_ENQUEUE      = "job-enqueue";
-    private static final String SPLIT_JOB_PRE_NETWORK  = "job-pre-network";
-    private static final String SPLIT_NETWORK          = "network";
-    private static final String SPLIT_JOB_POST_NETWORK = "job-post-network";
-    private static final String SPLIT_UI_UPDATE        = "ui-update";
+    private static final String SPLIT_DB_INSERT               = "db-insert";
+    private static final String SPLIT_JOB_ENQUEUE             = "job-enqueue";
+    private static final String SPLIT_JOB_PRE_NETWORK         = "job-pre-network";
+    private static final String SPLIT_SENDER_KEY_SHARED       = "sk-shared";
+    private static final String SPLIT_ENCRYPTION              = "encryption";
+    private static final String SPLIT_NETWORK_SENDER_KEY      = "network-sk";
+    private static final String SPLIT_NETWORK_SENDER_KEY_SYNC = "network-sk-sync";
+    private static final String SPLIT_MSL_SENDER_KEY          = "msl-sk";
+    private static final String SPLIT_NETWORK_LEGACY          = "network-legacy";
+    private static final String SPLIT_NETWORK_LEGACY_SYNC     = "network-legacy-sync";
+    private static final String SPLIT_JOB_POST_NETWORK        = "job-post-network";
+    private static final String SPLIT_UI_UPDATE               = "ui-update";
 
     private static final Map<Long, String> ID_MAP = new HashMap<>();
 
@@ -196,34 +201,53 @@ public final class SignalLocalMetrics {
     public static void onInsertedIntoDatabase(long messageId, String id) {
       if (id != null) {
         ID_MAP.put(messageId, id);
-        LocalMetrics.getInstance().split(requireId(messageId), SPLIT_DB_INSERT);
+        split(messageId, SPLIT_DB_INSERT);
       }
     }
 
     public static void onJobStarted(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_JOB_ENQUEUE);
+      split(messageId, SPLIT_JOB_ENQUEUE);
     }
 
-    public static void onNetworkStarted(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_JOB_PRE_NETWORK);
+    public static void onSenderKeyStarted(long messageId) {
+      split(messageId, SPLIT_JOB_PRE_NETWORK);
     }
 
-    public static void onNetworkFinished(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_NETWORK);
+    public static void onSenderKeyShared(long messageId) {
+      split(messageId, SPLIT_SENDER_KEY_SHARED);
+    }
+
+    public static void onSenderKeyEncrypted(long messageId) {
+      split(messageId, SPLIT_ENCRYPTION);
+    }
+
+    public static void onSenderKeyMessageSent(long messageId) {
+      split(messageId, SPLIT_NETWORK_SENDER_KEY);
+    }
+
+    public static void onSenderKeySyncSent(long messageId) {
+      split(messageId, SPLIT_NETWORK_SENDER_KEY_SYNC);
+    }
+
+    public static void onSenderKeyMslInserted(long messageId) {
+      split(messageId, SPLIT_MSL_SENDER_KEY);
+    }
+
+    public static void onLegacyMessageSent(long messageId) {
+      split(messageId, SPLIT_NETWORK_LEGACY);
+    }
+
+    public static void onLegacySyncFinished(long messageId) {
+      split(messageId, SPLIT_NETWORK_LEGACY_SYNC);
     }
 
     public static void onJobFinished(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_JOB_POST_NETWORK);
+      split(messageId, SPLIT_JOB_POST_NETWORK);
     }
 
     public static void onUiUpdated(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().split(requireId(messageId), SPLIT_UI_UPDATE);
-      LocalMetrics.getInstance().end(requireId(messageId));
+      split(messageId, SPLIT_UI_UPDATE);
+      end(messageId);
 
       ID_MAP.remove(messageId);
     }
@@ -235,13 +259,26 @@ public final class SignalLocalMetrics {
     }
 
     public static void cancel(long messageId) {
-      if (!ID_MAP.containsKey(messageId)) return;
-      LocalMetrics.getInstance().cancel(requireId(messageId));
+      String splitId = ID_MAP.get(messageId);
+      if (splitId != null) {
+        LocalMetrics.getInstance().cancel(splitId);
+      }
+
+      ID_MAP.remove(messageId);
     }
 
+    private static void split(long messageId, @NonNull String event) {
+      String splitId = ID_MAP.get(messageId);
+      if (splitId != null) {
+        LocalMetrics.getInstance().split(splitId, event);
+      }
+    }
 
-    private static @NonNull String requireId(long messageId) {
-      return Objects.requireNonNull(ID_MAP.get(messageId));
+    private static void end(long messageId) {
+      String splitId = ID_MAP.get(messageId);
+      if (splitId != null) {
+        LocalMetrics.getInstance().end(splitId);
+      }
     }
   }
 }

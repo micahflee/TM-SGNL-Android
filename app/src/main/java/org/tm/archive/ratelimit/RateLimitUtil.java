@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobs.PushGroupSendJob;
@@ -26,8 +26,8 @@ public final class RateLimitUtil {
    */
   @WorkerThread
   public static void retryAllRateLimitedMessages(@NonNull Context context) {
-    Set<Long> sms = DatabaseFactory.getSmsDatabase(context).getAllRateLimitedMessageIds();
-    Set<Long> mms = DatabaseFactory.getMmsDatabase(context).getAllRateLimitedMessageIds();
+    Set<Long> sms = SignalDatabase.sms().getAllRateLimitedMessageIds();
+    Set<Long> mms = SignalDatabase.mms().getAllRateLimitedMessageIds();
 
     if (sms.isEmpty() && mms.isEmpty()) {
       return;
@@ -35,8 +35,8 @@ public final class RateLimitUtil {
 
     Log.i(TAG, "Retrying " + sms.size() + " sms records and " + mms.size() + " mms records.");
 
-    DatabaseFactory.getSmsDatabase(context).clearRateLimitStatus(sms);
-    DatabaseFactory.getMmsDatabase(context).clearRateLimitStatus(mms);
+    SignalDatabase.sms().clearRateLimitStatus(sms);
+    SignalDatabase.mms().clearRateLimitStatus(mms);
 
     ApplicationDependencies.getJobManager().update((job, serializer) -> {
       Data data = serializer.deserialize(job.getSerializedData());

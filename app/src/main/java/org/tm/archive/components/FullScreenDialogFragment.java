@@ -13,7 +13,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 
 import org.tm.archive.R;
-import org.tm.archive.util.ThemeUtil;
 
 /**
  * Base dialog fragment for rendering as a full screen dialog with animation

@@ -11,8 +11,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.PendingRetryReceiptModel;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.database.PendingRetryReceiptCache;
@@ -33,7 +33,7 @@ public final class PendingRetryReceiptManager extends TimedEventManager<PendingR
     super(application, "PendingRetryReceiptManager");
 
     this.pendingCache    = ApplicationDependencies.getPendingRetryReceiptCache();
-    this.messageDatabase = DatabaseFactory.getSmsDatabase(application);
+    this.messageDatabase = SignalDatabase.sms();
 
     scheduleIfNecessary();
   }

@@ -26,8 +26,8 @@ import org.tm.archive.R;
 import org.tm.archive.WebRtcCallActivity;
 import org.tm.archive.contacts.sync.DirectoryHelper;
 import org.tm.archive.conversation.ConversationIntents;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.ui.invitesandrequests.joining.GroupJoinBottomSheetDialogFragment;
@@ -105,7 +105,7 @@ public class CommunicationActions {
     new AsyncTask<Void, Void, Long>() {
       @Override
       protected Long doInBackground(Void... voids) {
-        return DatabaseFactory.getThreadDatabase(context).getThreadIdFor(recipient.getId());
+        return SignalDatabase.threads().getThreadIdFor(recipient.getId());
       }
 
       @Override
@@ -197,9 +197,7 @@ public class CommunicationActions {
     GroupId.V2 groupId = GroupId.v2(groupInviteLinkUrl.getGroupMasterKey());
 
     SimpleTask.run(SignalExecutors.BOUNDED, () -> {
-      GroupDatabase.GroupRecord group = DatabaseFactory.getGroupDatabase(activity)
-                                                       .getGroup(groupId)
-                                                       .orNull();
+      GroupDatabase.GroupRecord group = SignalDatabase.groups().getGroup(groupId).orNull();
 
       return group != null && group.isActive() ? Recipient.resolved(group.getRecipientId())
                                                : null;
@@ -242,7 +240,7 @@ public class CommunicationActions {
       SimpleTask.run(() -> {
         Recipient recipient = Recipient.external(activity, e164);
 
-        if (!recipient.isRegistered() || !recipient.hasUuid()) {
+        if (!recipient.isRegistered() || !recipient.hasAci()) {
           try {
             DirectoryHelper.refreshDirectoryFor(activity, recipient, false);
             recipient = Recipient.resolved(recipient.getId());

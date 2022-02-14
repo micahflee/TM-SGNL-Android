@@ -3,6 +3,7 @@ package org.tm.archive.components.settings.app.internal
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import org.signal.ringrtc.CallManager
 import org.tm.archive.keyvalue.InternalValues
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.livedata.Store
@@ -27,6 +28,11 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
 
   fun setShakeToReport(enabled: Boolean) {
     preferenceDataStore.putBoolean(InternalValues.SHAKE_TO_REPORT, enabled)
+    refresh()
+  }
+
+  fun setDisableStorageService(enabled: Boolean) {
+    preferenceDataStore.putBoolean(InternalValues.DISABLE_STORAGE_SERVICE, enabled)
     refresh()
   }
 
@@ -85,6 +91,11 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
     refresh()
   }
 
+  fun setInternalAudioProcessingMethod(method: CallManager.AudioProcessingMethod) {
+    preferenceDataStore.putInt(InternalValues.AUDIO_PROCESSING_METHOD, method.ordinal)
+    refresh()
+  }
+
   private fun refresh() {
     store.update { getState().copy(emojiVersion = it.emojiVersion) }
   }
@@ -100,10 +111,12 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
     disableAutoMigrationNotification = SignalStore.internalValues().disableGv1AutoMigrateNotification(),
     forceCensorship = SignalStore.internalValues().forcedCensorship(),
     callingServer = SignalStore.internalValues().groupCallingServer(),
+    audioProcessingMethod = SignalStore.internalValues().audioProcessingMethod(),
     useBuiltInEmojiSet = SignalStore.internalValues().forceBuiltInEmoji(),
     emojiVersion = null,
     removeSenderKeyMinimium = SignalStore.internalValues().removeSenderKeyMinimum(),
-    delayResends = SignalStore.internalValues().delayResends()
+    delayResends = SignalStore.internalValues().delayResends(),
+    disableStorageService = SignalStore.internalValues().storageServiceDisabled()
   )
 
   class Factory(private val repository: InternalSettingsRepository) : ViewModelProvider.Factory {

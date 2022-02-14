@@ -13,7 +13,7 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.CursorUtil;
@@ -117,7 +117,7 @@ public final class DoNotDisturbUtil {
   }
 
   private static boolean isRepeatCaller(@NonNull Context context, @NonNull Recipient recipient) {
-    return DatabaseFactory.getThreadDatabase(context).hasCalledSince(recipient, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(15));
+    return SignalDatabase.threads().hasCalledSince(recipient, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(15));
   }
 
 }

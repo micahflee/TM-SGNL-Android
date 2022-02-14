@@ -1,6 +1,6 @@
 package org.tm.archive.conversation.colors.ui
 
-import org.tm.archive.util.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingModel
 
 class CustomColorMappingModel : MappingModel<CustomColorMappingModel> {
   override fun areItemsTheSame(newItem: CustomColorMappingModel): Boolean {

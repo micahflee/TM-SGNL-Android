@@ -5,9 +5,7 @@ import androidx.annotation.NonNull;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.components.emoji.Emoji;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.EmojiSearchDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.EmojiSearchData;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -24,11 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -113,7 +107,7 @@ public final class EmojiSearchIndexDownloadJob extends BaseJob {
 
     List<EmojiSearchData> searchIndex = downloadSearchIndex(client, manifest.getVersion(), remoteLanguage);
 
-    DatabaseFactory.getEmojiSearchDatabase(context).setSearchIndex(searchIndex);
+    SignalDatabase.emojiSearch().setSearchIndex(searchIndex);
     SignalStore.emojiValues().onSearchIndexUpdated(manifest.getVersion(), remoteLanguage);
     SignalStore.emojiValues().setLastSearchIndexCheck(System.currentTimeMillis());
 

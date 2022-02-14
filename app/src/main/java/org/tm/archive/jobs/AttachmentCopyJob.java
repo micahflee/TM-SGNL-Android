@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.util.JsonUtils;
@@ -75,7 +75,7 @@ public class AttachmentCopyJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    AttachmentDatabase database = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase database = SignalDatabase.attachments();
 
     for (AttachmentId destinationId : destinationIds) {
       database.copyAttachmentData(sourceId, destinationId);

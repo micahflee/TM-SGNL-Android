@@ -2,11 +2,12 @@ package org.tm.archive.util;
 
 import androidx.annotation.NonNull;
 
+import org.signal.core.util.ExceptionUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 
-import java.util.concurrent.TimeUnit;
+import io.reactivex.rxjava3.exceptions.OnErrorNotImplementedException;
 
 public class SignalUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
@@ -20,10 +21,14 @@ public class SignalUncaughtExceptionHandler implements Thread.UncaughtExceptionH
 
   @Override
   public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+    if (e instanceof OnErrorNotImplementedException && e.getCause() != null) {
+      e = e.getCause();
+    }
+
     Log.e(TAG, "", e, true);
     SignalStore.blockUntilAllWritesFinished();
     Log.blockUntilAllWritesFinished();
     ApplicationDependencies.getJobManager().flush();
-    originalHandler.uncaughtException(t, e);
+    originalHandler.uncaughtException(t, ExceptionUtil.joinStackTraceAndMessage(e));
   }
 }

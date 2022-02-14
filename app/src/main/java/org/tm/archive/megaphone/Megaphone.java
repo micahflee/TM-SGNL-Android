@@ -19,7 +19,6 @@ public class Megaphone {
 
   private final Event                  event;
   private final Style                  style;
-  private final Priority               priority;
   private final boolean                canSnooze;
   private final int                    titleRes;
   private final int                    bodyRes;
@@ -36,7 +35,6 @@ public class Megaphone {
   private Megaphone(@NonNull Builder builder) {
     this.event                   = builder.event;
     this.style                   = builder.style;
-    this.priority                = builder.priority;
     this.canSnooze               = builder.canSnooze;
     this.titleRes                = builder.titleRes;
     this.bodyRes                 = builder.bodyRes;
@@ -53,10 +51,6 @@ public class Megaphone {
 
   public @NonNull Event getEvent() {
     return event;
-  }
-
-  public @NonNull Priority getPriority() {
-    return priority;
   }
 
   public boolean canSnooze() {
@@ -121,10 +115,9 @@ public class Megaphone {
 
   public static class Builder {
 
-    private final Event  event;
-    private final Style  style;
+    private final Event event;
+    private final Style style;
 
-    private Priority               priority;
     private boolean                canSnooze;
     private int                    titleRes;
     private int                    bodyRes;
@@ -140,17 +133,8 @@ public class Megaphone {
 
 
     public Builder(@NonNull Event event, @NonNull Style style) {
-      this.event          = event;
-      this.style          = style;
-      this.priority       = Priority.DEFAULT;
-    }
-
-    /**
-     * Prioritizes this megaphone over others that do not set this flag.
-     */
-    public @NonNull Builder setPriority(@NonNull Priority priority) {
-      this.priority = priority;
-      return this;
+      this.event = event;
+      this.style = style;
     }
 
     public @NonNull Builder enableSnooze(@Nullable EventListener listener) {
@@ -213,12 +197,6 @@ public class Megaphone {
   }
 
   enum Style {
-    /** Specialized style for announcing reactions. */
-    REACTIONS,
-
-    /** Specialized style for announcing link previews. */
-    LINK_PREVIEWS,
-
     /** Specialized style for onboarding. */
     ONBOARDING,
 
@@ -237,20 +215,6 @@ public class Megaphone {
      * otherwise, the event will be marked finished (it will not be shown again).
      */
     POPUP
-  }
-
-  enum Priority {
-    DEFAULT(0), HIGH(1), CLIENT_EXPIRATION(1000);
-
-    int priorityValue;
-
-    Priority(int priorityValue) {
-      this.priorityValue = priorityValue;
-    }
-
-    public int getPriorityValue() {
-      return priorityValue;
-    }
   }
 
   public interface EventListener {

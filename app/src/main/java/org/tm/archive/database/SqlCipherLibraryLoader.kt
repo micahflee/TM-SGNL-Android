@@ -1,26 +1,21 @@
 package org.tm.archive.database
 
-import android.content.Context
-
 /**
  * A simple wrapper to load SQLCipher libs exactly once. The exact entry point of database access is non-deterministic because content providers run before
  * Application#onCreate().
  */
-class SqlCipherLibraryLoader {
+object SqlCipherLibraryLoader {
+  @Volatile
+  private var loaded = false
+  private val LOCK = Object()
 
-  companion object {
-    @Volatile
-    private var loaded = false
-    private val LOCK = Object()
-
-    @JvmStatic
-    fun load(context: Context) {
-      if (!loaded) {
-        synchronized(LOCK) {
-          if (!loaded) {
-            System.loadLibrary("sqlcipher")
-            loaded = true
-          }
+  @JvmStatic
+  fun load() {
+    if (!loaded) {
+      synchronized(LOCK) {
+        if (!loaded) {
+          System.loadLibrary("sqlcipher")
+          loaded = true
         }
       }
     }

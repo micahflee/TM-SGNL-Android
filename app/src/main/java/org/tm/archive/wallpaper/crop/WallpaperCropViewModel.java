@@ -15,7 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.imageeditor.model.EditorModel;
+import org.signal.imageeditor.core.model.EditorModel;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.AsynchronousCallback;

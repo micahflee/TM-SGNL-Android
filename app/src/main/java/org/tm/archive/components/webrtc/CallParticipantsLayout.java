@@ -16,7 +16,6 @@ import org.tm.archive.R;
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
-import org.webrtc.RendererCommon;
 
 import java.util.Collections;
 import java.util.List;

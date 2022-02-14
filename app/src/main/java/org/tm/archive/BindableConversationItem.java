@@ -1,8 +1,6 @@
 package org.tm.archive;
 
-import android.graphics.Point;
 import android.net.Uri;
-import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -12,7 +10,6 @@ import androidx.lifecycle.Observer;
 
 import org.tm.archive.components.voice.VoiceNotePlaybackState;
 import org.tm.archive.contactshare.Contact;
-import org.tm.archive.conversation.ConversationItem;
 import org.tm.archive.conversation.ConversationMessage;
 import org.tm.archive.conversation.colors.Colorizable;
 import org.tm.archive.conversation.colors.Colorizer;
@@ -29,7 +26,6 @@ import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.stickers.StickerLocator;
-import org.tm.archive.video.exo.AttachmentMediaSourceFactory;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.List;
@@ -49,15 +45,18 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
             boolean pulseMention,
             boolean hasWallpaper,
             boolean isMessageRequestAccepted,
-            @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
             boolean canPlayInline,
             @NonNull Colorizer colorizer);
 
-  ConversationMessage getConversationMessage();
+  @NonNull ConversationMessage getConversationMessage();
 
   void setEventListener(@Nullable EventListener listener);
 
   default void updateTimestamps() {
+    // Intentionally Blank.
+  }
+
+  default void updateContactNameColor() {
     // Intentionally Blank.
   }
 
@@ -71,7 +70,7 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
     void onAddToContactsClicked(@NonNull Contact contact);
     void onMessageSharedContactClicked(@NonNull List<Recipient> choices);
     void onInviteSharedContactClicked(@NonNull List<Recipient> choices);
-    void onReactionClicked(@NonNull View reactionTarget, long messageId, boolean isMms);
+    void onReactionClicked(@NonNull MultiselectPart multiselectPart, long messageId, boolean isMms);
     void onGroupMemberClicked(@NonNull RecipientId recipientId, @NonNull GroupId groupId);
     void onMessageWithErrorClicked(@NonNull MessageRecord messageRecord);
     void onMessageWithRecaptchaNeededClicked(@NonNull MessageRecord messageRecord);
@@ -92,6 +91,9 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
     void onPlayInlineContent(ConversationMessage conversationMessage);
     void onInMemoryMessageClicked(@NonNull InMemoryMessageRecord messageRecord);
     void onViewGroupDescriptionChange(@Nullable GroupId groupId, @NonNull String description, boolean isMessageRequestAccepted);
+    void onChangeNumberUpdateContact(@NonNull Recipient recipient);
+    void onCallToAction(@NonNull String action);
+    void onDonateClicked();
 
     /** @return true if handled, false if you want to let the normal url handling continue */
     boolean onUrlClicked(@NonNull String url);

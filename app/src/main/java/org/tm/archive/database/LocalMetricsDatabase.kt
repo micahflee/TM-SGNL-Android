@@ -3,8 +3,8 @@ package org.tm.archive.database
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentValues
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SQLiteOpenHelper
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 import org.signal.core.util.logging.Log
 import org.tm.archive.crypto.DatabaseSecret
 import org.tm.archive.crypto.DatabaseSecretProvider
@@ -18,23 +18,26 @@ import java.util.concurrent.TimeUnit
  *
  * These metrics are only ever included in debug logs in an aggregate fashion (i.e. p50, p90, p99) and are never automatically uploaded anywhere.
  *
- * The performance of insertions is important, but given insertions frequency isn't crazy-high, we can also optimize for retrieval performance.
- * SQLite isn't amazing at statistical analysis, so having indices that speeds those operations up is encouraged.
+ * The performance of insertions is important, but given insertion frequency isn't crazy-high, we can also optimize for retrieval performance.
+ * SQLite isn't amazing at statistical analysis, so having indices that speed up those operations is encouraged.
  *
  * This is it's own separate physical database, so it cannot do joins or queries with any other tables.
  */
 class LocalMetricsDatabase private constructor(
   application: Application,
-  private val databaseSecret: DatabaseSecret
-) : SQLiteOpenHelper(
+  databaseSecret: DatabaseSecret
+) :
+  SQLiteOpenHelper(
     application,
     DATABASE_NAME,
+    databaseSecret.asString(),
     null,
     DATABASE_VERSION,
-    SqlCipherDatabaseHook(),
-    SqlCipherErrorHandler(DATABASE_NAME)
+    0,
+    SqlCipherDeletingErrorHandler(DATABASE_NAME),
+    SqlCipherDatabaseHook()
   ),
-  SignalDatabase {
+  SignalDatabaseOpenHelper {
 
   companion object {
     private val TAG = Log.tag(LocalMetricsDatabase::class.java)
@@ -78,7 +81,7 @@ class LocalMetricsDatabase private constructor(
       if (instance == null) {
         synchronized(LocalMetricsDatabase::class.java) {
           if (instance == null) {
-            SqlCipherLibraryLoader.load(context)
+            SqlCipherLibraryLoader.load()
             instance = LocalMetricsDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context))
           }
         }
@@ -237,12 +240,6 @@ class LocalMetricsDatabase private constructor(
       }
     }
   }
-
-  private val readableDatabase: SQLiteDatabase
-    get() = getReadableDatabase(databaseSecret.asString())
-
-  private val writableDatabase: SQLiteDatabase
-    get() = getWritableDatabase(databaseSecret.asString())
 
   data class EventMetrics(
     val name: String,

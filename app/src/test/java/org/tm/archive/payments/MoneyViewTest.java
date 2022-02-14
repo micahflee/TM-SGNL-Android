@@ -7,13 +7,8 @@ import androidx.test.core.app.ApplicationProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.DatabaseObserver;
-import org.tm.archive.dependencies.ApplicationDependencies;
 import org.whispersystems.signalservice.api.payments.Currency;
 
 import static org.junit.Assert.assertEquals;

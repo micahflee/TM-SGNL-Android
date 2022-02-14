@@ -10,9 +10,10 @@ import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingAdapter;
-import org.tm.archive.util.MappingModel;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.LayoutFactory;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 public class EmojiPageViewGridAdapter extends MappingAdapter implements PopupWindow.OnDismissListener {
 

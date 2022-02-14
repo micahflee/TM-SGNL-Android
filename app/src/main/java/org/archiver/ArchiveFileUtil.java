@@ -1,8 +1,10 @@
 package org.archiver;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -16,8 +18,7 @@ import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.contactshare.Contact;
-import org.tm.archive.conversation.ConversationActivity;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.providers.BlobProvider;
 
@@ -398,11 +399,11 @@ This method can parse out the real local file path from a file URI.
 
         String[] splitUri = contentUri.split("/");
         int splitLength = splitUri.length;
-        DatabaseAttachment databaseAttachment = DatabaseFactory.getAttachmentDatabase(context).getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
+        DatabaseAttachment databaseAttachment = SignalDatabase.attachments().getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
 
         InputStream attachmentInputStream = null;
         try {
-            attachmentInputStream = DatabaseFactory.getAttachmentDatabase(context).getAttachmentStream(databaseAttachment.getAttachmentId(),0);
+            attachmentInputStream = SignalDatabase.attachments().getAttachmentStream(databaseAttachment.getAttachmentId(),0);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -472,7 +473,7 @@ This method can parse out the real local file path from a file URI.
         String fileName = "";
         InputStream stream = null;
         try {
-            stream = DatabaseFactory.getStickerDatabase(context).getStickerStream(ContentUris.parseId(Uri.parse(contentUri)));
+            stream =  SignalDatabase.stickers().getStickerStream(ContentUris.parseId(Uri.parse(contentUri)));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -486,9 +487,16 @@ This method can parse out the real local file path from a file URI.
         return resultFile;
     }
 
+    public static boolean checkWriteExternalPermission(Context context)
+    {
+        String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+        int res = context.checkCallingOrSelfPermission(permission);
+        return (res == PackageManager.PERMISSION_GRANTED);
+    }
+
     @Nullable
     private static File getFileFromDeviceUri(Context context, String contentUri) {
-        if(ConversationActivity.checkWriteExternalPermission(context)) {
+        if(checkWriteExternalPermission(context)) {
             File resultFile = null;
             String fileName = "";
             String fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(context.getContentResolver().getType(Uri.parse(contentUri)));

@@ -6,7 +6,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" >
 
-        <org.tm.archive.contacts.RecipientsEditor android:id="@+id/recipients_text"
+        <org.tm.archive.contacts.RecipientsEditor
+            android:id="@+id/recipients_text"
            android:layout_height="wrap_content"
             android:capitalize="sentences"
             android:autoText="true"

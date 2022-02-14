@@ -3,7 +3,6 @@ package org.tm.archive.payments.create;
 import android.app.AlertDialog;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
@@ -30,9 +29,11 @@ import org.tm.archive.payments.preferences.RecipientHasNotEnabledPaymentsDialog;
 import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.SpanUtil;
 import org.tm.archive.util.ViewUtil;
+import org.tm.archive.util.navigation.SafeNavigation;
 import org.whispersystems.signalservice.api.payments.FormatterOptions;
 import org.whispersystems.signalservice.api.payments.Money;
 
+import java.text.DecimalFormatSymbols;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,6 +95,9 @@ public class CreatePaymentFragment extends LoggingFragment {
     addNote          = view.findViewById(R.id.create_payment_fragment_add_note);
     toggle           = view.findViewById(R.id.create_payment_fragment_toggle);
 
+    TextView decimal = view.findViewById(R.id.create_payment_fragment_keyboard_decimal);
+    decimal.setText(String.valueOf(DecimalFormatSymbols.getInstance().getDecimalSeparator()));
+
     View infoTapTarget = view.findViewById(R.id.create_payment_fragment_info_tap_region);
 
     //noinspection CodeBlock2Expr
@@ -110,13 +114,13 @@ public class CreatePaymentFragment extends LoggingFragment {
 
     initializeInfoIcon();
 
-    note.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_createPaymentFragment_to_editPaymentNoteFragment));
-    addNote.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_createPaymentFragment_to_editPaymentNoteFragment));
+    note.setOnClickListener(v -> SafeNavigation.safeNavigate(Navigation.findNavController(v), R.id.action_createPaymentFragment_to_editPaymentNoteFragment));
+    addNote.setOnClickListener(v -> SafeNavigation.safeNavigate(Navigation.findNavController(v), R.id.action_createPaymentFragment_to_editPaymentNoteFragment));
 
     pay.setOnClickListener(v -> {
       NavDirections directions = CreatePaymentFragmentDirections.actionCreatePaymentFragmentToConfirmPaymentFragment(viewModel.getCreatePaymentDetails())
                                                                 .setFinishOnConfirm(arguments.getFinishOnConfirm());
-      Navigation.findNavController(v).navigate(directions);
+      SafeNavigation.safeNavigate(Navigation.findNavController(v), directions);
     });
 
     toggle.setOnClickListener(v -> viewModel.toggleMoneyInputTarget());

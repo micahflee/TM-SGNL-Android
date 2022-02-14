@@ -12,7 +12,6 @@ import org.tm.archive.util.testprotos.TestPersonWithNewMessage;
 import org.tm.archive.util.testprotos.TestPersonWithNewRepeatedString;
 import org.tm.archive.util.testprotos.TestPersonWithNewString;
 import org.tm.archive.util.testprotos.TestPersonWithNewStringAndInt;
-import org.whispersystems.signalservice.api.util.ProtoUtil;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -236,6 +235,6 @@ public class ProtoUtilTest {
     TestInnerMessageWithNewString reparsedTest = TestInnerMessageWithNewString.parseFrom(combined.toByteArray());
 
     Assert.assertEquals("a2", reparsedTest.getInner().getA());
-    Assert.assertEquals("", reparsedTest.getInner().getB());
+    Assert.assertEquals("b1", reparsedTest.getInner().getB());
   }
 }

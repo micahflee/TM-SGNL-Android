@@ -2,8 +2,6 @@ package org.tm.archive.util;
 
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -13,8 +11,8 @@ import androidx.annotation.WorkerThread;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.DatabaseAttachment;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.NoSuchMessageException;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.jobmanager.impl.NotInCallConstraint;
 import org.tm.archive.recipients.Recipient;
@@ -65,14 +63,14 @@ public class AttachmentUtil {
   {
     AttachmentId attachmentId    = attachment.getAttachmentId();
     long         mmsId           = attachment.getMmsId();
-    int          attachmentCount = DatabaseFactory.getAttachmentDatabase(context)
-        .getAttachmentsForMessage(mmsId)
-        .size();
+    int          attachmentCount = SignalDatabase.attachments()
+                                                 .getAttachmentsForMessage(mmsId)
+                                                 .size();
 
     if (attachmentCount <= 1) {
-      DatabaseFactory.getMmsDatabase(context).deleteMessage(mmsId);
+      SignalDatabase.mms().deleteMessage(mmsId);
     } else {
-      DatabaseFactory.getAttachmentDatabase(context).deleteAttachment(attachmentId);
+      SignalDatabase.attachments().deleteAttachment(attachmentId);
     }
   }
 
@@ -93,10 +91,10 @@ public class AttachmentUtil {
   @WorkerThread
   private static boolean isFromTrustedConversation(@NonNull Context context, @NonNull DatabaseAttachment attachment) {
     try {
-      MessageRecord message = DatabaseFactory.getMmsDatabase(context).getMessageRecord(attachment.getMmsId());
+      MessageRecord message = SignalDatabase.mms().getMessageRecord(attachment.getMmsId());
 
       Recipient individualRecipient = message.getRecipient();
-      Recipient threadRecipient     = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(message.getThreadId());
+      Recipient threadRecipient     = SignalDatabase.threads().getRecipientForThreadId(message.getThreadId());
 
       if (threadRecipient != null && threadRecipient.isGroup()) {
         return threadRecipient.isProfileSharing() || isTrustedIndividual(individualRecipient, message);
@@ -113,6 +111,7 @@ public class AttachmentUtil {
     return recipient.isSystemContact()  ||
            recipient.isProfileSharing() ||
            message.isOutgoing()         ||
-           recipient.isSelf();
+           recipient.isSelf()           ||
+           recipient.isReleaseNotes();
     }
   }

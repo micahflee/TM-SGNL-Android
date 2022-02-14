@@ -5,14 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +31,8 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.MediaPreviewActivity;
 import org.tm.archive.R;
 import org.tm.archive.attachments.DatabaseAttachment;
+import org.tm.archive.components.menu.ActionItem;
+import org.tm.archive.components.menu.SignalBottomActionBar;
 import org.tm.archive.components.voice.VoiceNoteMediaController;
 import org.tm.archive.components.voice.VoiceNotePlaybackState;
 import org.tm.archive.database.MediaDatabase;
@@ -43,7 +43,8 @@ import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
-import org.tm.archive.util.WindowUtil;
+
+import java.util.Arrays;
 
 public final class MediaOverviewPageFragment extends Fragment
   implements MediaGalleryAllAdapter.ItemClickListener,
@@ -69,6 +70,7 @@ public final class MediaOverviewPageFragment extends Fragment
   private       MediaGalleryAllAdapter        adapter;
   private       GridMode                      gridMode;
   private       VoiceNoteMediaController      voiceNoteMediaController;
+  private       SignalBottomActionBar         bottomActionBar;
 
   public static @NonNull Fragment newInstance(long threadId,
                                               @NonNull MediaLoader.MediaType mediaType,
@@ -112,9 +114,10 @@ public final class MediaOverviewPageFragment extends Fragment
     View    view    = inflater.inflate(R.layout.media_overview_page_fragment, container, false);
     int     spans   = getResources().getInteger(R.integer.media_overview_cols);
 
-    this.recyclerView = view.findViewById(R.id.media_grid);
-    this.noMedia      = view.findViewById(R.id.no_images);
-    this.gridManager  = new StickyHeaderGridLayoutManager(spans);
+    this.recyclerView    = view.findViewById(R.id.media_grid);
+    this.noMedia         = view.findViewById(R.id.no_images);
+    this.bottomActionBar = view.findViewById(R.id.media_overview_bottom_action_bar);
+    this.gridManager     = new StickyHeaderGridLayoutManager(spans);
 
     this.adapter = new MediaGalleryAllAdapter(context,
                                               GlideApp.with(this),
@@ -136,7 +139,7 @@ public final class MediaOverviewPageFragment extends Fragment
           this.sorting = sorting;
           adapter.setShowFileSizes(sorting.isRelatedToFileSize());
           LoaderManager.getInstance(this).restartLoader(0, null, this);
-          refreshActionModeTitle();
+          updateMultiSelect();
         }
       });
 
@@ -154,7 +157,7 @@ public final class MediaOverviewPageFragment extends Fragment
     this.detail = detail;
     adapter.setDetailView(detail);
     refreshLayoutManager();
-    refreshActionModeTitle();
+    updateMultiSelect();
   }
 
   @Override
@@ -214,7 +217,7 @@ public final class MediaOverviewPageFragment extends Fragment
     if (adapter.getSelectedMediaCount() == 0) {
       actionMode.finish();
     } else {
-      refreshActionModeTitle();
+      updateMultiSelect();
     }
   }
 
@@ -275,33 +278,18 @@ public final class MediaOverviewPageFragment extends Fragment
 
   private void handleSelectAllMedia() {
     getListAdapter().selectAllMedia();
-    refreshActionModeTitle();
-  }
-
-  private void refreshActionModeTitle() {
-    if (actionMode != null) {
-      actionMode.setTitle(getActionModeTitle());
-    }
+    updateMultiSelect();
   }
 
   private String getActionModeTitle() {
-    MediaGalleryAllAdapter adapter           = getListAdapter();
-    int                    mediaCount        = adapter.getSelectedMediaCount();
-    boolean                showTotalFileSize = detail                                     ||
-                                               mediaType != MediaLoader.MediaType.GALLERY ||
-                                               sorting   == MediaDatabase.Sorting.Largest;
+    MediaGalleryAllAdapter adapter       = getListAdapter();
+    int                    mediaCount    = adapter.getSelectedMediaCount();
+    long                   totalFileSize = adapter.getSelectedMediaTotalFileSize();
 
-    if (showTotalFileSize) {
-      long                   totalFileSize = adapter.getSelectedMediaTotalFileSize();
-      return getResources().getQuantityString(R.plurals.MediaOverviewActivity_d_items_s,
-                                            mediaCount,
-                                            mediaCount,
-                                            Util.getPrettyFileSize(totalFileSize));
-    } else {
-      return getResources().getQuantityString(R.plurals.MediaOverviewActivity_d_items,
-                                            mediaCount,
-                                            mediaCount);
-    }
+    return getResources().getQuantityString(R.plurals.MediaOverviewActivity_d_selected_s,
+                                          mediaCount,
+                                          mediaCount,
+                                          Util.getPrettyFileSize(totalFileSize));
   }
 
   private MediaGalleryAllAdapter getListAdapter() {
@@ -312,7 +300,37 @@ public final class MediaOverviewPageFragment extends Fragment
     FragmentActivity activity = requireActivity();
     actionMode = ((AppCompatActivity) activity).startSupportActionMode(actionModeCallback);
     ((MediaOverviewActivity) activity).onEnterMultiSelect();
+    ViewUtil.animateIn(bottomActionBar, bottomActionBar.getEnterAnimation());
+    updateMultiSelect();
   }
+
+  private void exitMultiSelect() {
+    actionMode.finish();
+    actionMode = null;
+    ViewUtil.animateOut(bottomActionBar, bottomActionBar.getExitAnimation());
+  }
+
+  private void updateMultiSelect() {
+    if (actionMode != null) {
+      actionMode.setTitle(getActionModeTitle());
+
+      int selectionCount = getListAdapter().getSectionCount();
+
+      bottomActionBar.setItems(Arrays.asList(
+          new ActionItem(R.drawable.ic_save_24, getResources().getQuantityString(R.plurals.MediaOverviewActivity_save_plural, selectionCount), () -> {
+            MediaActions.handleSaveMedia(MediaOverviewPageFragment.this,
+                                         getListAdapter().getSelectedMedia(),
+                                         this::exitMultiSelect);
+          }),
+          new ActionItem(R.drawable.ic_select_24, getString(R.string.MediaOverviewActivity_select_all), this::handleSelectAllMedia),
+          new ActionItem(R.drawable.ic_delete_24, getResources().getQuantityString(R.plurals.MediaOverviewActivity_delete_plural, selectionCount), () -> {
+            MediaActions.handleDeleteMedia(requireContext(), getListAdapter().getSelectedMedia());
+            exitMultiSelect();
+          })
+      ));
+    }
+  }
+
 
   @Override
   public void onPlay(@NonNull Uri audioUri, double progress, long messageId) {
@@ -346,18 +364,9 @@ public final class MediaOverviewPageFragment extends Fragment
 
   private class ActionModeCallback implements ActionMode.Callback {
 
-    private int originalStatusBarColor;
-
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-      mode.getMenuInflater().inflate(R.menu.media_overview_context, menu);
       mode.setTitle(getActionModeTitle());
-
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        Window window = requireActivity().getWindow();
-        originalStatusBarColor = window.getStatusBarColor();
-        WindowUtil.setStatusBarColor(requireActivity().getWindow(), getResources().getColor(R.color.action_mode_status_bar));
-      }
       return true;
     }
 
@@ -368,33 +377,17 @@ public final class MediaOverviewPageFragment extends Fragment
 
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem menuItem) {
-      switch (menuItem.getItemId()) {
-        case R.id.save:
-          MediaActions.handleSaveMedia(MediaOverviewPageFragment.this,
-                                       getListAdapter().getSelectedMedia(),
-                                       () -> actionMode.finish());
-          return true;
-        case R.id.delete:
-          MediaActions.handleDeleteMedia(requireContext(), getListAdapter().getSelectedMedia());
-          actionMode.finish();
-          return true;
-        case R.id.select_all:
-          handleSelectAllMedia();
-          return true;
-      }
       return false;
     }
 
     @Override
     public void onDestroyActionMode(ActionMode mode) {
-      actionMode = null;
       getListAdapter().clearSelection();
 
       FragmentActivity activity = requireActivity();
-
       ((MediaOverviewActivity) activity).onExitMultiSelect();
 
-      WindowUtil.setStatusBarColor(requireActivity().getWindow(), originalStatusBarColor);
+      exitMultiSelect();
     }
   }
 

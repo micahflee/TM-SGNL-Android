@@ -14,6 +14,7 @@ import org.tm.archive.LoggingFragment;
 import org.tm.archive.PaymentPreferencesDirections;
 import org.tm.archive.R;
 import org.tm.archive.payments.preferences.model.PaymentItem;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 public class PaymentsPagerItemFragment extends LoggingFragment {
 
@@ -62,8 +63,8 @@ public class PaymentsPagerItemFragment extends LoggingFragment {
   private class Callbacks implements PaymentsHomeAdapter.Callbacks {
     @Override
     public void onPaymentItem(@NonNull PaymentItem model) {
-      NavHostFragment.findNavController(PaymentsPagerItemFragment.this)
-                     .navigate(PaymentPreferencesDirections.actionDirectlyToPaymentDetails(model.getPaymentDetailsParcelable()));
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(PaymentsPagerItemFragment.this),
+                                  PaymentPreferencesDirections.actionDirectlyToPaymentDetails(model.getPaymentDetailsParcelable()));
     }
   }
 }

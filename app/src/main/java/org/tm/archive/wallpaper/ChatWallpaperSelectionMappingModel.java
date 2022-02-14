@@ -4,7 +4,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 
 class ChatWallpaperSelectionMappingModel implements MappingModel<ChatWallpaperSelectionMappingModel> {
 

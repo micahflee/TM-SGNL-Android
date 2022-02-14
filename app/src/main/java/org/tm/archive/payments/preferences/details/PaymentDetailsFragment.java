@@ -23,6 +23,7 @@ import androidx.navigation.Navigation;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
+import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.database.PaymentDatabase;
 import org.tm.archive.payments.Direction;
@@ -57,6 +58,7 @@ public final class PaymentDetailsFragment extends LoggingFragment {
     PaymentDetailsParcelable details = PaymentDetailsFragmentArgs.fromBundle(requireArguments()).getPaymentDetails();
 
     AvatarImageView   avatar          = view.findViewById(R.id.payments_details_avatar);
+    BadgeImageView    badge           = view.findViewById(R.id.payments_details_badge);
     TextView          contactFromTo   = view.findViewById(R.id.payments_details_contact_to_from);
     MoneyView         amount          = view.findViewById(R.id.payments_details_amount);
     TextView          note            = view.findViewById(R.id.payments_details_note);
@@ -106,6 +108,7 @@ public final class PaymentDetailsFragment extends LoggingFragment {
                             avatar.setImageResource(R.drawable.ic_mobilecoin_avatar_24);
                           } else {
                             avatar.setRecipient(state.getRecipient(), true);
+                            badge.setBadgeFromRecipient(state.getRecipient());
                           }
                           contactFromTo.setText(describeToOrFrom(state));
 

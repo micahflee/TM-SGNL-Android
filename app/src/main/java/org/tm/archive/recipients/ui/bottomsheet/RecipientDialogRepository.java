@@ -9,9 +9,10 @@ import androidx.core.util.Consumer;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.contacts.sync.DirectoryHelper;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.IdentityRecord;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
@@ -51,11 +52,9 @@ final class RecipientDialogRepository {
     return groupId;
   }
 
-  void getIdentity(@NonNull Consumer<IdentityDatabase.IdentityRecord> callback) {
+  void getIdentity(@NonNull Consumer<IdentityRecord> callback) {
     SignalExecutors.BOUNDED.execute(
-      () -> callback.accept(DatabaseFactory.getIdentityDatabase(context)
-                                           .getIdentity(recipientId)
-                                           .orNull()));
+      () -> callback.accept(ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(recipientId).orNull()));
   }
 
   void getRecipient(@NonNull RecipientCallback recipientCallback) {
@@ -107,7 +106,7 @@ final class RecipientDialogRepository {
   void getGroupMembership(@NonNull Consumer<List<RecipientId>> onComplete) {
     SimpleTask.run(SignalExecutors.UNBOUNDED,
                    () -> {
-                     GroupDatabase                   groupDatabase   = DatabaseFactory.getGroupDatabase(context);
+                     GroupDatabase                   groupDatabase   = SignalDatabase.groups();
                      List<GroupDatabase.GroupRecord> groupRecords    = groupDatabase.getPushGroupsContainingMember(recipientId);
                      ArrayList<RecipientId>          groupRecipients = new ArrayList<>(groupRecords.size());
 
@@ -121,7 +120,7 @@ final class RecipientDialogRepository {
   }
 
   public void getActiveGroupCount(@NonNull Consumer<Integer> onComplete) {
-    SignalExecutors.BOUNDED.execute(() -> onComplete.accept(DatabaseFactory.getGroupDatabase(context).getActiveGroupCount()));
+    SignalExecutors.BOUNDED.execute(() -> onComplete.accept(SignalDatabase.groups().getActiveGroupCount()));
   }
 
   interface RecipientCallback {

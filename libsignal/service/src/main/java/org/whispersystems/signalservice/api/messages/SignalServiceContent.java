@@ -31,6 +31,8 @@ import org.whispersystems.signalservice.api.messages.calls.OpaqueMessage;
 import org.whispersystems.signalservice.api.messages.calls.SignalServiceCallMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.BlockedListMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.ConfigurationMessage;
+import org.whispersystems.signalservice.api.messages.multidevice.ContactsMessage;
+import org.whispersystems.signalservice.api.messages.multidevice.KeysMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.MessageRequestResponseMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.OutgoingPaymentMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.ReadMessage;
@@ -43,7 +45,10 @@ import org.whispersystems.signalservice.api.messages.multidevice.ViewOnceOpenMes
 import org.whispersystems.signalservice.api.messages.multidevice.ViewedMessage;
 import org.whispersystems.signalservice.api.messages.shared.SharedContact;
 import org.whispersystems.signalservice.api.payments.Money;
+import org.whispersystems.signalservice.api.push.ACI;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
+import org.whispersystems.signalservice.api.storage.StorageKey;
+import org.whispersystems.signalservice.api.util.AttachmentPointerUtil;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 import org.whispersystems.signalservice.internal.push.UnsupportedDataMessageException;
@@ -528,6 +533,7 @@ public final class SignalServiceContent {
     SignalServiceDataMessage.Reaction        reaction         = createReaction(content);
     SignalServiceDataMessage.RemoteDelete    remoteDelete     = createRemoteDelete(content);
     SignalServiceDataMessage.GroupCallUpdate groupCallUpdate  = createGroupCallUpdate(content);
+    SignalServiceDataMessage.StoryContext    storyContext     = createStoryContext(content);
 
     if (content.getRequiredProtocolVersion() > SignalServiceProtos.DataMessage.ProtocolVersion.CURRENT_VALUE) {
       throw new UnsupportedDataMessageProtocolVersionException(SignalServiceProtos.DataMessage.ProtocolVersion.CURRENT_VALUE,
@@ -576,7 +582,8 @@ public final class SignalServiceContent {
                                         reaction,
                                         remoteDelete,
                                         groupCallUpdate,
-                                        payment);
+                                        payment,
+                                        storyContext);
   }
 
   private static SignalServiceSyncMessage createSynchronizeMessage(SignalServiceMetadata metadata,
@@ -588,7 +595,7 @@ public final class SignalServiceContent {
       SignalServiceProtos.SyncMessage.Sent sentContent          = content.getSent();
       SignalServiceDataMessage             dataMessage          = createSignalServiceMessage(metadata, sentContent.getMessage());
       Optional<SignalServiceAddress>       address              = SignalServiceAddress.isValidAddress(sentContent.getDestinationUuid(), sentContent.getDestinationE164())
-                                                                  ? Optional.of(new SignalServiceAddress(UuidUtil.parseOrThrow(sentContent.getDestinationUuid()), sentContent.getDestinationE164()))
+                                                                  ? Optional.of(new SignalServiceAddress(ACI.parseOrThrow(sentContent.getDestinationUuid()), sentContent.getDestinationE164()))
                                                                   : Optional.<SignalServiceAddress>absent();
 
       if (!address.isPresent() && !dataMessage.getGroupContext().isPresent()) {
@@ -597,7 +604,7 @@ public final class SignalServiceContent {
 
       for (SignalServiceProtos.SyncMessage.Sent.UnidentifiedDeliveryStatus status : sentContent.getUnidentifiedStatusList()) {
         if (SignalServiceAddress.isValidAddress(status.getDestinationUuid(), status.getDestinationE164())) {
-          SignalServiceAddress recipient = new SignalServiceAddress(UuidUtil.parseOrThrow(status.getDestinationUuid()), status.getDestinationE164());
+          SignalServiceAddress recipient = new SignalServiceAddress(ACI.parseOrThrow(status.getDestinationUuid()), status.getDestinationE164());
           unidentifiedStatuses.put(recipient, status.getUnidentified());
         } else {
           Log.w(TAG, "Encountered an invalid UnidentifiedDeliveryStatus in a SentTranscript! Ignoring.");
@@ -621,7 +628,7 @@ public final class SignalServiceContent {
 
       for (SignalServiceProtos.SyncMessage.Read read : content.getReadList()) {
         if (SignalServiceAddress.isValidAddress(read.getSenderUuid(), read.getSenderE164())) {
-          SignalServiceAddress address = new SignalServiceAddress(UuidUtil.parseOrThrow(read.getSenderUuid()), read.getSenderE164());
+          SignalServiceAddress address = new SignalServiceAddress(ACI.parseOrThrow(read.getSenderUuid()), read.getSenderE164());
           readMessages.add(new ReadMessage(address, read.getTimestamp()));
         } else {
           Log.w(TAG, "Encountered an invalid ReadMessage! Ignoring.");
@@ -636,7 +643,7 @@ public final class SignalServiceContent {
 
       for (SignalServiceProtos.SyncMessage.Viewed viewed : content.getViewedList()) {
         if (SignalServiceAddress.isValidAddress(viewed.getSenderUuid(), viewed.getSenderE164())) {
-          SignalServiceAddress address = new SignalServiceAddress(UuidUtil.parseOrThrow(viewed.getSenderUuid()), viewed.getSenderE164());
+          SignalServiceAddress address = new SignalServiceAddress(ACI.parseOrThrow(viewed.getSenderUuid()), viewed.getSenderE164());
           viewedMessages.add(new ViewedMessage(address, viewed.getTimestamp()));
         } else {
           Log.w(TAG, "Encountered an invalid ReadMessage! Ignoring.");
@@ -648,8 +655,8 @@ public final class SignalServiceContent {
 
     if (content.hasViewOnceOpen()) {
       if (SignalServiceAddress.isValidAddress(content.getViewOnceOpen().getSenderUuid(), content.getViewOnceOpen().getSenderE164())) {
-        SignalServiceAddress address   = new SignalServiceAddress(UuidUtil.parseOrThrow(content.getViewOnceOpen().getSenderUuid()), content.getViewOnceOpen().getSenderE164());
-        ViewOnceOpenMessage timerRead = new ViewOnceOpenMessage(address, content.getViewOnceOpen().getTimestamp());
+        SignalServiceAddress address   = new SignalServiceAddress(ACI.parseOrThrow(content.getViewOnceOpen().getSenderUuid()), content.getViewOnceOpen().getSenderE164());
+        ViewOnceOpenMessage  timerRead = new ViewOnceOpenMessage(address, content.getViewOnceOpen().getTimestamp());
         return SignalServiceSyncMessage.forViewOnceOpen(timerRead);
       } else {
         throw new InvalidMessageStructureException("ViewOnceOpen message has no sender!");
@@ -660,7 +667,7 @@ public final class SignalServiceContent {
       if (SignalServiceAddress.isValidAddress(content.getVerified().getDestinationUuid(), content.getVerified().getDestinationE164())) {
         try {
           SignalServiceProtos.Verified verified    = content.getVerified();
-          SignalServiceAddress destination = new SignalServiceAddress(UuidUtil.parseOrThrow(verified.getDestinationUuid()), verified.getDestinationE164());
+          SignalServiceAddress         destination = new SignalServiceAddress(ACI.parseOrThrow(verified.getDestinationUuid()), verified.getDestinationE164());
           IdentityKey identityKey = new IdentityKey(verified.getIdentityKey().toByteArray(), 0);
 
           VerifiedMessage.VerifiedState verifiedState;
@@ -740,8 +747,9 @@ public final class SignalServiceContent {
 
     if (content.hasFetchLatest() && content.getFetchLatest().hasType()) {
       switch (content.getFetchLatest().getType()) {
-        case LOCAL_PROFILE:    return SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.LOCAL_PROFILE);
-        case STORAGE_MANIFEST: return SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.STORAGE_MANIFEST);
+        case LOCAL_PROFILE:       return SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.LOCAL_PROFILE);
+        case STORAGE_MANIFEST:    return SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.STORAGE_MANIFEST);
+        case SUBSCRIPTION_STATUS: return SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.SUBSCRIPTION_STATUS);
       }
     }
 
@@ -791,7 +799,7 @@ public final class SignalServiceContent {
           Money.MobileCoin                                           amount     = Money.picoMobileCoin(mobileCoin.getAmountPicoMob());
           Money.MobileCoin                                           fee        = Money.picoMobileCoin(mobileCoin.getFeePicoMob());
           ByteString                                                 address    = mobileCoin.getRecipientAddress();
-          Optional<UUID>                                             recipient  = Optional.fromNullable(UuidUtil.parseOrNull(outgoingPayment.getRecipientUuid()));
+          Optional<SignalServiceAddress>                             recipient  = SignalServiceAddress.fromRaw(outgoingPayment.getRecipientUuid(), null);
 
           return SignalServiceSyncMessage.forOutgoingPayment(new OutgoingPaymentMessage(recipient,
                                                                                         amount,
@@ -807,6 +815,16 @@ public final class SignalServiceContent {
         default:
           return SignalServiceSyncMessage.empty();
       }
+    }
+
+    if (content.hasKeys() && content.getKeys().hasStorageService()) {
+      byte[] storageKey = content.getKeys().getStorageService().toByteArray();
+
+      return SignalServiceSyncMessage.forKeys(new KeysMessage(Optional.of(new StorageKey(storageKey))));
+    }
+
+    if (content.hasContacts()) {
+      return SignalServiceSyncMessage.forContacts(new ContactsMessage(createAttachmentPointer(content.getContacts().getBlob()), content.getContacts().getComplete()));
     }
 
     return SignalServiceSyncMessage.empty();
@@ -898,7 +916,7 @@ public final class SignalServiceContent {
     }
 
     if (SignalServiceAddress.isValidAddress(content.getQuote().getAuthorUuid(), content.getQuote().getAuthorE164())) {
-      SignalServiceAddress address = new SignalServiceAddress(UuidUtil.parseOrThrow(content.getQuote().getAuthorUuid()), content.getQuote().getAuthorE164());
+      SignalServiceAddress address = new SignalServiceAddress(ACI.parseOrThrow(content.getQuote().getAuthorUuid()), content.getQuote().getAuthorE164());
 
       return new SignalServiceDataMessage.Quote(content.getQuote().getId(),
                                                 address,
@@ -945,7 +963,7 @@ public final class SignalServiceContent {
     for (SignalServiceProtos.DataMessage.BodyRange bodyRange : bodyRanges) {
       if (bodyRange.hasMentionUuid()) {
         try {
-          mentions.add(new SignalServiceDataMessage.Mention(UuidUtil.parseOrThrow(bodyRange.getMentionUuid()), bodyRange.getStart(), bodyRange.getLength()));
+          mentions.add(new SignalServiceDataMessage.Mention(ACI.parseOrThrow(bodyRange.getMentionUuid()), bodyRange.getStart(), bodyRange.getLength()));
         } catch (IllegalArgumentException e) {
           throw new InvalidMessageStructureException("Invalid body range!");
         }
@@ -988,7 +1006,7 @@ public final class SignalServiceContent {
     }
 
     SignalServiceProtos.DataMessage.Reaction reaction = content.getReaction();
-    UUID                                     uuid     = UuidUtil.parseOrNull(reaction.getTargetAuthorUuid());
+    ACI                                      uuid     = ACI.parseOrNull(reaction.getTargetAuthorUuid());
 
     if (uuid == null) {
       Log.w(TAG, "Cannot parse author UUID on reaction");
@@ -996,9 +1014,9 @@ public final class SignalServiceContent {
     }
 
     return new SignalServiceDataMessage.Reaction(reaction.getEmoji(),
-                        reaction.getRemove(),
-                        new SignalServiceAddress(uuid),
-                        reaction.getTargetSentTimestamp());
+                                                 reaction.getRemove(),
+                                                 new SignalServiceAddress(uuid),
+                                                 reaction.getTargetSentTimestamp());
   }
 
   private static SignalServiceDataMessage.RemoteDelete createRemoteDelete(SignalServiceProtos.DataMessage content) {
@@ -1032,6 +1050,20 @@ public final class SignalServiceContent {
       case NOTIFICATION: return new SignalServiceDataMessage.Payment(createPaymentNotification(payment));
       default          : throw new InvalidMessageStructureException("Unknown payment item");
     }
+  }
+
+  private static SignalServiceDataMessage.StoryContext createStoryContext(SignalServiceProtos.DataMessage content) throws InvalidMessageStructureException {
+    if (!content.hasStoryContext()) {
+      return null;
+    }
+
+    ACI aci = ACI.parseOrNull(content.getStoryContext().getAuthorUuid());
+
+    if (aci == null) {
+      throw new InvalidMessageStructureException("Invalid author ACI!");
+    }
+
+    return new SignalServiceDataMessage.StoryContext(aci, content.getStoryContext().getSentTimestamp());
   }
 
   private static SignalServiceDataMessage.PaymentNotification createPaymentNotification(SignalServiceProtos.DataMessage.Payment content)
@@ -1144,21 +1176,7 @@ public final class SignalServiceContent {
   }
 
   private static SignalServiceAttachmentPointer createAttachmentPointer(SignalServiceProtos.AttachmentPointer pointer) throws InvalidMessageStructureException {
-    return new SignalServiceAttachmentPointer(pointer.getCdnNumber(),
-                                              SignalServiceAttachmentRemoteId.from(pointer),
-                                              pointer.getContentType(),
-                                              pointer.getKey().toByteArray(),
-                                              pointer.hasSize() ? Optional.of(pointer.getSize()) : Optional.<Integer>absent(),
-                                              pointer.hasThumbnail() ? Optional.of(pointer.getThumbnail().toByteArray()): Optional.<byte[]>absent(),
-                                              pointer.getWidth(), pointer.getHeight(),
-                                              pointer.hasDigest() ? Optional.of(pointer.getDigest().toByteArray()) : Optional.<byte[]>absent(),
-                                              pointer.hasFileName() ? Optional.of(pointer.getFileName()) : Optional.<String>absent(),
-                                              (pointer.getFlags() & FlagUtil.toBinaryFlag(SignalServiceProtos.AttachmentPointer.Flags.VOICE_MESSAGE_VALUE)) != 0,
-                                              (pointer.getFlags() & FlagUtil.toBinaryFlag(SignalServiceProtos.AttachmentPointer.Flags.BORDERLESS_VALUE)) != 0,
-                                              (pointer.getFlags() & FlagUtil.toBinaryFlag(SignalServiceProtos.AttachmentPointer.Flags.GIF_VALUE)) != 0,
-                                              pointer.hasCaption() ? Optional.of(pointer.getCaption()) : Optional.<String>absent(),
-                                              pointer.hasBlurHash() ? Optional.of(pointer.getBlurHash()) : Optional.<String>absent(),
-                                              pointer.hasUploadTimestamp() ? pointer.getUploadTimestamp() : 0);
+    return AttachmentPointerUtil.createSignalAttachmentPointer(pointer);
 
   }
 

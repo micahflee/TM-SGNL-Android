@@ -6,7 +6,6 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.database.helpers.SQLCipherOpenHelper;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.CursorUtil;
 
@@ -43,7 +42,7 @@ public class RemappedRecordsDatabase extends Database {
                                                                                      NEW_ID + " INTEGER)";
   }
 
-  RemappedRecordsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  RemappedRecordsDatabase(Context context, SignalDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -95,6 +94,14 @@ public class RemappedRecordsDatabase extends Database {
 
   void addThreadMapping(long oldId, long newId) {
     addMapping(Threads.TABLE_NAME, new Mapping(oldId, newId));
+  }
+
+  public Cursor getAllRecipients() {
+    return databaseHelper.getSignalReadableDatabase().query(Recipients.TABLE_NAME, null, null, null, null, null, null);
+  }
+
+  public Cursor getAllThreads() {
+    return databaseHelper.getSignalReadableDatabase().query(Threads.TABLE_NAME, null, null, null, null, null, null);
   }
 
   private @NonNull List<Mapping> getAllMappings(@NonNull String table) {

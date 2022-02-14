@@ -2,11 +2,9 @@ package org.tm.archive.conversation;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Point;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -14,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
@@ -25,12 +24,14 @@ import com.google.common.collect.Sets;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.BindableConversationItem;
 import org.tm.archive.R;
-import org.tm.archive.VerifyIdentityActivity;
+import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.util.views.AutoRounder;
+import org.tm.archive.util.views.Stub;
+import org.tm.archive.verify.VerifyIdentityActivity;
 import org.tm.archive.conversation.colors.Colorizer;
-import org.tm.archive.conversation.mutiselect.Multiselect;
 import org.tm.archive.conversation.mutiselect.MultiselectPart;
 import org.tm.archive.conversation.ui.error.EnableCallNotificationSettingsDialog;
-import org.tm.archive.database.IdentityDatabase.IdentityRecord;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.model.GroupCallUpdateDetailsUtil;
 import org.tm.archive.database.model.InMemoryMessageRecord;
 import org.tm.archive.database.model.LiveUpdateMessage;
@@ -42,33 +43,33 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.DateUtils;
 import org.tm.archive.util.IdentityUtil;
 import org.tm.archive.util.Projection;
-import org.tm.archive.util.TextSecurePreferences;
+import org.tm.archive.util.ProjectionList;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.livedata.LiveDataUtil;
-import org.tm.archive.video.exo.AttachmentMediaSourceFactory;
 import org.whispersystems.libsignal.util.guava.Optional;
+import org.whispersystems.signalservice.api.push.ACI;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public final class ConversationUpdateItem extends FrameLayout
                                           implements BindableConversationItem
 {
-  private static final String TAG = Log.tag(ConversationUpdateItem.class);
+  private static final String         TAG                   = Log.tag(ConversationUpdateItem.class);
+  private static final ProjectionList EMPTY_PROJECTION_LIST = new ProjectionList();
+
 
   private Set<MultiselectPart> batchSelected;
 
   private TextView                  body;
   private MaterialButton            actionButton;
+  private Stub<CardView>            donateButtonStub;
   private View                      background;
   private ConversationMessage       conversationMessage;
   private Recipient                 conversationRecipient;
@@ -96,9 +97,10 @@ public final class ConversationUpdateItem extends FrameLayout
   @Override
   public void onFinishInflate() {
     super.onFinishInflate();
-    this.body         = findViewById(R.id.conversation_update_body);
-    this.actionButton = findViewById(R.id.conversation_update_action);
-    this.background   = findViewById(R.id.conversation_update_background);
+    this.body             = findViewById(R.id.conversation_update_body);
+    this.actionButton     = findViewById(R.id.conversation_update_action);
+    this.donateButtonStub = ViewUtil.findStubById(this, R.id.conversation_update_donate_action);
+    this.background       = findViewById(R.id.conversation_update_background);
 
     this.setOnClickListener(new InternalClickListener(null));
   }
@@ -116,7 +118,6 @@ public final class ConversationUpdateItem extends FrameLayout
                    boolean pulseMention,
                    boolean hasWallpaper,
                    boolean isMessageRequestAccepted,
-                   @NonNull AttachmentMediaSourceFactory attachmentMediaSourceFactory,
                    boolean allowedToPlayInline,
                    @NonNull Colorizer colorizer)
   {
@@ -131,7 +132,7 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   @Override
-  public ConversationMessage getConversationMessage() {
+  public @NonNull ConversationMessage getConversationMessage() {
     return conversationMessage;
   }
 
@@ -172,7 +173,7 @@ public final class ConversationUpdateItem extends FrameLayout
     }
 
     UpdateDescription         updateDescription = Objects.requireNonNull(messageRecord.getUpdateDisplayBody(getContext()));
-    LiveData<SpannableString> liveUpdateMessage = LiveUpdateMessage.fromMessageDescription(getContext(), updateDescription, textColor);
+    LiveData<SpannableString> liveUpdateMessage = LiveUpdateMessage.fromMessageDescription(getContext(), updateDescription, textColor, true);
     LiveData<SpannableString> spannableMessage  = loading(liveUpdateMessage);
 
     observeDisplayBody(lifecycleOwner, spannableMessage);
@@ -226,8 +227,13 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   @Override
-  public @NonNull List<Projection> getColorizerProjections() {
-    return Collections.emptyList();
+  public boolean shouldProjectContent() {
+    return false;
+  }
+
+  @Override
+  public @NonNull ProjectionList getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
+    return EMPTY_PROJECTION_LIST;
   }
 
   @Override
@@ -345,11 +351,11 @@ public final class ConversationUpdateItem extends FrameLayout
       });
     } else if (conversationMessage.getMessageRecord().isGroupCall()) {
       UpdateDescription updateDescription = MessageRecord.getGroupCallUpdateDescription(getContext(), conversationMessage.getMessageRecord().getBody(), true);
-      Collection<UUID>  uuids             = updateDescription.getMentioned();
+      Collection<ACI>   acis              = updateDescription.getMentioned();
 
       int text = 0;
-      if (Util.hasItems(uuids)) {
-        if (uuids.contains(TextSecurePreferences.getLocalUuid(getContext()))) {
+      if (Util.hasItems(acis)) {
+        if (acis.contains(Recipient.self().requireAci())) {
           text = R.string.ConversationUpdateItem_return_to_call;
         } else if (GroupCallUpdateDetailsUtil.parse(conversationMessage.getMessageRecord().getBody()).getIsCallFull()) {
           text = R.string.ConversationUpdateItem_call_is_full;
@@ -413,9 +419,45 @@ public final class ConversationUpdateItem extends FrameLayout
           eventListener.onBadDecryptLearnMoreClicked(conversationMessage.getMessageRecord().getRecipient().getId());
         }
       });
+    } else if (conversationMessage.getMessageRecord().isChangeNumber() && conversationMessage.getMessageRecord().getIndividualRecipient().isSystemContact()) {
+      actionButton.setText(R.string.ConversationUpdateItem_update_contact);
+      actionButton.setVisibility(VISIBLE);
+      actionButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onChangeNumberUpdateContact(conversationMessage.getMessageRecord().getIndividualRecipient());
+        }
+      });
     } else {
       actionButton.setVisibility(GONE);
       actionButton.setOnClickListener(null);
+    }
+
+    if (conversationMessage.getMessageRecord().isBoostRequest()) {
+      actionButton.setVisibility(GONE);
+
+      CardView donateButton = donateButtonStub.get();
+      TextView buttonText   = donateButton.findViewById(R.id.conversation_update_donate_action_button);
+      boolean  isSustainer  = SignalStore.donationsValues().isLikelyASustainer();
+
+      donateButton.setVisibility(VISIBLE);
+      donateButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onDonateClicked();
+        }
+      });
+
+      if (isSustainer) {
+        buttonText.setText(R.string.ConversationUpdateItem_signal_boost);
+        buttonText.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_boost_outline_16, 0, 0, 0);
+      } else {
+        buttonText.setText(R.string.ConversationUpdateItem_become_a_sustainer);
+        buttonText.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0);
+      }
+
+      AutoRounder.autoSetCorners(donateButton, donateButton::setRadius);
+
+    } else if (donateButtonStub.resolved()) {
+      donateButtonStub.get().setVisibility(GONE);
     }
   }
 
@@ -485,10 +527,11 @@ public final class ConversationUpdateItem extends FrameLayout
   }
 
   private static boolean isSameType(@NonNull MessageRecord current, @NonNull MessageRecord candidate) {
-    return (current.isGroupUpdate()           && candidate.isGroupUpdate())   ||
-           (current.isProfileChange()         && candidate.isProfileChange()) ||
-           (current.isGroupCall()             && candidate.isGroupCall())     ||
-           (current.isExpirationTimerUpdate() && candidate.isExpirationTimerUpdate());
+    return (current.isGroupUpdate()           && candidate.isGroupUpdate())           ||
+           (current.isProfileChange()         && candidate.isProfileChange())         ||
+           (current.isGroupCall()             && candidate.isGroupCall())             ||
+           (current.isExpirationTimerUpdate() && candidate.isExpirationTimerUpdate()) ||
+           (current.isChangeNumber()          && candidate.isChangeNumber());
   }
 
   @Override

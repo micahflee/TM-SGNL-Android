@@ -5,9 +5,9 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.GroupDatabase.GroupRecord;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
@@ -90,7 +90,7 @@ public class PushGroupUpdateJob extends BaseJob {
       return;
     }
 
-    GroupDatabase           groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    GroupDatabase           groupDatabase = SignalDatabase.groups();
     Optional<GroupRecord>   record        = groupDatabase.getGroup(groupId);
     SignalServiceAttachment avatar        = null;
 
@@ -124,7 +124,7 @@ public class PushGroupUpdateJob extends BaseJob {
                                                         .withName(record.get().getTitle())
                                                         .build();
 
-    RecipientId groupRecipientId = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupId);
+    RecipientId groupRecipientId = SignalDatabase.recipients().getOrInsertFromGroupId(groupId);
     Recipient   groupRecipient   = Recipient.resolved(groupRecipientId);
 
     SignalServiceDataMessage message = SignalServiceDataMessage.newBuilder()

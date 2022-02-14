@@ -2,6 +2,7 @@ package org.whispersystems.signalservice.api.profiles;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,8 +11,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.signal.zkgroup.InvalidInputException;
 import org.signal.zkgroup.profiles.ProfileKeyCredentialResponse;
 import org.whispersystems.libsignal.logging.Log;
+import org.whispersystems.signalservice.api.push.ACI;
 import org.whispersystems.signalservice.internal.util.JsonUtil;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public class SignalServiceProfile {
@@ -51,12 +55,15 @@ public class SignalServiceProfile {
   private Capabilities capabilities;
 
   @JsonProperty
-  @JsonSerialize(using = JsonUtil.UuidSerializer.class)
-  @JsonDeserialize(using = JsonUtil.UuidDeserializer.class)
-  private UUID uuid;
+  @JsonSerialize(using = JsonUtil.AciSerializer.class)
+  @JsonDeserialize(using = JsonUtil.AciDeserializer.class)
+  private ACI uuid;
 
   @JsonProperty
   private byte[] credential;
+
+  @JsonProperty
+  private List<Badge> badges;
 
   @JsonIgnore
   private RequestType requestType;
@@ -99,7 +106,11 @@ public class SignalServiceProfile {
     return capabilities;
   }
 
-  public UUID getUuid() {
+  public List<Badge> getBadges() {
+    return badges;
+  }
+
+  public ACI getAci() {
     return uuid;
   }
 
@@ -109,6 +120,57 @@ public class SignalServiceProfile {
 
   public void setRequestType(RequestType requestType) {
     this.requestType = requestType;
+  }
+
+  public static class Badge {
+    @JsonProperty
+    private String id;
+
+    @JsonProperty
+    private String category;
+
+    @JsonProperty
+    private String name;
+
+    @JsonProperty
+    private String description;
+
+    @JsonProperty
+    private List<String> sprites6;
+
+    @JsonProperty
+    private BigDecimal expiration;
+
+    @JsonProperty
+    private boolean visible;
+
+    public String getId() {
+      return id;
+    }
+
+    public String getCategory() {
+      return category;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public List<String> getSprites6() {
+      return sprites6;
+    }
+
+    public BigDecimal getExpiration() {
+      return expiration;
+    }
+
+    public boolean isVisible() {
+      return visible;
+    }
   }
 
   public static class Capabilities {
@@ -126,6 +188,9 @@ public class SignalServiceProfile {
 
     @JsonProperty
     private boolean announcementGroup;
+
+    @JsonProperty
+    private boolean changeNumber;
 
     @JsonCreator
     public Capabilities() {}
@@ -148,6 +213,10 @@ public class SignalServiceProfile {
 
     public boolean isAnnouncementGroup() {
       return announcementGroup;
+    }
+
+    public boolean isChangeNumber() {
+      return changeNumber;
     }
   }
 

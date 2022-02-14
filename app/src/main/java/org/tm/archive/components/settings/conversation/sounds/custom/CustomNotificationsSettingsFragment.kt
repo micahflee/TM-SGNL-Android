@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
+import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsAdapter
@@ -19,6 +20,8 @@ import org.tm.archive.components.settings.configure
 import org.tm.archive.database.RecipientDatabase
 import org.tm.archive.notifications.NotificationChannels
 import org.tm.archive.util.RingtoneUtil
+
+private val TAG = Log.tag(CustomNotificationsSettingsFragment::class.java)
 
 class CustomNotificationsSettingsFragment : DSLSettingsFragment(R.string.CustomNotificationsDialogFragment__custom_notifications) {
 
@@ -36,6 +39,11 @@ class CustomNotificationsSettingsFragment : DSLSettingsFragment(R.string.CustomN
     val repository = CustomNotificationsSettingsRepository(requireContext())
 
     return CustomNotificationsSettingsViewModel.Factory(recipientId, repository)
+  }
+
+  override fun onResume() {
+    super.onResume()
+    viewModel.channelConsistencyCheck()
   }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
@@ -135,7 +143,15 @@ class CustomNotificationsSettingsFragment : DSLSettingsFragment(R.string.CustomN
     } else {
       val tone = RingtoneUtil.getRingtone(requireContext(), ringtone)
       if (tone != null) {
-        return tone.getTitle(context)
+        return try {
+          tone.getTitle(context)
+        } catch (e: NullPointerException) {
+          Log.w(TAG, "Could not get correct title for ringtone.", e)
+          context.getString(R.string.CustomNotificationsDialogFragment__unknown)
+        } catch (e: SecurityException) {
+          Log.w(TAG, "Could not get correct title for ringtone.", e)
+          context.getString(R.string.CustomNotificationsDialogFragment__unknown)
+        }
       }
     }
     return context.getString(R.string.CustomNotificationsDialogFragment__default)

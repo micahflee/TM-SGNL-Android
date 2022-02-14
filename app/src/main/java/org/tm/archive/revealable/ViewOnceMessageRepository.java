@@ -6,15 +6,13 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
-import org.tm.archive.database.MmsDatabase;
-import org.tm.archive.database.model.MessageId;
+import org.tm.archive.database.NoSuchMessageException;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.MultiDeviceViewedUpdateJob;
 import org.tm.archive.jobs.SendViewedReceiptJob;
-import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collections;
@@ -26,13 +24,13 @@ class ViewOnceMessageRepository {
   private final MessageDatabase mmsDatabase;
 
   ViewOnceMessageRepository(@NonNull Context context) {
-    this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+    this.mmsDatabase = SignalDatabase.mms();
   }
 
   void getMessage(long messageId, @NonNull Callback<Optional<MmsMessageRecord>> callback) {
     SignalExecutors.BOUNDED.execute(() -> {
-      try (MmsDatabase.Reader reader = MmsDatabase.readerFor(mmsDatabase.getMessageCursor(messageId))) {
-        MmsMessageRecord record = (MmsMessageRecord) reader.getNext();
+      try {
+        MmsMessageRecord record = (MmsMessageRecord) mmsDatabase.getMessageRecord(messageId);
 
         MessageDatabase.MarkedMessageInfo info = mmsDatabase.setIncomingMessageViewed(record.getId());
         if (info != null) {
@@ -44,6 +42,8 @@ class ViewOnceMessageRepository {
         }
 
         callback.onComplete(Optional.fromNullable(record));
+      } catch (NoSuchMessageException e) {
+        callback.onComplete(Optional.absent());
       }
     });
   }

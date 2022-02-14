@@ -19,7 +19,6 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
 
 import org.tm.archive.R;
 import org.tm.archive.permissions.Permissions;

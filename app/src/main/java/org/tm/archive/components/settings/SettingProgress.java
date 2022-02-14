@@ -4,8 +4,8 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.util.MappingModel;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 /**
  * Simple progress indicator that can be used multiple times (if provided with different {@link Item#id}s).

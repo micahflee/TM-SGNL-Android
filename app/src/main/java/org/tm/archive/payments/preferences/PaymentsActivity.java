@@ -12,6 +12,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.PaymentLedgerUpdateJob;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 public class PaymentsActivity extends PassphraseRequiredActivity {
 
@@ -31,7 +32,7 @@ public class PaymentsActivity extends PassphraseRequiredActivity {
 
     int startingAction = getIntent().getIntExtra(EXTRA_PAYMENTS_STARTING_ACTION, R.id.paymentsHome);
     if (startingAction != R.id.paymentsHome) {
-      controller.navigate(startingAction, getIntent().getBundleExtra(EXTRA_STARTING_ARGUMENTS));
+      SafeNavigation.safeNavigate(controller, startingAction, getIntent().getBundleExtra(EXTRA_STARTING_ARGUMENTS));
     }
   }
 

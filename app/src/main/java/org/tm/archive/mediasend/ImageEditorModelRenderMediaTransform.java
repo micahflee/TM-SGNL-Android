@@ -11,7 +11,7 @@ import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.imageeditor.model.EditorModel;
+import org.signal.imageeditor.core.model.EditorModel;
 import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.util.MediaUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
@@ -26,11 +26,11 @@ public final class ImageEditorModelRenderMediaTransform implements MediaTransfor
   @NonNull  private final EditorModel modelToRender;
   @Nullable private final Point       size;
 
-  ImageEditorModelRenderMediaTransform(@NonNull EditorModel modelToRender) {
+  public ImageEditorModelRenderMediaTransform(@NonNull EditorModel modelToRender) {
     this(modelToRender, null);
   }
 
-  ImageEditorModelRenderMediaTransform(@NonNull EditorModel modelToRender, @Nullable Point size) {
+  public ImageEditorModelRenderMediaTransform(@NonNull EditorModel modelToRender, @Nullable Point size) {
     this.modelToRender = modelToRender;
     this.size          = size;
   }

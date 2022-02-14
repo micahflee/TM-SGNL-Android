@@ -1,20 +1,15 @@
 package org.tm.archive.profiles.spoofing;
 
 import android.content.Context;
-import android.graphics.Outline;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewOutlineProvider;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.Px;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.tm.archive.R;
 import org.tm.archive.components.AvatarImageView;
@@ -23,7 +18,6 @@ import org.tm.archive.contacts.avatars.FallbackPhoto20dp;
 import org.tm.archive.contacts.avatars.GeneratedContactPhoto;
 import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.ViewUtil;
 
 /**
  * Banner displayed within a conversation when a review is suggested.
@@ -106,7 +100,7 @@ public class ReviewBannerView extends LinearLayout {
 
     @NonNull
     @Override
-    public FallbackContactPhoto getPhotoForRecipientWithName(String name) {
+    public FallbackContactPhoto getPhotoForRecipientWithName(String name, int targetSize) {
       return new FixedSizeGeneratedContactPhoto(name, R.drawable.ic_profile_outline_20);
     }
 

@@ -90,6 +90,8 @@
   <string name="BlockUnblockDialog_group_members_will_be_able_to_add_you">ગ્રુપના સભ્યો તમને આ ગ્રુપમાં ફરીથી ઉમેરવામાં સમર્થ હશે.</string>
   <string name="BlockUnblockDialog_you_will_be_able_to_call_and_message_each_other">તમે એકબીજાને મેસેજ અને કૉલ કરી શકશો અને તમારું નામ અને ફોટો તેમની સાથે શેર કરવામાં આવશે.</string>
   <string name="BlockUnblockDialog_blocked_people_wont_be_able_to_call_you_or_send_you_messages">અવરોધિત લોકો તમને કૉલ કરી શકશે નહીં અથવા તમને મેસેજ મોકલશે નહીં.</string>
+  <!--Message shown on block dialog when blocking the Signal release notes recipient-->
+  <!--Message shown on unblock dialog when unblocking the Signal release notes recipient-->
   <string name="BlockUnblockDialog_unblock_s">અન બ્લોક કરવું છે%1$s?</string>
   <string name="BlockUnblockDialog_block">અવરોધિત કરો</string>
   <string name="BlockUnblockDialog_block_and_leave">બ્લોક કરો અને નીકળો</string>
@@ -184,9 +186,6 @@
   <string name="ConversationItem_this_message_was_deleted">આ મેસેજ કાઢી નાખ્યો હતો.</string>
   <string name="ConversationItem_you_deleted_this_message">તમે આ મેસેજ કાઢી નાખ્યો.</string>
   <!--ConversationActivity-->
-  <string name="ConversationActivity_reset_secure_session_question">સુરક્ષિત સત્ર ફરીથી સેટ કરીએ?</string>
-  <string name="ConversationActivity_this_may_help_if_youre_having_encryption_problems">જો તમને આ વાતચીતમાં એન્ક્રિપ્શન સમસ્યા આવી રહી હોય તો આ મદદ કરી શકે છે. તમારા મેસેજ રાખવામાં આવશે.</string>
-  <string name="ConversationActivity_reset">ફરીથી સેટ કરો</string>
   <string name="ConversationActivity_add_attachment">જોડાણ ઉમેરો </string>
   <string name="ConversationActivity_select_contact_info">સંપર્ક માહિતી પસંદ કરો</string>
   <string name="ConversationActivity_compose_message">મેસેજ લખો</string>
@@ -300,6 +299,7 @@
   <string name="ConversationFragment_not_now">અત્યારે નહીં </string>
   <string name="ConversationFragment_your_safety_number_with_s_changed">%s સાથેનો તમારો સલામતી નંબર બદલાયો છે</string>
   <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">%s સાથેનો તમારો સલામતી નંબર બદલાયો છે, સંભવિત કારણ કે તેઓએ સિગ્નલ ફરીથી ઇન્સ્ટોલ કર્યું અથવા ડિવાઇસ બદલ્યુ છે.</string>
+  <!--Message shown to indicate which notification profile is on/active-->
   <plurals name="ConversationListFragment_delete_selected_conversations">
     <item quantity="one">પસંદ કરેલા સંવાદ કાઢી નાખીએ?</item>
     <item quantity="other">પસંદ કરેલા સંવાદ કાઢી નાખીએ?</item>
@@ -319,6 +319,11 @@
     <item quantity="one">સંવાદને ઇનબોક્સમાં ખસેડયો</item>
     <item quantity="other">સંવાદને %d ઇનબોક્સમાં ખસેડયા</item>
   </plurals>
+  <string name="ConversationListFragment_select">પસંદ કરો</string>
+  <string name="ConversationListFragment_select_all">બધા પસંદ કરો</string>
+  <!--Show in conversation list overflow menu to open selection bottom sheet-->
+  <!--Tooltip shown after you have created your first notification profile-->
+  <!--Message shown in top toast to indicate the named profile is on-->
   <!--ConversationListItem-->
   <string name="ConversationListItem_key_exchange_message">કી વિનિમય મેસેજ</string>
   <!--ConversationListItemAction-->
@@ -364,6 +369,7 @@
   <string name="BackupsPreferenceFragment__learn_more">વધુ શીખો</string>
   <string name="BackupsPreferenceFragment__in_progress">થાય છે…</string>
   <string name="BackupsPreferenceFragment__d_so_far">%1$dઅત્યાર સુધી…</string>
+  <!--Show percentage of completion of backup-->
   <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">બૅકઅપ બનાવવા માટે Signal ને બાહ્ય સ્ટોરેજ પરવાનગીની જરૂર હોય છે, પરંતુ તે કાયમી ધોરણે નામંજૂર કરવામાં આવી છે. કૃપા કરીને એપ્લિકેશન સેટિંગ્સ ચાલુ રાખો, \"પરવાનગી\" પસંદ કરો અને \"સ્ટોરેજ\" સક્ષમ કરો.</string>
   <!--CustomDefaultPreference-->
   <string name="CustomDefaultPreference_using_custom">કસ્ટમથી: %s</string>
@@ -399,14 +405,6 @@
   <string name="DeviceListItem_today">આજે</string>
   <!--DocumentView-->
   <string name="DocumentView_unnamed_file">અનામી ફાઇલ</string>
-  <!--DonateMegaphone-->
-  <string name="DonateMegaphone_donate_to_signal">Signal માટે ફાળો આપો</string>
-  <string name="DonateMegaphone_Signal_is_powered_by_people_like_you_show_your_support_today">Signal તમારા જેવા લોકો દ્વારા સંચાલિત છે. આજે તમારો સપોર્ટ બતાવો!</string>
-  <string name="DonateMegaphone_donate">દાન કરો</string>
-  <string name="DonateMegaphone_no_thanks">ના આભાર</string>
-  <!--GroupCallingMegaphone-->
-  <string name="GroupCallingMegaphone__introducing_group_calls">પ્રસ્તુત કરી રહ્યા છીએ ગ્રુપ કોલ્સ</string>
-  <string name="GroupCallingMegaphone__open_a_new_group_to_start">ફ્રી એન્ક્રિપ્ટેડ ગ્રુપ કૉલ ચાલુ કરવા માટે એક નવું ગ્રુપ ચાલુ કરો</string>
   <!--DozeReminder-->
   <string name="DozeReminder_optimize_for_missing_play_services">ખૂટતી Play Services માટે ઓપ્ટિમાઇઝ કરો</string>
   <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">આ ડિવાઇસ Play Servicesનું સમર્થન કરતું નથી. સિસ્ટમ બેટરી ઓપ્ટિમાઇઝેશંસને અક્ષમ કરવા માટે ટેપ કરો જે Signal ને નિષ્ક્રિય હોવા પર મેસેજ પ્રાપ્ત કરવામાં અટકાવે છે.</string>
@@ -524,10 +522,6 @@
   <string name="LeaveGroupDialog_choose_new_admin">નવો એડમિન પસંદ કરો</string>
   <string name="LeaveGroupDialog_before_you_leave_you_must_choose_at_least_one_new_admin_for_this_group">તમે નીકળો તે પહેલાં, તમારે આ ગ્રુપ માટે ઓછામાં ઓછું એક નવું એડમિન પસંદ કરવું આવશ્યક છે.</string>
   <string name="LeaveGroupDialog_choose_admin">એડમિન પસંદ કરો</string>
-  <!--LinkPreviewsMegaphone-->
-  <string name="LinkPreviewsMegaphone_disable">અક્ષમ</string>
-  <string name="LinkPreviewsMegaphone_preview_any_link">કોઈપણ લિંક પ્રિવ્યુ કરો</string>
-  <string name="LinkPreviewsMegaphone_you_can_now_retrieve_link_previews_directly_from_any_website">તમે મોકલેલા મેસેજ માટે હવે તમે સીધા જ કોઈપણ વેબસાઈટ પરથી લિંક પ્રિવ્યુ મેળવી શકો છો.</string>
   <!--LinkPreviewView-->
   <string name="LinkPreviewView_no_link_preview_available">કોઈ લિંકનુ પ્રિવ્યુ ઉપલબ્ધ નથી</string>
   <string name="LinkPreviewView_this_group_link_is_not_active">આ ગ્રુપ લિંક સક્રિય નથી</string>
@@ -685,6 +679,7 @@
   <string name="CustomNotificationsDialogFragment__enabled">સક્ષમ કરેલ</string>
   <string name="CustomNotificationsDialogFragment__disabled">અક્ષમ</string>
   <string name="CustomNotificationsDialogFragment__default">ડિફોલ્ટ</string>
+  <string name="CustomNotificationsDialogFragment__unknown">અજાણ્યું</string>
   <!--ShareableGroupLinkDialogFragment-->
   <string name="ShareableGroupLinkDialogFragment__shareable_group_link">શેર કરી શકાય તેવી ગ્રુપ લિંક</string>
   <string name="ShareableGroupLinkDialogFragment__manage_and_share">મેનેજ કરો &amp; શેર</string>
@@ -795,14 +790,7 @@
   <string name="MediaOverviewActivity_Grid_view_description">ગ્રીડ વ્યુ</string>
   <string name="MediaOverviewActivity_List_view_description">યાદી વ્યુ</string>
   <string name="MediaOverviewActivity_Selected_description">પસંદ કરેલ</string>
-  <plurals name="MediaOverviewActivity_d_items_s">
-    <item quantity="one">%1$dઆઈટમ%2$s</item>
-    <item quantity="other">%1$dઆઈટમ્સ%2$s</item>
-  </plurals>
-  <plurals name="MediaOverviewActivity_d_items">
-    <item quantity="one">%1$dઆઈટમ</item>
-    <item quantity="other">%1$d આઈટમ્સ</item>
-  </plurals>
+  <string name="MediaOverviewActivity_select_all">બધા પસંદ કરો</string>
   <string name="MediaOverviewActivity_file">ફાઇલ</string>
   <string name="MediaOverviewActivity_audio">ઓડિયો</string>
   <string name="MediaOverviewActivity_video">વિડિયો</string>
@@ -813,8 +801,6 @@
   <string name="MediaOverviewActivity_sent_by_s_to_s">%1$s દ્વારા %2$s મોકલ્યો</string>
   <string name="MediaOverviewActivity_sent_by_you_to_s">%1$s ને તમારા દ્વારા મોકલાયેલ</string>
   <!--Megaphones-->
-  <string name="Megaphones_introducing_reactions">પ્રસ્તુત પ્રતિક્રિયાઓ</string>
-  <string name="Megaphones_tap_and_hold_any_message_to_quicky_share_how_you_feel">તમને કેવું લાગે છે તેનો ઝડપથી જવાબ આપવા માટે કોઈપણ મેસેજને ટેપ કરો અને પકડી રાખો.</string>
   <string name="Megaphones_remind_me_later">મને પછી યાદ કરાવો</string>
   <string name="Megaphones_verify_your_signal_pin">તમારા Signal PIN ને ચકાસો</string>
   <string name="Megaphones_well_occasionally_ask_you_to_verify_your_pin">અમે તમને ક્યારેક ક્યારેક તમારો PIN ચકાસવા માટે કહીશું જેથી કરીને તમે તેને યાદ કરો.</string>
@@ -1035,6 +1021,8 @@
   <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified">તમે તમારા સલામતી નંબરને %s ચકાસાયેલ વગર માર્ક કર્યા છે</string>
   <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device">તમે બીજા ડિવાઇસ માંથી વણચકાસેલ %s સાથે તમારો સલામતી નંબર માર્ક કર્યો છે</string>
   <string name="MessageRecord_a_message_from_s_couldnt_be_delivered">%s તરફથી મેસેજ પહોંચાડી શકાયો નથી</string>
+  <!--Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost.-->
+  <!--Update item message shown in the release channel when someone is not a sustainer so we ask them to consider becoming one-->
   <!--Group Calling update messages-->
   <string name="MessageRecord_s_started_a_group_call_s">%1$s એ ગ્રુપ કૉલ શરૂ કર્યો · %2$s</string>
   <string name="MessageRecord_s_is_in_the_group_call_s">%1$s એ ગ્રુપ કૉલમાં છે· %2$s</string>
@@ -1187,6 +1175,9 @@
   <string name="RedPhone_number_not_registered">નંબર રજીસ્ટર નથી!</string>
   <string name="RedPhone_the_number_you_dialed_does_not_support_secure_voice">તમે ડાયલ કરેલ નંબર સુરક્ષિત ઑડિયોને સપોર્ટ કરતું નથી!</string>
   <string name="RedPhone_got_it">ખબર પડી</string>
+  <!--Valentine\'s Day Megaphone-->
+  <!--Title text for the Valentine\'s Day donation megaphone. The placeholder will always be a heart emoji. Needs to be a placeholder for Android reasons.-->
+  <!--Body text for the Valentine\'s Day donation megaphone.-->
   <!--WebRtcCallActivity-->
   <string name="WebRtcCallActivity__tap_here_to_turn_on_your_video">તમારી વિડિયો ચાલુ કરવા માટે અહીં ટેપ કરો</string>
   <string name="WebRtcCallActivity__to_call_s_signal_needs_access_to_your_camera">કૉલ કરવા માટે %1$s, Signal ને તમારા માઇક્રોફોન અને કૅમેરાની ઍક્સેસની જરૂર છે.</string>
@@ -1257,8 +1248,6 @@
   <string name="RegistrationActivity_play_services_error">Play Services ભૂલ</string>
   <string name="RegistrationActivity_google_play_services_is_updating_or_unavailable">Google Play Services અપડેટ થઈ રહી છે અથવા અસ્થાયીરૂપે અનુપલબ્ધ છે. મેહરબાની કરી ને ફરીથી પ્રયાસ કરો.</string>
   <string name="RegistrationActivity_terms_and_privacy">શરતો &amp; ગોપનીયતા નીતિ</string>
-  <string name="RegistrationActivity_signal_needs_access_to_your_contacts_and_media_in_order_to_connect_with_friends">મિત્રો સાથે જોડાવા, મેસેજ આપ-લે કરવા અને સલામત કૉલ્સ કરવા માટે Signal ને તમારા સંપર્કો અને મીડિયા એક્સેસની જરૂર છે</string>
-  <string name="RegistrationActivity_signal_needs_access_to_your_contacts_in_order_to_connect_with_friends">મિત્રો સાથે જોડાવા, મેસેજ આપલે કરવા અને સલામત કૉલ્સ કરવા માટે Signal ને તમારા સંપર્કોની ઍક્સેસની જરૂર છે</string>
   <string name="RegistrationActivity_rate_limited_to_service">તમે આ નંબરને રજીસ્ટર કરવા માટે ઘણા પ્રયત્નો કર્યા છે. પછીથી ફરી પ્રયત્ન કરો.</string>
   <string name="RegistrationActivity_unable_to_connect_to_service">સેવાથી કનેક્ટ કરવામાં અસમર્થ. કૃપા કરીને નેટવર્ક કનેક્શન તપાસો અને ફરીથી પ્રયાસ કરો.</string>
   <plurals name="RegistrationActivity_debug_log_hint">
@@ -1303,6 +1292,8 @@
   <string name="SharedContactView_add_to_contacts">સંપર્કોમાં ઉમેરો</string>
   <string name="SharedContactView_invite_to_signal">Signal માટે આમંત્રણ આપો</string>
   <string name="SharedContactView_message">Signal મેસેજ</string>
+  <!--SignalBottomActionBar-->
+  <string name="SignalBottomActionBar_more">વધુ</string>
   <!--SignalPinReminders-->
   <string name="SignalPinReminders_well_remind_you_again_later">અમે તમને પછીથી ફરી યાદ કરાવીશું.</string>
   <string name="SignalPinReminders_well_remind_you_again_tomorrow">કાલે ફરી તમને યાદ કરાવીશું.</string>
@@ -1625,10 +1616,13 @@
   <string name="ConversationUpdateItem_call_is_full">કૉલ પૂર્ણ છે</string>
   <string name="ConversationUpdateItem_invite_friends">મિત્રોને આમંત્રિત કરો</string>
   <string name="ConversationUpdateItem_enable_call_notifications">કૉલ સૂચનાઓ સક્ષમ કરો</string>
+  <string name="ConversationUpdateItem_update_contact">સંપર્કને અપડેટ કરો</string>
   <string name="ConversationUpdateItem_no_groups_in_common_review_requests_carefully">કોઈ ગ્રુપ સામાન્ય નથી. વિનંતીઓની કાળજીપૂર્વક રિવ્યુ કરો.</string>
   <string name="ConversationUpdateItem_no_contacts_in_this_group_review_requests_carefully">આ ગ્રુપમાં કોઈ સંપર્કો નથી. વિનંતીઓની કાળજીપૂર્વક સમીક્ષા કરો.</string>
   <string name="ConversationUpdateItem_view">વ્યૂ</string>
   <string name="ConversationUpdateItem_the_disappearing_message_time_will_be_set_to_s_when_you_message_them">જ્યારે તમે મેસેજ મોકલો ત્યારે અદૃશ્ય થઈ રહેલો મેસેજ સમય %1$s પર સેટ કરવામાં આવશે.</string>
+  <!--Update item button text to show to boost a feature-->
+  <!--Update item button text to show to become a sustainer in the release notes channel-->
   <!--audio_view-->
   <string name="audio_view__play_pause_accessibility_description">ચાલુ કરો … અટકાવો</string>
   <string name="audio_view__download_accessibility_description">ડાઉનલોડ</string>
@@ -1636,12 +1630,19 @@
   <string name="QuoteView_audio">ઓડિયો</string>
   <string name="QuoteView_video">વિડિયો</string>
   <string name="QuoteView_photo">ફોટો</string>
+  <string name="QuoteView_gif">GIF</string>
   <string name="QuoteView_view_once_media">એકવાર મીડિયા જુઓ</string>
   <string name="QuoteView_sticker">સ્ટીકર</string>
   <string name="QuoteView_you">તમે</string>
   <string name="QuoteView_original_missing">અસલ મેસેજ મળ્યો નથી</string>
   <!--conversation_fragment-->
   <string name="conversation_fragment__scroll_to_the_bottom_content_description">નીચે સ્ક્રોલ કરો</string>
+  <!--BubbleOptOutTooltip-->
+  <!--Message to inform the user of what Android chat bubbles are-->
+  <!--Button to dismiss the tooltip for opting out of using Android bubbles-->
+  <string name="BubbleOptOutTooltip__not_now">અત્યારે નહીં </string>
+  <!--Button to move to the system settings to control the use of Android bubbles-->
+  <string name="BubbleOptOutTooltip__turn_off">બંધ કરો</string>
   <!--safety_number_change_dialog-->
   <string name="safety_number_change_dialog__safety_number_changes">સલામતી નંબર ફેરફારો</string>
   <string name="safety_number_change_dialog__accept">સ્વીકાર</string>
@@ -1786,21 +1787,18 @@
   <!--recipients_panel-->
   <string name="recipients_panel__to"><small>નામ અથવા નંબર દાખલ કરો</small></string>
   <!--verify_display_fragment-->
-  <string name="verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[જો તમે તેની સાથે તમારા એન્ક્રિપ્શનની સુરક્ષાને ચકાસવા માંગો છો %s, ઉપરના નંબરની તુલના તેમના ડિવાઇસ પરની સંખ્યા સાથે કરો. વૈકલ્પિક રીતે, તમે તેમના ફોન પર કોડને સ્કેન કરી શકો છો અથવા તમારો કોડ સ્કેન કરવા માટે કહી શકો છો. <a href="https://signal.org/redirect/safety-numbers">વધુ શીખો</a>]]></string>
   <string name="verify_display_fragment__tap_to_scan">સ્કેન કરવા માટે ટેપ કરો</string>
   <string name="verify_display_fragment__loading">લોડ કરી રહ્યું છે </string>
-  <string name="verify_display_fragment__verified">ચકાસણી</string>
+  <string name="verify_display_fragment__mark_as_verified">ચકાસાયેલ તરીકે માર્ક કરો</string>
   <!--verify_identity-->
   <string name="verify_identity__share_safety_number">સલામતી નંબર શેર કરો</string>
+  <!--verity_scan_fragment-->
+  <string name="verify_scan_fragment__scan_the_qr_code_on_your_contact">તમારા સંપર્કના ડિવાઇસ પર QR કોડ સ્કેન કરો.</string>
   <!--webrtc_answer_decline_button-->
   <string name="webrtc_answer_decline_button__swipe_up_to_answer">જવાબ આપવા માટે ઉપર સ્લાઇડ કરો </string>
   <string name="webrtc_answer_decline_button__swipe_down_to_reject">અસ્વીકાર માટે નીચે સ્લાઇડ કરો </string>
   <!--message_details_header-->
   <string name="message_details_header__issues_need_your_attention">કેટલાક મુદ્દાઓ પર તમારું ધ્યાન લેવાની જરૂર છે.</string>
-  <string name="message_details_header__sent">મોકલ્યો</string>
-  <string name="message_details_header__received">મળી ગયા</string>
-  <string name="message_details_header__disappears">અદૃશ્ય થઈ જાય છે</string>
-  <string name="message_details_header__via">દ્વારા</string>
   <!--message_details_recipient_header-->
   <string name="message_details_recipient_header__pending_send">બાકી</string>
   <string name="message_details_recipient_header__sent_to">આને મોકલવામાં આવેલ છે</string>
@@ -1842,15 +1840,6 @@
   <string name="HelpFragment__debug_log">ડીબગ લૉગ:</string>
   <string name="HelpFragment__could_not_upload_logs">લૉગ્સ અપલોડ કરી શક્યાં નથી.</string>
   <string name="HelpFragment__please_be_as_descriptive_as_possible">કૃપા કરીને સમસ્યાને સમજવામાં અમારી સહાય માટે શક્ય તેટલું વર્ણનાત્મક બનો.</string>
-  <string-array name="HelpFragment__categories">
-    <item>--કૃપા કરીને એક વિકલ્પ પસંદ કરો--</item>
-    <item>કંઈક કામ કરી રહ્યું નથી</item>
-    <item>લક્ષણ વિનંતી</item>
-    <item>પ્રશ્નો</item>
-    <item>પ્રતિસાદ</item>
-    <item>અન્ય</item>
-    <item>પેમેન્ટ</item>
-  </string-array>
   <!--ReactWithAnyEmojiBottomSheetDialogFragment-->
   <string name="ReactWithAnyEmojiBottomSheetDialogFragment__this_message">આ મેસેજ </string>
   <string name="ReactWithAnyEmojiBottomSheetDialogFragment__recently_used">તાજેતરમાં વપરાયેલ</string>
@@ -2213,18 +2202,27 @@
   <string name="conversation_callable_secure__menu_call">Signal કૉલ</string>
   <string name="conversation_callable_secure__menu_video">Signal વિડિયો કૉલ</string>
   <!--conversation_context-->
-  <string name="conversation_context__menu_message_details">મેસેજ ની વિગત</string>
-  <string name="conversation_context__menu_copy_text">લખાણ કોપી કરો</string>
-  <string name="conversation_context__menu_delete_message">મેસેજ કાઢી નાખો</string>
-  <string name="conversation_context__menu_forward_message">ફોરવર્ડ મેસેજ</string>
-  <string name="conversation_context__menu_resend_message">મેસેજ ફરીથી મોકલો</string>
-  <string name="conversation_context__menu_reply_to_message">મેસેજ નો જવાબ આપો</string>
-  <!--conversation_context_reacction-->
-  <string name="conversation_context__reaction_multi_select">વધારે પસંદ કરો</string>
+  <!--Heading which shows how many messages are currently selected-->
   <!--conversation_context_image-->
-  <string name="conversation_context_image__save_attachment">જોડાણ સેવ કરો</string>
+  <!--Button to save a message attachment (image, file etc.)-->
+  <string name="conversation_context_image__save_attachment">સેવ કરો</string>
   <!--conversation_expiring_off-->
   <string name="conversation_expiring_off__disappearing_messages">અદૃશ્ય થઈ રહેલા મેસેજ</string>
+  <!--conversation_selection-->
+  <!--Button to view detailed information for a message-->
+  <!--Button to copy a message\'s text to the clipboard-->
+  <string name="conversation_selection__menu_copy">કૉપિ</string>
+  <!--Button to delete a message-->
+  <string name="conversation_selection__menu_delete">કાઢી નાખો </string>
+  <!--Button to forward a message to another person or group chat-->
+  <string name="conversation_selection__menu_forward">ફોરવર્ડ</string>
+  <!--Button to reply to a message-->
+  <string name="conversation_selection__menu_reply">જવાબ</string>
+  <!--Button to save a message attachment (image, file etc.)-->
+  <string name="conversation_selection__menu_save">સેવ કરો</string>
+  <!--Button to retry sending a message-->
+  <!--Button to select a message and enter selection mode-->
+  <string name="conversation_selection__menu_multi_select">પસંદ કરો</string>
   <!--conversation_expiring_on-->
   <!--conversation_insecure-->
   <string name="conversation_insecure__invite">આમંત્રિત</string>
@@ -2303,7 +2301,6 @@
   <string name="Insights__title">ઈનસાઈટ</string>
   <string name="InsightsDashboardFragment__title">ઈનસાઈટ</string>
   <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">પાછલા %2$d દિવસોમાં Signal પ્રોટોકોલ આપમેળે સુરક્ષિત %1$d%% તમારા આઉટગોઇંગ મેસેજ ને સુરક્ષિત કરે છે. Signal વપરાશકર્તાઓ વચ્ચેની વાતચીત હંમેશાં એન્ડ-ટુ-એન્ડ એન્ક્રિપ્ટેડ હોય છે.</string>
-  <string name="InsightsDashboardFragment__boost_your_signal">Signal બુસ્ટ</string>
   <string name="InsightsDashboardFragment__not_enough_data">પૂરતો ડેટા નથી</string>
   <string name="InsightsDashboardFragment__your_insights_percentage_is_calculated_based_on">તમારી ઈનસાઈટની ટકાવારી છેલ્લાં %1$d દિવસોમાં બહાર જતા મેસેજ ના આધારે ગણવામાં આવે છે જે અદૃશ્ય થઈ નથી અથવા કાઢી નથી.</string>
   <string name="InsightsDashboardFragment__start_a_conversation">સંવાદ શરૂ કરો</string>
@@ -2408,16 +2405,6 @@
   <string name="KbsMegaphone__create_a_pin">એક PIN બનાવો</string>
   <string name="KbsMegaphone__pins_keep_information_thats_stored_with_signal_encrytped">PIN Signal એન્ક્રિપ્ટેડ સાથે સંગ્રહિત માહિતી રાખે છે.</string>
   <string name="KbsMegaphone__create_pin">PIN બનાવો</string>
-  <!--Research Megaphone-->
-  <string name="ResearchMegaphone_tell_signal_what_you_think">તમે શું વિચારો છો તે Signal ને કહો</string>
-  <string name="ResearchMegaphone_to_make_signal_the_best_messaging_app_on_the_planet">સિગ્નલને ગ્રહ પરની શ્રેષ્ઠ મેસેજિંગ એપ બનાવવા માટે, અમને તમારો ફિડબેક સાંભળવો ગમશે.</string>
-  <string name="ResearchMegaphone_learn_more">વધુ શીખો</string>
-  <string name="ResearchMegaphone_dismiss">કાઢી નાખો</string>
-  <string name="ResearchMegaphoneDialog_signal_research">Signal સંશોધન</string>
-  <string name="ResearchMegaphoneDialog_we_believe_in_privacy"><![CDATA[<p><b>અમે ગોપનીયતામાં માનીએ છીએ.</b></p><p>Signal તમને ટ્રેક કરતું નથી અથવા તમારો ડેટા એકત્રિત કરતું નથી. દરેકને માટે Signalને વધુ સારુ બનાવવા માટે, અમે વપરાશકર્તા ફિડબેક પર આધાર રાખીએ છીએ, <b>અને તમે અપશો એ ગમશે.</b></p><p>તમે Signal નો ઉપયોગ કેવી રીતે કરો છો તે સમજવા માટે અમે એક સર્વેક્ષણ ચલાવી રહ્યા છીએ. અમારો સર્વે તમને ઓળખી શકે તેવો કોઈ ડેટા એકત્રિત કરતો નથી. જો તમે વધારાના ફિડબેક શેર કરવામાં રસ ધરાવો છો, તો તમારી પાસે સંપર્ક માહિતી આપવાનો વિકલ્પ હશે.</p><p>જો તમારી પાસે ઓફર કરવા માટે થોડી મિનિટો અને ફિડબેક હોય, તો અમને તમારી પાસેથી સાંભળવામાં ખુશી થશે.</p>]]></string>
-  <string name="ResearchMegaphoneDialog_take_the_survey">સર્વે લો</string>
-  <string name="ResearchMegaphoneDialog_no_thanks">ના આભાર</string>
-  <string name="ResearchMegaphoneDialog_the_survey_is_hosted_by_alchemer_at_the_secure_domain">અલકેમર દ્વારા સુરક્ષિત ડોમેન surveys.signalusers.org પર સર્વેનું આયોજન કરવામાં આવ્યું છે.</string>
   <!--transport_selection_list_item-->
   <string name="transport_selection_list_item__transport_icon">પરિવહન ચિહ્ન</string>
   <string name="ConversationListFragment_loading">લોડ કરી રહ્યું છે </string>
@@ -2467,7 +2454,6 @@
   <string name="BackupDialog_verify">ચકાસો</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">તમે સફળતાપૂર્વક તમારો બૅકઅપ પાસફ્રેઝ દાખલ કર્યો</string>
   <string name="BackupDialog_passphrase_was_not_correct">પાસફ્રેઝ સાચો ન હતો</string>
-  <string name="LocalBackupJob_creating_backup">બૅકઅપ બનાવી રહ્યા છે…</string>
   <string name="LocalBackupJobApi29_backup_failed">બૅકઅપ નિષ્ફળ</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">તમારી બૅકઅપ ડિરેક્ટરી કાઢી નાખવામાં આવી છે અથવા ખસેડવામાં આવી છે.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">આ વોલ્યુમ પર સ્ટોર કરવા માટે તમારી બૅકઅપ ફાઇલ ખૂબ મોટી છે.</string>
@@ -2588,6 +2574,7 @@
   <string name="DeviceTransfer__transferring_data">ડેટા ટ્રાન્સફર કરી રહ્યા છીએ</string>
   <string name="DeviceTransfer__keep_both_devices_near_each_other">બંને ડિવાઇસને એકબીજાની નજીક રાખો. ડિવાઇસ બંધ ન કરો અને Signal ચાલુ કરો. ટ્રાન્સફર એન્ડ-ટુ-એન્ડ એન્ક્રિપ્ટેડ છે.</string>
   <string name="DeviceTransfer__d_messages_so_far">%1$d અત્યાર સુધીના મેસેજ…</string>
+  <!--Filled in with total percentage of messages transferred-->
   <string name="DeviceTransfer__cancel">રદ કરો</string>
   <string name="DeviceTransfer__try_again">ફરીથી પ્રયત્ન કરો</string>
   <string name="DeviceTransfer__stop_transfer_question">ટ્રાન્સફર રોકો?</string>
@@ -2637,6 +2624,7 @@
   <string name="RecipientBottomSheet_block">અવરોધિત કરો</string>
   <string name="RecipientBottomSheet_unblock">અનાવરોધિત કરો</string>
   <string name="RecipientBottomSheet_add_to_contacts">સંપર્કોમાં ઉમેરો </string>
+  <!--Error message that displays when a user tries to tap to view system contact details but has no app that supports it-->
   <string name="RecipientBottomSheet_add_to_a_group">ગ્રુપમાં ઉમેરો</string>
   <string name="RecipientBottomSheet_add_to_another_group">અન્ય ગ્રુપ માં ઉમેરો</string>
   <string name="RecipientBottomSheet_view_safety_number">સલામતી નંબર જુઓ</string>
@@ -2674,8 +2662,8 @@
   <!--VoiceNotePlaybackPreparer-->
   <string name="VoiceNotePlaybackPreparer__failed_to_play_voice_message">વૉઈસ મેસેજ ચલાવવામાં નિષ્ફળ</string>
   <!--VoiceNoteMediaDescriptionCompatFactory-->
-  <string name="VoiceNoteMediaDescriptionCompatFactory__voice_message">વૉઈસ મેસેજ . %1$s</string>
-  <string name="VoiceNoteMediaDescriptionCompatFactory__s_to_s">%1$sતરફ%2$s</string>
+  <string name="VoiceNoteMediaItemFactory__voice_message">વૉઈસ મેસેજ . %1$s</string>
+  <string name="VoiceNoteMediaItemFactory__s_to_s">%1$sતરફ%2$s</string>
   <!--StorageUtil-->
   <string name="StorageUtil__s_s">%1$s/%2$s</string>
   <string name="BlockedUsersActivity__s_has_been_blocked">\"%1$s\" બ્લૉક કરવામાં આવ્યો છે</string>
@@ -2735,6 +2723,12 @@
   <string name="DeleteAccountFragment__failed_to_delete_account">એકાઉન્ટ ડિલીટ કરવામાં નિષ્ફળ. શું તમારી પાસે નેટવર્ક કનેક્શન છે?</string>
   <string name="DeleteAccountFragment__failed_to_delete_local_data">સ્થાનિક ડેટા કાઢી નાખવામાં નિષ્ફળ. તમે તેને સિસ્ટમ એપ્લિકેશન સેટિંગ્સમાં જાતે દૂર કરી શકો છો.</string>
   <string name="DeleteAccountFragment__launch_app_settings">એપ્લિકેશન સેટિંગ્સ લોંચ કરો</string>
+  <!--Title of progress dialog shown when a user deletes their account and the process is leaving all groups-->
+  <!--Title of progress dialog shown when a user deletes their account and the process has left all groups-->
+  <!--Message of progress dialog shown when a user deletes their account and the process is leaving groups-->
+  <!--Message of progress dialog shown when a user deletes their account and the process has left all groups-->
+  <!--Title of error dialog shown when a network error occurs during account deletion-->
+  <!--Message of error dialog shown when a network error occurs during account deletion-->
   <!--DeleteAccountCountryPickerFragment-->
   <string name="DeleteAccountCountryPickerFragment__search_countries">દેશ સર્ચ કરો </string>
   <!--CreateGroupActivity-->
@@ -2892,6 +2886,30 @@
   <string name="AccountSettingsFragment__account">એકાઉન્ટ</string>
   <string name="AccountSettingsFragment__youll_be_asked_less_frequently">સમય જતાં તમને ઓછી વાર પૂછવામાં આવશે</string>
   <string name="AccountSettingsFragment__require_your_signal_pin">Signal સાથે તમારો ફોન નંબર ફરીથી રજીસ્ટર કરવા માટે તમારા Signal PIN ની આવશ્યકતા છે.</string>
+  <!--ChangeNumberFragment-->
+  <string name="ChangeNumberFragment__continue">ચાલુ રાખો</string>
+  <!--Message shown on dialog after your number has been changed successfully.-->
+  <!--Confirmation button to dismiss number changed dialog-->
+  <string name="ChangeNumber__okay">બરાબર</string>
+  <!--ChangeNumberEnterPhoneNumberFragment-->
+  <string name="ChangeNumberEnterPhoneNumberFragment__the_phone_number_you_entered_doesnt_match_your_accounts">તમે દાખલ કરેલા ફોન નંબર તમારા એકાઉન્ટ સાથે મેળ ખાતા નથી.</string>
+  <!--ChangeNumberVerifyFragment-->
+  <!--ChangeNumberConfirmFragment-->
+  <string name="ChangeNumberConfirmFragment__edit_number">નંબરમાં ફેરફાર કરો</string>
+  <!--ChangeNumberRegistrationLockFragment-->
+  <!--ChangeNumberPinDiffersFragment-->
+  <string name="ChangeNumberPinDiffersFragment__update_pin">PIN અપડેટ કરો</string>
+  <!--ChangeNumberLockActivity-->
+  <!--Info message shown to user if something crashed the app during the change number attempt and we were unable to confirm the change so we force them into this screen to check before letting them use the app-->
+  <!--Dialog title shown if we were able to confirm your change number status (meaning we now know what the server thinks our number is) after a crash during the regular flow-->
+  <!--Dialog message shown if we were able to confirm your change number status (meaning we now know what the server thinks our number is) after a crash during the regular flow-->
+  <!--Dialog title shown if we were not able to confirm your phone number with the server and thus cannot let leave the change flow yet after a crash during the regular flow-->
+  <!--Dialog message shown when we can\'t verify the phone number on the server, only shown if there was a network error communicating with the server after a crash during the regular flow-->
+  <!--Dialog button to retry confirming the number on the server-->
+  <string name="ChangeNumberLockActivity__retry">ફરી પ્રયાસ કરો</string>
+  <!--Dialog button shown to leave the app when in the unconfirmed change status after a crash in the regular flow-->
+  <string name="ChangeNumberLockActivity__leave">છોડો</string>
+  <string name="ChangeNumberLockActivity__submit_debug_log">ડિબગ લૉગ સબમિટ કરો</string>
   <!--ChatsSettingsFragment-->
   <string name="ChatsSettingsFragment__keyboard">કીબોર્ડ</string>
   <string name="ChatsSettingsFragment__enter_key_sends">કી મોકલો દાખલ કરો</string>
@@ -2902,6 +2920,12 @@
   <string name="NotificationsSettingsFragment__calls">કૉલ્સ</string>
   <string name="NotificationsSettingsFragment__notify_when">સૂચિત કરો ક્યારે…</string>
   <string name="NotificationsSettingsFragment__contact_joins_signal">સંપર્ક Signal સાથે જોડાય છે</string>
+  <!--Notification preference header-->
+  <!--Notification preference option header-->
+  <!--Notification preference summary text-->
+  <!--NotificationProfilesFragment-->
+  <!--Title for notification profiles screen that shows all existing profiles-->
+  <!--Button text to create a notification profile-->
   <!--PrivacySettingsFragment-->
   <string name="PrivacySettingsFragment__blocked">બ્લૉક કરેલ</string>
   <string name="PrivacySettingsFragment__d_contacts">%1$d સંપર્કો</string>
@@ -2943,6 +2967,8 @@
   <string name="HelpFragment__copyright_signal_messenger">કોપીરાઇટ Signal મેસેન્જર</string>
   <string name="HelpFragment__licenced_under_the_gplv3"> GPLv3 હેઠળ લાયસન્સ </string>
   <!--DataAndStorageSettingsFragment-->
+  <string name="DataAndStorageSettingsFragment__high">ઉચ્ચ</string>
+  <string name="DataAndStorageSettingsFragment__standard">સ્ટાન્ડર્ડ</string>
   <string name="DataAndStorageSettingsFragment__calls">કૉલ્સ</string>
   <!--ChatColorSelectionFragment-->
   <string name="ChatColorSelectionFragment__auto">આપમેળે</string>
@@ -2989,6 +3015,8 @@
   <string name="AddAProfilePhotoMegaphone__choose_a_look_and_color">દેખાવ અને કલર પસંદ કરો અથવા તમારા ઇનિશયલ્સ કસ્ટમાઇઝ કરો.</string>
   <string name="AddAProfilePhotoMegaphone__not_now">અત્યારે નહીં </string>
   <string name="AddAProfilePhotoMegaphone__add_photo">ફોટો ઉમેરો</string>
+  <!--BecomeASustainerMegaphone-->
+  <string name="BecomeASustainerMegaphone__no_thanks">ના આભાર</string>
   <!--KeyboardPagerFragment-->
   <string name="KeyboardPagerFragment_emoji">ઇમોજી</string>
   <string name="KeyboardPagerFragment_open_emoji_search">ઈમોજી સર્ચ ઓપન કરો</string>
@@ -3059,6 +3087,7 @@
   <!--PlaybackSpeedToggleTextView-->
   <string name="PlaybackSpeedToggleTextView__p5x">.5x</string>
   <string name="PlaybackSpeedToggleTextView__1x">1x</string>
+  <string name="PlaybackSpeedToggleTextView__1p5x">1.5x</string>
   <string name="PlaybackSpeedToggleTextView__2x">2x</string>
   <!--PaymentRecipientSelectionFragment-->
   <string name="PaymentRecipientSelectionFragment__new_payment">નવું પેમેન્ટ </string>
@@ -3067,7 +3096,7 @@
   <!--ContactFilterView-->
   <string name="ContactFilterView__search_name_or_number">નામ અથવા નંબર સર્ચ કરો</string>
   <!--VoiceNotePlayerView-->
-  <string name="VoiceNotePlayerView__s_dot_s">%1$s . %2$s</string>
+  <string name="VoiceNotePlayerView__dot_s">· %1$s</string>
   <!--AvatarPickerFragment-->
   <string name="AvatarPickerFragment__avatar_preview">અવતાર પ્રિવ્યૂ</string>
   <string name="AvatarPickerFragment__camera">કૅમેરા</string>
@@ -3092,5 +3121,118 @@
   <string name="ContactSelectionListItem__dot_s">· %1$s</string>
   <!--DSLSettingsToolbar-->
   <string name="DSLSettingsToolbar__navigate_up">નેવિગેટ અપ </string>
+  <!--Media V2-->
+  <string name="ImageEditorHud__cancel">રદ કરો</string>
+  <string name="ImageEditorHud__undo">પૂર્વવત્ કરો</string>
+  <string name="ImageEditorHud__delete">કાઢી નાખો </string>
+  <string name="MediaCountIndicatorButton__send">મોકલો</string>
+  <string name="MediaReviewSelectedItem__tap_to_select">પસંદ કરવા માટે ટેપ કરો</string>
+  <string name="MediaReviewImagePageFragment__discard">કાઢી નાખો</string>
+  <string name="SelectFeaturedBadgeFragment__preview">પ્રિવ્યૂ</string>
+  <string name="SubscribeFragment__signal_is_powered_by_people_like_you">Signal તમારા જેવા લોકો દ્વારા સંચાલિત છે.</string>
+  <string name="SubscribeFragment__not_now">અત્યારે નહીં </string>
+  <string name="SubscribeFragment__confirm">ખાતરી કરો</string>
+  <string name="SubscribeFragment__update">અપડેટ</string>
+  <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__done">થઈ ગયું</string>
+  <string name="Boost__enter_custom_amount">કસ્ટમ રકમ દાખલ કરો</string>
+  <!--Displayed on "My Support" screen when user badge failed to be added to their account-->
+  <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">અત્યારે નહીં </string>
+  <string name="Subscription__contact_support">સપોર્ટનો સંપર્ક કરો</string>
+  <string name="SubscribeFragment__processing_payment">પેમેન્ટ પ્રક્રિયા થઈ રહી છે…</string>
+  <!--Displayed in notification when user payment fails to process on Stripe-->
+  <!--Displayed on "My Support" screen when user subscription payment method failed.-->
+  <string name="NetworkFailure__retry">ફરી પ્રયાસ કરો</string>
+  <!--Title of create notification profile screen-->
+  <!--Hint text for create/edit notification profile name-->
+  <string name="EditNotificationProfileFragment__profile_name">પ્રોફાઇલ નામ</string>
+  <!--Name has a max length, this shows how many characters are used out of the max-->
+  <string name="EditNotificationProfileFragment__count">%1$d/%2$d</string>
+  <!--Call to action button to continue to the next step-->
+  <string name="EditNotificationProfileFragment__next">આગળ</string>
+  <!--Call to action button once the profile is named to create the profile and continue to the customization steps-->
+  <string name="EditNotificationProfileFragment__create">બનાવો</string>
+  <!--Call to action button once the profile name is edited-->
+  <string name="EditNotificationProfileFragment__save">સેવ કરો</string>
+  <!--Title of edit notification profile screen-->
+  <!--Error message shown when attempting to create or edit a profile name to an existing profile name-->
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <string name="EditNotificationProfileFragment__work">કામ</string>
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <!--Preset selectable name for a profile name, shown as list in edit/create screen-->
+  <!--Error message shown when attempting to next/save without a profile name-->
+  <!--Title for add recipients to notification profile screen in create flow-->
+  <!--Description of what the user should be doing with this screen-->
+  <!--Button text that launches the contact picker to select from-->
+  <!--Call to action button on contact picker for adding to profile-->
+  <string name="SelectRecipientsFragment__add">ઉમેરો</string>
+  <!--Notification profiles home fragment, shown when no profiles have been created yet-->
+  <!--Header shown above list of all notification profiles-->
+  <!--Button that starts the create new notification profile flow-->
+  <!--Profile active status, indicating the current profile is on for an unknown amount of time-->
+  <string name="NotificationProfilesFragment__on">ચાલુ</string>
+  <!--Button use to permanently delete a notification profile-->
+  <!--Snakbar message shown when removing a recipient from a profile-->
+  <!--Snackbar button text that will undo the recipient remove-->
+  <string name="NotificationProfileDetails__undo">પૂર્વવત્ કરો</string>
+  <!--Dialog message shown to confirm deleting a profile-->
+  <!--Dialog button to delete profile-->
+  <string name="NotificationProfileDetails__delete">કાઢી નાખો </string>
+  <!--Title/accessibility text for edit icon to edit profile emoji/name-->
+  <!--Schedule description if all days are selected-->
+  <!--Profile status on if it is the active profile-->
+  <string name="NotificationProfileDetails__on">ચાલુ</string>
+  <!--Profile status on if it is not the active profile-->
+  <string name="NotificationProfileDetails__off">બંધ</string>
+  <!--Description of hours for schedule (start to end) times-->
+  <string name="NotificationProfileDetails__s_to_s">%1$sતરફ%2$s</string>
+  <!--Section header for exceptions to the notification profile-->
+  <!--Profile exception to allow all calls through the profile restrictions-->
+  <!--Profile exception to allow all @mentions through the profile restrictions-->
+  <!--Section header for showing schedule information-->
+  <!--If member list is long, will truncate the list and show an option to then see all when tapped-->
+  <string name="NotificationProfileDetails__see_all">બધા જુઓ</string>
+  <!--Title for add schedule to profile in create flow-->
+  <!--Descriptor text indicating what the user can do with this screen-->
+  <!--Text shown next to toggle switch to enable/disable schedule-->
+  <!--Label for showing the start time for the schedule-->
+  <string name="EditNotificationProfileSchedule__start">શરૂ કરો</string>
+  <!--Label for showing the end time for the schedule-->
+  <!--First letter of Sunday-->
+  <!--First letter of Monday-->
+  <!--First letter of Tuesday-->
+  <!--First letter of Wednesday-->
+  <!--First letter of Thursday-->
+  <!--First letter of Friday-->
+  <!--First letter of Saturday-->
+  <!--Title of select time dialog shown when setting start time for schedule-->
+  <!--Title of select time dialog shown when setting end time for schedule-->
+  <!--If in edit mode, call to action button text show to save schedule to profile-->
+  <string name="EditNotificationProfileSchedule__save">સેવ કરો</string>
+  <!--If in create mode, call to action button text to show to skip enabling a schedule-->
+  <string name="EditNotificationProfileSchedule__skip">સ્કિપ</string>
+  <!--If in create mode, call to action button text to show to use the enabled schedule and move to the next screen-->
+  <string name="EditNotificationProfileSchedule__next">આગળ</string>
+  <!--Error message shown if trying to save/use a schedule with no days selected-->
+  <!--Title for final screen shown after completing a profile creation-->
+  <!--Call to action button to press to close the created screen and move to the profile details screen-->
+  <string name="NotificationProfileCreated__done">થઈ ગયું</string>
+  <!--Descriptor text shown to indicate how to manually turn a profile on/off-->
+  <!--Descriptor text shown to indicate you can add a schedule later since you did not add one during create flow-->
+  <!--Descriptor text shown to indicate your profile will follow the schedule set during create flow-->
+  <!--Button text shown in profile selection bottom sheet to create a new profile-->
+  <!--Manual enable option to manually enable a profile for 1 hour-->
+  <!--Manual enable option to manually enable a profile until a set time (currently 6pm or 8am depending on what is next)-->
+  <string name="NotificationProfileSelection__until_s">ત્યાં સુધી %1$s</string>
+  <!--Option to view profile details-->
+  <!--Descriptor text indicating how long a profile will be on when there is a time component associated with it-->
+  <!--Title for notification profile megaphone-->
+  <!--Description for notification profile megaphone-->
+  <!--Call to action button to create a profile from megaphone-->
+  <!--Button to dismiss notification profile megaphone-->
+  <string name="NotificationProfilesMegaphone__not_now">અત્યારે નહીં </string>
+  <!--Displayed in a toast when we fail to open the ringtone picker-->
+  <!--Description shown for the Signal Release Notes channel-->
   <!--EOF-->
 </resources>

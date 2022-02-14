@@ -1,9 +1,14 @@
 package org.tm.archive.components.settings
 
 import androidx.annotation.CallSuper
+import androidx.annotation.Px
 import androidx.annotation.StringRes
-import org.tm.archive.util.MappingModel
-import org.tm.archive.util.MappingModelList
+import org.tm.archive.components.settings.models.AsyncSwitch
+import org.tm.archive.components.settings.models.Button
+import org.tm.archive.components.settings.models.Space
+import org.tm.archive.components.settings.models.Text
+import org.tm.archive.util.adapter.mapping.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingModelList
 
 fun configure(init: DSLConfiguration.() -> Unit): DSLConfiguration {
   val configuration = DSLConfiguration()
@@ -52,6 +57,17 @@ class DSLConfiguration {
     children.add(preference)
   }
 
+  fun asyncSwitchPref(
+    title: DSLSettingsText,
+    isEnabled: Boolean = true,
+    isChecked: Boolean,
+    isProcessing: Boolean,
+    onClick: () -> Unit
+  ) {
+    val preference = AsyncSwitch.Model(title, isEnabled, isChecked, isProcessing, onClick)
+    children.add(preference)
+  }
+
   fun switchPref(
     title: DSLSettingsText,
     summary: DSLSettingsText? = null,
@@ -86,6 +102,17 @@ class DSLConfiguration {
     children.add(preference)
   }
 
+  fun longClickPref(
+    title: DSLSettingsText,
+    summary: DSLSettingsText? = null,
+    icon: DSLSettingsIcon? = null,
+    isEnabled: Boolean = true,
+    onLongClick: () -> Unit
+  ) {
+    val preference = LongClickPreference(title, summary, icon, isEnabled, onLongClick)
+    children.add(preference)
+  }
+
   fun externalLinkPref(
     title: DSLSettingsText,
     icon: DSLSettingsIcon? = null,
@@ -107,6 +134,35 @@ class DSLConfiguration {
 
   fun sectionHeaderPref(title: Int) {
     val preference = SectionHeaderPreference(DSLSettingsText.from(title))
+    children.add(preference)
+  }
+
+  fun noPadTextPref(title: DSLSettingsText) {
+    val preference = Text(title)
+    children.add(Text.Model(preference))
+  }
+
+  fun space(@Px pixels: Int) {
+    val preference = Space(pixels)
+    children.add(Space.Model(preference))
+  }
+
+  fun primaryButton(
+    text: DSLSettingsText,
+    isEnabled: Boolean = true,
+    onClick: () -> Unit
+  ) {
+    val preference = Button.Model.Primary(text, null, isEnabled, onClick)
+    children.add(preference)
+  }
+
+  fun secondaryButtonNoOutline(
+    text: DSLSettingsText,
+    icon: DSLSettingsIcon? = null,
+    isEnabled: Boolean = true,
+    onClick: () -> Unit
+  ) {
+    val preference = Button.Model.SecondaryNoOutline(text, icon, isEnabled, onClick)
     children.add(preference)
   }
 
@@ -215,6 +271,14 @@ class ClickPreference(
   override val isEnabled: Boolean = true,
   val onClick: () -> Unit
 ) : PreferenceModel<ClickPreference>()
+
+class LongClickPreference(
+  override val title: DSLSettingsText,
+  override val summary: DSLSettingsText? = null,
+  override val icon: DSLSettingsIcon? = null,
+  override val isEnabled: Boolean = true,
+  val onLongClick: () -> Unit
+) : PreferenceModel<LongClickPreference>()
 
 class ExternalLinkPreference(
   override val title: DSLSettingsText,

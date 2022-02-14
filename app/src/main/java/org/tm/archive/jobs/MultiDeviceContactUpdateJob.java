@@ -15,9 +15,9 @@ import org.signal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.conversation.colors.ChatColorsMapper;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.IdentityDatabase;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -126,6 +126,11 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
       return;
     }
 
+    if (SignalStore.account().isLinkedDevice()) {
+      Log.i(TAG, "Not primary device, aborting...");
+      return;
+    }
+
     if (recipientId == null) generateFullContactUpdate();
     else                     generateSingleContactUpdate(recipientId);
   }
@@ -144,10 +149,10 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
         return;
       }
 
-      Optional<IdentityDatabase.IdentityRecord> identityRecord  = DatabaseFactory.getIdentityDatabase(context).getIdentity(recipient.getId());
-      Optional<VerifiedMessage>                 verifiedMessage = getVerifiedMessage(recipient, identityRecord);
-      Map<RecipientId, Integer>                 inboxPositions  = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
-      Set<RecipientId>                          archived        = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
+      Optional<IdentityRecord>  identityRecord  = ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(recipient.getId());
+      Optional<VerifiedMessage> verifiedMessage = getVerifiedMessage(recipient, identityRecord);
+      Map<RecipientId, Integer> inboxPositions  = SignalDatabase.threads().getInboxPositions();
+      Set<RecipientId>          archived        = SignalDatabase.threads().getArchivedRecipients();
 
       out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, recipient),
                                   Optional.fromNullable(recipient.isGroup() || recipient.isSystemContact() ? recipient.getDisplayName(context) : null),
@@ -198,18 +203,18 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
 
     try {
       DeviceContactsOutputStream out            = new DeviceContactsOutputStream(writeDetails.outputStream);
-      List<Recipient>            recipients     = DatabaseFactory.getRecipientDatabase(context).getRecipientsForMultiDeviceSync();
-      Map<RecipientId, Integer>  inboxPositions = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
-      Set<RecipientId>           archived       = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
+      List<Recipient>            recipients     = SignalDatabase.recipients().getRecipientsForMultiDeviceSync();
+      Map<RecipientId, Integer>  inboxPositions = SignalDatabase.threads().getInboxPositions();
+      Set<RecipientId>           archived       = SignalDatabase.threads().getArchivedRecipients();
 
       for (Recipient recipient : recipients) {
-        Optional<IdentityDatabase.IdentityRecord> identity      = DatabaseFactory.getIdentityDatabase(context).getIdentity(recipient.getId());
-        Optional<VerifiedMessage>                 verified      = getVerifiedMessage(recipient, identity);
-        Optional<String>                          name          = Optional.fromNullable(recipient.isSystemContact() ? recipient.getDisplayName(context) : recipient.getGroupName(context));
-        Optional<ProfileKey>                      profileKey    = ProfileKeyUtil.profileKeyOptional(recipient.getProfileKey());
-        boolean                                   blocked       = recipient.isBlocked();
-        Optional<Integer>                         expireTimer   = recipient.getExpiresInSeconds() > 0 ? Optional.of(recipient.getExpiresInSeconds()) : Optional.absent();
-        Optional<Integer>                         inboxPosition = Optional.fromNullable(inboxPositions.get(recipient.getId()));
+        Optional<IdentityRecord>  identity      = ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(recipient.getId());
+        Optional<VerifiedMessage> verified      = getVerifiedMessage(recipient, identity);
+        Optional<String>          name          = Optional.fromNullable(recipient.isSystemContact() ? recipient.getDisplayName(context) : recipient.getGroupName(context));
+        Optional<ProfileKey>      profileKey    = ProfileKeyUtil.profileKeyOptional(recipient.getProfileKey());
+        boolean                   blocked       = recipient.isBlocked();
+        Optional<Integer>         expireTimer   = recipient.getExpiresInSeconds() > 0 ? Optional.of(recipient.getExpiresInSeconds()) : Optional.absent();
+        Optional<Integer>         inboxPosition = Optional.fromNullable(inboxPositions.get(recipient.getId()));
 
         out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, recipient),
                                     name,
@@ -386,7 +391,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
     }
   }
 
-  private Optional<VerifiedMessage> getVerifiedMessage(Recipient recipient, Optional<IdentityDatabase.IdentityRecord> identity)
+  private Optional<VerifiedMessage> getVerifiedMessage(Recipient recipient, Optional<IdentityRecord> identity)
       throws InvalidNumberException, IOException
   {
     if (!identity.isPresent()) return Optional.absent();

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,6 +13,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
+import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.components.FromTextView;
 import org.tm.archive.mms.GlideRequests;
@@ -37,16 +37,17 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
   private TextView        labelView;
   private CheckBox        checkBox;
   private View            smsTag;
+  private BadgeImageView  badge;
 
-  private String        number;
-  private String        chipName;
-  private int           contactType;
-  private String        contactName;
-  private String        contactNumber;
-  private String        contactLabel;
-  private String        contactAbout;
-  private LiveRecipient recipient;
-  private GlideRequests glideRequests;
+  private String           number;
+  private String           chipName;
+  private int              contactType;
+  private String           contactName;
+  private String           contactNumber;
+  private String           contactLabel;
+  private String           contactAbout;
+  private LiveRecipient    recipient;
+  private GlideRequests    glideRequests;
 
   public ContactSelectionListItem(Context context) {
     super(context);
@@ -65,8 +66,23 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     this.nameView          = findViewById(R.id.name);
     this.checkBox          = findViewById(R.id.check_box);
     this.smsTag            = findViewById(R.id.sms_tag);
+    this.badge             = findViewById(R.id.contact_badge);
 
     ViewUtil.setTextViewGravityStart(this.nameView, getContext());
+  }
+
+  @Override
+  protected void onAttachedToWindow() {
+    super.onAttachedToWindow();
+    if (recipient != null) {
+      recipient.observeForever(this);
+    }
+  }
+
+  @Override
+  protected void onDetachedFromWindow() {
+    super.onDetachedFromWindow();
+    unbind();
   }
 
   public void set(@NonNull GlideRequests glideRequests,
@@ -90,6 +106,9 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
       this.recipient = null;
       this.contactPhotoImage.setAvatar(glideRequests, null, false);
     } else if (recipientId != null) {
+      if (this.recipient != null) {
+        this.recipient.removeForeverObserver(this);
+      }
       this.recipient = Recipient.live(recipientId);
       this.recipient.observeForever(this);
     }
@@ -118,22 +137,16 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     }
 
     this.checkBox.setVisibility(checkboxVisible ? View.VISIBLE : View.GONE);
+
+    if (recipientSnapshot == null || recipientSnapshot.isSelf()) {
+      badge.setBadge(null);
+    } else {
+      badge.setBadgeFromRecipient(recipientSnapshot);
+    }
   }
 
   public void setChecked(boolean selected, boolean animate) {
-    boolean wasSelected = checkBox.isChecked();
-
-    if (wasSelected != selected) {
-      checkBox.setChecked(selected);
-
-      float alpha = selected ? 1f : 0f;
-      if (animate) {
-        checkBox.animate().setDuration(250L).alpha(alpha);
-      } else {
-        checkBox.animate().cancel();
-        checkBox.setAlpha(alpha);
-      }
-    }
+    checkBox.setChecked(selected);
   }
 
   @Override
@@ -142,10 +155,9 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     this.checkBox.setEnabled(enabled);
   }
 
-  public void unbind(GlideRequests glideRequests) {
+  public void unbind() {
     if (recipient != null) {
       recipient.removeForeverObserver(this);
-      recipient = null;
     }
   }
 
@@ -229,6 +241,7 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
       contactPhotoImage.setAvatar(glideRequests, recipient, false);
       setText(recipient, contactType, contactName, contactNumber, contactLabel, contactAbout);
       smsTag.setVisibility(recipient.isRegistered() ? GONE : VISIBLE);
+      badge.setBadgeFromRecipient(recipient);
     } else {
       Log.w(TAG, "Bad change! Local recipient doesn't match. Ignoring. Local: " + (this.recipient == null ? "null" : this.recipient.getId()) + ", Changed: " + recipient.getId());
     }

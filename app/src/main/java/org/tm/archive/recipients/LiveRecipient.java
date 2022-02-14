@@ -13,11 +13,11 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.GroupDatabase.GroupRecord;
 import org.tm.archive.database.RecipientDatabase;
-import org.tm.archive.database.RecipientDatabase.RecipientSettings;
+import org.tm.archive.database.model.RecipientRecord;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -46,8 +46,8 @@ public final class LiveRecipient {
     this.context           = context.getApplicationContext();
     this.liveData          = new MutableLiveData<>(defaultRecipient);
     this.recipient         = new AtomicReference<>(defaultRecipient);
-    this.recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    this.groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+    this.recipientDatabase = SignalDatabase.recipients();
+    this.groupDatabase     = SignalDatabase.groups();
     this.observers         = new CopyOnWriteArraySet<>();
     this.foreverObserver   = recipient -> {
       ThreadUtil.postToMain(() -> {
@@ -192,7 +192,7 @@ public final class LiveRecipient {
   }
 
   private @NonNull Recipient fetchAndCacheRecipientFromDisk(@NonNull RecipientId id) {
-    RecipientSettings settings = recipientDatabase.getRecipientSettings(id);
+    RecipientRecord settings = recipientDatabase.getRecord(id);
     RecipientDetails  details  = settings.getGroupId() != null ? getGroupRecipientDetails(settings)
                                                                : RecipientDetails.forIndividual(context, settings);
 
@@ -202,7 +202,7 @@ public final class LiveRecipient {
   }
 
   @WorkerThread
-  private @NonNull RecipientDetails getGroupRecipientDetails(@NonNull RecipientSettings settings) {
+  private @NonNull RecipientDetails getGroupRecipientDetails(@NonNull RecipientRecord settings) {
     Optional<GroupRecord> groupRecord = groupDatabase.getGroup(settings.getId());
 
     if (groupRecord.isPresent()) {
@@ -214,10 +214,10 @@ public final class LiveRecipient {
         avatarId = Optional.of(groupRecord.get().getAvatarId());
       }
 
-      return new RecipientDetails(title, null,  avatarId, false, false, settings.getRegistered(), settings, members);
+      return new RecipientDetails(title, null,  avatarId, false, false, settings.getRegistered(), settings, members, false);
     }
 
-    return new RecipientDetails(null, null, Optional.absent(), false, false, settings.getRegistered(), settings, null);
+    return new RecipientDetails(null, null, Optional.absent(), false, false, settings.getRegistered(), settings, null, false);
   }
 
   synchronized void set(@NonNull Recipient recipient) {

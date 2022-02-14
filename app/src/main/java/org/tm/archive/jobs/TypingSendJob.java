@@ -5,27 +5,21 @@ import androidx.annotation.NonNull;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
-import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.messages.GroupSendUtil;
+import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.CancelationException;
-import org.whispersystems.signalservice.api.SignalServiceMessageSender;
-import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 import org.whispersystems.signalservice.api.messages.SignalServiceTypingMessage;
 import org.whispersystems.signalservice.api.messages.SignalServiceTypingMessage.Action;
-import org.whispersystems.signalservice.api.push.DistributionId;
-import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.util.Collections;
 import java.util.List;
@@ -91,7 +85,7 @@ public class TypingSendJob extends BaseJob {
 
     Log.d(TAG, "Sending typing " + (typing ? "started" : "stopped") + " for thread " + threadId);
 
-    Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    Recipient recipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
 
     if (recipient == null) {
       Log.w(TAG, "Tried to send a typing indicator to a non-existent thread.");
@@ -122,7 +116,7 @@ public class TypingSendJob extends BaseJob {
     Optional<byte[]> groupId        = Optional.absent();
 
     if (recipient.isGroup()) {
-      recipients = DatabaseFactory.getGroupDatabase(context).getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+      recipients = SignalDatabase.groups().getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
       groupId    = Optional.of(recipient.requireGroupId().getDecodedId());
     }
 

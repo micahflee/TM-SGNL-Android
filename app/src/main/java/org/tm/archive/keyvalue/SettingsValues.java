@@ -10,15 +10,15 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.DatabaseFactory;
+import org.signal.core.util.logging.Log;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.mms.SentMediaQuality;
 import org.tm.archive.preferences.widgets.NotificationPrivacyPreference;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.storage.StorageSyncHelper;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.TextSecurePreferences;
-import org.signal.core.util.logging.Log;
 import org.tm.archive.webrtc.CallBandwidthMode;
 
 import java.util.Arrays;
@@ -64,6 +64,7 @@ public final class SettingsValues extends SignalStoreValues {
   public static final  String NOTIFY_WHEN_CONTACT_JOINS_SIGNAL        = "settings.notify.when.contact.joins.signal";
   private static final String DEFAULT_SMS                             = "settings.default_sms";
   private static final String UNIVERSAL_EXPIRE_TIMER                  = "settings.universal.expire.timer";
+  private static final String SENT_MEDIA_QUALITY                      = "settings.sentMediaQuality";
 
   private final SingleLiveEvent<String> onConfigurationSettingChanged = new SingleLiveEvent<>();
 
@@ -106,7 +107,8 @@ public final class SettingsValues extends SignalStoreValues {
                          CALL_RINGTONE,
                          CALL_VIBRATE_ENABLED,
                          NOTIFY_WHEN_CONTACT_JOINS_SIGNAL,
-                         UNIVERSAL_EXPIRE_TIMER);
+                         UNIVERSAL_EXPIRE_TIMER,
+                         SENT_MEDIA_QUALITY);
   }
 
   public @NonNull LiveData<String> getOnConfigurationSettingChanged() {
@@ -366,7 +368,7 @@ public final class SettingsValues extends SignalStoreValues {
       putBoolean(DEFAULT_SMS, value);
 
       SignalExecutors.BOUNDED.execute(() -> {
-        DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).markNeedsSync(Recipient.self().getId());
+        SignalDatabase.recipients().markNeedsSync(Recipient.self().getId());
         StorageSyncHelper.scheduleSyncForDataChange();
       });
     }
@@ -374,14 +376,18 @@ public final class SettingsValues extends SignalStoreValues {
 
   public void setUniversalExpireTimer(int seconds) {
     putInteger(UNIVERSAL_EXPIRE_TIMER, seconds);
-    SignalExecutors.BOUNDED.execute(() -> {
-      DatabaseFactory.getRecipientDatabase(ApplicationDependencies.getApplication()).markNeedsSync(Recipient.self().getId());
-      StorageSyncHelper.scheduleSyncForDataChange();
-    });
   }
 
   public int getUniversalExpireTimer() {
     return getInteger(UNIVERSAL_EXPIRE_TIMER, 0);
+  }
+
+  public void setSentMediaQuality(@NonNull SentMediaQuality sentMediaQuality) {
+    putInteger(SENT_MEDIA_QUALITY, sentMediaQuality.getCode());
+  }
+
+  public @NonNull SentMediaQuality getSentMediaQuality() {
+    return SentMediaQuality.fromCode(getInteger(SENT_MEDIA_QUALITY, SentMediaQuality.STANDARD.getCode()));
   }
 
   private @Nullable Uri getUri(@NonNull String key) {

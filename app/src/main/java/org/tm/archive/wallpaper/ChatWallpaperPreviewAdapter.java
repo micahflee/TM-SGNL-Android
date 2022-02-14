@@ -1,7 +1,7 @@
 package org.tm.archive.wallpaper;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
 
 class ChatWallpaperPreviewAdapter extends MappingAdapter {
   ChatWallpaperPreviewAdapter() {

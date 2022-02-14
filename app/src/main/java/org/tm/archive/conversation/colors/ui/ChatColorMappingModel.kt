@@ -1,7 +1,7 @@
 package org.tm.archive.conversation.colors.ui
 
 import org.tm.archive.conversation.colors.ChatColors
-import org.tm.archive.util.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingModel
 
 class ChatColorMappingModel(
   val chatColors: ChatColors,

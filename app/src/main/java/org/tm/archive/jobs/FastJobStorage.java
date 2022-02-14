@@ -18,7 +18,6 @@ import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

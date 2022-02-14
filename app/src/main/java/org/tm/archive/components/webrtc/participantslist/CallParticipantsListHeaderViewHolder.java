@@ -6,7 +6,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 public class CallParticipantsListHeaderViewHolder extends MappingViewHolder<CallParticipantsListHeader> {
 

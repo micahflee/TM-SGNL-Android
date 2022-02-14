@@ -7,12 +7,12 @@ import android.os.Handler;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
+import org.signal.core.util.ExceptionUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.notifications.v2.MessageNotifierV2;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.BubbleUtil;
 import org.tm.archive.util.LeakyBucketLimiter;
-import org.tm.archive.util.Util;
 
 /**
  * Uses a leaky-bucket strategy to limiting notification updates.
@@ -109,7 +109,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
       try {
         runnable.run();
       } catch (RuntimeException e) {
-        throw Util.appendStackTrace(e, prettyException);
+        throw ExceptionUtil.joinStackTrace(e, prettyException);
       }
     });
   }

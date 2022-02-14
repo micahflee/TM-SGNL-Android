@@ -148,7 +148,7 @@
 
         <item name="actionBarStyle">@style/TextSecure.LightActionBar</item>
         <item name="actionBarTabBarStyle">@style/TextSecure.LightActionBar.TabBar</item>
-        <item name="actionModeBackground">@color/signal_background_secondary</item>
+        <item name="actionModeBackground">@color/signal_background_primary</item>
         <item name="actionModeCloseDrawable">@drawable/ic_x_tinted</item>
         <item name="actionModeStyle">@style/TextSecure.ActionModeStyle</item>
         <item name="android:textColor">@color/text_color_light_theme</item>
@@ -187,6 +187,8 @@
         <item name="colorControlNormal">@color/core_grey_90</item>
 
         <item name="materialAlertDialogTheme">@style/Signal.ThemeOverlay.Dialog.Rounded</item>
+        <item name="materialTimePickerTheme">@style/Signal.ThemeOverlay.TimePicker</item>
+        <item name="materialTimePickerStyle">@style/Signal.Widget.TimePicker</item>
     </style>
 
     <style name="TextSecure.DarkTheme" parent="@style/TextSecure.BaseDarkTheme">
@@ -204,7 +206,7 @@
         <item name="actionBarStyle">@style/TextSecure.DarkActionBar</item>
         <item name="actionBarTabBarStyle">@style/TextSecure.DarkActionBar.TabBar</item>
         <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
-        <item name="actionModeBackground">@color/signal_background_secondary</item>
+        <item name="actionModeBackground">@color/signal_background_primary</item>
         <item name="actionModeCloseDrawable">@drawable/ic_x_tinted</item>
         <item name="actionModeStyle">@style/TextSecure.ActionModeStyle</item>
         <item name="android:textColor">@color/text_color_dark_theme</item>
@@ -242,6 +244,8 @@
         <item name="colorControlNormal">@color/core_white</item>
 
         <item name="materialAlertDialogTheme">@style/Signal.ThemeOverlay.Dialog.Rounded</item>
+        <item name="materialTimePickerTheme">@style/Signal.ThemeOverlay.TimePicker</item>
+        <item name="materialTimePickerStyle">@style/Signal.Widget.TimePicker</item>
     </style>
 
     <style name="Theme.Signal.AlertDialog.Light.Cornered" parent="Theme.AppCompat.Light.Dialog.Alert">
@@ -425,6 +429,14 @@
         <item name="cornerSizeTopLeft">12dp</item>
         <item name="cornerSizeBottomLeft">12dp</item>
         <item name="cornerSizeBottomRight">12dp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.Signal.MediaSelection" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">10dp</item>
+        <item name="cornerSizeTopLeft">10dp</item>
+        <item name="cornerSizeBottomLeft">10dp</item>
+        <item name="cornerSizeBottomRight">10dp</item>
     </style>
 
     <style name="ShapeAppearanceOverlay.Signal.Circle" parent="">

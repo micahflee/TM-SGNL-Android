@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import org.tm.archive.ApplicationContext;
 import org.tm.archive.dependencies.ApplicationDependencies;
 
 public class ExpirationListener extends BroadcastReceiver {

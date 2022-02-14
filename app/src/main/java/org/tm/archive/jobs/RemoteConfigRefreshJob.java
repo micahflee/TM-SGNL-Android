@@ -7,8 +7,8 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.FeatureFlags;
-import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.util.Map;
@@ -46,7 +46,7 @@ public class RemoteConfigRefreshJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       Log.w(TAG, "Not registered. Skipping.");
       return;
     }

@@ -18,7 +18,7 @@ import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.databaseprotos.BodyRangeList;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.whispersystems.signalservice.api.util.UuidUtil;
+import org.whispersystems.signalservice.api.push.ACI;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +41,7 @@ public final class MentionUtil {
   @WorkerThread
   public static @NonNull CharSequence updateBodyWithDisplayNames(@NonNull Context context, @NonNull MessageRecord messageRecord, @NonNull CharSequence body) {
     if (messageRecord.isMms()) {
-      List<Mention> mentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessage(messageRecord.getId());
+      List<Mention> mentions = SignalDatabase.mentions().getMentionsForMessage(messageRecord.getId());
       CharSequence  updated  = updateBodyAndMentionsWithDisplayNames(context, body, mentions).getBody();
       if (updated != null) {
         return updated;
@@ -105,7 +105,7 @@ public final class MentionUtil {
     BodyRangeList.Builder builder = BodyRangeList.newBuilder();
 
     for (Mention mention : mentions) {
-      String uuid = Recipient.resolved(mention.getRecipientId()).requireUuid().toString();
+      String uuid = Recipient.resolved(mention.getRecipientId()).requireAci().toString();
       builder.addRanges(BodyRangeList.BodyRange.newBuilder()
                                                .setMentionUuid(uuid)
                                                .setStart(mention.getStart())
@@ -121,7 +121,7 @@ public final class MentionUtil {
         return Stream.of(BodyRangeList.parseFrom(data).getRangesList())
                      .filter(bodyRange -> bodyRange.getAssociatedValueCase() == BodyRangeList.BodyRange.AssociatedValueCase.MENTIONUUID)
                      .map(mention -> {
-                       RecipientId id = Recipient.externalPush(context, UuidUtil.parseOrThrow(mention.getMentionUuid()), null, false).getId();
+                       RecipientId id = Recipient.externalPush(context, ACI.parseOrThrow(mention.getMentionUuid()), null, false).getId();
                        return new Mention(id, mention.getStart(), mention.getLength());
                      })
                      .toList();

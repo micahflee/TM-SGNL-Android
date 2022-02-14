@@ -40,9 +40,9 @@ import org.tm.archive.R;
 import org.tm.archive.components.AnimatingToggle;
 import org.tm.archive.components.BoldSelectionTabItem;
 import org.tm.archive.components.ControllableTabLayout;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MediaDatabase;
 import org.tm.archive.database.MediaDatabase.Sorting;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.loaders.MediaLoader;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
@@ -51,7 +51,6 @@ import org.whispersystems.libsignal.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Activity for displaying media attachments in-app
@@ -200,7 +199,7 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
     if (threadId == MediaDatabase.ALL_THREADS) {
       getSupportActionBar().setTitle(R.string.MediaOverviewActivity_All_storage_use);
     } else {
-      SimpleTask.run(() -> DatabaseFactory.getThreadDatabase(this).getRecipientForThreadId(threadId),
+      SimpleTask.run(() -> SignalDatabase.threads().getRecipientForThreadId(threadId),
         (recipient) -> {
           if (recipient != null) {
             getSupportActionBar().setTitle(recipient.getDisplayName(this));

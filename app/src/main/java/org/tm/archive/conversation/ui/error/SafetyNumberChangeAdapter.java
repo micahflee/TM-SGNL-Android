@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.tm.archive.R;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.components.FromTextView;
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.adapter.AlwaysChangedDiffUtil;
 
@@ -80,6 +80,6 @@ final class SafetyNumberChangeAdapter extends ListAdapter<ChangedRecipient, Safe
   }
 
   interface Callbacks {
-    void onViewIdentityRecord(@NonNull IdentityDatabase.IdentityRecord identityRecord);
+    void onViewIdentityRecord(@NonNull IdentityRecord identityRecord);
   }
 }

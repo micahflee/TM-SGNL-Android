@@ -22,7 +22,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.databaseprotos.AudioWaveFormData;
 import org.tm.archive.media.DecryptableUriMediaInput;
 import org.tm.archive.media.MediaInput;
@@ -100,7 +100,7 @@ public final class AudioWaveForm {
 
       if (attachment instanceof DatabaseAttachment) {
         try {
-          AttachmentDatabase attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
+          AttachmentDatabase attachmentDatabase = SignalDatabase.attachments();
           DatabaseAttachment dbAttachment       = (DatabaseAttachment) attachment;
           long               startTime          = System.currentTimeMillis();
 

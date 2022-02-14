@@ -11,7 +11,6 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import org.tm.archive.database.model.Mention;
-import org.tm.archive.database.model.MessageId;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mediasend.Media;
 import org.tm.archive.stickers.StickerLocator;

@@ -8,17 +8,19 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.IntPair;
 import com.annimon.stream.Stream;
-import com.mobilecoin.lib.util.Hex;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.components.emoji.EmojiPageModel;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.emoji.EmojiData;
+import org.tm.archive.emoji.EmojiDownloader;
 import org.tm.archive.emoji.EmojiFiles;
 import org.tm.archive.emoji.EmojiImageRequest;
 import org.tm.archive.emoji.EmojiJsonRequest;
+import org.tm.archive.emoji.EmojiPageCache;
 import org.tm.archive.emoji.EmojiRemote;
 import org.tm.archive.emoji.EmojiSource;
+import org.tm.archive.emoji.JumboEmoji;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.AutoDownloadEmojiConstraint;
@@ -29,19 +31,10 @@ import org.tm.archive.util.ScreenDensity;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okio.Okio;
-import okio.Sink;
-import okio.Source;
 
 /**
  * Downloads Emoji JSON and Images to local persistent storage.
@@ -112,7 +105,7 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
       bucket = targetVersion.getDensity();
     }
 
-    Log.d(TAG, "LocalVersion: " + localVersion + ", SeverVersion: " + serverVersion + ", Bucket: " + bucket);
+    Log.d(TAG, "LocalVersion: " + localVersion + ", ServerVersion: " + serverVersion + ", Bucket: " + bucket);
 
     if (bucket == null) {
       Log.d(TAG, "This device has too low a display density to download remote emoji.");
@@ -156,6 +149,7 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
       clearOldEmojiData(context, targetVersion);
       markComplete(targetVersion);
       EmojiSource.refresh();
+      JumboEmoji.updateCurrentVersion(context);
     } else {
       Log.d(TAG, "Server has an older version than we do. Skipping.");
     }
@@ -259,7 +253,7 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
     if (!Arrays.equals(localHash, remoteHash)) {
       Log.d(TAG, "Downloading JSON from Remote");
       assertRemoteDownloadConstraints(context);
-      EmojiFiles.Name name = downloadAndVerifyJsonFromRemote(context, version);
+      EmojiFiles.Name name = EmojiDownloader.downloadAndVerifyJsonFromRemote(context, version);
       EmojiFiles.NameCollection.append(context, names, name);
     } else {
       Log.d(TAG, "Already have JSON from remote, skipping download");
@@ -304,7 +298,7 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
         }
 
         assertRemoteDownloadConstraints(context);
-        EmojiFiles.Name name = downloadAndVerifyImageFromRemote(context, version, version.getDensity(), imagePath, format);
+        EmojiFiles.Name name = EmojiDownloader.downloadAndVerifyImageFromRemote(context, version, version.getDensity(), imagePath, format);
         names = EmojiFiles.NameCollection.append(context, names, name);
       } else {
         Log.d(TAG, "Already have Image from remote, skipping download");
@@ -319,83 +313,6 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
   private static void assertRemoteDownloadConstraints(@NonNull Context context) throws IOException {
     if (!AutoDownloadEmojiConstraint.canAutoDownloadEmoji(context)) {
       throw new IOException("Network conditions no longer permit download.");
-    }
-  }
-
-  private static @NonNull EmojiFiles.Name downloadAndVerifyJsonFromRemote(@NonNull Context context, @NonNull EmojiFiles.Version version) throws IOException {
-    return downloadAndVerifyFromRemote(context,
-                                       version,
-                                       () -> EmojiRemote.getObject(new EmojiJsonRequest(version.getVersion())),
-                                       EmojiFiles.Name::forEmojiDataJson);
-  }
-
-  private static @NonNull EmojiFiles.Name downloadAndVerifyImageFromRemote(@NonNull Context context,
-                                                                @NonNull EmojiFiles.Version version,
-                                                                @NonNull String bucket,
-                                                                @NonNull String imagePath,
-                                                                @NonNull String format) throws IOException
-  {
-    return downloadAndVerifyFromRemote(context,
-                                       version,
-                                       () -> EmojiRemote.getObject(new EmojiImageRequest(version.getVersion(), bucket, imagePath, format)),
-                                       () -> new EmojiFiles.Name(imagePath, UUID.randomUUID()));
-  }
-
-  private static @NonNull EmojiFiles.Name downloadAndVerifyFromRemote(@NonNull Context context,
-                                                           @NonNull EmojiFiles.Version version,
-                                                           @NonNull Producer<Response> responseProducer,
-                                                           @NonNull Producer<EmojiFiles.Name> nameProducer) throws IOException
-  {
-    try (Response response = responseProducer.produce()) {
-      if (!response.isSuccessful()) {
-        throw new IOException("Unsuccessful response " + response.code());
-      }
-
-      ResponseBody responseBody = response.body();
-      if (responseBody == null) {
-        throw new IOException("No response body");
-      }
-
-      String responseMD5 = getMD5FromResponse(response);
-      if (responseMD5 == null) {
-        throw new IOException("Invalid ETag on response");
-      }
-
-      EmojiFiles.Name name = nameProducer.produce();
-
-      byte[] savedMd5;
-
-      try (OutputStream outputStream = EmojiFiles.openForWriting(context, version, name.getUuid())) {
-        Source source = response.body().source();
-        Sink   sink   = Okio.sink(outputStream);
-
-        Okio.buffer(source).readAll(sink);
-        outputStream.flush();
-
-        source.close();
-        sink.close();
-
-        savedMd5 = EmojiFiles.getMd5(context, version, name.getUuid());
-      }
-
-      if (!Arrays.equals(savedMd5, Hex.toByteArray(responseMD5))) {
-        EmojiFiles.delete(context, version, name.getUuid());
-        throw new IOException("MD5 Mismatch.");
-      }
-
-      return name;
-    }
-  }
-
-  private static @Nullable String getMD5FromResponse(@NonNull Response response) {
-    Pattern pattern = Pattern.compile(".*([a-f0-9]{32}).*");
-    String  header  = response.header("etag");
-    Matcher matcher = pattern.matcher(header);
-
-    if (matcher.find()) {
-      return matcher.group(1);
-    } else {
-      return null;
     }
   }
 
@@ -432,6 +349,12 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
           .filterNot(file -> file.getName().equals(currentDirectoryName))
           .filterNot(file -> file.getName().equals(newVersionDirectoryName))
           .forEach(FileUtils::deleteDirectory);
+
+    EmojiPageCache.INSTANCE.clear();
+
+    if (version != null) {
+      SignalStore.emojiValues().clearJumboEmojiSheets(version.getVersion());
+    }
   }
 
   public static final class Factory implements Job.Factory<DownloadLatestEmojiDataJob> {

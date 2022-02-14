@@ -3,7 +3,7 @@ package org.tm.archive.conversation.ui.error;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.database.IdentityDatabase;
-import org.tm.archive.database.IdentityDatabase.IdentityRecord;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.recipients.Recipient;
 
 /**

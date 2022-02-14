@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import org.tm.archive.contacts.SelectedContact;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.recipients.RecipientId;
@@ -28,6 +28,6 @@ final class AddMembersRepository {
 
   @WorkerThread
   String getGroupTitle() {
-    return DatabaseFactory.getGroupDatabase(context).requireGroup(groupId).getTitle();
+    return SignalDatabase.groups().requireGroup(groupId).getTitle();
   }
 }

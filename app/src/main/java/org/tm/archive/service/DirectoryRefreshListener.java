@@ -6,6 +6,7 @@ import android.content.Intent;
 
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.DirectoryRefreshJob;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.TextSecurePreferences;
 
@@ -20,7 +21,7 @@ public class DirectoryRefreshListener extends PersistentAlarmManagerListener {
 
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
-    if (scheduledTime != 0 && TextSecurePreferences.isPushRegistered(context)) {
+    if (scheduledTime != 0 && SignalStore.account().isRegistered()) {
       ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(true));
     }
 

@@ -33,8 +33,9 @@ import org.tm.archive.payments.Payee;
 import org.tm.archive.payments.preferences.RecipientHasNotEnabledPaymentsDialog;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.BottomSheetUtil;
-import org.tm.archive.util.MappingModelList;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.StringUtil;
+import org.tm.archive.util.navigation.SafeNavigation;
 import org.whispersystems.signalservice.api.payments.FormatterOptions;
 
 import java.util.concurrent.TimeUnit;
@@ -49,7 +50,7 @@ public class ConfirmPaymentFragment extends BottomSheetDialogFragment {
       requireActivity().setResult(Activity.RESULT_OK);
       requireActivity().finish();
     } else {
-      NavHostFragment.findNavController(this).navigate(R.id.action_directly_to_paymentsHome);
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_directly_to_paymentsHome);
     }
   };
 

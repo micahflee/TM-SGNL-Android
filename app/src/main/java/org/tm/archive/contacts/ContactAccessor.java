@@ -26,38 +26,17 @@ import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Contacts;
-import android.provider.ContactsContract.PhoneLookup;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
-
-import com.annimon.stream.Stream;
-
-import org.tm.archive.R;
-import org.tm.archive.contactshare.Contact;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.phonenumbers.PhoneNumberFormatter;
-import org.tm.archive.profiles.ProfileName;
-import org.tm.archive.recipients.Recipient;
-import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.CursorUtil;
 import org.tm.archive.util.SqlUtil;
-import org.tm.archive.util.TextSecurePreferences;
-import org.tm.archive.util.Util;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-
-import static org.tm.archive.database.GroupDatabase.GroupRecord;
 
 /**
  * This class was originally a layer of indirection between

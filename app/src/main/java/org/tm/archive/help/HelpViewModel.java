@@ -3,17 +3,11 @@ package org.tm.archive.help;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
-import org.tm.archive.logsubmit.LogLine;
 import org.tm.archive.logsubmit.SubmitDebugLogRepository;
-import org.tm.archive.util.livedata.LiveDataPair;
 import org.tm.archive.util.livedata.LiveDataUtil;
-import org.whispersystems.libsignal.util.Pair;
 import org.whispersystems.libsignal.util.guava.Optional;
-
-import java.util.List;
 
 public class HelpViewModel extends ViewModel {
 

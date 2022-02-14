@@ -5,7 +5,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,19 +24,16 @@ import org.tm.archive.logsubmit.util.Scrubber;
 import org.tm.archive.net.StandardUserAgentInterceptor;
 import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.push.SignalServiceNetworkAccess;
-import org.tm.archive.util.ByteUnit;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.Stopwatch;
-import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 
@@ -81,11 +77,17 @@ public class SubmitDebugLogRepository {
       add(new LogSectionPower());
     }
     add(new LogSectionNotifications());
+    add(new LogSectionNotificationProfiles());
     add(new LogSectionKeyPreferences());
+    add(new LogSectionBadges());
     add(new LogSectionPermissions());
     add(new LogSectionTrace());
     add(new LogSectionThreads());
     add(new LogSectionBlockedThreads());
+    if (FeatureFlags.internalUser()) {
+      add(new LogSectionSenderKey());
+    }
+    add(new LogSectionRemappedRecords());
     add(new LogSectionLogcat());
     add(new LogSectionLoggerHeader());
   }};
@@ -104,6 +106,7 @@ public class SubmitDebugLogRepository {
 
   public void buildAndSubmitLog(@NonNull Callback<Optional<String>> callback) {
     SignalExecutors.UNBOUNDED.execute(() -> {
+      Log.blockUntilAllWritesFinished();
       LogDatabase.getInstance(context).trimToSize();
       callback.onResult(submitLogInternal(System.currentTimeMillis(), getPrefixLogLinesInternal(), Tracer.getInstance().serialize()));
     });
@@ -164,6 +167,9 @@ public class SubmitDebugLogRepository {
           gzipOutput.write(reader.next().getBytes());
           gzipOutput.write("\n".getBytes());
         }
+      } catch (IllegalStateException e) {
+        Log.e(TAG, "Failed to read row!", e);
+        return Optional.absent();
       }
 
       StreamUtil.close(gzipOutput);

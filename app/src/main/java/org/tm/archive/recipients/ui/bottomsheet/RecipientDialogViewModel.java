@@ -18,10 +18,10 @@ import androidx.lifecycle.ViewModelProvider;
 import org.signal.core.util.ThreadUtil;
 import org.tm.archive.BlockUnblockDialog;
 import org.tm.archive.R;
-import org.tm.archive.VerifyIdentityActivity;
+import org.tm.archive.verify.VerifyIdentityActivity;
 import org.tm.archive.components.settings.conversation.ConversationSettingsActivity;
 import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.LiveGroup;
 import org.tm.archive.groups.ui.GroupChangeFailureReason;
@@ -37,13 +37,13 @@ import java.util.Objects;
 
 final class RecipientDialogViewModel extends ViewModel {
 
-  private final Context                                          context;
-  private final RecipientDialogRepository                        recipientDialogRepository;
-  private final LiveData<Recipient>                              recipient;
-  private final MutableLiveData<IdentityDatabase.IdentityRecord> identity;
-  private final LiveData<AdminActionStatus>                      adminActionStatus;
-  private final LiveData<Boolean>                                canAddToAGroup;
-  private final MutableLiveData<Boolean>                         adminActionBusy;
+  private final Context                         context;
+  private final RecipientDialogRepository       recipientDialogRepository;
+  private final LiveData<Recipient>             recipient;
+  private final MutableLiveData<IdentityRecord> identity;
+  private final LiveData<AdminActionStatus>     adminActionStatus;
+  private final LiveData<Boolean>               canAddToAGroup;
+  private final MutableLiveData<Boolean>        adminActionBusy;
 
   private RecipientDialogViewModel(@NonNull Context context,
                                    @NonNull RecipientDialogRepository recipientDialogRepository)
@@ -84,7 +84,7 @@ final class RecipientDialogViewModel extends ViewModel {
     MutableLiveData<Integer> localGroupCount = new MutableLiveData<>(0);
 
     canAddToAGroup = LiveDataUtil.combineLatest(recipient, localGroupCount,
-                                                (r, count) -> count > 0 && r.isRegistered() && !r.isGroup() && !r.isSelf());
+                                                (r, count) -> count > 0 && r.isRegistered() && !r.isGroup() && !r.isSelf() && !r.isBlocked());
 
     recipientDialogRepository.getActiveGroupCount(localGroupCount::postValue);
   }
@@ -101,7 +101,7 @@ final class RecipientDialogViewModel extends ViewModel {
     return adminActionStatus;
   }
 
-  LiveData<IdentityDatabase.IdentityRecord> getIdentity() {
+  LiveData<IdentityRecord> getIdentity() {
     return identity;
   }
 
@@ -133,7 +133,7 @@ final class RecipientDialogViewModel extends ViewModel {
     recipientDialogRepository.getRecipient(recipient -> BlockUnblockDialog.showUnblockFor(activity, activity.getLifecycle(), recipient, () -> RecipientUtil.unblock(context, recipient)));
   }
 
-  void onViewSafetyNumberClicked(@NonNull Activity activity, @NonNull IdentityDatabase.IdentityRecord identityRecord) {
+  void onViewSafetyNumberClicked(@NonNull Activity activity, @NonNull IdentityRecord identityRecord) {
     activity.startActivity(VerifyIdentityActivity.newIntent(activity, identityRecord));
   }
 

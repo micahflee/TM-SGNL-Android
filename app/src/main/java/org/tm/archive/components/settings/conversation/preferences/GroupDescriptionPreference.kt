@@ -7,13 +7,14 @@ import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.v2.GroupDescriptionUtil
 import org.tm.archive.util.LongClickMovementMethod
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 
 object GroupDescriptionPreference {
 
   fun register(adapter: MappingAdapter) {
-    adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory(::ViewHolder, R.layout.conversation_settings_group_description_preference))
+    adapter.registerFactory(Model::class.java, LayoutFactory(::ViewHolder, R.layout.conversation_settings_group_description_preference))
   }
 
   class Model(

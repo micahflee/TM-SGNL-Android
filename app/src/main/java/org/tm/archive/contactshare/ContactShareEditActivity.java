@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.util.DynamicLanguage;
 import org.tm.archive.util.DynamicTheme;
@@ -78,8 +78,8 @@ public class ContactShareEditActivity extends PassphraseRequiredActivity impleme
     contactList.setAdapter(contactAdapter);
 
     SharedContactRepository contactRepository = new SharedContactRepository(this,
-                                                                AsyncTask.THREAD_POOL_EXECUTOR,
-                                                                DatabaseFactory.getContactsDatabase(this));
+                                                                            AsyncTask.THREAD_POOL_EXECUTOR,
+                                                                            SignalDatabase.contacts());
 
     viewModel = ViewModelProviders.of(this, new Factory(contactUris, contactRepository)).get(ContactShareEditViewModel.class);
     viewModel.getContacts().observe(this, contacts -> {

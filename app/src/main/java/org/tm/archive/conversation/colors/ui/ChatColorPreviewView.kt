@@ -101,15 +101,25 @@ class ChatColorPreviewView @JvmOverloads constructor(
       wallpaper = findViewById(R.id.wallpaper)
       wallpaperDim = findViewById(R.id.wallpaper_dim)
       colorizerView = findViewById(R.id.colorizer)
-      colorizer = Colorizer(colorizerView)
+      colorizer = Colorizer()
     } finally {
       typedArray?.recycle()
     }
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
+    redrawChatColors()
+  }
+
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
     super.onLayout(changed, left, top, right, bottom)
 
+    redrawChatColors()
+  }
+
+  private fun redrawChatColors() {
     if (chatColors != null) {
       setChatColors(requireNotNull(chatColors))
     }

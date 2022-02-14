@@ -2,11 +2,10 @@ package org.tm.archive.components.settings.app.chats
 
 import android.content.Context
 import org.signal.core.util.concurrent.SignalExecutors
-import org.tm.archive.database.DatabaseFactory
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.MultiDeviceConfigurationUpdateJob
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.megaphone.Megaphones
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.TextSecurePreferences
@@ -19,7 +18,7 @@ class ChatsSettingsRepository {
     SignalExecutors.BOUNDED.execute {
       val isLinkPreviewsEnabled = SignalStore.settings().isLinkPreviewsEnabled
 
-      DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().id)
+      SignalDatabase.recipients.markNeedsSync(Recipient.self().id)
       StorageSyncHelper.scheduleSyncForDataChange()
       ApplicationDependencies.getJobManager().add(
         MultiDeviceConfigurationUpdateJob(
@@ -29,9 +28,6 @@ class ChatsSettingsRepository {
           isLinkPreviewsEnabled
         )
       )
-      if (isLinkPreviewsEnabled) {
-        ApplicationDependencies.getMegaphoneRepository().markFinished(Megaphones.Event.LINK_PREVIEWS)
-      }
     }
   }
 }

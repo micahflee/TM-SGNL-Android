@@ -10,7 +10,6 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.SignalProxyUtil;
 import org.tm.archive.util.SingleLiveEvent;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState;
 import org.whispersystems.signalservice.internal.configuration.SignalProxy;
@@ -32,10 +31,10 @@ public class EditProxyViewModel extends ViewModel {
     this.events    = new SingleLiveEvent<>();
     this.uiState   = new MutableLiveData<>();
     this.saveState = new MutableLiveData<>(SaveState.IDLE);
-    this.pipeState = TextSecurePreferences.getLocalNumber(ApplicationDependencies.getApplication()) == null ? new MutableLiveData<>()
-                                                                                                            : fromPublisher(ApplicationDependencies.getSignalWebSocket()
-                                                                                                                                                   .getWebSocketState()
-                                                                                                                                                   .toFlowable(BackpressureStrategy.LATEST));
+    this.pipeState = SignalStore.account().getE164() == null ? new MutableLiveData<>()
+                                                             : fromPublisher(ApplicationDependencies.getSignalWebSocket()
+                                                                                                    .getWebSocketState()
+                                                                                                    .toFlowable(BackpressureStrategy.LATEST));
 
     if (SignalStore.proxy().isProxyEnabled()) {
       uiState.setValue(UiState.ALL_ENABLED);

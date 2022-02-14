@@ -100,6 +100,10 @@ public final class ViewUtil {
     return new Stub<>(parent.findViewById(resId));
   }
 
+  public static <T extends View> Stub<T> findStubById(@NonNull View parent, @IdRes int resId) {
+    return new Stub<>(parent.findViewById(resId));
+  }
+
   private static Animation getAlphaAnimation(float from, float to, int duration) {
     final Animation anim = new AlphaAnimation(from, to);
     anim.setInterpolator(new FastOutSlowInInterpolator());
@@ -117,6 +121,10 @@ public final class ViewUtil {
 
   public static ListenableFuture<Boolean> fadeOut(@NonNull View view, int duration, int visibility) {
     return animateOut(view, getAlphaAnimation(1f, 0f, duration), visibility);
+  }
+
+  public static ListenableFuture<Boolean> animateOut(final @NonNull View view, final @NonNull Animation animation) {
+    return animateOut(view, animation, View.GONE);
   }
 
   public static ListenableFuture<Boolean> animateOut(final @NonNull View view, final @NonNull Animation animation, final int visibility) {
@@ -280,6 +288,10 @@ public final class ViewUtil {
     view.requestLayout();
   }
 
+  public static int getWidth(@NonNull View view) {
+    return view.getLayoutParams().width;
+  }
+
   public static void setPaddingTop(@NonNull View view, int padding) {
     view.setPadding(view.getPaddingLeft(), padding, view.getPaddingRight(), view.getPaddingBottom());
   }
@@ -323,6 +335,15 @@ public final class ViewUtil {
   public static int getStatusBarHeight(@NonNull View view) {
     int result = 0;
     int resourceId = view.getResources().getIdentifier("status_bar_height", "dimen", "android");
+    if (resourceId > 0) {
+      result = view.getResources().getDimensionPixelSize(resourceId);
+    }
+    return result;
+  }
+
+  public static int getNavigationBarHeight(@NonNull View view) {
+    int result = 0;
+    int resourceId = view.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
     if (resourceId > 0) {
       result = view.getResources().getDimensionPixelSize(resourceId);
     }

@@ -21,7 +21,7 @@ import org.tm.archive.payments.currency.CurrencyExchange;
 import org.tm.archive.payments.currency.CurrencyExchangeRepository;
 import org.tm.archive.payments.currency.CurrencyUtil;
 import org.tm.archive.util.AsynchronousCallback;
-import org.tm.archive.util.MappingModelList;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.SetUtil;
 import org.tm.archive.util.livedata.Store;
 import org.whispersystems.libsignal.util.Pair;

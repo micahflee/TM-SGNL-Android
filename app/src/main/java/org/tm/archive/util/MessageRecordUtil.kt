@@ -31,7 +31,7 @@ fun MessageRecord.hasAudio(): Boolean =
   isMms && (this as MmsMessageRecord).slideDeck.audioSlide != null
 
 fun MessageRecord.isCaptionlessMms(context: Context): Boolean =
-  getDisplayBody(context).isEmpty() && isMms && (this as MmsMessageRecord).slideDeck.textSlide == null
+  isMms && isDisplayBodyEmpty(context) && (this as MmsMessageRecord).slideDeck.textSlide == null
 
 fun MessageRecord.hasThumbnail(): Boolean =
   isMms && (this as MmsMessageRecord).slideDeck.thumbnailSlide != null
@@ -43,7 +43,7 @@ fun MessageRecord.isBorderless(context: Context): Boolean {
 }
 
 fun MessageRecord.hasNoBubble(context: Context): Boolean =
-  hasSticker() || isBorderless(context)
+  hasSticker() || isBorderless(context) || (isTextOnly(context) && isJumbomoji(context))
 
 fun MessageRecord.hasOnlyThumbnail(context: Context): Boolean {
   return hasThumbnail() &&

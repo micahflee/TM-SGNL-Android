@@ -15,9 +15,9 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.SessionUtil;
 import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.crypto.storage.TextSecureIdentityKeyStore;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.IdentityDatabase;
-import org.tm.archive.database.IdentityDatabase.IdentityRecord;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MmsSmsDatabase;
 import org.tm.archive.database.NoSuchMessageException;
@@ -68,7 +68,7 @@ final class SafetyNumberChangeRepository {
 
     List<Recipient> recipients = Stream.of(recipientIds).map(Recipient::resolved).toList();
 
-    List<ChangedRecipient> changedRecipients = Stream.of(DatabaseFactory.getIdentityDatabase(context).getIdentities(recipients).getIdentityRecords())
+    List<ChangedRecipient> changedRecipients = Stream.of(ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecords(recipients).getIdentityRecords())
                                                      .map(record -> new ChangedRecipient(Recipient.resolved(record.getRecipientId()), record))
                                                      .toList();
 
@@ -82,9 +82,9 @@ final class SafetyNumberChangeRepository {
     try {
       switch (messageType) {
         case MmsSmsDatabase.SMS_TRANSPORT:
-          return DatabaseFactory.getSmsDatabase(context).getMessageRecord(messageId);
+          return SignalDatabase.sms().getMessageRecord(messageId);
         case MmsSmsDatabase.MMS_TRANSPORT:
-          return DatabaseFactory.getMmsDatabase(context).getMessageRecord(messageId);
+          return SignalDatabase.mms().getMessageRecord(messageId);
         default:
           throw new AssertionError("no valid message type specified");
       }
@@ -96,7 +96,7 @@ final class SafetyNumberChangeRepository {
 
   @WorkerThread
   private TrustAndVerifyResult trustOrVerifyChangedRecipientsInternal(@NonNull List<ChangedRecipient> changedRecipients) {
-    IdentityDatabase identityDatabase = DatabaseFactory.getIdentityDatabase(context);
+    TextSecureIdentityKeyStore identityStore = ApplicationDependencies.getProtocolStore().aci().identities();
 
     try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
       for (ChangedRecipient changedRecipient : changedRecipients) {
@@ -104,12 +104,12 @@ final class SafetyNumberChangeRepository {
 
         if (changedRecipient.isUnverified()) {
           Log.d(TAG, "Setting " + identityRecord.getRecipientId() + " as verified");
-          identityDatabase.setVerified(identityRecord.getRecipientId(),
-                                       identityRecord.getIdentityKey(),
-                                       IdentityDatabase.VerifiedStatus.DEFAULT);
+          ApplicationDependencies.getProtocolStore().aci().identities().setVerified(identityRecord.getRecipientId(),
+                                                                                    identityRecord.getIdentityKey(),
+                                                                                    IdentityDatabase.VerifiedStatus.DEFAULT);
         } else {
           Log.d(TAG, "Setting " + identityRecord.getRecipientId() + " as approved");
-          identityDatabase.setApproval(identityRecord.getRecipientId(), true);
+          identityStore.setApproval(identityRecord.getRecipientId(), true);
         }
       }
     }
@@ -129,14 +129,14 @@ final class SafetyNumberChangeRepository {
         SignalProtocolAddress mismatchAddress = new SignalProtocolAddress(changedRecipient.getRecipient().requireServiceId(), SignalServiceAddress.DEFAULT_DEVICE_ID);
 
         Log.d(TAG, "Saving identity for: " + changedRecipient.getRecipient().getId() + " " + changedRecipient.getIdentityRecord().getIdentityKey().hashCode());
-        TextSecureIdentityKeyStore.SaveResult result = ApplicationDependencies.getIdentityStore().saveIdentity(mismatchAddress, changedRecipient.getIdentityRecord().getIdentityKey(), true);
+        TextSecureIdentityKeyStore.SaveResult result = ApplicationDependencies.getProtocolStore().aci().identities().saveIdentity(mismatchAddress, changedRecipient.getIdentityRecord().getIdentityKey(), true);
 
         Log.d(TAG, "Saving identity result: " + result);
         if (result == TextSecureIdentityKeyStore.SaveResult.NO_CHANGE) {
           Log.i(TAG, "Archiving sessions explicitly as they appear to be out of sync.");
           SessionUtil.archiveSession(changedRecipient.getRecipient().getId(), SignalServiceAddress.DEFAULT_DEVICE_ID);
           SessionUtil.archiveSiblingSessions(mismatchAddress);
-          DatabaseFactory.getSenderKeySharedDatabase(context).deleteAllFor(changedRecipient.getRecipient().getId());
+          SignalDatabase.senderKeyShared().deleteAllFor(changedRecipient.getRecipient().getId());
         }
       }
     }
@@ -151,8 +151,8 @@ final class SafetyNumberChangeRepository {
   @WorkerThread
   private void processOutgoingMessageRecord(@NonNull List<ChangedRecipient> changedRecipients, @NonNull MessageRecord messageRecord) {
     Log.d(TAG, "processOutgoingMessageRecord");
-    MessageDatabase smsDatabase = DatabaseFactory.getSmsDatabase(context);
-    MessageDatabase mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase smsDatabase = SignalDatabase.sms();
+    MessageDatabase mmsDatabase = SignalDatabase.mms();
 
     for (ChangedRecipient changedRecipient : changedRecipients) {
       RecipientId id          = changedRecipient.getRecipient().getId();

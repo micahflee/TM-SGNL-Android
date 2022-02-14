@@ -14,6 +14,7 @@ import org.tm.archive.components.settings.configure
 import org.tm.archive.components.settings.conversation.preferences.Utils.formatMutedUntil
 import org.tm.archive.database.RecipientDatabase
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.util.navigation.safeNavigate
 
 class SoundsAndNotificationsSettingsFragment : DSLSettingsFragment(
   titleId = R.string.ConversationSettingsFragment__sounds_and_notifications
@@ -32,9 +33,14 @@ class SoundsAndNotificationsSettingsFragment : DSLSettingsFragment(
     }
   )
 
+  override fun onResume() {
+    super.onResume()
+    viewModel.channelConsistencyCheck()
+  }
+
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
     viewModel.state.observe(viewLifecycleOwner) { state ->
-      if (state.recipientId != Recipient.UNKNOWN.id) {
+      if (state.channelConsistencyCheckComplete && state.recipientId != Recipient.UNKNOWN.id) {
         adapter.submitList(getConfiguration(state).toMappingModelList())
       }
     }
@@ -111,7 +117,7 @@ class SoundsAndNotificationsSettingsFragment : DSLSettingsFragment(
         summary = DSLSettingsText.from(customSoundSummary),
         onClick = {
           val action = SoundsAndNotificationsSettingsFragmentDirections.actionSoundsAndNotificationsSettingsFragmentToCustomNotificationsSettingsFragment(state.recipientId)
-          Navigation.findNavController(requireView()).navigate(action)
+          Navigation.findNavController(requireView()).safeNavigate(action)
         }
       )
     }

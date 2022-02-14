@@ -11,6 +11,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.push.AccountManagerFactory;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
+import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState;
 import org.whispersystems.signalservice.internal.configuration.SignalProxy;
 
@@ -77,7 +78,7 @@ public final class SignalProxyUtil {
   public static boolean testWebsocketConnection(long timeout) {
     startListeningToWebsocket();
 
-    if (TextSecurePreferences.getLocalNumber(ApplicationDependencies.getApplication()) == null) {
+    if (SignalStore.account().getE164() == null) {
       Log.i(TAG, "User is unregistered! Doing simple check.");
       return testWebsocketConnectionUnregistered(timeout);
     }
@@ -152,7 +153,7 @@ public final class SignalProxyUtil {
   private static boolean testWebsocketConnectionUnregistered(long timeout) {
     CountDownLatch              latch          = new CountDownLatch(1);
     AtomicBoolean               success        = new AtomicBoolean(false);
-    SignalServiceAccountManager accountManager = AccountManagerFactory.createUnauthenticated(ApplicationDependencies.getApplication(), "", "");
+    SignalServiceAccountManager accountManager = AccountManagerFactory.createUnauthenticated(ApplicationDependencies.getApplication(), "", SignalServiceAddress.DEFAULT_DEVICE_ID, "");
 
     SignalExecutors.UNBOUNDED.execute(() -> {
       try {

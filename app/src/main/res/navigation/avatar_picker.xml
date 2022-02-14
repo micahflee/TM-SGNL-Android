@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/avatar_picker"
     app:startDestination="@id/avatarPickerFragment">
-
     <fragment
         android:id="@+id/avatarPickerFragment"
+
         android:name="org.tm.archive.avatar.picker.AvatarPickerFragment"
         android:label="fragment_pick_avatar"
         tools:layout="@layout/avatar_picker_fragment">

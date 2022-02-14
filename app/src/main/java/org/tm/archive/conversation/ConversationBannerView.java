@@ -12,11 +12,12 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.R;
+import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.components.emoji.EmojiTextView;
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.ResourceContactPhoto;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.LongClickMovementMethod;
@@ -29,6 +30,7 @@ public class ConversationBannerView extends ConstraintLayout {
   private TextView        contactSubtitle;
   private EmojiTextView   contactDescription;
   private View            tapToView;
+  private BadgeImageView  contactBadge;
 
   public ConversationBannerView(Context context) {
     this(context, null);
@@ -44,6 +46,7 @@ public class ConversationBannerView extends ConstraintLayout {
     inflate(getContext(), R.layout.conversation_banner_view, this);
 
     contactAvatar      = findViewById(R.id.message_request_avatar);
+    contactBadge       = findViewById(R.id.message_request_badge);
     contactTitle       = findViewById(R.id.message_request_title);
     contactAbout       = findViewById(R.id.message_request_about);
     contactSubtitle    = findViewById(R.id.message_request_subtitle);
@@ -53,14 +56,21 @@ public class ConversationBannerView extends ConstraintLayout {
     contactAvatar.setFallbackPhotoProvider(new FallbackPhotoProvider());
   }
 
+  public void setBadge(@Nullable Recipient recipient) {
+    if (recipient == null || recipient.isSelf()) {
+      contactBadge.setBadge(null);
+    } else {
+      contactBadge.setBadgeFromRecipient(recipient);
+    }
+  }
+
   public void setAvatar(@NonNull GlideRequests requests, @Nullable Recipient recipient) {
     contactAvatar.setAvatar(requests, recipient, false);
 
     if (recipient != null && recipient.shouldBlurAvatar() && recipient.getContactPhoto() != null) {
       tapToView.setVisibility(VISIBLE);
       tapToView.setOnClickListener(v -> {
-        SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getRecipientDatabase(getContext().getApplicationContext())
-                                                             .manuallyShowAvatar(recipient.getId()));
+        SignalExecutors.BOUNDED.execute(() -> SignalDatabase.recipients().manuallyShowAvatar(recipient.getId()));
       });
     } else {
       tapToView.setVisibility(GONE);
@@ -68,11 +78,26 @@ public class ConversationBannerView extends ConstraintLayout {
     }
   }
 
-  public void setTitle(@Nullable CharSequence title) {
+  public String setTitle(@NonNull Recipient recipient) {
+    if (recipient.isReleaseNotes()) {
+      contactTitle.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.ic_official_28, 0);
+    } else {
+      contactTitle.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0);
+    }
+
+    String title = recipient.isSelf() ? getContext().getString(R.string.note_to_self) : recipient.getDisplayNameOrUsername(getContext());
     contactTitle.setText(title);
+    return title;
   }
 
-  public void setAbout(@Nullable String about) {
+  public void setAbout(@NonNull Recipient recipient) {
+    String about;
+    if (recipient.isReleaseNotes()) {
+      about = getContext().getString(R.string.ReleaseNotes__signal_release_notes_and_news);
+    } else {
+      about = recipient.getCombinedAboutAndEmoji();
+    }
+
     contactAbout.setText(about);
     contactAbout.setVisibility(TextUtils.isEmpty(about) ? GONE : VISIBLE);
   }
@@ -118,17 +143,17 @@ public class ConversationBannerView extends ConstraintLayout {
   private static final class FallbackPhotoProvider extends Recipient.FallbackPhotoProvider {
     @Override
     public @NonNull FallbackContactPhoto getPhotoForRecipientWithoutName() {
-      return new ResourceContactPhoto(R.drawable.ic_profile_80);
+      return new ResourceContactPhoto(R.drawable.ic_profile_64);
     }
 
     @Override
     public @NonNull FallbackContactPhoto getPhotoForGroup() {
-      return new ResourceContactPhoto(R.drawable.ic_group_80);
+      return new ResourceContactPhoto(R.drawable.ic_group_64);
     }
 
     @Override
     public @NonNull FallbackContactPhoto getPhotoForLocalNumber() {
-      return new ResourceContactPhoto(R.drawable.ic_note_80);
+      return new ResourceContactPhoto(R.drawable.ic_note_64);
     }
   }
 }

@@ -5,7 +5,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.payments.preferences.model.InProgress;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 public class InProgressViewHolder extends MappingViewHolder<InProgress> {
 

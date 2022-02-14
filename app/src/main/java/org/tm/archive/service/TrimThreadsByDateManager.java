@@ -9,8 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.KeepMessagesDuration;
@@ -26,8 +26,8 @@ public class TrimThreadsByDateManager extends TimedEventManager<TrimThreadsByDat
   public TrimThreadsByDateManager(@NonNull Application application) {
     super(application, "TrimThreadsByDateManager");
 
-    threadDatabase = DatabaseFactory.getThreadDatabase(application);
-    mmsSmsDatabase = DatabaseFactory.getMmsSmsDatabase(application);
+    threadDatabase = SignalDatabase.threads();
+    mmsSmsDatabase = SignalDatabase.mmsSms();
 
     scheduleIfNecessary();
   }

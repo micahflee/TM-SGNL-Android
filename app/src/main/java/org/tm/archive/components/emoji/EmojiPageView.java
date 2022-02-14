@@ -21,7 +21,7 @@ import org.tm.archive.components.emoji.EmojiPageViewGridAdapter.EmojiNoResultsMo
 import org.tm.archive.components.emoji.EmojiPageViewGridAdapter.VariationSelectorListener;
 import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.DrawableUtil;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 import org.tm.archive.util.ViewUtil;
 
 import java.util.List;

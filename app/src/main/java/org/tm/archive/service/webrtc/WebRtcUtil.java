@@ -1,7 +1,6 @@
 package org.tm.archive.service.webrtc;
 
 import android.content.Context;
-import android.media.AudioManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -9,8 +8,11 @@ import androidx.annotation.Nullable;
 import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
 import org.signal.ringrtc.PeekInfo;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.WebRtcViewModel;
-import org.tm.archive.util.ServiceUtil;
+import org.tm.archive.service.webrtc.state.WebRtcServiceState;
+import org.tm.archive.webrtc.audio.AudioManagerCompat;
+import org.tm.archive.webrtc.audio.SignalAudioManager;
 import org.tm.archive.webrtc.locks.LockManager;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.ecc.Curve;
@@ -32,7 +34,7 @@ public final class WebRtcUtil {
   }
 
   public static @NonNull LockManager.PhoneState getInCallPhoneState(@NonNull Context context) {
-    AudioManager audioManager = ServiceUtil.getAudioManager(context);
+    AudioManagerCompat audioManager = ApplicationDependencies.getAndroidCallAudioManager();
     if (audioManager.isSpeakerphoneOn() || audioManager.isBluetoothScoOn() || audioManager.isWiredHeadsetOn()) {
       return LockManager.PhoneState.IN_HANDS_FREE_CALL;
     } else {
@@ -44,7 +46,7 @@ public final class WebRtcUtil {
     return offerType == OfferMessage.Type.VIDEO_CALL ? CallManager.CallMediaType.VIDEO_CALL : CallManager.CallMediaType.AUDIO_CALL;
   }
 
-  public static @NonNull OfferMessage.Type getOfferTypeFromCallMediaType(@NonNull CallManager.CallMediaType callMediaType) {
+  public static @NonNull OfferMessage.Type getOfferTypeFromCallMediaType(@Nullable CallManager.CallMediaType callMediaType) {
     return callMediaType == CallManager.CallMediaType.VIDEO_CALL ? OfferMessage.Type.VIDEO_CALL : OfferMessage.Type.AUDIO_CALL;
   }
 
@@ -72,17 +74,15 @@ public final class WebRtcUtil {
     return OpaqueMessage.Urgency.DROPPABLE;
   }
 
-  public static void enableSpeakerPhoneIfNeeded(@NonNull Context context, boolean enable) {
-    if (!enable) {
+  public static void enableSpeakerPhoneIfNeeded(@NonNull WebRtcInteractor webRtcInteractor, WebRtcServiceState currentState) {
+    if (!currentState.getLocalDeviceState().getCameraState().isEnabled()) {
       return;
     }
 
-    AudioManager androidAudioManager = ServiceUtil.getAudioManager(context);
-    //noinspection deprecation
-    boolean shouldEnable = !(androidAudioManager.isSpeakerphoneOn() || androidAudioManager.isBluetoothScoOn() || androidAudioManager.isWiredHeadsetOn());
-
-    if (shouldEnable) {
-      androidAudioManager.setSpeakerphoneOn(true);
+    if (currentState.getLocalDeviceState().getActiveDevice() == SignalAudioManager.AudioDevice.EARPIECE ||
+        currentState.getLocalDeviceState().getActiveDevice() == SignalAudioManager.AudioDevice.NONE)
+    {
+      webRtcInteractor.setDefaultAudioDevice(SignalAudioManager.AudioDevice.SPEAKER_PHONE, true);
     }
   }
 

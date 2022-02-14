@@ -5,9 +5,7 @@ import android.graphics.PointF;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
 
-import org.tm.archive.components.MaskView;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.views.Stub;
@@ -25,9 +23,8 @@ final class ConversationReactionDelegate {
   private final PointF                            lastSeenDownPoint = new PointF();
 
   private ConversationReactionOverlay.OnReactionSelectedListener onReactionSelectedListener;
-  private Toolbar.OnMenuItemClickListener                        onToolbarItemClickedListener;
+  private ConversationReactionOverlay.OnActionSelectedListener   onActionSelectedListener;
   private ConversationReactionOverlay.OnHideListener             onHideListener;
-  private float                                                  translationY;
 
   ConversationReactionDelegate(@NonNull Stub<ConversationReactionOverlay> overlayStub) {
     this.overlayStub = overlayStub;
@@ -38,17 +35,12 @@ final class ConversationReactionDelegate {
   }
 
   void show(@NonNull Activity activity,
-            @NonNull MaskView.MaskTarget maskTarget,
             @NonNull Recipient conversationRecipient,
             @NonNull ConversationMessage conversationMessage,
-            int maskPaddingBottom,
-            boolean isNonAdminInAnnouncementGroup)
+            boolean isNonAdminInAnnouncementGroup,
+            @NonNull SelectedConversationModel selectedConversationModel)
   {
-    resolveOverlay().show(activity, maskTarget, conversationRecipient, conversationMessage, maskPaddingBottom, lastSeenDownPoint, isNonAdminInAnnouncementGroup);
-  }
-
-  void showMask(@NonNull MaskView.MaskTarget maskTarget, int maskPaddingTop, int maskPaddingBottom) {
-    resolveOverlay().showMask(maskTarget, maskPaddingTop, maskPaddingBottom);
+    resolveOverlay().show(activity, conversationRecipient, conversationMessage, lastSeenDownPoint, isNonAdminInAnnouncementGroup, selectedConversationModel);
   }
 
   void hide() {
@@ -59,10 +51,6 @@ final class ConversationReactionDelegate {
     overlayStub.get().hideForReactWithAny();
   }
 
-  void hideMask() {
-    overlayStub.get().hideMask();
-  }
-
   void setOnReactionSelectedListener(@NonNull ConversationReactionOverlay.OnReactionSelectedListener onReactionSelectedListener) {
     this.onReactionSelectedListener = onReactionSelectedListener;
 
@@ -71,11 +59,11 @@ final class ConversationReactionDelegate {
     }
   }
 
-  void setOnToolbarItemClickedListener(@NonNull Toolbar.OnMenuItemClickListener onToolbarItemClickedListener) {
-    this.onToolbarItemClickedListener = onToolbarItemClickedListener;
+  void setOnActionSelectedListener(@NonNull ConversationReactionOverlay.OnActionSelectedListener onActionSelectedListener) {
+    this.onActionSelectedListener = onActionSelectedListener;
 
     if (overlayStub.resolved()) {
-      overlayStub.get().setOnToolbarItemClickedListener(onToolbarItemClickedListener);
+      overlayStub.get().setOnActionSelectedListener(onActionSelectedListener);
     }
   }
 
@@ -84,14 +72,6 @@ final class ConversationReactionDelegate {
 
     if (overlayStub.resolved()) {
       overlayStub.get().setOnHideListener(onHideListener);
-    }
-  }
-
-  void setListVerticalTranslation(float translationY) {
-    this.translationY = translationY;
-
-    if (overlayStub.resolved()) {
-      overlayStub.get().setListVerticalTranslation(translationY);
     }
   }
 
@@ -118,9 +98,8 @@ final class ConversationReactionDelegate {
     ConversationReactionOverlay overlay = overlayStub.get();
     overlay.requestFitSystemWindows();
 
-    overlay.setListVerticalTranslation(translationY);
     overlay.setOnHideListener(onHideListener);
-    overlay.setOnToolbarItemClickedListener(onToolbarItemClickedListener);
+    overlay.setOnActionSelectedListener(onActionSelectedListener);
     overlay.setOnReactionSelectedListener(onReactionSelectedListener);
 
     return overlay;

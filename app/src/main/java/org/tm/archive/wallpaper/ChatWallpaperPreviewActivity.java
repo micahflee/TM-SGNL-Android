@@ -23,7 +23,7 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.FullscreenHelper;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 import org.tm.archive.util.Projection;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.WindowUtil;

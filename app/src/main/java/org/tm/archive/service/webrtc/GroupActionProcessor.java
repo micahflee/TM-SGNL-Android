@@ -22,6 +22,7 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.service.webrtc.state.WebRtcServiceStateBuilder;
 import org.webrtc.VideoTrack;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
+import org.whispersystems.signalservice.api.push.ACI;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,7 +83,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
     seen.add(Recipient.self());
 
     for (GroupCall.RemoteDeviceState device : remoteDeviceStates) {
-      Recipient                   recipient         = Recipient.externalPush(context, device.getUserId(), null, false);
+      Recipient                   recipient         = Recipient.externalPush(context, ACI.from(device.getUserId()), null, false);
       CallParticipantId           callParticipantId = new CallParticipantId(device.getDemuxId(), recipient.getId());
       CallParticipant             callParticipant   = participants.get(callParticipantId);
 
@@ -184,14 +185,14 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
 
   @Override
   protected @NonNull WebRtcServiceState handleSetRingGroup(@NonNull WebRtcServiceState currentState, boolean ringGroup) {
-    Log.i(tag, "handleReceivedOpaqueMessage(): ring: " + ringGroup);
+    Log.i(tag, "handleSetRingGroup(): ring: " + ringGroup);
 
-    if (currentState.getCallSetupState().shouldRingGroup() == ringGroup) {
+    if (currentState.getCallSetupState(RemotePeer.GROUP_CALL_ID).shouldRingGroup() == ringGroup) {
       return currentState;
     }
 
     return currentState.builder()
-                       .changeCallSetupState()
+                       .changeCallSetupState(RemotePeer.GROUP_CALL_ID)
                        .setRingGroup(ringGroup)
                        .build();
   }

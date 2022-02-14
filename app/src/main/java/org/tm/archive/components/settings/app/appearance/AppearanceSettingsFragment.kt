@@ -1,6 +1,6 @@
 package org.tm.archive.components.settings.app.appearance
 
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
@@ -8,6 +8,7 @@ import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
+import org.tm.archive.util.navigation.safeNavigate
 
 class AppearanceSettingsFragment : DSLSettingsFragment(R.string.preferences__appearance) {
 
@@ -23,7 +24,7 @@ class AppearanceSettingsFragment : DSLSettingsFragment(R.string.preferences__app
   private val languageValues by lazy { resources.getStringArray(R.array.language_values) }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    viewModel = ViewModelProviders.of(this)[AppearanceSettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this)[AppearanceSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
@@ -44,7 +45,7 @@ class AppearanceSettingsFragment : DSLSettingsFragment(R.string.preferences__app
       clickPref(
         title = DSLSettingsText.from(R.string.preferences__chat_color_and_wallpaper),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appearanceSettings_to_wallpaperActivity)
+          Navigation.findNavController(requireView()).safeNavigate(R.id.action_appearanceSettings_to_wallpaperActivity)
         }
       )
 

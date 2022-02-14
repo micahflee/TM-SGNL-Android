@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.annotation.Px
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.tm.archive.R
@@ -54,7 +54,7 @@ class StickerSearchDialogFragment : DialogFragment(), KeyboardStickerListAdapter
     list.adapter = adapter
     list.addItemDecoration(InsetItemDecoration(StickerInsetSetter()))
 
-    val viewModel: StickerSearchViewModel = ViewModelProviders.of(this, StickerSearchViewModel.Factory(requireContext())).get(StickerSearchViewModel::class.java)
+    val viewModel: StickerSearchViewModel = ViewModelProvider(this, StickerSearchViewModel.Factory(requireContext())).get(StickerSearchViewModel::class.java)
 
     viewModel.searchResults.observe(viewLifecycleOwner) { stickers ->
       adapter.submitList(stickers)
@@ -96,6 +96,7 @@ class StickerSearchDialogFragment : DialogFragment(), KeyboardStickerListAdapter
   override fun onStickerLongClicked(sticker: KeyboardStickerListAdapter.Sticker) = Unit
 
   companion object {
+    @JvmStatic
     fun show(fragmentManager: FragmentManager) {
       StickerSearchDialogFragment().show(fragmentManager, "TAG")
     }

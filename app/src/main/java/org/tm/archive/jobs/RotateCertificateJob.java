@@ -9,7 +9,6 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.CertificateType;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
@@ -51,7 +50,7 @@ public final class RotateCertificateJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       Log.w(TAG, "Not yet registered. Ignoring.");
       return;
     }

@@ -18,7 +18,7 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientForeverObserver;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DefaultValueLiveData;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.whispersystems.libsignal.util.guava.Optional;
 

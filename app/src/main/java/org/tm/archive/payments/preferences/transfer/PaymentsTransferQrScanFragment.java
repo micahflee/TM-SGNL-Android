@@ -11,12 +11,14 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.components.camera.CameraView;
 import org.tm.archive.payments.MobileCoinPublicAddress;
 import org.tm.archive.qr.ScanningThread;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 public final class PaymentsTransferQrScanFragment extends LoggingFragment {
 
@@ -52,14 +54,14 @@ public final class PaymentsTransferQrScanFragment extends LoggingFragment {
   public void onResume() {
     super.onResume();
     scanningThread = new ScanningThread();
-    scanningThread.setScanListener(data -> {
+    scanningThread.setScanListener(data -> ThreadUtil.runOnMain(() -> {
       try {
         viewModel.postQrData(MobileCoinPublicAddress.fromQr(data).getPaymentAddressBase58());
-        Navigation.findNavController(requireView()).navigate(R.id.action_paymentsScanQr_pop);
+        SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), R.id.action_paymentsScanQr_pop);
       } catch (MobileCoinPublicAddress.AddressException e) {
         Log.e(TAG, "Not a valid address");
       }
-    });
+    }));
     scannerView.onResume();
     scannerView.setPreviewCallback(scanningThread);
     scanningThread.start();

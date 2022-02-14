@@ -1,12 +1,9 @@
 package org.tm.archive.jobs;
 
-import android.os.Build;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -20,8 +17,6 @@ import org.tm.archive.util.TextSecurePreferences;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static org.tm.archive.util.ConversationUtil.CONVERSATION_SUPPORT_VERSION;
 
 /**
  * On some devices, interacting with the ShortcutManager can take a very long time (several seconds).
@@ -68,7 +63,7 @@ public class ConversationShortcutUpdateJob extends BaseJob {
       return;
     }
 
-    ThreadDatabase  threadDatabase = DatabaseFactory.getThreadDatabase(context);
+    ThreadDatabase  threadDatabase = SignalDatabase.threads();
     int             maxShortcuts   = ConversationUtil.getMaxShortcuts(context);
     List<Recipient> ranked         = new ArrayList<>(maxShortcuts);
 

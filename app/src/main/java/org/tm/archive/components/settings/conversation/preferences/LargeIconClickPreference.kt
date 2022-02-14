@@ -6,7 +6,8 @@ import org.tm.archive.components.settings.DSLSettingsIcon
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.components.settings.PreferenceViewHolder
-import org.tm.archive.util.MappingAdapter
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 
 /**
  * Renders a preference line item with a larger (40dp) icon
@@ -14,7 +15,7 @@ import org.tm.archive.util.MappingAdapter
 object LargeIconClickPreference {
 
   fun register(adapter: MappingAdapter) {
-    adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory(::ViewHolder, R.layout.large_icon_preference_item))
+    adapter.registerFactory(Model::class.java, LayoutFactory(::ViewHolder, R.layout.large_icon_preference_item))
   }
 
   class Model(

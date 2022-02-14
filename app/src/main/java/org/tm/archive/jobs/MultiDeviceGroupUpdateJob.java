@@ -8,12 +8,13 @@ import androidx.annotation.NonNull;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.conversation.colors.ChatColorsMapper;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.profiles.AvatarHelper;
 import org.tm.archive.providers.BlobProvider;
@@ -82,6 +83,11 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
       return;
     }
 
+    if (SignalStore.account().isLinkedDevice()) {
+      Log.i(TAG, "Not primary device, aborting...");
+      return;
+    }
+
     ParcelFileDescriptor[] pipe        = ParcelFileDescriptor.createPipe();
     InputStream            inputStream = new ParcelFileDescriptor.AutoCloseInputStream(pipe[0]);
     Uri                    uri         = BlobProvider.getInstance()
@@ -91,7 +97,7 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
                                                                                         () -> Log.i(TAG, "Write successful."),
                                                                                         e  -> Log.w(TAG, "Error during write.", e));
 
-    try (GroupDatabase.Reader reader = DatabaseFactory.getGroupDatabase(context).getGroups()) {
+    try (GroupDatabase.Reader reader = SignalDatabase.groups().getGroups()) {
       DeviceGroupsOutputStream out     = new DeviceGroupsOutputStream(new ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]));
       boolean                  hasData = false;
 
@@ -106,11 +112,11 @@ public class MultiDeviceGroupUpdateJob extends BaseJob {
             members.add(RecipientUtil.toSignalServiceAddress(context, member));
           }
 
-          RecipientId               recipientId     = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromPossiblyMigratedGroupId(record.getId());
+          RecipientId               recipientId     = SignalDatabase.recipients().getOrInsertFromPossiblyMigratedGroupId(record.getId());
           Recipient                 recipient       = Recipient.resolved(recipientId);
           Optional<Integer>         expirationTimer = recipient.getExpiresInSeconds() > 0 ? Optional.of(recipient.getExpiresInSeconds()) : Optional.absent();
-          Map<RecipientId, Integer> inboxPositions  = DatabaseFactory.getThreadDatabase(context).getInboxPositions();
-          Set<RecipientId>          archived        = DatabaseFactory.getThreadDatabase(context).getArchivedRecipients();
+          Map<RecipientId, Integer> inboxPositions  = SignalDatabase.threads().getInboxPositions();
+          Set<RecipientId>          archived        = SignalDatabase.threads().getArchivedRecipients();
 
           out.write(new DeviceGroup(record.getId().getDecodedId(),
                                     Optional.fromNullable(record.getTitle()),

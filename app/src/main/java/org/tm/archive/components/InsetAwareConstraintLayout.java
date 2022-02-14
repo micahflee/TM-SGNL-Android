@@ -13,7 +13,6 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Guideline;
 
-import org.signal.glide.Log;
 import org.tm.archive.R;
 import org.tm.archive.util.ViewUtil;
 

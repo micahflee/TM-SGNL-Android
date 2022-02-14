@@ -8,9 +8,7 @@ import androidx.annotation.WorkerThread;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.DecryptionsDrainedConstraint;
@@ -21,15 +19,10 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.transport.RetryLaterException;
-import org.whispersystems.libsignal.util.guava.Optional;
-import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.ContentHint;
-import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
-import org.whispersystems.signalservice.api.messages.SignalServiceGroup;
-import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
 
 import java.io.IOException;
@@ -55,7 +48,7 @@ public class ProfileKeySendJob extends BaseJob {
    */
   @WorkerThread
   public static ProfileKeySendJob create(@NonNull Context context, long threadId, boolean queueLimits) {
-    Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    Recipient conversationRecipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
 
     if (conversationRecipient == null) {
       throw new AssertionError("We have a thread but no recipient!");
@@ -72,16 +65,17 @@ public class ProfileKeySendJob extends BaseJob {
 
     if (queueLimits) {
       return new ProfileKeySendJob(new Parameters.Builder()
-                                                 .setQueue(conversationRecipient.getId().toQueueKey())
+                                                 .setQueue("ProfileKeySendJob_" + conversationRecipient.getId().toQueueKey())
+                                                 .setMaxInstancesForQueue(1)
                                                  .addConstraint(NetworkConstraint.KEY)
+                                                 .addConstraint(DecryptionsDrainedConstraint.KEY)
                                                  .setLifespan(TimeUnit.DAYS.toMillis(1))
                                                  .setMaxAttempts(Parameters.UNLIMITED)
                                                  .build(), threadId, recipients);
     } else {
       return new ProfileKeySendJob(new Parameters.Builder()
-                                                 .setQueue("ProfileKeySendJob_" + conversationRecipient.getId().toQueueKey())
+                                                 .setQueue(conversationRecipient.getId().toQueueKey())
                                                  .addConstraint(NetworkConstraint.KEY)
-                                                 .addConstraint(DecryptionsDrainedConstraint.KEY)
                                                  .setLifespan(TimeUnit.DAYS.toMillis(1))
                                                  .setMaxAttempts(Parameters.UNLIMITED)
                                                  .build(), threadId, recipients);
@@ -100,7 +94,7 @@ public class ProfileKeySendJob extends BaseJob {
       throw new NotPushRegisteredException();
     }
 
-    Recipient conversationRecipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    Recipient conversationRecipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
 
     if (conversationRecipient == null) {
       Log.w(TAG, "Thread no longer present");

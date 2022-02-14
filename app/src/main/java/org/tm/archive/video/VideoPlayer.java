@@ -26,31 +26,23 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ClippingMediaSource;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.PlayerControlView;
 import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.mms.VideoSlide;
-import org.tm.archive.video.exo.AttachmentDataSourceFactory;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class VideoPlayer extends FrameLayout {
@@ -58,8 +50,9 @@ public class VideoPlayer extends FrameLayout {
   @SuppressWarnings("unused")
   private static final String TAG = Log.tag(VideoPlayer.class);
 
-  private final PlayerView        exoView;
-  private final PlayerControlView exoControls;
+  private final PlayerView                exoView;
+  private final PlayerControlView         exoControls;
+  private final DefaultMediaSourceFactory mediaSourceFactory;
 
   private SimpleExoPlayer                     exoPlayer;
   private Window                              window;
@@ -68,6 +61,8 @@ public class VideoPlayer extends FrameLayout {
   private PlayerCallback                      playerCallback;
   private boolean                             clipped;
   private long                                clippedStartUs;
+  private ExoPlayerListener                   exoPlayerListener;
+  private Player.Listener                     playerListener;
 
   public VideoPlayer(Context context) {
     this(context, null);
@@ -82,51 +77,62 @@ public class VideoPlayer extends FrameLayout {
 
     inflate(context, R.layout.video_player, this);
 
+    this.mediaSourceFactory = new DefaultMediaSourceFactory(context);
+
     this.exoView     = findViewById(R.id.video_view);
     this.exoControls = new PlayerControlView(getContext());
     this.exoControls.setShowTimeoutMs(-1);
-  }
 
-  private CreateMediaSource createMediaSource;
+    this.exoPlayerListener = new ExoPlayerListener(this, window, playerStateCallback, playerPositionDiscontinuityCallback);
+    this.playerListener = new Player.Listener() {
+      @Override
+      public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+        onPlaybackStateChanged(playWhenReady, exoPlayer.getPlaybackState());
+      }
 
-  public void setVideoSource(@NonNull VideoSlide videoSource, boolean autoplay) {
-    Context                 context                    = getContext();
-    DefaultRenderersFactory renderersFactory           = new DefaultRenderersFactory(context);
-    TrackSelection.Factory  videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory();
-    TrackSelector           trackSelector              = new DefaultTrackSelector(videoTrackSelectionFactory);
-    LoadControl             loadControl                = new DefaultLoadControl();
+      @Override
+      public void onPlaybackStateChanged(int playbackState) {
+        onPlaybackStateChanged(exoPlayer.getPlayWhenReady(), playbackState);
+      }
 
-    if (exoPlayer == null) {
-      exoPlayer = ExoPlayerFactory.newSimpleInstance(context, renderersFactory, trackSelector, loadControl);
-      exoPlayer.addListener(new ExoPlayerListener(this, window, playerStateCallback, playerPositionDiscontinuityCallback));
-      exoPlayer.addListener(new Player.EventListener() {
-        @Override
-        public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-          if (playerCallback != null) {
-            switch (playbackState) {
-              case Player.STATE_READY:
-                if (playWhenReady) playerCallback.onPlaying();
-                break;
-              case Player.STATE_ENDED:
-                playerCallback.onStopped();
-                break;
-            }
+      private void onPlaybackStateChanged(boolean playWhenReady, int playbackState) {
+        if (playerCallback != null) {
+          switch (playbackState) {
+            case Player.STATE_READY:
+              playerCallback.onReady();
+              if (playWhenReady) playerCallback.onPlaying();
+              break;
+            case Player.STATE_ENDED:
+              playerCallback.onStopped();
+              break;
           }
         }
-      });
+      }
+
+      @Override
+      public void onPlayerError(@NonNull PlaybackException error) {
+        Log.w(TAG, "A player error occurred", error);
+        if (playerCallback != null) {
+          playerCallback.onError();
+        }
+      }
+    };
+  }
+
+  private MediaItem mediaItem;
+
+  public void setVideoSource(@NonNull VideoSlide videoSource, boolean autoplay) {
+    if (exoPlayer == null) {
+      exoPlayer = ApplicationDependencies.getExoPlayerPool().require();
+      exoPlayer.addListener(exoPlayerListener);
+      exoPlayer.addListener(playerListener);
       exoView.setPlayer(exoPlayer);
       exoControls.setPlayer(exoPlayer);
     }
 
-    DefaultDataSourceFactory    defaultDataSourceFactory    = new DefaultDataSourceFactory(context, "GenericUserAgent", null);
-    AttachmentDataSourceFactory attachmentDataSourceFactory = new AttachmentDataSourceFactory(context, defaultDataSourceFactory, null);
-    ExtractorsFactory           extractorsFactory           = new DefaultExtractorsFactory();
-
-    createMediaSource = () -> new ExtractorMediaSource.Factory(attachmentDataSourceFactory)
-                                                      .setExtractorsFactory(extractorsFactory)
-                                                      .createMediaSource(videoSource.getUri());
-
-    exoPlayer.prepare(createMediaSource.create());
+    mediaItem = MediaItem.fromUri(Objects.requireNonNull(videoSource.getUri()));
+    exoPlayer.setMediaItem(mediaItem);
+    exoPlayer.prepare();
     exoPlayer.setPlayWhenReady(autoplay);
   }
 
@@ -136,6 +142,14 @@ public class VideoPlayer extends FrameLayout {
 
   public void setResizeMode(@AspectRatioFrameLayout.ResizeMode int resizeMode) {
     exoView.setResizeMode(resizeMode);
+  }
+
+  public boolean isPlaying() {
+    if (this.exoPlayer != null) {
+      return this.exoPlayer.isPlaying();
+    } else {
+      return false;
+    }
   }
 
   public void pause() {
@@ -151,15 +165,21 @@ public class VideoPlayer extends FrameLayout {
   }
 
   public @Nullable View getControlView() {
-    if (this.exoControls != null) {
-      return this.exoControls;
-    }
-    return null;
+    return this.exoControls;
   }
 
   public void cleanup() {
     if (this.exoPlayer != null) {
-      this.exoPlayer.release();
+      exoPlayer.stop();
+      exoPlayer.clearMediaItems();
+
+      exoView.setPlayer(null);
+      exoControls.setPlayer(null);
+
+      exoPlayer.removeListener(playerListener);
+      exoPlayer.removeListener(exoPlayerListener);
+
+      ApplicationDependencies.getExoPlayerPool().pool(exoPlayer);
       this.exoPlayer = null;
     }
   }
@@ -198,9 +218,12 @@ public class VideoPlayer extends FrameLayout {
   }
 
   public void clip(long fromUs, long toUs, boolean playWhenReady) {
-    if (this.exoPlayer != null && createMediaSource != null) {
-      MediaSource clippedMediaSource = new ClippingMediaSource(createMediaSource.create(), fromUs, toUs);
-      exoPlayer.prepare(clippedMediaSource);
+    if (this.exoPlayer != null && mediaItem != null) {
+      MediaSource         mediaItemSource = mediaSourceFactory.createMediaSource(mediaItem);
+      ClippingMediaSource clippedSource   = new ClippingMediaSource(mediaItemSource, fromUs, toUs);
+
+      exoPlayer.setMediaSource(clippedSource);
+      exoPlayer.prepare();
       exoPlayer.setPlayWhenReady(playWhenReady);
       clipped        = true;
       clippedStartUs = fromUs;
@@ -208,9 +231,10 @@ public class VideoPlayer extends FrameLayout {
   }
 
   public void removeClip(boolean playWhenReady) {
-    if (exoPlayer != null && createMediaSource != null) {
+    if (exoPlayer != null && mediaItem != null) {
       if (clipped) {
-        exoPlayer.prepare(createMediaSource.create());
+        exoPlayer.setMediaItem(mediaItem);
+        exoPlayer.prepare();
         clipped        = false;
         clippedStartUs = 0;
       }
@@ -220,6 +244,9 @@ public class VideoPlayer extends FrameLayout {
 
   public void setWindow(@Nullable Window window) {
     this.window = window;
+    if (exoPlayerListener != null) {
+      exoPlayerListener.setWindow(window);
+    }
   }
 
   public void setPlayerStateCallbacks(@Nullable PlayerStateCallback playerStateCallback) {
@@ -246,9 +273,9 @@ public class VideoPlayer extends FrameLayout {
     }
   }
 
-  private static class ExoPlayerListener implements Player.EventListener {
+  private static class ExoPlayerListener implements Player.Listener {
     private final VideoPlayer                         videoPlayer;
-    private final Window                              window;
+    private       Window                              window;
     private final PlayerStateCallback                 playerStateCallback;
     private final PlayerPositionDiscontinuityCallback playerPositionDiscontinuityCallback;
 
@@ -264,7 +291,20 @@ public class VideoPlayer extends FrameLayout {
     }
 
     @Override
-    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+    public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+      onPlaybackStateChanged(playWhenReady, videoPlayer.exoPlayer.getPlaybackState());
+    }
+
+    @Override
+    public void onPlaybackStateChanged(int playbackState) {
+      onPlaybackStateChanged(videoPlayer.exoPlayer.getPlayWhenReady(), playbackState);
+    }
+
+    public void setWindow(Window window) {
+      this.window = window;
+    }
+
+    private void onPlaybackStateChanged(boolean playWhenReady, int playbackState) {
       switch (playbackState) {
         case Player.STATE_IDLE:
         case Player.STATE_BUFFERING:
@@ -289,7 +329,10 @@ public class VideoPlayer extends FrameLayout {
     }
 
     @Override
-    public void onPositionDiscontinuity(int reason) {
+    public void onPositionDiscontinuity(@NonNull Player.PositionInfo oldPosition,
+                                        @NonNull Player.PositionInfo newPosition,
+                                        int reason)
+    {
       if (playerPositionDiscontinuityCallback != null) {
         playerPositionDiscontinuityCallback.onPositionDiscontinuity(videoPlayer, reason);
       }
@@ -310,12 +353,12 @@ public class VideoPlayer extends FrameLayout {
 
   public interface PlayerCallback {
 
+    default void onReady() {}
+
     void onPlaying();
 
     void onStopped();
-  }
 
-  private interface CreateMediaSource {
-    MediaSource create();
+    void onError();
   }
 }

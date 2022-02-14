@@ -14,13 +14,13 @@ import androidx.lifecycle.ViewModelProvider;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.DefaultValueLiveData;
-import org.tm.archive.util.MappingModelList;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collections;
@@ -71,11 +71,14 @@ public class ShareViewModel extends ViewModel {
         Recipient recipient = Recipient.resolved(selectedContact.getRecipientId().get());
 
         if (recipient.isPushV2Group()) {
-          Optional<GroupDatabase.GroupRecord> record = DatabaseFactory.getGroupDatabase(context).getGroup(recipient.requireGroupId());
+          Optional<GroupDatabase.GroupRecord> record = SignalDatabase.groups().getGroup(recipient.requireGroupId());
 
           if (record.isPresent() && record.get().isAnnouncementGroup() && !record.get().isAdmin(Recipient.self())) {
             return ContactSelectResult.FALSE_AND_SHOW_PERMISSION_TOAST;
           }
+        } else if (SmsShareRestriction.DISALLOW_SMS_CONTACTS.equals(smsShareRestriction.getValue()) &&
+                   (!recipient.isRegistered() || recipient.isForceSmsSelection())) {
+          return ContactSelectResult.FALSE_AND_SHOW_SMS_MULTISELECT_TOAST;
         }
       }
 
@@ -147,12 +150,17 @@ public class ShareViewModel extends ViewModel {
       return SmsShareRestriction.NO_RESTRICTIONS;
     } else if (shareContacts.size() == 1) {
       ShareContact shareContact = shareContacts.iterator().next();
-      Recipient    recipient    = Recipient.live(shareContact.getRecipientId().get()).get();
 
-      if (!recipient.isRegistered() || recipient.isForceSmsSelection()) {
-        return SmsShareRestriction.DISALLOW_MULTI_SHARE;
+      if (shareContact.getRecipientId().isPresent()) {
+        Recipient recipient = Recipient.live(shareContact.getRecipientId().get()).get();
+
+        if (!recipient.isRegistered() || recipient.isForceSmsSelection()) {
+          return SmsShareRestriction.DISALLOW_MULTI_SHARE;
+        } else {
+          return SmsShareRestriction.DISALLOW_SMS_CONTACTS;
+        }
       } else {
-        return SmsShareRestriction.DISALLOW_SMS_CONTACTS;
+        return SmsShareRestriction.DISALLOW_MULTI_SHARE;
       }
     } else {
       return SmsShareRestriction.DISALLOW_SMS_CONTACTS;
@@ -160,7 +168,7 @@ public class ShareViewModel extends ViewModel {
   }
 
   enum ContactSelectResult {
-    TRUE, FALSE, FALSE_AND_SHOW_PERMISSION_TOAST
+    TRUE, FALSE, FALSE_AND_SHOW_PERMISSION_TOAST, FALSE_AND_SHOW_SMS_MULTISELECT_TOAST
   }
 
   enum SmsShareRestriction {

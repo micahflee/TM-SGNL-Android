@@ -47,6 +47,7 @@ import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.concurrent.SimpleTask;
+import org.tm.archive.util.navigation.SafeNavigation;
 import org.tm.archive.util.text.AfterTextChanged;
 import org.tm.archive.util.views.LearnMoreTextView;
 
@@ -301,9 +302,9 @@ public class EditProfileFragment extends LoggingFragment {
   private void startAvatarSelection() {
     if (viewModel.isGroup()) {
       Parcelable groupId = ParcelableGroupId.from(viewModel.getGroupId());
-      Navigation.findNavController(requireView()).navigate(EditProfileFragmentDirections.actionCreateProfileFragmentToAvatarPicker((ParcelableGroupId) groupId, viewModel.getAvatarMedia()));
+      SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), EditProfileFragmentDirections.actionCreateProfileFragmentToAvatarPicker((ParcelableGroupId) groupId, viewModel.getAvatarMedia()));
     } else {
-      Navigation.findNavController(requireView()).navigate(EditProfileFragmentDirections.actionCreateProfileFragmentToAvatarPicker(null, null));
+      SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), EditProfileFragmentDirections.actionCreateProfileFragmentToAvatarPicker(null, null));
     }
   }
 
@@ -354,7 +355,9 @@ public class EditProfileFragment extends LoggingFragment {
       @Override
       public void onAnimationEnd(Animator animation) {
         finishButton.setProgress(0);
-        if (nextIntent != null)  startActivity(nextIntent);
+        if (nextIntent != null && getActivity() != null) {
+          startActivity(nextIntent);
+        }
 
         controller.onProfileNameUploadCompleted();
       }

@@ -3,7 +3,7 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.ThreadUtil;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -45,7 +45,7 @@ public final class ThreadUpdateJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    DatabaseFactory.getThreadDatabase(context).update(threadId, true);
+    SignalDatabase.threads().update(threadId, true);
     ThreadUtil.sleep(1000);
   }
 

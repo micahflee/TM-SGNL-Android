@@ -2,7 +2,8 @@ package org.tm.archive.keyboard.emoji
 
 import org.tm.archive.R
 import org.tm.archive.keyboard.KeyboardPageCategoryIconViewHolder
-import org.tm.archive.util.MappingAdapter
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import java.util.function.Consumer
 
 class EmojiKeyboardPageCategoriesAdapter(private val onPageSelected: Consumer<String>) : MappingAdapter() {

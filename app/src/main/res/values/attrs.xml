@@ -109,6 +109,10 @@
         <attr name="pickerBorderColor" format="color" />
         <attr name="pickerBorderWidth" format="dimension" />
         <attr name="pickerColors" format="reference" />
+        <attr name="pickerOrientation" format="enum">
+            <enum name="vertical" value="0" />
+            <enum name="horizontal" value="1" />
+        </attr>
     </declare-styleable>
 
     <declare-styleable name="EmojiTextView">
@@ -117,6 +121,7 @@
         <attr name="emoji_maxLength" format="integer" />
         <attr name="emoji_forceCustom" format="boolean" />
         <attr name="emoji_renderMentions" format="boolean" />
+        <attr name="emoji_forceJumbo" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="RingtonePreference">
@@ -246,10 +251,6 @@
       <attr name="rcv_outgoing" format="boolean" />
     </declare-styleable>
 
-    <declare-styleable name="AdaptiveActionsToolbar">
-        <attr name="aat_max_shown" format="integer" />
-    </declare-styleable>
-
     <declare-styleable name="VideoThumbnailsRangeSelectorView">
         <attr name="thumbWidth" format="dimension" />
         <attr name="thumbColorEdited" format="color" />
@@ -321,5 +322,16 @@
         <attr name="bsiv_icon" format="reference" />
         <attr name="bsiv_label" format="string" />
         <attr name="bsiv_icon_contentDescription" format="string" />
+    </declare-styleable>
+
+    <declare-styleable name="BadgeImageView">
+        <attr name="badge_size" format="enum">
+            <enum name="small" value="0" />
+            <enum name="medium" value="1" />
+            <enum name="large" value="2" />
+            <enum name="xlarge" value="3" />
+            <enum name="badge_64" value="4" />
+            <enum name="badge_112" value="5" />
+        </attr>
     </declare-styleable>
 </resources>

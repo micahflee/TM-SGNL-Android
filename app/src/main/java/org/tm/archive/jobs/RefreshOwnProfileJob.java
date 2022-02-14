@@ -8,17 +8,20 @@ import androidx.annotation.Nullable;
 import org.signal.core.util.logging.Log;
 import org.signal.zkgroup.profiles.ProfileKey;
 import org.signal.zkgroup.profiles.ProfileKeyCredential;
+import org.tm.archive.badges.BadgeRepository;
+import org.tm.archive.badges.Badges;
+import org.tm.archive.badges.models.Badge;
 import org.tm.archive.crypto.ProfileKeyUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.ProfileUtil;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.crypto.InvalidCiphertextException;
@@ -27,6 +30,11 @@ import org.whispersystems.signalservice.api.profiles.SignalServiceProfile;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -40,13 +48,28 @@ public class RefreshOwnProfileJob extends BaseJob {
 
   private static final String TAG = Log.tag(RefreshOwnProfileJob.class);
 
+  private static final String SUBSCRIPTION_QUEUE = ProfileUploadJob.QUEUE + "_Subscription";
+  private static final String BOOST_QUEUE        = ProfileUploadJob.QUEUE + "_Boost";
+
   public RefreshOwnProfileJob() {
+    this(ProfileUploadJob.QUEUE);
+  }
+
+  private RefreshOwnProfileJob(@NonNull String queue) {
     this(new Parameters.Builder()
-                       .addConstraint(NetworkConstraint.KEY)
-                       .setQueue(ProfileUploadJob.QUEUE)
-                       .setMaxInstancesForFactory(1)
-                       .setMaxAttempts(10)
-                       .build());
+             .addConstraint(NetworkConstraint.KEY)
+             .setQueue(queue)
+             .setMaxInstancesForFactory(1)
+             .setMaxAttempts(10)
+             .build());
+  }
+
+  public static @NonNull RefreshOwnProfileJob forSubscription() {
+    return new RefreshOwnProfileJob(SUBSCRIPTION_QUEUE);
+  }
+
+  public static @NonNull RefreshOwnProfileJob forBoost() {
+    return new RefreshOwnProfileJob(BOOST_QUEUE);
   }
 
 
@@ -66,19 +89,30 @@ public class RefreshOwnProfileJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextUtils.isEmpty(TextSecurePreferences.getLocalNumber(context))) {
+    if (!SignalStore.account().isRegistered() || TextUtils.isEmpty(SignalStore.account().getE164())) {
       Log.w(TAG, "Not yet registered!");
       return;
     }
 
+    if (SignalStore.kbsValues().hasPin() && !SignalStore.kbsValues().hasOptedOut() && SignalStore.storageService().getLastSyncTime() == 0) {
+      Log.i(TAG, "Registered with PIN but haven't completed storage sync yet.");
+      return;
+    }
+
+    if (!SignalStore.registrationValues().hasUploadedProfile() && SignalStore.account().isPrimaryDevice()) {
+      Log.i(TAG, "Registered but haven't uploaded profile yet.");
+      return;
+    }
+
     Recipient            self                 = Recipient.self();
-    ProfileAndCredential profileAndCredential = ProfileUtil.retrieveProfileSync(context, self, getRequestType(self));
+    ProfileAndCredential profileAndCredential = ProfileUtil.retrieveProfileSync(context, self, getRequestType(self), false);
     SignalServiceProfile profile              = profileAndCredential.getProfile();
 
     setProfileName(profile.getName());
     setProfileAbout(profile.getAbout(), profile.getAboutEmoji());
     setProfileAvatar(profile.getAvatar());
     setProfileCapabilities(profile.getCapabilities());
+    setProfileBadges(profile.getBadges());
     Optional<ProfileKeyCredential> profileKeyCredential = profileAndCredential.getProfileKeyCredential();
     if (profileKeyCredential.isPresent()) {
       setProfileKeyCredential(self, ProfileKeyUtil.getSelfProfileKey(), profileKeyCredential.get());
@@ -89,7 +123,7 @@ public class RefreshOwnProfileJob extends BaseJob {
                                        @NonNull ProfileKey recipientProfileKey,
                                        @NonNull ProfileKeyCredential credential)
   {
-    RecipientDatabase recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase recipientDatabase = SignalDatabase.recipients();
     recipientDatabase.setProfileKeyCredential(recipient.getId(), recipientProfileKey, credential);
   }
 
@@ -113,7 +147,8 @@ public class RefreshOwnProfileJob extends BaseJob {
       String      plaintextName = ProfileUtil.decryptString(profileKey, encryptedName);
       ProfileName profileName   = ProfileName.fromSerialized(plaintextName);
 
-      DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), profileName);
+      Log.d(TAG, "Saving " + (!Util.isEmpty(plaintextName) ? "non-" : "") + "empty name.");
+      SignalDatabase.recipients().setProfileName(Recipient.self().getId(), profileName);
     } catch (InvalidCiphertextException | IOException e) {
       Log.w(TAG, e);
     }
@@ -128,13 +163,14 @@ public class RefreshOwnProfileJob extends BaseJob {
       Log.d(TAG, "Saving " + (!Util.isEmpty(plaintextAbout) ? "non-" : "") + "empty about.");
       Log.d(TAG, "Saving " + (!Util.isEmpty(plaintextEmoji) ? "non-" : "") + "empty emoji.");
 
-      DatabaseFactory.getRecipientDatabase(context).setAbout(Recipient.self().getId(), plaintextAbout, plaintextEmoji);
+      SignalDatabase.recipients().setAbout(Recipient.self().getId(), plaintextAbout, plaintextEmoji);
     } catch (InvalidCiphertextException | IOException e) {
       Log.w(TAG, e);
     }
   }
 
   private static void setProfileAvatar(@Nullable String avatar) {
+    Log.d(TAG, "Saving " + (!Util.isEmpty(avatar) ? "non-" : "") + "empty avatar.");
     ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(Recipient.self(), avatar));
   }
 
@@ -143,7 +179,85 @@ public class RefreshOwnProfileJob extends BaseJob {
       return;
     }
 
-    DatabaseFactory.getRecipientDatabase(context).setCapabilities(Recipient.self().getId(), capabilities);
+    SignalDatabase.recipients().setCapabilities(Recipient.self().getId(), capabilities);
+  }
+
+  private void setProfileBadges(@Nullable List<SignalServiceProfile.Badge> badges) {
+    if (badges == null) {
+      return;
+    }
+
+    Set<String> localDonorBadgeIds  = Recipient.self()
+                                               .getBadges()
+                                               .stream()
+                                               .filter(badge -> badge.getCategory() == Badge.Category.Donor)
+                                               .map(Badge::getId)
+                                               .collect(Collectors.toSet());
+
+    Set<String> remoteDonorBadgeIds = badges.stream()
+                                            .filter(badge -> Objects.equals(badge.getCategory(), Badge.Category.Donor.getCode()))
+                                            .map(SignalServiceProfile.Badge::getId)
+                                            .collect(Collectors.toSet());
+
+    boolean remoteHasSubscriptionBadges = remoteDonorBadgeIds.stream().anyMatch(RefreshOwnProfileJob::isSubscription);
+    boolean localHasSubscriptionBadges  = localDonorBadgeIds.stream().anyMatch(RefreshOwnProfileJob::isSubscription);
+    boolean remoteHasBoostBadges        = remoteDonorBadgeIds.stream().anyMatch(RefreshOwnProfileJob::isBoost);
+    boolean localHasBoostBadges         = localDonorBadgeIds.stream().anyMatch(RefreshOwnProfileJob::isBoost);
+
+    if (!remoteHasSubscriptionBadges && localHasSubscriptionBadges) {
+      Badge mostRecentExpiration = Recipient.self()
+                                            .getBadges()
+                                            .stream()
+                                            .filter(badge -> badge.getCategory() == Badge.Category.Donor)
+                                            .filter(badge -> isSubscription(badge.getId()))
+                                            .max(Comparator.comparingLong(Badge::getExpirationTimestamp))
+                                            .get();
+
+      Log.d(TAG, "Marking subscription badge as expired, should notify next time the conversation list is open.", true);
+      SignalStore.donationsValues().setExpiredBadge(mostRecentExpiration);
+
+      if (!SignalStore.donationsValues().isUserManuallyCancelled()) {
+        Log.d(TAG, "Detected an unexpected subscription expiry.", true);
+        MultiDeviceSubscriptionSyncRequestJob.enqueue();
+        SignalStore.donationsValues().setShouldCancelSubscriptionBeforeNextSubscribeAttempt(true);
+      }
+    } else if (!remoteHasBoostBadges && localHasBoostBadges) {
+      Badge mostRecentExpiration = Recipient.self()
+                                            .getBadges()
+                                            .stream()
+                                            .filter(badge -> badge.getCategory() == Badge.Category.Donor)
+                                            .filter(badge -> isBoost(badge.getId()))
+                                            .max(Comparator.comparingLong(Badge::getExpirationTimestamp))
+                                            .get();
+
+      Log.d(TAG, "Marking boost badge as expired, should notify next time the conversation list is open.", true);
+      SignalStore.donationsValues().setExpiredBadge(mostRecentExpiration);
+    }
+
+    boolean userHasVisibleBadges   = badges.stream().anyMatch(SignalServiceProfile.Badge::isVisible);
+    boolean userHasInvisibleBadges = badges.stream().anyMatch(b -> !b.isVisible());
+
+    List<Badge> appBadges = badges.stream().map(Badges::fromServiceBadge).collect(Collectors.toList());
+
+    if (userHasVisibleBadges && userHasInvisibleBadges) {
+      boolean displayBadgesOnProfile = SignalStore.donationsValues().getDisplayBadgesOnProfile();
+      Log.d(TAG, "Detected mixed visibility of badges. Telling the server to mark them all " +
+                 (displayBadgesOnProfile ? "" : "not") +
+                 " visible.", true);
+
+      BadgeRepository badgeRepository = new BadgeRepository(context);
+      badgeRepository.setVisibilityForAllBadges(displayBadgesOnProfile, appBadges).blockingSubscribe();
+    } else {
+      SignalDatabase.recipients().setBadges(Recipient.self().getId(), appBadges);
+    }
+  }
+
+  private static boolean isSubscription(String badgeId) {
+    return !Objects.equals(badgeId, Badge.BOOST_BADGE_ID);
+  }
+
+  private static boolean isBoost(String badgeId) {
+    return Objects.equals(badgeId, Badge.BOOST_BADGE_ID);
   }
 
   public static final class Factory implements Job.Factory<RefreshOwnProfileJob> {

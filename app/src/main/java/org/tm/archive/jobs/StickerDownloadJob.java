@@ -3,7 +3,7 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.StickerDatabase;
 import org.tm.archive.database.model.IncomingSticker;
 import org.tm.archive.database.model.StickerRecord;
@@ -77,7 +77,7 @@ public class StickerDownloadJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    StickerDatabase db = DatabaseFactory.getStickerDatabase(context);
+    StickerDatabase db = SignalDatabase.stickers();
 
     StickerRecord stickerRecord = db.getSticker(sticker.getPackId(), sticker.getStickerId(), sticker.isCover());
     if (stickerRecord != null) {

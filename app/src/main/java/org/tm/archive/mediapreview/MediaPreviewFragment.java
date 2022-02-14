@@ -11,7 +11,7 @@ import androidx.fragment.app.Fragment;
 
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.mms.PartUriParser;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.concurrent.SimpleTask;
@@ -85,15 +85,13 @@ public abstract class MediaPreviewFragment extends Fragment {
     return null;
   }
 
-  public void checkMediaStillAvailable() {
+  private void checkMediaStillAvailable() {
     if (attachmentId == null) {
       attachmentId = new PartUriParser(Objects.requireNonNull(requireArguments().getParcelable(DATA_URI))).getPartId();
     }
 
-    final Context context = requireContext().getApplicationContext();
-
     SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
-                   () -> DatabaseFactory.getAttachmentDatabase(context).hasAttachment(attachmentId),
+                   () -> SignalDatabase.attachments().hasAttachment(attachmentId),
                    hasAttachment -> { if (!hasAttachment) events.mediaNotAvailable(); });
   }
 

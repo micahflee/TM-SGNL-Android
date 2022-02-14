@@ -1,8 +1,6 @@
 package org.tm.archive.megaphone;
 
-import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.util.TextSecurePreferences;
 
 final class SignalPinReminderSchedule implements MegaphoneSchedule {
 
@@ -20,7 +18,7 @@ final class SignalPinReminderSchedule implements MegaphoneSchedule {
       return false;
     }
 
-    if (!TextSecurePreferences.isPushRegistered(ApplicationDependencies.getApplication())) {
+    if (!SignalStore.account().isRegistered()) {
       return false;
     }
 

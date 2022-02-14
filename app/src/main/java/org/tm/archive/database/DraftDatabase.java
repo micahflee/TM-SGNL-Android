@@ -10,7 +10,6 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.database.helpers.SQLCipherOpenHelper;
 import org.tm.archive.util.CursorUtil;
 import org.tm.archive.util.SqlUtil;
 
@@ -35,7 +34,7 @@ public class DraftDatabase extends Database {
     "CREATE INDEX IF NOT EXISTS draft_thread_index ON " + TABLE_NAME + " (" + THREAD_ID + ");",
   };
 
-  public DraftDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public DraftDatabase(Context context, SignalDatabase databaseHelper) {
     super(context, databaseHelper);
   }
 

@@ -16,7 +16,7 @@ import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.attachments.PointerAttachment;
 import org.tm.archive.blurhash.BlurHashEncoder;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.PartProgressEvent;
 import org.tm.archive.jobmanager.Data;
@@ -32,7 +32,6 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer;
-import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResumableUploadResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.ResumeLocationInvalidException;
 import org.whispersystems.signalservice.internal.push.http.ResumableUploadSpec;
@@ -125,7 +124,7 @@ public final class AttachmentUploadJob extends BaseJob {
     }
 
     SignalServiceMessageSender messageSender      = ApplicationDependencies.getSignalServiceMessageSender();
-    AttachmentDatabase         database           = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase         database           = SignalDatabase.attachments();
     DatabaseAttachment         databaseAttachment = database.getAttachment(attachmentId);
 
     if (databaseAttachment == null) {
@@ -167,7 +166,7 @@ public final class AttachmentUploadJob extends BaseJob {
   @Override
   public void onFailure() {
     if (isCanceled()) {
-      DatabaseFactory.getAttachmentDatabase(context).deleteAttachment(attachmentId);
+      SignalDatabase.attachments().deleteAttachment(attachmentId);
     }
   }
 

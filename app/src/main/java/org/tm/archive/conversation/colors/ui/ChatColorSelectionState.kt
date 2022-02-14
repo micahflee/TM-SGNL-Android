@@ -2,7 +2,7 @@ package org.tm.archive.conversation.colors.ui
 
 import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.conversation.colors.ChatColorsPalette
-import org.tm.archive.util.MappingModelList
+import org.tm.archive.util.adapter.mapping.MappingModelList
 import org.tm.archive.wallpaper.ChatWallpaper
 
 data class ChatColorSelectionState(

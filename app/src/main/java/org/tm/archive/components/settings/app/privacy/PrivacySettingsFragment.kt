@@ -12,7 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
@@ -39,15 +39,14 @@ import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.ConversationUtil
 import org.tm.archive.util.ExpirationUtil
 import org.tm.archive.util.FeatureFlags
-import org.tm.archive.util.MappingAdapter
 import org.tm.archive.util.ServiceUtil
 import org.tm.archive.util.SpanUtil
 import org.tm.archive.util.TextSecurePreferences
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.navigation.safeNavigate
 import java.lang.Integer.max
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
 
 private val TAG = Log.tag(PrivacySettingsFragment::class.java)
 
@@ -71,12 +70,12 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
   }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    adapter.registerFactory(ValueClickPreference::class.java, MappingAdapter.LayoutFactory(::ValueClickPreferenceViewHolder, R.layout.value_click_preference_item))
+    adapter.registerFactory(ValueClickPreference::class.java, LayoutFactory(::ValueClickPreferenceViewHolder, R.layout.value_click_preference_item))
 
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
     val repository = PrivacySettingsRepository()
     val factory = PrivacySettingsViewModel.Factory(sharedPreferences, repository)
-    viewModel = ViewModelProviders.of(this, factory)[PrivacySettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this, factory)[PrivacySettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
@@ -90,7 +89,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         summary = DSLSettingsText.from(getString(R.string.PrivacySettingsFragment__d_contacts, state.blockedCount)),
         onClick = {
           Navigation.findNavController(requireView())
-            .navigate(R.id.action_privacySettingsFragment_to_blockedUsersActivity)
+            .safeNavigate(R.id.action_privacySettingsFragment_to_blockedUsersActivity)
         }
       )
 
@@ -149,7 +148,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
             title = DSLSettingsText.from(R.string.PrivacySettingsFragment__default_timer_for_new_changes),
             summary = DSLSettingsText.from(R.string.PrivacySettingsFragment__set_a_default_disappearing_message_timer_for_all_new_chats_started_by_you),
             onClick = {
-              NavHostFragment.findNavController(this@PrivacySettingsFragment).navigate(R.id.action_privacySettingsFragment_to_disappearingMessagesTimerSelectFragment)
+              NavHostFragment.findNavController(this@PrivacySettingsFragment).safeNavigate(R.id.action_privacySettingsFragment_to_disappearingMessagesTimerSelectFragment)
             }
           )
         )
@@ -295,7 +294,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         title = DSLSettingsText.from(R.string.preferences__advanced),
         summary = DSLSettingsText.from(R.string.PrivacySettingsFragment__signal_message_and_calls),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_privacySettingsFragment_to_advancedPrivacySettingsFragment)
+          Navigation.findNavController(requireView()).safeNavigate(R.id.action_privacySettingsFragment_to_advancedPrivacySettingsFragment)
         }
       )
     }

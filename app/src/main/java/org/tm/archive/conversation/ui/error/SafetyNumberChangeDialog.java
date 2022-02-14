@@ -26,9 +26,9 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.VerifyIdentityActivity;
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.verify.VerifyIdentityActivity;
 import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.recipients.RecipientId;
 
@@ -62,9 +62,9 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
     fragment.show(fragmentManager, SAFETY_NUMBER_DIALOG);
   }
 
-  public static void show(@NonNull FragmentManager fragmentManager, @NonNull List<IdentityDatabase.IdentityRecord> identityRecords) {
+  public static void show(@NonNull FragmentManager fragmentManager, @NonNull List<IdentityRecord> identityRecords) {
     List<String> ids = Stream.of(identityRecords)
-                             .filterNot(IdentityDatabase.IdentityRecord::isFirstUse)
+                             .filterNot(IdentityRecord::isFirstUse)
                              .map(record -> record.getRecipientId().serialize())
                              .distinct()
                              .toList();
@@ -102,9 +102,9 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
     fragment.show(fragmentManager, SAFETY_NUMBER_DIALOG);
   }
 
-  public static void showForGroupCall(@NonNull FragmentManager fragmentManager, @NonNull List<IdentityDatabase.IdentityRecord> identityRecords) {
+  public static void showForGroupCall(@NonNull FragmentManager fragmentManager, @NonNull List<IdentityRecord> identityRecords) {
     List<String> ids = Stream.of(identityRecords)
-                             .filterNot(IdentityDatabase.IdentityRecord::isFirstUse)
+                             .filterNot(IdentityRecord::isFirstUse)
                              .map(record -> record.getRecipientId().serialize())
                              .distinct()
                              .toList();
@@ -255,7 +255,7 @@ public final class SafetyNumberChangeDialog extends DialogFragment implements Sa
   }
 
   @Override
-  public void onViewIdentityRecord(@NonNull IdentityDatabase.IdentityRecord identityRecord) {
+  public void onViewIdentityRecord(@NonNull IdentityRecord identityRecord) {
     startActivity(VerifyIdentityActivity.newIntent(requireContext(), identityRecord));
   }
 

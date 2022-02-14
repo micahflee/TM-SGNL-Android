@@ -5,13 +5,14 @@ import androidx.annotation.NonNull;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.model.RecipientRecord;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.storage.StorageSyncHelper;
-import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.storage.SignalAccountRecord;
 import org.whispersystems.signalservice.api.storage.StorageId;
 import org.whispersystems.signalservice.internal.storage.protos.AccountRecord;
@@ -45,17 +46,17 @@ public class ApplyUnknownFieldsToSelfMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextSecurePreferences.getLocalUuid(context) == null) {
+    if (!SignalStore.account().isRegistered() || SignalStore.account().getAci() == null) {
       Log.w(TAG, "Not registered!");
       return;
     }
 
-    Recipient                           self;
-    RecipientDatabase.RecipientSettings settings;
+    Recipient       self;
+    RecipientRecord settings;
 
     try {
       self     = Recipient.self();
-      settings = DatabaseFactory.getRecipientDatabase(context).getRecipientSettingsForSync(self.getId());
+      settings = SignalDatabase.recipients().getRecordForSync(self.getId());
     } catch (RecipientDatabase.MissingRecipientException e) {
       Log.w(TAG, "Unable to find self");
       return;

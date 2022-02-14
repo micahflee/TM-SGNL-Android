@@ -3,7 +3,7 @@ package org.tm.archive.migrations;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 
@@ -36,7 +36,7 @@ public class AttachmentCleanupMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    int deletes = DatabaseFactory.getAttachmentDatabase(context).deleteAbandonedAttachmentFiles();
+    int deletes = SignalDatabase.attachments().deleteAbandonedAttachmentFiles();
     Log.i(TAG, "Deleted " + deletes + " abandoned attachments.");
   }
 

@@ -14,7 +14,7 @@ import androidx.autofill.HintConstants
 import androidx.core.app.DialogCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import com.google.android.material.snackbar.Snackbar
 import org.tm.archive.R
@@ -30,8 +30,11 @@ import org.tm.archive.lock.v2.CreateKbsPinActivity
 import org.tm.archive.lock.v2.KbsConstants
 import org.tm.archive.lock.v2.PinKeyboardType
 import org.tm.archive.pin.RegistrationLockV2Dialog
+import org.tm.archive.recipients.Recipient
+import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.ServiceUtil
 import org.tm.archive.util.ThemeUtil
+import org.tm.archive.util.navigation.safeNavigate
 
 class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFragment__account) {
 
@@ -49,7 +52,7 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
   }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    viewModel = ViewModelProviders.of(this)[AccountSettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this)[AccountSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
@@ -61,6 +64,7 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
 
       sectionHeaderPref(R.string.preferences_app_protection__signal_pin)
 
+      @Suppress("DEPRECATION")
       clickPref(
         title = DSLSettingsText.from(if (state.hasPin) R.string.preferences_app_protection__change_your_pin else R.string.preferences_app_protection__create_a_pin),
         onClick = {
@@ -95,7 +99,7 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
       clickPref(
         title = DSLSettingsText.from(R.string.preferences__advanced_pin_settings),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_accountSettingsFragment_to_advancedPinSettingsActivity)
+          Navigation.findNavController(requireView()).safeNavigate(R.id.action_accountSettingsFragment_to_advancedPinSettingsActivity)
         }
       )
 
@@ -103,18 +107,27 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
 
       sectionHeaderPref(R.string.AccountSettingsFragment__account)
 
+      if (FeatureFlags.changeNumber() && Recipient.self().changeNumberCapability == Recipient.Capability.SUPPORTED && SignalStore.account().isRegistered) {
+        clickPref(
+          title = DSLSettingsText.from(R.string.AccountSettingsFragment__change_phone_number),
+          onClick = {
+            Navigation.findNavController(requireView()).safeNavigate(R.id.action_accountSettingsFragment_to_changePhoneNumberFragment)
+          }
+        )
+      }
+
       clickPref(
         title = DSLSettingsText.from(R.string.preferences_chats__transfer_account),
         summary = DSLSettingsText.from(R.string.preferences_chats__transfer_account_to_a_new_android_device),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_accountSettingsFragment_to_oldDeviceTransferActivity)
+          Navigation.findNavController(requireView()).safeNavigate(R.id.action_accountSettingsFragment_to_oldDeviceTransferActivity)
         }
       )
 
       clickPref(
         title = DSLSettingsText.from(R.string.preferences__delete_account, ContextCompat.getColor(requireContext(), R.color.signal_alert_primary)),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_accountSettingsFragment_to_deleteAccountFragment)
+          Navigation.findNavController(requireView()).safeNavigate(R.id.action_accountSettingsFragment_to_deleteAccountFragment)
         }
       )
     }

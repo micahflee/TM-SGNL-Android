@@ -1,5 +1,8 @@
 package org.tm.archive.payments.create;
 
+import android.content.Context;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 
 import org.tm.archive.R;
@@ -25,7 +28,11 @@ enum AmountKeyboardGlyph {
     this.glyphRes = glyphRes;
   }
 
-  public int getGlyphRes() {
-    return glyphRes;
+  public String getGlyph(@NonNull Context context) {
+    if (this == DECIMAL) {
+      return ".";
+    } else {
+      return context.getString(glyphRes);
+    }
   }
 }

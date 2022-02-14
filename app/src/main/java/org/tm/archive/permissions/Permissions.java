@@ -14,7 +14,6 @@ import android.view.Display;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
-import androidx.activity.result.ActivityResultCallback;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -24,6 +23,7 @@ import androidx.fragment.app.Fragment;
 import com.annimon.stream.Stream;
 import com.annimon.stream.function.Consumer;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.util.LRUCache;
 import org.tm.archive.util.ServiceUtil;
@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Permissions {
+
+  private static final String TAG = Log.tag(Permissions.class);
 
   private static final Map<Integer, PermissionsRequest> OUTSTANDING = new LRUCache<>(2);
 
@@ -202,11 +204,26 @@ public class Permissions {
   }
 
   private static void requestPermissions(@NonNull Activity activity, int requestCode, String... permissions) {
-    ActivityCompat.requestPermissions(activity, filterNotGranted(activity, permissions), requestCode);
+    String[] neededPermissions = filterNotGranted(activity, permissions);
+
+    if (neededPermissions.length == 0) {
+      Log.i(TAG, "No permissions needed!");
+      return;
+    }
+
+    ActivityCompat.requestPermissions(activity, neededPermissions, requestCode);
   }
 
   private static void requestPermissions(@NonNull Fragment fragment, int requestCode, String... permissions) {
-    fragment.requestPermissions(filterNotGranted(fragment.getContext(), permissions), requestCode);
+    String[] neededPermissions = filterNotGranted(fragment.requireContext(), permissions);
+
+    if (neededPermissions.length == 0) {
+      Log.i(TAG, "No permissions needed!");
+      return;
+    }
+
+
+    fragment.requestPermissions(filterNotGranted(fragment.requireContext(), permissions), requestCode);
   }
 
   private static String[] filterNotGranted(@NonNull Context context, String... permissions) {

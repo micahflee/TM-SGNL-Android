@@ -5,8 +5,8 @@ import androidx.annotation.NonNull;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.UnknownStorageIdDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -19,7 +19,6 @@ import org.tm.archive.storage.StorageSyncHelper;
 import org.tm.archive.storage.StorageSyncModels;
 import org.tm.archive.storage.StorageSyncValidations;
 import org.tm.archive.transport.RetryLaterException;
-import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
@@ -72,10 +71,15 @@ public class StorageForcePushJob extends BaseJob {
 
   @Override
   protected void onRun() throws IOException, RetryLaterException {
+    if (SignalStore.account().isLinkedDevice()) {
+      Log.i(TAG, "Only the primary device can force push");
+      return;
+    }
+
     StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
     SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
-    RecipientDatabase           recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    UnknownStorageIdDatabase    storageIdDatabase = DatabaseFactory.getUnknownStorageIdDatabase(context);
+    RecipientDatabase           recipientDatabase = SignalDatabase.recipients();
+    UnknownStorageIdDatabase    storageIdDatabase = SignalDatabase.unknownStorageIds();
 
     long                        currentVersion       = accountManager.getStorageManifestVersion();
     Map<RecipientId, StorageId> oldContactStorageIds = recipientDatabase.getContactStorageSyncIdsMap();
@@ -83,7 +87,7 @@ public class StorageForcePushJob extends BaseJob {
     long                        newVersion           = currentVersion + 1;
     Map<RecipientId, StorageId> newContactStorageIds = generateContactStorageIds(oldContactStorageIds);
     List<SignalStorageRecord>   inserts              = Stream.of(oldContactStorageIds.keySet())
-                                                             .map(recipientDatabase::getRecipientSettingsForSync)
+                                                             .map(recipientDatabase::getRecordForSync)
                                                              .withoutNulls()
                                                              .map(s -> StorageSyncModels.localToRemoteRecord(s, Objects.requireNonNull(newContactStorageIds.get(s.getId())).getRaw()))
                                                              .toList();

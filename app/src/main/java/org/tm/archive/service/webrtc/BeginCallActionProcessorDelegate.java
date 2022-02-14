@@ -1,7 +1,5 @@
 package org.tm.archive.service.webrtc;
 
-import android.media.AudioManager;
-
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
@@ -11,9 +9,9 @@ import org.tm.archive.components.webrtc.BroadcastVideoSink;
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.events.CallParticipantId;
 import org.tm.archive.events.WebRtcViewModel;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.ringrtc.RemotePeer;
 import org.tm.archive.service.webrtc.state.WebRtcServiceState;
-import org.tm.archive.util.ServiceUtil;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 
 import static org.tm.archive.webrtc.CallNotificationBuilder.TYPE_INCOMING_CONNECTING;
@@ -62,7 +60,7 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
     CallManager.CallMediaType callMediaType = WebRtcUtil.getCallMediaTypeFromOfferType(offerType);
 
     try {
-      webRtcInteractor.getCallManager().call(remotePeer, callMediaType, 1);
+      webRtcInteractor.getCallManager().call(remotePeer, callMediaType, SignalStore.account().getDeviceId());
     } catch (CallException e) {
       return callFailure(currentState, "Unable to create outgoing call: ", e);
     }
@@ -75,9 +73,6 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
     remotePeer.answering();
 
     Log.i(tag, "assign activePeer callId: " + remotePeer.getCallId() + " key: " + remotePeer.hashCode());
-
-    AudioManager androidAudioManager = ServiceUtil.getAudioManager(context);
-    androidAudioManager.setSpeakerphoneOn(false);
 
     webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, remotePeer);
     webRtcInteractor.retrieveTurnServers(remotePeer);

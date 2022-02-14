@@ -5,14 +5,18 @@ import android.Manifest;
 
 import androidx.annotation.NonNull;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.backup.BackupFileIOError;
 import org.tm.archive.backup.BackupPassphrase;
+import org.tm.archive.backup.FullBackupBase;
 import org.tm.archive.backup.FullBackupExporter;
 import org.tm.archive.crypto.AttachmentSecretProvider;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.NoExternalStorageException;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -85,11 +89,14 @@ public final class LocalBackupJob extends BaseJob {
       throw new IOException("No external storage permission!");
     }
 
+    ProgressUpdater updater = new ProgressUpdater();
     try (NotificationController notification = GenericForegroundService.startForegroundTask(context,
-                                                                     context.getString(R.string.LocalBackupJob_creating_backup),
+                                                                     context.getString(R.string.LocalBackupJob_creating_signal_backup),
                                                                      NotificationChannels.BACKUPS,
                                                                      R.drawable.ic_signal_backup))
     {
+      updater.setNotification(notification);
+      EventBus.getDefault().register(updater);
       notification.setIndeterminateProgress();
 
       String backupPassword  = BackupPassphrase.get(context);
@@ -113,7 +120,7 @@ public final class LocalBackupJob extends BaseJob {
       try {
         FullBackupExporter.export(context,
                                   AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
-                                  DatabaseFactory.getBackupDatabase(context),
+                                  SignalDatabase.getBackupDatabase(),
                                   tempFile,
                                   backupPassword,
                                   this::isCanceled);
@@ -139,6 +146,9 @@ public final class LocalBackupJob extends BaseJob {
       }
 
       BackupUtil.deleteOldBackups();
+    } finally {
+      EventBus.getDefault().unregister(updater);
+      updater.setNotification(null);
     }
   }
 
@@ -164,6 +174,29 @@ public final class LocalBackupJob extends BaseJob {
 
   @Override
   public void onFailure() {
+  }
+
+  private static class ProgressUpdater {
+    private NotificationController notification;
+
+    @Subscribe(threadMode = ThreadMode.POSTING)
+    public void onEvent(FullBackupBase.BackupEvent event) {
+      if (notification == null) {
+        return;
+      }
+
+      if (event.getType() == FullBackupBase.BackupEvent.Type.PROGRESS) {
+        if (event.getEstimatedTotalCount() == 0) {
+          notification.setIndeterminateProgress();
+        } else {
+          notification.setProgress(100, (int) event.getCompletionPercentage());
+        }
+      }
+    }
+
+    public void setNotification(NotificationController notification) {
+      this.notification = notification;
+    }
   }
 
   public static class Factory implements Job.Factory<LocalBackupJob> {

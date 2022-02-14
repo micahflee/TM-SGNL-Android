@@ -20,19 +20,16 @@ import androidx.core.text.HtmlCompat;
 import androidx.navigation.Navigation;
 
 import org.signal.core.util.logging.Log;
+import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
-import org.tm.archive.database.documents.Document;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.util.BackupUtil;
+import org.tm.archive.util.navigation.SafeNavigation;
 
-public class ChooseBackupFragment extends BaseRegistrationFragment {
+public class ChooseBackupFragment extends LoggingFragment {
 
   private static final String TAG = Log.tag(ChooseBackupFragment.class);
 
   private static final short OPEN_FILE_REQUEST_CODE = 3862;
-
-  private View     chooseBackupButton;
-  private TextView learnMore;
 
   @Override
   public @Nullable View onCreateView(@NonNull LayoutInflater inflater,
@@ -44,10 +41,10 @@ public class ChooseBackupFragment extends BaseRegistrationFragment {
 
   @Override
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-    chooseBackupButton = view.findViewById(R.id.choose_backup_fragment_button);
+    View chooseBackupButton = view.findViewById(R.id.choose_backup_fragment_button);
     chooseBackupButton.setOnClickListener(this::onChooseBackupSelected);
 
-    learnMore = view.findViewById(R.id.choose_backup_fragment_learn_more);
+    TextView learnMore = view.findViewById(R.id.choose_backup_fragment_learn_more);
     learnMore.setText(HtmlCompat.fromHtml(String.format("<a href=\"%s\">%s</a>", getString(R.string.backup_support_url), getString(R.string.ChooseBackupFragment__learn_more)), 0));
     learnMore.setMovementMethod(LinkMovementMethod.getInstance());
   }
@@ -59,7 +56,7 @@ public class ChooseBackupFragment extends BaseRegistrationFragment {
 
       restore.setUri(data.getData());
 
-      Navigation.findNavController(requireView()).navigate(restore);
+      SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), restore);
     }
   }
 

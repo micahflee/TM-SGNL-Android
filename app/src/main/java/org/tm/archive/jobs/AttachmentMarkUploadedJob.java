@@ -6,7 +6,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 
@@ -60,7 +60,7 @@ public final class AttachmentMarkUploadedJob extends BaseJob {
 
   @Override
   public void onRun() throws Exception {
-    AttachmentDatabase         database           = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase         database           = SignalDatabase.attachments();
     DatabaseAttachment         databaseAttachment = database.getAttachment(attachmentId);
 
     if (databaseAttachment == null) {

@@ -6,7 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 
 public class DeleteNotificationReceiver extends BroadcastReceiver {
@@ -40,9 +40,9 @@ public class DeleteNotificationReceiver extends BroadcastReceiver {
       SignalExecutors.BOUNDED.execute(() -> {
         for (int i = 0; i < ids.length; i++) {
           if (!mms[i]) {
-            DatabaseFactory.getSmsDatabase(context).markAsNotified(ids[i]);
+            SignalDatabase.sms().markAsNotified(ids[i]);
           } else {
-            DatabaseFactory.getMmsDatabase(context).markAsNotified(ids[i]);
+            SignalDatabase.mms().markAsNotified(ids[i]);
           }
         }
         finisher.finish();

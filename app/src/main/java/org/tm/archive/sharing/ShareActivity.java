@@ -48,10 +48,10 @@ import org.tm.archive.R;
 import org.tm.archive.components.SearchToolbar;
 import org.tm.archive.contacts.ContactsCursorLoader.DisplayMode;
 import org.tm.archive.conversation.ConversationIntents;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.mediasend.Media;
-import org.tm.archive.mediasend.MediaSendActivity;
+import org.tm.archive.mediasend.v2.MediaSelectionActivity;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sharing.interstitial.ShareInterstitialActivity;
@@ -208,6 +208,10 @@ public class ShareActivity extends PassphraseRequiredActivity
                                      Toast.makeText(this, R.string.ShareActivity_you_do_not_have_permission_to_send_to_this_group, Toast.LENGTH_SHORT).show();
                                      callback.accept(false);
                                      break;
+                                   case FALSE_AND_SHOW_SMS_MULTISELECT_TOAST:
+                                     Toast.makeText(this, R.string.ShareActivity__sharing_to_multiple_chats_is, Toast.LENGTH_LONG).show();
+                                     callback.accept(false);
+                                     break;
                                  }
                                }));
     }
@@ -324,7 +328,7 @@ public class ShareActivity extends PassphraseRequiredActivity
     int         distributionType = ThreadDatabase.DistributionTypes.DEFAULT;
 
     if (recipientId != null) {
-      threadId = DatabaseFactory.getThreadDatabase(this).getThreadIdFor(recipientId);
+      threadId = SignalDatabase.threads().getThreadIdFor(recipientId);
       extras.putString(EXTRA_RECIPIENT_ID, recipientId.serialize());
       extras.putLong(EXTRA_THREAD_ID, threadId != null ? threadId : -1);
       extras.putInt(EXTRA_DISTRIBUTION_TYPE, distributionType);
@@ -517,10 +521,10 @@ public class ShareActivity extends PassphraseRequiredActivity
                                                              .or(() -> Recipient.external(this, contact.getNumber())))
                                       .collect(Collectors.toSet());
 
-    Map<RecipientId, Long> existingThreads = DatabaseFactory.getThreadDatabase(this)
-                                                            .getThreadIdsIfExistsFor(Stream.of(recipients)
-                                                                                           .map(Recipient::getId)
-                                                                                           .toArray(RecipientId[]::new));
+    Map<RecipientId, Long> existingThreads = SignalDatabase.threads()
+                                                           .getThreadIdsIfExistsFor(Stream.of(recipients)
+                                                                                          .map(Recipient::getId)
+                                                                                          .toArray(RecipientId[]::new));
 
     return Stream.of(recipients)
                  .map(recipient -> new ShareContactAndThread(recipient.getId(), Util.getOrDefault(existingThreads, recipient.getId(), -1L), recipient.isForceSmsSelection() || !recipient.isRegistered()))
@@ -537,7 +541,7 @@ public class ShareActivity extends PassphraseRequiredActivity
       recipient = Recipient.external(this, shareContact.getNumber());
     }
 
-    long existingThread = DatabaseFactory.getThreadDatabase(this).getThreadIdIfExistsFor(recipient.getId());
+    long existingThread = SignalDatabase.threads().getThreadIdIfExistsFor(recipient.getId());
     return new ShareContactAndThread(recipient.getId(), existingThread, recipient.isForceSmsSelection() || !recipient.isRegistered());
   }
 
@@ -624,6 +628,7 @@ public class ShareActivity extends PassphraseRequiredActivity
 
     viewModel.onSuccessfulShare();
 
+    finish();
     startActivity(builder.build());
   }
 
@@ -672,12 +677,12 @@ public class ShareActivity extends PassphraseRequiredActivity
                               Optional.absent()));
         }
 
-        startActivityForResult(MediaSendActivity.buildShareIntent(this,
-                                                                  media,
-                                                                  Stream.of(multiShareArgs.getShareContactAndThreads()).map(ShareContactAndThread::getRecipientId).toList(),
-                                                                  multiShareArgs.getDraftText(),
-                                                                  MultiShareSender.getWorstTransportOption(this, multiShareArgs.getShareContactAndThreads())),
-            RESULT_MEDIA_CONFIRMATION);
+        Intent intent = MediaSelectionActivity.share(this,
+                                                     MultiShareSender.getWorstTransportOption(this, multiShareArgs.getShareContactAndThreads()),
+                                                     media,
+                                                     Stream.of(multiShareArgs.getShareContactAndThreads()).map(ShareContactAndThread::getRecipientId).toList(),
+                                                     multiShareArgs.getDraftText());
+        startActivityForResult(intent, RESULT_MEDIA_CONFIRMATION);
         break;
       default:
         //noinspection CodeBlock2Expr

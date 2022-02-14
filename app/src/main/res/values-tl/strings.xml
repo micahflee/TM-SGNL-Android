@@ -170,7 +170,7 @@
   <!--ConversationActivity-->
   <!-- Removed by excludeNonTranslatables <string name="ConversationActivity_reset_secure_session_question">I-reset ang secure na sesyon?</string> -->
   <!-- Removed by excludeNonTranslatables <string name="ConversationActivity_this_may_help_if_youre_having_encryption_problems">Maaari itong makatulong kung ika\'y nagkakaproblema sa encryption ng pag-uusap na ito. Ang iyong mga mensahe ay pananatilihin.</string> -->
-  <string name="ConversationActivity_reset">I-reset</string>
+  <!-- Removed by excludeNonTranslatables <string name="ConversationActivity_reset">I-reset</string> -->
   <string name="ConversationActivity_add_attachment">Magdagdag ng kalakip</string>
   <string name="ConversationActivity_select_contact_info">Pumili ng impormasyon ng kontak</string>
   <string name="ConversationActivity_compose_message">Magsulat ng mensahe</string>
@@ -371,7 +371,7 @@
   <!--GV2 invites sent-->
   <!-- Removed by excludeNonTranslatables <string name="GroupManagement_learn_more">Matuto pa</string> -->
   <!--LinkPreviewsMegaphone-->
-  <string name="LinkPreviewsMegaphone_disable">Huwag Paganahin</string>
+  <!-- Removed by excludeNonTranslatables <string name="LinkPreviewsMegaphone_disable">Huwag Paganahin</string> -->
   <!--LinkPreviewView-->
   <!--PendingMembersActivity-->
   <string name="PendingMembersActivity_people_you_invited">Mga taong iyong inimbitahan</string>
@@ -484,14 +484,14 @@
   <string name="MediaOverviewActivity_Grid_view_description">Grid na view</string>
   <string name="MediaOverviewActivity_List_view_description">List na view</string>
   <string name="MediaOverviewActivity_Selected_description">Pinili</string>
-  <plurals name="MediaOverviewActivity_d_items_s">
+  <!-- Removed by excludeNonTranslatables <plurals name="MediaOverviewActivity_d_items_s">
     <item quantity="one">%1$d item %2$s</item>
     <item quantity="other">%1$d item %2$s</item>
-  </plurals>
-  <plurals name="MediaOverviewActivity_d_items">
+  </plurals> -->
+  <!-- Removed by excludeNonTranslatables <plurals name="MediaOverviewActivity_d_items">
     <item quantity="one">%1$d item</item>
     <item quantity="other">%1$d item</item>
-  </plurals>
+  </plurals> -->
   <string name="MediaOverviewActivity_file">File</string>
   <string name="MediaOverviewActivity_audio">Audio</string>
   <string name="MediaOverviewActivity_video">Video</string>
@@ -501,8 +501,8 @@
   <string name="MediaOverviewActivity_sent_by_s_to_s">Ipinadala ni %1$s kay %2$s</string>
   <string name="MediaOverviewActivity_sent_by_you_to_s">Ipinadala mo kay %1$s</string>
   <!--Megaphones-->
-  <string name="Megaphones_introducing_reactions">Ipinakikilala ang Mga Reaksyon</string>
-  <string name="Megaphones_tap_and_hold_any_message_to_quicky_share_how_you_feel">I-tap at huwag bitiwan ang anumang mensahe upang mabilis na maibahagi ang iyong nadarama.</string>
+  <!-- Removed by excludeNonTranslatables <string name="Megaphones_introducing_reactions">Ipinakikilala ang Mga Reaksyon</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="Megaphones_tap_and_hold_any_message_to_quicky_share_how_you_feel">I-tap at huwag bitiwan ang anumang mensahe upang mabilis na maibahagi ang iyong nadarama.</string> -->
   <string name="Megaphones_remind_me_later">Paalalahanan ako sa ibang pagkakataon</string>
   <string name="Megaphones_verify_your_signal_pin">Beripikahin ang PIN ng iyong Signal</string>
   <string name="Megaphones_well_occasionally_ask_you_to_verify_your_pin">Paminsan-minsa\'y hihingin namin sa iyong beripikahin ang iyong PIN upang matandaan mo ito.</string>
@@ -1228,10 +1228,10 @@
   <!-- Removed by excludeNonTranslatables <string name="unknown_sender_view__add_to_contacts">IDAGDAG SA MGA KONTAK</string> -->
   <!-- Removed by excludeNonTranslatables <string name="unknown_sender_view__don_t_add_but_make_my_profile_visible">HUWAG IDAGDAG, NGUNIT HAYAANG MAKITA ANG AKING PROFILE</string> -->
   <!--verify_display_fragment-->
-  <string name="verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[Kung gusto mong iberipika ang seguridad ng iyong encryption kay %s, ikumpara ang numero sa itaas sa numero sa kanyang device. Isang alternatibo dito, maaari mong i-scan ang code sa kanyang telepono, o hilingin sa kanyang i-scan ang iyong code. <a href="https://signal.org/redirect/safety-numbers">Matuto pa.</a>]]></string>
+  <!-- Removed by excludeNonTranslatables <string name="verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[Kung gusto mong iberipika ang seguridad ng iyong encryption kay %s, ikumpara ang numero sa itaas sa numero sa kanyang device. Isang alternatibo dito, maaari mong i-scan ang code sa kanyang telepono, o hilingin sa kanyang i-scan ang iyong code. <a href="https://signal.org/redirect/safety-numbers">Matuto pa.</a>]]></string> -->
   <string name="verify_display_fragment__tap_to_scan">Pindutin para mag-scan</string>
   <string name="verify_display_fragment__loading">Naglo-load…</string>
-  <string name="verify_display_fragment__verified">Beripikado</string>
+  <!-- Removed by excludeNonTranslatables <string name="verify_display_fragment__verified">Beripikado</string> -->
   <!--verify_identity-->
   <string name="verify_identity__share_safety_number">Ibahagi ang numerong pangkaligtasan</string>
   <!--webrtc_answer_decline_button-->
@@ -1450,14 +1450,14 @@
   <string name="conversation_callable_secure__menu_call">Tawag sa Signal</string>
   <string name="conversation_callable_secure__menu_video">Video call sa Signal</string>
   <!--conversation_context-->
-  <string name="conversation_context__menu_message_details">Mga detalye ng mensahe</string>
-  <string name="conversation_context__menu_copy_text">Kopyahin ang text</string>
-  <string name="conversation_context__menu_delete_message">Burahin ang mensahe</string>
-  <string name="conversation_context__menu_forward_message">Ipasa ang mensahe</string>
-  <string name="conversation_context__menu_resend_message">Muling ipadala ang mensahe</string>
-  <string name="conversation_context__menu_reply_to_message">Tugon sa mensahe</string>
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_message_details">Mga detalye ng mensahe</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_copy_text">Kopyahin ang text</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_delete_message">Burahin ang mensahe</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_forward_message">Ipasa ang mensahe</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_resend_message">Muling ipadala ang mensahe</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_reply_to_message">Tugon sa mensahe</string> -->
   <!--conversation_context_reacction-->
-  <string name="conversation_context__reaction_multi_select">Pumili ng marami</string>
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__reaction_multi_select">Pumili ng marami</string> -->
   <!--conversation_context_image-->
   <string name="conversation_context_image__save_attachment">I-save ang kalakip</string>
   <!--conversation_expiring_off-->
@@ -1557,7 +1557,7 @@
   <string name="Insights__title">Insights</string>
   <string name="InsightsDashboardFragment__title">Insights</string>
   <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">Awtomatikong pinrotektahan ng Signal Protocol ang %1$d%% sa iyong mga ipinapadalang mensahe sa nakalipas na %2$d araw. Ang mga pag-uusap sa pagitan ng mga gumagamit ng Signal ay palaging end-to-end encrypted.</string>
-  <string name="InsightsDashboardFragment__boost_your_signal">Palakasin ang Signal</string>
+  <!-- Removed by excludeNonTranslatables <string name="InsightsDashboardFragment__boost_your_signal">Palakasin ang Signal</string> -->
   <string name="InsightsDashboardFragment__not_enough_data">Hindi sapat ang data</string>
   <string name="InsightsDashboardFragment__your_insights_percentage_is_calculated_based_on">Ang porsyento ng iyong Insights ay kalkulado batay sa mga ipinapadalang mensahe sa loob ng nakaraang %1$d araw na hindi naglaho o hindi binura.</string>
   <string name="InsightsDashboardFragment__start_a_conversation">Magsimula ng pag-uusap</string>
@@ -1710,7 +1710,7 @@
   <!-- Removed by excludeNonTranslatables <string name="ChatsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Kailangan ng Signal ng pahintulot sa paggamit ng panlabas na storage upang makalikha ng mga backup, ngunit ito ay permanenteng ipinagbabawal. Pumunta sa app settings, piliin ang \"Pahintulot\", at i-enable ang \"Storage\". </string> -->
   <!-- Removed by excludeNonTranslatables <string name="ChatsPreferenceFragment_last_backup_s">Huling backup: %s</string> -->
   <!-- Removed by excludeNonTranslatables <string name="ChatsPreferenceFragment_in_progress">Isinasagawa</string> -->
-  <string name="LocalBackupJob_creating_backup">Lumilikha ng backup…</string>
+  <!-- Removed by excludeNonTranslatables <string name="LocalBackupJob_creating_backup">Lumilikha ng backup…</string> -->
   <string name="ProgressPreference_d_messages_so_far">%d mensahe sa ngayon</string>
   <!-- Removed by excludeNonTranslatables <string name="RegistrationActivity_please_enter_the_verification_code_sent_to_s">Pakilagay ang verification code na ipinadala kay %s.</string> -->
   <string name="RegistrationActivity_wrong_number">Mali ang numero</string>

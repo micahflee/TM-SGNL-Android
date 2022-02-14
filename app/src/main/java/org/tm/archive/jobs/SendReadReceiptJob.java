@@ -4,12 +4,12 @@ package org.tm.archive.jobs;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MessageDatabase.MarkedMessageInfo;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -23,7 +23,6 @@ import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.transport.UndeliverableMessageException;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.util.guava.Preconditions;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.ContentHint;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
@@ -35,7 +34,6 @@ import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedExcept
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +60,7 @@ public class SendReadReceiptJob extends BaseJob {
   private final long            timestamp;
   private final List<MessageId> messageIds;
 
+  @VisibleForTesting
   public SendReadReceiptJob(long threadId, @NonNull RecipientId recipientId, List<Long> messageSentTimestamps, List<MessageId> messageIds) {
     this(new Job.Parameters.Builder()
                            .addConstraint(NetworkConstraint.KEY)
@@ -97,6 +96,10 @@ public class SendReadReceiptJob extends BaseJob {
    * maximum size.
    */
   public static void enqueue(long threadId, @NonNull RecipientId recipientId, List<MarkedMessageInfo> markedMessageInfos) {
+    if (recipientId.equals(Recipient.self().getId())) {
+      return;
+    }
+
     JobManager                    jobManager      = ApplicationDependencies.getJobManager();
     List<List<MarkedMessageInfo>> messageIdChunks = Util.chunk(markedMessageInfos, MAX_TIMESTAMPS);
 
@@ -149,6 +152,10 @@ public class SendReadReceiptJob extends BaseJob {
 
     Recipient recipient = Recipient.resolved(recipientId);
 
+    if (recipient.isSelf()) {
+      Log.i(TAG, "Not sending to self, aborting.");
+    }
+
     if (recipient.isBlocked()) {
       Log.w(TAG, "Refusing to send receipts to blocked recipient");
       return;
@@ -173,7 +180,7 @@ public class SendReadReceiptJob extends BaseJob {
                                                          receiptMessage);
 
     if (Util.hasItems(messageIds)) {
-      DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageIds);
+      SignalDatabase.messageLog().insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageIds);
     }
   }
 

@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -102,6 +102,11 @@ public class SendDeliveryReceiptJob extends BaseJob {
     SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
     Recipient                   recipient      = Recipient.resolved(recipientId);
 
+    if (recipient.isSelf()) {
+      Log.i(TAG, "Not sending to self, abort");
+      return;
+    }
+
     if (recipient.isUnregistered()) {
       Log.w(TAG, recipient.getId() + " is unregistered!");
       return;
@@ -117,7 +122,7 @@ public class SendDeliveryReceiptJob extends BaseJob {
                                                          receiptMessage);
 
     if (messageId != null) {
-      DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageId);
+      SignalDatabase.messageLog().insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageId);
     }
   }
 

@@ -24,7 +24,7 @@ import androidx.appcompat.widget.AppCompatSeekBar
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.tm.archive.R
@@ -48,18 +48,20 @@ class CustomChatColorCreatorPageFragment :
 
   private lateinit var hueSlider: AppCompatSeekBar
   private lateinit var saturationSlider: AppCompatSeekBar
+  private lateinit var preview: ChatColorPreviewView
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     val args: CustomChatColorCreatorFragmentArgs = CustomChatColorCreatorFragmentArgs.fromBundle(requireArguments())
     val chatColorSelectionViewModel: ChatColorSelectionViewModel = ChatColorSelectionViewModel.getOrCreate(requireActivity(), args.recipientId)
     val page: Int = requireArguments().getInt(PAGE_ARG)
     val factory: CustomChatColorCreatorViewModel.Factory = CustomChatColorCreatorViewModel.Factory(MAX_SEEK_DIVISIONS, ChatColors.Id.forLongValue(args.chatColorId), args.recipientId, createRepository())
-    val viewModel: CustomChatColorCreatorViewModel = ViewModelProviders.of(
+    val viewModel: CustomChatColorCreatorViewModel = ViewModelProvider(
       requireParentFragment(),
       factory
     )[CustomChatColorCreatorViewModel::class.java]
 
-    val preview: ChatColorPreviewView = view.findViewById(R.id.chat_color_preview)
+    preview = view.findViewById(R.id.chat_color_preview)
+
     val hueThumb = ThumbDrawable(requireContext())
     val saturationThumb = ThumbDrawable(requireContext())
 

@@ -17,12 +17,7 @@
 package org.tm.archive.database;
 
 import android.content.Context;
-import android.database.ContentObserver;
-import android.database.Cursor;
 
-import androidx.annotation.NonNull;
-
-import org.tm.archive.database.helpers.SQLCipherOpenHelper;
 import org.tm.archive.dependencies.ApplicationDependencies;
 
 import java.util.Set;
@@ -32,10 +27,10 @@ public abstract class Database {
   protected static final String   ID_WHERE = "_id = ?";
   protected static final String[] COUNT    = new String[] { "COUNT(*)" };
 
-  protected       SQLCipherOpenHelper databaseHelper;
-  protected final Context             context;
+  protected       SignalDatabase databaseHelper;
+  protected final Context        context;
 
-  public Database(Context context, SQLCipherOpenHelper databaseHelper) {
+  public Database(Context context, SignalDatabase databaseHelper) {
     this.context        = context;
     this.databaseHelper = databaseHelper;
   }
@@ -56,58 +51,31 @@ public abstract class Database {
     ApplicationDependencies.getDatabaseObserver().notifyVerboseConversationListeners(threadIds);
   }
 
-  protected void notifyVerboseConversationListeners(long threadId) {
-    ApplicationDependencies.getDatabaseObserver().notifyVerboseConversationListeners(threadId);
-  }
-
   protected void notifyConversationListListeners() {
     ApplicationDependencies.getDatabaseObserver().notifyConversationListListeners();
-  }
-
-  protected void notifyStickerListeners() {
-    context.getContentResolver().notifyChange(DatabaseContentProviders.Sticker.CONTENT_URI, null);
   }
 
   protected void notifyStickerPackListeners() {
     ApplicationDependencies.getDatabaseObserver().notifyStickerPackObservers();
   }
 
-  @Deprecated
-  protected void setNotifyConversationListeners(Cursor cursor, long threadId) {
-    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.Conversation.getUriForThread(threadId));
-  }
-
-  @Deprecated
-  protected void setNotifyConversationListeners(Cursor cursor) {
-    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.Conversation.getUriForAllThreads());
-  }
-
-  @Deprecated
-  protected void setNotifyVerboseConversationListeners(Cursor cursor, long threadId) {
-    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.Conversation.getVerboseUriForThread(threadId));
-  }
-
-  @Deprecated
-  protected void setNotifyStickerListeners(Cursor cursor) {
-    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.Sticker.CONTENT_URI);
-  }
-
-  @Deprecated
-  protected void setNotifyStickerPackListeners(Cursor cursor) {
-    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.StickerPack.CONTENT_URI);
-  }
-
-  protected void registerAttachmentListeners(@NonNull ContentObserver observer) {
-    context.getContentResolver().registerContentObserver(DatabaseContentProviders.Attachment.CONTENT_URI,
-                                                         true,
-                                                         observer);
+  protected void notifyStickerListeners() {
+    ApplicationDependencies.getDatabaseObserver().notifyStickerObservers();
   }
 
   protected void notifyAttachmentListeners() {
-    context.getContentResolver().notifyChange(DatabaseContentProviders.Attachment.CONTENT_URI, null);
+    ApplicationDependencies.getDatabaseObserver().notifyAttachmentObservers();
   }
 
-  public void reset(SQLCipherOpenHelper databaseHelper) {
+  public void reset(SignalDatabase databaseHelper) {
     this.databaseHelper = databaseHelper;
+  }
+
+  protected SQLiteDatabase getReadableDatabase() {
+    return databaseHelper.getSignalReadableDatabase();
+  }
+
+  protected SQLiteDatabase getWritableDatabase() {
+    return databaseHelper.getSignalWritableDatabase();
   }
 }

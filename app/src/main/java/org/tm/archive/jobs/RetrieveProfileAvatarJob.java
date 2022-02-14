@@ -8,8 +8,8 @@ import androidx.annotation.NonNull;
 import org.signal.core.util.logging.Log;
 import org.signal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.crypto.ProfileKeyUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -73,7 +73,7 @@ public class RetrieveProfileAvatarJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    RecipientDatabase database   = DatabaseFactory.getRecipientDatabase(context);
+    RecipientDatabase database   = SignalDatabase.recipients();
     ProfileKey        profileKey = ProfileKeyUtil.profileKeyOrNull(recipient.resolve().getProfileKey());
 
     if (profileKey == null) {

@@ -16,7 +16,7 @@ import org.tm.archive.payments.preferences.viewholder.IntroducingPaymentViewHold
 import org.tm.archive.payments.preferences.viewholder.NoRecentActivityViewHolder;
 import org.tm.archive.payments.preferences.viewholder.PaymentItemViewHolder;
 import org.tm.archive.payments.preferences.viewholder.SeeAllViewHolder;
-import org.tm.archive.util.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
 
 public class PaymentsHomeAdapter extends MappingAdapter {
 

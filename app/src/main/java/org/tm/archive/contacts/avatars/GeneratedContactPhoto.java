@@ -17,7 +17,6 @@ import org.tm.archive.avatar.Avatar;
 import org.tm.archive.avatar.AvatarRenderer;
 import org.tm.archive.avatar.Avatars;
 import org.tm.archive.conversation.colors.AvatarColor;
-import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.NameUtil;
 
 import java.util.Objects;
@@ -45,7 +44,7 @@ public class GeneratedContactPhoto implements FallbackContactPhoto {
 
   @Override
   public Drawable asDrawable(@NonNull Context context, @NonNull AvatarColor color, boolean inverted) {
-    int targetSize = this.targetSize != -1
+    int targetSize = this.targetSize > 0
                      ? this.targetSize
                      : context.getResources().getDimensionPixelSize(R.dimen.contact_photo_target_size);
 
@@ -54,7 +53,7 @@ public class GeneratedContactPhoto implements FallbackContactPhoto {
     if (!TextUtils.isEmpty(character)) {
       Avatars.ForegroundColor foregroundColor = Avatars.getForegroundColor(color);
       Avatar.Text             avatar          = new Avatar.Text(character, new Avatars.ColorPair(color, foregroundColor), Avatar.DatabaseId.DoNotPersist.INSTANCE);
-      Drawable                foreground      = AvatarRenderer.createTextDrawable(context, avatar, inverted, targetSize);
+      Drawable                foreground      = AvatarRenderer.createTextDrawable(context, avatar, inverted, targetSize, false);
       Drawable                background      = Objects.requireNonNull(ContextCompat.getDrawable(context, R.drawable.circle_tintable));
 
       background.setColorFilter(new SimpleColorFilter(inverted ? foregroundColor.getColorInt() : color.colorInt()));

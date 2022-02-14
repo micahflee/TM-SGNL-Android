@@ -1,21 +1,20 @@
 package org.tm.archive.conversation;
 
-import android.app.Application;
-
 import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import org.signal.core.util.ThreadUtil;
 import org.tm.archive.search.MessageResult;
-import org.tm.archive.database.CursorList;
 import org.tm.archive.search.SearchRepository;
 import org.tm.archive.util.Debouncer;
 
+import java.util.Collections;
 import java.util.List;
 
-public class ConversationSearchViewModel extends AndroidViewModel {
+public class ConversationSearchViewModel extends ViewModel {
 
   private final SearchRepository              searchRepository;
   private final MutableLiveData<SearchResult> result;
@@ -26,11 +25,10 @@ public class ConversationSearchViewModel extends AndroidViewModel {
   private String  activeQuery;
   private long    activeThreadId;
 
-  public ConversationSearchViewModel(@NonNull Application application) {
-    super(application);
+  public ConversationSearchViewModel(@NonNull String noteToSelfTitle) {
     result           = new MutableLiveData<>();
     debouncer        = new Debouncer(500);
-    searchRepository = new SearchRepository();
+    searchRepository = new SearchRepository(noteToSelfTitle);
   }
 
   LiveData<SearchResult> getSearchResults() {
@@ -39,7 +37,7 @@ public class ConversationSearchViewModel extends AndroidViewModel {
 
   void onQueryUpdated(@NonNull String query, long threadId, boolean forced) {
     if (firstSearch && query.length() < 2) {
-      result.postValue(new SearchResult(CursorList.emptyList(), 0));
+      result.postValue(new SearchResult(Collections.emptyList(), 0));
       return;
     }
 
@@ -126,6 +124,21 @@ public class ConversationSearchViewModel extends AndroidViewModel {
 
     public int getPosition() {
       return position;
+    }
+  }
+
+  public static class Factory extends ViewModelProvider.NewInstanceFactory {
+
+    private final String noteToSelfTitle;
+
+    public Factory(@NonNull String noteToSelfTitle) {
+      this.noteToSelfTitle = noteToSelfTitle;
+    }
+
+    @Override
+    public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+      //noinspection ConstantConditions
+      return modelClass.cast(new ConversationSearchViewModel(noteToSelfTitle));
     }
   }
 }

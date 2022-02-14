@@ -9,13 +9,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.MarkReadReceiver;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.concurrent.SimpleTask;
 
 import java.util.List;
@@ -53,7 +52,7 @@ public class TurnOffContactJoinedNotificationsActivity extends AppCompatActivity
 
   private void handlePositiveAction(@NonNull DialogInterface dialog) {
     SimpleTask.run(getLifecycle(), () -> {
-      ThreadDatabase threadDatabase = DatabaseFactory.getThreadDatabase(this);
+      ThreadDatabase threadDatabase = SignalDatabase.threads();
 
       List<MessageDatabase.MarkedMessageInfo> marked = threadDatabase.setRead(getIntent().getLongExtra(EXTRA_THREAD_ID, -1), false);
       MarkReadReceiver.process(this, marked);

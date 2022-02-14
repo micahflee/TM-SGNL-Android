@@ -7,7 +7,7 @@ import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
@@ -43,7 +43,7 @@ class UsernameEditRepository {
   private @NonNull UsernameSetResult setUsernameInternal(@NonNull String username) {
     try {
       accountManager.setUsername(username);
-      DatabaseFactory.getRecipientDatabase(application).setUsername(Recipient.self().getId(), username);
+      SignalDatabase.recipients().setUsername(Recipient.self().getId(), username);
       Log.i(TAG, "[setUsername] Successfully set username.");
       return UsernameSetResult.SUCCESS;
     } catch (UsernameTakenException e) {
@@ -62,7 +62,7 @@ class UsernameEditRepository {
   private @NonNull UsernameDeleteResult deleteUsernameInternal() {
     try {
       accountManager.deleteUsername();
-      DatabaseFactory.getRecipientDatabase(application).setUsername(Recipient.self().getId(), null);
+      SignalDatabase.recipients().setUsername(Recipient.self().getId(), null);
       Log.i(TAG, "[deleteUsername] Successfully deleted the username.");
       return UsernameDeleteResult.SUCCESS;
     } catch (IOException e) {

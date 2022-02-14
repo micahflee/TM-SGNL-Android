@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.PreKeyUtil;
-import org.tm.archive.crypto.storage.SignalProtocolStoreImpl;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.whispersystems.libsignal.InvalidKeyIdException;
@@ -55,7 +55,7 @@ public class CleanPreKeysJob extends BaseJob {
       Log.i(TAG, "Cleaning prekeys...");
 
       int                activeSignedPreKeyId = PreKeyUtil.getActiveSignedPreKeyId(context);
-      SignedPreKeyStore  signedPreKeyStore    = new SignalProtocolStoreImpl(context);
+      SignedPreKeyStore  signedPreKeyStore    = ApplicationDependencies.getProtocolStore().aci();
 
       if (activeSignedPreKeyId < 0) return;
 

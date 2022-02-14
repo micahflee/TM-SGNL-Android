@@ -106,7 +106,7 @@ public class Quote {
     //**TM_SA**//Start
     ((Buffer)quoteBuf).position(pos);
     quoteBuf.get(buf);
-    //**TM_SA**//Ende
+    //**TM_SA**//End
   }
 
   private void readZero(ByteBuffer quoteBuf, int pos, int count) {

@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.util.storage.FileStorage;
@@ -64,7 +64,7 @@ public final class WallpaperStorage {
       return;
     }
 
-    int recipientCount = DatabaseFactory.getRecipientDatabase(context).getWallpaperUriUsageCount(uri);
+    int recipientCount = SignalDatabase.recipients().getWallpaperUriUsageCount(uri);
     if (recipientCount > 0) {
       return;
     }

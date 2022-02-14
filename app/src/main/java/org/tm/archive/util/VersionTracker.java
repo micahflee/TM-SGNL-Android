@@ -8,9 +8,9 @@ import androidx.annotation.NonNull;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.RemoteConfigRefreshJob;
+import org.tm.archive.jobs.RetrieveReleaseChannelJob;
 import org.tm.archive.keyvalue.SignalStore;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class VersionTracker {
@@ -22,20 +22,18 @@ public class VersionTracker {
   }
 
   public static void updateLastSeenVersion(@NonNull Context context) {
-    try {
-      int currentVersionCode = Util.getCanonicalVersionCode();
-      int lastVersionCode    = TextSecurePreferences.getLastVersionCode(context);
+    int currentVersionCode = Util.getCanonicalVersionCode();
+    int lastVersionCode    = TextSecurePreferences.getLastVersionCode(context);
 
-      if (currentVersionCode != lastVersionCode) {
-        Log.i(TAG, "Upgraded from " + lastVersionCode + " to " + currentVersionCode);
-        SignalStore.misc().clearClientDeprecated();
-        TextSecurePreferences.setLastVersionCode(context, currentVersionCode);
-        ApplicationDependencies.getJobManager().add(new RemoteConfigRefreshJob());
-        LocalMetrics.getInstance().clear();
-      }
-    } catch (IOException ioe) {
-      throw new AssertionError(ioe);
+    if (currentVersionCode != lastVersionCode) {
+      Log.i(TAG, "Upgraded from " + lastVersionCode + " to " + currentVersionCode);
+      SignalStore.misc().clearClientDeprecated();
+      ApplicationDependencies.getJobManager().add(new RemoteConfigRefreshJob());
+      RetrieveReleaseChannelJob.enqueue(true);
+      LocalMetrics.getInstance().clear();
     }
+
+    TextSecurePreferences.setLastVersionCode(context, currentVersionCode);
   }
 
   public static long getDaysSinceFirstInstalled(Context context) {

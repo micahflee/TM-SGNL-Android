@@ -17,8 +17,8 @@ import org.signal.storageservice.protos.groups.AccessControl;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedRequestingMember;
 import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.ui.GroupMemberEntry;
 import org.tm.archive.groups.v2.GroupInviteLinkUrl;
@@ -27,7 +27,7 @@ import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.livedata.LiveDataUtil;
-import org.whispersystems.signalservice.api.util.UuidUtil;
+import org.whispersystems.signalservice.api.push.ACI;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -55,7 +55,7 @@ public final class LiveGroup {
     Context                        context       = ApplicationDependencies.getApplication();
     MutableLiveData<LiveRecipient> liveRecipient = new MutableLiveData<>();
 
-    this.groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+    this.groupDatabase     = SignalDatabase.groups();
     this.recipient         = Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData);
     this.groupRecord       = LiveDataUtil.filterNotNull(LiveDataUtil.mapAsync(recipient, groupRecipient -> groupDatabase.getGroup(groupRecipient.getId()).orNull()));
     this.fullMembers       = mapToFullMembers(this.groupRecord);
@@ -108,7 +108,7 @@ public final class LiveGroup {
 
                                    return Stream.of(requestingMembersList)
                                                 .map(requestingMember -> {
-                                                  Recipient recipient = Recipient.externalPush(ApplicationDependencies.getApplication(), UuidUtil.fromByteString(requestingMember.getUuid()), null, false);
+                                                  Recipient recipient = Recipient.externalPush(ApplicationDependencies.getApplication(), ACI.fromByteString(requestingMember.getUuid()), null, false);
                                                   return new GroupMemberEntry.RequestingMember(recipient, selfAdmin);
                                                 })
                                                 .toList();

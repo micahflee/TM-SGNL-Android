@@ -15,7 +15,7 @@ import org.archiver.ArchiveUtil.Companion.getFromPartForSubject
 import org.archiver.ArchiveUtil.Companion.getGroupInboxRecipientNumber
 import org.archiver.ArchiveUtil.Companion.groupId
 import org.signal.glide.Log
-import org.tm.archive.database.DatabaseFactory
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.mms.IncomingMediaMessage
 import org.tm.archive.mms.OutgoingMediaMessage
 import org.tm.archive.recipients.Recipient
@@ -97,7 +97,7 @@ class ArchiveSender {
             val inboxRecipient = ""
             var groupTitle = ""
             if (message.recipient.groupId.isPresent) {
-                groupTitle = DatabaseFactory.getGroupDatabase(context).getGroup(message.recipient.groupId.get()).get().title
+                groupTitle = SignalDatabase.groups.getGroup(message.recipient.groupId.get()).get().title
             }
 
             val from = getFromPartForSubject(context, isInbox, archiveRecipient, inboxRecipient)

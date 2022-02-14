@@ -1,6 +1,6 @@
 package org.tm.archive.components.settings.app.chats
 
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
@@ -8,15 +8,21 @@ import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
+import org.tm.archive.util.navigation.safeNavigate
 
 class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__chats) {
 
   private lateinit var viewModel: ChatsSettingsViewModel
 
+  override fun onResume() {
+    super.onResume()
+    viewModel.refresh()
+  }
+
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
     val repository = ChatsSettingsRepository()
     val factory = ChatsSettingsViewModel.Factory(repository)
-    viewModel = ViewModelProviders.of(this, factory)[ChatsSettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this, factory)[ChatsSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) {
       adapter.submitList(getConfiguration(it).toMappingModelList())
@@ -29,7 +35,7 @@ class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__ch
       clickPref(
         title = DSLSettingsText.from(R.string.preferences__sms_mms),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_chatsSettingsFragment_to_smsSettingsFragment)
+          Navigation.findNavController(requireView()).safeNavigate(R.id.action_chatsSettingsFragment_to_smsSettingsFragment)
         }
       )
 
@@ -79,7 +85,7 @@ class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__ch
         title = DSLSettingsText.from(R.string.preferences_chats__chat_backups),
         summary = DSLSettingsText.from(if (state.chatBackupsEnabled) R.string.arrays__enabled else R.string.arrays__disabled),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_chatsSettingsFragment_to_backupsPreferenceFragment)
+          Navigation.findNavController(requireView()).safeNavigate(R.id.action_chatsSettingsFragment_to_backupsPreferenceFragment)
         }
       )
     }

@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import org.tm.archive.BindableConversationListItem;
+import org.tm.archive.conversationlist.model.ConversationSet;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.mms.GlideRequests;
 
@@ -45,14 +46,13 @@ public class ConversationListItemInboxZero extends LinearLayout implements Binda
                    @NonNull GlideRequests glideRequests,
                    @NonNull Locale locale,
                    @NonNull Set<Long> typingThreads,
-                   @NonNull Set<Long> selectedThreads,
-                   boolean batchMode)
+                   @NonNull ConversationSet selectedConversations)
   {
 
   }
 
   @Override
-  public void setBatchMode(boolean batchMode) {
+  public void setSelectedConversations(@NonNull ConversationSet conversations) {
 
   }
 

@@ -4,7 +4,7 @@ package org.tm.archive.database.helpers;
 import android.content.ContentValues;
 import android.content.Context;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.signal.core.util.Conversions;
 import org.signal.core.util.logging.Log;
@@ -16,7 +16,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-class SessionStoreMigrationHelper {
+public final class SessionStoreMigrationHelper {
 
   private static final String TAG = Log.tag(SessionStoreMigrationHelper.class);
 
@@ -28,7 +28,7 @@ class SessionStoreMigrationHelper {
   private static final int PLAINTEXT_VERSION      = 3;
   private static final int CURRENT_VERSION        = 3;
 
-  static void migrateSessions(Context context, SQLiteDatabase database) {
+  public static void migrateSessions(Context context, SQLiteDatabase database) {
     File directory = new File(context.getFilesDir(), SESSIONS_DIRECTORY_V2);
 
     if (directory.exists()) {

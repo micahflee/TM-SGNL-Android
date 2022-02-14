@@ -7,8 +7,8 @@ import androidx.core.util.Consumer;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupChangeFailedException;
 import org.tm.archive.recipients.Recipient;
@@ -32,7 +32,7 @@ class BlockedUsersRepository {
 
   void getBlocked(@NonNull Consumer<List<Recipient>> blockedUsers) {
     SignalExecutors.BOUNDED.execute(() -> {
-      RecipientDatabase db = DatabaseFactory.getRecipientDatabase(context);
+      RecipientDatabase db = SignalDatabase.recipients();
       try (RecipientDatabase.RecipientReader reader = db.readerForBlocked(db.getBlocked())) {
         int count = reader.getCount();
         if (count == 0) {

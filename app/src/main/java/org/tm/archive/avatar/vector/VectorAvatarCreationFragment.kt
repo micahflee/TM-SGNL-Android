@@ -15,8 +15,8 @@ import org.tm.archive.avatar.AvatarBundler
 import org.tm.archive.avatar.AvatarColorItem
 import org.tm.archive.avatar.Avatars
 import org.tm.archive.components.recyclerview.GridDividerDecoration
-import org.tm.archive.util.MappingAdapter
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 
 /**
  * Fragment to create an avatar based off a default vector.

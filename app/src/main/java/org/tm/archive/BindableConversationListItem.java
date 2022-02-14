@@ -2,6 +2,7 @@ package org.tm.archive;
 
 import androidx.annotation.NonNull;
 
+import org.tm.archive.conversationlist.model.ConversationSet;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.mms.GlideRequests;
 
@@ -13,8 +14,8 @@ public interface BindableConversationListItem extends Unbindable {
   void bind(@NonNull ThreadRecord thread,
             @NonNull GlideRequests glideRequests, @NonNull Locale locale,
             @NonNull Set<Long> typingThreads,
-            @NonNull Set<Long> selectedThreads, boolean batchMode);
+            @NonNull ConversationSet selectedConversations);
 
-  void setBatchMode(boolean batchMode);
+  void setSelectedConversations(@NonNull ConversationSet conversations);
   void updateTypingIndicator(@NonNull Set<Long> typingThreads);
 }

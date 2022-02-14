@@ -2,9 +2,7 @@ package org.tm.archive.reactions.any;
 
 import android.content.Context;
 
-import androidx.annotation.AttrRes;
 import androidx.annotation.NonNull;
-import androidx.annotation.StringRes;
 
 import com.annimon.stream.Stream;
 
@@ -12,12 +10,9 @@ import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.components.emoji.EmojiUtil;
 import org.tm.archive.components.emoji.RecentEmojiPageModel;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.MessageDatabase;
-import org.tm.archive.database.NoSuchMessageException;
-import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.ReactionRecord;
 import org.tm.archive.emoji.EmojiCategory;
 import org.tm.archive.emoji.EmojiSource;
@@ -68,24 +63,18 @@ final class ReactWithAnyEmojiRepository {
     return pages;
   }
 
-  void addEmojiToMessage(@NonNull String emoji, long messageId, boolean isMms) {
+  void addEmojiToMessage(@NonNull String emoji, @NonNull MessageId messageId) {
     SignalExecutors.BOUNDED.execute(() -> {
-      try {
-        MessageDatabase db              = isMms ? DatabaseFactory.getMmsDatabase(context) : DatabaseFactory.getSmsDatabase(context);
-        MessageRecord     messageRecord = db.getMessageRecord(messageId);
-        ReactionRecord    oldRecord     = Stream.of(messageRecord.getReactions())
-                                                .filter(record -> record.getAuthor().equals(Recipient.self().getId()))
-                                                .findFirst()
-                                                .orElse(null);
+      ReactionRecord  oldRecord = Stream.of(SignalDatabase.reactions().getReactions(messageId))
+                                        .filter(record -> record.getAuthor().equals(Recipient.self().getId()))
+                                        .findFirst()
+                                        .orElse(null);
 
-        if (oldRecord != null && oldRecord.getEmoji().equals(emoji)) {
-          MessageSender.sendReactionRemoval(context, messageRecord.getId(), messageRecord.isMms(), oldRecord);
-        } else {
-          MessageSender.sendNewReaction(context, messageRecord.getId(), messageRecord.isMms(), emoji);
-          ThreadUtil.runOnMain(() -> recentEmojiPageModel.onCodePointSelected(emoji));
-        }
-      } catch (NoSuchMessageException e) {
-        Log.w(TAG, "Message not found! Ignoring.");
+      if (oldRecord != null && oldRecord.getEmoji().equals(emoji)) {
+        MessageSender.sendReactionRemoval(context, messageId, oldRecord);
+      } else {
+        MessageSender.sendNewReaction(context, messageId, emoji);
+        ThreadUtil.runOnMain(() -> recentEmojiPageModel.onCodePointSelected(emoji));
       }
     });
   }

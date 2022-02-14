@@ -2,7 +2,7 @@ package org.tm.archive.payments.preferences.model;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 
 public class NoRecentActivity implements MappingModel<NoRecentActivity> {
   @Override

@@ -5,17 +5,15 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import org.tm.archive.LoggingFragment
 import org.tm.archive.R
-import org.tm.archive.conversation.ConversationActivity
 import org.tm.archive.giph.mp4.GiphyMp4Fragment
 import org.tm.archive.giph.mp4.GiphyMp4SaveResult
 import org.tm.archive.giph.mp4.GiphyMp4ViewModel
 import org.tm.archive.keyboard.emoji.KeyboardPageSearchView
 import org.tm.archive.keyboard.findListener
-import org.tm.archive.mms.AttachmentManager
 import org.tm.archive.util.views.SimpleProgressDialog
 
 class GifKeyboardPageFragment : LoggingFragment(R.layout.gif_keyboard_page_fragment) {
@@ -49,13 +47,14 @@ class GifKeyboardPageFragment : LoggingFragment(R.layout.gif_keyboard_page_fragm
     quickSearchAdapter = GifQuickSearchAdapter(this::onQuickSearchSelected)
     quickSearchList.adapter = quickSearchAdapter
 
-    giphyMp4ViewModel = ViewModelProviders.of(requireActivity(), GiphyMp4ViewModel.Factory(host.isMms())).get(GiphyMp4ViewModel::class.java)
+    giphyMp4ViewModel = ViewModelProvider(requireActivity(), GiphyMp4ViewModel.Factory(host.isMms())).get(GiphyMp4ViewModel::class.java)
     giphyMp4ViewModel.saveResultEvents.observe(viewLifecycleOwner, this::handleGiphyMp4SaveResult)
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityCreated(savedInstanceState: Bundle?) {
     super.onActivityCreated(savedInstanceState)
-    viewModel = ViewModelProviders.of(requireActivity()).get(GifKeyboardPageViewModel::class.java)
+    viewModel = ViewModelProvider(requireActivity()).get(GifKeyboardPageViewModel::class.java)
     updateQuickSearchTabs()
   }
 
@@ -106,11 +105,12 @@ class GifKeyboardPageFragment : LoggingFragment(R.layout.gif_keyboard_page_fragm
   }
 
   private fun openGifSearch() {
-    AttachmentManager.selectGif(requireActivity(), ConversationActivity.PICK_GIF, host.isMms())
+    host.openGifSearch()
   }
 
   interface Host {
     fun isMms(): Boolean
+    fun openGifSearch()
     fun onGifSelectSuccess(blobUri: Uri, width: Int, height: Int)
   }
 }

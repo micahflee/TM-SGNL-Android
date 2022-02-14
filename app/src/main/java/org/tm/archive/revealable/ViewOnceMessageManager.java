@@ -11,10 +11,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.ApplicationContext;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.service.TimedEventManager;
 
@@ -31,8 +30,8 @@ public class ViewOnceMessageManager extends TimedEventManager<ViewOnceExpiration
   public ViewOnceMessageManager(@NonNull Application application) {
     super(application, "RevealableMessageManager");
 
-    this.mmsDatabase        = DatabaseFactory.getMmsDatabase(application);
-    this.attachmentDatabase = DatabaseFactory.getAttachmentDatabase(application);
+    this.mmsDatabase        = SignalDatabase.mms();
+    this.attachmentDatabase = SignalDatabase.attachments();
     
     scheduleIfNecessary();
   }

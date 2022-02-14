@@ -19,6 +19,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import org.tm.archive.R;
 import org.tm.archive.payments.Mnemonic;
 import org.tm.archive.util.Util;
+import org.tm.archive.util.navigation.SafeNavigation;
 import org.tm.archive.util.text.AfterTextChanged;
 
 public class PaymentsRecoveryEntryFragment extends Fragment {
@@ -54,8 +55,8 @@ public class PaymentsRecoveryEntryFragment extends Fragment {
 
     viewModel.getEvents().observe(getViewLifecycleOwner(), event -> {
       if (event == PaymentsRecoveryEntryViewModel.Events.GO_TO_CONFIRM) {
-        Navigation.findNavController(view).navigate(PaymentsRecoveryEntryFragmentDirections.actionPaymentsRecoveryEntryToPaymentsRecoveryPhrase(false)
-                                                                                           .setWords(viewModel.getWords()));
+        SafeNavigation.safeNavigate(Navigation.findNavController(view), PaymentsRecoveryEntryFragmentDirections.actionPaymentsRecoveryEntryToPaymentsRecoveryPhrase(false)
+                                                                                                               .setWords(viewModel.getWords()));
       }
     });
 

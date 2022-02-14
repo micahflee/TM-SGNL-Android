@@ -14,9 +14,10 @@ import org.tm.archive.avatar.AvatarRenderer
 import org.tm.archive.avatar.Avatars
 import org.tm.archive.mms.DecryptableStreamUriLoader
 import org.tm.archive.mms.GlideApp
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingModel
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 import org.tm.archive.util.visible
 
 typealias OnAvatarClickListener = (Avatar, Boolean) -> Unit
@@ -27,7 +28,7 @@ object AvatarPickerItem {
   private val SELECTION_CHANGED = Any()
 
   fun register(adapter: MappingAdapter, onAvatarClickListener: OnAvatarClickListener, onAvatarLongClickListener: OnAvatarLongClickListener) {
-    adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory({ ViewHolder(it, onAvatarClickListener, onAvatarLongClickListener) }, R.layout.avatar_picker_item))
+    adapter.registerFactory(Model::class.java, LayoutFactory({ ViewHolder(it, onAvatarClickListener, onAvatarLongClickListener) }, R.layout.avatar_picker_item))
   }
 
   class Model(val avatar: Avatar, val isSelected: Boolean) : MappingModel<Model> {

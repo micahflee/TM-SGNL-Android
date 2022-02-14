@@ -3,7 +3,7 @@ package org.tm.archive.keyboard.sticker
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.Px
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
@@ -22,9 +22,9 @@ import org.tm.archive.stickers.StickerRolloverTouchListener
 import org.tm.archive.stickers.StickerRolloverTouchListener.RolloverStickerRetriever
 import org.tm.archive.util.DeviceProperties
 import org.tm.archive.util.InsetItemDecoration
-import org.tm.archive.util.MappingModel
-import org.tm.archive.util.MappingModelList
 import org.tm.archive.util.Throttler
+import org.tm.archive.util.adapter.mapping.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingModelList
 import org.whispersystems.libsignal.util.Pair
 import java.util.Optional
 import kotlin.math.abs
@@ -87,13 +87,17 @@ class StickerKeyboardPageFragment :
 
     view.findViewById<KeyboardPageSearchView>(R.id.sticker_keyboard_search_text).callbacks = object : KeyboardPageSearchView.Callbacks {
       override fun onClicked() {
-        StickerSearchDialogFragment.show(requireActivity().supportFragmentManager)
+        findListener<Callback>()!!.openStickerSearch()
       }
     }
 
-    view.findViewById<View>(R.id.sticker_search).setOnClickListener { StickerSearchDialogFragment.show(requireActivity().supportFragmentManager) }
+    view.findViewById<View>(R.id.sticker_search).setOnClickListener {
+      findListener<Callback>()!!.openStickerSearch()
+    }
+
     view.findViewById<View>(R.id.sticker_manage).setOnClickListener { findListener<StickerEventListener>()?.onStickerManagementClicked() }
 
+    ApplicationDependencies.getDatabaseObserver().registerStickerObserver(this)
     ApplicationDependencies.getDatabaseObserver().registerStickerPackObserver(this)
 
     view.addOnLayoutChangeListener(this)
@@ -105,10 +109,11 @@ class StickerKeyboardPageFragment :
     super.onDestroyView()
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityCreated(savedInstanceState: Bundle?) {
     super.onActivityCreated(savedInstanceState)
 
-    viewModel = ViewModelProviders.of(requireActivity(), StickerKeyboardPageViewModel.Factory(requireContext()))
+    viewModel = ViewModelProvider(requireActivity(), StickerKeyboardPageViewModel.Factory(requireContext()))
       .get(StickerKeyboardPageViewModel::class.java)
 
     viewModel.stickers.observe(viewLifecycleOwner, this::updateStickerList)
@@ -234,5 +239,9 @@ class StickerKeyboardPageFragment :
         viewModel.selectPack((item.get() as KeyboardStickerListAdapter.HasPackId).packId)
       }
     }
+  }
+
+  interface Callback {
+    fun openStickerSearch()
   }
 }

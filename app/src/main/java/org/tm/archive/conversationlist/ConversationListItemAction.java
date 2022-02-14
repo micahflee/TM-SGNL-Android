@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 
 import org.tm.archive.BindableConversationListItem;
 import org.tm.archive.R;
+import org.tm.archive.conversationlist.model.ConversationSet;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.mms.GlideRequests;
 
@@ -42,8 +43,7 @@ public class ConversationListItemAction extends FrameLayout implements BindableC
                    @NonNull GlideRequests glideRequests,
                    @NonNull Locale locale,
                    @NonNull Set<Long> typingThreads,
-                   @NonNull Set<Long> selectedThreads,
-                   boolean batchMode)
+                   @NonNull ConversationSet selectedConversations)
   {
     this.description.setText(getContext().getString(R.string.ConversationListItemAction_archived_conversations_d, thread.getUnreadCount()));
   }
@@ -54,7 +54,7 @@ public class ConversationListItemAction extends FrameLayout implements BindableC
   }
 
   @Override
-  public void setBatchMode(boolean batchMode) {
+  public void setSelectedConversations(@NonNull ConversationSet conversations) {
 
   }
 

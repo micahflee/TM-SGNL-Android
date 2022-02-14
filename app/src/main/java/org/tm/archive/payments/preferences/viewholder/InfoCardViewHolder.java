@@ -18,7 +18,7 @@ import androidx.appcompat.widget.Toolbar;
 import org.tm.archive.R;
 import org.tm.archive.payments.preferences.PaymentsHomeAdapter;
 import org.tm.archive.payments.preferences.model.InfoCard;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 public class InfoCardViewHolder extends MappingViewHolder<InfoCard> {
 

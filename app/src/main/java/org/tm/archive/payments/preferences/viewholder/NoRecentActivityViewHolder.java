@@ -5,7 +5,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.payments.preferences.model.NoRecentActivity;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 public class NoRecentActivityViewHolder extends MappingViewHolder<NoRecentActivity> {
 

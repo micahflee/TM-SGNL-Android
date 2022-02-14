@@ -17,14 +17,15 @@ import org.tm.archive.attachments.UriAttachment;
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.contactshare.VCardUtil;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MessageDatabase.InsertResult;
 import org.tm.archive.database.MmsDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.ApnUnavailableException;
 import org.tm.archive.mms.CompatMmsConnection;
 import org.tm.archive.mms.IncomingMediaMessage;
@@ -36,7 +37,6 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.service.KeyCachingService;
 import org.tm.archive.util.MediaUtil;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.util.guava.Optional;
 
@@ -98,18 +98,18 @@ public class MmsDownloadJob extends BaseJob {
   @Override
   public void onAdded() {
     if (automatic && KeyCachingService.isLocked(context)) {
-      DatabaseFactory.getMmsDatabase(context).markIncomingNotificationReceived(threadId);
+      SignalDatabase.mms().markIncomingNotificationReceived(threadId);
       ApplicationDependencies.getMessageNotifier().updateNotification(context);
     }
   }
 
   @Override
   public void onRun() {
-    if (TextSecurePreferences.getLocalUuid(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
+    if (SignalStore.account().getE164() == null) {
       throw new NotReadyException();
     }
 
-    MessageDatabase                           database     = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase                           database     = SignalDatabase.mms();
     Optional<MmsDatabase.MmsNotificationInfo> notification = database.getNotification(messageId);
 
     if (!notification.isPresent()) {
@@ -122,7 +122,7 @@ public class MmsDownloadJob extends BaseJob {
         throw new MmsException("Notification content location was null.");
       }
 
-      if (!TextSecurePreferences.isPushRegistered(context)) {
+      if (!SignalStore.account().isRegistered()) {
         throw new MmsException("Not registered");
       }
 
@@ -169,7 +169,7 @@ public class MmsDownloadJob extends BaseJob {
 
   @Override
   public void onFailure() {
-    MessageDatabase database = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase database = SignalDatabase.mms();
     database.markDownloadState(messageId, MmsDatabase.Status.DOWNLOAD_SOFT_FAILURE);
 
     if (automatic) {
@@ -188,7 +188,7 @@ public class MmsDownloadJob extends BaseJob {
                                  int subscriptionId, @Nullable RecipientId notificationFrom)
       throws MmsException
   {
-    MessageDatabase   database    = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase   database    = SignalDatabase.mms();
     Optional<GroupId> group       = Optional.absent();
     Set<RecipientId>  members     = new HashSet<>();
     String            body        = null;
@@ -246,7 +246,7 @@ public class MmsDownloadJob extends BaseJob {
 
     if (members.size() > 2) {
       List<RecipientId> recipients = new ArrayList<>(members);
-      group = Optional.of(DatabaseFactory.getGroupDatabase(context).getOrCreateMmsGroupForMembers(recipients));
+      group = Optional.of(SignalDatabase.groups().getOrCreateMmsGroupForMembers(recipients));
     }
 
     IncomingMediaMessage   message      = new IncomingMediaMessage(from, group, body, TimeUnit.SECONDS.toMillis(retrieved.getDate()), -1, System.currentTimeMillis(), attachments, subscriptionId, 0, false, false, false, Optional.of(sharedContacts));
@@ -260,7 +260,7 @@ public class MmsDownloadJob extends BaseJob {
 
   private void handleDownloadError(long messageId, long threadId, int downloadStatus, boolean automatic)
   {
-    MessageDatabase db = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase db = SignalDatabase.mms();
 
     db.markDownloadState(messageId, downloadStatus);
 

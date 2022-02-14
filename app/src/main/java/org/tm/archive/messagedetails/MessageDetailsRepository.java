@@ -10,9 +10,9 @@ import androidx.lifecycle.MutableLiveData;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.conversation.ConversationMessage.ConversationMessageFactory;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.GroupReceiptDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.database.documents.NetworkFailure;
 import org.tm.archive.database.model.MessageRecord;
@@ -51,21 +51,21 @@ final class MessageDetailsRepository {
                                                  messageRecord.getRecipient(),
                                                  getStatusFor(messageRecord),
                                                  messageRecord.isUnidentified(),
-                                                 -1,
+                                                 messageRecord.getReceiptTimestamp(),
                                                  getNetworkFailure(messageRecord, messageRecord.getRecipient()),
                                                  getKeyMismatchFailure(messageRecord, messageRecord.getRecipient())));
     } else {
-      List<GroupReceiptDatabase.GroupReceiptInfo> receiptInfoList = DatabaseFactory.getGroupReceiptDatabase(context).getGroupReceiptInfo(messageRecord.getId());
+      List<GroupReceiptDatabase.GroupReceiptInfo> receiptInfoList = SignalDatabase.groupReceipts().getGroupReceiptInfo(messageRecord.getId());
 
       if (receiptInfoList.isEmpty()) {
-        List<Recipient> group = DatabaseFactory.getGroupDatabase(context).getGroupMembers(messageRecord.getRecipient().requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+        List<Recipient> group = SignalDatabase.groups().getGroupMembers(messageRecord.getRecipient().requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
         for (Recipient recipient : group) {
           recipients.add(new RecipientDeliveryStatus(messageRecord,
                                                      recipient,
                                                      RecipientDeliveryStatus.Status.UNKNOWN,
                                                      false,
-                                                     -1,
+                                                     messageRecord.getReceiptTimestamp(),
                                                      getNetworkFailure(messageRecord, recipient),
                                                      getKeyMismatchFailure(messageRecord, recipient)));
         }

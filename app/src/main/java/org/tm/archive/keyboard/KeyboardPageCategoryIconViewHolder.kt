@@ -5,8 +5,8 @@ import android.graphics.drawable.Drawable
 import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import org.tm.archive.R
-import org.tm.archive.util.MappingModel
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.adapter.mapping.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 import java.util.function.Consumer
 
 interface KeyboardPageCategoryIconMappingModel<T : KeyboardPageCategoryIconMappingModel<T>> : MappingModel<T> {

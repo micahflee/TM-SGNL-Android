@@ -6,7 +6,6 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.tm.archive.color.MaterialColor;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;

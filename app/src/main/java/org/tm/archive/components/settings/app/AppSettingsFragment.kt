@@ -3,12 +3,13 @@ package org.tm.archive.components.settings.app
 import android.app.AlertDialog
 import android.view.View
 import android.widget.TextView
-import androidx.lifecycle.ViewModelProviders
-import androidx.navigation.Navigation
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchivePreferenceConstants
 import org.tm.archive.R
+import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.components.AvatarImageView
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsAdapter
@@ -18,25 +19,39 @@ import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.components.settings.PreferenceViewHolder
 import org.tm.archive.components.settings.app.about.AboutPreferenceFragment
+import org.tm.archive.components.settings.app.subscription.SubscriptionsRepository
 import org.tm.archive.components.settings.configure
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.FeatureFlags
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.PlayServicesUtil
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
+import org.tm.archive.util.navigation.safeNavigate
 
 class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__menu_settings) {
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    adapter.registerFactory(BioPreference::class.java, MappingAdapter.LayoutFactory(::BioPreferenceViewHolder, R.layout.bio_preference_item))
-    adapter.registerFactory(PaymentsPreference::class.java, MappingAdapter.LayoutFactory(::PaymentsPreferenceViewHolder, R.layout.dsl_payments_preference))
+  private val viewModel: AppSettingsViewModel by viewModels(
+    factoryProducer = {
+      AppSettingsViewModel.Factory(SubscriptionsRepository(ApplicationDependencies.getDonationsService()))
+    }
+  )
 
-    val viewModel = ViewModelProviders.of(this)[AppSettingsViewModel::class.java]
+  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+    adapter.registerFactory(BioPreference::class.java, LayoutFactory(::BioPreferenceViewHolder, R.layout.bio_preference_item))
+    adapter.registerFactory(PaymentsPreference::class.java, LayoutFactory(::PaymentsPreferenceViewHolder, R.layout.dsl_payments_preference))
+    adapter.registerFactory(SubscriptionPreference::class.java, LayoutFactory(::SubscriptionPreferenceViewHolder, R.layout.dsl_preference_item))
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
     }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    viewModel.refreshActiveSubscription()
   }
 
   private fun getConfiguration(state: AppSettingsState): DSLConfiguration {
@@ -44,7 +59,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
 
       customPref(
         BioPreference(state.self) {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_manageProfileActivity)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_manageProfileActivity)
         }
       )
 
@@ -52,7 +67,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.AccountSettingsFragment__account),
         icon = DSLSettingsIcon.from(R.drawable.ic_profile_circle_24),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_accountSettingsFragment)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_accountSettingsFragment)
         }
       )
 
@@ -60,7 +75,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.preferences__linked_devices),
         icon = DSLSettingsIcon.from(R.drawable.ic_linked_devices_24),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_deviceActivity)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_deviceActivity)
         }
       )
 
@@ -69,7 +84,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
           PaymentsPreference(
             unreadCount = state.unreadPaymentsCount
           ) {
-            Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_paymentsActivity)
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_paymentsActivity)
           }
         )
       }
@@ -80,7 +95,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.preferences__appearance),
         icon = DSLSettingsIcon.from(R.drawable.ic_appearance_24),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_appearanceSettingsFragment)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_appearanceSettingsFragment)
         }
       )
 
@@ -88,7 +103,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.preferences_chats__chats),
         icon = DSLSettingsIcon.from(R.drawable.ic_message_tinted_bitmap_24),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_chatsSettingsFragment)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_chatsSettingsFragment)
         }
       )
 
@@ -96,7 +111,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.preferences__notifications),
         icon = DSLSettingsIcon.from(R.drawable.ic_bell_24),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_notificationsSettingsFragment)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_notificationsSettingsFragment)
         }
       )
 
@@ -104,7 +119,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.preferences__privacy),
         icon = DSLSettingsIcon.from(R.drawable.ic_lock_24),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_privacySettingsFragment)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_privacySettingsFragment)
         }
       )
 
@@ -112,7 +127,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.preferences__data_and_storage),
         icon = DSLSettingsIcon.from(R.drawable.ic_archive_24dp),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_dataAndStorageSettingsFragment)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_dataAndStorageSettingsFragment)
         }
       )
 
@@ -122,7 +137,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.preferences__help),
         icon = DSLSettingsIcon.from(R.drawable.ic_help_24),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_helpSettingsFragment)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_helpSettingsFragment)
         }
       )
 
@@ -130,33 +145,63 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         title = DSLSettingsText.from(R.string.AppSettingsFragment__invite_your_friends),
         icon = DSLSettingsIcon.from(R.drawable.ic_invite_24),
         onClick = {
-          Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_inviteActivity)
+          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_inviteActivity)
         }
       )
 
-      externalLinkPref(
-        title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
-        icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
-        linkId = R.string.donate_url
-      )
-      //**TM_SA**// Start
-      clickPref(
-        title = DSLSettingsText.from(R.string.preferences__send_logs_to_telemessage),
-        icon = DSLSettingsIcon.from(R.drawable.ic_settings_logs_icon),
-        onClick = {
-          doSendLogsClicked()
-        }
-      )
+      if (FeatureFlags.donorBadges() && PlayServicesUtil.getPlayServicesStatus(requireContext()) == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
+        customPref(
+          SubscriptionPreference(
+            title = DSLSettingsText.from(
+              if (state.hasActiveSubscription) {
+                R.string.preferences__subscription
+              } else {
+                R.string.preferences__become_a_signal_sustainer
+              }
+            ),
+            icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
+            isActive = state.hasActiveSubscription,
+            onClick = { isActive ->
+              if (isActive) {
+                findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToManageDonationsFragment())
+              } else {
+                findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToSubscribeFragment())
+              }
+            }
+          )
+        )
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__signal_boost),
+          icon = DSLSettingsIcon.from(R.drawable.ic_boost_24),
+          onClick = {
+            findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToBoostsFragment())
+          }
+        )
+      } else {
+        externalLinkPref(
+          title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
+          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
+          linkId = R.string.donate_url
+        )
+        //**TM_SA**// Start
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__send_logs_to_telemessage),
+          icon = DSLSettingsIcon.from(R.drawable.ic_settings_logs_icon),
+          onClick = {
+            doSendLogsClicked()
+          }
+        )
 
-      clickPref(
-        title = DSLSettingsText.from(R.string.EditAboutFragment_about),
-        icon = DSLSettingsIcon.from(R.drawable.ic_about_icon),
-        onClick = {
-          /*Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_inviteActivity)*/
-          startAboutFragment()
-        }
-      )
-      //**TM_SA**// End
+        clickPref(
+          title = DSLSettingsText.from(R.string.EditAboutFragment_about),
+          icon = DSLSettingsIcon.from(R.drawable.ic_about_icon),
+          onClick = {
+            /*Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_inviteActivity)*/
+            startAboutFragment()
+          }
+        )
+        //**TM_SA**// End
+      }
 
       if (FeatureFlags.internalUser()) {
         dividerPref()
@@ -164,7 +209,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         clickPref(
           title = DSLSettingsText.from(R.string.preferences__internal_preferences),
           onClick = {
-            Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_internalSettingsFragment)
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_internalSettingsFragment)
           }
         )
       }
@@ -177,7 +222,6 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
       .replace(android.R.id.content, AboutPreferenceFragment())
       .addToBackStack(null)
       .commit()
-
   }
 
   private fun doSendLogsClicked() {
@@ -205,6 +249,30 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
 
   //**TM_SA**// End
 
+  private class SubscriptionPreference(
+    override val title: DSLSettingsText,
+    override val summary: DSLSettingsText? = null,
+    override val icon: DSLSettingsIcon? = null,
+    override val isEnabled: Boolean = true,
+    val isActive: Boolean = false,
+    val onClick: (Boolean) -> Unit
+  ) : PreferenceModel<SubscriptionPreference>() {
+    override fun areItemsTheSame(newItem: SubscriptionPreference): Boolean {
+      return true
+    }
+
+    override fun areContentsTheSame(newItem: SubscriptionPreference): Boolean {
+      return super.areContentsTheSame(newItem) && isActive == newItem.isActive
+    }
+  }
+
+  private class SubscriptionPreferenceViewHolder(itemView: View) : PreferenceViewHolder<SubscriptionPreference>(itemView) {
+    override fun bind(model: SubscriptionPreference) {
+      super.bind(model)
+      itemView.setOnClickListener { model.onClick(model.isActive) }
+    }
+  }
+
   private class BioPreference(val recipient: Recipient, val onClick: () -> Unit) : PreferenceModel<BioPreference>() {
     override fun areContentsTheSame(newItem: BioPreference): Boolean {
       return super.areContentsTheSame(newItem) && recipient.hasSameContent(newItem.recipient)
@@ -219,6 +287,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
 
     private val avatarView: AvatarImageView = itemView.findViewById(R.id.icon)
     private val aboutView: TextView = itemView.findViewById(R.id.about)
+    private val badgeView: BadgeImageView = itemView.findViewById(R.id.badge)
 
     override fun bind(model: BioPreference) {
       super.bind(model)
@@ -228,6 +297,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
       titleView.text = model.recipient.profileName.toString()
       summaryView.text = PhoneNumberFormatter.prettyPrint(model.recipient.requireE164())
       avatarView.setRecipient(Recipient.self())
+      badgeView.setBadgeFromRecipient(Recipient.self())
 
       titleView.visibility = View.VISIBLE
       summaryView.visibility = View.VISIBLE

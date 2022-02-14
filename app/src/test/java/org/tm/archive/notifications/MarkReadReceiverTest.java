@@ -19,6 +19,7 @@ import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.MultiDeviceReadUpdateJob;
+import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.Util;
 import org.whispersystems.libsignal.util.Pair;
@@ -37,21 +38,25 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(ApplicationDependencies.class)
+@PrepareForTest({ApplicationDependencies.class, Recipient.class})
 public class MarkReadReceiverTest {
 
   private final Context    mockContext    = mock(Context.class);
   private final JobManager mockJobManager = mock(JobManager.class);
+  private final Recipient  mockSelf       = mock(Recipient.class);
   private final List<Job>  jobs           = new LinkedList<>();
 
   @Before
   public void setUp() {
     mockStatic(ApplicationDependencies.class);
+    mockStatic(Recipient.class);
     when(ApplicationDependencies.getJobManager()).thenReturn(mockJobManager);
     doAnswer((Answer<Void>) invocation -> {
       jobs.add((Job) invocation.getArguments()[0]);
       return null;
     }).when(mockJobManager).add(any());
+    when(Recipient.self()).thenReturn(mockSelf);
+    when(mockSelf.getId()).thenReturn(RecipientId.from(-1));
   }
 
   @Test

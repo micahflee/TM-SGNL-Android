@@ -3,7 +3,7 @@ package org.tm.archive.avatar
 import android.content.Context
 import android.net.Uri
 import android.webkit.MimeTypeMap
-import org.tm.archive.database.DatabaseFactory
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mms.PartAuthority
 import org.tm.archive.util.MediaUtil
@@ -33,7 +33,7 @@ object AvatarPickerStorage {
   @JvmStatic
   fun cleanOrphans(context: Context) {
     val avatarFiles = FileStorage.getAllFiles(context, DIRECTORY, FILENAME_BASE)
-    val database = DatabaseFactory.getAvatarPickerDatabase(context)
+    val database = SignalDatabase.avatarPicker
     val photoAvatars = database
       .getAllAvatars()
       .filterIsInstance<Avatar.Photo>()

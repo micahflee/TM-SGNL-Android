@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.badges.models.Badge;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.RetrieveProfileJob;
 import org.tm.archive.mediasend.Media;
@@ -20,9 +21,11 @@ import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientForeverObserver;
+import org.tm.archive.util.DefaultValueLiveData;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.livedata.LiveDataUtil;
+import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.util.StreamDetails;
 
 import java.io.IOException;
@@ -42,6 +45,7 @@ class ManageProfileViewModel extends ViewModel {
   private final SingleLiveEvent<Event>               events;
   private final RecipientForeverObserver             observer;
   private final ManageProfileRepository              repository;
+  private final MutableLiveData<Optional<Badge>>     badge;
 
   private byte[] previousAvatar;
 
@@ -53,6 +57,7 @@ class ManageProfileViewModel extends ViewModel {
     this.aboutEmoji          = new MutableLiveData<>();
     this.events              = new SingleLiveEvent<>();
     this.repository          = new ManageProfileRepository();
+    this.badge               = new DefaultValueLiveData<>(Optional.absent());
     this.observer            = this::onRecipientChanged;
     this.avatarState         = LiveDataUtil.combineLatest(Recipient.self().live().getLiveData(), internalAvatarState, (self, state) -> new AvatarState(state, self));
 
@@ -95,6 +100,10 @@ class ManageProfileViewModel extends ViewModel {
 
   public @NonNull LiveData<String> getAboutEmoji() {
     return aboutEmoji;
+  }
+
+  public @NonNull LiveData<Optional<Badge>> getBadge() {
+    return badge;
   }
 
   public @NonNull LiveData<Event> getEvents() {
@@ -159,6 +168,7 @@ class ManageProfileViewModel extends ViewModel {
     username.postValue(recipient.getUsername().orNull());
     about.postValue(recipient.getAbout());
     aboutEmoji.postValue(recipient.getAboutEmoji());
+    badge.postValue(Optional.fromNullable(recipient.getFeaturedBadge()));
   }
 
   @Override

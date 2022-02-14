@@ -10,7 +10,6 @@ import androidx.annotation.RequiresApi;
 
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.ServiceUtil;
-import org.tm.archive.util.TextSecurePreferences;
 
 final class LogSectionNotifications implements LogSection {
 

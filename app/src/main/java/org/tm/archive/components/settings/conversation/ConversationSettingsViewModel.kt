@@ -71,7 +71,8 @@ sealed class ConversationSettingsViewModel(
         state.copy(
           sharedMedia = cursor.orNull(),
           sharedMediaIds = ids,
-          sharedMediaLoaded = true
+          sharedMediaLoaded = true,
+          displayInternalRecipientDetails = repository.isInternalRecipientDetailsEnabled()
         )
       } else {
         cursor.orNull().ensureClosed()
@@ -102,10 +103,8 @@ sealed class ConversationSettingsViewModel(
 
   override fun onCleared() {
     cleared = true
-    store.update { state ->
-      openedMediaCursors.forEach { it.ensureClosed() }
-      state.copy(sharedMedia = null)
-    }
+    openedMediaCursors.forEach { it.ensureClosed() }
+    store.clear()
   }
 
   private fun Cursor?.ensureClosed() {
@@ -114,10 +113,6 @@ sealed class ConversationSettingsViewModel(
     }
   }
 
-  open fun disableProfileSharing(): Unit = error("This ViewModel does not support this interaction")
-
-  open fun deleteSession(): Unit = error("This ViewModel does not support this interaction")
-
   open fun initiateGroupUpgrade(): Unit = error("This ViewModel does not support this interaction")
 
   private class RecipientSettingsViewModel(
@@ -125,9 +120,7 @@ sealed class ConversationSettingsViewModel(
     private val repository: ConversationSettingsRepository
   ) : ConversationSettingsViewModel(
     repository,
-    SpecificSettingsState.RecipientSettingsState(
-      displayInternalRecipientDetails = repository.isInternalRecipientDetailsEnabled()
-    )
+    SpecificSettingsState.RecipientSettingsState()
   ) {
 
     private val liveRecipient = Recipient.live(recipientId)
@@ -137,18 +130,18 @@ sealed class ConversationSettingsViewModel(
         state.copy(
           recipient = recipient,
           buttonStripState = ButtonStripPreference.State(
-            isVideoAvailable = recipient.registered == RecipientDatabase.RegisteredState.REGISTERED && !recipient.isSelf,
-            isAudioAvailable = !recipient.isGroup && !recipient.isSelf,
+            isVideoAvailable = recipient.registered == RecipientDatabase.RegisteredState.REGISTERED && !recipient.isSelf && !recipient.isBlocked && !recipient.isReleaseNotes,
+            isAudioAvailable = !recipient.isGroup && !recipient.isSelf && !recipient.isBlocked && !recipient.isReleaseNotes,
             isAudioSecure = recipient.registered == RecipientDatabase.RegisteredState.REGISTERED,
             isMuted = recipient.isMuted,
             isMuteAvailable = !recipient.isSelf,
             isSearchAvailable = true
           ),
           disappearingMessagesLifespan = recipient.expiresInSeconds,
-          canModifyBlockedState = !recipient.isSelf,
+          canModifyBlockedState = !recipient.isSelf && RecipientUtil.isBlockable(recipient),
           specificSettingsState = state.requireRecipientSettingsState().copy(
             contactLinkState = when {
-              recipient.isSelf -> ContactLinkState.NONE
+              recipient.isSelf || recipient.isReleaseNotes -> ContactLinkState.NONE
               recipient.isSystemContact -> ContactLinkState.OPEN
               else -> ContactLinkState.ADD
             }
@@ -237,14 +230,6 @@ sealed class ConversationSettingsViewModel(
     override fun unblock() {
       repository.unblock(recipientId)
     }
-
-    override fun disableProfileSharing() {
-      repository.disableProfileSharingForInternalUser(recipientId)
-    }
-
-    override fun deleteSession() {
-      repository.deleteSessionForInternalUser(recipientId)
-    }
   }
 
   private class GroupSettingsViewModel(
@@ -255,11 +240,12 @@ sealed class ConversationSettingsViewModel(
     private val liveGroup = LiveGroup(groupId)
 
     init {
-      store.update(liveGroup.groupRecipient) { recipient, state ->
+      val recipientAndIsActive = LiveDataUtil.combineLatest(liveGroup.groupRecipient, liveGroup.isActive) { r, a -> r to a }
+      store.update(recipientAndIsActive) { (recipient, isActive), state ->
         state.copy(
           recipient = recipient,
           buttonStripState = ButtonStripPreference.State(
-            isVideoAvailable = recipient.isPushV2Group,
+            isVideoAvailable = recipient.isPushV2Group && !recipient.isBlocked && isActive,
             isAudioAvailable = false,
             isAudioSecure = recipient.isPushV2Group,
             isMuted = recipient.isMuted,

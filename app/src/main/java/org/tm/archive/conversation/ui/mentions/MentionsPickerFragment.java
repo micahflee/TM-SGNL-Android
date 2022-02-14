@@ -18,7 +18,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 import org.tm.archive.util.VibrateUtil;
 
 import java.util.Collections;

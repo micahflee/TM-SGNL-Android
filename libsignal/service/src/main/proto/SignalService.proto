@@ -248,6 +248,11 @@ message DataMessage {
     optional string eraId = 1;
   }
 
+  message StoryContext {
+    optional string authorUuid = 1;
+    optional uint64 sentTimestamp = 2;
+  }
+
   message Payment {
 
     message Address {
@@ -320,6 +325,7 @@ message DataMessage {
   repeated BodyRange          bodyRanges              = 18;
   optional GroupCallUpdate    groupCallUpdate         = 19;
   optional Payment            payment                 = 20;
+  optional StoryContext       storyContext            = 21;
 }
 
 message NullMessage {
@@ -447,9 +453,10 @@ message SyncMessage {
 
   message FetchLatest {
     enum Type {
-      UNKNOWN          = 0;
-      LOCAL_PROFILE    = 1;
-      STORAGE_MANIFEST = 2;
+      UNKNOWN             = 0;
+      LOCAL_PROFILE       = 1;
+      STORAGE_MANIFEST    = 2;
+      SUBSCRIPTION_STATUS = 3;
     }
 
     optional Type type = 1;

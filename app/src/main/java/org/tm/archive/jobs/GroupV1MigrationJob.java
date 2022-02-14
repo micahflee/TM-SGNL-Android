@@ -8,7 +8,7 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeBusyException;
@@ -21,8 +21,6 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.transport.RetryLaterException;
-import org.tm.archive.util.FeatureFlags;
-import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
@@ -70,8 +68,8 @@ public class GroupV1MigrationJob extends BaseJob {
 
   public static void enqueueRoutineMigrationsIfNecessary(@NonNull Application application) {
     if (!SignalStore.registrationValues().isRegistrationComplete() ||
-        !TextSecurePreferences.isPushRegistered(application)       ||
-        TextSecurePreferences.getLocalUuid(application) == null)
+        !SignalStore.account().isRegistered()                      ||
+        SignalStore.account().getAci() == null)
     {
       Log.i(TAG, "Registration not complete. Skipping.");
       return;
@@ -88,7 +86,7 @@ public class GroupV1MigrationJob extends BaseJob {
 
     SignalExecutors.BOUNDED.execute(() -> {
       JobManager         jobManager   = ApplicationDependencies.getJobManager();
-      List<ThreadRecord> threads      = DatabaseFactory.getThreadDatabase(application).getRecentV1Groups(ROUTINE_LIMIT);
+      List<ThreadRecord> threads      = SignalDatabase.threads().getRecentV1Groups(ROUTINE_LIMIT);
       Set<RecipientId>   needsRefresh = new HashSet<>();
 
       if (threads.size() > 0) {
@@ -125,6 +123,11 @@ public class GroupV1MigrationJob extends BaseJob {
 
   @Override
   protected void onRun() throws IOException, GroupChangeBusyException, RetryLaterException {
+    if (Recipient.resolved(recipientId).isBlocked()) {
+      Log.i(TAG, "Group blocked. Skipping.");
+      return;
+    }
+
     try {
       GroupsV1MigrationUtil.migrate(context, recipientId, false);
     } catch (GroupsV1MigrationUtil.InvalidMigrationStateException e) {

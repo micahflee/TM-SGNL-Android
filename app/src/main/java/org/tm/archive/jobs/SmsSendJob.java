@@ -11,9 +11,9 @@ import android.telephony.SmsManager;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.NoSuchMessageException;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.SmsMessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -68,7 +68,7 @@ public class SmsSendJob extends SendJob {
 
   @Override
   public void onAdded() {
-    DatabaseFactory.getSmsDatabase(context).markAsSending(messageId);
+    SignalDatabase.sms().markAsSending(messageId);
   }
 
   @Override
@@ -78,7 +78,7 @@ public class SmsSendJob extends SendJob {
       throw new TooManyRetriesException();
     }
 
-    MessageDatabase  database = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase  database = SignalDatabase.sms();
     SmsMessageRecord record   = database.getSmsMessage(messageId);
 
     if (!record.isPending() && !record.isFailed()) {
@@ -96,7 +96,7 @@ public class SmsSendJob extends SendJob {
       log(TAG, String.valueOf(record.getDateSent()), "Sent message: " + messageId);
     } catch (UndeliverableMessageException ude) {
       warn(TAG, ude);
-      DatabaseFactory.getSmsDatabase(context).markAsSentFailed(record.getId());
+      SignalDatabase.sms().markAsSentFailed(record.getId());
       ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), record.getThreadId());
     }
   }
@@ -109,10 +109,10 @@ public class SmsSendJob extends SendJob {
   @Override
   public void onFailure() {
     warn(TAG, "onFailure() messageId: " + messageId);
-    long      threadId  = DatabaseFactory.getSmsDatabase(context).getThreadIdForMessage(messageId);
-    Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    long      threadId  = SignalDatabase.sms().getThreadIdForMessage(messageId);
+    Recipient recipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
 
-    DatabaseFactory.getSmsDatabase(context).markAsSentFailed(messageId);
+    SignalDatabase.sms().markAsSentFailed(messageId);
 
     if (threadId != -1 && recipient != null) {
       ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);
@@ -237,7 +237,7 @@ public class SmsSendJob extends SendJob {
   private static Job.Parameters constructParameters(@NonNull Recipient destination) {
     return new Job.Parameters.Builder()
                              .setMaxAttempts(MAX_ATTEMPTS)
-                             .setQueue(destination.getId().toQueueKey())
+                             .setQueue(destination.getId().toQueueKey() + "::SMS")
                              .addConstraint(NetworkOrCellServiceConstraint.KEY)
                              .build();
   }

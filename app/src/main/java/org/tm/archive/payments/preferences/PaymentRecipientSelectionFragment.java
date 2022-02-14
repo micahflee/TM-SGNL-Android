@@ -16,13 +16,14 @@ import org.tm.archive.R;
 import org.tm.archive.components.ContactFilterView;
 import org.tm.archive.contacts.ContactsCursorLoader.DisplayMode;
 import org.tm.archive.conversation.ConversationIntents;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.payments.CanNotSendPaymentDialog;
 import org.tm.archive.payments.preferences.model.PayeeParcelable;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.SimpleTask;
+import org.tm.archive.util.navigation.SafeNavigation;
 import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.function.Consumer;
@@ -106,7 +107,7 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
 
   private void createPayment(@NonNull RecipientId recipientId) {
     hideKeyboard();
-    Navigation.findNavController(requireView()).navigate(PaymentRecipientSelectionFragmentDirections.actionPaymentRecipientSelectionToCreatePayment(new PayeeParcelable(recipientId)));
+    SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), PaymentRecipientSelectionFragmentDirections.actionPaymentRecipientSelectionToCreatePayment(new PayeeParcelable(recipientId)));
   }
 
   private void showWarningDialog(@NonNull RecipientId recipientId) {
@@ -116,7 +117,7 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
 
   private void openConversation(@NonNull RecipientId recipientId) {
     SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
-                   () -> DatabaseFactory.getThreadDatabase(requireContext()).getThreadIdIfExistsFor(recipientId),
+                   () -> SignalDatabase.threads().getThreadIdIfExistsFor(recipientId),
                    threadId -> startActivity(ConversationIntents.createBuilder(requireContext(), recipientId, threadId).build()));
   }
 }

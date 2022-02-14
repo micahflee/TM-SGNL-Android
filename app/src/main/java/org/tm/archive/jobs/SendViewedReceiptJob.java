@@ -7,8 +7,8 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase.MarkedMessageInfo;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -150,6 +150,11 @@ public class SendViewedReceiptJob extends BaseJob {
 
     Recipient recipient = Recipient.resolved(recipientId);
 
+    if (recipient.isSelf()) {
+      Log.i(TAG, "Not sending view receipt to self.");
+      return;
+    }
+
     if (recipient.isBlocked()) {
       Log.w(TAG, "Refusing to send receipts to blocked recipient");
       return;
@@ -176,7 +181,7 @@ public class SendViewedReceiptJob extends BaseJob {
                                                          receiptMessage);
 
     if (Util.hasItems(messageIds)) {
-      DatabaseFactory.getMessageLogDatabase(context).insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageIds);
+      SignalDatabase.messageLog().insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageIds);
     }
   }
 

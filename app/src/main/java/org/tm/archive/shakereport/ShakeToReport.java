@@ -13,13 +13,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import org.signal.core.util.ShakeDetector;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
-import org.signal.core.util.tracing.Tracer;
 import org.tm.archive.R;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.logsubmit.SubmitDebugLogRepository;
 import org.tm.archive.sharing.ShareIntents;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.views.SimpleProgressDialog;
 

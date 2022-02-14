@@ -30,6 +30,7 @@ import org.whispersystems.signalservice.api.groupsv2.DecryptedGroupUtil;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
 import org.whispersystems.signalservice.api.messages.SignalServiceGroupV2;
+import org.whispersystems.signalservice.api.push.ACI;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
@@ -73,8 +74,8 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
 
     Set<RecipientId> recipients = Stream.concat(Stream.of(memberUuids), Stream.of(pendingUuids))
                                         .filter(uuid -> !UuidUtil.UNKNOWN_UUID.equals(uuid))
-                                        .filter(uuid -> !Recipient.self().getUuid().get().equals(uuid))
-                                        .map(uuid -> Recipient.externalPush(context, uuid, null, false))
+                                        .filter(uuid -> !Recipient.self().requireAci().uuid().equals(uuid))
+                                        .map(uuid -> Recipient.externalPush(context, ACI.from(uuid), null, false))
                                         .filter(recipient -> recipient.getRegistered() != RecipientDatabase.RegisteredState.NOT_REGISTERED)
                                         .map(Recipient::getId)
                                         .collect(Collectors.toSet());
@@ -129,9 +130,15 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
       throw new NotPushRegisteredException();
     }
 
-    GroupId.V2      groupId        = GroupId.v2(GroupUtil.requireMasterKey(groupContextV2.getMasterKey().toByteArray()));
-    List<Recipient> destinations   = Stream.of(recipients).map(Recipient::resolved).toList();
-    List<Recipient> completions    = deliver(destinations, groupId);
+    GroupId.V2 groupId = GroupId.v2(GroupUtil.requireMasterKey(groupContextV2.getMasterKey().toByteArray()));
+
+    if (Recipient.externalGroupExact(context, groupId).isBlocked()) {
+      Log.i(TAG, "Not updating group state for blocked group " + groupId);
+      return;
+    }
+
+    List<Recipient> destinations = Stream.of(recipients).map(Recipient::resolved).toList();
+    List<Recipient> completions  = deliver(destinations, groupId);
 
     for (Recipient completion : completions) {
       recipients.remove(completion.getId());

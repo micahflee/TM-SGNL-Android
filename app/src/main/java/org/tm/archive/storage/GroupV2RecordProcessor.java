@@ -7,9 +7,9 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.zkgroup.groups.GroupMasterKey;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupsV1MigrationUtil;
 import org.tm.archive.recipients.RecipientId;
@@ -30,7 +30,7 @@ public final class GroupV2RecordProcessor extends DefaultStorageRecordProcessor<
   private final Map<GroupId.V2, GroupId.V1> gv1GroupsByExpectedGv2Id;
 
   public GroupV2RecordProcessor(@NonNull Context context) {
-    this(context, DatabaseFactory.getRecipientDatabase(context), DatabaseFactory.getGroupDatabase(context));
+    this(context, SignalDatabase.recipients(), SignalDatabase.groups());
   }
 
   GroupV2RecordProcessor(@NonNull Context context, @NonNull RecipientDatabase recipientDatabase, @NonNull GroupDatabase groupDatabase) {
@@ -51,7 +51,7 @@ public final class GroupV2RecordProcessor extends DefaultStorageRecordProcessor<
 
     Optional<RecipientId> recipientId = recipientDatabase.getByGroupId(groupId);
 
-    return recipientId.transform(recipientDatabase::getRecipientSettingsForSync)
+    return recipientId.transform(recipientDatabase::getRecordForSync)
                       .transform(settings -> {
                         if (settings.getSyncExtras().getGroupMasterKey() != null) {
                           return StorageSyncModels.localToRemoteRecord(settings);

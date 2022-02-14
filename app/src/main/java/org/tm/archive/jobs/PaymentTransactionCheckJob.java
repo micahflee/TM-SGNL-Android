@@ -3,8 +3,8 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -52,7 +52,7 @@ public final class PaymentTransactionCheckJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    PaymentDatabase paymentDatabase = DatabaseFactory.getPaymentDatabase(context);
+    PaymentDatabase paymentDatabase = SignalDatabase.payments();
 
     PaymentDatabase.PaymentTransaction payment = paymentDatabase.getPayment(uuid);
 

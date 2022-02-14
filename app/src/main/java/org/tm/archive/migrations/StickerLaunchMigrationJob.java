@@ -4,7 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.StickerDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -50,7 +50,7 @@ public class StickerLaunchMigrationJob extends MigrationJob {
 
   private static void installPack(@NonNull Context context, @NonNull BlessedPacks.Pack pack) {
     JobManager      jobManager      = ApplicationDependencies.getJobManager();
-    StickerDatabase stickerDatabase = DatabaseFactory.getStickerDatabase(context);
+    StickerDatabase stickerDatabase = SignalDatabase.stickers();
 
     if (stickerDatabase.isPackAvailableAsReference(pack.getPackId())) {
       stickerDatabase.markPackAsInstalled(pack.getPackId(), false);

@@ -12,8 +12,8 @@ import androidx.lifecycle.ViewModelProviders;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MediaDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.preferences.widgets.StorageGraphView;
 
 import java.util.Arrays;
@@ -32,8 +32,7 @@ public class ApplicationPreferencesViewModel extends ViewModel {
 
   void refreshStorageBreakdown(@NonNull Context context) {
     SignalExecutors.BOUNDED.execute(() -> {
-      MediaDatabase.StorageBreakdown breakdown = DatabaseFactory.getMediaDatabase(context)
-                                                                .getStorageBreakdown();
+      MediaDatabase.StorageBreakdown breakdown = SignalDatabase.media().getStorageBreakdown();
 
       StorageGraphView.StorageBreakdown latestStorageBreakdown = new StorageGraphView.StorageBreakdown(Arrays.asList(
         new StorageGraphView.Entry(ContextCompat.getColor(context, R.color.storage_color_photos), breakdown.getPhotoSize()),

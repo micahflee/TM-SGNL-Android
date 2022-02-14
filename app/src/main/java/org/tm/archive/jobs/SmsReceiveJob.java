@@ -16,13 +16,14 @@ import com.google.android.gms.common.api.Status;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MessageDatabase.InsertResult;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.SqlCipherMigrationConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.recipients.Recipient;
@@ -89,7 +90,7 @@ public class SmsReceiveJob extends BaseJob {
   public void onRun() throws MigrationPendingException, RetryLaterException {
     Optional<IncomingTextMessage> message = assembleMessageFragments(pdus, subscriptionId);
 
-    if (TextSecurePreferences.getLocalUuid(context) == null && TextSecurePreferences.getLocalNumber(context) == null) {
+    if (SignalStore.account().getE164() == null) {
       Log.i(TAG, "Received an SMS before we're registered...");
 
       if (message.isPresent()) {
@@ -150,7 +151,7 @@ public class SmsReceiveJob extends BaseJob {
   }
 
   private Optional<InsertResult> storeMessage(IncomingTextMessage message) throws MigrationPendingException {
-    MessageDatabase database = DatabaseFactory.getSmsDatabase(context);
+    MessageDatabase database = SignalDatabase.sms();
     database.ensureMigration();
 
     if (TextSecurePreferences.getNeedsSqlCipherMigration(context)) {

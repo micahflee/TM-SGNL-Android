@@ -15,6 +15,7 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.RecyclerView
+import org.signal.core.util.ThreadUtil
 import org.tm.archive.R
 import org.tm.archive.avatar.Avatar
 import org.tm.archive.avatar.AvatarBundler
@@ -27,10 +28,10 @@ import org.tm.archive.groups.ParcelableGroupId
 import org.tm.archive.mediasend.AvatarSelectionActivity
 import org.tm.archive.mediasend.Media
 import org.tm.archive.permissions.Permissions
-import org.tm.archive.util.MappingAdapter
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.navigation.safeNavigate
 import org.tm.archive.util.visible
-import java.util.Objects
 
 /**
  * Primary Avatar picker fragment, displays current user avatar and a list of recently used avatars and defaults.
@@ -111,7 +112,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
               putParcelable(SELECT_AVATAR_MEDIA, it)
             }
           )
-          Navigation.findNavController(v).popBackStack()
+          ThreadUtil.runOnMain { Navigation.findNavController(v).popBackStack() }
         },
         {
           setFragmentResult(
@@ -120,7 +121,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
               putBoolean(SELECT_AVATAR_CLEAR, true)
             }
           )
-          Navigation.findNavController(v).popBackStack()
+          ThreadUtil.runOnMain { Navigation.findNavController(v).popBackStack() }
         }
       )
     }
@@ -147,9 +148,10 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
     ViewUtil.hideKeyboard(requireContext(), requireView())
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     if (requestCode == REQUEST_CODE_SELECT_IMAGE && resultCode == Activity.RESULT_OK && data != null) {
-      val media: Media = Objects.requireNonNull(data.getParcelableExtra(AvatarSelectionActivity.EXTRA_MEDIA))
+      val media: Media = requireNotNull(data.getParcelableExtra(AvatarSelectionActivity.EXTRA_MEDIA))
       viewModel.onAvatarPhotoSelectionCompleted(media)
     } else {
       super.onActivityResult(requestCode, resultCode, data)
@@ -195,23 +197,24 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
     }
   }
 
-  fun openPhotoEditor(photo: Avatar.Photo) {
+  private fun openPhotoEditor(photo: Avatar.Photo) {
     Navigation.findNavController(requireView())
-      .navigate(AvatarPickerFragmentDirections.actionAvatarPickerFragmentToAvatarPhotoEditorFragment(AvatarBundler.bundlePhoto(photo)))
+      .safeNavigate(AvatarPickerFragmentDirections.actionAvatarPickerFragmentToAvatarPhotoEditorFragment(AvatarBundler.bundlePhoto(photo)))
   }
 
-  fun openVectorEditor(vector: Avatar.Vector) {
+  private fun openVectorEditor(vector: Avatar.Vector) {
     Navigation.findNavController(requireView())
-      .navigate(AvatarPickerFragmentDirections.actionAvatarPickerFragmentToVectorAvatarCreationFragment(AvatarBundler.bundleVector(vector)))
+      .safeNavigate(AvatarPickerFragmentDirections.actionAvatarPickerFragmentToVectorAvatarCreationFragment(AvatarBundler.bundleVector(vector)))
   }
 
-  fun openTextEditor(text: Avatar.Text?) {
+  private fun openTextEditor(text: Avatar.Text?) {
     val bundle = if (text != null) AvatarBundler.bundleText(text) else null
     Navigation.findNavController(requireView())
-      .navigate(AvatarPickerFragmentDirections.actionAvatarPickerFragmentToTextAvatarCreationFragment(bundle))
+      .safeNavigate(AvatarPickerFragmentDirections.actionAvatarPickerFragmentToTextAvatarCreationFragment(bundle))
   }
 
-  fun openCameraCapture() {
+  @Suppress("DEPRECATION")
+  private fun openCameraCapture() {
     Permissions.with(this)
       .request(Manifest.permission.CAMERA)
       .ifNecessary()
@@ -226,7 +229,8 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
       .execute()
   }
 
-  fun openGallery() {
+  @Suppress("DEPRECATION")
+  private fun openGallery() {
     Permissions.with(this)
       .request(Manifest.permission.READ_EXTERNAL_STORAGE)
       .ifNecessary()

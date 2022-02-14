@@ -11,9 +11,9 @@ import org.signal.core.util.StreamUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.conversation.ConversationMessage.ConversationMessageFactory;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MmsDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.SmsDatabase;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.MmsMessageRecord;
@@ -32,8 +32,8 @@ class LongMessageRepository {
   private final MessageDatabase smsDatabase;
 
   LongMessageRepository(@NonNull Context context) {
-    this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
-    this.smsDatabase = DatabaseFactory.getSmsDatabase(context);
+    this.mmsDatabase = SignalDatabase.mms();
+    this.smsDatabase = SignalDatabase.sms();
   }
 
   void getMessage(@NonNull Context context, long messageId, boolean isMms, @NonNull Callback<Optional<LongMessage>> callback) {

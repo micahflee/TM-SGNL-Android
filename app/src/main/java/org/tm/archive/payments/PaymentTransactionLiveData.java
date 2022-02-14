@@ -4,9 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.DatabaseObserver;
 import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.util.concurrent.SerialMonoLifoExecutor;
 
@@ -22,7 +22,7 @@ public final class PaymentTransactionLiveData extends LiveData<PaymentDatabase.P
 
   public PaymentTransactionLiveData(@NonNull UUID paymentId) {
     this.paymentId       = paymentId;
-    this.paymentDatabase = DatabaseFactory.getPaymentDatabase(ApplicationDependencies.getApplication());
+    this.paymentDatabase = SignalDatabase.payments();
     this.observer        = this::getPaymentTransaction;
     this.executor        = new SerialMonoLifoExecutor(SignalExecutors.BOUNDED);
   }

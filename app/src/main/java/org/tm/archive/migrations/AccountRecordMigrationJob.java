@@ -3,13 +3,13 @@ package org.tm.archive.migrations;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.StorageSyncJob;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.TextSecurePreferences;
 
 /**
  * Marks the AccountRecord as dirty and runs a storage sync. Can be enqueued when we've added a new
@@ -41,12 +41,12 @@ public class AccountRecordMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
-    if (!TextSecurePreferences.isPushRegistered(context) || TextSecurePreferences.getLocalUuid(context) == null) {
+    if (!SignalStore.account().isRegistered() || SignalStore.account().getAci() == null) {
       Log.w(TAG, "Not registered!");
       return;
     }
 
-    DatabaseFactory.getRecipientDatabase(context).markNeedsSync(Recipient.self().getId());
+    SignalDatabase.recipients().markNeedsSync(Recipient.self().getId());
     ApplicationDependencies.getJobManager().add(new StorageSyncJob());
   }
 

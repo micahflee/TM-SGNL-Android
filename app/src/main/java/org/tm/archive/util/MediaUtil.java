@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
+import androidx.exifinterface.media.ExifInterface;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
@@ -24,7 +25,8 @@ import com.bumptech.glide.load.resource.gif.GifDrawable;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.mediasend.Media;
 import org.tm.archive.mms.AudioSlide;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.mms.DocumentSlide;
@@ -188,7 +190,7 @@ public class MediaUtil {
       try {
         if (MediaUtil.isJpegType(contentType)) {
           attachmentStream = PartAuthority.getAttachmentStream(context, uri);
-          dimens = BitmapUtil.getExifDimensions(attachmentStream);
+          dimens = BitmapUtil.getExifDimensions(new ExifInterface(attachmentStream));
           attachmentStream.close();
           attachmentStream = null;
         }
@@ -283,12 +285,16 @@ public class MediaUtil {
     return (null != contentType) && contentType.startsWith("text/");
   }
 
+  public static boolean isNonGifVideo(Media media) {
+    return isVideo(media.getMimeType()) && !media.isVideoGif();
+  }
+
   public static boolean isImageType(String contentType) {
     if (contentType == null) {
       return false;
     }
 
-    return contentType.startsWith("image/") ||
+    return (contentType.startsWith("image/") && !contentType.equals("image/svg+xml")) ||
            contentType.equals(MediaStore.Images.Media.CONTENT_TYPE);
   }
 
@@ -399,7 +405,7 @@ public class MediaUtil {
     {
       try {
         AttachmentId    attachmentId = PartAuthority.requireAttachmentId(uri);
-        MediaDataSource source       = DatabaseFactory.getAttachmentDatabase(context).mediaDataSourceFor(attachmentId);
+        MediaDataSource source       = SignalDatabase.attachments().mediaDataSourceFor(attachmentId);
         return extractFrame(source, timeUs);
       } catch (IOException e) {
         Log.w(TAG, "Failed to extract frame for URI: " + uri, e);

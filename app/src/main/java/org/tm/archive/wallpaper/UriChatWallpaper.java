@@ -10,15 +10,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
-import org.jetbrains.annotations.NotNull;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.conversation.colors.ChatColors;
-import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.database.model.databaseprotos.Wallpaper;
 import org.tm.archive.mms.DecryptableStreamUriLoader;
 import org.tm.archive.mms.GlideApp;

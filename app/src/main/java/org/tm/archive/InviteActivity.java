@@ -24,7 +24,7 @@ import org.tm.archive.components.ContactFilterView;
 import org.tm.archive.components.ContactFilterView.OnFilterChangedListener;
 import org.tm.archive.contacts.ContactsCursorLoader.DisplayMode;
 import org.tm.archive.contacts.SelectedContact;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.SelectionLimits;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -255,7 +255,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
         MessageSender.send(context, new OutgoingTextMessage(recipient, message, subscriptionId), -1L, true, null, null);
 
         if (recipient.getContactUri() != null) {
-          DatabaseFactory.getRecipientDatabase(context).setHasSentInvite(recipient.getId());
+          SignalDatabase.recipients().setHasSentInvite(recipient.getId());
         }
       }
 

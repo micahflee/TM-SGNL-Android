@@ -9,6 +9,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.TextSecurePreferences;
@@ -91,6 +92,11 @@ public class MultiDeviceConfigurationUpdateJob extends BaseJob {
 
     if (!TextSecurePreferences.isMultiDevice(context)) {
       Log.i(TAG, "Not multi device, aborting...");
+      return;
+    }
+
+    if (SignalStore.account().isLinkedDevice()) {
+      Log.i(TAG, "Not primary device, aborting...");
       return;
     }
 

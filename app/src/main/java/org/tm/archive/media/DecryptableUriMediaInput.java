@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import org.tm.archive.attachments.AttachmentId;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.mms.PartUriParser;
 import org.tm.archive.providers.BlobProvider;
@@ -41,8 +41,7 @@ public final class DecryptableUriMediaInput {
       throw new AssertionError();
     }
 
-    MediaDataSource mediaDataSource = DatabaseFactory.getAttachmentDatabase(context)
-                                                     .mediaDataSourceFor(partId);
+    MediaDataSource mediaDataSource = SignalDatabase.attachments().mediaDataSourceFor(partId);
 
     if (mediaDataSource == null) {
       throw new AssertionError();

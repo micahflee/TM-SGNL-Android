@@ -8,9 +8,9 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 
@@ -23,8 +23,8 @@ final class MentionsPickerRepository {
   private final GroupDatabase     groupDatabase;
 
   MentionsPickerRepository(@NonNull Context context) {
-    recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    groupDatabase     = DatabaseFactory.getGroupDatabase(context);
+    recipientDatabase = SignalDatabase.recipients();
+    groupDatabase     = SignalDatabase.groups();
   }
 
   @WorkerThread

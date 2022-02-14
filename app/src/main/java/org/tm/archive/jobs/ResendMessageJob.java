@@ -9,10 +9,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.crypto.storage.SignalSenderKeyStore;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.GroupDatabase.GroupRecord;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
@@ -138,7 +136,7 @@ public class ResendMessageJob extends BaseJob {
     Content                          contentToSend = content;
 
     if (distributionId != null) {
-      Optional<GroupRecord> groupRecord = DatabaseFactory.getGroupDatabase(context).getGroupByDistributionId(distributionId);
+      Optional<GroupRecord> groupRecord = SignalDatabase.groups().getGroupByDistributionId(distributionId);
 
       if (!groupRecord.isPresent()) {
         Log.w(TAG, "Could not find a matching group for the distributionId! Skipping message send.");
@@ -163,7 +161,7 @@ public class ResendMessageJob extends BaseJob {
                                                     .map(device -> new SignalProtocolAddress(recipient.requireServiceId(), device))
                                                     .collect(Collectors.toList());
 
-      ApplicationDependencies.getSenderKeyStore().markSenderKeySharedWith(distributionId, addresses);
+      ApplicationDependencies.getProtocolStore().aci().markSenderKeySharedWith(distributionId, addresses);
     }
   }
 

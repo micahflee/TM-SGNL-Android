@@ -36,10 +36,12 @@ import org.tm.archive.profiles.AvatarHelper;
 import org.tm.archive.profiles.edit.EditProfileActivity;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.registration.RegistrationUtil;
+import org.tm.archive.registration.fragments.RegistrationViewDelegate;
 import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.SupportEmailUtil;
 import org.tm.archive.util.ViewUtil;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 public class PinRestoreEntryFragment extends LoggingFragment {
   private static final String TAG = Log.tag(PinRestoreActivity.class);
@@ -66,6 +68,8 @@ public class PinRestoreEntryFragment extends LoggingFragment {
   }
 
   private void initViews(@NonNull View root) {
+    RegistrationViewDelegate.setDebugLogSubmitMultiTapView(root.findViewById(R.id.pin_restore_pin_title));
+
     pinEntry       = root.findViewById(R.id.pin_restore_pin_input);
     pinButton      = root.findViewById(R.id.pin_restore_pin_confirm);
     errorLabel     = root.findViewById(R.id.pin_restore_pin_input_label);
@@ -223,7 +227,7 @@ public class PinRestoreEntryFragment extends LoggingFragment {
   }
 
   private void onAccountLocked() {
-    Navigation.findNavController(requireView()).navigate(PinRestoreEntryFragmentDirections.actionAccountLocked());
+    SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), PinRestoreEntryFragmentDirections.actionAccountLocked());
   }
 
   private void handleSuccess() {

@@ -9,10 +9,10 @@ import org.signal.core.util.logging.Log
 import org.signal.storageservice.protos.groups.local.DecryptedGroup
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMember
 import org.tm.archive.contacts.sync.DirectoryHelper
-import org.tm.archive.database.DatabaseFactory
 import org.tm.archive.database.GroupDatabase
-import org.tm.archive.database.IdentityDatabase
 import org.tm.archive.database.MediaDatabase
+import org.tm.archive.database.SignalDatabase
+import org.tm.archive.database.model.IdentityRecord
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.GroupManager
@@ -26,7 +26,6 @@ import org.tm.archive.recipients.RecipientId
 import org.tm.archive.recipients.RecipientUtil
 import org.tm.archive.util.FeatureFlags
 import org.whispersystems.libsignal.util.guava.Optional
-import org.whispersystems.libsignal.util.guava.Preconditions
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -41,44 +40,40 @@ class ConversationSettingsRepository(
     return if (threadId <= 0) {
       Optional.absent()
     } else {
-      Optional.of(DatabaseFactory.getMediaDatabase(context).getGalleryMediaForThread(threadId, MediaDatabase.Sorting.Newest))
+      Optional.of(SignalDatabase.media.getGalleryMediaForThread(threadId, MediaDatabase.Sorting.Newest))
     }
   }
 
   fun getThreadId(recipientId: RecipientId, consumer: (Long) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      consumer(DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(recipientId))
+      consumer(SignalDatabase.threads.getThreadIdIfExistsFor(recipientId))
     }
   }
 
   fun getThreadId(groupId: GroupId, consumer: (Long) -> Unit) {
     SignalExecutors.BOUNDED.execute {
       val recipientId = Recipient.externalGroupExact(context, groupId).id
-      consumer(DatabaseFactory.getThreadDatabase(context).getThreadIdIfExistsFor(recipientId))
+      consumer(SignalDatabase.threads.getThreadIdIfExistsFor(recipientId))
     }
   }
 
   fun isInternalRecipientDetailsEnabled(): Boolean = SignalStore.internalValues().recipientDetails()
 
   fun hasGroups(consumer: (Boolean) -> Unit) {
-    SignalExecutors.BOUNDED.execute { consumer(DatabaseFactory.getGroupDatabase(context).activeGroupCount > 0) }
+    SignalExecutors.BOUNDED.execute { consumer(SignalDatabase.groups.activeGroupCount > 0) }
   }
 
-  fun getIdentity(recipientId: RecipientId, consumer: (IdentityDatabase.IdentityRecord?) -> Unit) {
+  fun getIdentity(recipientId: RecipientId, consumer: (IdentityRecord?) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      consumer(
-        DatabaseFactory.getIdentityDatabase(context)
-          .getIdentity(recipientId)
-          .orNull()
-      )
+      consumer(ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(recipientId).orNull())
     }
   }
 
   fun getGroupsInCommon(recipientId: RecipientId, consumer: (List<Recipient>) -> Unit) {
     SignalExecutors.BOUNDED.execute {
       consumer(
-        DatabaseFactory
-          .getGroupDatabase(context)
+        SignalDatabase
+          .groups
           .getPushGroupsContainingMember(recipientId)
           .asSequence()
           .filter { it.members.contains(Recipient.self().id) }
@@ -92,7 +87,7 @@ class ConversationSettingsRepository(
 
   fun getGroupMembership(recipientId: RecipientId, consumer: (List<RecipientId>) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val groupDatabase = DatabaseFactory.getGroupDatabase(context)
+      val groupDatabase = SignalDatabase.groups
       val groupRecords = groupDatabase.getPushGroupsContainingMember(recipientId)
       val groupRecipients = ArrayList<RecipientId>(groupRecords.size)
       for (groupRecord in groupRecords) {
@@ -114,13 +109,13 @@ class ConversationSettingsRepository(
 
   fun setMuteUntil(recipientId: RecipientId, until: Long) {
     SignalExecutors.BOUNDED.execute {
-      DatabaseFactory.getRecipientDatabase(context).setMuted(recipientId, until)
+      SignalDatabase.recipients.setMuted(recipientId, until)
     }
   }
 
   fun getGroupCapacity(groupId: GroupId, consumer: (GroupCapacityResult) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val groupRecord: GroupDatabase.GroupRecord = DatabaseFactory.getGroupDatabase(context).getGroup(groupId).get()
+      val groupRecord: GroupDatabase.GroupRecord = SignalDatabase.groups.getGroup(groupId).get()
       consumer(
         if (groupRecord.isV2Group) {
           val decryptedGroup: DecryptedGroup = groupRecord.requireV2GroupProperties().decryptedGroup
@@ -143,7 +138,7 @@ class ConversationSettingsRepository(
 
   fun addMembers(groupId: GroupId, selected: List<RecipientId>, consumer: (GroupAddMembersResult) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val record: GroupDatabase.GroupRecord = DatabaseFactory.getGroupDatabase(context).getGroup(groupId).get()
+      val record: GroupDatabase.GroupRecord = SignalDatabase.groups.getGroup(groupId).get()
 
       if (record.isAnnouncementGroup) {
         val needsResolve = selected
@@ -176,14 +171,18 @@ class ConversationSettingsRepository(
   fun setMuteUntil(groupId: GroupId, until: Long) {
     SignalExecutors.BOUNDED.execute {
       val recipientId = Recipient.externalGroupExact(context, groupId).id
-      DatabaseFactory.getRecipientDatabase(context).setMuted(recipientId, until)
+      SignalDatabase.recipients.setMuted(recipientId, until)
     }
   }
 
   fun block(recipientId: RecipientId) {
     SignalExecutors.BOUNDED.execute {
       val recipient = Recipient.resolved(recipientId)
-      RecipientUtil.blockNonGroup(context, recipient)
+      if (recipient.isGroup) {
+        RecipientUtil.block(context, recipient)
+      } else {
+        RecipientUtil.blockNonGroup(context, recipient)
+      }
     }
   }
 
@@ -205,29 +204,6 @@ class ConversationSettingsRepository(
     SignalExecutors.BOUNDED.execute {
       val recipient = Recipient.externalGroupExact(context, groupId)
       RecipientUtil.unblock(context, recipient)
-    }
-  }
-
-  fun disableProfileSharingForInternalUser(recipientId: RecipientId) {
-    Preconditions.checkArgument(FeatureFlags.internalUser(), "Internal users only!")
-
-    SignalExecutors.BOUNDED.execute {
-      DatabaseFactory.getRecipientDatabase(context).setProfileSharing(recipientId, false)
-    }
-  }
-
-  fun deleteSessionForInternalUser(recipientId: RecipientId) {
-    Preconditions.checkArgument(FeatureFlags.internalUser(), "Internal users only!")
-
-    SignalExecutors.BOUNDED.execute {
-      val recipient = Recipient.resolved(recipientId)
-
-      if (recipient.hasUuid()) {
-        DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireUuid().toString())
-      }
-      if (recipient.hasE164()) {
-        DatabaseFactory.getSessionDatabase(context).deleteAllFor(recipient.requireE164())
-      }
     }
   }
 

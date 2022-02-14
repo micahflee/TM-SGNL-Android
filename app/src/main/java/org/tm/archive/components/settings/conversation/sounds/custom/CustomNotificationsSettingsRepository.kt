@@ -4,8 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.annotation.WorkerThread
 import org.signal.core.util.concurrent.SignalExecutors
-import org.tm.archive.database.DatabaseFactory
 import org.tm.archive.database.RecipientDatabase
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.notifications.NotificationChannels
 import org.tm.archive.recipients.Recipient
@@ -17,19 +17,20 @@ class CustomNotificationsSettingsRepository(context: Context) {
   private val context = context.applicationContext
   private val executor = SerialExecutor(SignalExecutors.BOUNDED)
 
-  fun initialize(recipientId: RecipientId, onInitializationComplete: () -> Unit) {
+  fun ensureCustomChannelConsistency(recipientId: RecipientId, onComplete: () -> Unit) {
     executor.execute {
-      val recipient = Recipient.resolved(recipientId)
-      val database = DatabaseFactory.getRecipientDatabase(context)
-
-      if (NotificationChannels.supported() && recipient.notificationChannel != null) {
-        database.setMessageRingtone(recipient.id, NotificationChannels.getMessageRingtone(context, recipient))
-        database.setMessageVibrate(recipient.id, RecipientDatabase.VibrateState.fromBoolean(NotificationChannels.getMessageVibrate(context, recipient)))
-
+      if (NotificationChannels.supported()) {
         NotificationChannels.ensureCustomChannelConsistency(context)
+
+        val recipient = Recipient.resolved(recipientId)
+        val database = SignalDatabase.recipients
+        if (recipient.notificationChannel != null) {
+          database.setMessageRingtone(recipient.id, NotificationChannels.getMessageRingtone(context, recipient))
+          database.setMessageVibrate(recipient.id, RecipientDatabase.VibrateState.fromBoolean(NotificationChannels.getMessageVibrate(context, recipient)))
+        }
       }
 
-      onInitializationComplete()
+      onComplete()
     }
   }
 
@@ -47,14 +48,14 @@ class CustomNotificationsSettingsRepository(context: Context) {
     executor.execute {
       val recipient: Recipient = Recipient.resolved(recipientId)
 
-      DatabaseFactory.getRecipientDatabase(context).setMessageVibrate(recipient.id, vibrateState)
+      SignalDatabase.recipients.setMessageVibrate(recipient.id, vibrateState)
       NotificationChannels.updateMessageVibrate(context, recipient, vibrateState)
     }
   }
 
   fun setCallingVibrate(recipientId: RecipientId, vibrateState: RecipientDatabase.VibrateState) {
     executor.execute {
-      DatabaseFactory.getRecipientDatabase(context).setCallVibrate(recipientId, vibrateState)
+      SignalDatabase.recipients.setCallVibrate(recipientId, vibrateState)
     }
   }
 
@@ -64,7 +65,7 @@ class CustomNotificationsSettingsRepository(context: Context) {
       val defaultValue = SignalStore.settings().messageNotificationSound
       val newValue: Uri? = if (defaultValue == sound) null else sound ?: Uri.EMPTY
 
-      DatabaseFactory.getRecipientDatabase(context).setMessageRingtone(recipient.id, newValue)
+      SignalDatabase.recipients.setMessageRingtone(recipient.id, newValue)
       NotificationChannels.updateMessageRingtone(context, recipient, newValue)
     }
   }
@@ -74,7 +75,7 @@ class CustomNotificationsSettingsRepository(context: Context) {
       val defaultValue = SignalStore.settings().callRingtone
       val newValue: Uri? = if (defaultValue == sound) null else sound ?: Uri.EMPTY
 
-      DatabaseFactory.getRecipientDatabase(context).setCallRingtone(recipientId, newValue)
+      SignalDatabase.recipients.setCallRingtone(recipientId, newValue)
     }
   }
 
@@ -82,13 +83,13 @@ class CustomNotificationsSettingsRepository(context: Context) {
   private fun createCustomNotificationChannel(recipientId: RecipientId) {
     val recipient: Recipient = Recipient.resolved(recipientId)
     val channelId = NotificationChannels.createChannelFor(context, recipient)
-    DatabaseFactory.getRecipientDatabase(context).setNotificationChannel(recipient.id, channelId)
+    SignalDatabase.recipients.setNotificationChannel(recipient.id, channelId)
   }
 
   @WorkerThread
   private fun deleteCustomNotificationChannel(recipientId: RecipientId) {
     val recipient: Recipient = Recipient.resolved(recipientId)
-    DatabaseFactory.getRecipientDatabase(context).setNotificationChannel(recipient.id, null)
+    SignalDatabase.recipients.setNotificationChannel(recipient.id, null)
     NotificationChannels.deleteChannelFor(context, recipient)
   }
 }

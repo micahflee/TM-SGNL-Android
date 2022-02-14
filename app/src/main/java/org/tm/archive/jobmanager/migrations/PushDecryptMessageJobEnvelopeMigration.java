@@ -5,22 +5,13 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.PushDatabase;
-import org.tm.archive.groups.BadGroupIdException;
-import org.tm.archive.groups.GroupId;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.JobMigration;
 import org.tm.archive.jobs.FailingJob;
-import org.tm.archive.recipients.Recipient;
-import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.Base64;
-import org.tm.archive.util.GroupUtil;
-import org.whispersystems.signalservice.api.messages.SignalServiceContent;
 import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
-
-import java.io.IOException;
 
 /**
  * We removed the messageId property from the job data and replaced it with a serialized envelope,
@@ -34,7 +25,7 @@ public class PushDecryptMessageJobEnvelopeMigration extends JobMigration {
 
   public PushDecryptMessageJobEnvelopeMigration(@NonNull Context context) {
     super(8);
-    this.pushDatabase = DatabaseFactory.getPushDatabase(context);
+    this.pushDatabase = SignalDatabase.push();
   }
 
   @Override

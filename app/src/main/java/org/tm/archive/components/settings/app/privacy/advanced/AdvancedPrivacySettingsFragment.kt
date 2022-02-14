@@ -9,7 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.widget.TextViewCompat
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.tm.archive.R
@@ -18,11 +18,11 @@ import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
+import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.registration.RegistrationNavigationActivity
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.SpanUtil
-import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.ViewUtil
 
 class AdvancedPrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__advanced) {
@@ -67,7 +67,7 @@ class AdvancedPrivacySettingsFragment : DSLSettingsFragment(R.string.preferences
     val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
     val factory = AdvancedPrivacySettingsViewModel.Factory(preferences, repository)
 
-    viewModel = ViewModelProviders.of(this, factory)[AdvancedPrivacySettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this, factory)[AdvancedPrivacySettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) {
       if (it.showProgressSpinner) {
@@ -168,7 +168,7 @@ class AdvancedPrivacySettingsFragment : DSLSettingsFragment(R.string.preferences
 
   private fun getPushToggleSummary(isPushEnabled: Boolean): String {
     return if (isPushEnabled) {
-      PhoneNumberFormatter.prettyPrint(TextSecurePreferences.getLocalNumber(requireContext()))
+      PhoneNumberFormatter.prettyPrint(SignalStore.account().e164!!)
     } else {
       getString(R.string.preferences__free_private_messages_and_calls)
     }

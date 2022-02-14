@@ -19,7 +19,7 @@ import com.annimon.stream.Stream;
 import org.signal.core.util.ThreadUtil;
 import org.tm.archive.components.sensors.DeviceOrientationMonitor;
 import org.tm.archive.components.sensors.Orientation;
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.events.CallParticipantId;
@@ -34,11 +34,13 @@ import org.tm.archive.util.DefaultValueLiveData;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.livedata.LiveDataUtil;
+import org.tm.archive.webrtc.audio.SignalAudioManager;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class WebRtcCallViewModel extends ViewModel {
 
@@ -251,9 +253,9 @@ public class WebRtcCallViewModel extends ViewModel {
                          webRtcViewModel.isRemoteVideoEnabled(),
                          webRtcViewModel.isRemoteVideoOffer(),
                          localParticipant.isMoreThanOneCameraAvailable(),
-                         webRtcViewModel.isBluetoothAvailable(),
                          Util.hasItems(webRtcViewModel.getRemoteParticipants()),
-                         repository.getAudioOutput(),
+                         webRtcViewModel.getActiveDevice(),
+                         webRtcViewModel.getAvailableDevices(),
                          webRtcViewModel.getRemoteDevicesCount().orElse(0),
                          webRtcViewModel.getParticipantLimit());
 
@@ -313,9 +315,9 @@ public class WebRtcCallViewModel extends ViewModel {
                                     boolean isRemoteVideoEnabled,
                                     boolean isRemoteVideoOffer,
                                     boolean isMoreThanOneCameraAvailable,
-                                    boolean isBluetoothAvailable,
                                     boolean hasAtLeastOneRemote,
-                                    @NonNull WebRtcAudioOutput audioOutput,
+                                    @NonNull SignalAudioManager.AudioDevice activeDevice,
+                                    @NonNull Set<SignalAudioManager.AudioDevice> availableDevices,
                                     long remoteDevicesCount,
                                     @Nullable Long participantLimit)
   {
@@ -340,6 +342,9 @@ public class WebRtcCallViewModel extends ViewModel {
       case CALL_BUSY:
       case CALL_DISCONNECTED:
         callState = WebRtcControls.CallState.ENDING;
+        break;
+      case CALL_DISCONNECTED_GLARE:
+        callState = WebRtcControls.CallState.INCOMING;
         break;
       case NETWORK_FAILURE:
         callState = WebRtcControls.CallState.ERROR;
@@ -372,14 +377,14 @@ public class WebRtcCallViewModel extends ViewModel {
     webRtcControls.setValue(new WebRtcControls(isLocalVideoEnabled,
                                                isRemoteVideoEnabled || isRemoteVideoOffer,
                                                isMoreThanOneCameraAvailable,
-                                               isBluetoothAvailable,
                                                Boolean.TRUE.equals(isInPipMode.getValue()),
                                                hasAtLeastOneRemote,
                                                callState,
                                                groupCallState,
-                                               audioOutput,
                                                participantLimit,
-                                               WebRtcControls.FoldableState.flat()));
+                                               WebRtcControls.FoldableState.flat(),
+                                               activeDevice,
+                                               availableDevices));
   }
 
   private @NonNull WebRtcControls updateControlsFoldableState(@NonNull WebRtcControls.FoldableState foldableState, @NonNull WebRtcControls controls) {
@@ -440,7 +445,7 @@ public class WebRtcCallViewModel extends ViewModel {
     if (recipient.isGroup()) {
       repository.getIdentityRecords(recipient, identityRecords -> {
         if (identityRecords.isUntrusted(false) || identityRecords.isUnverified(false)) {
-          List<IdentityDatabase.IdentityRecord> records = identityRecords.getUnverifiedRecords();
+          List<IdentityRecord> records = identityRecords.getUnverifiedRecords();
           records.addAll(identityRecords.getUntrustedRecords());
           events.postValue(new Event.ShowGroupCallSafetyNumberChange(records));
         } else {
@@ -475,13 +480,13 @@ public class WebRtcCallViewModel extends ViewModel {
     }
 
     public static class ShowGroupCallSafetyNumberChange extends Event {
-      private final List<IdentityDatabase.IdentityRecord> identityRecords;
+      private final List<IdentityRecord> identityRecords;
 
-      public ShowGroupCallSafetyNumberChange(@NonNull List<IdentityDatabase.IdentityRecord> identityRecords) {
+      public ShowGroupCallSafetyNumberChange(@NonNull List<IdentityRecord> identityRecords) {
         this.identityRecords = identityRecords;
       }
 
-      public @NonNull List<IdentityDatabase.IdentityRecord> getIdentityRecords() {
+      public @NonNull List<IdentityRecord> getIdentityRecords() {
         return identityRecords;
       }
     }

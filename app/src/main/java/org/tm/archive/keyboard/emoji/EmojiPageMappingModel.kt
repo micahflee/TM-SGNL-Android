@@ -1,7 +1,7 @@
 package org.tm.archive.keyboard.emoji
 
 import org.tm.archive.components.emoji.EmojiPageModel
-import org.tm.archive.util.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingModel
 
 class EmojiPageMappingModel(val key: String, val emojiPageModel: EmojiPageModel) : MappingModel<EmojiPageMappingModel> {
   override fun areItemsTheSame(newItem: EmojiPageMappingModel): Boolean {

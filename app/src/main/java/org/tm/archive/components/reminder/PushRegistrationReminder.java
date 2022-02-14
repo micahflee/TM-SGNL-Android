@@ -3,8 +3,8 @@ package org.tm.archive.components.reminder;
 import android.content.Context;
 
 import org.tm.archive.R;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.registration.RegistrationNavigationActivity;
-import org.tm.archive.util.TextSecurePreferences;
 
 public class PushRegistrationReminder extends Reminder {
 
@@ -21,6 +21,6 @@ public class PushRegistrationReminder extends Reminder {
   }
 
   public static boolean isEligible(Context context) {
-    return !TextSecurePreferences.isPushRegistered(context);
+    return !SignalStore.account().isRegistered();
   }
 }

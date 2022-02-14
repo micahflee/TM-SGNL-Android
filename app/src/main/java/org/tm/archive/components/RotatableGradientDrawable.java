@@ -8,6 +8,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.graphics.Xfermode;
 import android.graphics.drawable.Drawable;
 
 import androidx.annotation.NonNull;
@@ -15,7 +16,6 @@ import androidx.annotation.Nullable;
 
 import java.util.Arrays;
 
-import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
 
 /**
@@ -100,6 +100,10 @@ public final class RotatableGradientDrawable extends Drawable {
     fillPaint.setShader(new LinearGradient(fillRect.left, fillRect.top, fillRect.right, fillRect.bottom, colors, positions, Shader.TileMode.CLAMP));
   }
 
+  public void setXfermode(@NonNull Xfermode xfermode) {
+    fillPaint.setXfermode(xfermode);
+  }
+
   private static Point cornerPrime(@NonNull Point origin, @NonNull Point corner, float degrees) {
     return new Point(xPrime(origin, corner, Math.toRadians(degrees)), yPrime(origin, corner, Math.toRadians(degrees)));
   }
@@ -116,7 +120,11 @@ public final class RotatableGradientDrawable extends Drawable {
   public void draw(Canvas canvas) {
     int save = canvas.save();
     canvas.rotate(degrees, getBounds().width() / 2f, getBounds().height() / 2f);
-    canvas.drawRect(fillRect, fillPaint);
+
+    int height = fillRect.height();
+    int width = fillRect.width();
+    canvas.drawRect(fillRect.left - width, fillRect.top - height, fillRect.right + width, fillRect.bottom + height, fillPaint);
+
     canvas.restoreToCount(save);
   }
 

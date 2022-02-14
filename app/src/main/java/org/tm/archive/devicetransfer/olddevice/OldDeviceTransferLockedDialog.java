@@ -2,7 +2,6 @@ package org.tm.archive.devicetransfer.olddevice;
 
 import android.app.Dialog;
 import android.os.Bundle;
-import android.view.Window;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

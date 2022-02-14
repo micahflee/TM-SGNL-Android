@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingModelList;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 
 import java.io.Serializable;
 import java.util.Objects;

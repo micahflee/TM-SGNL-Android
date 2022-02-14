@@ -17,7 +17,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
@@ -120,7 +119,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
   }
 
   @Override
-  public void onQrDataFound(final String data) {
+  public void onQrDataFound(@NonNull final String data) {
     ThreadUtil.runOnMain(() -> {
       ((Vibrator)getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
       Uri uri = Uri.parse(data);
@@ -191,7 +190,6 @@ public class DeviceActivity extends PassphraseRequiredActivity
           Optional<byte[]> profileKey        = Optional.of(ProfileKeyUtil.getProfileKey(getContext()));
 
           TextSecurePreferences.setMultiDevice(DeviceActivity.this, true);
-          TextSecurePreferences.setIsUnidentifiedDeliveryEnabled(context, false);
           accountManager.addDevice(ephemeralId, publicKey, identityKeyPair, profileKey, verificationCode);
 
           return SUCCESS;

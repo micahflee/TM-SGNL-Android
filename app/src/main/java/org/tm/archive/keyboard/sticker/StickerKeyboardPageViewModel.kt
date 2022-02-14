@@ -5,9 +5,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import org.tm.archive.database.DatabaseFactory
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.keyboard.sticker.KeyboardStickerPackListAdapter.StickerPack
-import org.tm.archive.util.MappingModelList
+import org.tm.archive.util.adapter.mapping.MappingModelList
 import org.tm.archive.util.livedata.LiveDataUtil
 
 private const val NO_SELECTED_PAGE = "no_selected_page"
@@ -57,7 +57,7 @@ class StickerKeyboardPageViewModel(private val repository: StickerKeyboardReposi
   }
 
   class Factory(context: Context) : ViewModelProvider.Factory {
-    private val repository = StickerKeyboardRepository(DatabaseFactory.getStickerDatabase(context))
+    private val repository = StickerKeyboardRepository(SignalDatabase.stickers)
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
       return requireNotNull(modelClass.cast(StickerKeyboardPageViewModel(repository)))

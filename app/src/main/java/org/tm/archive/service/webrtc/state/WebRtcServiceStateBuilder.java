@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.OptionalLong;
 
+import org.signal.ringrtc.CallId;
 import org.signal.ringrtc.GroupCall;
 import org.tm.archive.components.sensors.Orientation;
 import org.tm.archive.components.webrtc.BroadcastVideoSink;
@@ -18,8 +19,10 @@ import org.tm.archive.ringrtc.Camera;
 import org.tm.archive.ringrtc.CameraState;
 import org.tm.archive.ringrtc.RemotePeer;
 import org.tm.archive.service.webrtc.WebRtcActionProcessor;
+import org.tm.archive.webrtc.audio.SignalAudioManager;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Builder that creates a new {@link WebRtcServiceState} from an existing one and allows
@@ -41,8 +44,8 @@ public class WebRtcServiceStateBuilder {
     return this;
   }
 
-  public @NonNull CallSetupStateBuilder changeCallSetupState() {
-    return new CallSetupStateBuilder();
+  public @NonNull CallSetupStateBuilder changeCallSetupState(@NonNull CallId callId) {
+    return new CallSetupStateBuilder(callId);
   }
 
   public @NonNull CallInfoStateBuilder changeCallInfoState() {
@@ -57,14 +60,15 @@ public class WebRtcServiceStateBuilder {
     return new VideoStateBuilder();
   }
 
-  public @NonNull WebRtcServiceStateBuilder terminate() {
-    toBuild.callSetupState   = new CallSetupState();
+  public @NonNull WebRtcServiceStateBuilder terminate(@NonNull CallId callId) {
     toBuild.localDeviceState = new LocalDeviceState();
     toBuild.videoState       = new VideoState();
 
     CallInfoState newCallInfoState = new CallInfoState();
     newCallInfoState.peerMap.putAll(toBuild.callInfoState.peerMap);
     toBuild.callInfoState = newCallInfoState;
+
+    toBuild.callSetupStates.remove(callId);
 
     return this;
   }
@@ -73,7 +77,7 @@ public class WebRtcServiceStateBuilder {
     private LocalDeviceState toBuild;
 
     public LocalDeviceStateBuilder() {
-      toBuild = new LocalDeviceState(WebRtcServiceStateBuilder.this.toBuild.localDeviceState);
+      toBuild = WebRtcServiceStateBuilder.this.toBuild.localDeviceState.duplicate();
     }
 
     public @NonNull WebRtcServiceStateBuilder commit() {
@@ -87,50 +91,52 @@ public class WebRtcServiceStateBuilder {
     }
 
     public @NonNull LocalDeviceStateBuilder cameraState(@NonNull CameraState cameraState) {
-      toBuild.cameraState = cameraState;
+      toBuild.setCameraState(cameraState);
       return this;
     }
 
     public @NonNull LocalDeviceStateBuilder isMicrophoneEnabled(boolean enabled) {
-      toBuild.microphoneEnabled = enabled;
-      return this;
-    }
-
-    public @NonNull LocalDeviceStateBuilder isBluetoothAvailable(boolean available) {
-      toBuild.bluetoothAvailable = available;
-      return this;
-    }
-
-    public @NonNull LocalDeviceStateBuilder wantsBluetooth(boolean wantsBluetooth) {
-      toBuild.wantsBluetooth = wantsBluetooth;
+      toBuild.setMicrophoneEnabled(enabled);
       return this;
     }
 
     public @NonNull LocalDeviceStateBuilder setOrientation(@NonNull Orientation orientation) {
-      toBuild.orientation = orientation;
+      toBuild.setOrientation(orientation);
       return this;
     }
 
     public @NonNull LocalDeviceStateBuilder setLandscapeEnabled(boolean isLandscapeEnabled) {
-      toBuild.isLandscapeEnabled = isLandscapeEnabled;
+      toBuild.setLandscapeEnabled(isLandscapeEnabled);
       return this;
     }
 
     public @NonNull LocalDeviceStateBuilder setDeviceOrientation(@NonNull Orientation deviceOrientation) {
-      toBuild.deviceOrientation = deviceOrientation;
+      toBuild.setDeviceOrientation(deviceOrientation);
+      return this;
+    }
+
+    public @NonNull LocalDeviceStateBuilder setActiveDevice(@NonNull SignalAudioManager.AudioDevice audioDevice) {
+      toBuild.setActiveDevice(audioDevice);
+      return this;
+    }
+
+    public @NonNull LocalDeviceStateBuilder setAvailableDevices(@NonNull Set<SignalAudioManager.AudioDevice> availableDevices) {
+      toBuild.setAvailableDevices(availableDevices);
       return this;
     }
   }
 
   public class CallSetupStateBuilder {
     private CallSetupState toBuild;
+    private CallId         callId;
 
-    public CallSetupStateBuilder() {
-      toBuild = WebRtcServiceStateBuilder.this.toBuild.callSetupState.duplicate();
+    public CallSetupStateBuilder(@NonNull CallId callId) {
+      this.toBuild = WebRtcServiceStateBuilder.this.toBuild.getCallSetupState(callId).duplicate();
+      this.callId  = callId;
     }
 
     public @NonNull WebRtcServiceStateBuilder commit() {
-      WebRtcServiceStateBuilder.this.toBuild.callSetupState = toBuild;
+      WebRtcServiceStateBuilder.this.toBuild.callSetupStates.put(callId, toBuild);
       return WebRtcServiceStateBuilder.this;
     }
 

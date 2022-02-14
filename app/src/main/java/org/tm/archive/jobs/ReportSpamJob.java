@@ -3,14 +3,14 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase.ReportSpamData;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
@@ -63,12 +63,12 @@ public class ReportSpamJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    if (!TextSecurePreferences.isPushRegistered(context)) {
+    if (!SignalStore.account().isRegistered()) {
       return;
     }
 
     int                         count                       = 0;
-    List<ReportSpamData>        reportSpamData              = DatabaseFactory.getMmsSmsDatabase(context).getReportSpamMessageServerData(threadId, timestamp, MAX_MESSAGE_COUNT);
+    List<ReportSpamData>        reportSpamData              = SignalDatabase.mmsSms().getReportSpamMessageServerData(threadId, timestamp, MAX_MESSAGE_COUNT);
     SignalServiceAccountManager signalServiceAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
     for (ReportSpamData data : reportSpamData) {
       Optional<String> e164 = Recipient.resolved(data.getRecipientId()).getE164();

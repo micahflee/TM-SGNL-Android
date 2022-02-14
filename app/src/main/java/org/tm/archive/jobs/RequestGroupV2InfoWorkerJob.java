@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupId;
@@ -77,10 +77,15 @@ final class RequestGroupV2InfoWorkerJob extends BaseJob {
       Log.i(TAG, "Updating group to revision " + toRevision);
     }
 
-    Optional<GroupDatabase.GroupRecord> group = DatabaseFactory.getGroupDatabase(context).getGroup(groupId);
+    Optional<GroupDatabase.GroupRecord> group = SignalDatabase.groups().getGroup(groupId);
 
     if (!group.isPresent()) {
       Log.w(TAG, "Group not found");
+      return;
+    }
+
+    if (Recipient.externalGroupExact(context, groupId).isBlocked()) {
+      Log.i(TAG, "Not fetching group info for blocked group " + groupId);
       return;
     }
 

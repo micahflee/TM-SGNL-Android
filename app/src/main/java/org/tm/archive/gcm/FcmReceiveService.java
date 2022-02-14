@@ -14,8 +14,8 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.FcmRefreshJob;
 import org.tm.archive.jobs.SubmitRateLimitPushChallengeJob;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.registration.PushChallengeRequest;
-import org.tm.archive.util.TextSecurePreferences;
 
 import java.util.Locale;
 
@@ -52,14 +52,14 @@ public class FcmReceiveService extends FirebaseMessagingService {
   }
 
   @Override
-  public void onNewToken(String token) {
+    public void onNewToken(String token) {
     Log.i(TAG, "onNewToken()");
 
     //**TM_SA**//
     PrefManager.setStringPref(getApplicationContext(), ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, token);
     //**TM_SA**//
 
-    if (!TextSecurePreferences.isPushRegistered(ApplicationDependencies.getApplication())) {
+    if (!SignalStore.account().isRegistered()) {
       Log.i(TAG, "Got a new FCM token, but the user isn't registered.");
       return;
     }

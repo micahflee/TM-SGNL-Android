@@ -7,7 +7,6 @@ import androidx.annotation.NonNull;
 
 import org.tm.archive.conversation.colors.ChatColors;
 import org.tm.archive.conversation.colors.ChatColorsMapper;
-import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.database.model.databaseprotos.Wallpaper;
 
 import java.util.Arrays;

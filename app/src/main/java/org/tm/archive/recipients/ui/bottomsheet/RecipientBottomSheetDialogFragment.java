@@ -1,6 +1,7 @@
 package org.tm.archive.recipients.ui.bottomsheet;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
@@ -23,7 +24,10 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
+import org.tm.archive.badges.BadgeImageView;
+import org.tm.archive.badges.view.ViewBadgeBottomSheetDialogFragment;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.components.settings.DSLSettingsIcon;
 import org.tm.archive.components.settings.conversation.preferences.ButtonStripPreference;
@@ -52,6 +56,8 @@ import kotlin.Unit;
  */
 public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogFragment {
 
+  public static final String TAG = Log.tag(RecipientBottomSheetDialogFragment.class);
+
   public static final int REQUEST_CODE_SYSTEM_CONTACT_SHEET = 1111;
 
   private static final String ARGS_RECIPIENT_ID = "RECIPIENT_ID";
@@ -75,6 +81,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   private View                     noteToSelfDescription;
   private View                     buttonStrip;
   private View                     interactionsContainer;
+  private BadgeImageView           badgeImageView;
 
   public static BottomSheetDialogFragment create(@NonNull RecipientId recipientId,
                                                  @Nullable GroupId groupId)
@@ -122,6 +129,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
     noteToSelfDescription  = view.findViewById(R.id.rbs_note_to_self_description);
     buttonStrip            = view.findViewById(R.id.button_strip);
     interactionsContainer  = view.findViewById(R.id.interactions_container);
+    badgeImageView         = view.findViewById(R.id.rbs_badge);
 
     return view;
   }
@@ -148,6 +156,11 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         }
       });
       avatar.setAvatar(recipient);
+
+      if (!recipient.isSelf()) {
+        badgeImageView.setBadgeFromRecipient(recipient);
+      }
+
       if (recipient.isSelf()) {
         avatar.setOnClickListener(v -> {
           dismiss();
@@ -156,16 +169,23 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
       }
 
       String name = recipient.isSelf() ? requireContext().getString(R.string.note_to_self)
-                                              : recipient.getDisplayName(requireContext());
+                                       : recipient.getDisplayName(requireContext());
       fullName.setText(name);
       fullName.setVisibility(TextUtils.isEmpty(name) ? View.GONE : View.VISIBLE);
       if (recipient.isSystemContact() && !recipient.isSelf()) {
         fullName.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.ic_profile_circle_outline_16, 0);
         fullName.setCompoundDrawablePadding(ViewUtil.dpToPx(4));
         TextViewCompat.setCompoundDrawableTintList(fullName, ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.signal_text_primary)));
+      } else if (recipient.isReleaseNotes()) {
+        fullName.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.ic_official_28, 0);
+        fullName.setCompoundDrawablePadding(ViewUtil.dpToPx(4));
       }
 
       String aboutText = recipient.getCombinedAboutAndEmoji();
+      if (recipient.isReleaseNotes()) {
+        aboutText = getString(R.string.ReleaseNotes__signal_release_notes_and_news);
+      }
+
       if (!Util.isEmpty(aboutText)) {
         about.setText(aboutText);
         about.setVisibility(View.VISIBLE);
@@ -198,13 +218,13 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
       }
 
       ButtonStripPreference.State  buttonStripState = new ButtonStripPreference.State(
-          /* isMessageAvailable = */ !recipient.isSelf(),
-          /* isVideoAvailable = */   recipient.isRegistered() && !recipient.isSelf(),
-          /* isAudioAvailable = */   !recipient.isSelf(),
-          /* isMuteAvailable = */    false,
-          /* isSearchAvailable = */  false,
-          /* isAudioSecure = */      recipient.isRegistered(),
-          /* isMuted = */            false
+          /* isMessageAvailable = */ !recipient.isBlocked() && !recipient.isSelf() && !recipient.isReleaseNotes(),
+          /* isVideoAvailable   = */ !recipient.isBlocked() && !recipient.isSelf() && recipient.isRegistered(),
+          /* isAudioAvailable   = */ !recipient.isBlocked() && !recipient.isSelf() && !recipient.isReleaseNotes(),
+          /* isMuteAvailable    = */ false,
+          /* isSearchAvailable  = */ false,
+          /* isAudioSecure      = */ recipient.isRegistered(),
+          /* isMuted            = */ false
       );
 
       ButtonStripPreference.Model buttonStripModel = new ButtonStripPreference.Model(
@@ -233,19 +253,23 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
 
       new ButtonStripPreference.ViewHolder(buttonStrip).bind(buttonStripModel);
 
-      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf()) {
+      if (recipient.isReleaseNotes()) {
+        buttonStrip.setVisibility(View.GONE);
+      }
+
+      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes()) {
         addContactButton.setVisibility(View.GONE);
       } else {
         addContactButton.setVisibility(View.VISIBLE);
         addContactButton.setOnClickListener(v -> {
-          startActivityForResult(RecipientExporter.export(recipient).asAddContactIntent(), REQUEST_CODE_SYSTEM_CONTACT_SHEET);
+          openSystemContactSheet(RecipientExporter.export(recipient).asAddContactIntent());
         });
       }
 
       if (recipient.isSystemContact() && !recipient.isGroup() && !recipient.isSelf()) {
         contactDetailsButton.setVisibility(View.VISIBLE);
         contactDetailsButton.setOnClickListener(v -> {
-          startActivityForResult(new Intent(Intent.ACTION_VIEW, recipient.getContactUri()), REQUEST_CODE_SYSTEM_CONTACT_SHEET);
+          openSystemContactSheet(new Intent(Intent.ACTION_VIEW, recipient.getContactUri()));
         });
       } else {
         contactDetailsButton.setVisibility(View.GONE);
@@ -279,6 +303,11 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
       viewModel.onAvatarClicked(requireActivity());
     });
 
+    badgeImageView.setOnClickListener(view -> {
+      dismiss();
+      ViewBadgeBottomSheetDialogFragment.show(getParentFragmentManager(), recipientId, null);
+    });
+
     blockButton.setOnClickListener(view -> viewModel.onBlockClicked(requireActivity()));
     unblockButton.setOnClickListener(view -> viewModel.onUnblockClicked(requireActivity()));
 
@@ -299,6 +328,15 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
       removeAdminButton.setEnabled(!busy);
       removeFromGroupButton.setEnabled(!busy);
     });
+  }
+
+  private void openSystemContactSheet(@NonNull Intent intent) {
+    try {
+      startActivityForResult(intent, REQUEST_CODE_SYSTEM_CONTACT_SHEET);
+    } catch (ActivityNotFoundException e) {
+      Log.w(TAG, "No activity existed to open the contact.");
+      Toast.makeText(requireContext(), R.string.RecipientBottomSheet_unable_to_open_contacts, Toast.LENGTH_LONG).show();
+    }
   }
 
   @Override

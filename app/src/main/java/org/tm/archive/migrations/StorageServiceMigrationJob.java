@@ -3,12 +3,15 @@ package org.tm.archive.migrations;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.MultiDeviceKeysUpdateJob;
 import org.tm.archive.jobs.StorageSyncJob;
+import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.TextSecurePreferences;
 
 /**
@@ -40,6 +43,13 @@ public class StorageServiceMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() {
+    if (SignalStore.account().getAci() == null) {
+      Log.w(TAG, "Self not yet available.");
+      return;
+    }
+
+    SignalDatabase.recipients().markNeedsSync(Recipient.self().getId());
+
     JobManager jobManager = ApplicationDependencies.getJobManager();
 
     if (TextSecurePreferences.isMultiDevice(context)) {

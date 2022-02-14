@@ -17,6 +17,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.CustomViewTarget;
 import com.bumptech.glide.request.transition.Transition;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.contacts.avatars.ContactPhoto;
 import org.tm.archive.contacts.avatars.GeneratedContactPhoto;
@@ -29,6 +30,10 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import java.util.concurrent.ExecutionException;
 
 public final class AvatarUtil {
+
+  private static final String TAG = Log.tag(AvatarUtil.class);
+
+  public static final int UNDEFINED_SIZE = -1;
 
   private AvatarUtil() {
   }
@@ -71,9 +76,13 @@ public final class AvatarUtil {
   }
 
   public static void loadIconIntoImageView(@NonNull Recipient recipient, @NonNull ImageView target) {
+    loadIconIntoImageView(recipient, target, -1);
+  }
+
+  public static void loadIconIntoImageView(@NonNull Recipient recipient, @NonNull ImageView target, int requestedSize) {
     Context  context  = target.getContext();
 
-    requestCircle(GlideApp.with(context).asDrawable(), context, recipient).into(target);
+    requestCircle(GlideApp.with(context).asDrawable(), context, recipient, requestedSize).into(target);
   }
 
   public static Bitmap loadIconBitmapSquareNoCache(@NonNull Context context,
@@ -92,7 +101,7 @@ public final class AvatarUtil {
   @WorkerThread
   public static IconCompat getIconForNotification(@NonNull Context context, @NonNull Recipient recipient) {
     try {
-      return IconCompat.createWithBitmap(requestCircle(GlideApp.with(context).asBitmap(), context, recipient).submit().get());
+      return IconCompat.createWithBitmap(requestCircle(GlideApp.with(context).asBitmap(), context, recipient, UNDEFINED_SIZE).submit().get());
     } catch (ExecutionException | InterruptedException e) {
       return null;
     }
@@ -107,32 +116,38 @@ public final class AvatarUtil {
       }
       return IconCompat.createWithAdaptiveBitmap(glideRequest.submit().get());
     } catch (ExecutionException | InterruptedException e) {
-      throw new AssertionError("This call should not fail.", e);
+      Log.w(TAG, "Failed to generate shortcut icon for recipient " + recipient.getId() + ". Generating fallback.", e);
+
+      Drawable fallbackDrawable = getFallback(context, recipient, DrawableUtil.SHORTCUT_INFO_WRAPPED_SIZE);
+      Bitmap   fallbackBitmap   = DrawableUtil.toBitmap(fallbackDrawable, DrawableUtil.SHORTCUT_INFO_WRAPPED_SIZE, DrawableUtil.SHORTCUT_INFO_WRAPPED_SIZE);
+      Bitmap   wrappedBitmap    = DrawableUtil.wrapBitmapForShortcutInfo(fallbackBitmap);
+
+      return IconCompat.createWithAdaptiveBitmap(wrappedBitmap);
     }
   }
 
   @WorkerThread
   public static Bitmap getBitmapForNotification(@NonNull Context context, @NonNull Recipient recipient) {
     try {
-      return requestCircle(GlideApp.with(context).asBitmap(), context, recipient).submit().get();
+      return requestCircle(GlideApp.with(context).asBitmap(), context, recipient, UNDEFINED_SIZE).submit().get();
     } catch (ExecutionException | InterruptedException e) {
       return null;
     }
   }
 
-  private static <T> GlideRequest<T> requestCircle(@NonNull GlideRequest<T> glideRequest, @NonNull Context context, @NonNull Recipient recipient) {
-    return request(glideRequest, context, recipient).circleCrop();
+  private static <T> GlideRequest<T> requestCircle(@NonNull GlideRequest<T> glideRequest, @NonNull Context context, @NonNull Recipient recipient, int targetSize) {
+    return request(glideRequest, context, recipient, targetSize).circleCrop();
   }
 
   private static <T> GlideRequest<T> requestSquare(@NonNull GlideRequest<T> glideRequest, @NonNull Context context, @NonNull Recipient recipient) {
-    return request(glideRequest, context, recipient).centerCrop();
+    return request(glideRequest, context, recipient, UNDEFINED_SIZE).centerCrop();
   }
 
-  private static <T> GlideRequest<T> request(@NonNull GlideRequest<T> glideRequest, @NonNull Context context, @NonNull Recipient recipient) {
-    return request(glideRequest, context, recipient, true);
+  private static <T> GlideRequest<T> request(@NonNull GlideRequest<T> glideRequest, @NonNull Context context, @NonNull Recipient recipient, int targetSize) {
+    return request(glideRequest, context, recipient, true, targetSize);
   }
 
-  private static <T> GlideRequest<T> request(@NonNull GlideRequest<T> glideRequest, @NonNull Context context, @NonNull Recipient recipient, boolean loadSelf) {
+  private static <T> GlideRequest<T> request(@NonNull GlideRequest<T> glideRequest, @NonNull Context context, @NonNull Recipient recipient, boolean loadSelf, int targetSize) {
     final ContactPhoto photo;
     if (Recipient.self().equals(recipient) && loadSelf) {
       photo = new ProfileContactPhoto(recipient, recipient.getProfileAvatar());
@@ -141,7 +156,7 @@ public final class AvatarUtil {
     }
 
     final GlideRequest<T> request = glideRequest.load(photo)
-                                                .error(getFallback(context, recipient))
+                                                .error(getFallback(context, recipient, targetSize))
                                                 .diskCacheStrategy(DiskCacheStrategy.ALL);
 
     if (recipient.shouldBlurAvatar()) {
@@ -151,9 +166,9 @@ public final class AvatarUtil {
     }
   }
 
-  private static Drawable getFallback(@NonNull Context context, @NonNull Recipient recipient) {
+  private static Drawable getFallback(@NonNull Context context, @NonNull Recipient recipient, int targetSize) {
     String name = Optional.fromNullable(recipient.getDisplayName(context)).or("");
 
-    return new GeneratedContactPhoto(name, R.drawable.ic_profile_outline_40).asDrawable(context, recipient.getAvatarColor());
+    return new GeneratedContactPhoto(name, R.drawable.ic_profile_outline_40, targetSize).asDrawable(context, recipient.getAvatarColor());
   }
 }

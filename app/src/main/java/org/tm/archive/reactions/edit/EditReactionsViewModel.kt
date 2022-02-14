@@ -2,8 +2,12 @@ package org.tm.archive.reactions.edit
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import org.signal.core.util.concurrent.SignalExecutors
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.keyvalue.EmojiValues
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.recipients.Recipient
+import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.livedata.LiveDataUtil
 import org.tm.archive.util.livedata.Store
 
@@ -37,6 +41,11 @@ class EditReactionsViewModel : ViewModel() {
 
   fun save() {
     emojiValues.reactions = store.state.reactions
+
+    SignalExecutors.BOUNDED.execute {
+      SignalDatabase.recipients.markNeedsSync(Recipient.self().id)
+      StorageSyncHelper.scheduleSyncForDataChange()
+    }
   }
 
   companion object {

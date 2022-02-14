@@ -5,14 +5,15 @@ import androidx.core.content.ContextCompat
 import org.tm.archive.R
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.util.FeatureFlags
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 import org.tm.archive.util.views.LearnMoreTextView
 
 object LegacyGroupPreference {
 
   fun register(adapter: MappingAdapter) {
-    adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory(::ViewHolder, R.layout.conversation_settings_legacy_group_preference))
+    adapter.registerFactory(Model::class.java, LayoutFactory(::ViewHolder, R.layout.conversation_settings_legacy_group_preference))
   }
 
   class Model(

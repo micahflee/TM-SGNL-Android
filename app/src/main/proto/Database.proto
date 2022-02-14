@@ -11,8 +11,10 @@ package signal;
 option java_package        = "org.tm.archive.database.model.databaseprotos";
 option java_multiple_files = true;
 
-
+// DEPRECATED -- only here for database migrations
 message ReactionList {
+    option deprecated = true;
+
     message Reaction {
         string emoji        = 1;
         uint64 author       = 2;
@@ -21,6 +23,21 @@ message ReactionList {
     }
 
     repeated Reaction reactions = 1;
+}
+
+message BadgeList {
+    message Badge {
+        string   id           = 1;
+        string   category     = 2;
+        string   name         = 3;
+        string   description  = 4;
+        string   imageUrl     = 5;
+        uint64   expiration   = 6;
+        bool     visible      = 7;
+        string   imageDensity = 8;
+    }
+
+    repeated Badge badges = 1;
 }
 
 
@@ -59,11 +76,24 @@ message ProfileChangeDetails {
 
 message BodyRangeList {
     message BodyRange {
+        enum Style {
+            BOLD   = 0;
+            ITALIC = 1;
+        }
+
+        message Button {
+            string label  = 1;
+            string action = 2;
+        }
+
         int32 start  = 1;
         int32 length = 2;
 
         oneof associatedValue {
             string mentionUuid = 3;
+            Style  style       = 4;
+            string link        = 5;
+            Button button      = 6;
         }
     }
 

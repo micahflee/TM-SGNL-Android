@@ -3,8 +3,9 @@ package org.tm.archive.keyboard.gif
 import android.view.View
 import android.widget.ImageView
 import org.tm.archive.R
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 
 class GifQuickSearchAdapter(clickListener: (GifQuickSearchOption) -> Unit) : MappingAdapter() {
   init {

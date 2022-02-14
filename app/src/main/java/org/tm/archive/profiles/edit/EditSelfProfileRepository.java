@@ -10,7 +10,7 @@ import androidx.core.util.Consumer;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.conversation.colors.AvatarColor;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.MultiDeviceProfileContentUpdateJob;
 import org.tm.archive.jobs.MultiDeviceProfileKeyUpdateJob;
@@ -130,7 +130,7 @@ public class EditSelfProfileRepository implements EditProfileRepository {
                             @NonNull Consumer<UploadResult> uploadResultConsumer)
   {
     SimpleTask.run(() -> {
-      DatabaseFactory.getRecipientDatabase(context).setProfileName(Recipient.self().getId(), profileName);
+      SignalDatabase.recipients().setProfileName(Recipient.self().getId(), profileName);
 
       if (avatarChanged) {
         try {

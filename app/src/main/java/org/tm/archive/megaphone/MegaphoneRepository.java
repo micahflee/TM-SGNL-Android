@@ -1,7 +1,6 @@
 package org.tm.archive.megaphone;
 
 import android.app.Application;
-import android.content.Context;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -12,7 +11,6 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MegaphoneDatabase;
 import org.tm.archive.database.model.MegaphoneRecord;
 import org.tm.archive.megaphone.Megaphones.Event;
@@ -51,13 +49,9 @@ public class MegaphoneRepository {
   @AnyThread
   public void onFirstEverAppLaunch() {
     executor.execute(() -> {
-      database.markFinished(Event.REACTIONS);
-      database.markFinished(Event.MESSAGE_REQUESTS);
-      database.markFinished(Event.LINK_PREVIEWS);
-      database.markFinished(Event.RESEARCH);
-      database.markFinished(Event.GROUP_CALLING);
       database.markFinished(Event.CHAT_COLORS);
       database.markFinished(Event.ADD_A_PROFILE_PHOTO);
+      database.markFinished(Event.NOTIFICATION_PROFILES);
       resetDatabaseCache();
     });
   }

@@ -25,7 +25,6 @@ import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
 import org.tm.archive.components.ConversationItemFooter;
 import org.tm.archive.components.emoji.EmojiTextView;
-import org.tm.archive.conversation.colors.ChatColors;
 import org.tm.archive.conversation.colors.ColorizerView;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.linkpreview.LinkPreviewUtil;

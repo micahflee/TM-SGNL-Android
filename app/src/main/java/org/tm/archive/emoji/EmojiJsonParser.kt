@@ -3,11 +3,11 @@ package org.tm.archive.emoji
 import android.net.Uri
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.android.gms.common.util.Hex
 import org.tm.archive.components.emoji.CompositeEmojiPageModel
 import org.tm.archive.components.emoji.Emoji
 import org.tm.archive.components.emoji.EmojiPageModel
 import org.tm.archive.components.emoji.StaticEmojiPageModel
+import org.tm.archive.util.Hex
 import java.io.InputStream
 import java.nio.charset.Charset
 
@@ -18,6 +18,7 @@ typealias UriFactory = (sprite: String, format: String) -> Uri
  */
 object EmojiJsonParser {
   private val OBJECT_MAPPER = ObjectMapper()
+  private const val ESTIMATED_EMOJI_COUNT = 3500
 
   @JvmStatic
   fun verify(body: InputStream) {
@@ -36,11 +37,12 @@ object EmojiJsonParser {
     val format: String = node["format"].textValue()
     val obsolete: List<ObsoleteEmoji> = node["obsolete"].toObseleteList()
     val dataPages: List<EmojiPageModel> = getDataPages(format, node["emoji"], uriFactory)
+    val jumboPages: Map<String, String> = getJumboPages(node["jumbomoji"])
     val displayPages: List<EmojiPageModel> = mergeToDisplayPages(dataPages)
     val metrics: EmojiMetrics = node["metrics"].toEmojiMetrics()
     val densities: List<String> = node["densities"].toDensityList()
 
-    return ParsedEmojiData(metrics, densities, format, displayPages, dataPages, obsolete)
+    return ParsedEmojiData(metrics, densities, format, displayPages, dataPages, jumboPages, obsolete)
   }
 
   private fun getDataPages(format: String, emoji: JsonNode, uriFactory: UriFactory): List<EmojiPageModel> {
@@ -64,13 +66,33 @@ object EmojiJsonParser {
       .toList()
   }
 
+  private fun getJumboPages(jumbo: JsonNode?): Map<String, String> {
+    if (jumbo != null) {
+      return jumbo.fields()
+        .asSequence()
+        .map { (page: String, node: JsonNode) ->
+          node.associate { it.textValue() to page }
+        }
+        .flatMap { it.entries }
+        .associateTo(HashMap(ESTIMATED_EMOJI_COUNT)) { it.key to it.value }
+    }
+    return emptyMap()
+  }
+
   private fun createPage(pageName: String, format: String, page: JsonNode, uriFactory: UriFactory): EmojiPageModel {
     val category = EmojiCategory.forKey(pageName.asCategoryKey())
     val pageList = page.mapIndexed { i, data ->
       if (data.size() == 0) {
         throw IllegalStateException("Page index $pageName.$i had no data")
       } else {
-        Emoji(data.map { it.textValue().encodeAsUtf16() })
+        val variations: MutableList<String> = mutableListOf()
+        val rawVariations: MutableList<String> = mutableListOf()
+        data.forEach {
+          variations += it.textValue().encodeAsUtf16()
+          rawVariations += it.textValue()
+        }
+
+        Emoji(variations, rawVariations)
       }
     }
 
@@ -101,7 +123,7 @@ private fun JsonNode.toDensityList(): List<String> {
   return map { it.textValue() }
 }
 
-private fun String.encodeAsUtf16() = String(Hex.stringToBytes(this), Charset.forName("UTF-16"))
+private fun String.encodeAsUtf16() = String(Hex.fromStringCondensed(this), Charset.forName("UTF-16"))
 private fun String.asCategoryKey() = replace("(_\\d+)*$".toRegex(), "")
 private fun String.getPageIndex() = "^.*_(\\d+)+$".toRegex().find(this)?.let { it.groupValues[1] }?.toInt() ?: throw IllegalStateException("No index.")
 
@@ -111,5 +133,6 @@ data class ParsedEmojiData(
   override val format: String,
   override val displayPages: List<EmojiPageModel>,
   override val dataPages: List<EmojiPageModel>,
+  override val jumboPages: Map<String, String>,
   override val obsolete: List<ObsoleteEmoji>
 ) : EmojiData

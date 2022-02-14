@@ -5,7 +5,7 @@ import androidx.core.util.Consumer;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.PaymentLedgerUpdateJob;
 import org.tm.archive.jobs.ProfileUploadJob;
@@ -29,7 +29,7 @@ class PaymentsRecoveryPhraseRepository {
       switch (result) {
         case ENTROPY_CHANGED:
           Log.i(TAG, "restoreMnemonic: mnemonic resulted in entropy mismatch, flushing cached values");
-          DatabaseFactory.getPaymentDatabase(ApplicationDependencies.getApplication()).deleteAll();
+          SignalDatabase.payments().deleteAll();
           ApplicationDependencies.getPayments().closeWallet();
           updateProfileAndFetchLedger();
           break;

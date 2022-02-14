@@ -19,6 +19,7 @@ import org.tm.archive.devicetransfer.SetupStep;
 import org.tm.archive.jobs.LocalBackupJob;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.notifications.NotificationIds;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 /**
  * Most responsibility is in {@link DeviceTransferSetupFragment} and delegates here
@@ -41,7 +42,7 @@ public final class OldDeviceTransferSetupFragment extends DeviceTransferSetupFra
 
   @Override
   protected void navigateToTransferConnected() {
-    NavHostFragment.findNavController(this).navigate(R.id.action_oldDeviceTransferSetup_to_oldDeviceTransfer);
+    SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_oldDeviceTransferSetup_to_oldDeviceTransfer);
   }
 
   @Override

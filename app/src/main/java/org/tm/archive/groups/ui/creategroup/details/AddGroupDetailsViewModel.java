@@ -19,7 +19,6 @@ import org.tm.archive.mediasend.Media;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DefaultValueLiveData;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.livedata.LiveDataUtil;
 

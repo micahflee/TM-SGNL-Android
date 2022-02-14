@@ -20,7 +20,7 @@ import org.tm.archive.crypto.AttachmentSecretProvider;
 import org.tm.archive.crypto.ModernDecryptingPartInputStream;
 import org.tm.archive.crypto.ModernEncryptingPartOutputStream;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.events.PartProgressEvent;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -129,7 +129,7 @@ public final class AttachmentCompressionJob extends BaseJob {
   public void onRun() throws Exception {
     Log.d(TAG, "Running for: " + attachmentId);
 
-    AttachmentDatabase database           = DatabaseFactory.getAttachmentDatabase(context);
+    AttachmentDatabase database           = SignalDatabase.attachments();
     DatabaseAttachment databaseAttachment = database.getAttachment(attachmentId);
 
     if (databaseAttachment == null) {
@@ -226,8 +226,7 @@ public final class AttachmentCompressionJob extends BaseJob {
             Log.i(TAG, "Compressing with streaming muxer");
             AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
 
-            File file = DatabaseFactory.getAttachmentDatabase(context)
-                                       .newFile();
+            File file = SignalDatabase.attachments().newFile();
             file.deleteOnExit();
 
             try {

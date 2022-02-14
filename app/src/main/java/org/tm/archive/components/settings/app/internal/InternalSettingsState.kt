@@ -1,5 +1,6 @@
 package org.tm.archive.components.settings.app.internal
 
+import org.signal.ringrtc.CallManager
 import org.tm.archive.emoji.EmojiFiles
 
 data class InternalSettingsState(
@@ -13,8 +14,10 @@ data class InternalSettingsState(
   val disableAutoMigrationNotification: Boolean,
   val forceCensorship: Boolean,
   val callingServer: String,
+  val audioProcessingMethod: CallManager.AudioProcessingMethod,
   val useBuiltInEmojiSet: Boolean,
   val emojiVersion: EmojiFiles.Version?,
   val removeSenderKeyMinimium: Boolean,
   val delayResends: Boolean,
+  val disableStorageService: Boolean,
 )

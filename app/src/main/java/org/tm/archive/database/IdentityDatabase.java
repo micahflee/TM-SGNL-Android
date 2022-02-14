@@ -25,9 +25,9 @@ import androidx.annotation.Nullable;
 
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.helpers.SQLCipherOpenHelper;
-import org.tm.archive.database.identity.IdentityRecordList;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.model.IdentityStoreRecord;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.Base64;
@@ -37,11 +37,9 @@ import org.tm.archive.util.SqlUtil;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.util.guava.Optional;
+import org.whispersystems.signalservice.api.util.UuidUtil;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class IdentityDatabase extends Database {
 
@@ -87,45 +85,8 @@ public class IdentityDatabase extends Database {
     }
   }
 
-  IdentityDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  IdentityDatabase(Context context, SignalDatabase databaseHelper) {
     super(context, databaseHelper);
-  }
-
-  public Cursor getIdentities() {
-    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
-    return database.query(TABLE_NAME, null, null, null, null, null, null);
-  }
-
-  public @Nullable IdentityReader readerFor(@Nullable Cursor cursor) {
-    if (cursor == null) return null;
-    return new IdentityReader(cursor);
-  }
-
-  public Optional<IdentityRecord> getIdentity(@NonNull String addressName) {
-    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
-    String         query    = ADDRESS + " = ?";
-    String[]       args     = SqlUtil.buildArgs(addressName);
-
-    try (Cursor cursor = database.query(TABLE_NAME, null, query, args, null, null, null)) {
-      if (cursor.moveToFirst()) {
-        return Optional.of(getIdentityRecord(cursor));
-      }
-    } catch (InvalidKeyException | IOException e) {
-      throw new AssertionError(e);
-    }
-
-    return Optional.absent();
-  }
-
-  public Optional<IdentityRecord> getIdentity(@NonNull RecipientId recipientId) {
-    Recipient recipient = Recipient.resolved(recipientId);
-
-    if (recipient.hasServiceIdentifier()) {
-      return getIdentity(recipient.requireServiceId());
-    } else {
-      Log.w(TAG, "Recipient has no service identifier!");
-      return Optional.absent();
-    }
   }
 
   public @Nullable IdentityStoreRecord getIdentityStoreRecord(@NonNull String addressName) {
@@ -147,11 +108,11 @@ public class IdentityDatabase extends Database {
                                        firstUse,
                                        timestamp,
                                        nonblockingApproval);
-      } else if (addressName.charAt(0) != '+') {
-        if (DatabaseFactory.getRecipientDatabase(context).containsPhoneOrUuid(addressName)) {
+      } else if (UuidUtil.isUuid(addressName)) {
+        if (SignalDatabase.recipients().containsPhoneOrUuid(addressName)) {
           Recipient recipient = Recipient.external(context, addressName);
 
-          if (recipient.hasE164()) {
+          if (recipient.hasE164() && !UuidUtil.isUuid(recipient.requireE164())) {
             Log.i(TAG, "Could not find identity for UUID. Attempting E164.");
             return getIdentityStoreRecord(recipient.requireE164());
           } else {
@@ -170,34 +131,6 @@ public class IdentityDatabase extends Database {
     return null;
   }
 
-  public @NonNull IdentityRecordList getIdentities(@NonNull List<Recipient> recipients) {
-    List<String> addressNames = recipients.stream()
-                                          .filter(Recipient::hasServiceIdentifier)
-                                          .map(Recipient::requireServiceId)
-                                          .collect(Collectors.toList());
-
-    if (addressNames.isEmpty()) {
-      return IdentityRecordList.EMPTY;
-    }
-
-    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
-    SqlUtil.Query  query    = SqlUtil.buildCollectionQuery(ADDRESS, addressNames);
-
-    List<IdentityRecord> records = new LinkedList<>();
-
-    try (Cursor cursor = database.query(TABLE_NAME, null, query.getWhere(), query.getWhereArgs(), null, null, null)) {
-      while (cursor.moveToNext()) {
-        try {
-          records.add(getIdentityRecord(cursor));
-        } catch (InvalidKeyException | IOException e) {
-          throw new AssertionError(e);
-        }
-      }
-    }
-
-    return new IdentityRecordList(records);
-  }
-
   public void saveIdentity(@NonNull String addressName,
                            @NonNull RecipientId recipientId,
                            IdentityKey identityKey,
@@ -206,23 +139,8 @@ public class IdentityDatabase extends Database {
                            long timestamp,
                            boolean nonBlockingApproval)
   {
-    saveIdentityInternal(addressName, identityKey, verifiedStatus, firstUse, timestamp, nonBlockingApproval);
-    DatabaseFactory.getRecipientDatabase(context).markNeedsSync(recipientId);
-  }
-
-  public void saveIdentity(@NonNull RecipientId recipientId,
-                           IdentityKey identityKey,
-                           VerifiedStatus verifiedStatus,
-                           boolean firstUse,
-                           long timestamp,
-                           boolean nonBlockingApproval)
-  {
-    saveIdentityInternal(Recipient.resolved(recipientId).requireServiceId(), identityKey, verifiedStatus, firstUse, timestamp, nonBlockingApproval);
-    DatabaseFactory.getRecipientDatabase(context).markNeedsSync(recipientId);
-  }
-
-  public void setApproval(@NonNull RecipientId recipientId, boolean nonBlockingApproval) {
-    setApproval(Recipient.resolved(recipientId).requireServiceId(), recipientId, nonBlockingApproval);
+    saveIdentityInternal(addressName, recipientId, identityKey, verifiedStatus, firstUse, timestamp, nonBlockingApproval);
+    SignalDatabase.recipients().markNeedsSync(recipientId);
   }
 
   public void setApproval(@NonNull String addressName, @NonNull RecipientId recipientId, boolean nonBlockingApproval) {
@@ -233,14 +151,14 @@ public class IdentityDatabase extends Database {
 
     database.update(TABLE_NAME, contentValues, ADDRESS + " = ?", SqlUtil.buildArgs(addressName));
 
-    DatabaseFactory.getRecipientDatabase(context).markNeedsSync(recipientId);
+    SignalDatabase.recipients().markNeedsSync(recipientId);
   }
 
-  public void setVerified(@NonNull RecipientId recipientId, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
+  public void setVerified(@NonNull String addressName, @NonNull RecipientId recipientId, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
     SQLiteDatabase database = databaseHelper.getSignalWritableDatabase();
 
     String   query = ADDRESS + " = ? AND " + IDENTITY_KEY + " = ?";
-    String[] args  = SqlUtil.buildArgs(Recipient.resolved(recipientId).requireServiceId(), Base64.encodeBytes(identityKey.serialize()));
+    String[] args  = SqlUtil.buildArgs(addressName, Base64.encodeBytes(identityKey.serialize()));
 
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(VERIFIED, verifiedStatus.toInt());
@@ -248,30 +166,52 @@ public class IdentityDatabase extends Database {
     int updated = database.update(TABLE_NAME, contentValues, query, args);
 
     if (updated > 0) {
-      Optional<IdentityRecord> record = getIdentity(recipientId);
+      Optional<IdentityRecord> record = getIdentityRecord(addressName);
       if (record.isPresent()) EventBus.getDefault().post(record.get());
-      DatabaseFactory.getRecipientDatabase(context).markNeedsSync(recipientId);
+      SignalDatabase.recipients().markNeedsSync(recipientId);
     }
   }
 
-  public void updateIdentityAfterSync(@NonNull String addressName, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
-    boolean hadEntry      = getIdentity(addressName).isPresent();
+  public void updateIdentityAfterSync(@NonNull String addressName, @NonNull RecipientId recipientId, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
+    boolean hadEntry      = getIdentityRecord(addressName).isPresent();
     boolean keyMatches    = hasMatchingKey(addressName, identityKey);
     boolean statusMatches = keyMatches && hasMatchingStatus(addressName, identityKey, verifiedStatus);
 
     if (!keyMatches || !statusMatches) {
-      saveIdentityInternal(addressName, identityKey, verifiedStatus, !hadEntry, System.currentTimeMillis(), true);
+      saveIdentityInternal(addressName, recipientId, identityKey, verifiedStatus, !hadEntry, System.currentTimeMillis(), true);
 
-      Optional<IdentityRecord> record = getIdentity(addressName);
+      Optional<IdentityRecord> record = getIdentityRecord(addressName);
 
       if (record.isPresent()) {
         EventBus.getDefault().post(record.get());
       }
+
+      ApplicationDependencies.getProtocolStore().aci().identities().invalidate(addressName);
     }
 
     if (hadEntry && !keyMatches) {
       IdentityUtil.markIdentityUpdate(context, RecipientId.fromExternalPush(addressName));
     }
+  }
+
+  public void delete(@NonNull String addressName) {
+    databaseHelper.getSignalWritableDatabase().delete(IdentityDatabase.TABLE_NAME, IdentityDatabase.ADDRESS + " = ?", SqlUtil.buildArgs(addressName));
+  }
+
+  private Optional<IdentityRecord> getIdentityRecord(@NonNull String addressName) {
+    SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
+    String         query    = ADDRESS + " = ?";
+    String[]       args     = SqlUtil.buildArgs(addressName);
+
+    try (Cursor cursor = database.query(TABLE_NAME, null, query, args, null, null, null)) {
+      if (cursor.moveToFirst()) {
+        return Optional.of(getIdentityRecord(cursor));
+      }
+    } catch (InvalidKeyException | IOException e) {
+      throw new AssertionError(e);
+    }
+
+    return Optional.absent();
   }
 
   private boolean hasMatchingKey(@NonNull String addressName, IdentityKey identityKey) {
@@ -307,6 +247,7 @@ public class IdentityDatabase extends Database {
   }
 
   private void saveIdentityInternal(@NonNull String addressName,
+                                    @NonNull RecipientId recipientId,
                                     IdentityKey identityKey,
                                     VerifiedStatus verifiedStatus,
                                     boolean firstUse,
@@ -326,86 +267,6 @@ public class IdentityDatabase extends Database {
 
     database.replace(TABLE_NAME, null, contentValues);
 
-    EventBus.getDefault().post(new IdentityRecord(RecipientId.fromExternalPush(addressName), identityKey, verifiedStatus, firstUse, timestamp, nonBlockingApproval));
+    EventBus.getDefault().post(new IdentityRecord(recipientId, identityKey, verifiedStatus, firstUse, timestamp, nonBlockingApproval));
   }
-
-  public static class IdentityRecord {
-
-    private final RecipientId    recipientId;
-    private final IdentityKey    identitykey;
-    private final VerifiedStatus verifiedStatus;
-    private final boolean        firstUse;
-    private final long           timestamp;
-    private final boolean        nonblockingApproval;
-
-    private IdentityRecord(@NonNull RecipientId recipientId,
-                           IdentityKey identitykey,
-                           VerifiedStatus verifiedStatus,
-                           boolean firstUse,
-                           long timestamp,
-                           boolean nonblockingApproval)
-    {
-      this.recipientId         = recipientId;
-      this.identitykey         = identitykey;
-      this.verifiedStatus      = verifiedStatus;
-      this.firstUse            = firstUse;
-      this.timestamp           = timestamp;
-      this.nonblockingApproval = nonblockingApproval;
-    }
-
-    public RecipientId getRecipientId() {
-      return recipientId;
-    }
-
-    public IdentityKey getIdentityKey() {
-      return identitykey;
-    }
-
-    public long getTimestamp() {
-      return timestamp;
-    }
-
-    public VerifiedStatus getVerifiedStatus() {
-      return verifiedStatus;
-    }
-
-    public boolean isApprovedNonBlocking() {
-      return nonblockingApproval;
-    }
-
-    public boolean isFirstUse() {
-      return firstUse;
-    }
-
-    @Override
-    public @NonNull String toString() {
-      return "{recipientId: " + recipientId + ", identityKey: " + identitykey + ", verifiedStatus: " + verifiedStatus + ", firstUse: " + firstUse + "}";
-    }
-
-  }
-
-  public static class IdentityReader {
-    private final Cursor cursor;
-
-    IdentityReader(@NonNull Cursor cursor) {
-      this.cursor = cursor;
-    }
-
-    public @Nullable IdentityRecord getNext() {
-      if (cursor.moveToNext()) {
-        try {
-          return getIdentityRecord(cursor);
-        } catch (IOException | InvalidKeyException e) {
-          throw new AssertionError(e);
-        }
-      }
-
-      return null;
-    }
-
-    public void close() {
-      cursor.close();
-    }
-  }
-
 }

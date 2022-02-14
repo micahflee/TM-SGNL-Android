@@ -8,8 +8,8 @@ import androidx.lifecycle.LifecycleOwner;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.notifications.MarkReadReceiver;
@@ -46,7 +46,7 @@ class MarkReadHelper {
 
     debouncer.publish(() -> {
       EXECUTOR.execute(() -> {
-        ThreadDatabase                          threadDatabase = DatabaseFactory.getThreadDatabase(context);
+        ThreadDatabase                          threadDatabase = SignalDatabase.threads();
         List<MessageDatabase.MarkedMessageInfo> infos          = threadDatabase.setReadSince(threadId, false, timestamp);
 
         Log.d(TAG, "Marking " + infos.size() + " messages as read.");

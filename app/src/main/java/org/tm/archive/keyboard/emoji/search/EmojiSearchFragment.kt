@@ -6,7 +6,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.tm.archive.R
@@ -26,14 +26,14 @@ class EmojiSearchFragment : Fragment(R.layout.emoji_search_fragment), EmojiPageV
   override fun onAttach(context: Context) {
     super.onAttach(context)
 
-    callback = context as Callback
+    callback = findListener<Callback>()!!
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     val repository = EmojiSearchRepository(requireContext())
     val factory = EmojiSearchViewModel.Factory(repository)
 
-    viewModel = ViewModelProviders.of(this, factory)[EmojiSearchViewModel::class.java]
+    viewModel = ViewModelProvider(this, factory)[EmojiSearchViewModel::class.java]
 
     val keyboardAwareLinearLayout: KeyboardAwareLinearLayout = view.findViewById(R.id.kb_aware_layout)
     val eventListener: EmojiEventListener = requireNotNull(findListener())

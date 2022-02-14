@@ -10,7 +10,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.model.databaseprotos.Wallpaper;
-import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.wallpaper.ChatWallpaper;
 import org.tm.archive.wallpaper.ChatWallpaperFactory;
 import org.tm.archive.wallpaper.WallpaperStorage;

@@ -12,9 +12,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.mobilecoin.lib.exceptions.SerializationException;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.helpers.SQLCipherOpenHelper;
 import org.tm.archive.database.model.databaseprotos.CryptoValue;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.payments.CryptoValueUtil;
@@ -91,7 +91,7 @@ public final class PaymentDatabase extends Database {
 
   private final MutableLiveData<Object> changeSignal;
 
-  PaymentDatabase(@NonNull Context context, @NonNull SQLCipherOpenHelper databaseHelper) {
+  PaymentDatabase(@NonNull Context context, @NonNull SignalDatabase databaseHelper) {
     super(context, databaseHelper);
 
     this.changeSignal = new MutableLiveData<>(new Object());
@@ -105,7 +105,7 @@ public final class PaymentDatabase extends Database {
                                     @NonNull Money amount,
                                     @NonNull Money fee,
                                     @NonNull byte[] receipt)
-      throws PublicKeyConflictException
+      throws PublicKeyConflictException, SerializationException
   {
     create(uuid, fromRecipient, null, timestamp, 0, note, Direction.RECEIVED, State.SUBMITTED, amount, fee, null, receipt, null, false);
   }
@@ -122,7 +122,9 @@ public final class PaymentDatabase extends Database {
       create(uuid, toRecipient, publicAddress, timestamp, 0, note, Direction.SENT, State.INITIAL, amount, amount.toZero(), null, null, null, true);
     } catch (PublicKeyConflictException e) {
       Log.w(TAG, "Tried to create payment but the public key appears already in the database", e);
-      throw new AssertionError(e);
+      throw new IllegalArgumentException(e);
+    } catch (SerializationException e) {
+      throw new IllegalArgumentException(e);
     }
   }
 
@@ -142,6 +144,7 @@ public final class PaymentDatabase extends Database {
                                       @NonNull Money fee,
                                       @NonNull byte[] receipt,
                                       @NonNull PaymentMetaData metaData)
+    throws SerializationException
   {
     try {
       create(uuid, toRecipient, publicAddress, timestamp, blockIndex, note, Direction.SENT, State.SUCCESSFUL, amount, fee, null, receipt, metaData, true);
@@ -165,6 +168,8 @@ public final class PaymentDatabase extends Database {
     } catch (PublicKeyConflictException e) {
       Log.w(TAG, "Tried to create payment but the public key appears already in the database", e);
       throw new AssertionError(e);
+    } catch (SerializationException e) {
+      throw new IllegalArgumentException(e);
     }
   }
 
@@ -183,7 +188,7 @@ public final class PaymentDatabase extends Database {
                       @Nullable byte[] receipt,
                       @Nullable PaymentMetaData metaData,
                       boolean seen)
-      throws PublicKeyConflictException
+      throws PublicKeyConflictException, SerializationException
   {
     if (recipientId == null && publicAddress == null) {
       throw new AssertionError();
@@ -403,8 +408,12 @@ public final class PaymentDatabase extends Database {
     values.put(STATE, State.SUBMITTED.serialize());
     values.put(TRANSACTION, transaction);
     values.put(RECEIPT, receipt);
-    values.put(PUBLIC_KEY, Base64.encodeBytes(PaymentMetaDataUtil.receiptPublic(PaymentMetaDataUtil.fromReceipt(receipt))));
-    values.put(META_DATA, PaymentMetaDataUtil.fromReceiptAndTransaction(receipt, transaction).toByteArray());
+    try {
+      values.put(PUBLIC_KEY, Base64.encodeBytes(PaymentMetaDataUtil.receiptPublic(PaymentMetaDataUtil.fromReceipt(receipt))));
+      values.put(META_DATA, PaymentMetaDataUtil.fromReceiptAndTransaction(receipt, transaction).toByteArray());
+    } catch (SerializationException e) {
+      throw new IllegalArgumentException(e);
+    }
     values.put(FEE, CryptoValueUtil.moneyToCryptoValue(fee).toByteArray());
 
     database.beginTransaction();

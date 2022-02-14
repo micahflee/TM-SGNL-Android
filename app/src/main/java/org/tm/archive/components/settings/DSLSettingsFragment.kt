@@ -1,15 +1,18 @@
 package org.tm.archive.components.settings
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.EdgeEffect
+import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
 import androidx.annotation.MenuRes
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.tm.archive.R
 import org.tm.archive.components.recyclerview.OnScrollAnimationHelper
@@ -18,12 +21,14 @@ import org.tm.archive.components.recyclerview.ToolbarShadowAnimationHelper
 abstract class DSLSettingsFragment(
   @StringRes private val titleId: Int = -1,
   @MenuRes private val menuId: Int = -1,
-  @LayoutRes layoutId: Int = R.layout.dsl_settings_fragment
+  @LayoutRes layoutId: Int = R.layout.dsl_settings_fragment,
+  val layoutManagerProducer: (Context) -> RecyclerView.LayoutManager = { context -> LinearLayoutManager(context) }
 ) : Fragment(layoutId) {
 
-  private lateinit var recyclerView: RecyclerView
-  private lateinit var scrollAnimationHelper: OnScrollAnimationHelper
+  private var recyclerView: RecyclerView? = null
+  private var scrollAnimationHelper: OnScrollAnimationHelper? = null
 
+  @CallSuper
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     val toolbar: Toolbar = view.findViewById(R.id.toolbar)
     val toolbarShadow: View = view.findViewById(R.id.toolbar_shadow)
@@ -41,15 +46,23 @@ abstract class DSLSettingsFragment(
       toolbar.setOnMenuItemClickListener { onOptionsItemSelected(it) }
     }
 
-    recyclerView = view.findViewById(R.id.recycler)
-    recyclerView.edgeEffectFactory = EdgeEffectFactory()
     scrollAnimationHelper = getOnScrollAnimationHelper(toolbarShadow)
-    val adapter = DSLSettingsAdapter()
+    val settingsAdapter = DSLSettingsAdapter()
 
-    recyclerView.adapter = adapter
-    recyclerView.addOnScrollListener(scrollAnimationHelper)
+    recyclerView = view.findViewById<RecyclerView>(R.id.recycler).apply {
+      edgeEffectFactory = EdgeEffectFactory()
+      layoutManager = layoutManagerProducer(requireContext())
+      adapter = settingsAdapter
+      addOnScrollListener(scrollAnimationHelper!!)
+    }
 
-    bindAdapter(adapter)
+    bindAdapter(settingsAdapter)
+  }
+
+  override fun onDestroyView() {
+    super.onDestroyView()
+    recyclerView = null
+    scrollAnimationHelper = null
   }
 
   protected open fun getOnScrollAnimationHelper(toolbarShadow: View): OnScrollAnimationHelper {

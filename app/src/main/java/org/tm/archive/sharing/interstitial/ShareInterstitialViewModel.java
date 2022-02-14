@@ -17,7 +17,7 @@ import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.sharing.MultiShareSender;
 import org.tm.archive.util.DefaultValueLiveData;
-import org.tm.archive.util.MappingModelList;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.Util;
 
 class ShareInterstitialViewModel extends ViewModel {

@@ -1,7 +1,6 @@
 package org.archiver
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson

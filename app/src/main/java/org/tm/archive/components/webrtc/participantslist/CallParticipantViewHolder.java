@@ -1,7 +1,6 @@
 package org.tm.archive.components.webrtc.participantslist;
 
 import android.view.View;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 

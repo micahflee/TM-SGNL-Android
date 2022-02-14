@@ -3,7 +3,7 @@ package org.tm.archive.wallpaper;
 import androidx.annotation.Nullable;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
 
 class ChatWallpaperSelectionAdapter extends MappingAdapter {
   ChatWallpaperSelectionAdapter(@Nullable ChatWallpaperViewHolder.EventListener eventListener) {

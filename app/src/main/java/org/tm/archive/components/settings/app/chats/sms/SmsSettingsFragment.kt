@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
@@ -15,6 +15,7 @@ import org.tm.archive.components.settings.configure
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.SmsUtil
 import org.tm.archive.util.Util
+import org.tm.archive.util.navigation.safeNavigate
 
 private const val SMS_REQUEST_CODE: Short = 1234
 
@@ -28,7 +29,7 @@ class SmsSettingsFragment : DSLSettingsFragment(R.string.preferences__sms_mms) {
   }
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    viewModel = ViewModelProviders.of(this)[SmsSettingsViewModel::class.java]
+    viewModel = ViewModelProvider(this)[SmsSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) {
       adapter.submitList(getConfiguration(it).toMappingModelList())
@@ -41,6 +42,7 @@ class SmsSettingsFragment : DSLSettingsFragment(R.string.preferences__sms_mms) {
 
   private fun getConfiguration(state: SmsSettingsState): DSLConfiguration {
     return configure {
+      @Suppress("DEPRECATION")
       clickPref(
         title = DSLSettingsText.from(R.string.SmsSettingsFragment__use_as_default_sms_app),
         summary = DSLSettingsText.from(if (state.useAsDefaultSmsApp) R.string.arrays__enabled else R.string.arrays__disabled),
@@ -75,7 +77,7 @@ class SmsSettingsFragment : DSLSettingsFragment(R.string.preferences__sms_mms) {
         clickPref(
           title = DSLSettingsText.from(R.string.preferences__advanced_mms_access_point_names),
           onClick = {
-            Navigation.findNavController(requireView()).navigate(R.id.action_smsSettingsFragment_to_mmsPreferencesFragment)
+            Navigation.findNavController(requireView()).safeNavigate(R.id.action_smsSettingsFragment_to_mmsPreferencesFragment)
           }
         )
       }
@@ -84,6 +86,7 @@ class SmsSettingsFragment : DSLSettingsFragment(R.string.preferences__sms_mms) {
 
   // Linter isn't smart enough to figure out the else only happens if API >= 24
   @SuppressLint("InlinedApi")
+  @Suppress("DEPRECATION")
   private fun startDefaultAppSelectionIntent() {
     val intent: Intent = when {
       Build.VERSION.SDK_INT < 23 -> Intent(Settings.ACTION_WIRELESS_SETTINGS)

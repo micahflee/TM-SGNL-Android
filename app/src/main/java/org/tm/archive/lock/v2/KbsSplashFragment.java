@@ -22,6 +22,7 @@ import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.pin.PinOptOutDialog;
 import org.tm.archive.util.CommunicationActions;
+import org.tm.archive.util.navigation.SafeNavigation;
 
 public final class KbsSplashFragment extends Fragment {
 
@@ -117,7 +118,7 @@ public final class KbsSplashFragment extends Fragment {
 
     action.setIsPinChange(SignalStore.kbsValues().hasPin());
 
-    Navigation.findNavController(requireView()).navigate(action);
+    SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), action);
   }
 
   private void onLearnMore() {

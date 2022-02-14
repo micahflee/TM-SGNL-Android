@@ -8,15 +8,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MmsSmsDatabase;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.util.FeatureFlags;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -25,7 +24,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({DatabaseFactory.class, FeatureFlags.class})
+@PrepareForTest({SignalDatabase.class, FeatureFlags.class})
 public class RecipientUtilTest {
 
   private Context           context               = mock(Context.class);
@@ -36,10 +35,10 @@ public class RecipientUtilTest {
 
   @Before
   public void setUp() {
-    mockStatic(DatabaseFactory.class);
-    when(DatabaseFactory.getThreadDatabase(any())).thenReturn(mockThreadDatabase);
-    when(DatabaseFactory.getMmsSmsDatabase(any())).thenReturn(mockMmsSmsDatabase);
-    when(DatabaseFactory.getRecipientDatabase(any())).thenReturn(mockRecipientDatabase);
+    mockStatic(SignalDatabase.class);
+    when(SignalDatabase.threads()).thenReturn(mockThreadDatabase);
+    when(SignalDatabase.mmsSms()).thenReturn(mockMmsSmsDatabase);
+    when(SignalDatabase.recipients()).thenReturn(mockRecipientDatabase);
     mockStatic(FeatureFlags.class);
 
     when(recipient.getId()).thenReturn(RecipientId.from(5));

@@ -8,14 +8,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.tm.archive.R;
+import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.MappingAdapter;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.Factory;
+import org.tm.archive.util.adapter.mapping.LayoutFactory;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 public class RecipientViewHolder<T extends RecipientMappingModel<T>> extends MappingViewHolder<T> {
 
   protected final @Nullable AvatarImageView  avatar;
+  protected final @Nullable BadgeImageView   badge;
   protected final @Nullable TextView         name;
   protected final @Nullable EventListener<T> eventListener;
   private   final           boolean          quickContactEnabled;
@@ -30,6 +33,7 @@ public class RecipientViewHolder<T extends RecipientMappingModel<T>> extends Map
     this.quickContactEnabled = quickContactEnabled;
 
     avatar = findViewById(R.id.recipient_view_avatar);
+    badge  = findViewById(R.id.recipient_view_badge);
     name   = findViewById(R.id.recipient_view_name);
   }
 
@@ -37,6 +41,10 @@ public class RecipientViewHolder<T extends RecipientMappingModel<T>> extends Map
   public void bind(@NonNull T model) {
     if (avatar != null) {
       avatar.setRecipient(model.getRecipient(), quickContactEnabled);
+    }
+
+    if (badge != null) {
+      badge.setBadgeFromRecipient(model.getRecipient());
     }
 
     if (name != null) {
@@ -50,8 +58,8 @@ public class RecipientViewHolder<T extends RecipientMappingModel<T>> extends Map
     }
   }
 
-  public static @NonNull <T extends RecipientMappingModel<T>> MappingAdapter.Factory<T> createFactory(@LayoutRes int layout, @Nullable EventListener<T> listener) {
-    return new MappingAdapter.LayoutFactory<>(view -> new RecipientViewHolder<>(view, listener), layout);
+  public static @NonNull <T extends RecipientMappingModel<T>> Factory<T> createFactory(@LayoutRes int layout, @Nullable EventListener<T> listener) {
+    return new LayoutFactory<>(view -> new RecipientViewHolder<>(view, listener), layout);
   }
 
   public interface EventListener<T extends RecipientMappingModel<T>> {

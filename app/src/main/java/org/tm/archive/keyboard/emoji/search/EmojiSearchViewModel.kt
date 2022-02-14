@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import org.tm.archive.components.emoji.EmojiPageModel
 import org.tm.archive.components.emoji.RecentEmojiPageModel
 import org.tm.archive.keyboard.emoji.toMappingModels
-import org.tm.archive.util.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingModel
 import org.tm.archive.util.livedata.LiveDataUtil
 
 class EmojiSearchViewModel(private val repository: EmojiSearchRepository) : ViewModel() {

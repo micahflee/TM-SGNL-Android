@@ -20,8 +20,8 @@ import org.tm.archive.R;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.UriAttachment;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
@@ -55,7 +55,6 @@ import org.whispersystems.signalservice.api.messages.SignalServiceStickerManifes
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.IDN;
 import java.util.concurrent.ExecutionException;
 
 import okhttp3.CacheControl;
@@ -260,8 +259,7 @@ public class LinkPreviewRepository {
 
         GroupMasterKey                      groupMasterKey = groupInviteLinkUrl.getGroupMasterKey();
         GroupId.V2                          groupId        = GroupId.v2(groupMasterKey);
-        Optional<GroupDatabase.GroupRecord> group          = DatabaseFactory.getGroupDatabase(context)
-                                                                            .getGroup(groupId);
+        Optional<GroupDatabase.GroupRecord> group          = SignalDatabase.groups().getGroup(groupId);
 
         if (group.isPresent()) {
           Log.i(TAG, "Creating preview for locally available group");

@@ -25,8 +25,7 @@ import org.signal.libsignal.metadata.SelfSendException;
 import org.tm.archive.R;
 import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.crypto.storage.SignalProtocolStoreImpl;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupId;
@@ -34,6 +33,7 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.AutomaticSessionResetJob;
 import org.tm.archive.jobs.RefreshPreKeysJob;
 import org.tm.archive.jobs.SendRetryReceiptJob;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.logsubmit.SubmitDebugLogActivity;
 import org.tm.archive.messages.MessageContentProcessor.ExceptionMetadata;
 import org.tm.archive.messages.MessageContentProcessor.MessageState;
@@ -42,7 +42,6 @@ import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.GroupUtil;
-import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.protocol.DecryptionErrorMessage;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
@@ -77,9 +76,9 @@ public final class MessageDecryptionUtil {
    * caller.
    */
   public static @NonNull DecryptionResult decrypt(@NonNull Context context, @NonNull SignalServiceEnvelope envelope) {
-    SignalProtocolStore  axolotlStore = new SignalProtocolStoreImpl(context);
-    SignalServiceAddress localAddress = new SignalServiceAddress(TextSecurePreferences.getLocalUuid(context), Optional.of(TextSecurePreferences.getLocalNumber(context)));
-    SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, axolotlStore, ReentrantSessionLock.INSTANCE, UnidentifiedAccessUtil.getCertificateValidator());
+    SignalProtocolStore  axolotlStore = ApplicationDependencies.getProtocolStore().aci();
+    SignalServiceAddress localAddress = new SignalServiceAddress(Recipient.self().requireAci(), Recipient.self().requireE164());
+    SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, SignalStore.account().getDeviceId(), axolotlStore, ReentrantSessionLock.INSTANCE, UnidentifiedAccessUtil.getCertificateValidator());
     List<Job>            jobs         = new LinkedList<>();
 
     if (envelope.isPreKeySignalMessage()) {
@@ -106,19 +105,19 @@ public final class MessageDecryptionUtil {
 
         return DecryptionResult.forNoop(jobs);
       } catch (ProtocolLegacyMessageException e) {
-        Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] " + envelope.getSourceIdentifier() + ":" + envelope.getSourceDevice(), e);
         return DecryptionResult.forError(MessageState.LEGACY_MESSAGE, toExceptionMetadata(e), jobs);
       } catch (ProtocolDuplicateMessageException e) {
-        Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] " + envelope.getSourceIdentifier() + ":" + envelope.getSourceDevice(), e);
         return DecryptionResult.forError(MessageState.DUPLICATE_MESSAGE, toExceptionMetadata(e), jobs);
       } catch (InvalidMetadataVersionException | InvalidMetadataMessageException | InvalidMessageStructureException e) {
-        Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] " + envelope.getSourceIdentifier() + ":" + envelope.getSourceDevice(), e);
         return DecryptionResult.forNoop(jobs);
       } catch (SelfSendException e) {
         Log.i(TAG, "Dropping UD message from self.");
         return DecryptionResult.forNoop(jobs);
       } catch (UnsupportedDataMessageException e) {
-        Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] " + envelope.getSourceIdentifier() + ":" + envelope.getSourceDevice(), e);
         return DecryptionResult.forError(MessageState.UNSUPPORTED_DATA_MESSAGE, toExceptionMetadata(e), jobs);
       }
     } catch (NoSenderException e) {
@@ -147,15 +146,15 @@ public final class MessageDecryptionUtil {
 
     if (groupId.isPresent()) {
       Recipient groupRecipient = Recipient.externalPossiblyMigratedGroup(context, groupId.get());
-      threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient);
+      threadId = SignalDatabase.threads().getOrCreateThreadIdFor(groupRecipient);
     } else {
-      threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(sender);
+      threadId = SignalDatabase.threads().getOrCreateThreadIdFor(sender);
     }
 
     switch (contentHint) {
       case DEFAULT:
         Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting an error right away because it's " + contentHint);
-        DatabaseFactory.getSmsDatabase(context).insertBadDecryptMessage(sender.getId(), senderDevice, envelope.getTimestamp(), receivedTimestamp, threadId);
+        SignalDatabase.sms().insertBadDecryptMessage(sender.getId(), senderDevice, envelope.getTimestamp(), receivedTimestamp, threadId);
         break;
       case RESENDABLE:
         Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting into pending retries store because it's " + contentHint);

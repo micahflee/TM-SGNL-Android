@@ -33,7 +33,6 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.ApplicationContext;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.DummyActivity;
 import org.tm.archive.MainActivity;

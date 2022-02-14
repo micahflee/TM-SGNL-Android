@@ -24,6 +24,8 @@ package org.tm.archive.components.emoji.parsing;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.tm.archive.emoji.JumboEmoji;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -125,6 +127,15 @@ public class EmojiParser {
 
     public int size() {
       return list.size();
+    }
+
+    public boolean hasJumboForAll() {
+      for (Candidate candidate : list) {
+        if (!JumboEmoji.hasJumboEmoji(candidate.drawInfo)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     @Override

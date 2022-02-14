@@ -27,8 +27,8 @@ import org.tm.archive.components.BoldSelectionTabItem
 import org.tm.archive.components.ControllableTabLayout
 import org.tm.archive.components.KeyboardAwareLinearLayout
 import org.tm.archive.components.recyclerview.GridDividerDecoration
-import org.tm.archive.util.MappingAdapter
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 
 /**
  * Fragment to create an avatar based off of a Vector or Text (via a pager)
@@ -106,7 +106,7 @@ class TextAvatarCreationFragment : Fragment(R.layout.text_avatar_creation_fragme
       Navigation.findNavController(v).popBackStack()
     }
 
-    textInput.setOnEditorActionListener { v, actionId, event ->
+    textInput.setOnEditorActionListener { _, actionId, _ ->
       if (actionId == EditorInfo.IME_ACTION_NEXT) {
         tabLayout.getTabAt(1)?.select()
         true

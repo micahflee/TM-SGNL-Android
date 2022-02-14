@@ -4,9 +4,10 @@ import android.view.View
 import android.widget.ImageView
 import com.airbnb.lottie.SimpleColorFilter
 import org.tm.archive.R
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingModel
-import org.tm.archive.util.MappingViewHolder
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingModel
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 
 typealias OnAvatarColorClickListener = (Avatars.ColorPair) -> Unit
 
@@ -20,7 +21,7 @@ data class AvatarColorItem(
 
   companion object {
     fun registerViewHolder(adapter: MappingAdapter, onAvatarColorClickListener: OnAvatarColorClickListener) {
-      adapter.registerFactory(Model::class.java, MappingAdapter.LayoutFactory({ ViewHolder(it, onAvatarColorClickListener) }, R.layout.avatar_color_item))
+      adapter.registerFactory(Model::class.java, LayoutFactory({ ViewHolder(it, onAvatarColorClickListener) }, R.layout.avatar_color_item))
     }
   }
 

@@ -28,7 +28,6 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.blurhash.BlurHash;
-import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.database.AttachmentDatabase.TransformProperties;
 import org.tm.archive.util.MediaUtil;
 

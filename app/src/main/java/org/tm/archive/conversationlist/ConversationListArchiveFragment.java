@@ -22,7 +22,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import androidx.annotation.DrawableRes;
-import androidx.annotation.MenuRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
@@ -36,7 +35,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import org.tm.archive.R;
 import org.tm.archive.components.registration.PulsingFloatingActionButton;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.util.task.SnackbarAsyncTask;
 import org.tm.archive.util.views.Stub;
 
@@ -105,30 +104,28 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
   }
 
   @Override
-  protected @MenuRes int getActionModeMenuRes() {
-    return R.menu.conversation_list_batch_unarchive;
-  }
-
-  @Override
   protected @DrawableRes int getArchiveIconRes() {
-    return R.drawable.ic_unarchive_white_36dp;
+    return R.drawable.ic_unarchive_24;
   }
 
   @Override
   @WorkerThread
   protected void archiveThreads(Set<Long> threadIds) {
-    DatabaseFactory.getThreadDatabase(getActivity()).setArchived(threadIds, false);
+    SignalDatabase.threads().setArchived(threadIds, false);
   }
 
   @Override
   @WorkerThread
   protected void reverseArchiveThreads(Set<Long> threadIds) {
-    DatabaseFactory.getThreadDatabase(getActivity()).setArchived(threadIds, true);
+    SignalDatabase.threads().setArchived(threadIds, true);
   }
 
   @SuppressLint("StaticFieldLeak")
   @Override
   protected void onItemSwiped(long threadId, int unreadCount) {
+    archiveDecoration.onArchiveStarted();
+    itemAnimator.enable();
+
     new SnackbarAsyncTask<Long>(getViewLifecycleOwner().getLifecycle(),
                                 requireView(),
                                 getResources().getQuantityString(R.plurals.ConversationListFragment_moved_conversations_to_inbox, 1, 1),
@@ -139,12 +136,12 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
     {
       @Override
       protected void executeAction(@Nullable Long parameter) {
-        DatabaseFactory.getThreadDatabase(getActivity()).unarchiveConversation(threadId);
+        SignalDatabase.threads().unarchiveConversation(threadId);
       }
 
       @Override
       protected void reverseAction(@Nullable Long parameter) {
-        DatabaseFactory.getThreadDatabase(getActivity()).archiveConversation(threadId);
+        SignalDatabase.threads().archiveConversation(threadId);
       }
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, threadId);
   }

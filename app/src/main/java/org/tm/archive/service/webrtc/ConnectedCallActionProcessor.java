@@ -12,8 +12,6 @@ import org.tm.archive.ringrtc.RemotePeer;
 import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.webrtc.locks.LockManager;
 
-import java.util.List;
-
 /**
  * Handles action for a connected/ongoing call. At this point it's mostly responding
  * to user actions (local and remote) on video/mic and adjusting accordingly.
@@ -55,7 +53,7 @@ public class ConnectedCallActionProcessor extends DeviceAwareActionProcessor {
       webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context));
     }
 
-    WebRtcUtil.enableSpeakerPhoneIfNeeded(context, currentState.getLocalDeviceState().getCameraState().isEnabled());
+    WebRtcUtil.enableSpeakerPhoneIfNeeded(webRtcInteractor, currentState);
 
     return currentState;
   }
@@ -87,15 +85,6 @@ public class ConnectedCallActionProcessor extends DeviceAwareActionProcessor {
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleSendIceCandidates(@NonNull WebRtcServiceState currentState,
-                                                                @NonNull WebRtcData.CallMetadata callMetadata,
-                                                                boolean broadcast,
-                                                                @NonNull List<byte[]> iceCandidates)
-  {
-    return activeCallDelegate.handleSendIceCandidates(currentState, callMetadata, broadcast, iceCandidates);
-  }
-
-  @Override
   protected @NonNull WebRtcServiceState handleLocalHangup(@NonNull WebRtcServiceState currentState) {
     return activeCallDelegate.handleLocalHangup(currentState);
   }
@@ -113,10 +102,5 @@ public class ConnectedCallActionProcessor extends DeviceAwareActionProcessor {
   @Override
   protected @NonNull WebRtcServiceState handleReceivedOfferWhileActive(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
     return activeCallDelegate.handleReceivedOfferWhileActive(currentState, remotePeer);
-  }
-
-  @Override
-  protected @NonNull WebRtcServiceState handleCallConcluded(@NonNull WebRtcServiceState currentState, @Nullable RemotePeer remotePeer) {
-    return activeCallDelegate.handleCallConcluded(currentState, remotePeer);
   }
 }

@@ -1,7 +1,8 @@
 package org.tm.archive.components.webrtc.participantslist;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.LayoutFactory;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
 
 public class CallParticipantsListAdapter extends MappingAdapter {
 

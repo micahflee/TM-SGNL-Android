@@ -7,7 +7,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.util.SingleLiveEvent;
 
 public final class EditAboutViewModel extends ViewModel {

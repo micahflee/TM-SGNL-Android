@@ -6,8 +6,8 @@ import org.signal.core.util.concurrent.SignalExecutors
 import org.tm.archive.components.emoji.Emoji
 import org.tm.archive.components.emoji.EmojiPageModel
 import org.tm.archive.components.emoji.RecentEmojiPageModel
-import org.tm.archive.database.DatabaseFactory
 import org.tm.archive.database.EmojiSearchDatabase
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.emoji.EmojiSource
 import org.tm.archive.util.TextSecurePreferences
 import java.util.function.Consumer
@@ -17,7 +17,7 @@ private const val EMOJI_SEARCH_LIMIT = 20
 
 class EmojiSearchRepository(private val context: Context) {
 
-  private val emojiSearchDatabase: EmojiSearchDatabase = DatabaseFactory.getEmojiSearchDatabase(context)
+  private val emojiSearchDatabase: EmojiSearchDatabase = SignalDatabase.emojiSearch
 
   fun submitQuery(query: String, includeRecents: Boolean, limit: Int = EMOJI_SEARCH_LIMIT, consumer: Consumer<EmojiPageModel>) {
     if (query.length < MINIMUM_QUERY_THRESHOLD && includeRecents) {

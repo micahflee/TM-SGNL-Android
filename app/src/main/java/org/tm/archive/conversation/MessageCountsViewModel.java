@@ -2,7 +2,6 @@ package org.tm.archive.conversation;
 
 import android.app.Application;
 import android.content.Context;
-import android.database.ContentObserver;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
@@ -11,10 +10,9 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.DatabaseContentProviders;
-import org.tm.archive.database.DatabaseFactory;
-import org.tm.archive.database.MessageDatabase;
-import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.database.DatabaseObserver;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.util.concurrent.SerialMonoLifoExecutor;
 import org.whispersystems.libsignal.util.Pair;
@@ -26,10 +24,10 @@ public class MessageCountsViewModel extends ViewModel {
   private static final Executor EXECUTOR = new SerialMonoLifoExecutor(SignalExecutors.BOUNDED);
 
   private final Application                      context;
-  private final MutableLiveData<Long>            threadId       = new MutableLiveData<>(-1L);
+  private final MutableLiveData<Long>            threadId = new MutableLiveData<>(-1L);
   private final LiveData<Pair<Integer, Integer>> unreadCounts;
 
-  private ContentObserver observer;
+  private DatabaseObserver.Observer observer;
 
   public MessageCountsViewModel() {
     this.context      = ApplicationDependencies.getApplication();
@@ -41,18 +39,24 @@ public class MessageCountsViewModel extends ViewModel {
         return counts;
       }
 
-      observer = new ContentObserver(null) {
+      observer = new DatabaseObserver.Observer() {
+        private int previousUnreadCount = -1;
+
         @Override
-        public void onChange(boolean selfChange) {
+        public void onChanged() {
           EXECUTOR.execute(() -> {
-            counts.postValue(getCounts(context, id));
+            int unreadCount = getUnreadCount(context, id);
+            if (unreadCount != previousUnreadCount) {
+              previousUnreadCount = unreadCount;
+              counts.postValue(new Pair<>(unreadCount, getUnreadMentionsCount(context, id)));
+            }
           });
         }
       };
 
-      observer.onChange(false);
+      observer.onChanged();
 
-      context.getContentResolver().registerContentObserver(DatabaseContentProviders.Conversation.getUriForThread(id), true, observer);
+      ApplicationDependencies.getDatabaseObserver().registerConversationListObserver(observer);
 
       return counts;
     });
@@ -75,19 +79,19 @@ public class MessageCountsViewModel extends ViewModel {
     return Transformations.map(unreadCounts, Pair::second);
   }
 
-  private Pair<Integer, Integer> getCounts(@NonNull Context context, long threadId) {
-    MmsSmsDatabase  mmsSmsDatabase     = DatabaseFactory.getMmsSmsDatabase(context);
-    MessageDatabase mmsDatabase        = DatabaseFactory.getMmsDatabase(context);
-    int             unreadCount        = mmsSmsDatabase.getUnreadCount(threadId);
-    int             unreadMentionCount = mmsDatabase.getUnreadMentionCount(threadId);
+  private int getUnreadCount(@NonNull Context context, long threadId) {
+    ThreadRecord threadRecord = SignalDatabase.threads().getThreadRecord(threadId);
+    return threadRecord != null ? threadRecord.getUnreadCount() : 0;
+  }
 
-    return new Pair<>(unreadCount, unreadMentionCount);
+  private int getUnreadMentionsCount(@NonNull Context context, long threadId) {
+    return SignalDatabase.mms().getUnreadMentionCount(threadId);
   }
 
   @Override
   protected void onCleared() {
     if (observer != null) {
-      context.getContentResolver().unregisterContentObserver(observer);
+      ApplicationDependencies.getDatabaseObserver().unregisterObserver(observer);
     }
   }
 }

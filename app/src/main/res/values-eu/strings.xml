@@ -177,9 +177,9 @@
   <string name="ConversationItem_this_message_was_deleted">Mezu hau ezabatu da.</string>
   <string name="ConversationItem_you_deleted_this_message">Mezu hau ezabatu duzu.</string>
   <!--ConversationActivity-->
-  <string name="ConversationActivity_reset_secure_session_question">Saio segurua berrabiarazi?</string>
-  <string name="ConversationActivity_this_may_help_if_youre_having_encryption_problems">Agian honek lagunduko du enkriptatzeko arazorik baldin baduzu. Zure mezuak mantenduko dira.</string>
-  <string name="ConversationActivity_reset">Berrabiarazi</string>
+  <!-- Removed by excludeNonTranslatables <string name="ConversationActivity_reset_secure_session_question">Saio segurua berrabiarazi?</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ConversationActivity_this_may_help_if_youre_having_encryption_problems">Agian honek lagunduko du enkriptatzeko arazorik baldin baduzu. Zure mezuak mantenduko dira.</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ConversationActivity_reset">Berrabiarazi</string> -->
   <string name="ConversationActivity_add_attachment">Eranskina gehitu</string>
   <string name="ConversationActivity_select_contact_info">Kontaktuaren informazioa aukeratu</string>
   <string name="ConversationActivity_compose_message">Mezua idatzi</string>
@@ -386,13 +386,13 @@
   <!--DocumentView-->
   <string name="DocumentView_unnamed_file">Izenik gabeko fitxategia</string>
   <!--DonateMegaphone-->
-  <string name="DonateMegaphone_donate_to_signal">Signal-i dohaintza eman</string>
-  <string name="DonateMegaphone_Signal_is_powered_by_people_like_you_show_your_support_today">Signalen indarra zu moduko jendearengandik dator. Erakutsi zure laguntza gaur bertan!</string>
-  <string name="DonateMegaphone_donate">Dohaintza egin</string>
-  <string name="DonateMegaphone_no_thanks">Ez eskerrik asko</string>
+  <!-- Removed by excludeNonTranslatables <string name="DonateMegaphone_donate_to_signal">Signal-i dohaintza eman</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="DonateMegaphone_Signal_is_powered_by_people_like_you_show_your_support_today">Signalen indarra zu moduko jendearengandik dator. Erakutsi zure laguntza gaur bertan!</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="DonateMegaphone_donate">Dohaintza egin</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="DonateMegaphone_no_thanks">Ez eskerrik asko</string> -->
   <!--GroupCallingMegaphone-->
-  <string name="GroupCallingMegaphone__introducing_group_calls">Talde-deiei buruz</string>
-  <string name="GroupCallingMegaphone__open_a_new_group_to_start">Ireki Talde Berria zifratutako talde-dei bat egiteko</string>
+  <!-- Removed by excludeNonTranslatables <string name="GroupCallingMegaphone__introducing_group_calls">Talde-deiei buruz</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="GroupCallingMegaphone__open_a_new_group_to_start">Ireki Talde Berria zifratutako talde-dei bat egiteko</string> -->
   <!--DozeReminder-->
   <string name="DozeReminder_optimize_for_missing_play_services">Optimizatu Google Play-ren zerbitzuetarko</string>
   <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">Gailu honek ez dauka Play Services erabiltzerik. Signal irekita ez dagoenean, sistemaren bateria optimizazioek galarazten diote mezuak jasotzea. Ukitu sistemaren bateria optimizazioak desaktibatzeko.</string>
@@ -510,9 +510,9 @@
   <string name="LeaveGroupDialog_before_you_leave_you_must_choose_at_least_one_new_admin_for_this_group">Taldea utzi baino lehenago, gutxienez administratzaile berri bat aukeratu behar duzu talde honetarako.</string>
   <string name="LeaveGroupDialog_choose_admin">Hautatu administratzailea</string>
   <!--LinkPreviewsMegaphone-->
-  <string name="LinkPreviewsMegaphone_disable">Desaktibatu</string>
-  <string name="LinkPreviewsMegaphone_preview_any_link">Aurreikusi edozein esteka</string>
-  <string name="LinkPreviewsMegaphone_you_can_now_retrieve_link_previews_directly_from_any_website">Orain webguneen aurrebistak txerta ditzakezu bidaltzen dituzun mezuetan.</string>
+  <!-- Removed by excludeNonTranslatables <string name="LinkPreviewsMegaphone_disable">Desaktibatu</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="LinkPreviewsMegaphone_preview_any_link">Aurreikusi edozein esteka</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="LinkPreviewsMegaphone_you_can_now_retrieve_link_previews_directly_from_any_website">Orain webguneen aurrebistak txerta ditzakezu bidaltzen dituzun mezuetan.</string> -->
   <!--LinkPreviewView-->
   <string name="LinkPreviewView_no_link_preview_available">Ez dago estekaren aurrebistarik</string>
   <string name="LinkPreviewView_this_group_link_is_not_active">Talde esteka hau ez dago indarrean</string>
@@ -774,14 +774,14 @@
   <string name="MediaOverviewActivity_Grid_view_description">Sareta ikuspegia</string>
   <string name="MediaOverviewActivity_List_view_description">Zerrenda ikuspegia</string>
   <string name="MediaOverviewActivity_Selected_description">Hautatua</string>
-  <plurals name="MediaOverviewActivity_d_items_s">
+  <!-- Removed by excludeNonTranslatables <plurals name="MediaOverviewActivity_d_items_s">
     <item quantity="one">Elementu %1$d %2$s</item>
     <item quantity="other">%1$d elementu %2$s</item>
-  </plurals>
-  <plurals name="MediaOverviewActivity_d_items">
+  </plurals> -->
+  <!-- Removed by excludeNonTranslatables <plurals name="MediaOverviewActivity_d_items">
     <item quantity="one">Elementu %1$d</item>
     <item quantity="other">%1$d elementu</item>
-  </plurals>
+  </plurals> -->
   <string name="MediaOverviewActivity_file">Artxiboa</string>
   <string name="MediaOverviewActivity_audio">Audioa</string>
   <string name="MediaOverviewActivity_video">Bideoa</string>
@@ -792,8 +792,8 @@
   <string name="MediaOverviewActivity_sent_by_s_to_s">%1$s -k %2$s (r)i bidalia</string>
   <string name="MediaOverviewActivity_sent_by_you_to_s">Zuk %1$s (r)i bidalia</string>
   <!--Megaphones-->
-  <string name="Megaphones_introducing_reactions">Erreakzioak Aurkezten</string>
-  <string name="Megaphones_tap_and_hold_any_message_to_quicky_share_how_you_feel">Ukitu eta eutsi edozein mezutan nola sentitzen zaren berehala partzekatzeko.</string>
+  <!-- Removed by excludeNonTranslatables <string name="Megaphones_introducing_reactions">Erreakzioak Aurkezten</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="Megaphones_tap_and_hold_any_message_to_quicky_share_how_you_feel">Ukitu eta eutsi edozein mezutan nola sentitzen zaren berehala partzekatzeko.</string> -->
   <string name="Megaphones_remind_me_later">Gogorarazi iezadazu beranduago</string>
   <string name="Megaphones_verify_your_signal_pin">Zure Signal PINa egiaztatu</string>
   <string name="Megaphones_well_occasionally_ask_you_to_verify_your_pin">Noizean behin eskatuko dizugu zure PINa egiaztatzeko, gogora dezazun.</string>
@@ -1722,10 +1722,10 @@ Gakoaren elkar-trukeraro mezua jaso da protokoloaren bertsio baliogabe baterako.
   <!--recipients_panel-->
   <string name="recipients_panel__to"><small>Izen edo zenbaki bat idatzi</small></string>
   <!--verify_display_fragment-->
-  <string name="verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[%s erabiltzailearekin duzun enkriptazioaren segurtasuna egiaztatu nahi baduzu, goian duzun zenbakia bere gailuan agertzen denarekin alderatu. Hona hemen beste aukera bat: bere telefonoan agertzen den kodea eskaneatzea edo zurean agertzen den kodea eskaneatzeko berari eskatzea.  <a href="https://signal.org/redirect/safety-numbers">Gehiago ikasi. </a>]]></string>
+  <!-- Removed by excludeNonTranslatables <string name="verify_display_fragment__if_you_wish_to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[%s erabiltzailearekin duzun enkriptazioaren segurtasuna egiaztatu nahi baduzu, goian duzun zenbakia bere gailuan agertzen denarekin alderatu. Hona hemen beste aukera bat: bere telefonoan agertzen den kodea eskaneatzea edo zurean agertzen den kodea eskaneatzeko berari eskatzea.  <a href="https://signal.org/redirect/safety-numbers">Gehiago ikasi. </a>]]></string> -->
   <string name="verify_display_fragment__tap_to_scan">Ukitu eskaneatzeko</string>
   <string name="verify_display_fragment__loading">Kargatzen…</string>
-  <string name="verify_display_fragment__verified">Egiaztatua</string>
+  <!-- Removed by excludeNonTranslatables <string name="verify_display_fragment__verified">Egiaztatua</string> -->
   <!--verify_identity-->
   <string name="verify_identity__share_safety_number">Segurtasun zenbakia partekatu</string>
   <!--webrtc_answer_decline_button-->
@@ -2034,14 +2034,14 @@ Gakoaren elkar-trukeraro mezua jaso da protokoloaren bertsio baliogabe baterako.
   <string name="conversation_callable_secure__menu_call">Signal deia</string>
   <string name="conversation_callable_secure__menu_video">Signal bideodeia</string>
   <!--conversation_context-->
-  <string name="conversation_context__menu_message_details">Mezuaren detaileak</string>
-  <string name="conversation_context__menu_copy_text">Testua kopiatu</string>
-  <string name="conversation_context__menu_delete_message">Mezua ezabatu</string>
-  <string name="conversation_context__menu_forward_message">Birbidali mezua</string>
-  <string name="conversation_context__menu_resend_message">Berriro bidali mezua</string>
-  <string name="conversation_context__menu_reply_to_message">Erantzun mezuari</string>
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_message_details">Mezuaren detaileak</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_copy_text">Testua kopiatu</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_delete_message">Mezua ezabatu</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_forward_message">Birbidali mezua</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_resend_message">Berriro bidali mezua</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__menu_reply_to_message">Erantzun mezuari</string> -->
   <!--conversation_context_reacction-->
-  <string name="conversation_context__reaction_multi_select">Hautapen anitza</string>
+  <!-- Removed by excludeNonTranslatables <string name="conversation_context__reaction_multi_select">Hautapen anitza</string> -->
   <!--conversation_context_image-->
   <string name="conversation_context_image__save_attachment">Eraskina gorde</string>
   <!--conversation_expiring_off-->
@@ -2124,7 +2124,7 @@ Gakoaren elkar-trukeraro mezua jaso da protokoloaren bertsio baliogabe baterako.
   <string name="Insights__title">Estatistikak</string>
   <string name="InsightsDashboardFragment__title">Estatistikak</string>
   <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">Signal protokoloak azkenengo %2$d egunetan bidali duzun mezuen %1$d%% babestu du. Signalen erabiltzaileen arteko solasaldiak muturretik-muturrera daude enkriptatuta beti.</string>
-  <string name="InsightsDashboardFragment__boost_your_signal">Signal bizkortu</string>
+  <!-- Removed by excludeNonTranslatables <string name="InsightsDashboardFragment__boost_your_signal">Signal bizkortu</string> -->
   <string name="InsightsDashboardFragment__not_enough_data">Ez dago datu nahikorik</string>
   <string name="InsightsDashboardFragment__your_insights_percentage_is_calculated_based_on">Zure estatistiken ehunekoaren kalkulua azkenengo %1$d egunetan bidali diren mezuetan oinarritzen da; desagertu ez diren edo ezabatu ez diren mezuak bakarrik hartzen dira kontuan.</string>
   <string name="InsightsDashboardFragment__start_a_conversation">Solasaldi bat hasieratu</string>
@@ -2230,15 +2230,15 @@ Gakoaren elkar-trukeraro mezua jaso da protokoloaren bertsio baliogabe baterako.
   <string name="KbsMegaphone__pins_keep_information_thats_stored_with_signal_encrytped">PIN-ek Signalekin batera gordetako informazioa enkriptatuta mantentzen dute.</string>
   <string name="KbsMegaphone__create_pin">PINa sortu</string>
   <!--Research Megaphone-->
-  <string name="ResearchMegaphone_tell_signal_what_you_think">Esan Signali pentsatzen duzuna</string>
-  <string name="ResearchMegaphone_to_make_signal_the_best_messaging_app_on_the_planet">Signal munduko mezularitza aplikaziorik onena bilakatzeko, zure iritzia entzutea gustatuko litzaiguke.</string>
-  <string name="ResearchMegaphone_learn_more">Gehiago jakin</string>
-  <string name="ResearchMegaphone_dismiss">Baztertu</string>
-  <string name="ResearchMegaphoneDialog_signal_research">Signal Ikerketa</string>
-  <string name="ResearchMegaphoneDialog_we_believe_in_privacy"><![CDATA[<p><b>Pribatutasunean sinesten dugu</b></p><p>Signalek ez du jarraitzen egiten duzuna edo zure datuak bildu. Signal guztiontzat hobetzeko, erabiltzaileen iruzkinetan oinarritzen gara, <b>eta zurea edukitzea gustatuko litzaiguke. </b></p><p> Inkesta bat egiten ari gara Signal nola erabiltzen duzun ulertzeko. Gure inkestak identifika zaitzakeen daturik ez du biltzen. Informazio gehiago partekatu nahi baduzu, kontakturako informazioa emateko aukera izango duzu. </p><p> Minutu batzuk eta iruzkinak egiteko baduzu, gustatuko litzaiguke zure iritzia entzutea. </p>]]></string>
-  <string name="ResearchMegaphoneDialog_take_the_survey">Inkesta egin</string>
-  <string name="ResearchMegaphoneDialog_no_thanks">Ez, eskerrik asko</string>
-  <string name="ResearchMegaphoneDialog_the_survey_is_hosted_by_alchemer_at_the_secure_domain">Inkesta Alchemer zerbitzuan dago ostatuta, surveys.signalusers.org domeinuan</string>
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphone_tell_signal_what_you_think">Esan Signali pentsatzen duzuna</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphone_to_make_signal_the_best_messaging_app_on_the_planet">Signal munduko mezularitza aplikaziorik onena bilakatzeko, zure iritzia entzutea gustatuko litzaiguke.</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphone_learn_more">Gehiago jakin</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphone_dismiss">Baztertu</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphoneDialog_signal_research">Signal Ikerketa</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphoneDialog_we_believe_in_privacy"><![CDATA[<p><b>Pribatutasunean sinesten dugu</b></p><p>Signalek ez du jarraitzen egiten duzuna edo zure datuak bildu. Signal guztiontzat hobetzeko, erabiltzaileen iruzkinetan oinarritzen gara, <b>eta zurea edukitzea gustatuko litzaiguke. </b></p><p> Inkesta bat egiten ari gara Signal nola erabiltzen duzun ulertzeko. Gure inkestak identifika zaitzakeen daturik ez du biltzen. Informazio gehiago partekatu nahi baduzu, kontakturako informazioa emateko aukera izango duzu. </p><p> Minutu batzuk eta iruzkinak egiteko baduzu, gustatuko litzaiguke zure iritzia entzutea. </p>]]></string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphoneDialog_take_the_survey">Inkesta egin</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphoneDialog_no_thanks">Ez, eskerrik asko</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="ResearchMegaphoneDialog_the_survey_is_hosted_by_alchemer_at_the_secure_domain">Inkesta Alchemer zerbitzuan dago ostatuta, surveys.signalusers.org domeinuan</string> -->
   <!--transport_selection_list_item-->
   <string name="transport_selection_list_item__transport_icon">Garraio ikonoa</string>
   <string name="ConversationListFragment_loading">Kargatzen…</string>
@@ -2286,7 +2286,7 @@ Gakoaren elkar-trukeraro mezua jaso da protokoloaren bertsio baliogabe baterako.
   <string name="BackupDialog_verify">Baieztatu</string>
   <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">Ondo sartu duzu zure babeskopiaren pasaesaldia</string>
   <string name="BackupDialog_passphrase_was_not_correct">Pasaesaldi ez da zuzena</string>
-  <string name="LocalBackupJob_creating_backup">Babeskopia sortzen…</string>
+  <!-- Removed by excludeNonTranslatables <string name="LocalBackupJob_creating_backup">Babeskopia sortzen…</string> -->
   <string name="LocalBackupJobApi29_backup_failed">Babeskopiak huts egin du</string>
   <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">Babeskopiak gordetzeko karpeta ezabatu edo mugitu da.</string>
   <string name="LocalBackupJobApi29_your_backup_file_is_too_large">Zure babeskopia duen fitxategia handiegia da bolumen honetan gordetzeko.</string>
@@ -2397,8 +2397,8 @@ Gakoaren elkar-trukeraro mezua jaso da protokoloaren bertsio baliogabe baterako.
   <string name="GroupLinkBottomSheet_the_link_is_not_currently_active">Esteka hau ez dago indarrean</string>
   <!--VoiceNotePlaybackPreparer-->
   <!--VoiceNoteMediaDescriptionCompatFactory-->
-  <string name="VoiceNoteMediaDescriptionCompatFactory__voice_message">Ahots-mezua · %1$s</string>
-  <string name="VoiceNoteMediaDescriptionCompatFactory__s_to_s">%1$s tik %2$s ra</string>
+  <!-- Removed by excludeNonTranslatables <string name="VoiceNoteMediaDescriptionCompatFactory__voice_message">Ahots-mezua · %1$s</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="VoiceNoteMediaDescriptionCompatFactory__s_to_s">%1$s tik %2$s ra</string> -->
   <!--StorageUtil-->
   <string name="StorageUtil__s_s">%1$s/%2$s</string>
   <string name="BlockedUsersActivity__s_has_been_blocked">\"%1$s\" blokeatua izan da.</string>
@@ -2617,7 +2617,7 @@ Gakoaren elkar-trukeraro mezua jaso da protokoloaren bertsio baliogabe baterako.
   <string name="NewConversationActivity__new_message">Mezu berria</string>
   <!--ContactFilterView-->
   <!--VoiceNotePlayerView-->
-  <string name="VoiceNotePlayerView__s_dot_s">%1$s · %2$s</string>
+  <!-- Removed by excludeNonTranslatables <string name="VoiceNotePlayerView__s_dot_s">%1$s · %2$s</string> -->
   <!--AvatarPickerFragment-->
   <string name="AvatarPickerFragment__camera">Kamera</string>
   <string name="AvatarPickerFragment__photo">Argazkia</string>

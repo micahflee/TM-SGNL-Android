@@ -17,7 +17,7 @@ import org.tm.archive.payments.FiatMoneyUtil;
 import org.tm.archive.payments.PaymentTransactionLiveData;
 import org.tm.archive.payments.PaymentsAddressException;
 import org.tm.archive.payments.confirm.ConfirmPaymentRepository.ConfirmPaymentResult;
-import org.tm.archive.payments.currency.FiatMoney;
+import org.signal.core.util.money.FiatMoney;
 import org.tm.archive.util.DefaultValueLiveData;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.livedata.LiveDataUtil;

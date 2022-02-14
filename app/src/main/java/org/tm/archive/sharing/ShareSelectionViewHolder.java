@@ -5,15 +5,11 @@ import android.widget.TextView;
 
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import org.tm.archive.R;
-import org.tm.archive.components.AvatarImageView;
-import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.MappingAdapter;
-import org.tm.archive.util.MappingViewHolder;
-import org.tm.archive.util.ViewUtil;
-import org.tm.archive.util.viewholders.RecipientMappingModel;
+import org.tm.archive.util.adapter.mapping.Factory;
+import org.tm.archive.util.adapter.mapping.LayoutFactory;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 public class ShareSelectionViewHolder extends MappingViewHolder<ShareSelectionMappingModel> {
 
@@ -30,7 +26,7 @@ public class ShareSelectionViewHolder extends MappingViewHolder<ShareSelectionMa
     name.setText(model.getName(context));
   }
 
-  public static @NonNull MappingAdapter.Factory<ShareSelectionMappingModel> createFactory(@LayoutRes int layout) {
-    return new MappingAdapter.LayoutFactory<>(ShareSelectionViewHolder::new, layout);
+  public static @NonNull Factory<ShareSelectionMappingModel> createFactory(@LayoutRes int layout) {
+    return new LayoutFactory<>(ShareSelectionViewHolder::new, layout);
   }
 }

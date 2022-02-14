@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.tm.archive.payments.Payee;
-import org.tm.archive.payments.currency.FiatMoney;
+import org.signal.core.util.money.FiatMoney;
 import org.whispersystems.signalservice.api.payments.Money;
 
 import java.util.UUID;

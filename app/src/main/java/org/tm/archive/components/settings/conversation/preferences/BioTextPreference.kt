@@ -9,9 +9,10 @@ import org.tm.archive.R
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingViewHolder
 import org.tm.archive.util.ServiceUtil
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 
 /**
  * Renders name, description, about, etc. for a given group or recipient.
@@ -19,14 +20,15 @@ import org.tm.archive.util.ServiceUtil
 object BioTextPreference {
 
   fun register(adapter: MappingAdapter) {
-    adapter.registerFactory(RecipientModel::class.java, MappingAdapter.LayoutFactory(::RecipientViewHolder, R.layout.conversation_settings_bio_preference_item))
-    adapter.registerFactory(GroupModel::class.java, MappingAdapter.LayoutFactory(::GroupViewHolder, R.layout.conversation_settings_bio_preference_item))
+    adapter.registerFactory(RecipientModel::class.java, LayoutFactory(::RecipientViewHolder, R.layout.conversation_settings_bio_preference_item))
+    adapter.registerFactory(GroupModel::class.java, LayoutFactory(::GroupViewHolder, R.layout.conversation_settings_bio_preference_item))
   }
 
   abstract class BioTextPreferenceModel<T : BioTextPreferenceModel<T>> : PreferenceModel<T>() {
     abstract fun getHeadlineText(context: Context): String
-    abstract fun getSubhead1Text(): String?
+    abstract fun getSubhead1Text(context: Context): String?
     abstract fun getSubhead2Text(): String?
+    abstract fun getCompoundDrawable(): Int
   }
 
   class RecipientModel(
@@ -35,9 +37,19 @@ object BioTextPreference {
 
     override fun getHeadlineText(context: Context): String = recipient.getDisplayNameOrUsername(context)
 
-    override fun getSubhead1Text(): String? = recipient.combinedAboutAndEmoji
+    override fun getSubhead1Text(context: Context): String? {
+      return if (recipient.isReleaseNotes) {
+        context.getString(R.string.ReleaseNotes__signal_release_notes_and_news)
+      } else {
+        recipient.combinedAboutAndEmoji
+      }
+    }
 
     override fun getSubhead2Text(): String? = recipient.e164.transform(PhoneNumberFormatter::prettyPrint).orNull()
+
+    override fun getCompoundDrawable(): Int {
+      return if (recipient.isReleaseNotes) R.drawable.ic_official_28 else 0
+    }
 
     override fun areContentsTheSame(newItem: RecipientModel): Boolean {
       return super.areContentsTheSame(newItem) && newItem.recipient.hasSameContent(recipient)
@@ -54,9 +66,11 @@ object BioTextPreference {
   ) : BioTextPreferenceModel<GroupModel>() {
     override fun getHeadlineText(context: Context): String = groupTitle
 
-    override fun getSubhead1Text(): String? = groupMembershipDescription
+    override fun getSubhead1Text(context: Context): String? = groupMembershipDescription
 
     override fun getSubhead2Text(): String? = null
+
+    override fun getCompoundDrawable(): Int = 0
 
     override fun areContentsTheSame(newItem: GroupModel): Boolean {
       return super.areContentsTheSame(newItem) &&
@@ -77,8 +91,9 @@ object BioTextPreference {
 
     override fun bind(model: T) {
       headline.text = model.getHeadlineText(context)
+      headline.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, model.getCompoundDrawable(), 0)
 
-      model.getSubhead1Text().let {
+      model.getSubhead1Text(context).let {
         subhead1.text = it
         subhead1.visibility = if (it == null) View.GONE else View.VISIBLE
       }

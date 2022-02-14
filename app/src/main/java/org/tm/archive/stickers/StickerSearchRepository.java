@@ -8,8 +8,7 @@ import androidx.annotation.NonNull;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.components.emoji.EmojiUtil;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.CursorList;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.StickerDatabase;
 import org.tm.archive.database.StickerDatabase.StickerRecordReader;
 import org.tm.archive.database.model.StickerRecord;
@@ -24,8 +23,8 @@ public final class StickerSearchRepository {
   private final AttachmentDatabase attachmentDatabase;
 
   public StickerSearchRepository(@NonNull Context context) {
-    this.stickerDatabase    = DatabaseFactory.getStickerDatabase(context);
-    this.attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
+    this.stickerDatabase    = SignalDatabase.stickers();
+    this.attachmentDatabase = SignalDatabase.attachments();
   }
 
   public void searchByEmoji(@NonNull String emoji, @NonNull Callback<List<StickerRecord>> callback) {
@@ -57,13 +56,6 @@ public final class StickerSearchRepository {
         }
       }
     });
-  }
-
-  private static class StickerModelBuilder implements CursorList.ModelBuilder<StickerRecord> {
-    @Override
-    public StickerRecord build(@NonNull Cursor cursor) {
-      return new StickerRecordReader(cursor).getCurrent();
-    }
   }
 
   public interface Callback<T> {

@@ -8,8 +8,8 @@ import com.google.android.mms.pdu_alt.PduHeaders;
 import com.google.android.mms.pdu_alt.PduParser;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -72,7 +72,7 @@ public class MmsReceiveJob extends BaseJob {
     }
 
     if (isNotification(pdu) && !isBlocked(pdu)) {
-      MessageDatabase  database           = DatabaseFactory.getMmsDatabase(context);
+      MessageDatabase  database           = SignalDatabase.mms();
       Pair<Long, Long> messageAndThreadId = database.insertMessageInbox((NotificationInd)pdu, subscriptionId);
 
       Log.i(TAG, "Inserted received MMS notification...");

@@ -2,15 +2,19 @@ package org.tm.archive.util;
 
 import android.app.Application;
 
-import androidx.test.core.app.ApplicationProvider;
-
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.ParameterizedRobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.tm.archive.SignalStoreRule;
+import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.keyvalue.AccountValues;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import kotlin.Unit;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -38,6 +42,12 @@ public class SignalMeUtilText_parseE164FromLink {
     });
   }
 
+  @Rule
+  public SignalStoreRule signalStore = new SignalStoreRule(dataSet -> {
+    dataSet.putString(AccountValues.KEY_E164, "+15555555555");
+    return Unit.INSTANCE;
+  });
+
   public SignalMeUtilText_parseE164FromLink(String input, String output) {
     this.input  = input;
     this.output = output;
@@ -45,6 +55,6 @@ public class SignalMeUtilText_parseE164FromLink {
 
   @Test
   public void parse() {
-    assertEquals(output, SignalMeUtil.parseE164FromLink(ApplicationProvider.getApplicationContext(), input));
+    assertEquals(output, SignalMeUtil.parseE164FromLink(ApplicationDependencies.getApplication(), input));
   }
 }

@@ -7,7 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupChangeBusyException;
@@ -129,11 +129,10 @@ public final class PushProcessMessageJob extends BaseJob {
           queueName = getQueueName(Recipient.externalPossiblyMigratedGroup(context, groupId).getId());
 
           if (groupId.isV2()) {
-            int localRevision = DatabaseFactory.getGroupDatabase(context)
-                                               .getGroupV2Revision(groupId.requireV2());
+            int localRevision = SignalDatabase.groups().getGroupV2Revision(groupId.requireV2());
 
             if (signalServiceGroupContext.getGroupV2().get().getRevision() > localRevision ||
-                DatabaseFactory.getGroupDatabase(context).getGroupV1ByExpectedV2(groupId.requireV2()).isPresent())
+                SignalDatabase.groups().getGroupV1ByExpectedV2(groupId.requireV2()).isPresent())
             {
               Log.i(TAG, "Adding network constraint to group-related job.");
               builder.addConstraint(NetworkConstraint.KEY)
@@ -143,6 +142,8 @@ public final class PushProcessMessageJob extends BaseJob {
         } catch (BadGroupIdException e) {
           Log.w(TAG, "Bad groupId! Using default queue. ID: " + content.getTimestamp());
         }
+      } else if (content.getSyncMessage().isPresent() && content.getSyncMessage().get().getSent().isPresent() && content.getSyncMessage().get().getSent().get().getDestination().isPresent()) {
+        queueName = getQueueName(RecipientId.fromHighTrust(content.getSyncMessage().get().getSent().get().getDestination().get()));
       } else {
         queueName = getQueueName(RecipientId.fromHighTrust(content.getSender()));
       }

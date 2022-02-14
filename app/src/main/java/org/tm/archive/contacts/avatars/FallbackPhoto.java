@@ -13,7 +13,6 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import org.tm.archive.R;
 import org.tm.archive.avatar.Avatars;
 import org.tm.archive.conversation.colors.AvatarColor;
-import org.tm.archive.util.ViewUtil;
 
 import java.util.Objects;
 

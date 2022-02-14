@@ -19,7 +19,6 @@ import org.tm.archive.payments.proto.MobileCoinLedger;
 import org.tm.archive.payments.proto.PaymentMetaData;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.testutil.LogRecorder;
-import org.tm.archive.testutil.SystemOutLogger;
 import org.whispersystems.libsignal.util.ByteUtil;
 import org.whispersystems.signalservice.api.payments.Money;
 import org.whispersystems.signalservice.api.util.Uint64RangeException;

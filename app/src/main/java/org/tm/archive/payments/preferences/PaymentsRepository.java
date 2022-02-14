@@ -9,9 +9,8 @@ import androidx.lifecycle.LiveData;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.PaymentDatabase;
-import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.payments.Direction;
 import org.tm.archive.payments.MobileCoinLedgerWrapper;
@@ -36,7 +35,7 @@ public class PaymentsRepository {
   private final LiveData<List<Payment>> recentReceivedPayments;
 
   public PaymentsRepository() {
-    paymentDatabase = DatabaseFactory.getPaymentDatabase(ApplicationDependencies.getApplication());
+    paymentDatabase = SignalDatabase.payments();
 
     LiveData<List<PaymentDatabase.PaymentTransaction>> localPayments = paymentDatabase.getAllLive();
     LiveData<MobileCoinLedgerWrapper>                  ledger        = SignalStore.paymentsValues().liveMobileCoinLedger();

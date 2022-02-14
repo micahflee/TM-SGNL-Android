@@ -14,7 +14,7 @@ import androidx.lifecycle.ViewModelProviders;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.R;
 import org.tm.archive.components.emoji.MediaKeyboard;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.StickerRecord;
 import org.tm.archive.keyboard.KeyboardPage;
 import org.tm.archive.keyboard.KeyboardPagerViewModel;
@@ -61,8 +61,7 @@ public final class ImageEditorStickerSelectActivity extends AppCompatActivity im
     intent.setData(sticker.getUri());
     setResult(RESULT_OK, intent);
 
-    SignalExecutors.BOUNDED.execute(() -> DatabaseFactory.getStickerDatabase(getApplicationContext())
-                                                         .updateStickerLastUsedTime(sticker.getRowId(), System.currentTimeMillis()));
+    SignalExecutors.BOUNDED.execute(() -> SignalDatabase.stickers().updateStickerLastUsedTime(sticker.getRowId(), System.currentTimeMillis()));
     ViewUtil.hideKeyboard(this, findViewById(android.R.id.content));
     finish();
   }

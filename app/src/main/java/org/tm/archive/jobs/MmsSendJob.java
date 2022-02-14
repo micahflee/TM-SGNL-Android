@@ -26,10 +26,10 @@ import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.DatabaseAttachment;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.NoSuchMessageException;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -37,6 +37,7 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobLogger;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.CompatMmsConnection;
 import org.tm.archive.mms.MediaConstraints;
 import org.tm.archive.mms.MmsException;
@@ -48,7 +49,6 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.transport.InsecureFallbackApprovalException;
 import org.tm.archive.transport.UndeliverableMessageException;
 import org.tm.archive.util.Hex;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 
 import java.io.ByteArrayOutputStream;
@@ -79,7 +79,7 @@ public final class MmsSendJob extends SendJob {
   /** Enqueues compression jobs for attachments and finally the MMS send job. */
   @WorkerThread
   public static void enqueue(@NonNull Context context, @NonNull JobManager jobManager, long messageId) {
-    MessageDatabase      database = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase      database = SignalDatabase.mms();
     OutgoingMediaMessage message;
 
     try {
@@ -116,12 +116,12 @@ public final class MmsSendJob extends SendJob {
 
   @Override
   public void onAdded() {
-    DatabaseFactory.getMmsDatabase(context).markAsSending(messageId);
+    SignalDatabase.mms().markAsSending(messageId);
   }
 
   @Override
   public void onSend() throws MmsException, NoSuchMessageException, IOException {
-    MessageDatabase      database = DatabaseFactory.getMmsDatabase(context);
+    MessageDatabase      database = SignalDatabase.mms();
     OutgoingMediaMessage message  = database.getOutgoingMessage(messageId);
 
     if (database.isSent(messageId)) {
@@ -163,7 +163,7 @@ public final class MmsSendJob extends SendJob {
   @Override
   public void onFailure() {
     Log.i(TAG, JobLogger.format(this, "onFailure() messageId: " + messageId));
-    DatabaseFactory.getMmsDatabase(context).markAsSentFailed(messageId);
+    SignalDatabase.mms().markAsSentFailed(messageId);
     notifyMediaMessageDeliveryFailed(context, messageId);
   }
 
@@ -235,11 +235,11 @@ public final class MmsSendJob extends SendJob {
     if (!TextUtils.isEmpty(lineNumber)) {
       req.setFrom(new EncodedStringValue(lineNumber));
     } else {
-      req.setFrom(new EncodedStringValue(TextSecurePreferences.getLocalNumber(context)));
+      req.setFrom(new EncodedStringValue(SignalStore.account().getE164()));
     }
 
     if (message.getRecipient().isMmsGroup()) {
-      List<Recipient> members = DatabaseFactory.getGroupDatabase(context).getGroupMembers(message.getRecipient().requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+      List<Recipient> members = SignalDatabase.groups().getGroupMembers(message.getRecipient().requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
       for (Recipient member : members) {
         if (!member.hasSmsAddress()) {
@@ -343,8 +343,8 @@ public final class MmsSendJob extends SendJob {
   }
 
   private void notifyMediaMessageDeliveryFailed(Context context, long messageId) {
-    long      threadId  = DatabaseFactory.getMmsDatabase(context).getThreadIdForMessage(messageId);
-    Recipient recipient = DatabaseFactory.getThreadDatabase(context).getRecipientForThreadId(threadId);
+    long      threadId  = SignalDatabase.mms().getThreadIdForMessage(messageId);
+    Recipient recipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
 
     if (recipient != null) {
       ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);

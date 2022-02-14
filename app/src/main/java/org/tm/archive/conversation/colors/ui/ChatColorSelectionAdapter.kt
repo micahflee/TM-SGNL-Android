@@ -10,9 +10,10 @@ import org.tm.archive.R
 import org.tm.archive.components.TooltipPopup
 import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.util.MappingAdapter
-import org.tm.archive.util.MappingViewHolder
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.LayoutFactory
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.adapter.mapping.MappingViewHolder
 import org.tm.archive.util.withFixedSize
 
 class ChatColorSelectionAdapter(

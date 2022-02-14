@@ -3,9 +3,9 @@ package org.tm.archive.service;
 import android.content.Context;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MmsDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.SmsDatabase;
 import org.tm.archive.database.model.MessageRecord;
 
@@ -27,8 +27,8 @@ public class ExpiringMessageManager {
 
   public ExpiringMessageManager(Context context) {
     this.context     = context.getApplicationContext();
-    this.smsDatabase = DatabaseFactory.getSmsDatabase(context);
-    this.mmsDatabase = DatabaseFactory.getMmsDatabase(context);
+    this.smsDatabase = SignalDatabase.sms();
+    this.mmsDatabase = SignalDatabase.mms();
 
     executor.execute(new LoadTask());
     executor.execute(new ProcessTask());

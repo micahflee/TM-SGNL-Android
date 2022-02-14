@@ -7,7 +7,6 @@ import org.tm.archive.contacts.sync.DirectoryHelper;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.util.TextSecurePreferences;
 
 import java.io.IOException;
 
@@ -40,9 +39,9 @@ public final class DirectoryRefreshMigrationJob extends MigrationJob {
 
   @Override
   public void performMigration() throws IOException {
-    if (!TextSecurePreferences.isPushRegistered(context)           ||
+    if (!SignalStore.account().isRegistered()                      ||
         !SignalStore.registrationValues().isRegistrationComplete() ||
-        TextSecurePreferences.getLocalUuid(context) == null)
+        SignalStore.account().getAci() == null)
     {
       Log.w(TAG, "Not registered! Skipping.");
       return;

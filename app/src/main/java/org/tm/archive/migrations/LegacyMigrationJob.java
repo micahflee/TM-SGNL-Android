@@ -1,25 +1,20 @@
 package org.tm.archive.migrations;
 
 import android.content.Context;
-import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.DatabaseAttachment;
-import org.tm.archive.color.MaterialColor;
-import org.tm.archive.contacts.avatars.ContactColorsLegacy;
-import org.tm.archive.conversation.colors.ChatColorsMapper;
-import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.crypto.MasterSecret;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MmsDatabase;
 import org.tm.archive.database.MmsDatabase.Reader;
 import org.tm.archive.database.PushDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -30,6 +25,7 @@ import org.tm.archive.jobs.CreateSignedPreKeyJob;
 import org.tm.archive.jobs.DirectoryRefreshJob;
 import org.tm.archive.jobs.PushDecryptMessageJob;
 import org.tm.archive.jobs.RefreshAttributesJob;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.service.KeyCachingService;
 import org.tm.archive.transport.RetryLaterException;
@@ -110,7 +106,7 @@ public class LegacyMigrationJob extends MigrationJob {
     MasterSecret masterSecret    = KeyCachingService.getMasterSecret(context);
     
     if (lastSeenVersion < SQLCIPHER && masterSecret != null) {
-      DatabaseFactory.getInstance(context).onApplicationLevelUpgrade(context, masterSecret, lastSeenVersion, (progress, total) -> {
+      SignalDatabase.onApplicationLevelUpgrade(context, masterSecret, lastSeenVersion, (progress, total) -> {
         Log.i(TAG, "onApplicationLevelUpgrade: " + progress + "/" + total);
       });
     } else if (lastSeenVersion < SQLCIPHER) {
@@ -190,7 +186,7 @@ public class LegacyMigrationJob extends MigrationJob {
     }
 
     if (lastSeenVersion < INTERNALIZE_CONTACTS) {
-      if (TextSecurePreferences.isPushRegistered(context)) {
+      if (SignalStore.account().isRegistered()) {
         TextSecurePreferences.setHasSuccessfullyRetrievedDirectory(context, true);
       }
     }
@@ -234,16 +230,11 @@ public class LegacyMigrationJob extends MigrationJob {
     if (lastSeenVersion < COLOR_MIGRATION) {
       long startTime = System.currentTimeMillis();
       //noinspection deprecation
-      DatabaseFactory.getRecipientDatabase(context).updateSystemContactColors();
+      SignalDatabase.recipients().updateSystemContactColors();
       Log.i(TAG, "Color migration took " + (System.currentTimeMillis() - startTime) + " ms");
     }
 
     if (lastSeenVersion < UNIDENTIFIED_DELIVERY) {
-      if (TextSecurePreferences.isMultiDevice(context)) {
-        Log.i(TAG, "MultiDevice: Disabling UD (will be re-enabled if possible after pending refresh).");
-        TextSecurePreferences.setIsUnidentifiedDeliveryEnabled(context, false);
-      }
-
       Log.i(TAG, "Scheduling UD attributes refresh.");
       ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
     }
@@ -260,9 +251,9 @@ public class LegacyMigrationJob extends MigrationJob {
   }
 
   private void schedulePendingIncomingParts(Context context) {
-    final AttachmentDatabase       attachmentDb       = DatabaseFactory.getAttachmentDatabase(context);
-    final MessageDatabase          mmsDb              = DatabaseFactory.getMmsDatabase(context);
-    final List<DatabaseAttachment> pendingAttachments = DatabaseFactory.getAttachmentDatabase(context).getPendingAttachments();
+    final AttachmentDatabase       attachmentDb       = SignalDatabase.attachments();
+    final MessageDatabase          mmsDb              = SignalDatabase.mms();
+    final List<DatabaseAttachment> pendingAttachments = SignalDatabase.attachments().getPendingAttachments();
 
     Log.i(TAG, pendingAttachments.size() + " pending parts.");
     for (DatabaseAttachment attachment : pendingAttachments) {
@@ -281,7 +272,7 @@ public class LegacyMigrationJob extends MigrationJob {
   }
 
   private static void scheduleMessagesInPushDatabase(@NonNull Context context) {
-    PushDatabase pushDatabase = DatabaseFactory.getPushDatabase(context);
+    PushDatabase pushDatabase = SignalDatabase.push();
     JobManager   jobManager   = ApplicationDependencies.getJobManager();
 
     try (PushDatabase.Reader pushReader = pushDatabase.readerFor(pushDatabase.getPending())) {

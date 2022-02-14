@@ -10,7 +10,7 @@ import org.tm.archive.R;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.payments.preferences.PaymentsHomeAdapter;
 import org.tm.archive.payments.preferences.model.PaymentItem;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 import org.tm.archive.util.SpanUtil;
 import org.tm.archive.util.viewholders.RecipientMappingModel.RecipientIdMappingModel;
 import org.tm.archive.util.viewholders.RecipientViewHolder;

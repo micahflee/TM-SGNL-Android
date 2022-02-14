@@ -6,7 +6,7 @@ import android.net.Uri
 import org.tm.archive.avatar.Avatar
 import org.tm.archive.avatar.Avatars
 import org.tm.archive.database.Database
-import org.tm.archive.database.helpers.SQLCipherOpenHelper
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.databaseprotos.CustomAvatar
 import org.tm.archive.groups.GroupId
 import org.tm.archive.util.CursorUtil
@@ -15,7 +15,7 @@ import org.tm.archive.util.SqlUtil
 /**
  * Database which manages the record keeping for custom created avatars.
  */
-class AvatarPickerDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Database(context, databaseHelper) {
+class AvatarPickerDatabase(context: Context, databaseHelper: SignalDatabase) : Database(context, databaseHelper) {
 
   companion object {
     const val TABLE_NAME = "avatar_picker"

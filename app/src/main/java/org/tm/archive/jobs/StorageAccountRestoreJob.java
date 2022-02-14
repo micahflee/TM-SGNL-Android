@@ -3,7 +3,7 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -13,7 +13,6 @@ import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.storage.StorageSyncHelper;
-import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
@@ -104,12 +103,12 @@ public class StorageAccountRestoreJob extends BaseJob {
 
 
     Log.i(TAG, "Applying changes locally...");
-    DatabaseFactory.getInstance(context).getRawDatabase().beginTransaction();
+    SignalDatabase.getRawDatabase().beginTransaction();
     try {
       StorageSyncHelper.applyAccountStorageSyncUpdates(context, Recipient.self(), accountRecord, false);
-      DatabaseFactory.getInstance(context).getRawDatabase().setTransactionSuccessful();
+      SignalDatabase.getRawDatabase().setTransactionSuccessful();
     } finally {
-      DatabaseFactory.getInstance(context).getRawDatabase().endTransaction();
+      SignalDatabase.getRawDatabase().endTransaction();
     }
 
     JobManager jobManager = ApplicationDependencies.getJobManager();

@@ -4,7 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -16,7 +16,7 @@ import org.tm.archive.backup.BackupPassphrase;
 import org.tm.archive.backup.FullBackupBase;
 import org.tm.archive.backup.FullBackupImporter;
 import org.tm.archive.crypto.AttachmentSecretProvider;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.notifications.NotificationChannels;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ final class NewDeviceServerTask implements ServerTask {
 
     EventBus.getDefault().register(this);
     try {
-      SQLiteDatabase database = DatabaseFactory.getBackupDatabase(context);
+      SQLiteDatabase database = SignalDatabase.getBackupDatabase();
 
       String passphrase = "deadbeef";
 
@@ -49,7 +49,7 @@ final class NewDeviceServerTask implements ServerTask {
                                     inputStream,
                                     passphrase);
 
-      DatabaseFactory.upgradeRestored(context, database);
+      SignalDatabase.upgradeRestored(database);
       NotificationChannels.restoreContactNotificationChannels(context);
 
       AppInitialization.onPostBackupRestore(context);

@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.StickerDatabase;
 import org.tm.archive.database.StickerDatabase.StickerPackRecordReader;
 import org.tm.archive.database.model.StickerPackRecord;
@@ -28,8 +28,8 @@ final class StickerManagementRepository {
 
   StickerManagementRepository(@NonNull Context context) {
     this.context            = context.getApplicationContext();
-    this.stickerDatabase    = DatabaseFactory.getStickerDatabase(context);
-    this.attachmentDatabase = DatabaseFactory.getAttachmentDatabase(context);
+    this.stickerDatabase    = SignalDatabase.stickers();
+    this.attachmentDatabase = SignalDatabase.attachments();
   }
 
   void deleteOrphanedStickerPacks() {

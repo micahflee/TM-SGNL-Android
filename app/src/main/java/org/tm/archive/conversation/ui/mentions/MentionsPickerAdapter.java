@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingAdapter;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingAdapter;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 import org.tm.archive.util.viewholders.RecipientViewHolder;
 import org.tm.archive.util.viewholders.RecipientViewHolder.EventListener;
 

@@ -26,8 +26,8 @@ import android.os.Bundle;
 import androidx.core.app.RemoteInput;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MessageDatabase.MarkedMessageInfo;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.mms.OutgoingMediaMessage;
 import org.tm.archive.notifications.v2.MessageNotifierV2;
@@ -90,8 +90,8 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
                                                                   Collections.emptyList(),
                                                                   Collections.emptyList(),
                                                                   Collections.emptyList(),
-                                                                  Collections.emptyList(),
-                                                                  Collections.emptyList());
+                                                                  Collections.emptySet(),
+                                                                  Collections.emptySet());
             threadId = MessageSender.send(context, reply, -1, false, null, null);
             break;
           }
@@ -111,7 +111,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
 
         ApplicationDependencies.getMessageNotifier().addStickyThread(threadId, intent.getLongExtra(EARLIEST_TIMESTAMP, System.currentTimeMillis()));
 
-        List<MarkedMessageInfo> messageIds = DatabaseFactory.getThreadDatabase(context).setRead(threadId, true);
+        List<MarkedMessageInfo> messageIds = SignalDatabase.threads().setRead(threadId, true);
 
         ApplicationDependencies.getMessageNotifier().updateNotification(context);
         MarkReadReceiver.process(context, messageIds);

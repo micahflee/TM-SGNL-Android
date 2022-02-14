@@ -2,7 +2,6 @@ package org.tm.archive.wallpaper;
 
 import android.net.Uri;
 
-import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.database.model.databaseprotos.Wallpaper;

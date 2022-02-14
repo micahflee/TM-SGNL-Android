@@ -2,16 +2,14 @@ package org.tm.archive.database;
 
 import android.app.Application;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import net.sqlcipher.database.SQLiteDatabaseHook;
-import net.sqlcipher.database.SQLiteOpenHelper;
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
@@ -26,7 +24,7 @@ import org.tm.archive.util.CursorUtil;
 import java.util.LinkedList;
 import java.util.List;
 
-public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
+public class JobDatabase extends SQLiteOpenHelper implements SignalDatabaseOpenHelper {
 
   private static final String TAG = Log.tag(JobDatabase.class);
 
@@ -89,14 +87,13 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
 
   private static volatile JobDatabase instance;
 
-  private final Application    application;
-  private final DatabaseSecret databaseSecret;
+  private final Application application;
 
   public static @NonNull JobDatabase getInstance(@NonNull Application context) {
     if (instance == null) {
       synchronized (JobDatabase.class) {
         if (instance == null) {
-          SqlCipherLibraryLoader.load(context);
+          SqlCipherLibraryLoader.load();
           instance = new JobDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context));
         }
       }
@@ -105,10 +102,9 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
   }
 
   public JobDatabase(@NonNull Application application, @NonNull DatabaseSecret databaseSecret) {
-    super(application, DATABASE_NAME, null, DATABASE_VERSION, new SqlCipherDatabaseHook(), new SqlCipherErrorHandler(DATABASE_NAME));
+    super(application, DATABASE_NAME, databaseSecret.asString(), null, DATABASE_VERSION, 0, new SqlCipherErrorHandler(DATABASE_NAME), new SqlCipherDatabaseHook());
 
-    this.application    = application;
-    this.databaseSecret = databaseSecret;
+    this.application = application;
   }
 
   @Override
@@ -119,19 +115,19 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
     db.execSQL(Constraints.CREATE_TABLE);
     db.execSQL(Dependencies.CREATE_TABLE);
 
-    if (DatabaseFactory.getInstance(application).hasTable("job_spec")) {
+    if (SignalDatabase.hasTable("job_spec")) {
       Log.i(TAG, "Found old job_spec table. Migrating data.");
-      migrateJobSpecsFromPreviousDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), db);
+      migrateJobSpecsFromPreviousDatabase(SignalDatabase.getRawDatabase(), db);
     }
 
-    if (DatabaseFactory.getInstance(application).hasTable("constraint_spec")) {
+    if (SignalDatabase.hasTable("constraint_spec")) {
       Log.i(TAG, "Found old constraint_spec table. Migrating data.");
-      migrateConstraintSpecsFromPreviousDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), db);
+      migrateConstraintSpecsFromPreviousDatabase(SignalDatabase.getRawDatabase(), db);
     }
 
-    if (DatabaseFactory.getInstance(application).hasTable("dependency_spec")) {
+    if (SignalDatabase.hasTable("dependency_spec")) {
       Log.i(TAG, "Found old dependency_spec table. Migrating data.");
-      migrateDependencySpecsFromPreviousDatabase(DatabaseFactory.getInstance(application).getRawDatabase(), db);
+      migrateDependencySpecsFromPreviousDatabase(SignalDatabase.getRawDatabase(), db);
     }
   }
 
@@ -377,9 +373,9 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
   }
 
   private void dropTableIfPresent(@NonNull String table) {
-    if (DatabaseFactory.getInstance(application).hasTable(table)) {
+    if (SignalDatabase.hasTable(table)) {
       Log.i(TAG, "Dropping original " + table + " table from the main database.");
-      DatabaseFactory.getInstance(application).getRawDatabase().execSQL("DROP TABLE " + table);
+      SignalDatabase.getRawDatabase().execSQL("DROP TABLE " + table);
     }
   }
 
@@ -429,13 +425,5 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabase {
         newDb.insert(Dependencies.TABLE_NAME, null, values);
       }
     }
-  }
-
-  private SQLiteDatabase getReadableDatabase() {
-    return super.getReadableDatabase(databaseSecret.asString());
-  }
-
-  private SQLiteDatabase getWritableDatabase() {
-    return super.getWritableDatabase(databaseSecret.asString());
   }
 }

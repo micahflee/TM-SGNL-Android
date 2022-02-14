@@ -7,8 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingModel;
-import org.tm.archive.util.MappingViewHolder;
+import org.tm.archive.util.adapter.mapping.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingViewHolder;
 
 import java.util.Objects;
 

@@ -5,7 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.R;
-import org.tm.archive.util.MappingModel;
+import org.tm.archive.util.adapter.mapping.MappingModel;
 
 public class CallParticipantsListHeader implements MappingModel<CallParticipantsListHeader> {
 

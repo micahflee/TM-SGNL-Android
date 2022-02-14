@@ -1,7 +1,6 @@
 package org.tm.archive.insights;
 
 import android.content.Context;
-import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.core.util.Consumer;
@@ -11,11 +10,9 @@ import com.annimon.stream.Stream;
 import org.tm.archive.R;
 import org.tm.archive.contacts.avatars.GeneratedContactPhoto;
 import org.tm.archive.contacts.avatars.ProfileContactPhoto;
-import org.tm.archive.conversation.colors.ChatColors;
-import org.tm.archive.conversation.colors.ChatColorsPalette;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.MmsSmsDatabase;
 import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.MessageSender;
@@ -37,7 +34,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
   @Override
   public void getInsightsData(@NonNull Consumer<InsightsData> insightsDataConsumer) {
     SimpleTask.run(() -> {
-      MmsSmsDatabase mmsSmsDatabase = DatabaseFactory.getMmsSmsDatabase(context);
+      MmsSmsDatabase mmsSmsDatabase = SignalDatabase.mmsSms();
       int            insecure       = mmsSmsDatabase.getInsecureMessageCountForInsights();
       int            secure         = mmsSmsDatabase.getSecureMessageCountForInsights();
 
@@ -52,7 +49,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
   @Override
   public void getInsecureRecipients(@NonNull Consumer<List<Recipient>> insecureRecipientsConsumer) {
     SimpleTask.run(() -> {
-      RecipientDatabase recipientDatabase      = DatabaseFactory.getRecipientDatabase(context);
+      RecipientDatabase recipientDatabase      = SignalDatabase.recipients();
       List<RecipientId> unregisteredRecipients = recipientDatabase.getUninvitedRecipientsForInsights();
 
       return Stream.of(unregisteredRecipients)
@@ -83,7 +80,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
 
       MessageSender.send(context, new OutgoingTextMessage(resolved, message, subscriptionId), -1L, true, null, null);
 
-      RecipientDatabase database = DatabaseFactory.getRecipientDatabase(context);
+      RecipientDatabase database = SignalDatabase.recipients();
       database.setHasSentInvite(recipient.getId());
 
       return null;

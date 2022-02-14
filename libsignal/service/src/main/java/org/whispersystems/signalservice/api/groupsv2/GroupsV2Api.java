@@ -21,6 +21,7 @@ import org.signal.zkgroup.auth.ClientZkAuthOperations;
 import org.signal.zkgroup.groups.ClientZkGroupCipher;
 import org.signal.zkgroup.groups.GroupSecretParams;
 import org.whispersystems.libsignal.util.guava.Optional;
+import org.whispersystems.signalservice.api.push.ACI;
 import org.whispersystems.signalservice.internal.push.PushServiceSocket;
 import org.whispersystems.signalservice.internal.push.exceptions.ForbiddenException;
 
@@ -54,14 +55,14 @@ public final class GroupsV2Api {
   /**
    * Create an auth token from a credential response.
    */
-  public GroupsV2AuthorizationString getGroupsV2AuthorizationString(UUID self,
+  public GroupsV2AuthorizationString getGroupsV2AuthorizationString(ACI self,
                                                                     int today,
                                                                     GroupSecretParams groupSecretParams,
                                                                     AuthCredentialResponse authCredentialResponse)
       throws VerificationFailedException
   {
     ClientZkAuthOperations     authOperations             = groupsOperations.getAuthOperations();
-    AuthCredential             authCredential             = authOperations.receiveAuthCredential(self, today, authCredentialResponse);
+    AuthCredential             authCredential             = authOperations.receiveAuthCredential(self.uuid(), today, authCredentialResponse);
     AuthCredentialPresentation authCredentialPresentation = authOperations.createAuthCredentialPresentation(new SecureRandom(), groupSecretParams, authCredential);
 
     return new GroupsV2AuthorizationString(groupSecretParams, authCredentialPresentation);
@@ -94,23 +95,17 @@ public final class GroupsV2Api {
                            .decryptGroup(group);
   }
 
-  public List<DecryptedGroupHistoryEntry> getGroupHistory(GroupSecretParams groupSecretParams,
-                                                          int fromRevision,
-                                                          GroupsV2AuthorizationString authorization)
+  public GroupHistoryPage getGroupHistoryPage(GroupSecretParams groupSecretParams,
+                                          int fromRevision,
+                                          GroupsV2AuthorizationString authorization)
       throws IOException, InvalidGroupStateException, VerificationFailedException
   {
     List<GroupChanges.GroupChangeState> changesList = new LinkedList<>();
     PushServiceSocket.GroupHistory      group;
 
-    do {
-      group = socket.getGroupsV2GroupHistory(fromRevision, authorization);
+    group = socket.getGroupsV2GroupHistory(fromRevision, authorization);
 
-      changesList.addAll(group.getGroupChanges().getGroupChangesList());
-
-      if (group.hasMore()) {
-        fromRevision = group.getNextPageStartGroupRevision();
-      }
-    } while (group.hasMore());
+    changesList.addAll(group.getGroupChanges().getGroupChangesList());
 
     ArrayList<DecryptedGroupHistoryEntry> result          = new ArrayList<>(changesList.size());
     GroupsV2Operations.GroupOperations    groupOperations = groupsOperations.forGroup(groupSecretParams);
@@ -122,7 +117,7 @@ public final class GroupsV2Api {
       result.add(new DecryptedGroupHistoryEntry(decryptedGroup, decryptedChange));
     }
 
-    return result;
+    return new GroupHistoryPage(result, GroupHistoryPage.PagingData.fromGroup(group));
   }
 
   public DecryptedGroupJoinInfo getGroupJoinInfo(GroupSecretParams groupSecretParams,

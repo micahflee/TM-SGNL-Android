@@ -10,9 +10,9 @@ import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.RecipientDatabase;
-import org.tm.archive.database.RecipientDatabase.RecipientSettings;
+import org.tm.archive.database.model.RecipientRecord;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.RetrieveProfileAvatarJob;
 import org.tm.archive.jobs.StorageSyncJob;
@@ -20,6 +20,7 @@ import org.tm.archive.keyvalue.PhoneNumberPrivacyValues;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.payments.Entropy;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.subscription.Subscriber;
 import org.tm.archive.util.Base64;
 import org.tm.archive.util.SetUtil;
 import org.tm.archive.util.TextSecurePreferences;
@@ -104,20 +105,20 @@ public final class StorageSyncHelper {
   }
 
   public static SignalStorageRecord buildAccountRecord(@NonNull Context context, @NonNull Recipient self) {
-    RecipientDatabase       recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    RecipientSettings       settings          = recipientDatabase.getRecipientSettingsForSync(self.getId());
-    List<RecipientSettings> pinned            = Stream.of(DatabaseFactory.getThreadDatabase(context).getPinnedRecipientIds())
-                                                      .map(recipientDatabase::getRecipientSettingsForSync)
-                                                      .toList();
+    RecipientDatabase     recipientDatabase = SignalDatabase.recipients();
+    RecipientRecord       record            = recipientDatabase.getRecordForSync(self.getId());
+    List<RecipientRecord> pinned            = Stream.of(SignalDatabase.threads().getPinnedRecipientIds())
+                                                    .map(recipientDatabase::getRecordForSync)
+                                                    .toList();
 
     SignalAccountRecord account = new SignalAccountRecord.Builder(self.getStorageServiceId())
-                                                         .setUnknownFields(settings != null ? settings.getSyncExtras().getStorageProto() : null)
+                                                         .setUnknownFields(record != null ? record.getSyncExtras().getStorageProto() : null)
                                                          .setProfileKey(self.getProfileKey())
                                                          .setGivenName(self.getProfileName().getGivenName())
                                                          .setFamilyName(self.getProfileName().getFamilyName())
                                                          .setAvatarUrlPath(self.getProfileAvatar())
-                                                         .setNoteToSelfArchived(settings != null && settings.getSyncExtras().isArchived())
-                                                         .setNoteToSelfForcedUnread(settings != null && settings.getSyncExtras().isForcedUnread())
+                                                         .setNoteToSelfArchived(record != null && record.getSyncExtras().isArchived())
+                                                         .setNoteToSelfForcedUnread(record != null && record.getSyncExtras().isForcedUnread())
                                                          .setTypingIndicatorsEnabled(TextSecurePreferences.isTypingIndicatorsEnabled(context))
                                                          .setReadReceiptsEnabled(TextSecurePreferences.isReadReceiptsEnabled(context))
                                                          .setSealedSenderIndicatorsEnabled(TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(context))
@@ -129,6 +130,11 @@ public final class StorageSyncHelper {
                                                          .setPayments(SignalStore.paymentsValues().mobileCoinPaymentsEnabled(), Optional.fromNullable(SignalStore.paymentsValues().getPaymentsEntropy()).transform(Entropy::getBytes).orNull())
                                                          .setPrimarySendsSms(Util.isDefaultSmsProvider(context))
                                                          .setUniversalExpireTimer(SignalStore.settings().getUniversalExpireTimer())
+                                                         .setE164(self.requireE164())
+                                                         .setDefaultReactions(SignalStore.emojiValues().getReactions())
+                                                         .setSubscriber(StorageSyncModels.localToRemoteSubscriber(SignalStore.donationsValues().getSubscriber()))
+                                                         .setDisplayBadgesOnProfile(SignalStore.donationsValues().getDisplayBadgesOnProfile())
+                                                         .setSubscriptionManuallyCancelled(SignalStore.donationsValues().isUserManuallyCancelled())
                                                          .build();
 
     return SignalStorageRecord.forAccount(account);
@@ -140,7 +146,7 @@ public final class StorageSyncHelper {
   }
 
   public static void applyAccountStorageSyncUpdates(@NonNull Context context, @NonNull Recipient self, @NonNull StorageRecordUpdate<SignalAccountRecord> update, boolean fetchProfile) {
-    DatabaseFactory.getRecipientDatabase(context).applyStorageSyncAccountUpdate(update);
+    SignalDatabase.recipients().applyStorageSyncAccountUpdate(update);
 
     TextSecurePreferences.setReadReceiptsEnabled(context, update.getNew().isReadReceiptsEnabled());
     TextSecurePreferences.setTypingIndicatorsEnabled(context, update.getNew().isTypingIndicatorsEnabled());
@@ -151,6 +157,19 @@ public final class StorageSyncHelper {
     SignalStore.settings().setPreferSystemContactPhotos(update.getNew().isPreferContactAvatars());
     SignalStore.paymentsValues().setEnabledAndEntropy(update.getNew().getPayments().isEnabled(), Entropy.fromBytes(update.getNew().getPayments().getEntropy().orNull()));
     SignalStore.settings().setUniversalExpireTimer(update.getNew().getUniversalExpireTimer());
+    SignalStore.emojiValues().setReactions(update.getNew().getDefaultReactions());
+    SignalStore.donationsValues().setDisplayBadgesOnProfile(update.getNew().isDisplayBadgesOnProfile());
+
+    if (update.getNew().isSubscriptionManuallyCancelled()) {
+      SignalStore.donationsValues().markUserManuallyCancelled();
+    } else {
+      SignalStore.donationsValues().clearUserManuallyCancelled();
+    }
+
+    Subscriber subscriber = StorageSyncModels.remoteToLocalSubscriber(update.getNew().getSubscriber());
+    if (subscriber != null) {
+      SignalStore.donationsValues().setSubscriber(subscriber);
+    }
 
     if (fetchProfile && update.getNew().getAvatarUrlPath().isPresent()) {
       ApplicationDependencies.getJobManager().add(new RetrieveProfileAvatarJob(self, update.getNew().getAvatarUrlPath().get()));

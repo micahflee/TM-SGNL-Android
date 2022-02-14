@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.function.BiFunction;
 
-import net.sqlcipher.database.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
@@ -38,9 +38,9 @@ public class SQLCipherMigrationHelper {
   private static final long ENCRYPTION_SYMMETRIC_BIT  = 0x80000000;
   private static final long ENCRYPTION_ASYMMETRIC_BIT = 0x40000000;
 
-  static void migratePlaintext(@NonNull Context context,
-                               @NonNull android.database.sqlite.SQLiteDatabase legacyDb,
-                               @NonNull SQLiteDatabase modernDb)
+  public static void migratePlaintext(@NonNull Context context,
+                                      @NonNull android.database.sqlite.SQLiteDatabase legacyDb,
+                                      @NonNull SQLiteDatabase modernDb)
   {
     modernDb.beginTransaction();
     int foregroundId = GenericForegroundService.startForegroundTask(context, context.getString(R.string.SQLCipherMigrationHelper_migrating_signal_database)).getId();

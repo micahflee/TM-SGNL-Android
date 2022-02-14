@@ -10,12 +10,10 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.concurrent.LatestPrioritizedSerialExecutor;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.R;
 import org.tm.archive.contacts.ContactRepository;
-import org.tm.archive.database.CursorList;
-import org.tm.archive.database.DatabaseFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.MentionDatabase;
 import org.tm.archive.database.MentionUtil;
@@ -23,6 +21,7 @@ import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MmsSmsColumns;
 import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.database.SearchDatabase;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.database.model.Mention;
 import org.tm.archive.database.model.MessageRecord;
@@ -33,7 +32,6 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.CursorUtil;
 import org.tm.archive.util.FtsUtil;
 import org.tm.archive.util.Util;
-import org.signal.core.util.concurrent.LatestPrioritizedSerialExecutor;
 import org.tm.archive.util.concurrent.SerialExecutor;
 
 import java.util.ArrayList;
@@ -57,6 +55,7 @@ public class SearchRepository {
   private static final String TAG = Log.tag(SearchRepository.class);
 
   private final Context           context;
+  private final String            noteToSelfTitle;
   private final SearchDatabase    searchDatabase;
   private final ContactRepository contactRepository;
   private final ThreadDatabase    threadDatabase;
@@ -67,14 +66,15 @@ public class SearchRepository {
   private final LatestPrioritizedSerialExecutor searchExecutor;
   private final Executor                        serialExecutor;
 
-  public SearchRepository() {
+  public SearchRepository(@NonNull String noteToSelfTitle) {
     this.context           = ApplicationDependencies.getApplication().getApplicationContext();
-    this.searchDatabase    = DatabaseFactory.getSearchDatabase(context);
-    this.threadDatabase    = DatabaseFactory.getThreadDatabase(context);
-    this.recipientDatabase = DatabaseFactory.getRecipientDatabase(context);
-    this.mentionDatabase   = DatabaseFactory.getMentionDatabase(context);
-    this.mmsDatabase       = DatabaseFactory.getMmsDatabase(context);
-    this.contactRepository = new ContactRepository(context);
+    this.noteToSelfTitle   = noteToSelfTitle;
+    this.searchDatabase    = SignalDatabase.messageSearch();
+    this.threadDatabase    = SignalDatabase.threads();
+    this.recipientDatabase = SignalDatabase.recipients();
+    this.mentionDatabase   = SignalDatabase.mentions();
+    this.mmsDatabase       = SignalDatabase.mms();
+    this.contactRepository = new ContactRepository(context, noteToSelfTitle);
     this.searchExecutor    = new LatestPrioritizedSerialExecutor(SignalExecutors.BOUNDED);
     this.serialExecutor    = new SerialExecutor(SignalExecutors.BOUNDED);
   }
@@ -118,7 +118,7 @@ public class SearchRepository {
 
   public void query(@NonNull String query, long threadId, @NonNull Callback<List<MessageResult>> callback) {
     if (TextUtils.isEmpty(query)) {
-      callback.onResult(CursorList.emptyList());
+      callback.onResult(Collections.emptyList());
       return;
     }
 
@@ -161,20 +161,20 @@ public class SearchRepository {
 
     Set<RecipientId> recipientIds = new LinkedHashSet<>();
 
-    try (Cursor cursor = DatabaseFactory.getRecipientDatabase(context).queryAllContacts(query)) {
+    try (Cursor cursor = SignalDatabase.recipients().queryAllContacts(query)) {
       while (cursor != null && cursor.moveToNext()) {
         recipientIds.add(RecipientId.from(CursorUtil.requireString(cursor, RecipientDatabase.ID)));
       }
     }
 
     GroupDatabase.GroupRecord record;
-    try (GroupDatabase.Reader reader = DatabaseFactory.getGroupDatabase(context).getGroupsFilteredByTitle(query, true, false, false)) {
+    try (GroupDatabase.Reader reader = SignalDatabase.groups().getGroupsFilteredByTitle(query, true, false, false)) {
       while ((record = reader.getNext()) != null) {
         recipientIds.add(record.getRecipientId());
       }
     }
 
-    if (context.getString(R.string.note_to_self).toLowerCase().contains(query.toLowerCase())) {
+    if (noteToSelfTitle.toLowerCase().contains(query.toLowerCase())) {
       recipientIds.add(Recipient.self().getId());
     }
 
@@ -204,7 +204,7 @@ public class SearchRepository {
       return results;
     }
 
-    Map<Long, List<Mention>> mentions = DatabaseFactory.getMentionDatabase(context).getMentionsForMessages(messageIds);
+    Map<Long, List<Mention>> mentions = SignalDatabase.mentions().getMentionsForMessages(messageIds);
     if (mentions.isEmpty()) {
       return results;
     }
@@ -345,11 +345,11 @@ public class SearchRepository {
     return body;
   }
 
-  private @NonNull <T> List<T> readToList(@Nullable Cursor cursor, @NonNull CursorList.ModelBuilder<T> builder) {
+  private @NonNull <T> List<T> readToList(@Nullable Cursor cursor, @NonNull ModelBuilder<T> builder) {
     return readToList(cursor, builder, -1);
   }
 
-  private @NonNull <T> List<T> readToList(@Nullable Cursor cursor, @NonNull CursorList.ModelBuilder<T> builder, int limit) {
+  private @NonNull <T> List<T> readToList(@Nullable Cursor cursor, @NonNull ModelBuilder<T> builder, int limit) {
     if (cursor == null) {
       return Collections.emptyList();
     }
@@ -396,7 +396,7 @@ public class SearchRepository {
     return combined;
   }
 
-  private static class RecipientModelBuilder implements CursorList.ModelBuilder<Recipient> {
+  private static class RecipientModelBuilder implements ModelBuilder<Recipient> {
 
     @Override
     public Recipient build(@NonNull Cursor cursor) {
@@ -405,7 +405,7 @@ public class SearchRepository {
     }
   }
 
-  private static class ThreadModelBuilder implements CursorList.ModelBuilder<ThreadRecord> {
+  private static class ThreadModelBuilder implements ModelBuilder<ThreadRecord> {
 
     private final ThreadDatabase threadDatabase;
 
@@ -419,7 +419,7 @@ public class SearchRepository {
     }
   }
 
-  private static class MessageModelBuilder implements CursorList.ModelBuilder<MessageResult> {
+  private static class MessageModelBuilder implements ModelBuilder<MessageResult> {
 
     @Override
     public MessageResult build(@NonNull Cursor cursor) {
@@ -440,5 +440,9 @@ public class SearchRepository {
 
   public interface Callback<E> {
     void onResult(@NonNull E result);
+  }
+
+  public interface ModelBuilder<T> {
+    T build(@NonNull Cursor cursor);
   }
 }

@@ -10,15 +10,14 @@ import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.crypto.ReentrantSessionLock;
-import org.tm.archive.crypto.storage.TextSecureSessionStore;
-import org.tm.archive.database.DatabaseFactory;
+import org.tm.archive.crypto.storage.TextSecureIdentityKeyStore;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.IdentityDatabase;
-import org.tm.archive.database.IdentityDatabase.IdentityRecord;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.MessageDatabase.InsertResult;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobs.ThreadUpdateJob;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.IncomingIdentityDefaultMessage;
@@ -38,6 +37,7 @@ import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalSessionLock;
 import org.whispersystems.signalservice.api.messages.multidevice.VerifiedMessage;
+import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.util.List;
 
@@ -52,8 +52,7 @@ public final class IdentityUtil {
     final RecipientId                              recipientId = recipient.getId();
 
     SimpleTask.run(SignalExecutors.BOUNDED,
-                   () -> DatabaseFactory.getIdentityDatabase(context)
-                                        .getIdentity(recipientId),
+                   () -> ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(recipientId),
                    future::set);
 
     return future;
@@ -62,8 +61,8 @@ public final class IdentityUtil {
   public static void markIdentityVerified(Context context, Recipient recipient, boolean verified, boolean remote)
   {
     long            time          = System.currentTimeMillis();
-    MessageDatabase smsDatabase   = DatabaseFactory.getSmsDatabase(context);
-    GroupDatabase   groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    MessageDatabase smsDatabase   = SignalDatabase.sms();
+    GroupDatabase   groupDatabase = SignalDatabase.groups();
 
     try (GroupDatabase.Reader reader = groupDatabase.getGroups()) {
 
@@ -80,16 +79,16 @@ public final class IdentityUtil {
 
             smsDatabase.insertMessageInbox(incoming);
           } else {
-            RecipientId         recipientId    = DatabaseFactory.getRecipientDatabase(context).getOrInsertFromGroupId(groupRecord.getId());
+            RecipientId         recipientId    = SignalDatabase.recipients().getOrInsertFromGroupId(groupRecord.getId());
             Recipient           groupRecipient = Recipient.resolved(recipientId);
-            long                threadId       = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(groupRecipient);
+            long                threadId       = SignalDatabase.threads().getOrCreateThreadIdFor(groupRecipient);
             OutgoingTextMessage outgoing ;
 
             if (verified) outgoing = new OutgoingIdentityVerifiedMessage(recipient);
             else          outgoing = new OutgoingIdentityDefaultMessage(recipient);
 
-            DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoing, false, time, null);
-            ThreadUpdateJob.enqueue(threadId);
+            SignalDatabase.sms().insertMessageOutbox(threadId, outgoing, false, time, null);
+            SignalDatabase.threads().update(threadId, true);
           }
         }
       }
@@ -108,18 +107,18 @@ public final class IdentityUtil {
       if (verified) outgoing = new OutgoingIdentityVerifiedMessage(recipient);
       else          outgoing = new OutgoingIdentityDefaultMessage(recipient);
 
-      long threadId = DatabaseFactory.getThreadDatabase(context).getOrCreateThreadIdFor(recipient);
+      long threadId = SignalDatabase.threads().getOrCreateThreadIdFor(recipient);
 
       Log.i(TAG, "Inserting verified outbox...");
-      DatabaseFactory.getSmsDatabase(context).insertMessageOutbox(threadId, outgoing, false, time, null);
-      ThreadUpdateJob.enqueue(threadId);
+      SignalDatabase.sms().insertMessageOutbox(threadId, outgoing, false, time, null);
+      SignalDatabase.threads().update(threadId, true);
     }
   }
 
   public static void markIdentityUpdate(@NonNull Context context, @NonNull RecipientId recipientId) {
     long            time          = System.currentTimeMillis();
-    MessageDatabase smsDatabase   = DatabaseFactory.getSmsDatabase(context);
-    GroupDatabase   groupDatabase = DatabaseFactory.getGroupDatabase(context);
+    MessageDatabase smsDatabase   = SignalDatabase.sms();
+    GroupDatabase   groupDatabase = SignalDatabase.groups();
 
     try (GroupDatabase.Reader reader = groupDatabase.getGroups()) {
       GroupDatabase.GroupRecord groupRecord;
@@ -145,10 +144,10 @@ public final class IdentityUtil {
 
   public static void saveIdentity(String user, IdentityKey identityKey) {
     try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-      SessionStore          sessionStore     = ApplicationDependencies.getSessionStore();
-      SignalProtocolAddress address          = new SignalProtocolAddress(user, 1);
+      SessionStore          sessionStore     = ApplicationDependencies.getProtocolStore().aci();
+      SignalProtocolAddress address          = new SignalProtocolAddress(user, SignalServiceAddress.DEFAULT_DEVICE_ID);
 
-      if (ApplicationDependencies.getIdentityStore().saveIdentity(address, identityKey)) {
+      if (ApplicationDependencies.getProtocolStore().aci().identities().saveIdentity(address, identityKey)) {
         if (sessionStore.containsSession(address)) {
           SessionRecord sessionRecord = sessionStore.loadSession(address);
           sessionRecord.archiveCurrentState();
@@ -161,9 +160,9 @@ public final class IdentityUtil {
 
   public static void processVerifiedMessage(Context context, VerifiedMessage verifiedMessage) {
     try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
-      IdentityDatabase         identityDatabase = DatabaseFactory.getIdentityDatabase(context);
-      Recipient                recipient        = Recipient.externalPush(context, verifiedMessage.getDestination());
-      Optional<IdentityRecord> identityRecord   = identityDatabase.getIdentity(recipient.getId());
+      TextSecureIdentityKeyStore identityStore  = ApplicationDependencies.getProtocolStore().aci().identities();
+      Recipient                  recipient      = Recipient.externalPush(context, verifiedMessage.getDestination());
+      Optional<IdentityRecord>   identityRecord = identityStore.getIdentityRecord(recipient.getId());
 
       if (!identityRecord.isPresent() && verifiedMessage.getVerified() == VerifiedMessage.VerifiedState.DEFAULT) {
         Log.w(TAG, "No existing record for default status");
@@ -175,7 +174,7 @@ public final class IdentityUtil {
           identityRecord.get().getIdentityKey().equals(verifiedMessage.getIdentityKey())      &&
           identityRecord.get().getVerifiedStatus() != IdentityDatabase.VerifiedStatus.DEFAULT)
       {
-        identityDatabase.setVerified(recipient.getId(), identityRecord.get().getIdentityKey(), IdentityDatabase.VerifiedStatus.DEFAULT);
+        identityStore.setVerified(recipient.getId(), identityRecord.get().getIdentityKey(), IdentityDatabase.VerifiedStatus.DEFAULT);
         markIdentityVerified(context, recipient, false, true);
       }
 
@@ -185,7 +184,7 @@ public final class IdentityUtil {
               (identityRecord.isPresent() && identityRecord.get().getVerifiedStatus() != IdentityDatabase.VerifiedStatus.VERIFIED)))
       {
         saveIdentity(verifiedMessage.getDestination().getIdentifier(), verifiedMessage.getIdentityKey());
-        identityDatabase.setVerified(recipient.getId(), verifiedMessage.getIdentityKey(), IdentityDatabase.VerifiedStatus.VERIFIED);
+        identityStore.setVerified(recipient.getId(), verifiedMessage.getIdentityKey(), IdentityDatabase.VerifiedStatus.VERIFIED);
         markIdentityVerified(context, recipient, true, true);
       }
     }
