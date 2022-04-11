@@ -16,6 +16,8 @@
  */
 package org.tm.archive;
 
+import static org.archiver.ArchiveConstants.isTestMode;
+
 import android.content.Context;
 import android.os.Build;
 
@@ -26,7 +28,14 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.multidex.MultiDexApplication;
 
 import com.google.android.gms.security.ProviderInstaller;
+import com.tm.androidcopysdk.AndroidCopySDK;
+import com.tm.androidcopysdk.AndroidCopySettings;
+import com.tm.androidcopysdk.CommonUtils;
+import com.tm.androidcopysdk.utils.PrefManager;
 
+import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveLogger;
+import org.archiver.ArchiveUtil;
 import org.conscrypt.Conscrypt;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.aesgcmprovider.AesGcmProvider;
@@ -199,8 +208,53 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
     SignalLocalMetrics.ColdStart.onApplicationCreateFinished();
     Tracer.getInstance().end("Application#onCreate()");
+
+    //**TM_SA**// start
+    com.tm.logger.Log.createInstance(getApplicationContext());
+    ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
+
+    initArchiveUrlsAndStartArchive();
+
+    if(ArchiveUtil.Companion.getFCMTokenIfExists(this) == null || ArchiveUtil.Companion.getFCMTokenIfExists(this).isEmpty()){
+      ArchiveUtil.Companion.fetchFCMToken(this);
+    }
   }
 
+  private void initArchiveUrlsAndStartArchive() {
+    ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive \nsetUrl: \nchosenUrl =" + ArchiveConstants.charlieProduction + "\nKeeperUrl =" + ArchiveConstants.prodKeeper);
+    CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.charlieProduction, ArchiveConstants.prodKeeper);
+    //  CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.integration, ArchiveConstants.integrationKeeper);
+    CommonUtils.setSqlInfo(getApplicationContext(), ArchiveConstants.isTestMode ? ArchiveConstants.signalTestPassword : ArchiveConstants.signalCurrentPassword);
+
+    boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);
+
+    if(isTestMode || !installationEventSent) {
+      initializeTMAndroidArchive();
+      ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive");
+    }
+
+    CommonUtils.startBackupService(getApplicationContext());
+    ArchiveLogger.Companion.sendArchiveLog("Backup service started");
+  }
+
+  private void initializeTMAndroidArchive() {
+
+    AndroidCopySettings mSettings = new AndroidCopySettings();
+
+    PrefManager.setStringPref(getApplicationContext(),"wifi3g","WIFI3G");
+
+    mSettings.setData(AndroidCopySettings.DataSaving.WIFI3G);
+    Log.d("initializeTMAndroidArchive", "signupSucess with emptey password and user name");
+    AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"", ArchiveConstants.signalCurrentPassword);
+    ArchiveLogger.Companion.sendArchiveLog("User name = " + "Password = ");
+
+    boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);
+    // InstallEvent should be sent only once
+    if(!installationEventSent) {
+      PrefManager.setBooleanPref(getApplicationContext(),R.string.installation_event_sent,true);
+    }
+  }
+  //**TM_SA**// End
   @Override
   public void onForeground() {
     long startTime = System.currentTimeMillis();
