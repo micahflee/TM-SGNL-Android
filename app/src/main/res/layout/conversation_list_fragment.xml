@@ -249,7 +249,7 @@
             android:clipToPadding="false"
             android:gravity="end"
             android:orientation="vertical"
-            app:layout_behavior="archive.util.views.SlideUpWithSnackbarBehavior">
+            app:layout_behavior="org.tm.archive.util.views.SlideUpWithSnackbarBehavior">
 
             <org.tm.archive.components.registration.PulsingFloatingActionButton
                 android:id="@+id/camera_fab"

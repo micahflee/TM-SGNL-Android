@@ -35,7 +35,7 @@
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/contact_selection_list_fragment"
-        android:name="archive.ContactSelectionListFragment"
+        android:name="org.tm.archive.ContactSelectionListFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="12dp"

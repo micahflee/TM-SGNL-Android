@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/mediaCaptureFragment"
-        android:name="archive.mediasend.v2.capture.MediaCaptureFragment"
+        android:name="org.tm.archive.mediasend.v2.capture.MediaCaptureFragment"
         android:label="media_capture_fragment"
         tools:layout="@layout/fragment_container">
         <action
@@ -17,7 +17,7 @@
 
     <fragment
         android:id="@+id/mediaReviewFragment"
-        android:name="archive.mediasend.v2.review.MediaReviewFragment"
+        android:name="org.tm.archive.mediasend.v2.review.MediaReviewFragment"
         android:label="media_review_fragment"
         tools:layout="@layout/v2_media_review_fragment">
 
@@ -28,7 +28,7 @@
 
     <fragment
         android:id="@+id/mediaGalleryFragment"
-        android:name="archive.mediasend.v2.gallery.MediaSelectionGalleryFragment"
+        android:name="org.tm.archive.mediasend.v2.gallery.MediaSelectionGalleryFragment"
         android:label="media_review_fragment"
         tools:layout="@layout/v2_media_gallery_fragment">
         <action
