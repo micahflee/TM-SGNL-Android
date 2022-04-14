@@ -19,7 +19,9 @@ package org.tm.archive;
 import static org.archiver.ArchiveConstants.isTestMode;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,6 +33,7 @@ import com.google.android.gms.security.ProviderInstaller;
 import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.AndroidCopySettings;
 import com.tm.androidcopysdk.CommonUtils;
+import com.tm.androidcopysdk.SimChangedReceiver;
 import com.tm.androidcopysdk.utils.PrefManager;
 
 import org.archiver.ArchiveConstants;
@@ -226,7 +229,10 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     //  CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.integration, ArchiveConstants.integrationKeeper);
     CommonUtils.setSqlInfo(getApplicationContext(), ArchiveConstants.isTestMode ? ArchiveConstants.signalTestPassword : ArchiveConstants.signalCurrentPassword);
 
+    //**TM_SA**/
+    //set SDK to active -> need to change it with the self register
     boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);
+    PrefManager.setBooleanPref(getApplicationContext(),com.tm.androidcopysdk.R.string.activated,true);
 
     if(isTestMode || !installationEventSent) {
       initializeTMAndroidArchive();

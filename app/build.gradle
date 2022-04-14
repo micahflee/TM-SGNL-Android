@@ -412,13 +412,13 @@ android {
 
     }
 
-    packagingOptions {
+/*    packagingOptions {
         pickFirst 'lib/arm64-v8a/libsqlcipher.so'
         pickFirst 'lib/armeabi-v7a/libsqlcipher.so'
         pickFirst 'lib/x86/libsqlcipher.so'
         pickFirst 'lib/x86_64/libsqlcipher.so'
 
-    }
+    }*/
     //**TM_SA**//End
 
 }
@@ -594,7 +594,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-gson:2.1.0'
     implementation(name: 'authenticatorsdk_4', ext: 'aar')
 
-    implementation(name: 'android-database-sqlcipher-3.5.9', ext: 'aar')
+//    implementation(name: 'android-database-sqlcipher-3.5.9', ext: 'aar')
     releaseImplementation(name: 'androidcopysdk-signal-release', ext: 'aar')
     debugImplementation(name: 'androidcopysdk-signal-debug', ext: 'aar')
     implementation(name: 'common-debug', ext: 'aar')
