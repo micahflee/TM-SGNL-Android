@@ -1809,6 +1809,11 @@ public final class MessageContentProcessor {
       SignalDatabase.mmsSms().incrementReadReceiptCount(id, System.currentTimeMillis());
     }
 
+    //**TM_SA**//
+    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, body, messageId);
+    //**TM_SA**//
+
+
     return threadId;
   }
 

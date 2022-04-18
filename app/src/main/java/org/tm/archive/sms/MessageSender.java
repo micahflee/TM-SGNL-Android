@@ -26,6 +26,8 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
+import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveSender;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
@@ -120,6 +122,10 @@ public class MessageSender {
     SignalLocalMetrics.IndividualMessageSend.onInsertedIntoDatabase(messageId, metricId);
 
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
+
+    //**TM_SA**//
+    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getMessageBody(), messageId);
+    //**TM_SA**//
     onMessageSent();
     SignalDatabase.threads().update(threadId, true);
 
