@@ -16,9 +16,9 @@
  */
 package org.tm.archive;
 
+import android.app.Application;
 import android.content.Context;
 import android.os.Build;
-import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -35,6 +35,7 @@ import com.tm.androidcopysdk.utils.PrefManager;
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveLogger;
 import org.archiver.ArchiveUtil;
+import org.archiver.FCMConnector;
 import org.conscrypt.Conscrypt;
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.signal.core.util.concurrent.SignalExecutors;
@@ -113,10 +114,14 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   private static final String TAG = Log.tag(ApplicationContext.class);
 
+  private static Application mApplicationContext;//**TM_SA**//
   private PersistentLogger persistentLogger;
 
   public static ApplicationContext getInstance(Context context) {
     return (ApplicationContext)context.getApplicationContext();
+  }
+  public static Application getInstance() {//**TM_SA**//
+    return mApplicationContext;
   }
 
   @Override
@@ -194,13 +199,18 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
 
     //**TM_SA**// start
+
+    mApplicationContext = this;
+
     com.tm.logger.Log.createInstance(getApplicationContext());
     ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
 
     initArchiveUrlsAndStartArchive();
 
-    if(ArchiveUtil.Companion.getFCMTokenIfExists(this) == null || ArchiveUtil.Companion.getFCMTokenIfExists(this).isEmpty()){
-      ArchiveUtil.Companion.fetchFCMToken(this);
+    if(ArchiveUtil.getFCMTokenIfExists(this) == null || ArchiveUtil.getFCMTokenIfExists(this).isEmpty()){
+      Log.d("SelfAuthenticator","initTeleMessageSignalFirebaseAccount");
+      FCMConnector.initTeleMessageSignalFirebaseAccount(null,true);
+      ArchiveUtil.fetchFCMToken(this, null);
     }
   }
 

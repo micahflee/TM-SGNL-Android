@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.SpannableStringBuilder;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -138,22 +140,33 @@ abstract class BaseRegistrationFragment extends LoggingFragment {
                                                          .append(context.getString(R.string.RegistrationActivity_is_your_phone_number_above_correct));
 
       Log.i(TAG, "Showing confirm number dialog (" + context.getString(firstMessageLine) + ")");
-      new AlertDialog.Builder(context)
-                     .setMessage(message)
-                     .setPositiveButton(android.R.string.ok,
-                                        (a, b) -> {
-                                          Log.i(TAG, "Number confirmed");
-                                          onConfirmed.run();
-                                        })
-                     .setNegativeButton(R.string.RegistrationActivity_edit_number,
-                                        (a, b) -> {
-                                          Log.i(TAG, "User requested edit number from confirm dialog");
-                                          onEditNumber.run();
-                                        })
-                     .show();
+
+      // <!--//**TM_SA**//--> START
+      new Handler(Looper.getMainLooper()).post(new Runnable() {
+        @Override
+        public void run() {
+          new AlertDialog.Builder(context)
+                  .setMessage(message)
+                  .setPositiveButton(android.R.string.ok,
+                          (a, b) -> {
+                            Log.i(TAG, "Number confirmed");
+                            onConfirmed.run();
+                          })
+                  .setNegativeButton(R.string.RegistrationActivity_edit_number,
+                          (a, b) -> {
+                            Log.i(TAG, "User requested edit number from confirm dialog");
+                            onEditNumber.run();
+                          })
+                  .show();
+        }
+      });
+
+
     } else {
      Log.i(TAG, "Confirm number dialog not translated in " + Locale.getDefault() + " skipping");
      onConfirmed.run();
     }
+
+    // <!--//**TM_SA**//--> END
   }
 }
