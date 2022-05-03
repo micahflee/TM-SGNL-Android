@@ -41,6 +41,10 @@ class ArchiveConstants {
 
         const val isNeedToSetTeleMessageBackgroundAsDefault = true
 
+
+      const val GENERATE_TOK_NAME = "logfile"
+      const val GENERATE_TOK_PASS = "enRR8UVVywXYbFkqU#QDPRkO"
+
     }
 
     enum class ProtocolType(val type: String) {

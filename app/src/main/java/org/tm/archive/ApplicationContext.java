@@ -15,9 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.tm.archive;
-
 import static org.archiver.ArchiveConstants.isTestMode;
-
+import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -34,11 +33,13 @@ import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.AndroidCopySettings;
 import com.tm.androidcopysdk.CommonUtils;
 import com.tm.androidcopysdk.SimChangedReceiver;
+import com.tm.androidcopysdk.database.DBMessagesHelper;
 import com.tm.androidcopysdk.utils.PrefManager;
 
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveLogger;
 import org.archiver.ArchiveUtil;
+import org.archiver.FCMConnector;
 import org.conscrypt.Conscrypt;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.aesgcmprovider.AesGcmProvider;
@@ -125,10 +126,14 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   private static final String TAG = Log.tag(ApplicationContext.class);
 
+  private static Application mApplicationContext;//**TM_SA**//
   private PersistentLogger persistentLogger;
 
   public static ApplicationContext getInstance(Context context) {
     return (ApplicationContext)context.getApplicationContext();
+  }
+  public static Application getInstance() {//**TM_SA**//
+    return mApplicationContext;
   }
 
   @Override
@@ -213,13 +218,18 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     Tracer.getInstance().end("Application#onCreate()");
 
     //**TM_SA**// start
+
+    mApplicationContext = this;
+
     com.tm.logger.Log.createInstance(getApplicationContext());
     ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
 
     initArchiveUrlsAndStartArchive();
 
-    if(ArchiveUtil.Companion.getFCMTokenIfExists(this) == null || ArchiveUtil.Companion.getFCMTokenIfExists(this).isEmpty()){
-      ArchiveUtil.Companion.fetchFCMToken(this);
+    if(ArchiveUtil.getFCMTokenIfExists(this) == null || ArchiveUtil.getFCMTokenIfExists(this).isEmpty()){
+      Log.d("SelfAuthenticator","initTeleMessageSignalFirebaseAccount");
+      FCMConnector.initTeleMessageSignalFirebaseAccount(null,true);
+      ArchiveUtil.fetchFCMToken(this, null);
     }
   }
 
@@ -251,7 +261,8 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
     mSettings.setData(AndroidCopySettings.DataSaving.WIFI3G);
     Log.d("initializeTMAndroidArchive", "signupSucess with emptey password and user name");
-    AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"", ArchiveConstants.signalCurrentPassword);
+    AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"qasam", "Aa123456");
+
     ArchiveLogger.Companion.sendArchiveLog("User name = " + "Password = ");
 
     boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);

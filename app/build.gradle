@@ -592,6 +592,7 @@ dependencies {
 
     implementation 'com.squareup.retrofit2:retrofit:2.6.1'
     implementation 'com.squareup.retrofit2:converter-gson:2.1.0'
+
     implementation(name: 'authenticatorsdk_4', ext: 'aar')
 
 //    implementation(name: 'android-database-sqlcipher-3.5.9', ext: 'aar')

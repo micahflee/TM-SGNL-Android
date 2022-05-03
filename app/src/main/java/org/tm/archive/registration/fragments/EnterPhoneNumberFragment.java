@@ -1,7 +1,11 @@
 package org.tm.archive.registration.fragments;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -18,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.fragment.app.FragmentActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
@@ -33,14 +38,25 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.tm.androidcopysdk.AndroidCopySDK;
+import com.tm.androidcopysdk.MessageEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
+import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
 
+import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.archiver.ArchiveLogger;
 import org.archiver.ArchivePreferenceConstants;
 import org.archiver.ArchiveUtil;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.LoggingFragment;
+import org.archiver.FCMConnector;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
+import org.selfAuthentication.SelfAuthenticatorManager;
+import org.signal.core.util.logging.Log;
+import org.tm.archive.ApplicationContext;
 import org.tm.archive.R;
 import org.tm.archive.components.LabeledEditText;
 import org.tm.archive.keyvalue.SignalStore;
@@ -64,7 +80,8 @@ import static org.tm.archive.registration.fragments.RegistrationViewDelegate.sho
 import static org.tm.archive.util.CircularProgressButtonUtil.cancelSpinning;
 import static org.tm.archive.util.CircularProgressButtonUtil.setSpinning;
 
-public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks {
+public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks, IAuthenticationStatus {
+
 
   private static final String TAG = Log.tag(EnterPhoneNumberFragment.class);
 
@@ -78,10 +95,23 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
   private final LifecycleDisposable disposables = new LifecycleDisposable();
 
+  private AlertDialog mAuthenticationProgressAlertDialog;
+  private static boolean mIsAuthenticationIsInProgress;
+  public static boolean mIsLoginAuthenticationInProgress = false;
+  private Context mContext;
+
+
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setHasOptionsMenu(true);
+    // <!--//**TM_SA**//--> START
+    mContext = getActivity();
+    if(!EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().register(this);
+    }
+    // <!--//**TM_SA**//--> END
+
   }
 
   @Override
@@ -130,6 +160,13 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     Toolbar toolbar = view.findViewById(R.id.toolbar);
     ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
     ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(null);
+
+    // <!--//**TM_SA**//--> START
+    if(mAuthenticationProgressAlertDialog == null){
+      mAuthenticationProgressAlertDialog = new AlertDialog.Builder(getContext()).setCancelable(true).create();
+    }
+    // <!--//**TM_SA**//--> END
+
   }
 
   @Override
@@ -176,8 +213,10 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
 
       AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
+      mIsLoginAuthenticationInProgress = true;
+    //  confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, e164number, true));
+      startAutoAuthentication(e164number);
       //**TM_SA**//End
-      confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
       confirmNumberPrompt(context, e164number, () -> handlePromptForNoPlayServices(context));
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.NEEDS_UPDATE) {
@@ -188,6 +227,14 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
                               getString(R.string.RegistrationActivity_google_play_services_is_updating_or_unavailable));
     }
   }
+  //**TM_SA**//START
+  private void startAutoAuthentication(String e164number) {
+      mIsAuthenticationIsInProgress = true;
+      SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
+      SelfAuthenticatorManager.INSTANCE.startAuthentication(this);
+      mAuthenticationProgressAlertDialog.show();
+  }
+  //**TM_SA**//End
 
   private void handleRequestVerification(@NonNull Context context, boolean fcmSupported) {
     setSpinning(register);
@@ -349,4 +396,72 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
                                         },
                                         () -> number.focusAndMoveCursorToEndAndOpenKeyboard());
   }
+
+  //**TM_SA**//START
+  @Subscribe(threadMode = ThreadMode.BACKGROUND)
+  public void onMessageEvent(MessageEvent event) {
+    if(event.message != null){
+      com.tm.logger.Log.d("SelfAuthenticatorM", "event.message = " + event.message);
+    }else{
+      com.tm.logger.Log.d("SelfAuthenticatorM", "event.message = null");
+    }
+
+    //check if listener is valid
+    if (event.message != null && (event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed()) ||
+            event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()))) {
+
+      if (mAuthenticationProgressAlertDialog != null) {
+        mAuthenticationProgressAlertDialog.dismiss();
+      }
+
+    //  if (!mIsLoginAuthenticationProgress) {
+        com.tm.logger.Log.d("SelfAuthenticatorM", "event.message 2  = " + event.message);
+        if (SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed().equals(event.message)) {
+          updatedSelfAuthenticatorPreference();
+          com.tm.logger.Log.d("SelfAuthenticatorM", "SelfAuthenticationSucceed ");
+
+          final NumberViewState number     = viewModel.getNumber();
+          final String          e164number = number.getE164Number();
+
+
+          confirmNumberPrompt(getContext(), e164number, () -> handleRequestVerification(getContext(), true));
+        } else {
+          com.tm.logger.Log.d("SelfAuthenticatorM", "getSelfAuthenticationFailure = " + event.message);
+          Handler handler = new Handler(Looper.getMainLooper());
+          handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+              mIsAuthenticationIsInProgress = false;
+              SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
+            }
+          }, 20);
+        }
+
+        Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+      FCMConnector.initOfficialSignalFirebaseAccount();
+
+    }
+
+
+  }
+
+  public void updatedSelfAuthenticatorPreference() {
+
+    SharedPreferences preferences = ApplicationContext.getInstance().getSharedPreferences("selfAuthenticatorPref", Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = preferences.edit();
+    editor.putBoolean("isAlreadyDoneSelfAuthentication", true);
+    editor.apply();
+  }
+
+
+  @Override
+  public void authenticationProcessMessage(@NotNull String message) {
+    com.tm.logger.Log.d("SelfAuthenticatorM", "authenticationProcessMessage = " + message);
+    if (!message.isEmpty()) {
+      mIsLoginAuthenticationInProgress = false;
+      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
+    }
+  }
+  //**TM_SA**//End
+
 }

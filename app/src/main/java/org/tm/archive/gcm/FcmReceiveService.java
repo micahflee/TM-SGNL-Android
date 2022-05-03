@@ -2,15 +2,30 @@ package org.tm.archive.gcm;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.tm.androidcopysdk.utils.PrefManager;
 
 import org.archiver.ArchivePreferenceConstants;
+
+import com.tm.androidcopysdk.BackupService;
+import com.tm.androidcopysdk.CommonUtils;
+import com.tm.androidcopysdk.MessageEvent;
+import com.tm.authenticatorsdk.selfAuthenticator.IOnCredentialsArrived;
+import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator;
+
+import org.archive.selfAuthentication.SelfAuthenticatorConstants;
+import org.archiver.FCMConnector;
+import org.greenrobot.eventbus.EventBus;
+import org.jetbrains.annotations.NotNull;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.ApplicationContext;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.FcmRefreshJob;
 import org.tm.archive.jobs.SubmitRateLimitPushChallengeJob;
@@ -19,29 +34,42 @@ import org.tm.archive.registration.PushChallengeRequest;
 
 import java.util.Locale;
 
-public class FcmReceiveService extends FirebaseMessagingService {
+public class FcmReceiveService extends FirebaseMessagingService implements IOnCredentialsArrived{
 
   private static final String TAG = Log.tag(FcmReceiveService.class);
 
 
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
-    Log.i(TAG, String.format(Locale.US,
-                             "onMessageReceived() ID: %s, Delay: %d, Priority: %d, Original Priority: %d",
-                             remoteMessage.getMessageId(),
-                             (System.currentTimeMillis() - remoteMessage.getSentTime()),
-                             remoteMessage.getPriority(),
-                             remoteMessage.getOriginalPriority()));
+    //**TM_SA**// Start
+    Log.d("SelfAuthenticatorM", "onMessageReceived!!!!! message = " + remoteMessage.getData().toString());
 
-    String registrationChallenge = remoteMessage.getData().get("challenge");
-    String rateLimitChallenge    = remoteMessage.getData().get("rateLimitChallenge");
+    if (remoteMessage.getData().get("Type") != null && remoteMessage.getData().get("Type").equals(FCMConnector.RETRIEVE_ONE_TIME_PIN_FCM_FROM_TYPE)) {
+      String msgBody = remoteMessage.getData().get(FCMConnector.RETRIEVE_ONE_TIME_PIN_FCM_MSG);
+      if (msgBody != null) {
+        String pinCode = msgBody.split(" ")[msgBody.split(" ").length -1];
+        com.tm.logger.Log.d("SelfAuthenticatorProcess", "The code is: " + pinCode);
+        SelfAuthenticator.INSTANCE.getUserCredentials(pinCode, this);
+      }
+    } else { //**TM_SA**// END
 
-    if (registrationChallenge != null) {
-      handleRegistrationPushChallenge(registrationChallenge);
-    } else if (rateLimitChallenge != null) {
-      handleRateLimitPushChallenge(rateLimitChallenge);
-    }else {
-      handleReceivedNotification(ApplicationDependencies.getApplication());
+      Log.i(TAG, String.format(Locale.US,
+              "onMessageReceived() ID: %s, Delay: %d, Priority: %d, Original Priority: %d",
+              remoteMessage.getMessageId(),
+              (System.currentTimeMillis() - remoteMessage.getSentTime()),
+              remoteMessage.getPriority(),
+              remoteMessage.getOriginalPriority()));
+
+      String registrationChallenge = remoteMessage.getData().get("challenge");
+      String rateLimitChallenge = remoteMessage.getData().get("rateLimitChallenge");
+
+      if (registrationChallenge != null) {
+        handleRegistrationPushChallenge(registrationChallenge);
+      } else if (rateLimitChallenge != null) {
+        handleRateLimitPushChallenge(rateLimitChallenge);
+      } else {
+        handleReceivedNotification(ApplicationDependencies.getApplication());
+      }
     }
   }
 
@@ -55,16 +83,18 @@ public class FcmReceiveService extends FirebaseMessagingService {
     public void onNewToken(String token) {
     Log.i(TAG, "onNewToken()");
 
-    //**TM_SA**//
-    PrefManager.setStringPref(getApplicationContext(), ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, token);
-    //**TM_SA**//
-
     if (!SignalStore.account().isRegistered()) {
       Log.i(TAG, "Got a new FCM token, but the user isn't registered.");
       return;
     }
 
-    ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
+    //**TM_SA**//
+    if(FirebaseApp.getInstance().getOptions().getProjectId().startsWith("signal")){
+      PrefManager.setStringPref(getApplicationContext(), ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, token);
+    }else {
+      ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
+    }
+    //**TM_SA**//
   }
 
   @Override
@@ -95,4 +125,39 @@ public class FcmReceiveService extends FirebaseMessagingService {
     Log.d(TAG, "Got a rate limit push challenge.");
     ApplicationDependencies.getJobManager().add(new SubmitRateLimitPushChallengeJob(challenge));
   }
+
+  // <!--//**TM_SA**//--> START
+  @Override
+  public void onCredentialsArrived(@NotNull String userName, @NotNull String password, String environmentProduction, String environmentKeeper ) {
+    com.tm.logger.Log.d("SelfAuthenticatorM", "onCredentialsArrived user = " + userName + "   password = " + password + " environmentProduction = " + environmentProduction + "  environmentKeeper = " + environmentKeeper);
+
+    if(!userName.isEmpty()) {
+      com.tm.logger.Log.d("SelfAuthenticatorM", "before updateSignUpCredentials");
+      new Handler(Looper.getMainLooper()).post(new Runnable() {
+        @Override
+        public void run() {
+          doSelfAuthenticationSucceed(userName, password, environmentProduction, environmentKeeper);
+        }
+      });
+
+      com.tm.logger.Log.d("SelfAuthenticatorM", "after updateSignUpCredentials");
+      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed()));
+    }else{
+      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
+    }
+
+  }
+
+  private void doSelfAuthenticationSucceed(@NotNull String userName, @NotNull String password, String environmentProduction, String environmentKeeper) {
+    if(CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)){
+      CommonUtils.stopBackupService(ApplicationContext.getInstance());
+    }
+
+    FCMConnector.updateSignUpCredentials(getApplicationContext() ,userName, password);
+    CommonUtils.setUrl(ApplicationContext.getInstance(), environmentProduction, environmentKeeper);
+
+    CommonUtils.startBackupService(ApplicationContext.getInstance());
+  }
+
+  // <!--//**TM_SA**//--> END
 }
