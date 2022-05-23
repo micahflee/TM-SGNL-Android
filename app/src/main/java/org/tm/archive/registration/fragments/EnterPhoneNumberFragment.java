@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -82,7 +83,6 @@ import static org.tm.archive.util.CircularProgressButtonUtil.setSpinning;
 
 public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks, IAuthenticationStatus {
 
-
   private static final String TAG = Log.tag(EnterPhoneNumberFragment.class);
 
   private LabeledEditText        countryCode;
@@ -99,7 +99,6 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   private static boolean mIsAuthenticationIsInProgress;
   public static boolean mIsLoginAuthenticationInProgress = false;
   private Context mContext;
-
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {

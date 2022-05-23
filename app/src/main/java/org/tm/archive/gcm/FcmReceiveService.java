@@ -84,6 +84,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
     Log.i(TAG, "onNewToken()");
 
     if (!SignalStore.account().isRegistered()) {
+
       Log.i(TAG, "Got a new FCM token, but the user isn't registered.");
       return;
     }
@@ -155,7 +156,6 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
 
     FCMConnector.updateSignUpCredentials(getApplicationContext() ,userName, password);
     CommonUtils.setUrl(ApplicationContext.getInstance(), environmentProduction, environmentKeeper);
-    Log.d("-->", "======environmentProduction - " + environmentProduction + "  , environmentKeeper - " + environmentKeeper);
 
     CommonUtils.startBackupService(ApplicationContext.getInstance());
   }
