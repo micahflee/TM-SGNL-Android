@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit
 object SelfAuthenticatorManager {
 
 
-    val SELF_AUTHENRICATION_PREFERENCE_NAME = "SelfAuthenticatorPref"
-    val SELF_AUTHENRICATION_PREF_FIRST_TIME_TRYING_KEY = "firstTimeTrying"
+    const val SELF_AUTHENTICATION_PREFERENCE_NAME = "SelfAuthenticatorPref"
+    const val SELF_AUTHENRICATION_PREF_FIRST_TIME_TRYING_KEY = "firstTimeTrying"
     val SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS = 2 * 24
     val SELF_AUTHENRICATION_WHEN_TO_SHOW_SECOND_WARNNING_IN_HOURS = 7 * 24
 
@@ -54,7 +54,7 @@ object SelfAuthenticatorManager {
     fun saveSelfAuthenticationFirstTimeTryingTime() {
         if (!isSelfAuthenticationAlreadyStarted()) {
           ApplicationContext.getInstance().applicationContext.getSharedPreferences(
-                SELF_AUTHENRICATION_PREFERENCE_NAME,
+                SELF_AUTHENTICATION_PREFERENCE_NAME,
                 Context.MODE_PRIVATE
             ).apply {
                 edit().apply {
@@ -69,7 +69,7 @@ object SelfAuthenticatorManager {
     }
 
     fun getSelfAuthenticationFirstTimeTryingInHours(): Int {
-        val sharedPreferences = ApplicationContext.getInstance().getSharedPreferences(SELF_AUTHENRICATION_PREFERENCE_NAME, Context.MODE_PRIVATE)
+        val sharedPreferences = ApplicationContext.getInstance().getSharedPreferences(SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE)
         val firstTimeInstallInMill =  sharedPreferences.getLong(SELF_AUTHENRICATION_PREF_FIRST_TIME_TRYING_KEY, -1)
         if(firstTimeInstallInMill != (-1).toLong()){
             Log.d("SelfAuthenticatorProcess", "hourDifferenceFromNow() = " + (hourDifferenceFromNow(firstTimeInstallInMill)).toInt())

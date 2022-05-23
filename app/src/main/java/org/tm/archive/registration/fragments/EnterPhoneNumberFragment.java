@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -56,7 +55,6 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
 import org.selfAuthentication.SelfAuthenticatorManager;
-import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
 import org.tm.archive.R;
 import org.tm.archive.components.LabeledEditText;
@@ -416,7 +414,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     //  if (!mIsLoginAuthenticationProgress) {
         com.tm.logger.Log.d("SelfAuthenticatorM", "event.message 2  = " + event.message);
         if (SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed().equals(event.message)) {
-          updatedSelfAuthenticatorPreference();
+          updatedSelfAuthenticatorDonePreference();
           com.tm.logger.Log.d("SelfAuthenticatorM", "SelfAuthenticationSucceed ");
 
           final NumberViewState number     = viewModel.getNumber();
@@ -444,9 +442,9 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
   }
 
-  public void updatedSelfAuthenticatorPreference() {
+  public void updatedSelfAuthenticatorDonePreference() {
 
-    SharedPreferences preferences = ApplicationContext.getInstance().getSharedPreferences("selfAuthenticatorPref", Context.MODE_PRIVATE);
+    SharedPreferences preferences = ApplicationContext.getInstance().getSharedPreferences(SelfAuthenticatorManager.SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = preferences.edit();
     editor.putBoolean("isAlreadyDoneSelfAuthentication", true);
     editor.apply();
