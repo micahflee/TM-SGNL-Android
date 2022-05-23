@@ -92,8 +92,8 @@ object SelfAuthenticatorManager {
         Log.d("SelfAuthenticatorProcess", "getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_DAYS = " + (getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS))
         Log.d("SelfAuthenticatorProcess", "isAppValidationTimePassed() = " + isAppValidationTimePassed())
 
-        if (true /*getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS*/) {
-            if (true/*!isAppValidationTimePassed()*/) {
+        if (getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS) {
+            if (!isAppValidationTimePassed()) {
                 mSelfAuthenticationDialogBuilder.showSelfAuthenticationFirstFailureWarning(aContext)
             } else {
                 mSelfAuthenticationDialogBuilder.showSelfAuthenticationSecondFailureWarning(aContext)
