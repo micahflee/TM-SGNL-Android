@@ -593,11 +593,11 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.6.1'
     implementation 'com.squareup.retrofit2:converter-gson:2.1.0'
 
-    implementation(name: 'authenticatorsdk_4', ext: 'aar')
+    implementation(name: 'authenticatorsdk_6', ext: 'aar')
 
 //    implementation(name: 'android-database-sqlcipher-3.5.9', ext: 'aar')
-    releaseImplementation(name: 'androidcopysdk-signal-release', ext: 'aar')
-    debugImplementation(name: 'androidcopysdk-signal-debug', ext: 'aar')
+    releaseImplementation(name: 'androidcopysdk-signal-release_7', ext: 'aar')
+    debugImplementation(name: 'androidcopysdk-signal-debug_7', ext: 'aar')
     implementation(name: 'common-debug', ext: 'aar')
     implementation group: 'log4j', name: 'log4j', version: '1.2.17'
     implementation 'com.google.code.gson:gson:2.8.6'

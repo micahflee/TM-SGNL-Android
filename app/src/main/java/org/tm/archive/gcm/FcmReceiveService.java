@@ -155,6 +155,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
 
     FCMConnector.updateSignUpCredentials(getApplicationContext() ,userName, password);
     CommonUtils.setUrl(ApplicationContext.getInstance(), environmentProduction, environmentKeeper);
+    Log.d("-->", "======environmentProduction - " + environmentProduction + "  , environmentKeeper - " + environmentKeeper);
 
     CommonUtils.startBackupService(ApplicationContext.getInstance());
   }
