@@ -397,9 +397,9 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   //**TM_SA**//START
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
   public void onMessageEvent(MessageEvent event) {
-    if(event.message != null){
+    if (event.message != null) {
       com.tm.logger.Log.d("SelfAuthenticatorM", "event.message = " + event.message);
-    }else{
+    } else {
       com.tm.logger.Log.d("SelfAuthenticatorM", "event.message = null");
     }
 
@@ -411,30 +411,23 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
         mAuthenticationProgressAlertDialog.dismiss();
       }
 
-    //  if (!mIsLoginAuthenticationProgress) {
-        com.tm.logger.Log.d("SelfAuthenticatorM", "event.message 2  = " + event.message);
-        if (SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed().equals(event.message)) {
-          updatedSelfAuthenticatorDonePreference();
-          com.tm.logger.Log.d("SelfAuthenticatorM", "SelfAuthenticationSucceed ");
+      com.tm.logger.Log.d("SelfAuthenticatorM", "event.message 2  = " + event.message);
+      if (SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed().equals(event.message)) {
+        updatedSelfAuthenticatorDonePreference();
+        com.tm.logger.Log.d("SelfAuthenticatorM", "SelfAuthenticationSucceed ");
 
-          final NumberViewState number     = viewModel.getNumber();
-          final String          e164number = number.getE164Number();
+      } else {
+        //I Removed this because we just show that after 48 hours.
+        //SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
+        com.tm.logger.Log.d("SelfAuthenticatorM", "getSelfAuthenticationFailure = " + event.message);
+      }
 
+      mIsAuthenticationIsInProgress = false;
+      final NumberViewState number = viewModel.getNumber();
+      final String e164number = number.getE164Number();
+      confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
 
-          confirmNumberPrompt(getContext(), e164number, () -> handleRequestVerification(getContext(), true));
-        } else {
-          com.tm.logger.Log.d("SelfAuthenticatorM", "getSelfAuthenticationFailure = " + event.message);
-          Handler handler = new Handler(Looper.getMainLooper());
-          handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-              mIsAuthenticationIsInProgress = false;
-              SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
-            }
-          }, 20);
-        }
-
-        Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+      Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
       FCMConnector.initOfficialSignalFirebaseAccount();
 
     }
