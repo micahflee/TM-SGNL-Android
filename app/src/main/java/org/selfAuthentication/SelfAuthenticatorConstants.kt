@@ -8,5 +8,6 @@ class SelfAuthenticatorConstants {
 
         val selfAuthenticationSucceed = "selfAuthenticationSucceed"
         val selfAuthenticationFailed = "selfAuthenticationFailed"
+        var isAuthenticationProcessOpened = false
     }
 }

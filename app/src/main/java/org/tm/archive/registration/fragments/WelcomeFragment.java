@@ -26,6 +26,7 @@ import com.dd.CircularProgressButton;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
 
+import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.signal.devicetransfer.DeviceToDeviceTransferService;
@@ -86,6 +87,10 @@ public final class WelcomeFragment extends LoggingFragment {
     super.onViewCreated(view, savedInstanceState);
 
     viewModel = ViewModelProviders.of(requireActivity()).get(RegistrationViewModel.class);
+
+    //**TM_SA**//
+    SelfAuthenticatorConstants.Companion.setAuthenticationProcessOpened(true);
+    //**TM_SA**//
 
     if (viewModel.isReregister()) {
       if (viewModel.hasRestoreFlowBeenShown()) {
