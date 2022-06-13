@@ -64,5 +64,6 @@
     <color name="conversation_list_archive_background_end">#ff329635</color>
     <!--//**TM_SA**//Start-->
     <color name="telemessage_color">#0277bd</color>
+    <color name="registration_progress_bar_background_transparent_grey">#55000000</color>
     <!--//**TM_SA**//End-->
 </resources>

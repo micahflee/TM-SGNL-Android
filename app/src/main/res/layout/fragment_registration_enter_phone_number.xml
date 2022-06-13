@@ -7,8 +7,9 @@
     android:layout_height="match_parent"
     android:fillViewport="true"
     tools:context=".registration.fragments.EnterPhoneNumberFragment">
-
+    <!--**TM_SA** add id to constraint layout-->
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraint_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp">
 

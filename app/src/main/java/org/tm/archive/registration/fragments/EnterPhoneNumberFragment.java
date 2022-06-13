@@ -4,8 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -13,6 +11,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -21,8 +20,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.fragment.app.FragmentActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
@@ -88,15 +87,19 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   private CircularProgressButton register;
   private Spinner                countrySpinner;
   private View                   cancel;
-  private ScrollView             scrollView;
-  private RegistrationViewModel  viewModel;
+  private ScrollView            scrollView;
+  private ConstraintLayout      constraintLayout;
+  private RegistrationViewModel viewModel;
 
   private final LifecycleDisposable disposables = new LifecycleDisposable();
 
-  private AlertDialog mAuthenticationProgressAlertDialog;
-  private static boolean mIsAuthenticationIsInProgress;
   public static boolean mIsLoginAuthenticationInProgress = false;
   private Context mContext;
+
+  //**TM_SA**// START
+  private boolean     progressBarShown;
+  private View progressBarCustomView;
+  //**TM_SA**// END
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -110,6 +113,15 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     // <!--//**TM_SA**//--> END
 
   }
+
+  //**TM_SA**// START
+  @Override public void onDestroy() {
+    super.onDestroy();
+    if(EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().unregister(this);
+    }
+  }
+  //**TM_SA**// END
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -128,6 +140,9 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     cancel         = view.findViewById(R.id.cancel_button);
     scrollView     = view.findViewById(R.id.scroll_view);
     register       = view.findViewById(R.id.registerButton);
+    constraintLayout = view.findViewById(R.id.constraint_layout);  //**TM_SA**//
+
+    initProgressBar();  //**TM_SA**//
 
     RegistrationNumberInputController controller = new RegistrationNumberInputController(requireContext(),
                                                                                          countryCode,
@@ -158,13 +173,41 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
     ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(null);
 
-    // <!--//**TM_SA**//--> START
-    if(mAuthenticationProgressAlertDialog == null){
-      mAuthenticationProgressAlertDialog = new AlertDialog.Builder(getContext()).setCancelable(true).create();
-    }
-    // <!--//**TM_SA**//--> END
-
+    constraintLayout.addView(progressBarCustomView);//**TM_SA**//
   }
+  //**TM_SA**// START
+  private void initProgressBar(){
+    progressBarShown = false;
+
+    progressBarCustomView = LayoutInflater.from(getContext()).inflate(R.layout.progress_bar_layout_with_background, null, false);
+    LinearLayout.LayoutParams backgroundLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+    progressBarCustomView.setLayoutParams(backgroundLayoutParams);
+    progressBarCustomView.setVisibility(View.GONE);
+  }
+
+
+  private void hideProgressBar(){
+    getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        progressBarCustomView.setVisibility(View.GONE);
+        progressBarShown = false;
+        com.tm.logger.Log.d(TAG, "Registration progress hidden");
+      }
+    });
+  }
+
+  private void showProgressBar(){
+    getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        progressBarCustomView.setVisibility(View.VISIBLE);
+        progressBarShown = true;
+        com.tm.logger.Log.d(TAG, "Registration progress shown");
+      }
+    });
+  }
+  //**TM_SA**// END
 
   @Override
   public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
@@ -211,7 +254,6 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
       AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
       mIsLoginAuthenticationInProgress = true;
-    //  confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, e164number, true));
       startAutoAuthentication(e164number);
       //**TM_SA**//End
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
@@ -226,12 +268,13 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   }
   //**TM_SA**//START
   private void startAutoAuthentication(String e164number) {
-      mIsAuthenticationIsInProgress = true;
       SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
       SelfAuthenticatorManager.INSTANCE.startAuthentication(this);
-      mAuthenticationProgressAlertDialog.show();
+    if (!progressBarShown) {
+      showProgressBar();
+    }
   }
-  //**TM_SA**//End
+  //**TM_SA**//END
 
   private void handleRequestVerification(@NonNull Context context, boolean fcmSupported) {
     setSpinning(register);
@@ -398,36 +441,34 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
   public void onMessageEvent(MessageEvent event) {
     if (event.message != null) {
-      com.tm.logger.Log.d("SelfAuthenticatorM", "event.message = " + event.message);
+      com.tm.logger.Log.d(TAG, "event.message = " + event.message);
     } else {
-      com.tm.logger.Log.d("SelfAuthenticatorM", "event.message = null");
+      com.tm.logger.Log.d(TAG, "event.message = null");
     }
 
     //check if listener is valid
     if (event.message != null && (event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed()) ||
-            event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()))) {
-
-      if (mAuthenticationProgressAlertDialog != null) {
-        mAuthenticationProgressAlertDialog.dismiss();
+        event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()))) {
+      if (progressBarShown) {
+        hideProgressBar();
       }
 
-      com.tm.logger.Log.d("SelfAuthenticatorM", "event.message 2  = " + event.message);
+      com.tm.logger.Log.d(TAG, "event.message 2  = " + event.message);
       if (SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed().equals(event.message)) {
         updatedSelfAuthenticatorDonePreference();
-        com.tm.logger.Log.d("SelfAuthenticatorM", "SelfAuthenticationSucceed ");
+        com.tm.logger.Log.d(TAG, "SelfAuthenticationSucceed ");
 
       } else {
         //I Removed this because we just show that after 48 hours.
         //SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
-        com.tm.logger.Log.d("SelfAuthenticatorM", "getSelfAuthenticationFailure = " + event.message);
+        com.tm.logger.Log.d(TAG, "getSelfAuthenticationFailure = " + event.message);
       }
 
-      mIsAuthenticationIsInProgress = false;
       final NumberViewState number = viewModel.getNumber();
       final String e164number = number.getE164Number();
       confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
 
-      Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+      com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
       FCMConnector.initOfficialSignalFirebaseAccount();
 
     }
@@ -446,7 +487,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
   @Override
   public void authenticationProcessMessage(@NotNull String message) {
-    com.tm.logger.Log.d("SelfAuthenticatorM", "authenticationProcessMessage = " + message);
+    com.tm.logger.Log.d(TAG, "authenticationProcessMessage = " + message);
     if (!message.isEmpty()) {
       mIsLoginAuthenticationInProgress = false;
       EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
