@@ -12,6 +12,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.tm.androidcopysdk.utils.PrefManager;
 
+import org.archiver.ArchiveConstants;
 import org.archiver.ArchivePreferenceConstants;
 
 import com.tm.androidcopysdk.BackupService;
@@ -155,7 +156,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
     }
 
     FCMConnector.updateSignUpCredentials(getApplicationContext() ,userName, password);
-    CommonUtils.setUrl(ApplicationContext.getInstance(), environmentProduction, environmentKeeper);
+    CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.IntegrationURLProduction, ArchiveConstants.IntegrationURLKeeper);
 
     CommonUtils.startBackupService(ApplicationContext.getInstance());
   }

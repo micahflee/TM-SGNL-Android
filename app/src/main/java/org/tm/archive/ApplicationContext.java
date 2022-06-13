@@ -224,7 +224,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
 
     initArchiveUrlsAndStartArchive();
-
     boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(
             this,
             "isAlreadyDoneSelfAuthentication", false
@@ -239,7 +238,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   private void initArchiveUrlsAndStartArchive() {
     ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive \nsetUrl: \nchosenUrl =" + ArchiveConstants.charlieProduction + "\nKeeperUrl =" + ArchiveConstants.prodKeeper);
-    CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.charlieProduction, ArchiveConstants.prodKeeper);
+    CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.IntegrationURLProduction, ArchiveConstants.IntegrationURLKeeper);
     //  CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.integration, ArchiveConstants.integrationKeeper);
     CommonUtils.setSqlInfo(getApplicationContext(), ArchiveConstants.isTestMode ? ArchiveConstants.signalTestPassword : ArchiveConstants.signalCurrentPassword);
 

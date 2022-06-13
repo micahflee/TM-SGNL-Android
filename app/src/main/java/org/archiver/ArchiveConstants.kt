@@ -23,6 +23,9 @@ class ArchiveConstants {
         const val charlieProduction = "https://rest.telemessage.com"
         const val prodKeeper = "https://archive.telemessage.com"
 
+        const val IntegrationURLProduction = "https://integration.telemessage.co.il"
+        const val IntegrationURLKeeper = "https://api-gateway-integration.devops.telemessage.co.il"
+
         const val ARCHIVE_TYPE_APP_MESSAGE = "Signal Message"
         const val ARCHIVE_TYPE_SMS = "SMS"
 
