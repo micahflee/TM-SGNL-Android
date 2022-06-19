@@ -25,6 +25,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.dd.CircularProgressButton;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.tm.authenticatorsdk.selfAuthenticator.api.ApiUtil;
 
 import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.greenrobot.eventbus.EventBus;
@@ -47,6 +48,9 @@ import static org.tm.archive.registration.fragments.RegistrationViewDelegate.set
 import static org.tm.archive.util.CircularProgressButtonUtil.cancelSpinning;
 import static org.tm.archive.util.CircularProgressButtonUtil.setSpinning;
 
+//In order to change the environment base url call to this method:
+//ApiUtil.Companion.selectServerEnvironment(Context)
+//The default environment is charlieProduction = https://rest.telemessage.com
 public final class WelcomeFragment extends LoggingFragment {
 
   private static final String TAG = Log.tag(WelcomeFragment.class);
@@ -76,6 +80,8 @@ public final class WelcomeFragment extends LoggingFragment {
 
   private CircularProgressButton continueButton;
   private RegistrationViewModel  viewModel;
+
+  private Boolean environmentAlreadySelected = false; //**TM_SA**//
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -147,13 +153,18 @@ public final class WelcomeFragment extends LoggingFragment {
 
   private void continueClicked(@NonNull View view) {
     boolean isUserSelectionRequired = BackupUtil.isUserSelectionRequired(requireContext());
-
-    Permissions.with(this)
-               .request(getContinuePermissions(isUserSelectionRequired))
-               .ifNecessary()
-               .withRationaleDialog(getString(getContinueRationale(isUserSelectionRequired)), getContinueHeaders(isUserSelectionRequired))
-               .onAnyResult(() -> gatherInformationAndContinue(continueButton))
-               .execute();
+   //**TM_SA**// START
+    if (!environmentAlreadySelected) {
+      ApiUtil.Companion.selectServerEnvironment(getContext());
+      environmentAlreadySelected = true; //but if it's really pressed move to ab
+    } else {    //**TM_SA**// END
+      Permissions.with(this)
+                 .request(getContinuePermissions(isUserSelectionRequired))
+                 .ifNecessary()
+                 .withRationaleDialog(getString(getContinueRationale(isUserSelectionRequired)), getContinueHeaders(isUserSelectionRequired))
+                 .onAnyResult(() -> gatherInformationAndContinue(continueButton))
+                 .execute();
+    }
   }
 
   private void restoreFromBackupClicked(@NonNull View view) {

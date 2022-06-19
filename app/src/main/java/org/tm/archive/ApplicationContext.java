@@ -30,10 +30,12 @@ import androidx.multidex.MultiDexApplication;
 import com.google.android.gms.security.ProviderInstaller;
 import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.AndroidCopySettings;
+import com.tm.androidcopysdk.BackupService;
 import com.tm.androidcopysdk.CommonUtils;
 import com.tm.androidcopysdk.SimChangedReceiver;
 import com.tm.androidcopysdk.database.DBMessagesHelper;
 import com.tm.androidcopysdk.utils.PrefManager;
+import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveLogger;
@@ -111,6 +113,7 @@ import io.reactivex.rxjava3.exceptions.OnErrorNotImplementedException;
 import io.reactivex.rxjava3.exceptions.UndeliverableException;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import kotlin.Pair;
 import rxdogtag2.RxDogTag;
 
 /**
@@ -238,9 +241,20 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   }
 
   private void initArchiveUrlsAndStartArchive() {
+
+    if(CommonUtils.isMyServiceRunning(mApplicationContext, BackupService.class)){
+      CommonUtils.stopBackupService(mApplicationContext);
+    }
+
     ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive \nsetUrl: \nchosenUrl =" + ArchiveConstants.charlieProduction + "\nKeeperUrl =" + ArchiveConstants.prodKeeper);
-    CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.charlieProduction, ArchiveConstants.prodKeeper);
-    //  CommonUtils.setUrl(getApplicationContext(), ArchiveConstants.integration, ArchiveConstants.integrationKeeper);
+    if(BuildConfig.DEBUG){
+      String baseUrlPrefProd = PrefManager.getStringPref(mApplicationContext, ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, ArchiveConstants.charlieProduction);
+      String baseUrlPrefKeeper = PrefManager.getStringPref(mApplicationContext, ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY,ArchiveConstants.prodKeeper);
+      AuthenticatorConstants.Companion.setBASE_URL(new Pair(baseUrlPrefProd, baseUrlPrefKeeper));
+      CommonUtils.setUrl(mApplicationContext, baseUrlPrefProd, baseUrlPrefKeeper);
+    }else {
+      CommonUtils.setUrl(mApplicationContext, ArchiveConstants.charlieProduction, ArchiveConstants.prodKeeper);
+    }
     CommonUtils.setSqlInfo(getApplicationContext(), ArchiveConstants.isTestMode ? ArchiveConstants.signalTestPassword : ArchiveConstants.signalCurrentPassword);
 
     //**TM_SA**/

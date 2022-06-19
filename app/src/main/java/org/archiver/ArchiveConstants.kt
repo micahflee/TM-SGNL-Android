@@ -44,7 +44,10 @@ class ArchiveConstants {
 
       const val GENERATE_TOK_NAME = "logfile"
       const val GENERATE_TOK_PASS = "enRR8UVVywXYbFkqU#QDPRkO"
-
+      //**TM_SA**// START
+      const val SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY = "sharedPreferenceBaseURLKeyProduction"
+      const val SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY = "sharedPreferenceBaseURLKeyKeeper"
+      //**TM_SA**// END
     }
 
     enum class ProtocolType(val type: String) {

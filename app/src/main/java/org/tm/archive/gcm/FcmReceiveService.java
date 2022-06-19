@@ -12,6 +12,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.tm.androidcopysdk.utils.PrefManager;
 
+import org.archiver.ArchiveConstants;
 import org.archiver.ArchivePreferenceConstants;
 
 import com.tm.androidcopysdk.BackupService;
@@ -26,6 +27,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
+import org.tm.archive.BuildConfig;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.FcmRefreshJob;
 import org.tm.archive.jobs.SubmitRateLimitPushChallengeJob;
@@ -137,7 +139,13 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
       new Handler(Looper.getMainLooper()).post(new Runnable() {
         @Override
         public void run() {
-          doSelfAuthenticationSucceed(userName, password, environmentProduction, environmentKeeper);
+          if(BuildConfig.DEBUG){
+            String baseUrlPrefProd = PrefManager.getStringPref(ApplicationContext.getInstance(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, ArchiveConstants.charlieProduction);
+            String baseUrlPrefKeeper = PrefManager.getStringPref(ApplicationContext.getInstance(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, ArchiveConstants.prodKeeper);
+            doSelfAuthenticationSucceed(userName, password,  baseUrlPrefProd, baseUrlPrefKeeper);
+           }else {
+            doSelfAuthenticationSucceed(userName, password, environmentProduction, environmentKeeper);
+          }
         }
       });
 
