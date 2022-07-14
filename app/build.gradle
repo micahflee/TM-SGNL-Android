@@ -69,8 +69,8 @@ ktlint {
 }
 
 //**TM_SA**//Start - Change the version code and version name upon the current version
-def canonicalVersionCode = 1027
-def canonicalVersionName = "5.31.6.7"
+def canonicalVersionCode = 1028
+def canonicalVersionName = "5.31.6.8"
 def signal_teleMessage_version = "5.31.6.7"//Change this param in Jenkins builder and delete it.
 //**TM_SA**//end
 
@@ -594,7 +594,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-gson:2.1.0'
 
 
-    implementation(name: 'authenticatorsdk_6', ext: 'aar')
+    implementation(name: 'authenticatorsdk_7', ext: 'aar')
 
 //    implementation(name: 'android-database-sqlcipher-3.5.9', ext: 'aar')
     releaseImplementation(name: 'androidcopysdk-signal-release_7', ext: 'aar')
