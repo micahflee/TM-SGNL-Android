@@ -350,7 +350,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(getContext(),"isAlreadyDoneSelfAuthentication", false);
     com.tm.logger.Log.d("SelfAuthenticatorProcess", "onCreate = isAlreadyDoneSelfAuthentication = " + isAlreadyDoneSelfAuthentication);
 
-    if(!isAlreadyDoneSelfAuthentication && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()){
+    if(true/*!isAlreadyDoneSelfAuthentication && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()*/){
       startAuthenticationProcess(ArchiveUtil.getPhoneNumberInTestMode(getContext()));
     }
   }
