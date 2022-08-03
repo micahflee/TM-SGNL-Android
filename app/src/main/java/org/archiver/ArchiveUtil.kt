@@ -404,6 +404,8 @@ class ArchiveUtil {
 
     @JvmStatic
     fun archiveMediaMessage(context: Context, messageId: Long, message: OutgoingMediaMessage) {
+
+
       var tempFileForArchiving: File? = null
       var isMediaMessage = false
       var filesToSend = arrayOfNulls<File>(message.attachments.size)
@@ -471,7 +473,8 @@ class ArchiveUtil {
             ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND,
             message.recipient,
             messageBody!!,
-            messageId
+            messageId,
+            message.sentTimeMillis
           )
         } else {
           //TODO - Group events/updates!!
@@ -516,6 +519,13 @@ class ArchiveUtil {
         ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY,
         ""
       )
+    }
+
+    @JvmStatic
+    fun getUniqueMessageId(context: Context, messageSendingTime: Long,  from: String): String {
+
+        return "${messageSendingTime}_${from.replace("+","")}"
+
     }
 
     @JvmStatic

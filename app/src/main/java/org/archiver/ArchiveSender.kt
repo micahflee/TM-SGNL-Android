@@ -26,13 +26,13 @@ class ArchiveSender {
 
     companion object{
 
-        private fun sendArchiveMessage(context: Context, aProtocolType: ArchiveConstants.ProtocolType, toRecipientsList: Array<String>, from: String, messageBody: String?, messageId: String, dateInTimeStamp: Long, subject: String, chatMode: DataGrabber.CHAT_MODE, chatName: String, chatId: String?, fromNameString: Contact, toRecipientsListNames: Array<Contact>, archiveFile: Array<File?>? = null){
+        private fun sendArchiveMessage(context: Context, uniqueMessageId: String , aProtocolType: ArchiveConstants.ProtocolType, toRecipientsList: Array<String>, from: String, messageBody: String?, messageId: String, dateInTimeStamp: Long, subject: String, chatMode: DataGrabber.CHAT_MODE, chatName: String, chatId: String?, fromNameString: Contact, toRecipientsListNames: Array<Contact>, archiveFile: Array<File?>? = null){
             Log.d("MNMNMDD", "messageId = " + messageId + " message text " + messageBody)
 
             if(archiveFile == null) {
-                DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, dateInTimeStamp.toString() + messageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, from, toRecipientsListNames, toRecipientsList)
+                DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, uniqueMessageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, from, toRecipientsListNames, toRecipientsList)
             }else {
-                DataGrabber.getInstance(context).setMmsMessage(aProtocolType.type, toRecipientsList, from, messageBody, dateInTimeStamp.toString() + messageId + "M", dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, from, toRecipientsListNames, toRecipientsList, archiveFile)
+                DataGrabber.getInstance(context).setMmsMessage(aProtocolType.type, toRecipientsList, from, messageBody, uniqueMessageId /*+ "M"*/, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, from, toRecipientsListNames, toRecipientsList, archiveFile)
             }
         }
 
@@ -62,13 +62,16 @@ class ArchiveSender {
             }else{
                 ""
             }
-            sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
 
-            sendArchiveLog("archiveMessageInbox --> type = $type  Message ID = $messageId subject = $subject group name = $groupTile")
+            val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, message.sentTimestampMillis, from)
+
+            sendArchiveMessage(context,uniqueMessageId , type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
+
+            sendArchiveLog("archiveMessageInbox --> type = $type  uniqueMessageId Message ID = $uniqueMessageId subject = $subject group name = $groupTile")
 
         }
 
-        fun archiveMessageOutbox(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, messageBody: String, messageId: Long) {
+        fun archiveMessageOutbox(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, messageBody: String, messageId: Long, sendingTime: Long) {
 
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = archiveRecipient.isGroup
@@ -84,8 +87,11 @@ class ArchiveSender {
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup, Contact(from))
             val cleanMessageBody = cleanMessageBodyFromUnusedCharacters(messageBody)
-            sendArchiveMessage(context, type, toRecipientsList, from, cleanMessageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
-            sendArchiveLog("archiveMessageOutbox --> type = $type subject = $subject  Message ID = $messageId")
+
+            val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, sendingTime, from)
+
+            sendArchiveMessage(context,uniqueMessageId,  type, toRecipientsList, from, cleanMessageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
+            sendArchiveLog("archiveMessageOutbox --> type = $type subject = $subject  uniqueMessageId Message ID = $messageId")
         }
 
 
@@ -110,9 +116,11 @@ class ArchiveSender {
             val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup, Contact(from))
             val messageBody = ArchiveUtil.createPreviewLinkBody(null, message)
 
-            sendArchiveMessage(context, type, toRecipientsList, from, messageBody , messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
+            val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, message.sentTimeMillis, from)
 
-            sendArchiveLog("archiveMessageOutboxMMS --> type = $type subject = $subject  Message ID = $messageId")
+            sendArchiveMessage(context, uniqueMessageId, type, toRecipientsList, from, messageBody , messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
+
+            sendArchiveLog("archiveMessageOutboxMMS --> type = $type subject = $subject  uniqueMessageId Message ID = $uniqueMessageId")
 
         }
 
@@ -137,9 +145,12 @@ class ArchiveSender {
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, recipientList, isGroup, Contact(from))
             val messageBody = ArchiveUtil.createPreviewLinkBody(message, null)
-            sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
 
-            sendArchiveLog("archiveMessageInboxMMS --> type = $type subject = $subject recipientList $recipientList  Message ID = $messageId")
+            val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, message.sentTimeMillis, from)
+
+            sendArchiveMessage(context, uniqueMessageId, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
+
+            sendArchiveLog("archiveMessageInboxMMS --> type = $type subject = $subject recipientList $recipientList  uniqueMessageId Message ID = $uniqueMessageId")
 
 
         }
@@ -157,9 +168,12 @@ class ArchiveSender {
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, recipientList, isGroup, Contact(from))
             val messageBody = ArchiveUtil.createPreviewLinkBody( null, message)
-            sendArchiveMessage(context, type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
 
-            sendArchiveLog("archiveMessageOutboxSyncMMS --> type = $type subject = $subject  Message ID = $messageId")
+            val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, message.sentTimeMillis, from)
+
+            sendArchiveMessage(context,uniqueMessageId,  type, toRecipientsList, from, messageBody, messageId.toString(), System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName, archiveFile)
+
+            sendArchiveLog("archiveMessageOutboxSyncMMS --> type = $type subject = $subject  uniqueMessageId Message ID = $uniqueMessageId")
         }
 
     }

@@ -111,12 +111,12 @@ public class MessageSender {
     MessageDatabase database    = SignalDatabase.sms();
     Recipient       recipient   = message.getRecipient();
     boolean         keyExchange = message.isKeyExchange();
-
+    long timeInMill = System.currentTimeMillis();
     long allocatedThreadId = SignalDatabase.threads().getOrCreateValidThreadId(recipient, threadId);
     long messageId         = database.insertMessageOutbox(allocatedThreadId,
                                                           applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId),
                                                           forceSms,
-                                                          System.currentTimeMillis(),
+                                                          timeInMill,
                                                           insertListener);
 
     SignalLocalMetrics.IndividualMessageSend.onInsertedIntoDatabase(messageId, metricId);
@@ -124,7 +124,7 @@ public class MessageSender {
     sendTextMessage(context, recipient, forceSms, keyExchange, messageId);
 
     //**TM_SA**//
-    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getMessageBody(), messageId);
+    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message.getMessageBody(), messageId, timeInMill);
     //**TM_SA**//
     onMessageSent();
     SignalDatabase.threads().update(threadId, true);

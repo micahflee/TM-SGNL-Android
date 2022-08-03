@@ -1810,7 +1810,7 @@ public final class MessageContentProcessor {
     }
 
     //**TM_SA**//
-    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, body, messageId);
+    ArchiveSender.Companion.archiveMessageOutbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, body, messageId, message.getTimestamp());
     //**TM_SA**//
 
 
