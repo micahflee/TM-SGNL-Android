@@ -68,6 +68,8 @@ import com.annimon.stream.Stream;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
+import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveSender;
 import org.signal.core.util.DimensionUnit;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
@@ -950,8 +952,13 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       {
         @Override
         protected Void doInBackground(Void... voids) {
+
           for (MessageRecord messageRecord : messageRecords) {
             boolean threadDeleted;
+
+            //**TM_SA**//
+            ArchiveSender.Companion.sendArchiveDeleteMessage(context,messageRecord , ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, false);
+            //**TM_SA**//
 
             if (messageRecord.isMms()) {
               threadDeleted = SignalDatabase.mms().deleteMessage(messageRecord.getId());
@@ -981,9 +988,17 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
   }
 
   private void handleDeleteForEveryone(Set<MessageRecord> messageRecords) {
+
+
+
+
     Runnable deleteForEveryone = () -> {
       SignalExecutors.BOUNDED.execute(() -> {
         for (MessageRecord message : messageRecords) {
+          //**TM_SA**//
+          ArchiveSender.Companion.sendArchiveDeleteMessage(getContext(), message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, true);
+          //**TM_SA**//
+
           MessageSender.sendRemoteDelete(ApplicationDependencies.getApplication(), message.getId(), message.isMms());
         }
       });

@@ -23,7 +23,7 @@ class ArchiveConstants {
         const val charlieProduction = "https://rest.telemessage.com"
         const val prodKeeper = "https://archive.telemessage.com"
 
-        const val ARCHIVE_TYPE_APP_MESSAGE = "Signal Message"
+        const val ARCHIVE_TYPE_APP_MESSAGE = "Signal message"
         const val ARCHIVE_TYPE_SMS = "SMS"
 
         const val ARCHIVE_SUBJECT_CHAT_GROUP = "chat group"

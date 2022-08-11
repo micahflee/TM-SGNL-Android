@@ -89,7 +89,8 @@ class ArchiveUtil {
       recipient: Recipient,
       inboxRecipient: String = "",
       forceSms: Boolean,
-      groupTitle: String? = ""
+      groupTitle: String? = "",
+      deletePrefix : String =""
     ): String {
 
       val archiveType: String = getArchiveType(isInboxArchiveMessage, isGroup, forceSms)
@@ -99,7 +100,7 @@ class ArchiveUtil {
       val clearSubject = "$archiveType $ARCHIVE_SUBJECT_FROM_TEXT ${
         from.toString().replace("+", "")
       } $ARCHIVE_SUBJECT_TO_TEXT ${to.replace("+", "")}"
-      return clearSubject.replace("\u2069", "").replace("\u2068", "")
+      return deletePrefix + clearSubject.replace("\u2069", "").replace("\u2068", "")
     }
 
     @JvmStatic
@@ -525,6 +526,18 @@ class ArchiveUtil {
     fun getUniqueMessageId(context: Context, messageSendingTime: Long,  from: String): String {
 
         return "${messageSendingTime}_${from.replace("+","")}"
+
+    }
+
+    @JvmStatic
+    fun getUniqueDeleteMessageId(messageSendingTime: Long,  from: String, isDeleteMessage: Boolean = false, deletedForAll : Boolean = false): String {
+
+      var uniqueMessageId = "${messageSendingTime}_${from.replace("+","")}"
+
+      if(isDeleteMessage){
+        uniqueMessageId = (if (deletedForAll) "DELETE_FOR_ALL-" else "DELETE_FOR_ME-") + uniqueMessageId
+      }
+        return uniqueMessageId
 
     }
 
