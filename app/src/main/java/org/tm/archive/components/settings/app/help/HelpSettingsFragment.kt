@@ -37,13 +37,15 @@ class HelpSettingsFragment : DSLSettingsFragment(R.string.preferences__help) {
         summary = DSLSettingsText.from(BuildConfig.VERSION_NAME)
       )
 
-      clickPref(
+      //**TM_SA**//
+      /*clickPref(
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__debug_log),
         onClick = {
           Navigation.findNavController(requireView()).safeNavigate(R.id.action_helpSettingsFragment_to_submitDebugLogActivity)
         }
-      )
-
+      )*/
+      //**TM_SA**//
+      
       externalLinkPref(
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__terms_amp_privacy_policy),
         linkId = R.string.terms_and_privacy_policy_url
