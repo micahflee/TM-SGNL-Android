@@ -7,8 +7,8 @@
          <trust file=".*-javadoc[.]jar" regex="true"/>
          <trust file=".*-sources[.]jar" regex="true"/>
          <trust file=".*[.]pom" regex="true"/>
-         <!--**TM_TA** Start-->
-         <trust file=".*[.]aar" regex="true"/> <!--**TM_TA**-->
+         <!--**TM_SA** Start-->
+         <trust file=".*[.]aar" regex="true"/> <!--**TM_SA**-->
          <trust file = "commons-io-2.6.jar" regex="true"/>
          <trust file = "commons-lang3-3.12.0.jar" regex="true"/>
          <trust file = "commons-text-1.9.jar" regex="true"/>
@@ -17,7 +17,7 @@
          <trust file = "logging-interceptor-3.8.1.jar" regex="true"/>
          <trust file = "okhttp-urlconnection-3.8.1.jar" regex="true"/>
          <trust file = "retrofit-2.6.1.jar" regex="true"/>
-         <!--**TM_TA** End-->
+         <!--**TM_SA** End-->
       </trusted-artifacts>
    </configuration>
    <components>

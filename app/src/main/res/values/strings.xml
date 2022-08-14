@@ -4284,7 +4284,7 @@
     <string name="get_self_authentication_failure_message_close">close</string>
     <string name="get_self_authentication_second_warning_message_step_2">We could not locate your TeleMessage account.\nYour app has been blocked Please contact TeleMessage support.</string>
 
-
+    <string name="log_report_sent">Log report sent</string>
 
 
 

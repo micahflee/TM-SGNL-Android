@@ -197,7 +197,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
                                                                       ConversationListSearchAdapter.EventListener,
                                                                       MainNavigator.BackHandler,
                                                                       MegaphoneActionController,
-        /***TM_TA***/IAuthenticationStatus
+        /***TM_SA***/IAuthenticationStatus
 {
   public static final short MESSAGE_REQUESTS_REQUEST_CODE_CREATE_NAME = 32562;
   public static final short SMS_ROLE_REQUEST_CODE                     = 32563;
@@ -240,11 +240,11 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   protected ConversationListItemAnimator          itemAnimator;
   private   Stopwatch                             startupStopwatch;
 
-  //**TM_TA**// Start
+  //**TM_SA**// Start
   private AlertDialog.Builder mAuthenticationProgressAlertDialogBuilder;
   private AlertDialog mAuthenticationProgressAlertDialog;
   public static boolean mIsAuthenticationIsInProgress = false;
-  //**TM_TA**// End
+  //**TM_SA**// End
 
   public static ConversationListFragment newInstance() {
     return new ConversationListFragment();
@@ -370,7 +370,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       mAuthenticationProgressAlertDialogBuilder.setCancelable(isCanCancel);
     }
   }
-  //**TM_TA**//END
+  //**TM_SA**//END
 
   @Override
   public void onDestroyView() {
@@ -384,11 +384,11 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
     updateReminders();
 
-    //**TM_TA**//Start
+    //**TM_SA**//Start
     if(!EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().register(this);
     }
-    //**TM_TA**//End
+    //**TM_SA**//End
     itemAnimator.disable();
 
     if (Util.isDefaultSmsProvider(requireContext())) {
@@ -1695,7 +1695,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   }
 
 
-  //**TM_TA**//Start
+  //**TM_SA**//Start
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
   public void onMessageEvent(MessageEvent event) {
     if(event.message != null){
@@ -1750,7 +1750,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
   }
 
-  //**TM_TA**//End
+  //**TM_SA**//End
 }
 
 

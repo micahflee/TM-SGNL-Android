@@ -3814,4 +3814,16 @@
   <!--Description shown for the Signal Release Notes channel-->
   <string name="ReleaseNotes__signal_release_notes_and_news">הערות שחרור וחדשות של Signal</string>
   <!--EOF-->
+
+
+  //**TM_SA**//
+
+  <string name="get_self_authentication_first_warning_message_step_1">לא ניתן לאתר את חשבונך ב – TeleMessage.\n נשמור את הודעותיך למשך 7 ימים.\n כדי לפתוח חשבון ולהתחיל לארכב הודעות יש ליצור עם התמיכה</string>
+  <string name="get_self_authentication_first_warning_message_step_1_dismiss">ביטול</string>
+  <string name="get_self_authentication_failure_contact_us">צור קשר</string>
+  <string name="get_self_authentication_contact_us_sent">תודה, קיבלנו את בקשתך ואחד מנציגנו יצור איתך קשר בקרוב</string>
+  <string name="get_self_authentication_failure_message_close">סגירה</string>
+  <string name="get_self_authentication_second_warning_message_step_2">לא ניתן לאתר את חשבונך ב – TeleMessage. האפליקציה נחסמה. יש ליצור קשר עם התמיכה </string>
+
+  //**TM_SA**//END
 </resources>

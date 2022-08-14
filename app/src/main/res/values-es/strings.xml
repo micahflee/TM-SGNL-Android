@@ -3606,4 +3606,24 @@ Se recibió un mensaje de intercambio de claves para una versión no válida del
   <!--Description shown for the Signal Release Notes channel-->
   <string name="ReleaseNotes__signal_release_notes_and_news">Novedades de Signal y noticias</string>
   <!--EOF-->
+
+  //**TM_TA**// Start
+  <string name="privacy_center_about"><![CDATA[<b><font color=#0277bd><u>Centro de privacidad</u></font></b>]]></string>
+  <string name="terms_about"><![CDATA[<b><font color=#0277bd><u>Términos de servicio</u></font></b>]]></string>
+
+  <string name="issue_report_list_title">Informe de problemas</string>
+  <string name="issue_report_list_summery">Envíanos un archivo de registro</string>
+
+  <string name="channel_unsupport_in_this_version">El canal no es compatible con esta versión</string>
+  <string name="channel_ok">@android:string/ok</string>
+
+  <string name="get_self_authentication_first_warning_message_step_1">No pudimos localizar su cuenta de TeleMessage. Guardaremos sus mensajes durante 7 días. Para abrir una cuenta y comenzar a archivar contáctenos en el soporte de TeleMessage.</string>
+  <string name="get_self_authentication_first_warning_message_step_1_dismiss">Despedir</string>
+  <string name="get_self_authentication_failure_contact_us">Contáctenos</string>
+  <string name="get_self_authentication_contact_us_sent">Gracias Hemos recibido su petición y uno de nuestros representantes se comunicará con usted pronto.</string>
+  <string name="get_self_authentication_failure_message_close">cerrar</string>
+  <string name="get_self_authentication_second_warning_message_step_2">No pudimos localizar su cuenta de TeleMessage. Tu aplicación ha sido bloqueada Comuníquese con el soporte de TeleMessage.</string>
+
+  //**TM_TA**// End
+
 </resources>
