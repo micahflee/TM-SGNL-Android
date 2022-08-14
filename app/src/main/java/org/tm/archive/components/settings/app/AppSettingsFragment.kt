@@ -1,13 +1,17 @@
 package org.tm.archive.components.settings.app
 
 import android.app.AlertDialog
+import android.app.Dialog
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.tm.androidcopysdk.AndroidCopySDK
+import com.tm.androidcopysdk.ISendLogCallback
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchivePreferenceConstants
+import org.selfAuthentication.ProgressDialog
+import org.signal.glide.Log
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.components.AvatarImageView
@@ -31,7 +35,10 @@ import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
 import org.tm.archive.util.navigation.safeNavigate
 
-class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__menu_settings) {
+class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__menu_settings),
+  ISendLogCallback { //**TM_SA**// add ISendLogCallback
+
+  lateinit var mProgressDialog : Dialog //**TM_SA**//
 
   private val viewModel: AppSettingsViewModel by viewModels(
     factoryProducer = {
@@ -201,6 +208,9 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
             startAboutFragment()
           }
         )
+
+
+
         //**TM_SA**// End
       }
 
@@ -216,7 +226,20 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
       }
     }
   }
+
   //**TM_SA**// start
+
+
+  override fun sendLogSucceed() {
+    mProgressDialog.hide()
+    Log.d("E#E#@E@#", "sendLogSucceed")
+  }
+
+  override fun sendLogFailure() {
+    mProgressDialog.hide()
+    Log.d("E#E#@E@#", "sendLogFailure")
+  }
+
   private fun startAboutFragment() {
     requireActivity().supportFragmentManager.beginTransaction()
       .setCustomAnimations(R.anim.slide_from_end, R.anim.slide_to_start, R.anim.slide_from_start, R.anim.slide_to_end)
@@ -228,13 +251,19 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
   private fun doSendLogsClicked() {
 
     val builder = AlertDialog.Builder(context)
+
+    mProgressDialog = ProgressDialog.progressDialog(requireContext())
+
     builder.setTitle(R.string.issue_report_list_title)
     builder.setMessage(getString(R.string.issue_report_list_summery) + "?")
 
     builder.setPositiveButton(R.string.ShareActivity__send) { dialog, which ->
+
+      mProgressDialog.show()
+
       AndroidCopySDK.getInstance(context).sentLogs(
         activity,
-        null,
+        this,
         PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
         "Signal Archiver logs",
         PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),

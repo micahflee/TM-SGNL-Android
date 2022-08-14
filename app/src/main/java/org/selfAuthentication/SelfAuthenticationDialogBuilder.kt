@@ -2,6 +2,7 @@ package com.tm.authenticatorsdk.selfAuthenticator
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.os.Handler
@@ -12,6 +13,7 @@ import com.tm.logger.BuildConfig
 import com.tm.logger.Log
 import org.archiver.ArchiveConstants
 import org.selfAuthentication.AuthenticationUtils
+import org.selfAuthentication.ProgressDialog
 import org.selfAuthentication.SelfAuthenticatorManager
 import org.tm.archive.ApplicationContext
 import org.tm.archive.R
@@ -25,7 +27,7 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
     lateinit var mFirstFailureWarningLogsSent : AlertDialog
     lateinit var mFirstFailureSecondFailureWarning : AlertDialog
     lateinit var mLogsSentContext : Activity
-    lateinit var mProgressDialog : AlertDialog
+    lateinit var mProgressDialog : Dialog
 
     companion object{
         val TEXT_MESSAGE_FOR_SENDING_LOGS = "Signal signup failure for " + BuildConfig.VERSION_NAME + " – could not locate the TeleMessage account. Please help."
@@ -193,9 +195,9 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
         }
     }
 
-    fun getAuthenticationProgressDialog(activity: Activity): AlertDialog {
+    fun getAuthenticationProgressDialog(activity: Activity): Dialog {
         if(!::mProgressDialog.isInitialized || (mProgressDialog.ownerActivity != null && mProgressDialog.ownerActivity!!.localClassName != activity.localClassName)){
-           mProgressDialog = AlertDialog.Builder(activity).setCancelable(false).create()
+           mProgressDialog = ProgressDialog.progressDialog(activity)
         }
 
         return mProgressDialog
