@@ -149,8 +149,9 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         }
       )
 
-      if (FeatureFlags.donorBadges() && PlayServicesUtil.getPlayServicesStatus(requireContext()) == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
-        customPref(
+      //**TM_SA**// Start - Comment all the Signal mention and put our about and sending logs logic.
+      if (false/* && FeatureFlags.donorBadges() && PlayServicesUtil.getPlayServicesStatus(requireContext()) == PlayServicesUtil.PlayServicesStatus.SUCCESS*/) {
+        /*customPref(
           SubscriptionPreference(
             title = DSLSettingsText.from(
               if (state.hasActiveSubscription) {
@@ -176,14 +177,14 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
           onClick = {
             findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToBoostsFragment())
           }
-        )
+        )*/
       } else {
-        externalLinkPref(
+        /*externalLinkPref(
           title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
           icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
           linkId = R.string.donate_url
-        )
-        //**TM_SA**// Start
+        )*/
+
         clickPref(
           title = DSLSettingsText.from(R.string.preferences__send_logs_to_telemessage),
           icon = DSLSettingsIcon.from(R.drawable.ic_settings_logs_icon),
