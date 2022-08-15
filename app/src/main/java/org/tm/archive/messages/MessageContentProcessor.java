@@ -934,6 +934,10 @@ public final class MessageContentProcessor {
 
     MessageRecord targetMessage = SignalDatabase.mmsSms().getMessageFor(delete.getTargetSentTimestamp(), senderRecipient.getId());
 
+    //**TM_SA**//
+    ArchiveSender.Companion.sendArchiveDeleteMessage(context, targetMessage , ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, false);
+    //**TM_SA**//
+
     if (targetMessage != null && RemoteDeleteUtil.isValidReceive(targetMessage, senderRecipient, content.getServerReceivedTimestamp())) {
       MessageDatabase db = targetMessage.isMms() ? SignalDatabase.mms() : SignalDatabase.sms();
       db.markAsRemoteDelete(targetMessage.getId());
