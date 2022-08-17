@@ -204,8 +204,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
           title = DSLSettingsText.from(R.string.EditAboutFragment_about),
           icon = DSLSettingsIcon.from(R.drawable.ic_about_icon),
           onClick = {
-            /*Navigation.findNavController(requireView()).navigate(R.id.action_appSettingsFragment_to_inviteActivity)*/
-            startAboutFragment()
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_tmAboutSettings)
           }
         )
 
@@ -240,13 +239,6 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
     Log.d("E#E#@E@#", "sendLogFailure")
   }
 
-  private fun startAboutFragment() {
-    requireActivity().supportFragmentManager.beginTransaction()
-      .setCustomAnimations(R.anim.slide_from_end, R.anim.slide_to_start, R.anim.slide_from_start, R.anim.slide_to_end)
-      .replace(android.R.id.content, AboutPreferenceFragment())
-      .addToBackStack(null)
-      .commit()
-  }
 
   private fun doSendLogsClicked() {
 
