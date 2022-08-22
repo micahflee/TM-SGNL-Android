@@ -29,10 +29,11 @@
             android:layout_height="?attr/actionBarSize"
             android:layout_marginTop="20dp">
 
+        <!--//**TM_SA**// Change to ic_launcher_foreground_new-->
         <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/ic_launcher_foreground"
+                app:srcCompat="@drawable/ic_launcher_foreground_new"
                 android:layout_gravity="center"/>
 
     </androidx.appcompat.widget.Toolbar>

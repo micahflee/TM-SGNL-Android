@@ -1,5 +1,6 @@
 package org.tm.archive;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Window;
@@ -18,6 +19,7 @@ public class DeviceProvisioningActivity extends PassphraseRequiredActivity {
     supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
   }
 
+  @SuppressLint("UseCompatLoadingForDrawables")
   @Override
   protected void onCreate(Bundle bundle, boolean ready) {
     AlertDialog dialog = new AlertDialog.Builder(this)
@@ -36,7 +38,7 @@ public class DeviceProvisioningActivity extends PassphraseRequiredActivity {
         .setOnDismissListener(dialog13 -> finish())
         .create();
 
-    dialog.setIcon(getResources().getDrawable(R.drawable.icon_dialog));
+    dialog.setIcon(getResources().getDrawable(R.drawable.ic_launcher_foreground_new));//**TM_SA**//
     dialog.show();
   }
 }
