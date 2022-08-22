@@ -188,7 +188,7 @@ public final class AttachmentDownloadJob extends BaseJob {
 
       //**TM_SA**//Start
       Pair<InputStream, InputStream> inputStreamPair  = FileUtils.duplicateInputStream(stream);
-      String                              fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.getFileName(), messageId, attachmentId.getUniqueId(), attachment.getContentType());
+      String                              fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.getFileName(), messageId, attachmentId.getUniqueId(), attachment.getContentType(), true);
       File                                tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, fileNameWithType, inputStreamPair.first);
 
       ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileWithData.getName(), false);

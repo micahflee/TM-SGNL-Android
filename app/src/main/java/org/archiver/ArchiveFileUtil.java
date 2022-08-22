@@ -29,6 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Random;
 
 public class ArchiveFileUtil {
 
@@ -554,11 +555,18 @@ This method can parse out the real local file path from a file URI.
 
     }
 
+
     public static String getFileNameWithType(String fileName, long messageId, long attachmentId, String contentType) {
-        if(fileName == null){
+        return getFileNameWithType(fileName,  messageId,  attachmentId,  contentType, false);
+    }
+
+    public static String getFileNameWithType(String fileName, long messageId, long attachmentId, String contentType, boolean isIncoming) {
+
+        if (isIncoming || fileName == null){
             return ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId) + "." + ArchiveFileUtil.getFileType(fileName, contentType);
         }else{
             return fileName;
         }
     }
+
 }
