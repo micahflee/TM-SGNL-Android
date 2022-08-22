@@ -178,7 +178,7 @@ object NotificationFactory {
     val builder: NotificationBuilder = NotificationBuilder.create(context)
 
     builder.apply {
-      setSmallIcon(R.drawable.ic_notification)
+      setSmallIcon(R.drawable.ic_notification) //**TM_SA**// Replace ic_notification with the app launcher!
       setColor(ContextCompat.getColor(context, R.color.core_ultramarine))
       setCategory(NotificationCompat.CATEGORY_MESSAGE)
       setGroup(MessageNotifierV2.NOTIFICATION_GROUP)
