@@ -430,7 +430,7 @@ This method can parse out the real local file path from a file URI.
         String fileType;
         try {
             if(fileName != null) {
-                fileType = fileName.split("\\.")[1];
+                fileType = fileName.split("\\.")[fileName.split("\\.").length - 1];
             }else{
                 fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(contentType);
             }
@@ -565,7 +565,7 @@ This method can parse out the real local file path from a file URI.
         if (isIncoming || fileName == null){
             return ArchiveUtil.Companion.generateAttachmentName(messageId, attachmentId) + "." + ArchiveFileUtil.getFileType(fileName, contentType);
         }else{
-            return fileName;
+            return fileName.replace(" ", "_");
         }
     }
 
