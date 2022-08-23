@@ -139,14 +139,15 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
       )
 
       dividerPref()
-
-      clickPref(
+     //**TM_SA**// Mark this part
+     /* clickPref(
         title = DSLSettingsText.from(R.string.preferences__help),
         icon = DSLSettingsIcon.from(R.drawable.ic_help_24),
         onClick = {
           findNavController().safeNavigate(R.id.action_appSettingsFragment_to_helpSettingsFragment)
         }
-      )
+      )*/
+      //**TM_SA**// Start
 
       clickPref(
         title = DSLSettingsText.from(R.string.AppSettingsFragment__invite_your_friends),
