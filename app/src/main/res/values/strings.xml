@@ -25,23 +25,23 @@
     <string name="AlbumThumbnailView_plus" translatable="false">\+%d</string>
 
     <!-- ApplicationMigrationActivity -->
-    <string name="ApplicationMigrationActivity__signal_is_updating">Signal is updating…</string>
+    <string name="ApplicationMigrationActivity__signal_is_updating">TM SGNL is updating…</string>
 
     <!-- ApplicationPreferencesActivity -->
     <string name="ApplicationPreferencesActivity_currently_s">Currently: %s</string>
     <string name="ApplicationPreferenceActivity_you_havent_set_a_passphrase_yet">You haven\'t set a passphrase yet!</string>
     <string name="ApplicationPreferencesActivity_disable_passphrase">Disable passphrase?</string>
-    <string name="ApplicationPreferencesActivity_this_will_permanently_unlock_signal_and_message_notifications">This will permanently unlock Signal and message notifications.</string>
+    <string name="ApplicationPreferencesActivity_this_will_permanently_unlock_signal_and_message_notifications">This will permanently unlock TM SGNL and message notifications.</string>
     <string name="ApplicationPreferencesActivity_disable">Disable</string>
     <string name="ApplicationPreferencesActivity_unregistering">Unregistering</string>
-    <string name="ApplicationPreferencesActivity_unregistering_from_signal_messages_and_calls">Unregistering from Signal messages and calls…</string>
-    <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls">Disable Signal messages and calls?</string>
-    <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Disable Signal messages and calls by unregistering from the server. You will need to re-register your phone number to use them again in the future.</string>
+    <string name="ApplicationPreferencesActivity_unregistering_from_signal_messages_and_calls">Unregistering from TM SGNL messages and calls…</string>
+    <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls">Disable TM SGNL messages and calls?</string>
+    <string name="ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering">Disable TM SGNL messages and calls by unregistering from the server. You will need to re-register your phone number to use them again in the future.</string>
     <string name="ApplicationPreferencesActivity_error_connecting_to_server">Error connecting to server!</string>
     <string name="ApplicationPreferencesActivity_sms_enabled">SMS Enabled</string>
     <string name="ApplicationPreferencesActivity_touch_to_change_your_default_sms_app">Touch to change your default SMS app</string>
     <string name="ApplicationPreferencesActivity_sms_disabled">SMS Disabled</string>
-    <string name="ApplicationPreferencesActivity_touch_to_make_signal_your_default_sms_app">Touch to make Signal your default SMS app</string>
+    <string name="ApplicationPreferencesActivity_touch_to_make_signal_your_default_sms_app">Touch to make TM SGNL your default SMS app</string>
     <string name="ApplicationPreferencesActivity_on">on</string>
     <string name="ApplicationPreferencesActivity_On">On</string>
     <string name="ApplicationPreferencesActivity_off">off</string>
@@ -77,15 +77,15 @@
     <string name="AttachmentKeyboard_file">File</string>
     <string name="AttachmentKeyboard_contact">Contact</string>
     <string name="AttachmentKeyboard_location">Location</string>
-    <string name="AttachmentKeyboard_Signal_needs_permission_to_show_your_photos_and_videos">Signal needs permission to show your photos and videos.</string>
+    <string name="AttachmentKeyboard_Signal_needs_permission_to_show_your_photos_and_videos">TM SGNL needs permission to show your photos and videos.</string>
     <string name="AttachmentKeyboard_give_access">Give Access</string>
     <string name="AttachmentKeyboard_payment">Payment</string>
 
     <!-- AttachmentManager -->
     <string name="AttachmentManager_cant_open_media_selection">Can\'t find an app to select media.</string>
-    <string name="AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio">Signal requires the Storage permission in order to attach photos, videos, or audio, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Storage\".</string>
-    <string name="AttachmentManager_signal_requires_contacts_permission_in_order_to_attach_contact_information">Signal requires Contacts permission in order to attach contact information, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Contacts\".</string>
-    <string name="AttachmentManager_signal_requires_location_information_in_order_to_attach_a_location">Signal requires Location permission in order to attach a location, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Location\".</string>
+    <string name="AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio">TM SGNL requires the Storage permission in order to attach photos, videos, or audio, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Storage\".</string>
+    <string name="AttachmentManager_signal_requires_contacts_permission_in_order_to_attach_contact_information">TM SGNL requires Contacts permission in order to attach contact information, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Contacts\".</string>
+    <string name="AttachmentManager_signal_requires_location_information_in_order_to_attach_a_location">TM SGNL requires Location permission in order to attach a location, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Location\".</string>
 
     <!-- AttachmentUploadJob -->
     <string name="AttachmentUploadJob_uploading_media">Uploading media…</string>
@@ -116,9 +116,9 @@
     <string name="BlockUnblockDialog_you_will_be_able_to_call_and_message_each_other">You will be able to message and call each other and your name and photo will be shared with them.</string>
     <string name="BlockUnblockDialog_blocked_people_wont_be_able_to_call_you_or_send_you_messages">Blocked people won\'t be able to call you or send you messages.</string>
     <!-- Message shown on block dialog when blocking the Signal release notes recipient -->
-    <string name="BlockUnblockDialog_block_getting_signal_updates_and_news">Block getting Signal updates and news.</string>
+    <string name="BlockUnblockDialog_block_getting_signal_updates_and_news">Block getting TM SGNL updates and news.</string>
     <!-- Message shown on unblock dialog when unblocking the Signal release notes recipient -->
-    <string name="BlockUnblockDialog_resume_getting_signal_updates_and_news">Resume getting Signal updates and news.</string>
+    <string name="BlockUnblockDialog_resume_getting_signal_updates_and_news">Resume getting TM SGNL updates and news.</string>
     <string name="BlockUnblockDialog_unblock_s">Unblock %1$s?</string>
     <string name="BlockUnblockDialog_block">Block</string>
     <string name="BlockUnblockDialog_block_and_leave">Block and Leave</string>
@@ -141,14 +141,14 @@
 
     <!-- CameraContacts -->
     <string name="CameraContacts_recent_contacts">Recent contacts</string>
-    <string name="CameraContacts_signal_contacts">Signal contacts</string>
-    <string name="CameraContacts_signal_groups">Signal groups</string>
+    <string name="CameraContacts_signal_contacts">TM SGNL contacts</string>
+    <string name="CameraContacts_signal_groups">TM SGNL groups</string>
     <string name="CameraContacts_you_can_share_with_a_maximum_of_n_conversations">You can share with a maximum of %d conversations.</string>
-    <string name="CameraContacts_select_signal_recipients">Select Signal recipients</string>
-    <string name="CameraContacts_no_signal_contacts">No Signal contacts</string>
-    <string name="CameraContacts_you_can_only_use_the_camera_button">You can only use the camera button to send photos to Signal contacts. </string>
+    <string name="CameraContacts_select_signal_recipients">Select TM SGNL recipients</string>
+    <string name="CameraContacts_no_signal_contacts">No TM SGNL contacts</string>
+    <string name="CameraContacts_you_can_only_use_the_camera_button">You can only use the camera button to send photos to TM SGNL contacts. </string>
     <string name="CameraContacts_cant_find_who_youre_looking_for">Can\'t find who you\'re looking for?</string>
-    <string name="CameraContacts_invite_a_contact_to_join_signal">Invite a contact to join Signal</string>
+    <string name="CameraContacts_invite_a_contact_to_join_signal">Invite a contact to join TM SGNL</string>
     <string name="CameraContacts__menu_search">Search</string>
 
     <!-- ClearProfileActivity -->
@@ -157,12 +157,12 @@
     <string name="ClearProfileActivity_remove_group_photo">Remove group photo?</string>
 
     <!-- ClientDeprecatedActivity -->
-    <string name="ClientDeprecatedActivity_update_signal">Update Signal</string>
+    <string name="ClientDeprecatedActivity_update_signal">Update TM SGNL</string>
     <string name="ClientDeprecatedActivity_this_version_of_the_app_is_no_longer_supported">This version of the app is no longer supported. To continue sending and receiving messages, update to the latest version.</string>
     <string name="ClientDeprecatedActivity_update">Update</string>
     <string name="ClientDeprecatedActivity_dont_update">Don\'t Update</string>
     <string name="ClientDeprecatedActivity_warning">Warning</string>
-    <string name="ClientDeprecatedActivity_your_version_of_signal_has_expired_you_can_view_your_message_history">Your version of Signal has expired. You can view your message history but you won\'t be able to send or receive messages until you update.</string>
+    <string name="ClientDeprecatedActivity_your_version_of_signal_has_expired_you_can_view_your_message_history">Your version of TM SGNL has expired. You can view your message history but you won\'t be able to send or receive messages until you update.</string>
 
     <!-- CommunicationActions -->
     <string name="CommunicationActions_no_browser_found">No web browser found.</string>
@@ -172,10 +172,10 @@
     <string name="CommunicationActions_cancel">Cancel</string>
     <string name="CommunicationActions_call">Call</string>
     <string name="CommunicationActions_insecure_call">Insecure call</string>
-    <string name="CommunicationActions_carrier_charges_may_apply">Carrier charges may apply. The number you are calling is not registered with Signal. This call will be placed through your mobile carrier, not over the internet.</string>
+    <string name="CommunicationActions_carrier_charges_may_apply">Carrier charges may apply. The number you are calling is not registered with TM SGNL. This call will be placed through your mobile carrier, not over the internet.</string>
 
     <!-- ConfirmIdentityDialog -->
-    <string name="ConfirmIdentityDialog_your_safety_number_with_s_has_changed">Your safety number with %1$s has changed. This could either mean that someone is trying to intercept your communication, or that %2$s simply reinstalled Signal.</string>
+    <string name="ConfirmIdentityDialog_your_safety_number_with_s_has_changed">Your safety number with %1$s has changed. This could either mean that someone is trying to intercept your communication, or that %2$s simply reinstalled TM SGNL.</string>
     <string name="ConfirmIdentityDialog_you_may_wish_to_verify_your_safety_number_with_this_contact">You may wish to verify your safety number with this contact.</string>
     <string name="ConfirmIdentityDialog_accept">Accept</string>
 
@@ -188,7 +188,7 @@
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">Message %s</string>
-    <string name="ContactsDatabase_signal_call_s">Signal Call %s</string>
+    <string name="ContactsDatabase_signal_call_s">TM SGNL Call %s</string>
 
     <!-- ContactNameEditActivity -->
     <string name="ContactNameEditActivity_given_name">Given name</string>
@@ -214,7 +214,7 @@
     <string name="ConversationItem_click_to_approve_unencrypted">Send failed, tap for unsecured fallback</string>
     <string name="ConversationItem_click_to_approve_unencrypted_sms_dialog_title">Fallback to unencrypted SMS?</string>
     <string name="ConversationItem_click_to_approve_unencrypted_mms_dialog_title">Fallback to unencrypted MMS?</string>
-    <string name="ConversationItem_click_to_approve_unencrypted_dialog_message">This message will <b>not</b> be encrypted because the recipient is no longer a Signal user.\n\nSend unsecured message?</string>
+    <string name="ConversationItem_click_to_approve_unencrypted_dialog_message">This message will <b>not</b> be encrypted because the recipient is no longer a TM SGNL user.\n\nSend unsecured message?</string>
     <string name="ConversationItem_unable_to_open_media">Can\'t find an app able to open this media.</string>
     <string name="ConversationItem_copied_text">Copied %s</string>
     <string name="ConversationItem_from_s">from %s</string>
@@ -241,8 +241,8 @@
     <string name="ConversationActivity_this_device_does_not_appear_to_support_dial_actions">This device does not appear to support dial actions.</string>
     <string name="ConversationActivity_transport_insecure_sms">Insecure SMS</string>
     <string name="ConversationActivity_transport_insecure_mms">Insecure MMS</string>
-    <string name="ConversationActivity_transport_signal">Signal</string>
-    <string name="ConversationActivity_lets_switch_to_signal">Let\'s switch to Signal %1$s</string>
+    <string name="ConversationActivity_transport_signal">TM SGNL</string>
+    <string name="ConversationActivity_lets_switch_to_signal">Let\'s switch to TM SGNL %1$s</string>
     <string name="ConversationActivity_specify_recipient">Please choose a contact</string>
     <string name="ConversationActivity_unblock">Unblock</string>
     <string name="ConversationActivity_attachment_exceeds_size_limits">Attachment exceeds size limits for the type of message you\'re sending.</string>
@@ -257,15 +257,15 @@
     <string name="ConversationActivity_your_request_to_join_has_been_sent_to_the_group_admin">Your request to join has been sent to the group admin. You\'ll be notified when they take action.</string>
     <string name="ConversationActivity_cancel_request">Cancel Request</string>
 
-    <string name="ConversationActivity_to_send_audio_messages_allow_signal_access_to_your_microphone">To send audio messages, allow Signal access to your microphone.</string>
-    <string name="ConversationActivity_signal_requires_the_microphone_permission_in_order_to_send_audio_messages">Signal requires the Microphone permission in order to send audio messages, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\".</string>
-    <string name="ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s">Signal needs the Microphone and Camera permissions in order to call %s, but they have been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\" and \"Camera\".</string>
-    <string name="ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera">To capture photos and video, allow Signal access to the camera.</string>
-    <string name="ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video">Signal needs the Camera permission to take photos or video, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
-    <string name="ConversationActivity_signal_needs_camera_permissions_to_take_photos_or_video">Signal needs Camera permissions to take photos or video</string>
+    <string name="ConversationActivity_to_send_audio_messages_allow_signal_access_to_your_microphone">To send audio messages, allow TM SGNL access to your microphone.</string>
+    <string name="ConversationActivity_signal_requires_the_microphone_permission_in_order_to_send_audio_messages">TM SGNL requires the Microphone permission in order to send audio messages, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\".</string>
+    <string name="ConversationActivity_signal_needs_the_microphone_and_camera_permissions_in_order_to_call_s">TM SGNL needs the Microphone and Camera permissions in order to call %s, but they have been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\" and \"Camera\".</string>
+    <string name="ConversationActivity_to_capture_photos_and_video_allow_signal_access_to_the_camera">To capture photos and video, allow TM SGNL access to the camera.</string>
+    <string name="ConversationActivity_signal_needs_the_camera_permission_to_take_photos_or_video">TM SGNL needs the Camera permission to take photos or video, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
+    <string name="ConversationActivity_signal_needs_camera_permissions_to_take_photos_or_video">TM SGNL needs Camera permissions to take photos or video</string>
     <string name="ConversationActivity_enable_the_microphone_permission_to_capture_videos_with_sound">Enable the microphone permission to capture videos with sound.</string>
-    <string name="ConversationActivity_signal_needs_the_recording_permissions_to_capture_video">Signal needs microphone permissions to record videos, but they have been denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\" and \"Camera\".</string>
-    <string name="ConversationActivity_signal_needs_recording_permissions_to_capture_video">Signal needs microphone permissions to record videos.</string>
+    <string name="ConversationActivity_signal_needs_the_recording_permissions_to_capture_video">TM SGNL needs microphone permissions to record videos, but they have been denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\" and \"Camera\".</string>
+    <string name="ConversationActivity_signal_needs_recording_permissions_to_capture_video">TM SGNL needs microphone permissions to record videos.</string>
 
     <string name="ConversationActivity_quoted_contact_message">%1$s %2$s</string>
     <string name="ConversationActivity_signal_cannot_sent_sms_mms_messages_because_it_is_not_your_default_sms_app">Signal cannot send SMS/MMS messages because it is not your default SMS app. Would you like to change this in your Android settings?</string>
@@ -284,7 +284,7 @@
     <string name="ConversationActivity_you_will_leave_this_group_and_it_will_be_deleted_from_all_of_your_devices">You will leave this group, and it will be deleted from all your devices.</string>
     <string name="ConversationActivity_delete">Delete</string>
     <string name="ConversationActivity_delete_and_leave">Delete and leave</string>
-    <string name="ConversationActivity__to_call_s_signal_needs_access_to_your_microphone">To call %1$s, Signal needs access to your microphone</string>
+    <string name="ConversationActivity__to_call_s_signal_needs_access_to_your_microphone">To call %1$s, TM SGNL needs access to your microphone</string>
 
     <string name="ConversationActivity__more_options_now_in_group_settings">More options now in \"Group settings\"</string>
 
@@ -325,14 +325,14 @@
         <item quantity="other">Saving %1$d attachments to storage…</item>
     </plurals>
     <string name="ConversationFragment_pending">Pending…</string>
-    <string name="ConversationFragment_push">Data (Signal)</string>
+    <string name="ConversationFragment_push">Data (TM SGNL)</string>
     <string name="ConversationFragment_mms">MMS</string>
     <string name="ConversationFragment_sms">SMS</string>
     <string name="ConversationFragment_deleting">Deleting</string>
     <string name="ConversationFragment_deleting_messages">Deleting messages…</string>
     <string name="ConversationFragment_delete_for_me">Delete for me</string>
     <string name="ConversationFragment_delete_for_everyone">Delete for everyone</string>
-    <string name="ConversationFragment_this_message_will_be_deleted_for_everyone_in_the_conversation">This message will be deleted for everyone in the conversation if they’re on a recent version of Signal. They will be able to see that you deleted a message.</string>
+    <string name="ConversationFragment_this_message_will_be_deleted_for_everyone_in_the_conversation">This message will be deleted for everyone in the conversation if they’re on a recent version of TM SGNL. They will be able to see that you deleted a message.</string>
     <string name="ConversationFragment_quoted_message_not_found">Original message not found</string>
     <string name="ConversationFragment_quoted_message_no_longer_available">Original message no longer available</string>
     <string name="ConversationFragment_failed_to_open_message">Failed to open message</string>
@@ -344,12 +344,12 @@
     <string name="ConversationFragment__d_group_members_have_the_same_name">%1$d group members have the same name.</string>
     <string name="ConversationFragment__tap_to_review">Tap to review</string>
     <string name="ConversationFragment__review_requests_carefully">Review requests carefully</string>
-    <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">Signal found another contact with the same name.</string>
+    <string name="ConversationFragment__signal_found_another_contact_with_the_same_name">TM SGNL found another contact with the same name.</string>
     <string name="ConversationFragment_contact_us">Contact us</string>
     <string name="ConversationFragment_verify">Verify</string>
     <string name="ConversationFragment_not_now">Not now</string>
     <string name="ConversationFragment_your_safety_number_with_s_changed">Your safety number with %s changed</string>
-    <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">Your safety number with %s changed, likely because they reinstalled Signal or changed devices. Tap Verify to confirm the new safety number. This is optional.</string>
+    <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">Your safety number with %s changed, likely because they reinstalled TM SGNL or changed devices. Tap Verify to confirm the new safety number. This is optional.</string>
     <!-- Message shown to indicate which notification profile is on/active -->
     <string name="ConversationFragment__s_on">%1$s on</string>
 
@@ -471,13 +471,13 @@
     <string name="BackupsPreferenceFragment__test_your_backup_passphrase">Test your backup passphrase and verify that it matches</string>
     <string name="BackupsPreferenceFragment__turn_on">Turn on</string>
     <string name="BackupsPreferenceFragment__turn_off">Turn off</string>
-    <string name="BackupsPreferenceFragment__to_restore_a_backup">To restore a backup, install a new copy of Signal. Open the app and tap "Restore backup", then locate a backup file. %1$s</string>
+    <string name="BackupsPreferenceFragment__to_restore_a_backup">To restore a backup, install a new copy of TM SGNL. Open the app and tap "Restore backup", then locate a backup file. %1$s</string>
     <string name="BackupsPreferenceFragment__learn_more">Learn more</string>
     <string name="BackupsPreferenceFragment__in_progress">In progress…</string>
     <string name="BackupsPreferenceFragment__d_so_far">%1$d so far…</string>
     <!-- Show percentage of completion of backup -->
     <string name="BackupsPreferenceFragment__s_so_far">%1$s%% so far…</string>
-    <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">Signal requires external storage permission in order to create backups, but it has been permanently denied. Please continue to app settings, select \"Permissions\" and enable \"Storage\".</string>
+    <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">TM SGNL requires external storage permission in order to create backups, but it has been permanently denied. Please continue to app settings, select \"Permissions\" and enable \"Storage\".</string>
 
 
     <!-- CustomDefaultPreference -->
@@ -501,7 +501,7 @@
 
     <!-- DecryptionFailedDialog -->
     <string name="DecryptionFailedDialog_chat_session_refreshed">Chat session refreshed</string>
-    <string name="DecryptionFailedDialog_signal_uses_end_to_end_encryption">Signal uses end-to-end encryption and it may need to refresh your chat session sometimes. This doesn\'t affect your chat\'s security, but you may have missed a message from this contact, and you can ask them to resend it.</string>
+    <string name="DecryptionFailedDialog_signal_uses_end_to_end_encryption">TM SGNL uses end-to-end encryption and it may need to refresh your chat session sometimes. This doesn\'t affect your chat\'s security, but you may have missed a message from this contact, and you can ask them to resend it.</string>
 
     <!-- DeviceListActivity -->
     <string name="DeviceListActivity_unlink_s">Unlink \'%s\'?</string>
@@ -523,10 +523,10 @@
 
     <!-- DozeReminder -->
     <string name="DozeReminder_optimize_for_missing_play_services">Optimize for missing Play Services</string>
-    <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">This device does not support Play Services. Tap to disable system battery optimizations that prevent Signal from retrieving messages while inactive.</string>
+    <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">This device does not support Play Services. Tap to disable system battery optimizations that prevent TM SGNL from retrieving messages while inactive.</string>
 
     <!-- ExpiredBuildReminder -->
-    <string name="ExpiredBuildReminder_this_version_of_signal_has_expired">This version of Signal has expired. Update now to send and receive messages.</string>
+    <string name="ExpiredBuildReminder_this_version_of_signal_has_expired">This version of TM SGNL has expired. Update now to send and receive messages.</string>
     <string name="ExpiredBuildReminder_update_now">Update now</string>
 
     <!-- PendingGroupJoinRequestsReminder -->
@@ -542,8 +542,8 @@
     <string name="ShareActivity_you_do_not_have_permission_to_send_to_this_group">You do not have permission to send to this group</string>
 
     <!-- GcmRefreshJob -->
-    <string name="GcmRefreshJob_Permanent_Signal_communication_failure">Permanent Signal communication failure!</string>
-    <string name="GcmRefreshJob_Signal_was_unable_to_register_with_Google_Play_Services">Signal was unable to register with Google Play Services. Signal messages and calls have been disabled, please try re-registering in Settings &gt; Advanced.</string>
+    <string name="GcmRefreshJob_Permanent_Signal_communication_failure">Permanent TM SGNL communication failure!</string>
+    <string name="GcmRefreshJob_Signal_was_unable_to_register_with_Google_Play_Services">TM SGNL was unable to register with Google Play Services. TM SGNL messages and calls have been disabled, please try re-registering in Settings &gt; Advanced.</string>
 
 
     <!-- GiphyActivity -->
@@ -726,7 +726,7 @@
     <string name="AddGroupDetailsFragment__this_field_is_required">This field is required.</string>
     <string name="AddGroupDetailsFragment__group_creation_failed">Group creation failed.</string>
     <string name="AddGroupDetailsFragment__try_again_later">Try again later.</string>
-    <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt">You\'ve selected a contact that doesn\'t support Signal groups, so this group will be MMS.</string>
+    <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt">You\'ve selected a contact that doesn\'t support TM SGNL groups, so this group will be MMS.</string>
     <string name="AddGroupDetailsFragment_custom_mms_group_names_and_photos_will_only_be_visible_to_you">Custom MMS group names and photos will only be visible to you.</string>
     <string name="AddGroupDetailsFragment__remove">Remove</string>
     <string name="AddGroupDetailsFragment__sms_contact">SMS contact</string>
@@ -741,15 +741,15 @@
     </plurals>
 
     <!-- NonGv2MemberDialog -->
-    <string name="NonGv2MemberDialog_single_users_are_non_gv2_capable">A Legacy Group will be created because “%1$s” is using an old version of Signal. You can create a New Style Group with them after they update Signal, or remove them before creating the group.</string>
+    <string name="NonGv2MemberDialog_single_users_are_non_gv2_capable">A Legacy Group will be created because “%1$s” is using an old version of TM SGNL. You can create a New Style Group with them after they update TM SGNL, or remove them before creating the group.</string>
     <plurals name="NonGv2MemberDialog_d_users_are_non_gv2_capable">
-        <item quantity="one">A Legacy Group will be created because %1$d member is using an old version of Signal. You can create a New Style Group with them after they update Signal, or remove them before creating the group.</item>
-        <item quantity="other">A Legacy Group will be created because %1$d members are using an old version of Signal. You can create a New Style Group with them after they update Signal, or remove them before creating the group.</item>
+        <item quantity="one">A Legacy Group will be created because %1$d member is using an old version of TM SGNL. You can create a New Style Group with them after they update TM SGNL, or remove them before creating the group.</item>
+        <item quantity="other">A Legacy Group will be created because %1$d members are using an old version of TM SGNL. You can create a New Style Group with them after they update TM SGNL, or remove them before creating the group.</item>
     </plurals>
-    <string name="NonGv2MemberDialog_single_users_are_non_gv2_capable_forced_migration">This group cannot be created because “%1$s” is using an old version of Signal. You must remove them before creating the group.</string>
+    <string name="NonGv2MemberDialog_single_users_are_non_gv2_capable_forced_migration">This group cannot be created because “%1$s” is using an old version of TM SGNL. You must remove them before creating the group.</string>
     <plurals name="NonGv2MemberDialog_d_users_are_non_gv2_capable_forced_migration">
-        <item quantity="one">This group cannot be created because %1$d member is using an old version of Signal. You must remove them before creating the group.</item>
-        <item quantity="other">This group cannot be created because %1$d members are using an old version of Signal. You must remove them before creating the group.</item>
+        <item quantity="one">This group cannot be created because %1$d member is using an old version of TM SGNL. You must remove them before creating the group.</item>
+        <item quantity="other">This group cannot be created because %1$d members are using an old version of TM SGNL. You must remove them before creating the group.</item>
     </plurals>
 
     <!-- ManageGroupActivity -->
@@ -783,8 +783,8 @@
     <string name="ManageGroupActivity_only_admins_can_reset_the_sharable_group_link">Only admins can reset the sharable group link.</string>
 
     <string name="ManageGroupActivity_you_dont_have_the_rights_to_do_this">You don\'t have the rights to do this</string>
-    <string name="ManageGroupActivity_not_capable">Someone you added does not support new groups and needs to update Signal</string>
-    <string name="ManageGroupActivity_not_announcement_capable">Someone you added does not support announcement groups and needs to update Signal</string>
+    <string name="ManageGroupActivity_not_capable">Someone you added does not support new groups and needs to update TM SGNL</string>
+    <string name="ManageGroupActivity_not_announcement_capable">Someone you added does not support announcement groups and needs to update TM SGNL</string>
     <string name="ManageGroupActivity_failed_to_update_the_group">Failed to update the group</string>
     <string name="ManageGroupActivity_youre_not_a_member_of_the_group">You\'re not a member of the group</string>
     <string name="ManageGroupActivity_failed_to_update_the_group_please_retry_later">Failed to update the group please retry later</string>
@@ -796,7 +796,7 @@
     <string name="ManageGroupActivity_legacy_group_upgrade">This is a Legacy Group. To access new features like @mentions and admins,</string>
     <string name="ManageGroupActivity_legacy_group_too_large">This Legacy Group can’t be upgraded to a New Group because it is too large. The maximum group size is %1$d.</string>
     <string name="ManageGroupActivity_upgrade_this_group">upgrade this group.</string>
-    <string name="ManageGroupActivity_this_is_an_insecure_mms_group">This is an insecure MMS Group. To chat privately, invite your contacts to Signal.</string>
+    <string name="ManageGroupActivity_this_is_an_insecure_mms_group">This is an insecure MMS Group. To chat privately, invite your contacts to TM SGNL.</string>
     <string name="ManageGroupActivity_invite_now">Invite now</string>
     <string name="ManageGroupActivity_more">more</string>
     <string name="ManageGroupActivity_add_group_description">Add group description…</string>
@@ -883,10 +883,10 @@
     </plurals>
 
     <!-- GroupJoinUpdateRequiredBottomSheetDialogFragment -->
-    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_signal_to_use_group_links">Update Signal to use group links</string>
-    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_message">The version of Signal you’re using does not support this group link. Update to the latest version to join this group via link.</string>
-    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_signal">Update Signal</string>
-    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_linked_device_message">One or more of your linked devices are running a version of Signal that doesn\'t support group links. Update Signal on your linked device(s) to join this group.</string>
+    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_signal_to_use_group_links">Update TM SGNL to use group links</string>
+    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_message">The version of TM SGNL you’re using does not support this group link. Update to the latest version to join this group via link.</string>
+    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_signal">Update TM SGNL</string>
+    <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_update_linked_device_message">One or more of your linked devices are running a version of TM SGNL that doesn\'t support group links. Update TM SGNL on your linked device(s) to join this group.</string>
     <string name="GroupJoinUpdateRequiredBottomSheetDialogFragment_group_link_is_not_valid">Group link is not valid</string>
 
     <!-- GroupInviteLinkEnableAndShareBottomSheetDialogFragment -->
@@ -924,13 +924,13 @@
     <string name="InviteActivity_cancel">Cancel</string>
     <string name="InviteActivity_sending">Sending…</string>
     <string name="InviteActivity_invitations_sent">Invitations sent!</string>
-    <string name="InviteActivity_invite_to_signal">Invite to Signal</string>
+    <string name="InviteActivity_invite_to_signal">Invite to TM SGNL</string>
     <string name="InviteActivity_send_sms">Send SMS (%d)</string>
     <plurals name="InviteActivity_send_sms_invites">
         <item quantity="one">Send %d SMS invite?</item>
         <item quantity="other">Send %d SMS invites?</item>
     </plurals>
-    <string name="InviteActivity_lets_switch_to_signal">Let\'s switch to Signal: %1$s</string>
+    <string name="InviteActivity_lets_switch_to_signal">Let\'s switch to TM SGNL: %1$s</string>
     <string name="InviteActivity_no_app_to_share_to">It looks like you don\'t have any apps to share to.</string>
 
     <!-- LearnMoreTextView -->
@@ -944,7 +944,7 @@
     <string name="LongMessageActivity_your_message">Your message</string>
 
     <!-- MessageRetrievalService -->
-    <string name="MessageRetrievalService_signal">Signal</string>
+    <string name="MessageRetrievalService_signal">TM SGNL</string>
     <string name="MessageRetrievalService_background_connection_enabled">Background connection enabled</string>
 
     <!-- MmsDownloader -->
@@ -1004,7 +1004,7 @@
 
     <!-- Megaphones -->
     <string name="Megaphones_remind_me_later">Remind me later</string>
-    <string name="Megaphones_verify_your_signal_pin">Verify your Signal PIN</string>
+    <string name="Megaphones_verify_your_signal_pin">Verify your TM SGNL PIN</string>
     <string name="Megaphones_well_occasionally_ask_you_to_verify_your_pin">We\'ll occasionally ask you to verify your PIN so that you remember it.</string>
     <string name="Megaphones_verify_pin">Verify PIN</string>
     <string name="Megaphones_get_started">Get started</string>
@@ -1015,11 +1015,11 @@
     <string name="Megaphones_add_photo">Add photo</string>
 
     <!-- NotificationBarManager -->
-    <string name="NotificationBarManager_signal_call_in_progress">Signal call in progress</string>
-    <string name="NotificationBarManager__establishing_signal_call">Establishing Signal call</string>
-    <string name="NotificationBarManager__incoming_signal_call">Incoming Signal call</string>
-    <string name="NotificationBarManager__incoming_signal_group_call">Incoming Signal group call</string>
-    <string name="NotificationBarManager__stopping_signal_call_service">Stopping Signal call service</string>
+    <string name="NotificationBarManager_signal_call_in_progress">TM SGNL call in progress</string>
+    <string name="NotificationBarManager__establishing_signal_call">Establishing TM SGNL call</string>
+    <string name="NotificationBarManager__incoming_signal_call">Incoming TM SGNL call</string>
+    <string name="NotificationBarManager__incoming_signal_group_call">Incoming TM SGNL group call</string>
+    <string name="NotificationBarManager__stopping_signal_call_service">Stopping TM SGNL call service</string>
     <string name="NotificationBarManager__decline_call">Decline call</string>
     <string name="NotificationBarManager__answer_call">Answer call</string>
     <string name="NotificationBarManager__end_call">End call</string>
@@ -1050,8 +1050,8 @@
     <string name="MediaSendActivity_message_to_s">Message to %s</string>
     <string name="MediaSendActivity_message">Message</string>
     <string name="MediaSendActivity_select_recipients">Select recipients</string>
-    <string name="MediaSendActivity_signal_needs_access_to_your_contacts">Signal needs access to your contacts in order to display them.</string>
-    <string name="MediaSendActivity_signal_needs_contacts_permission_in_order_to_show_your_contacts_but_it_has_been_permanently_denied">Signal needs Contacts permission in order to show your contacts, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Contacts\".</string>
+    <string name="MediaSendActivity_signal_needs_access_to_your_contacts">TM SGNL needs access to your contacts in order to display them.</string>
+    <string name="MediaSendActivity_signal_needs_contacts_permission_in_order_to_show_your_contacts_but_it_has_been_permanently_denied">TM SGNL needs Contacts permission in order to show your contacts, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Contacts\".</string>
     <plurals name="MediaSendActivity_cant_share_more_than_n_items">
         <item quantity="one">You can\'t share more than %d item.</item>
         <item quantity="other">You can\'t share more than %d items.</item>
@@ -1069,7 +1069,7 @@
 
     <!-- MessageRecord -->
     <string name="MessageRecord_unknown">Unknown</string>
-    <string name="MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported">Received a message encrypted using an old version of Signal that is no longer supported. Please ask the sender to update to the most recent version and resend the message.</string>
+    <string name="MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported">Received a message encrypted using an old version of TM SGNL that is no longer supported. Please ask the sender to update to the most recent version and resend the message.</string>
     <string name="MessageRecord_left_group">You have left the group.</string>
     <string name="MessageRecord_you_updated_group">You updated the group.</string>
     <string name="MessageRecord_the_group_was_updated">The group was updated.</string>
@@ -1078,7 +1078,7 @@
     <string name="MessageRecord_missed_video_call_date">Missed video call · %1$s</string>
     <string name="MessageRecord_s_updated_group">%s updated the group.</string>
     <string name="MessageRecord_s_called_you_date">%1$s called you · %2$s</string>
-    <string name="MessageRecord_s_joined_signal">%s is on Signal!</string>
+    <string name="MessageRecord_s_joined_signal">%s is on TM SGNL!</string>
     <string name="MessageRecord_you_disabled_disappearing_messages">You disabled disappearing messages.</string>
     <string name="MessageRecord_s_disabled_disappearing_messages">%1$s disabled disappearing messages.</string>
     <string name="MessageRecord_you_set_disappearing_message_time_to_s">You set the disappearing message timer to %1$s.</string>
@@ -1261,7 +1261,7 @@
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
     <string name="MessageRecord_like_this_new_feature_say_thanks_with_a_boost">Like this new feature? Say thanks with a Boost.</string>
     <!-- Update item message shown in the release channel when someone is not a sustainer so we ask them to consider becoming one -->
-    <string name="MessageRecord_signal_is_powered_by_people_like_you_become_a_sustainer_today">Signal is powered by people like you. Become a sustainer today.</string>
+    <string name="MessageRecord_signal_is_powered_by_people_like_you_become_a_sustainer_today">TM SGNL is powered by people like you. Become a sustainer today.</string>
 
     <!-- Group Calling update messages -->
     <string name="MessageRecord_s_started_a_group_call_s">%1$s started a group call · %2$s</string>
@@ -1344,27 +1344,27 @@
     <string name="DeviceProvisioningActivity_content_progress_key_error">Invalid QR code.</string>
     <string name="DeviceProvisioningActivity_sorry_you_have_too_many_devices_linked_already">Sorry, you have too many devices linked already, try removing some</string>
     <string name="DeviceActivity_sorry_this_is_not_a_valid_device_link_qr_code">Sorry, this is not a valid device link QR code.</string>
-    <string name="DeviceProvisioningActivity_link_a_signal_device">Link a Signal device?</string>
-    <string name="DeviceProvisioningActivity_it_looks_like_youre_trying_to_link_a_signal_device_using_a_3rd_party_scanner">It looks like you\'re trying to link a Signal device using a 3rd party scanner.  For your protection, please scan the code again from within Signal.</string>
+    <string name="DeviceProvisioningActivity_link_a_signal_device">Link a TM SGNL device?</string>
+    <string name="DeviceProvisioningActivity_it_looks_like_youre_trying_to_link_a_signal_device_using_a_3rd_party_scanner">It looks like you\'re trying to link a TM SGNL device using a 3rd party scanner.  For your protection, please scan the code again from within TM SGNL.</string>
 
-    <string name="DeviceActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code">Signal needs the Camera permission in order to scan a QR code, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
+    <string name="DeviceActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code">TM SGNL needs the Camera permission in order to scan a QR code, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
     <string name="DeviceActivity_unable_to_scan_a_qr_code_without_the_camera_permission">Unable to scan a QR code without the Camera permission</string>
 
     <!-- OutdatedBuildReminder -->
     <string name="OutdatedBuildReminder_update_now">Update now</string>
-    <string name="OutdatedBuildReminder_your_version_of_signal_will_expire_today">This version of Signal will expire today. Update to the most recent version.</string>
+    <string name="OutdatedBuildReminder_your_version_of_signal_will_expire_today">This version of TM SGNL will expire today. Update to the most recent version.</string>
     <plurals name="OutdatedBuildReminder_your_version_of_signal_will_expire_in_n_days">
-        <item quantity="one">This version of Signal will expire tomorrow. Update to the most recent version.</item>
-        <item quantity="other">This version of Signal will expire in %d days. Update to the most recent version.</item>
+        <item quantity="one">This version of TM SGNL will expire tomorrow. Update to the most recent version.</item>
+        <item quantity="other">This version of TM SGNL will expire in %d days. Update to the most recent version.</item>
     </plurals>
 
     <!-- PassphrasePromptActivity -->
     <string name="PassphrasePromptActivity_enter_passphrase">Enter passphrase</string>
-    <string name="PassphrasePromptActivity_watermark_content_description">Signal icon</string>
+    <string name="PassphrasePromptActivity_watermark_content_description">TM SGNL icon</string>
     <string name="PassphrasePromptActivity_ok_button_content_description">Submit passphrase</string>
     <string name="PassphrasePromptActivity_invalid_passphrase_exclamation">Invalid passphrase!</string>
-    <string name="PassphrasePromptActivity_unlock_signal">Unlock Signal</string>
-    <string name="PassphrasePromptActivity_signal_android_lock_screen">Signal Android - Lock Screen</string>
+    <string name="PassphrasePromptActivity_unlock_signal">Unlock TM SGNL</string>
+    <string name="PassphrasePromptActivity_signal_android_lock_screen">TM SGNL Android - Lock Screen</string>
 
     <!-- PlacePickerActivity -->
     <string name="PlacePickerActivity_title">Map</string>
@@ -1389,19 +1389,19 @@
         <item quantity="one">You have %1$d attempt remaining. If you run out of attempts, you can create a new PIN. You can register and use your account but you\'ll lose some saved settings like your profile information.</item>
         <item quantity="other">You have %1$d attempts remaining. If you run out of attempts, you can create a new PIN. You can register and use your account but you\'ll lose some saved settings like your profile information.</item>
     </plurals>
-    <string name="PinRestoreEntryFragment_signal_registration_need_help_with_pin">Signal Registration - Need Help with PIN for Android</string>
+    <string name="PinRestoreEntryFragment_signal_registration_need_help_with_pin">TM SGNL Registration - Need Help with PIN for Android</string>
     <string name="PinRestoreEntryFragment_enter_alphanumeric_pin">Enter alphanumeric PIN</string>
     <string name="PinRestoreEntryFragment_enter_numeric_pin">Enter numeric PIN</string>
 
     <!-- PinRestoreLockedFragment -->
     <string name="PinRestoreLockedFragment_create_your_pin">Create your PIN</string>
-    <string name="PinRestoreLockedFragment_youve_run_out_of_pin_guesses">You\'ve run out of PIN guesses, but you can still access your Signal account by creating a new PIN. For your privacy and security your account will be restored without any saved profile information or settings.</string>
+    <string name="PinRestoreLockedFragment_youve_run_out_of_pin_guesses">You\'ve run out of PIN guesses, but you can still access your TM SGNL account by creating a new PIN. For your privacy and security your account will be restored without any saved profile information or settings.</string>
     <string name="PinRestoreLockedFragment_create_new_pin">Create new PIN</string>
     <string name="PinRestoreLockedFragment_learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
 
     <!-- PinOptOutDialog -->
     <string name="PinOptOutDialog_warning">Warning</string>
-    <string name="PinOptOutDialog_if_you_disable_the_pin_you_will_lose_all_data">If you disable the PIN, you will lose all data when you re-register Signal unless you manually back up and restore. You can not turn on Registration Lock while the PIN is disabled.</string>
+    <string name="PinOptOutDialog_if_you_disable_the_pin_you_will_lose_all_data">If you disable the PIN, you will lose all data when you re-register TM SGNL unless you manually back up and restore. You can not turn on Registration Lock while the PIN is disabled.</string>
     <string name="PinOptOutDialog_disable_pin">Disable PIN</string>
 
     <!-- RatingManager -->
@@ -1422,7 +1422,7 @@
 
     <!-- RecaptchaRequiredBottomSheetFragment -->
     <string name="RecaptchaRequiredBottomSheetFragment_verify_to_continue_messaging">Verify to continue messaging</string>
-    <string name="RecaptchaRequiredBottomSheetFragment_to_help_prevent_spam_on_signal">To help prevent spam on Signal, please complete verification.</string>
+    <string name="RecaptchaRequiredBottomSheetFragment_to_help_prevent_spam_on_signal">To help prevent spam on TM SGNL, please complete verification.</string>
     <string name="RecaptchaRequiredBottomSheetFragment_after_verifying_you_can_continue_messaging">After verifying, you can continue messaging. Any paused messages will automatically be sent.</string>
 
     <!-- Recipient -->
@@ -1450,18 +1450,18 @@
     <!-- Title text for the Valentine\'s Day donation megaphone. The placeholder will always be a heart emoji. Needs to be a placeholder for Android reasons. -->
     <string name="ValentinesDayMegaphone_happy_heart_day">Happy 💜 Day!</string>
     <!-- Body text for the Valentine\'s Day donation megaphone. -->
-    <string name="ValentinesDayMegaphone_show_your_affection">Show your affection by becoming a Signal sustainer.</string>
+    <string name="ValentinesDayMegaphone_show_your_affection">Show your affection by becoming a TM SGNL sustainer.</string>
 
     <!-- WebRtcCallActivity -->
     <string name="WebRtcCallActivity__tap_here_to_turn_on_your_video">Tap here to turn on your video</string>
-    <string name="WebRtcCallActivity__to_call_s_signal_needs_access_to_your_camera">To call %1$s, Signal needs access to your camera</string>
-    <string name="WebRtcCallActivity__signal_s">Signal %1$s</string>
+    <string name="WebRtcCallActivity__to_call_s_signal_needs_access_to_your_camera">To call %1$s, TM SGNL needs access to your camera</string>
+    <string name="WebRtcCallActivity__signal_s">TM SGNL %1$s</string>
     <string name="WebRtcCallActivity__calling">Calling…</string>
     <string name="WebRtcCallActivity__group_is_too_large_to_ring_the_participants">Group is too large to ring the participants.</string>
 
     <!-- WebRtcCallView -->
-    <string name="WebRtcCallView__signal_call">Signal Call</string>
-    <string name="WebRtcCallView__signal_video_call">Signal Video Call</string>
+    <string name="WebRtcCallView__signal_call">TM SGNL Call</string>
+    <string name="WebRtcCallView__signal_video_call">TM SGNL Video Call</string>
     <string name="WebRtcCallView__start_call">Start Call</string>
     <string name="WebRtcCallView__join_call">Join Call</string>
     <string name="WebRtcCallView__call_is_full">Call is full</string>
@@ -1472,11 +1472,11 @@
     <string name="WebRtcCallView__joining">Joining…</string>
     <string name="WebRtcCallView__disconnected">Disconnected</string>
 
-    <string name="WebRtcCallView__signal_will_ring_s">Signal will ring %1$s</string>
-    <string name="WebRtcCallView__signal_will_ring_s_and_s">Signal will ring %1$s and %2$s</string>
+    <string name="WebRtcCallView__signal_will_ring_s">TM SGNL will ring %1$s</string>
+    <string name="WebRtcCallView__signal_will_ring_s_and_s">TM SGNL will ring %1$s and %2$s</string>
     <plurals name="WebRtcCallView__signal_will_ring_s_s_and_d_others">
-        <item quantity="one">Signal will ring %1$s, %2$s, and %3$d other</item>
-        <item quantity="other">Signal will ring %1$s, %2$s, and %3$d others</item>
+        <item quantity="one">TM SGNL will ring %1$s, %2$s, and %3$d other</item>
+        <item quantity="other">TM SGNL will ring %1$s, %2$s, and %3$d others</item>
     </plurals>
 
     <string name="WebRtcCallView__s_will_be_notified">%1$s will be notified</string>
@@ -1564,18 +1564,18 @@
     <string name="RegistrationActivity_is_your_phone_number_above_correct">Is your phone number above correct?</string>
     <string name="RegistrationActivity_edit_number">Edit number</string>
     <string name="RegistrationActivity_missing_google_play_services">Missing Google Play Services</string>
-    <string name="RegistrationActivity_this_device_is_missing_google_play_services">This device is missing Google Play Services. You can still use Signal, but this configuration may result in reduced reliability or performance.\n\nIf you are not an advanced user, are not running an aftermarket Android ROM, or believe that you are seeing this in error, please contact support@signal.org for help troubleshooting.</string>
+    <string name="RegistrationActivity_this_device_is_missing_google_play_services">This device is missing Google Play Services. You can still use TM SGNL, but this configuration may result in reduced reliability or performance.\n\nIf you are not an advanced user, are not running an aftermarket Android ROM, or believe that you are seeing this in error, please contact support@signal.org for help troubleshooting.</string>
     <string name="RegistrationActivity_i_understand">I understand</string>
     <string name="RegistrationActivity_play_services_error">Play Services Error</string>
     <string name="RegistrationActivity_google_play_services_is_updating_or_unavailable">Google Play Services is updating or temporarily unavailable. Please try again.</string>
     <string name="RegistrationActivity_terms_and_privacy">Terms &amp; Privacy Policy</string>
-    <string name="RegistrationActivity_signal_needs_access_to_your_contacts_and_media_in_order_to_connect_with_friends">Signal needs the contacts and media permissions to help you connect with friends and send messages. Your contacts are uploaded using Signal\'s private contact discovery, which means they are end-to-end encrypted and never visible to the Signal service.</string>
-    <string name="RegistrationActivity_signal_needs_access_to_your_contacts_in_order_to_connect_with_friends">Signal needs the contacts permission to help you connect with friends. Your contacts are uploaded using Signal\'s private contact discovery, which means they are end-to-end encrypted and never visible to the Signal service.</string>
+    <string name="RegistrationActivity_signal_needs_access_to_your_contacts_and_media_in_order_to_connect_with_friends">TM SGNL needs the contacts and media permissions to help you connect with friends and send messages. Your contacts are uploaded using TM SGNL\'s private contact discovery, which means they are end-to-end encrypted and never visible to the TM SGNL service.</string>
+    <string name="RegistrationActivity_signal_needs_access_to_your_contacts_in_order_to_connect_with_friends">TM SGNL needs the contacts permission to help you connect with friends. Your contacts are uploaded using TM SGNL\'s private contact discovery, which means they are end-to-end encrypted and never visible to the TM SGNL service.</string>
     <string name="RegistrationActivity_rate_limited_to_service">You\'ve made too many attempts to register this number. Please try again later.</string>
     <string name="RegistrationActivity_unable_to_connect_to_service">Unable to connect to service. Please check network connection and try again.</string>
     <string name="RegistrationActivity_non_standard_number_format">Non-standard number format</string>
     <string name="RegistrationActivity_the_number_you_entered_appears_to_be_a_non_standard">The number you entered (%1$s) appears to be a non-standard format.\n\nDid you mean %2$s?</string>
-    <string name="RegistrationActivity_signal_android_phone_number_format">Signal Android - Phone Number Format</string>
+    <string name="RegistrationActivity_signal_android_phone_number_format">TM SGNL Android - Phone Number Format</string>
     <string name="RegistrationActivity_call_requested">Call requested</string>
     <plurals name="RegistrationActivity_debug_log_hint">
         <item quantity="one">You are now %d step away from submitting a debug log.</item>
@@ -1598,7 +1598,7 @@
     <!-- RegistrationLockV2Dialog -->
     <string name="RegistrationLockV2Dialog_turn_on_registration_lock">Turn on Registration Lock?</string>
     <string name="RegistrationLockV2Dialog_turn_off_registration_lock">Turn off Registration Lock?</string>
-    <string name="RegistrationLockV2Dialog_if_you_forget_your_signal_pin_when_registering_again">If you forget your Signal PIN when registering with Signal again, you’ll be locked out of your account for 7 days.</string>
+    <string name="RegistrationLockV2Dialog_if_you_forget_your_signal_pin_when_registering_again">If you forget your TM SGNL PIN when registering with TM SGNL again, you’ll be locked out of your account for 7 days.</string>
     <string name="RegistrationLockV2Dialog_turn_on">Turn on</string>
     <string name="RegistrationLockV2Dialog_turn_off">Turn off</string>
 
@@ -1624,14 +1624,14 @@
 
     <!-- SharedContactDetailsActivity -->
     <string name="SharedContactDetailsActivity_add_to_contacts">Add to Contacts</string>
-    <string name="SharedContactDetailsActivity_invite_to_signal">Invite to Signal</string>
-    <string name="SharedContactDetailsActivity_signal_message">Signal Message</string>
-    <string name="SharedContactDetailsActivity_signal_call">Signal Call</string>
+    <string name="SharedContactDetailsActivity_invite_to_signal">Invite to TM SGNL</string>
+    <string name="SharedContactDetailsActivity_signal_message">TM SGNL Message</string>
+    <string name="SharedContactDetailsActivity_signal_call">TM SGNL Call</string>
 
     <!-- SharedContactView -->
     <string name="SharedContactView_add_to_contacts">Add to Contacts</string>
-    <string name="SharedContactView_invite_to_signal">Invite to Signal</string>
-    <string name="SharedContactView_message">Signal Message</string>
+    <string name="SharedContactView_invite_to_signal">Invite to TM SGNL</string>
+    <string name="SharedContactView_message">TM SGNL Message</string>
 
     <!-- SignalBottomActionBar -->
     <string name="SignalBottomActionBar_more">More</string>
@@ -1661,7 +1661,7 @@
     <string name="SmsMessageRecord_secure_session_reset">You reset the secure session.</string>
     <string name="SmsMessageRecord_secure_session_reset_s">%s reset the secure session.</string>
     <string name="SmsMessageRecord_duplicate_message">Duplicate message.</string>
-    <string name="SmsMessageRecord_this_message_could_not_be_processed_because_it_was_sent_from_a_newer_version">This message could not be processed because it was sent from a newer version of Signal. You can ask your contact to send this message again after you update.</string>
+    <string name="SmsMessageRecord_this_message_could_not_be_processed_because_it_was_sent_from_a_newer_version">This message could not be processed because it was sent from a newer version of TM SGNL. You can ask your contact to send this message again after you update.</string>
     <string name="SmsMessageRecord_error_handling_incoming_message">Error handling incoming message.</string>
 
     <!-- StickerManagementActivity -->
@@ -1670,7 +1670,7 @@
     <!-- StickerManagementAdapter -->
     <string name="StickerManagementAdapter_installed_stickers">Installed Stickers</string>
     <string name="StickerManagementAdapter_stickers_you_received">Stickers You Received</string>
-    <string name="StickerManagementAdapter_signal_artist_series">Signal Artist Series</string>
+    <string name="StickerManagementAdapter_signal_artist_series">TM SGNL Artist Series</string>
     <string name="StickerManagementAdapter_no_stickers_installed">No stickers installed</string>
     <string name="StickerManagementAdapter_stickers_from_incoming_messages_will_appear_here">Stickers from incoming messages will appear here</string>
     <string name="StickerManagementAdapter_untitled">Untitled</string>
@@ -1700,8 +1700,8 @@
     <string name="SupportEmailUtil_filter">Filter:</string>
     <string name="SupportEmailUtil_device_info">Device info:</string>
     <string name="SupportEmailUtil_android_version">Android version:</string>
-    <string name="SupportEmailUtil_signal_version">Signal version:</string>
-    <string name="SupportEmailUtil_signal_package">Signal package:</string>
+    <string name="SupportEmailUtil_signal_version">TM SGNL version:</string>
+    <string name="SupportEmailUtil_signal_package">TM SGNL package:</string>
     <string name="SupportEmailUtil_registration_lock">Registration lock:</string>
     <string name="SupportEmailUtil_locale">Locale:</string>
 
@@ -1721,7 +1721,7 @@
     <string name="ThreadRecord_view_once_media">View-once media</string>
     <string name="ThreadRecord_this_message_was_deleted">This message was deleted.</string>
     <string name="ThreadRecord_you_deleted_this_message">You deleted this message.</string>
-    <string name="ThreadRecord_s_is_on_signal">%s is on Signal!</string>
+    <string name="ThreadRecord_s_is_on_signal">%s is on TM SGNL!</string>
     <string name="ThreadRecord_disappearing_messages_disabled">Disappearing messages disabled</string>
     <string name="ThreadRecord_disappearing_message_time_updated_to_s">Disappearing message time set to %s</string>
     <string name="ThreadRecord_safety_number_changed">Safety number changed</string>
@@ -1739,8 +1739,8 @@
     <string name="ThreadRecord_chat_session_refreshed">Chat session refreshed</string>
 
     <!-- UpdateApkReadyListener -->
-    <string name="UpdateApkReadyListener_Signal_update">Signal update</string>
-    <string name="UpdateApkReadyListener_a_new_version_of_signal_is_available_tap_to_update">A new version of Signal is available, tap to update</string>
+    <string name="UpdateApkReadyListener_Signal_update">TM SGNL update</string>
+    <string name="UpdateApkReadyListener_a_new_version_of_signal_is_available_tap_to_update">A new version of TM SGNL is available, tap to update</string>
 
     <!-- UntrustedSendDialog -->
     <string name="UntrustedSendDialog_send_message">Send message?</string>
@@ -1762,22 +1762,22 @@
     <string name="UsernameEditFragment_usernames_cannot_begin_with_a_number">Usernames cannot begin with a number.</string>
     <string name="UsernameEditFragment_username_is_invalid">Username is invalid.</string>
     <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Usernames must be between %1$d and %2$d characters.</string>
-    <string name="UsernameEditFragment_usernames_on_signal_are_optional">Usernames on Signal are optional. If you choose to create a username, other Signal users will be able to find you by this username and contact you without knowing your phone number.</string>
+    <string name="UsernameEditFragment_usernames_on_signal_are_optional">Usernames on TM SGNL are optional. If you choose to create a username, other TM SGNL users will be able to find you by this username and contact you without knowing your phone number.</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
-        <item quantity="one">%d contact is on Signal!</item>
-        <item quantity="other">%d contacts are on Signal!</item>
+        <item quantity="one">%d contact is on TM SGNL!</item>
+        <item quantity="other">%d contacts are on TM SGNL!</item>
     </plurals>
 
     <!-- VerifyIdentityActivity -->
-    <string name="VerifyIdentityActivity_your_contact_is_running_an_old_version_of_signal">Your contact is running an old version of Signal. Please ask them to update before verifying your safety number.</string>
-    <string name="VerifyIdentityActivity_your_contact_is_running_a_newer_version_of_Signal">Your contact is running a newer version of Signal with an incompatible QR code format. Please update to compare.</string>
+    <string name="VerifyIdentityActivity_your_contact_is_running_an_old_version_of_signal">Your contact is running an old version of TM SGNL. Please ask them to update before verifying your safety number.</string>
+    <string name="VerifyIdentityActivity_your_contact_is_running_a_newer_version_of_Signal">Your contact is running a newer version of TM SGNL with an incompatible QR code format. Please update to compare.</string>
     <string name="VerifyIdentityActivity_the_scanned_qr_code_is_not_a_correctly_formatted_safety_number">The scanned QR code is not a correctly formatted safety number verification code. Please try scanning again.</string>
     <string name="VerifyIdentityActivity_share_safety_number_via">Share safety number via…</string>
-    <string name="VerifyIdentityActivity_our_signal_safety_number">Our Signal safety number:</string>
+    <string name="VerifyIdentityActivity_our_signal_safety_number">Our TM SGNL safety number:</string>
     <string name="VerifyIdentityActivity_no_app_to_share_to">It looks like you don\'t have any apps to share to.</string>
     <string name="VerifyIdentityActivity_no_safety_number_to_compare_was_found_in_the_clipboard">No safety number to compare was found in the clipboard</string>
-    <string name="VerifyIdentityActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code_but_it_has_been_permanently_denied">Signal needs the Camera permission in order to scan a QR code, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
+    <string name="VerifyIdentityActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code_but_it_has_been_permanently_denied">TM SGNL needs the Camera permission in order to scan a QR code, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
     <string name="VerifyIdentityActivity_unable_to_scan_qr_code_without_camera_permission">Unable to scan QR code without Camera permission</string>
     <string name="VerifyIdentityActivity_you_must_first_exchange_messages_in_order_to_view">You must first exchange messages in order to view %1$s\'s safety number.</string>
 
@@ -1805,14 +1805,14 @@
 
     <!-- KeyCachingService -->
     <string name="KeyCachingService_signal_passphrase_cached">Touch to open.</string>
-    <string name="KeyCachingService_passphrase_cached">Signal is unlocked</string>
-    <string name="KeyCachingService_lock">Lock Signal</string>
+    <string name="KeyCachingService_passphrase_cached">TM SGNL is unlocked</string>
+    <string name="KeyCachingService_lock">Lock TM SGNL</string>
 
     <!-- MediaPreviewActivity -->
     <string name="MediaPreviewActivity_you">You</string>
     <string name="MediaPreviewActivity_unssuported_media_type">Unsupported media type</string>
     <string name="MediaPreviewActivity_draft">Draft</string>
-    <string name="MediaPreviewActivity_signal_needs_the_storage_permission_in_order_to_write_to_external_storage_but_it_has_been_permanently_denied">Signal needs the Storage permission in order to save to external storage, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Storage\".</string>
+    <string name="MediaPreviewActivity_signal_needs_the_storage_permission_in_order_to_write_to_external_storage_but_it_has_been_permanently_denied">TM SGNL needs the Storage permission in order to save to external storage, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Storage\".</string>
     <string name="MediaPreviewActivity_unable_to_write_to_external_storage_without_permission">Unable to save to external storage without permissions</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_title">Delete message?</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_message">This will permanently delete this message.</string>
@@ -1828,17 +1828,17 @@
     <string name="MessageNotifier_failed_to_deliver_message">Failed to deliver message.</string>
     <string name="MessageNotifier_error_delivering_message">Error delivering message.</string>
     <string name="MessageNotifier_message_delivery_paused">Message delivery paused.</string>
-    <string name="MessageNotifier_verify_to_continue_messaging_on_signal">Verify to continue messaging on Signal.</string>
+    <string name="MessageNotifier_verify_to_continue_messaging_on_signal">Verify to continue messaging on TM SGNL.</string>
     <string name="MessageNotifier_mark_all_as_read">Mark all as read</string>
     <string name="MessageNotifier_mark_read">Mark read</string>
     <string name="MessageNotifier_turn_off_these_notifications">Turn off these notifications</string>
     <string name="MessageNotifier_view_once_photo">View-once photo</string>
     <string name="MessageNotifier_view_once_video">View-once video</string>
     <string name="MessageNotifier_reply">Reply</string>
-    <string name="MessageNotifier_signal_message">Signal Message</string>
+    <string name="MessageNotifier_signal_message">TM SGNL Message</string>
     <string name="MessageNotifier_unsecured_sms">Unsecured SMS</string>
     <string name="MessageNotifier_you_may_have_new_messages">You may have new messages</string>
-    <string name="MessageNotifier_open_signal_to_check_for_recent_notifications">Open Signal to check for recent notifications.</string>
+    <string name="MessageNotifier_open_signal_to_check_for_recent_notifications">Open TM SGNL to check for recent notifications.</string>
     <string name="MessageNotifier_contact_message">%1$s %2$s</string>
     <string name="MessageNotifier_unknown_contact_message">Contact</string>
     <string name="MessageNotifier_reacted_s_to_s">Reacted %1$s to: \"%2$s\".</string>
@@ -1851,7 +1851,7 @@
     <string name="MessageNotifier_reacted_s_to_your_sticker">Reacted %1$s to your sticker.</string>
     <string name="MessageNotifier_this_message_was_deleted">This message was deleted.</string>
 
-    <string name="TurnOffContactJoinedNotificationsActivity__turn_off_contact_joined_signal">Turn off contact joined Signal notifications? You can enable them again in Signal > Settings > Notifications.</string>
+    <string name="TurnOffContactJoinedNotificationsActivity__turn_off_contact_joined_signal">Turn off contact joined TM SGNL notifications? You can enable them again in TM SGNL > Settings > Notifications.</string>
 
     <!-- Notification Channels -->
     <string name="NotificationChannel_channel_messages">Messages</string>
@@ -1864,12 +1864,12 @@
     <string name="NotificationChannel_group_chats">Chats</string>
     <string name="NotificationChannel_missing_display_name">Unknown</string>
     <string name="NotificationChannel_voice_notes">Voice Notes</string>
-    <string name="NotificationChannel_contact_joined_signal">Contact joined Signal</string>
+    <string name="NotificationChannel_contact_joined_signal">Contact joined TM SGNL</string>
     <string name="NotificationChannels__no_activity_available_to_open_notification_channel_settings">No activity available to open notification channel settings.</string>
     <!-- ProfileEditNameFragment -->
 
     <!-- QuickResponseService -->
-    <string name="QuickResponseService_quick_response_unavailable_when_Signal_is_locked">Quick response unavailable when Signal is locked!</string>
+    <string name="QuickResponseService_quick_response_unavailable_when_Signal_is_locked">Quick response unavailable when TM SGNL is locked!</string>
     <string name="QuickResponseService_problem_sending_message">Problem sending message!</string>
 
     <!-- SaveAttachmentTask -->
@@ -1884,7 +1884,7 @@
     <string name="ShortcutLauncherActivity_invalid_shortcut">Invalid shortcut</string>
 
     <!-- SingleRecipientNotificationBuilder -->
-    <string name="SingleRecipientNotificationBuilder_signal">Signal</string>
+    <string name="SingleRecipientNotificationBuilder_signal">TM SGNL</string>
     <string name="SingleRecipientNotificationBuilder_new_message">New message</string>
     <string name="SingleRecipientNotificationBuilder_message_request">Message request</string>
     <string name="SingleRecipientNotificationBuilder_you">You</string>
@@ -1901,12 +1901,12 @@
 
     <!-- UnauthorizedReminder -->
     <string name="UnauthorizedReminder_device_no_longer_registered">Device no longer registered</string>
-    <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">This is likely because you registered your phone number with Signal on a different device. Tap to re-register.</string>
+    <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">This is likely because you registered your phone number with TM SGNL on a different device. Tap to re-register.</string>
 
     <!-- WebRtcCallActivity -->
-    <string name="WebRtcCallActivity_to_answer_the_call_give_signal_access_to_your_microphone">To answer the call, give Signal access to your microphone.</string>
-    <string name="WebRtcCallActivity_to_answer_the_call_from_s_give_signal_access_to_your_microphone">To answer the call from %s, give Signal access to your microphone.</string>
-    <string name="WebRtcCallActivity_signal_requires_microphone_and_camera_permissions_in_order_to_make_or_receive_calls">Signal requires Microphone and Camera permissions in order to make or receive calls, but they have been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\" and \"Camera\".</string>
+    <string name="WebRtcCallActivity_to_answer_the_call_give_signal_access_to_your_microphone">To answer the call, give TM SGNL access to your microphone.</string>
+    <string name="WebRtcCallActivity_to_answer_the_call_from_s_give_signal_access_to_your_microphone">To answer the call from %s, give TM SGNL access to your microphone.</string>
+    <string name="WebRtcCallActivity_signal_requires_microphone_and_camera_permissions_in_order_to_make_or_receive_calls">TM SGNL requires Microphone and Camera permissions in order to make or receive calls, but they have been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\" and \"Camera\".</string>
     <string name="WebRtcCallActivity__answered_on_a_linked_device">Answered on a linked device.</string>
     <string name="WebRtcCallActivity__declined_on_a_linked_device">Declined on a linked device.</string>
     <string name="WebRtcCallActivity__busy_on_a_linked_device">Busy on a linked device.</string>
@@ -1937,7 +1937,7 @@
 
     <!-- contact_selection_activity -->
     <string name="contact_selection_activity__enter_name_or_number">Enter name or number</string>
-    <string name="contact_selection_activity__invite_to_signal">Invite to Signal</string>
+    <string name="contact_selection_activity__invite_to_signal">Invite to TM SGNL</string>
     <string name="contact_selection_activity__new_group">New group</string>
 
     <!-- contact_filter_toolbar -->
@@ -1953,22 +1953,22 @@
     <string name="SingleContactSelectionActivity_contact_photo">Contact Photo</string>
 
     <!-- ContactSelectionListFragment-->
-    <string name="ContactSelectionListFragment_signal_requires_the_contacts_permission_in_order_to_display_your_contacts">Signal requires the Contacts permission in order to display your contacts, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Contacts\".</string>
+    <string name="ContactSelectionListFragment_signal_requires_the_contacts_permission_in_order_to_display_your_contacts">TM SGNL requires the Contacts permission in order to display your contacts, but it has been permanently denied. Please continue to the app settings menu, select \"Permissions\", and enable \"Contacts\".</string>
     <string name="ContactSelectionListFragment_error_retrieving_contacts_check_your_network_connection">Error retrieving contacts, check your network connection</string>
     <string name="ContactSelectionListFragment_username_not_found">Username not found</string>
-    <string name="ContactSelectionListFragment_s_is_not_a_signal_user">"%1$s" is not a Signal user. Please check the username and try again.</string>
+    <string name="ContactSelectionListFragment_s_is_not_a_signal_user">"%1$s" is not a TM SGNL user. Please check the username and try again.</string>
     <string name="ContactSelectionListFragment_you_do_not_need_to_add_yourself_to_the_group">You do not need to add yourself to the group</string>
     <string name="ContactSelectionListFragment_maximum_group_size_reached">Maximum group size reached</string>
-    <string name="ContactSelectionListFragment_signal_groups_can_have_a_maximum_of_d_members">Signal groups can have a maximum of %1$d members.</string>
+    <string name="ContactSelectionListFragment_signal_groups_can_have_a_maximum_of_d_members">TM SGNL groups can have a maximum of %1$d members.</string>
     <string name="ContactSelectionListFragment_recommended_member_limit_reached">Recommended member limit reached</string>
-    <string name="ContactSelectionListFragment_signal_groups_perform_best_with_d_members_or_fewer">Signal groups perform best with %1$d members or fewer. Adding more members will cause delays sending and receiving messages.</string>
+    <string name="ContactSelectionListFragment_signal_groups_perform_best_with_d_members_or_fewer">TM SGNL groups perform best with %1$d members or fewer. Adding more members will cause delays sending and receiving messages.</string>
     <plurals name="ContactSelectionListFragment_d_members">
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
 
     <!-- contact_selection_list_fragment -->
-    <string name="contact_selection_list_fragment__signal_needs_access_to_your_contacts_in_order_to_display_them">Signal needs access to your contacts in order to display them.</string>
+    <string name="contact_selection_list_fragment__signal_needs_access_to_your_contacts_in_order_to_display_them">TM SGNL needs access to your contacts in order to display them.</string>
     <string name="contact_selection_list_fragment__show_contacts">Show Contacts</string>
 
     <!-- contact_selection_list_item -->
@@ -1978,7 +1978,7 @@
     </plurals>
 
     <!-- conversation_activity -->
-    <string name="conversation_activity__type_message_push">Signal message</string>
+    <string name="conversation_activity__type_message_push">TM SGNL message</string>
     <string name="conversation_activity__type_message_sms_insecure">Unsecured SMS</string>
     <string name="conversation_activity__type_message_mms_insecure">Unsecured MMS</string>
     <string name="conversation_activity__from_sim_name">From %1$s</string>
@@ -1990,7 +1990,7 @@
     <string name="conversation_activity__quick_attachment_drawer_toggle_camera_description">Toggle quick camera attachment drawer</string>
     <string name="conversation_activity__quick_attachment_drawer_record_and_send_audio_description">Record and send audio attachment</string>
     <string name="conversation_activity__quick_attachment_drawer_lock_record_description">Lock recording of audio attachment</string>
-    <string name="conversation_activity__enable_signal_for_sms">Enable Signal for SMS</string>
+    <string name="conversation_activity__enable_signal_for_sms">Enable TM SGNL for SMS</string>
     <string name="conversation_activity__message_could_not_be_sent">Message could not be sent. Check your connection and try again.</string>
 
     <!-- conversation_input_panel -->
@@ -2024,7 +2024,7 @@
     <string name="ConversationUpdateItem_view">View</string>
     <string name="ConversationUpdateItem_the_disappearing_message_time_will_be_set_to_s_when_you_message_them">The disappearing message time will be set to %1$s when you message them.</string>
     <!-- Update item button text to show to boost a feature -->
-    <string name="ConversationUpdateItem_signal_boost">Signal Boost</string>
+    <string name="ConversationUpdateItem_signal_boost">TM SGNL Boost</string>
     <!-- Update item button text to show to become a sustainer in the release notes channel -->
     <string name="ConversationUpdateItem_become_a_sustainer">Become a Sustainer</string>
 
@@ -2047,7 +2047,7 @@
 
     <!-- BubbleOptOutTooltip -->
     <!-- Message to inform the user of what Android chat bubbles are -->
-    <string name="BubbleOptOutTooltip__description">Bubbles are an Android feature that you can turn off for Signal chats.</string>
+    <string name="BubbleOptOutTooltip__description">Bubbles are an Android feature that you can turn off for TM SGNL chats.</string>
     <!-- Button to dismiss the tooltip for opting out of using Android bubbles -->
     <string name="BubbleOptOutTooltip__not_now">Not now</string>
     <!-- Button to move to the system settings to control the use of Android bubbles -->
@@ -2137,9 +2137,9 @@
     <string name="IdentityUtil_unverified_banner_two">Your safety numbers with %1$s and %2$s are no longer verified</string>
     <string name="IdentityUtil_unverified_banner_many">Your safety numbers with %1$s, %2$s, and %3$s are no longer verified</string>
 
-    <string name="IdentityUtil_unverified_dialog_one">Your safety number with %1$s has changed and is no longer verified. This could either mean that someone is trying to intercept your communication, or that %1$s simply reinstalled Signal.</string>
-    <string name="IdentityUtil_unverified_dialog_two">Your safety numbers with %1$s and %2$s are no longer verified. This could either mean that someone is trying to intercept your communication, or that they simply reinstalled Signal.</string>
-    <string name="IdentityUtil_unverified_dialog_many">Your safety numbers with %1$s, %2$s, and %3$s are no longer verified. This could either mean that someone is trying to intercept your communication, or that they simply reinstalled Signal.</string>
+    <string name="IdentityUtil_unverified_dialog_one">Your safety number with %1$s has changed and is no longer verified. This could either mean that someone is trying to intercept your communication, or that %1$s simply reinstalled TM SGNL.</string>
+    <string name="IdentityUtil_unverified_dialog_two">Your safety numbers with %1$s and %2$s are no longer verified. This could either mean that someone is trying to intercept your communication, or that they simply reinstalled TM SGNL.</string>
+    <string name="IdentityUtil_unverified_dialog_many">Your safety numbers with %1$s, %2$s, and %3$s are no longer verified. This could either mean that someone is trying to intercept your communication, or that they simply reinstalled TM SGNL.</string>
 
     <string name="IdentityUtil_untrusted_dialog_one">Your safety number with %s just changed.</string>
     <string name="IdentityUtil_untrusted_dialog_two">Your safety numbers with %1$s and %2$s just changed.</string>
@@ -2157,7 +2157,7 @@
     <string name="giphy_fragment__nothing_found">Nothing found</string>
 
     <!-- database_migration_activity -->
-    <string name="database_migration_activity__would_you_like_to_import_your_existing_text_messages">Would you like to import your existing text messages into Signal\'s encrypted database?</string>
+    <string name="database_migration_activity__would_you_like_to_import_your_existing_text_messages">Would you like to import your existing text messages into TM SGNL\'s encrypted database?</string>
     <string name="database_migration_activity__the_default_system_database_will_not_be_modified">The default system database will not be modified or altered in any way.</string>
     <string name="database_migration_activity__skip">Skip</string>
     <string name="database_migration_activity__import">Import</string>
@@ -2187,7 +2187,7 @@
     <string name="prompt_passphrase_activity__unlock">Unlock</string>
 
     <!-- prompt_mms_activity -->
-    <string name="prompt_mms_activity__signal_requires_mms_settings_to_deliver_media_and_group_messages">Signal requires MMS settings to deliver media and group messages through your wireless carrier. Your device does not make this information available, which is occasionally true for locked devices and other restrictive configurations.</string>
+    <string name="prompt_mms_activity__signal_requires_mms_settings_to_deliver_media_and_group_messages">TM SGNL requires MMS settings to deliver media and group messages through your wireless carrier. Your device does not make this information available, which is occasionally true for locked devices and other restrictive configurations.</string>
     <string name="prompt_mms_activity__to_send_media_and_group_messages_tap_ok">To send media and group messages, tap \'OK\' and complete the requested settings. The MMS settings for your carrier can generally be located by searching for \'your carrier APN\'. You will only need to do this once.</string>
 
     <!-- BadDecryptLearnMoreDialog -->
@@ -2309,7 +2309,7 @@
     <string name="HelpFragment__link__debug_info" translatable="false">https://support.signal.org/hc/articles/360007318591</string>
     <string name="HelpFragment__link__faq" translatable="false">https://support.signal.org</string>
     <string name="HelpFragment__support_info">Support Info</string>
-    <string name="HelpFragment__signal_android_support_request">Signal Android Support Request</string>
+    <string name="HelpFragment__signal_android_support_request">TM SGNL Android Support Request</string>
     <string name="HelpFragment__debug_log">Debug Log:</string>
     <string name="HelpFragment__could_not_upload_logs">Could not upload logs</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">Please be as descriptive as possible to help us understand the issue.</string>
@@ -2321,7 +2321,7 @@
         <item>Feedback</item>
         <item>Other</item>
         <item>Payments (MobileCoin)</item>
-        <item>Sustainers &amp; Signal Boost</item>
+        <item>Sustainers &amp; TM SGNL Boost</item>
     </string-array>
 
     <!-- ReactWithAnyEmojiBottomSheetDialogFragment -->
@@ -2381,8 +2381,8 @@
     <string name="preferences__sms_mms">SMS and MMS</string>
     <string name="preferences__pref_all_sms_title">Receive all SMS</string>
     <string name="preferences__pref_all_mms_title">Receive all MMS</string>
-    <string name="preferences__use_signal_for_viewing_and_storing_all_incoming_text_messages">Use Signal for all incoming text messages</string>
-    <string name="preferences__use_signal_for_viewing_and_storing_all_incoming_multimedia_messages">Use Signal for all incoming multimedia messages</string>
+    <string name="preferences__use_signal_for_viewing_and_storing_all_incoming_text_messages">Use TM SGNL for all incoming text messages</string>
+    <string name="preferences__use_signal_for_viewing_and_storing_all_incoming_multimedia_messages">Use TM SGNL for all incoming multimedia messages</string>
     <string name="preferences__pref_enter_sends_title">Enter key sends</string>
     <string name="preferences__pressing_the_enter_key_will_send_text_messages">Pressing the Enter key will send text messages</string>
     <string name="preferences__pref_use_address_book_photos">Use address book photos</string>
@@ -2397,7 +2397,7 @@
     <string name="preferences__lock_signal_and_message_notifications_with_a_passphrase">Lock screen and notifications with a passphrase</string>
     <string name="preferences__screen_security">Screen security</string>
     <string name="preferences__disable_screen_security_to_allow_screen_shots">Block screenshots in the recents list and inside the app</string>
-    <string name="preferences__auto_lock_signal_after_a_specified_time_interval_of_inactivity">Auto-lock Signal after a specified time interval of inactivity</string>
+    <string name="preferences__auto_lock_signal_after_a_specified_time_interval_of_inactivity">Auto-lock TM SGNL after a specified time interval of inactivity</string>
     <string name="preferences__inactivity_timeout_passphrase">Inactivity timeout passphrase</string>
     <string name="preferences__inactivity_timeout_interval">Inactivity timeout interval</string>
     <string name="preferences__notifications">Notifications</string>
@@ -2428,10 +2428,10 @@
     <string name="preferences__slow">Slow</string>
     <string name="preferences__help">Help</string>
     <string name="preferences__advanced">Advanced</string>
-    <string name="preferences__donate_to_signal">Donate to Signal</string>
+    <string name="preferences__donate_to_signal">Donate to TM SGNL</string>
     <string name="preferences__subscription">Subscription</string>
-    <string name="preferences__become_a_signal_sustainer">Become a Signal Sustainer</string>
-    <string name="preferences__signal_boost">Signal Boost</string>
+    <string name="preferences__become_a_signal_sustainer">Become a TM SGNL Sustainer</string>
+    <string name="preferences__signal_boost">TM SGNL Boost</string>
     <string name="preferences__privacy">Privacy</string>
     <string name="preferences__mms_user_agent">MMS User Agent</string>
     <string name="preferences__advanced_mms_access_point_names">Manual MMS settings</string>
@@ -2458,13 +2458,13 @@
     <string name="preferences__chat_color_and_wallpaper">Chat color &amp; wallpaper</string>
     <string name="preferences__disable_pin">Disable PIN</string>
     <string name="preferences__enable_pin">Enable PIN</string>
-    <string name="preferences__if_you_disable_the_pin_you_will_lose_all_data">If you disable the PIN, you will lose all data when you re-register Signal unless you manually back up and restore. You can not turn on Registration Lock while the PIN is disabled.</string>
-    <string name="preferences__pins_keep_information_stored_with_signal_encrypted_so_only_you_can_access_it">PINs keep information stored with Signal encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won’t need your PIN to open the app.</string>
+    <string name="preferences__if_you_disable_the_pin_you_will_lose_all_data">If you disable the PIN, you will lose all data when you re-register TM SGNL unless you manually back up and restore. You can not turn on Registration Lock while the PIN is disabled.</string>
+    <string name="preferences__pins_keep_information_stored_with_signal_encrypted_so_only_you_can_access_it">PINs keep information stored with TM SGNL encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won’t need your PIN to open the app.</string>
     <string name="preferences__system_default">System default</string>
     <string name="preferences__language">Language</string>
-    <string name="preferences__signal_messages_and_calls">Signal messages and calls</string>
+    <string name="preferences__signal_messages_and_calls">TM SGNL messages and calls</string>
     <string name="preferences__advanced_pin_settings">Advanced PIN settings</string>
-    <string name="preferences__free_private_messages_and_calls">Free private messages and calls to Signal users</string>
+    <string name="preferences__free_private_messages_and_calls">Free private messages and calls to TM SGNL users</string>
     <string name="preferences__submit_debug_log">Submit debug log</string>
     <string name="preferences__delete_account">Delete account</string>
     <string name="preferences__support_wifi_calling">\'WiFi Calling\' compatibility mode</string>
@@ -2505,8 +2505,8 @@
     <string name="preferences_storage__s_messages">%1$s messages</string>
     <string name="preferences_storage__custom">Custom</string>
     <string name="preferences_advanced__use_system_emoji">Use system emoji</string>
-    <string name="preferences_advanced__disable_signal_built_in_emoji_support">Disable Signal\'s built-in emoji support</string>
-    <string name="preferences_advanced__relay_all_calls_through_the_signal_server_to_avoid_revealing_your_ip_address">Relay all calls through the Signal server to avoid revealing your IP address to your contact. Enabling will reduce call quality.</string>
+    <string name="preferences_advanced__disable_signal_built_in_emoji_support">Disable TM SGNL\'s built-in emoji support</string>
+    <string name="preferences_advanced__relay_all_calls_through_the_signal_server_to_avoid_revealing_your_ip_address">Relay all calls through the TM SGNL server to avoid revealing your IP address to your contact. Enabling will reduce call quality.</string>
     <string name="preferences_advanced__always_relay_calls">Always relay calls</string>
     <string name="preferences_app_protection__who_can">Who can…</string>
     <string name="preferences_app_protection__app_access">App access</string>
@@ -2526,9 +2526,9 @@
     <string name="preferences_notifications__calls">Calls</string>
     <string name="preferences_notifications__ringtone">Ringtone</string>
     <string name="preferences_chats__show_invitation_prompts">Show invitation prompts</string>
-    <string name="preferences_chats__display_invitation_prompts_for_contacts_without_signal">Display invitation prompts for contacts without Signal</string>
+    <string name="preferences_chats__display_invitation_prompts_for_contacts_without_signal">Display invitation prompts for contacts without TM SGNL</string>
     <string name="preferences_chats__message_text_size">Message font size</string>
-    <string name="preferences_events__contact_joined_signal">Contact joined Signal</string>
+    <string name="preferences_events__contact_joined_signal">Contact joined TM SGNL</string>
     <string name="preferences_notifications__priority">Priority</string>
     <string name="preferences_communication__category_sealed_sender">Sealed Sender</string>
     <string name="preferences_communication__sealed_sender_display_indicators">Display indicators</string>
@@ -2542,7 +2542,7 @@
     <string name="preferences_off">Off</string>
     <string name="preferences_on">On</string>
     <string name="preferences_proxy_address">Proxy address</string>
-    <string name="preferences_only_use_a_proxy_if">Only use a proxy if you\'re not able to connect to Signal on mobile data or Wi-Fi.</string>
+    <string name="preferences_only_use_a_proxy_if">Only use a proxy if you\'re not able to connect to TM SGNL on mobile data or Wi-Fi.</string>
     <string name="preferences_share">Share</string>
     <string name="preferences_save">Save</string>
     <string name="preferences_connecting_to_proxy">Connecting to proxy…</string>
@@ -2595,7 +2595,7 @@
     <string name="preferences__internal_force_storage_service_sync_description" translatable="false">Forces remote storage to match the local device state.</string>
     <string name="preferences__internal_network" translatable="false">Network</string>
     <string name="preferences__internal_force_censorship" translatable="false">Force censorship</string>
-    <string name="preferences__internal_force_censorship_description" translatable="false">Force the app to behave as if it is in a country where Signal is censored.</string>
+    <string name="preferences__internal_force_censorship_description" translatable="false">Force the app to behave as if it is in a country where TM SGNL is censored.</string>
     <string name="preferences__internal_conversations_and_shortcuts" translatable="false">Conversations and Shortcuts</string>
     <string name="preferences__internal_emoji" translatable="false">Emoji</string>
     <string name="preferences__internal_use_built_in_emoji_set" translatable="false">Use built-in emoji set</string>
@@ -2636,7 +2636,7 @@
     <string name="PaymentsAllActivityFragment__received">Received</string>
 
     <string name="PaymentsHomeFragment__introducing_payments">Introducing payments (Beta)</string>
-    <string name="PaymentsHomeFragment__use_signal_to_send_and_receive">Use Signal to send and receive MobileCoin, a new privacy focused digital currency. Activate to get started.</string>
+    <string name="PaymentsHomeFragment__use_signal_to_send_and_receive">Use TM SGNL to send and receive MobileCoin, a new privacy focused digital currency. Activate to get started.</string>
     <string name="PaymentsHomeFragment__activate_payments">Activate Payments</string>
     <string name="PaymentsHomeFragment__activating_payments">Activating payments…</string>
     <string name="PaymentsHomeFragment__restore_payments_account">Restore payments account</string>
@@ -2663,7 +2663,7 @@
     <string name="PaymentsHomeFragment__payments_is_not_available_in_your_region">Payments is not available in your region.</string>
     <string name="PaymentsHomeFragment__could_not_enable_payments">Could not enable payments. Try again later.</string>
     <string name="PaymentsHomeFragment__deactivate_payments_question">Deactivate Payments?</string>
-    <string name="PaymentsHomeFragment__you_will_not_be_able_to_send">You will not be able to send or receive MobileCoin in Signal if you deactivate payments.</string>
+    <string name="PaymentsHomeFragment__you_will_not_be_able_to_send">You will not be able to send or receive MobileCoin in TM SGNL if you deactivate payments.</string>
     <string name="PaymentsHomeFragment__deactivate">Deactivate</string>
     <string name="PaymentsHomeFragment__continue">Continue</string>
     <string name="PaymentsHomeFragment__balance_is_not_currently_available">Balance is not currently available.</string>
@@ -2671,10 +2671,10 @@
     <string name="PaymentsHomeFragment__payment_failed">Payment failed</string>
     <string name="PaymentsHomeFragment__details">Details</string>
     <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate </string>
-    <string name="PaymentsHomeFragment__you_can_use_signal_to_send">You can use Signal to send and receive MobileCoin. All payments are subject to the Terms of Use for MobileCoins and the MobileCoin Wallet. This is a beta feature so you may encounter some issues and payments or balances you may lose can\'t be recovered. </string>
+    <string name="PaymentsHomeFragment__you_can_use_signal_to_send">You can use TM SGNL to send and receive MobileCoin. All payments are subject to the Terms of Use for MobileCoins and the MobileCoin Wallet. This is a beta feature so you may encounter some issues and payments or balances you may lose can\'t be recovered. </string>
     <string name="PaymentsHomeFragment__activate">Activate</string>
     <string name="PaymentsHomeFragment__view_mobile_coin_terms">View MobileCoin terms</string>
-    <string name="PaymentsHomeFragment__payments_not_available">Payments in Signal is no longer available. You can still transfer funds to an exchange but you can no longer send and receive payments or add funds.</string>
+    <string name="PaymentsHomeFragment__payments_not_available">Payments in TM SGNL is no longer available. You can still transfer funds to an exchange but you can no longer send and receive payments or add funds.</string>
 
     <string name="PaymentsHomeFragment__mobile_coin_terms_url" translatable="false">https://www.mobilecoin.com/terms-of-use.html</string>
 
@@ -2719,10 +2719,10 @@
     <string name="PaymentsTransferFragment__next">Next</string>
     <string name="PaymentsTransferFragment__invalid_address">Invalid address</string>
     <string name="PaymentsTransferFragment__check_the_wallet_address">Check the wallet address you\'re attempting to transfer to and try again.</string>
-    <string name="PaymentsTransferFragment__you_cant_transfer_to_your_own_signal_wallet_address">You can\'t transfer to your own Signal wallet address. Enter the wallet address from your account at a supported exchange.</string>
-    <string name="PaymentsTransferFragment__to_scan_a_qr_code_signal_needs">To scan a QR code, Signal needs access to the camera.</string>
-    <string name="PaymentsTransferFragment__signal_needs_the_camera_permission_to_capture_qr_code_go_to_settings">Signal needs the Camera permission to capture a QR code. Go to settings, select \"Permissions\", and enable \"Camera\".</string>
-    <string name="PaymentsTransferFragment__to_scan_a_qr_code_signal_needs_access_to_the_camera">To scan a QR code, Signal needs access to the camera.</string>
+    <string name="PaymentsTransferFragment__you_cant_transfer_to_your_own_signal_wallet_address">You can\'t transfer to your own TM SGNL wallet address. Enter the wallet address from your account at a supported exchange.</string>
+    <string name="PaymentsTransferFragment__to_scan_a_qr_code_signal_needs">To scan a QR code, TM SGNL needs access to the camera.</string>
+    <string name="PaymentsTransferFragment__signal_needs_the_camera_permission_to_capture_qr_code_go_to_settings">TM SGNL needs the Camera permission to capture a QR code. Go to settings, select \"Permissions\", and enable \"Camera\".</string>
+    <string name="PaymentsTransferFragment__to_scan_a_qr_code_signal_needs_access_to_the_camera">To scan a QR code, TM SGNL needs access to the camera.</string>
     <string name="PaymentsTransferFragment__settings">Settings</string>
 
     <!-- PaymentsTransferQrScanFragment -->
@@ -2791,8 +2791,8 @@
     <string name="conversation_callable_insecure__menu_call">Call</string>
 
     <!-- conversation_callable_secure -->
-    <string name="conversation_callable_secure__menu_call">Signal call</string>
-    <string name="conversation_callable_secure__menu_video">Signal video call</string>
+    <string name="conversation_callable_secure__menu_call">TM SGNL call</string>
+    <string name="conversation_callable_secure__menu_video">TM SGNL video call</string>
 
     <!-- conversation_context -->
 
@@ -2902,10 +2902,10 @@
 
     <!-- reminder_header -->
     <string name="reminder_header_sms_import_title">Import system SMS</string>
-    <string name="reminder_header_sms_import_text">Tap to copy your phone\'s SMS messages into Signal\'s encrypted database.</string>
-    <string name="reminder_header_push_title">Enable Signal messages and calls</string>
+    <string name="reminder_header_sms_import_text">Tap to copy your phone\'s SMS messages into TM SGNL\'s encrypted database.</string>
+    <string name="reminder_header_push_title">Enable TM SGNL messages and calls</string>
     <string name="reminder_header_push_text">Upgrade your communication experience.</string>
-    <string name="reminder_header_service_outage_text">Signal is experiencing technical difficulties. We are working hard to restore service as quickly as possible.</string>
+    <string name="reminder_header_service_outage_text">TM SGNL is experiencing technical difficulties. We are working hard to restore service as quickly as possible.</string>
     <string name="reminder_header_progress">%1$d%%</string>
 
     <!-- media_preview -->
@@ -2925,23 +2925,23 @@
     <string name="Insights__percent">%</string>
     <string name="Insights__title">Insights</string>
     <string name="InsightsDashboardFragment__title">Insights</string>
-    <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">Signal Protocol automatically protected %1$d%% of your outgoing messages over the past %2$d days. Conversations between Signal users are always end-to-end encrypted.</string>
+    <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">TM SGNL Protocol automatically protected %1$d%% of your outgoing messages over the past %2$d days. Conversations between TM SGNL users are always end-to-end encrypted.</string>
     <string name="InsightsDashboardFragment__spread_the_word">Spread the word</string>
     <string name="InsightsDashboardFragment__not_enough_data">Not enough data</string>
     <string name="InsightsDashboardFragment__your_insights_percentage_is_calculated_based_on">Your Insights percentage is calculated based on outgoing messages within the past %1$d days that have not disappeared or been deleted.</string>
     <string name="InsightsDashboardFragment__start_a_conversation">Start a conversation</string>
-    <string name="InsightsDashboardFragment__invite_your_contacts">Start communicating securely and enable new features that go beyond the limitations of unencrypted SMS messages by inviting more contacts to join Signal.</string>
+    <string name="InsightsDashboardFragment__invite_your_contacts">Start communicating securely and enable new features that go beyond the limitations of unencrypted SMS messages by inviting more contacts to join TM SGNL.</string>
     <string name="InsightsDashboardFragment__this_stat_was_generated_locally">These statistics were locally generated on your device and can only be seen by you. They are never transmitted anywhere.</string>
     <string name="InsightsDashboardFragment__encrypted_messages">Encrypted messages</string>
     <string name="InsightsDashboardFragment__cancel">Cancel</string>
     <string name="InsightsDashboardFragment__send">Send</string>
     <string name="InsightsModalFragment__title">Introducing Insights</string>
-    <string name="InsightsModalFragment__description">Find out how many of your outgoing messages were sent securely, then quickly invite new contacts to boost your Signal percentage.</string>
+    <string name="InsightsModalFragment__description">Find out how many of your outgoing messages were sent securely, then quickly invite new contacts to boost your TM SGNL percentage.</string>
     <string name="InsightsModalFragment__view_insights">View Insights</string>
 
-    <string name="FirstInviteReminder__title">Invite to Signal</string>
+    <string name="FirstInviteReminder__title">Invite to TM SGNL</string>
     <string name="FirstInviteReminder__description">You could increase the number of encrypted messages you send by %1$d%%</string>
-    <string name="SecondInviteReminder__title">Boost your Signal</string>
+    <string name="SecondInviteReminder__title">Boost your TM SGNL</string>
     <string name="SecondInviteReminder__description">Invite %1$s</string>
     <string name="InsightsReminder__view_insights">View Insights</string>
     <string name="InsightsReminder__invite">Invite</string>
@@ -2966,7 +2966,7 @@
     <string name="CreateKbsPinFragment__create_a_new_pin">Create a new PIN</string>
     <string name="CreateKbsPinFragment__you_can_choose_a_new_pin_as_long_as_this_device_is_registered">You can change your PIN as long as this device is registered.</string>
     <string name="CreateKbsPinFragment__create_your_pin">Create your PIN</string>
-    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with Signal encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won\'t need your PIN to open the app.</string>
+    <string name="CreateKbsPinFragment__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with TM SGNL encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won\'t need your PIN to open the app.</string>
     <string name="CreateKbsPinFragment__choose_a_stronger_pin">Choose a stronger PIN</string>
 
     <!-- ConfirmKbsPinFragment -->
@@ -2980,7 +2980,7 @@
 
     <!-- KbsSplashFragment -->
     <string name="KbsSplashFragment__introducing_pins">Introducing PINs</string>
-    <string name="KbsSplashFragment__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with Signal encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won\'t need your PIN to open the app.</string>
+    <string name="KbsSplashFragment__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with TM SGNL encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won\'t need your PIN to open the app.</string>
     <string name="KbsSplashFragment__learn_more">Learn More</string>
     <string name="KbsSplashFragment__learn_more_link" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
     <string name="KbsSplashFragment__registration_lock_equals_pin">Registration Lock = PIN</string>
@@ -2991,7 +2991,7 @@
     <string name="KbsSplashFragment__disable_pin">Disable PIN</string>
 
     <!-- KBS Reminder Dialog -->
-    <string name="KbsReminderDialog__enter_your_signal_pin">Enter your Signal PIN</string>
+    <string name="KbsReminderDialog__enter_your_signal_pin">Enter your TM SGNL PIN</string>
     <string name="KbsReminderDialog__to_help_you_memorize_your_pin">To help you memorize your PIN, we\'ll ask you to enter it periodically. We ask you less over time.</string>
     <string name="KbsReminderDialog__skip">Skip</string>
     <string name="KbsReminderDialog__submit">Submit</string>
@@ -3015,8 +3015,8 @@
     <string name="RegistrationLockFragment__incorrect_pin">Incorrect PIN</string>
     <string name="RegistrationLockFragment__forgot_your_pin">Forgot your PIN?</string>
     <string name="RegistrationLockFragment__not_many_tries_left">Not many tries left!</string>
-    <string name="RegistrationLockFragment__signal_registration_need_help_with_pin_for_android_v1_pin">Signal Registration - Need Help with PIN for Android (v1 PIN)</string>
-    <string name="RegistrationLockFragment__signal_registration_need_help_with_pin_for_android_v2_pin">Signal Registration - Need Help with PIN for Android (v2 PIN)</string>
+    <string name="RegistrationLockFragment__signal_registration_need_help_with_pin_for_android_v1_pin">TM SGNL Registration - Need Help with PIN for Android (v1 PIN)</string>
+    <string name="RegistrationLockFragment__signal_registration_need_help_with_pin_for_android_v2_pin">TM SGNL Registration - Need Help with PIN for Android (v2 PIN)</string>
 
     <plurals name="RegistrationLockFragment__for_your_privacy_and_security_there_is_no_way_to_recover">
         <item quantity="one">For your privacy and security, there is no way to recover your PIN. If you can\'t remember your PIN, you can re-verify with SMS after %1$d day of inactivity. In this case, your account will be wiped and all content deleted.</item>
@@ -3048,7 +3048,7 @@
 
     <!-- KBS Megaphone -->
     <string name="KbsMegaphone__create_a_pin">Create a PIN</string>
-    <string name="KbsMegaphone__pins_keep_information_thats_stored_with_signal_encrytped">PINs keep information that’s stored with Signal encrypted.</string>
+    <string name="KbsMegaphone__pins_keep_information_thats_stored_with_signal_encrytped">PINs keep information that’s stored with TM SGNL encrypted.</string>
     <string name="KbsMegaphone__create_pin">Create PIN</string>
 
     <!-- transport_selection_list_item -->
@@ -3056,11 +3056,11 @@
     <string name="ConversationListFragment_loading">Loading…</string>
     <string name="CallNotificationBuilder_connecting">Connecting…</string>
     <string name="Permissions_permission_required">Permission required</string>
-    <string name="ConversationActivity_signal_needs_sms_permission_in_order_to_send_an_sms">Signal needs SMS permission in order to send an SMS, but it has been permanently denied. Please continue to app settings, select \"Permissions\" and enable \"SMS\".</string>
+    <string name="ConversationActivity_signal_needs_sms_permission_in_order_to_send_an_sms">TM SGNL needs SMS permission in order to send an SMS, but it has been permanently denied. Please continue to app settings, select \"Permissions\" and enable \"SMS\".</string>
     <string name="Permissions_continue">Continue</string>
     <string name="Permissions_not_now">Not now</string>
     <string name="conversation_activity__enable_signal_messages">ENABLE SIGNAL MESSAGES</string>
-    <string name="SQLCipherMigrationHelper_migrating_signal_database">Migrating Signal database</string>
+    <string name="SQLCipherMigrationHelper_migrating_signal_database">Migrating TM SGNL database</string>
     <string name="PushDecryptJob_new_locked_message">New locked message</string>
     <string name="PushDecryptJob_unlock_to_view_pending_messages">Unlock to view pending messages</string>
     <string name="enter_backup_passphrase_dialog__backup_passphrase">Backup passphrase</string>
@@ -3078,7 +3078,7 @@
     <string name="preferences_chats__transfer_account_to_a_new_android_device">Transfer account to a new Android device</string>
     <string name="RegistrationActivity_enter_backup_passphrase">Enter backup passphrase</string>
     <string name="RegistrationActivity_restore">Restore</string>
-    <string name="RegistrationActivity_backup_failure_downgrade">Cannot import backups from newer versions of Signal</string>
+    <string name="RegistrationActivity_backup_failure_downgrade">Cannot import backups from newer versions of TM SGNL</string>
     <string name="RegistrationActivity_incorrect_backup_passphrase">Incorrect backup passphrase</string>
     <string name="RegistrationActivity_checking">Checking…</string>
     <string name="RegistrationActivity_d_messages_so_far">%d messages so far…</string>
@@ -3100,7 +3100,7 @@
     <string name="BackupDialog_verify">Verify</string>
     <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">You successfully entered your backup passphrase</string>
     <string name="BackupDialog_passphrase_was_not_correct">Passphrase was not correct</string>
-    <string name="LocalBackupJob_creating_signal_backup">Creating Signal backup…</string>
+    <string name="LocalBackupJob_creating_signal_backup">Creating TM SGNL backup…</string>
     <string name="LocalBackupJobApi29_backup_failed">Backup failed</string>
     <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">Your backup directory has been deleted or moved.</string>
     <string name="LocalBackupJobApi29_your_backup_file_is_too_large">Your backup file is too large to store on this volume.</string>
@@ -3109,8 +3109,8 @@
     <string name="ProgressPreference_d_messages_so_far">%d messages so far</string>
     <string name="RegistrationActivity_wrong_number">Wrong number</string>
     <string name="RegistrationActivity_call_me_instead_available_in">Call me instead \n (Available in %1$02d:%2$02d)</string>
-    <string name="RegistrationActivity_contact_signal_support">Contact Signal Support</string>
-    <string name="RegistrationActivity_code_support_subject">Signal Registration - Verification Code for Android</string>
+    <string name="RegistrationActivity_contact_signal_support">Contact TM SGNL Support</string>
+    <string name="RegistrationActivity_code_support_subject">TM SGNL Registration - Verification Code for Android</string>
     <string name="RegistrationActivity_incorrect_code">Incorrect code</string>
     <string name="BackupUtil_never">Never</string>
     <string name="BackupUtil_unknown">Unknown</string>
@@ -3120,21 +3120,21 @@
     <string name="PhoneNumberPrivacy_my_contacts">My contacts</string>
     <string name="PhoneNumberPrivacy_nobody">Nobody</string>
     <string name="PhoneNumberPrivacy_everyone_see_description">Your phone number will be visible to all people and groups you message.</string>
-    <string name="PhoneNumberPrivacy_everyone_find_description">Anyone who has your phone number in their contacts will see you as a contact on Signal. Others will be able to find you in search.</string>
+    <string name="PhoneNumberPrivacy_everyone_find_description">Anyone who has your phone number in their contacts will see you as a contact on TM SGNL. Others will be able to find you in search.</string>
     <string name="preferences_app_protection__screen_lock">Screen lock</string>
-    <string name="preferences_app_protection__lock_signal_access_with_android_screen_lock_or_fingerprint">Lock Signal access with Android screen lock or fingerprint</string>
+    <string name="preferences_app_protection__lock_signal_access_with_android_screen_lock_or_fingerprint">Lock TM SGNL access with Android screen lock or fingerprint</string>
     <string name="preferences_app_protection__screen_lock_inactivity_timeout">Screen lock inactivity timeout</string>
-    <string name="preferences_app_protection__signal_pin">Signal PIN</string>
+    <string name="preferences_app_protection__signal_pin">TM SGNL PIN</string>
     <string name="preferences_app_protection__create_a_pin">Create a PIN</string>
     <string name="preferences_app_protection__change_your_pin">Change your PIN</string>
     <string name="preferences_app_protection__pin_reminders">PIN reminders</string>
-    <string name="preferences_app_protection__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with Signal encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall Signal.</string>
-    <string name="preferences_app_protection__add_extra_security_by_requiring_your_signal_pin_to_register">Add extra security by requiring your Signal PIN to register your phone number with Signal again.</string>
+    <string name="preferences_app_protection__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with TM SGNL encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall TM SGNL.</string>
+    <string name="preferences_app_protection__add_extra_security_by_requiring_your_signal_pin_to_register">Add extra security by requiring your TM SGNL PIN to register your phone number with TM SGNL again.</string>
     <string name="preferences_app_protection__reminders_help_you_remember_your_pin">Reminders help you remember your PIN since it can\'t be recovered. You\'ll be asked less frequently over time.</string>
     <string name="preferences_app_protection__turn_off">Turn off</string>
     <string name="preferences_app_protection__confirm_pin">Confirm PIN</string>
-    <string name="preferences_app_protection__confirm_your_signal_pin">Confirm your Signal PIN</string>
-    <string name="preferences_app_protection__make_sure_you_memorize_or_securely_store_your_pin">Make sure you memorize or securely store your PIN as it can\'t be recovered. If you forget your PIN, you may lose data when re-registering your Signal account.</string>
+    <string name="preferences_app_protection__confirm_your_signal_pin">Confirm your TM SGNL PIN</string>
+    <string name="preferences_app_protection__make_sure_you_memorize_or_securely_store_your_pin">Make sure you memorize or securely store your PIN as it can\'t be recovered. If you forget your PIN, you may lose data when re-registering your TM SGNL account.</string>
     <string name="preferences_app_protection__incorrect_pin_try_again">Incorrect PIN. Try again.</string>
     <string name="preferences_app_protection__failed_to_enable_registration_lock">Failed to enable registration lock.</string>
     <string name="preferences_app_protection__failed_to_disable_registration_lock">Failed to disable registration lock.</string>
@@ -3147,13 +3147,13 @@
     <string name="RegistrationActivity_you_have_made_too_many_attempts_please_try_again_later">You\'ve made too many attempts. Please try again later.</string>
     <string name="RegistrationActivity_error_connecting_to_service">Error connecting to service</string>
     <string name="preferences_chats__backups">Backups</string>
-    <string name="prompt_passphrase_activity__signal_is_locked">Signal is locked</string>
+    <string name="prompt_passphrase_activity__signal_is_locked">TM SGNL is locked</string>
     <string name="prompt_passphrase_activity__tap_to_unlock">TAP TO UNLOCK</string>
     <string name="Recipient_unknown">Unknown</string>
 
     <!-- TransferOrRestoreFragment -->
     <string name="TransferOrRestoreFragment__transfer_or_restore_account">Transfer or restore account</string>
-    <string name="TransferOrRestoreFragment__if_you_have_previously_registered_a_signal_account">If you have previously registered a Signal account, you can transfer or restore your account and messages</string>
+    <string name="TransferOrRestoreFragment__if_you_have_previously_registered_a_signal_account">If you have previously registered a TM SGNL account, you can transfer or restore your account and messages</string>
     <string name="TransferOrRestoreFragment__transfer_from_android_device">Transfer from Android device</string>
     <string name="TransferOrRestoreFragment__transfer_your_account_and_messages_from_your_old_android_device">Transfer your account and messages from your old Android device. You need access to your old device.</string>
     <string name="TransferOrRestoreFragment__you_need_access_to_your_old_device">You need access to your old device.</string>
@@ -3161,7 +3161,7 @@
     <string name="TransferOrRestoreFragment__restore_your_messages_from_a_local_backup">Restore your messages from a local backup. If you don’t restore now, you won\'t be able to restore later.</string>
 
     <!-- NewDeviceTransferInstructionsFragment -->
-    <string name="NewDeviceTransferInstructions__open_signal_on_your_old_android_phone">Open Signal on your old Android phone</string>
+    <string name="NewDeviceTransferInstructions__open_signal_on_your_old_android_phone">Open TM SGNL on your old Android phone</string>
     <string name="NewDeviceTransferInstructions__continue">Continue</string>
     <string name="NewDeviceTransferInstructions__first_bullet">1.</string>
     <string name="NewDeviceTransferInstructions__tap_on_your_profile_photo_in_the_top_left_to_open_settings">Tap on your profile photo in the top left to open Settings</string>
@@ -3174,19 +3174,19 @@
     <string name="NewDeviceTransferSetup__preparing_to_connect_to_old_android_device">Preparing to connect to old Android device…</string>
     <string name="NewDeviceTransferSetup__take_a_moment_should_be_ready_soon">Taking a moment, should be ready soon</string>
     <string name="NewDeviceTransferSetup__waiting_for_old_device_to_connect">Waiting for old Android device to connect…</string>
-    <string name="NewDeviceTransferSetup__signal_needs_the_location_permission_to_discover_and_connect_with_your_old_device">Signal needs the location permission to discover and connect to your old Android device.</string>
-    <string name="NewDeviceTransferSetup__signal_needs_location_services_enabled_to_discover_and_connect_with_your_old_device">Signal needs location services enabled to discover and connect with your old Android device.</string>
-    <string name="NewDeviceTransferSetup__signal_needs_wifi_on_to_discover_and_connect_with_your_old_device">Signal needs Wi-Fi on to discover and connect with your old Android device. Wi-Fi needs to be on but it does not have to be connected to a Wi-Fi network.</string>
-    <string name="NewDeviceTransferSetup__sorry_it_appears_your_device_does_not_support_wifi_direct">Sorry, it appears this device does not support Wi-Fi Direct. Signal uses Wi-Fi Direct to discover and connect with your old Android device. You can still restore a backup to restore your account from your old Android device.</string>
+    <string name="NewDeviceTransferSetup__signal_needs_the_location_permission_to_discover_and_connect_with_your_old_device">TM SGNL needs the location permission to discover and connect to your old Android device.</string>
+    <string name="NewDeviceTransferSetup__signal_needs_location_services_enabled_to_discover_and_connect_with_your_old_device">TM SGNL needs location services enabled to discover and connect with your old Android device.</string>
+    <string name="NewDeviceTransferSetup__signal_needs_wifi_on_to_discover_and_connect_with_your_old_device">TM SGNL needs Wi-Fi on to discover and connect with your old Android device. Wi-Fi needs to be on but it does not have to be connected to a Wi-Fi network.</string>
+    <string name="NewDeviceTransferSetup__sorry_it_appears_your_device_does_not_support_wifi_direct">Sorry, it appears this device does not support Wi-Fi Direct. TM SGNL uses Wi-Fi Direct to discover and connect with your old Android device. You can still restore a backup to restore your account from your old Android device.</string>
     <string name="NewDeviceTransferSetup__restore_a_backup">Restore a backup</string>
     <string name="NewDeviceTransferSetup__an_unexpected_error_occurred_while_attempting_to_connect_to_your_old_device">An unexpected error occurred while attempting to connect to your old Android device.</string>
 
     <!-- OldDeviceTransferSetupFragment -->
     <string name="OldDeviceTransferSetup__searching_for_new_android_device">Searching for new Android device…</string>
-    <string name="OldDeviceTransferSetup__signal_needs_the_location_permission_to_discover_and_connect_with_your_new_device">Signal needs the location permission to discover and connect to your new Android device.</string>
-    <string name="OldDeviceTransferSetup__signal_needs_location_services_enabled_to_discover_and_connect_with_your_new_device">Signal needs location services enabled to discover and connect with your new Android device.</string>
-    <string name="OldDeviceTransferSetup__signal_needs_wifi_on_to_discover_and_connect_with_your_new_device">Signal needs Wi-Fi on to discover and connect with your new Android device. Wi-Fi needs to be on but it does not have to be connected to a Wi-Fi network.</string>
-    <string name="OldDeviceTransferSetup__sorry_it_appears_your_device_does_not_support_wifi_direct">Sorry, it appears this device does not support Wi-Fi Direct. Signal uses Wi-Fi Direct to discover and connect with your new Android device. You can still create a backup to restore your account on your new Android device.</string>
+    <string name="OldDeviceTransferSetup__signal_needs_the_location_permission_to_discover_and_connect_with_your_new_device">TM SGNL needs the location permission to discover and connect to your new Android device.</string>
+    <string name="OldDeviceTransferSetup__signal_needs_location_services_enabled_to_discover_and_connect_with_your_new_device">TM SGNL needs location services enabled to discover and connect with your new Android device.</string>
+    <string name="OldDeviceTransferSetup__signal_needs_wifi_on_to_discover_and_connect_with_your_new_device">TM SGNL needs Wi-Fi on to discover and connect with your new Android device. Wi-Fi needs to be on but it does not have to be connected to a Wi-Fi network.</string>
+    <string name="OldDeviceTransferSetup__sorry_it_appears_your_device_does_not_support_wifi_direct">Sorry, it appears this device does not support Wi-Fi Direct. TM SGNL uses Wi-Fi Direct to discover and connect with your new Android device. You can still create a backup to restore your account on your new Android device.</string>
     <string name="OldDeviceTransferSetup__create_a_backup">Create a backup</string>
     <string name="OldDeviceTransferSetup__an_unexpected_error_occurred_while_attempting_to_connect_to_your_old_device">An unexpected error occurred while attempting to connect to your new Android device.</string>
 
@@ -3223,11 +3223,11 @@
     <string name="DeviceTransferSetup__tap_continue_on_your_other_device">Tap Continue on your other device…</string>
 
     <!-- NewDeviceTransferFragment -->
-    <string name="NewDeviceTransfer__cannot_transfer_from_a_newer_version_of_signal">Cannot transfer from a newer versions of Signal</string>
+    <string name="NewDeviceTransfer__cannot_transfer_from_a_newer_version_of_signal">Cannot transfer from a newer versions of TM SGNL</string>
 
     <!-- DeviceTransferFragment -->
     <string name="DeviceTransfer__transferring_data">Transferring data</string>
-    <string name="DeviceTransfer__keep_both_devices_near_each_other">Keep both devices near each other. Do not turn off the devices and keep Signal open. Transfers are end-to-end encrypted.</string>
+    <string name="DeviceTransfer__keep_both_devices_near_each_other">Keep both devices near each other. Do not turn off the devices and keep TM SGNL open. Transfers are end-to-end encrypted.</string>
     <string name="DeviceTransfer__d_messages_so_far">%1$d messages so far…</string>
     <!-- Filled in with total percentage of messages transferred -->
     <string name="DeviceTransfer__s_of_messages_so_far">%1$s%% of messages so far…</string>
@@ -3241,9 +3241,9 @@
 
     <!-- OldDeviceTransferInstructionsFragment -->
     <string name="OldDeviceTransferInstructions__transfer_account">Transfer Account</string>
-    <string name="OldDeviceTransferInstructions__you_can_transfer_your_signal_account_when_setting_up_signal_on_a_new_android_device">You can transfer your Signal account when setting up Signal on a new Android device. Before continuing:</string>
+    <string name="OldDeviceTransferInstructions__you_can_transfer_your_signal_account_when_setting_up_signal_on_a_new_android_device">You can transfer your TM SGNL account when setting up TM SGNL on a new Android device. Before continuing:</string>
     <string name="OldDeviceTransferInstructions__first_bullet">1.</string>
-    <string name="OldDeviceTransferInstructions__download_signal_on_your_new_android_device">Download Signal on your new Android device</string>
+    <string name="OldDeviceTransferInstructions__download_signal_on_your_new_android_device">Download TM SGNL on your new Android device</string>
     <string name="OldDeviceTransferInstructions__second_bullet">2.</string>
     <string name="OldDeviceTransferInstructions__tap_on_transfer_or_restore_account">Tap on "Transfer or restore account"</string>
     <string name="OldDeviceTransferInstructions__third_bullet">3.</string>
@@ -3253,7 +3253,7 @@
     <!-- OldDeviceTransferComplete -->
     <string name="OldDeviceTransferComplete__transfer_complete">Transfer complete</string>
     <string name="OldDeviceTransferComplete__go_to_your_new_device">Go to your new device</string>
-    <string name="OldDeviceTransferComplete__your_signal_data_has_Been_transferred_to_your_new_device">Your Signal data has been transferred to your new device. To complete the transfer process, you must continue registration on your new device.</string>
+    <string name="OldDeviceTransferComplete__your_signal_data_has_Been_transferred_to_your_new_device">Your TM SGNL data has been transferred to your new device. To complete the transfer process, you must continue registration on your new device.</string>
     <string name="OldDeviceTransferComplete__close">Close</string>
 
     <!-- NewDeviceTransferComplete -->
@@ -3273,7 +3273,7 @@
 
     <!-- OldDeviceTransferLockedDialog -->
     <string name="OldDeviceTransferLockedDialog__complete_registration_on_your_new_device">Complete registration on your new device</string>
-    <string name="OldDeviceTransferLockedDialog__your_signal_account_has_been_transferred_to_your_new_device">Your Signal account has been transferred to your new device, but you must complete registration on it to continue. Signal will be inactive on this device.</string>
+    <string name="OldDeviceTransferLockedDialog__your_signal_account_has_been_transferred_to_your_new_device">Your TM SGNL account has been transferred to your new device, but you must complete registration on it to continue. TM SGNL will be inactive on this device.</string>
     <string name="OldDeviceTransferLockedDialog__done">Done</string>
     <string name="OldDeviceTransferLockedDialog__cancel_and_activate_this_device">Cancel and activate this device</string>
 
@@ -3317,13 +3317,13 @@
     <string name="GroupsLearnMore_what_are_legacy_groups">What are Legacy Groups?</string>
     <string name="GroupsLearnMore_paragraph_1">Legacy Groups are groups that are not compatible with New Group features like admins and more descriptive group updates.</string>
     <string name="GroupsLearnMore_can_i_upgrade_a_legacy_group">Can I upgrade a Legacy Group?</string>
-    <string name="GroupsLearnMore_paragraph_2">Legacy Groups can\'t yet be upgraded to New Groups, but you can create a New Group with the same members if they\'re on the latest version of Signal.</string>
-    <string name="GroupsLearnMore_paragraph_3">Signal will offer a way to upgrade Legacy Groups in the future.</string>
+    <string name="GroupsLearnMore_paragraph_2">Legacy Groups can\'t yet be upgraded to New Groups, but you can create a New Group with the same members if they\'re on the latest version of TM SGNL.</string>
+    <string name="GroupsLearnMore_paragraph_3">TM SGNL will offer a way to upgrade Legacy Groups in the future.</string>
 
     <!-- GroupLinkBottomSheetDialogFragment -->
     <string name="GroupLinkBottomSheet_share_hint_requiring_approval">Anyone with this link can view the group\'s name and photo and request to join. Share it with people you trust.</string>
     <string name="GroupLinkBottomSheet_share_hint_not_requiring_approval">Anyone with this link can view the group\'s name and photo and join the group. Share it with people you trust.</string>
-    <string name="GroupLinkBottomSheet_share_via_signal">Share via Signal</string>
+    <string name="GroupLinkBottomSheet_share_via_signal">Share via TM SGNL</string>
     <string name="GroupLinkBottomSheet_copy">Copy</string>
     <string name="GroupLinkBottomSheet_qr_code">QR Code</string>
     <string name="GroupLinkBottomSheet_share">Share</string>
@@ -3397,7 +3397,7 @@
     <string name="DeleteAccountFragment__no_number">No number specified</string>
     <string name="DeleteAccountFragment__the_phone_number">The phone number you entered doesn\'t match your account\'s.</string>
     <string name="DeleteAccountFragment__are_you_sure">Are you sure you want to delete your account?</string>
-    <string name="DeleteAccountFragment__this_will_delete_your_signal_account">This will delete your Signal account and reset the application. The app will close after the process is complete.</string>
+    <string name="DeleteAccountFragment__this_will_delete_your_signal_account">This will delete your TM SGNL account and reset the application. The app will close after the process is complete.</string>
     <string name="DeleteAccountFragment__failed_to_delete_account">Failed to delete account. Do you have a network connection?</string>
     <string name="DeleteAccountFragment__failed_to_delete_local_data">Failed to delete local data. You can manually clear it in the system application settings.</string>
     <string name="DeleteAccountFragment__launch_app_settings">Launch App Settings</string>
@@ -3428,7 +3428,7 @@
     <string name="ShareActivity__share">Share</string>
     <string name="ShareActivity__send">Send</string>
     <string name="ShareActivity__comma_s">, %1$s</string>
-    <string name="ShareActivity__sharing_to_multiple_chats_is">Sharing to multiple chats is only supported for Signal messages</string>
+    <string name="ShareActivity__sharing_to_multiple_chats_is">Sharing to multiple chats is only supported for TM SGNL messages</string>
 
     <!-- MultiShareDialogs -->
     <string name="MultiShareDialogs__failed_to_send_to_some_users">Failed to send to some users</string>
@@ -3487,7 +3487,7 @@
     <string name="payment_info_card_about_mobilecoin">About MobileCoin</string>
     <string name="payment_info_card_mobilecoin_is_a_new_privacy_focused_digital_currency">MobileCoin is a new privacy focused digital currency.</string>
     <string name="payment_info_card_adding_funds">Adding funds</string>
-    <string name="payment_info_card_you_can_add_funds_for_use_in">You can add funds for use in Signal by sending MobileCoin to your wallet address.</string>
+    <string name="payment_info_card_you_can_add_funds_for_use_in">You can add funds for use in TM SGNL by sending MobileCoin to your wallet address.</string>
     <string name="payment_info_card_cashing_out">Cashing out</string>
     <string name="payment_info_card_you_can_cash_out_mobilecoin">You can cash out MobileCoin anytime on an exchange that supports MobileCoin. Just make a transfer to your account at that exchange.</string>
     <string name="payment_info_card_hide_this_card">Hide this card?</string>
@@ -3506,12 +3506,12 @@
     <!-- DeactivateWalletFragment -->
     <string name="DeactivateWalletFragment__deactivate_wallet">Deactivate Wallet</string>
     <string name="DeactivateWalletFragment__your_balance">Your balance</string>
-    <string name="DeactivateWalletFragment__its_recommended_that_you">It\'s recommended that you transfer your funds to another wallet address before deactivating payments. If you choose not to transfer your funds now, they will remain in your wallet linked to Signal if you reactivate payments.</string>
+    <string name="DeactivateWalletFragment__its_recommended_that_you">It\'s recommended that you transfer your funds to another wallet address before deactivating payments. If you choose not to transfer your funds now, they will remain in your wallet linked to TM SGNL if you reactivate payments.</string>
     <string name="DeactivateWalletFragment__transfer_remaining_balance">Transfer remaining balance</string>
     <string name="DeactivateWalletFragment__deactivate_without_transferring">Deactivate without transferring</string>
     <string name="DeactivateWalletFragment__deactivate">Deactivate</string>
     <string name="DeactivateWalletFragment__deactivate_without_transferring_question">Deactivate without transferring?</string>
-    <string name="DeactivateWalletFragment__your_balance_will_remain">Your balance will remain in your wallet linked to Signal if you choose to reactivate payments.</string>
+    <string name="DeactivateWalletFragment__your_balance_will_remain">Your balance will remain in your wallet linked to TM SGNL if you choose to reactivate payments.</string>
     <string name="DeactivateWalletFragment__error_deactivating_wallet">Error deactivating wallet.</string>
     <string name="DeactivateWalletFragment__learn_more__we_recommend_transferring_your_funds" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_deactivate</string>
 
@@ -3519,7 +3519,7 @@
     <string name="PaymentsRecoveryStartFragment__recovery_phrase">Recovery phrase</string>
     <string name="PaymentsRecoveryStartFragment__view_recovery_phrase">View recovery phrase</string>
     <string name="PaymentsRecoveryStartFragment__enter_recovery_phrase">Enter recovery phrase</string>
-    <string name="PaymentsRecoveryStartFragment__your_balance_will_automatically_restore">Your balance will automatically restore when you reinstall Signal if you confirm your Signal PIN. You can also restore your balance using a recovery phrase, which is a %1$d-word phrase unique to you. Write it down and store it in a safe place.</string>
+    <string name="PaymentsRecoveryStartFragment__your_balance_will_automatically_restore">Your balance will automatically restore when you reinstall TM SGNL if you confirm your TM SGNL PIN. You can also restore your balance using a recovery phrase, which is a %1$d-word phrase unique to you. Write it down and store it in a safe place.</string>
     <string name="PaymentsRecoveryStartFragment__your_recovery_phrase_is_a">Your recovery phrase is a %1$d-word phrase unique to you. Use this phrase to restore your balance.</string>
     <string name="PaymentsRecoveryStartFragment__start">Start</string>
     <string name="PaymentsRecoveryStartFragment__enter_manually">Enter manually</string>
@@ -3605,7 +3605,7 @@
     <!-- AccountSettingsFragment -->
     <string name="AccountSettingsFragment__account">Account</string>
     <string name="AccountSettingsFragment__youll_be_asked_less_frequently">You\'ll be asked less frequently over time</string>
-    <string name="AccountSettingsFragment__require_your_signal_pin">Require your Signal PIN to register your phone number with Signal again</string>
+    <string name="AccountSettingsFragment__require_your_signal_pin">Require your TM SGNL PIN to register your phone number with TM SGNL again</string>
     <string name="AccountSettingsFragment__change_phone_number">Change phone number</string>
 
     <!-- ChangeNumberFragment -->
@@ -3639,7 +3639,7 @@
     <string name="ChangeNumberConfirmFragment__edit_number">Edit number</string>
 
     <!-- ChangeNumberRegistrationLockFragment -->
-    <string name="ChangeNumberRegistrationLockFragment__signal_change_number_need_help_with_pin_for_android_v2_pin">Signal Change Number - Need Help with PIN for Android (v2 PIN)</string>
+    <string name="ChangeNumberRegistrationLockFragment__signal_change_number_need_help_with_pin_for_android_v2_pin">TM SGNL Change Number - Need Help with PIN for Android (v2 PIN)</string>
 
     <!-- ChangeNumberPinDiffersFragment -->
     <string name="ChangeNumberPinDiffersFragment__pins_do_not_match">PINs do not match</string>
@@ -3676,7 +3676,7 @@
     <string name="NotificationsSettingsFragment__messages">Messages</string>
     <string name="NotificationsSettingsFragment__calls">Calls</string>
     <string name="NotificationsSettingsFragment__notify_when">Notify when…</string>
-    <string name="NotificationsSettingsFragment__contact_joins_signal">Contact joins Signal</string>
+    <string name="NotificationsSettingsFragment__contact_joins_signal">Contact joins TM SGNL</string>
     <!-- Notification preference header -->
     <string name="NotificationsSettingsFragment__notification_profiles">Notification profiles</string>
     <!-- Notification preference option header -->
@@ -3697,7 +3697,7 @@
     <string name="PrivacySettingsFragment__disappearing_messages">Disappearing messages</string>
     <string name="PrivacySettingsFragment__app_security">App security</string>
     <string name="PrivacySettingsFragment__block_screenshots_in_the_recents_list_and_inside_the_app">Block screenshots in the recents list and inside the app</string>
-    <string name="PrivacySettingsFragment__signal_message_and_calls">Signal messages and calls, always relay calls, and sealed sender</string>
+    <string name="PrivacySettingsFragment__signal_message_and_calls">TM SGNL messages and calls, always relay calls, and sealed sender</string>
     <string name="PrivacySettingsFragment__default_timer_for_new_changes">Default timer for new chats</string>
     <string name="PrivacySettingsFragment__set_a_default_disappearing_message_timer_for_all_new_chats_started_by_you">Set a default disappearing message timer for all new chats started by you.</string>
 
@@ -3733,7 +3733,7 @@
     <string name="HelpSettingsFragment__version">Version</string>
     <string name="HelpSettingsFragment__debug_log">Debug log</string>
     <string name="HelpSettingsFragment__terms_amp_privacy_policy">Terms &amp; Privacy Policy</string>
-    <string name="HelpFragment__copyright_signal_messenger">Copyright Signal Messenger</string>
+    <string name="HelpFragment__copyright_signal_messenger">Copyright TM SGNL Messenger</string>
     <string name="HelpFragment__licenced_under_the_gplv3">Licensed under the GPLv3</string>
 
     <!-- DataAndStorageSettingsFragment -->
@@ -3798,7 +3798,7 @@
 
     <!-- BecomeASustainerMegaphone -->
     <string name="BecomeASustainerMegaphone__become_a_sustainer">Become a Sustainer</string>
-    <string name="BecomeASustainerMegaphone__signal_is_powered">Signal is powered by people like you. Contribute and receive a profile badge.</string>
+    <string name="BecomeASustainerMegaphone__signal_is_powered">TM SGNL is powered by people like you. Contribute and receive a profile badge.</string>
     <string name="BecomeASustainerMegaphone__no_thanks">No thanks</string>
     <string name="BecomeASustainerMegaphone__contribute">Contribute</string>
 
@@ -3853,7 +3853,7 @@
     <string name="ConversationSettingsFragment__conversation_muted_forever">Conversation muted forever</string>
     <string name="ConversationSettingsFragment__copied_phone_number_to_clipboard">Copied phone number to clipboard.</string>
     <string name="ConversationSettingsFragment__phone_number">Phone number</string>
-    <string name="ConversationSettingsFragment__get_badges">Get badges for your profile by supporting Signal. Tap on a badge to learn more.</string>
+    <string name="ConversationSettingsFragment__get_badges">Get badges for your profile by supporting TM SGNL. Tap on a badge to learn more.</string>
 
     <!-- PermissionsSettingsFragment -->
     <string name="PermissionsSettingsFragment__add_members">Add members</string>
@@ -4000,9 +4000,9 @@
 
     <string name="ImageView__badge">Badge</string>
 
-    <string name="SubscribeFragment__signal_is_powered_by_people_like_you">Signal is powered by people like you.</string>
+    <string name="SubscribeFragment__signal_is_powered_by_people_like_you">TM SGNL is powered by people like you.</string>
     <string name="SubscribeFragment__support_technology_that_is_built_for_you">Support technology that is built for you—not for your data—by joining the community of people that sustain it.</string>
-    <string name="SubscribeFragment__support_technology_that_is_built_for_you_not">Support technology that is built for you, not for your data, by joining the community that sustains Signal.</string>
+    <string name="SubscribeFragment__support_technology_that_is_built_for_you_not">Support technology that is built for you, not for your data, by joining the community that sustains TM SGNL.</string>
     <string name="SubscribeFragment__currency">Currency</string>
     <string name="SubscribeFragment__more_payment_options">More Payment Options</string>
     <string name="SubscribeFragment__cancel_subscription">Cancel Subscription</string>
@@ -4021,15 +4021,15 @@
     <string name="Subscription__s_per_month_dot_renews_s">%1$s/month · Renews %2$s</string>
     <string name="Subscription__s_per_month_dot_expires_s">%1$s/month · Expires %2$s</string>
 
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_a_non_profit_with_no">Signal is a non-profit with no advertisers or investors, sustained only by the people who use and value it. Make a recurring monthly contribution and receive a profile badge to share your support.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_a_non_profit_with_no">TM SGNL is a non-profit with no advertisers or investors, sustained only by the people who use and value it. Make a recurring monthly contribution and receive a profile badge to share your support.</string>
     <string name="SubscribeLearnMoreBottomSheetDialogFragment__why_contribute">Why Contribute?</string>
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_committed_to_developing">Signal is committed to developing open source privacy technology that protects free expression and enables secure global communication.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_committed_to_developing">TM SGNL is committed to developing open source privacy technology that protects free expression and enables secure global communication.</string>
     <string name="SubscribeLearnMoreBottomSheetDialogFragment__your_contribution">Your contribution fuels this cause and pays for the development and operations of an app used by millions for private communication. No ads. No trackers. No kidding.</string>
 
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support">Thanks for your Support!</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_the_boost">Thanks for the Boost!</string>
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_s_badge_help_signal">You\'ve earned %s badge! Help Signal build awareness by displaying this badge on your profile.</string>
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_help_signal">You\'ve earned a Boost badge! Help Signal build awareness by displaying this badge on your profile.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_s_badge_help_signal">You\'ve earned %s badge! Help TM SGNL build awareness by displaying this badge on your profile.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_help_signal">You\'ve earned a Boost badge! Help TM SGNL build awareness by displaying this badge on your profile.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also">You can also</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer">become a monthly Sustainer.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">Display on Profile</string>
@@ -4037,8 +4037,8 @@
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__done">Done</string>
     <string name="ThanksForYourSupportBottomSheetFragment__when_you_have_more">When you have more than one badge, you can choose one to feature for others to see on your profile.</string>
 
-    <string name="BecomeASustainerFragment__get_badges">Get badges for your profile by supporting Signal.</string>
-    <string name="BecomeASustainerFragment__signal_is_a_non_profit">Signal is a nonprofit with no advertisers or investors, supported only by people like you.</string>
+    <string name="BecomeASustainerFragment__get_badges">Get badges for your profile by supporting TM SGNL.</string>
+    <string name="BecomeASustainerFragment__signal_is_a_non_profit">TM SGNL is a nonprofit with no advertisers or investors, supported only by people like you.</string>
 
     <string name="ManageDonationsFragment__my_support">My support</string>
     <string name="ManageDonationsFragment__manage_subscription">Manage subscription</string>
@@ -4046,13 +4046,13 @@
     <string name="ManageDonationsFragment__subscription_faq">Subscription FAQ</string>
     <string name="ManageDonationsFragment__error_getting_subscription">Error getting subscription.</string>
 
-    <string name="BoostFragment__give_signal_a_boost">Give Signal a Boost</string>
+    <string name="BoostFragment__give_signal_a_boost">Give TM SGNL a Boost</string>
     <string name="BoostFragment__say_thanks_and_earn">Say \"Thanks!\" and earn the Boost badge for %1$d days.</string>
 
     <string name="Boost__enter_custom_amount">Enter Custom Amount</string>
     <string name="Boost__one_time_contribution">One-time contribution</string>
 
-    <string name="MySupportPreference__add_a_signal_boost">Add a Signal Boost</string>
+    <string name="MySupportPreference__add_a_signal_boost">Add a TM SGNL Boost</string>
     <string name="MySupportPreference__s_per_month">%1$s/month</string>
     <string name="MySupportPreference__renews_s">Renews %1$s</string>
     <string name="MySupportPreference__processing_transaction">Processing transaction…</string>
@@ -4070,7 +4070,7 @@
     <string name="ExpiredBadgeBottomSheetDialogFragment__add_a_boost">Add a Boost</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">Not now</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__your_sustainer">Your Sustainer subscription was automatically cancelled because you were inactive for too long. Your %1$s badge is no longer visible on your profile.</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__you_can">You can keep using Signal but to support the app and reactivate your badge, renew now.</string>
+    <string name="ExpiredBadgeBottomSheetDialogFragment__you_can">You can keep using TM SGNL but to support the app and reactivate your badge, renew now.</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__renew_subscription">Renew subscription</string>
 
     <string name="Subscription__please_contact_support_for_more_information">Please contact support for more information.</string>
@@ -4092,11 +4092,11 @@
     <string name="DonationsErrors__you_have_to_set_up_google_pay_to_donate_in_app">You have to set up Google Pay to donate in-app.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">Failed to cancel subscription</string>
     <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">Subscription cancellation requires an internet connection.</string>
-    <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">Your device doesn\'t support Google Pay, so you can\'t subscribe to earn a badge. You can still support Signal by making a donation on our website.</string>
+    <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">Your device doesn\'t support Google Pay, so you can\'t subscribe to earn a badge. You can still support TM SGNL by making a donation on our website.</string>
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">Network error. Check your connection and try again.</string>
     <string name="NetworkFailure__retry">Retry</string>
 
-    <string name="Boost__thank_you_for_your_donation" translatable="false">Thank you for your donation. Your contribution helps fuel the mission of developing open source privacy technology that protects free expression and enables secure global communication for millions around the world. Signal Technology Foundation is a tax-exempt nonprofit organization in the United States under section 501c3 of the Internal Revenue Code. Our Federal Tax ID is 82-4506840. No goods or services were provided in exchange for this donation. Please retain this receipt for your tax records.</string>
+    <string name="Boost__thank_you_for_your_donation" translatable="false">Thank you for your donation. Your contribution helps fuel the mission of developing open source privacy technology that protects free expression and enables secure global communication for millions around the world. TM SGNL Technology Foundation is a tax-exempt nonprofit organization in the United States under section 501c3 of the Internal Revenue Code. Our Federal Tax ID is 82-4506840. No goods or services were provided in exchange for this donation. Please retain this receipt for your tax records.</string>
 
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">Name your profile</string>
@@ -4249,7 +4249,7 @@
     <string name="NotificationSettingsFragment__failed_to_open_picker">Failed to open picker.</string>
 
     <!-- Description shown for the Signal Release Notes channel -->
-    <string name="ReleaseNotes__signal_release_notes_and_news">Signal Release Notes &amp; News</string>
+    <string name="ReleaseNotes__signal_release_notes_and_news">TM SGNL Release Notes &amp; News</string>
 
     <!-- EOF -->
 
@@ -4273,7 +4273,7 @@
     <!--//**TM_SA**//End-->
 
 
-    <string name="error_self_authentication_process_failed">We couldn\'t locate your TeleMessage Signal Archiver Account. Please contact</string>
+    <string name="error_self_authentication_process_failed">We couldn\'t locate your TeleMessage TM SGNL Archiver Account. Please contact</string>
 
 
     <string name="get_self_authentication_first_warning_message_step_1">We could not locate your TeleMessage account.\nWe will save your messages for 7 days.\nTo open an account and start archiving contact us at TeleMessage support.</string>
