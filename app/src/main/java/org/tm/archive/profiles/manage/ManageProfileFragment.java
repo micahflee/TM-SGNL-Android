@@ -121,7 +121,7 @@ public class ManageProfileFragment extends LoggingFragment {
       }
     });
 
-    if (FeatureFlags.donorBadges()) {
+    if (/*FeatureFlags.donorBadges()*/false) { //**TM_SA**//
       badgesContainer.setOnClickListener(v -> {
         if (Recipient.self().getBadges().isEmpty()) {
           BecomeASustainerFragment.show(getParentFragmentManager());
