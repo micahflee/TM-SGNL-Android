@@ -3,13 +3,15 @@
     <!--//**TM_SA**//Chnage App Name-->
     <string name="app_name" translatable="false">TM SGNL</string>
 
-    <string name="install_url" translatable="false">https://signal.org/install</string>
-    <string name="donate_url" translatable="false">https://signal.org/donate</string>
-    <string name="backup_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string>
-    <string name="transfer_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string>
-    <string name="support_center_url" translatable="false">https://support.signal.org/</string>
-    <string name="terms_and_privacy_policy_url" translatable="false">https://signal.org/legal</string>
-    <string name="sustainer_boost_and_badges" translatable="false">https://support.signal.org/hc/articles/4408365318426</string>
+    <!--//**TM_SA**// START Change the URL's to our-->
+    <string name="install_url" translatable="false">https://play.google.com/store/apps/details?id=org.tm.archive</string>
+    <string name="donate_url" translatable="false">https://www.telemessage.com/faqs</string>
+    <string name="backup_support_url" translatable="false">https://www.telemessage.com/contact-us</string>
+    <string name="transfer_support_url" translatable="false">https://www.telemessage.com/contact-us</string>
+    <string name="support_center_url" translatable="false">https://www.telemessage.com/contact-us</string>
+    <string name="terms_and_privacy_policy_url" translatable="false">http://www.telemessage.com/Privacy-Policy</string>
+    <string name="sustainer_boost_and_badges" translatable="false">https://www.telemessage.com/faqs/</string>
+    <!--//**TM_SA**// END Change the URL's to our-->
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -2220,7 +2222,7 @@
     <string name="EditProfileFragment__edit_group">Edit group</string>
     <string name="EditProfileFragment__group_name">Group name</string>
     <string name="EditProfileFragment__group_description">Group description</string>
-    <string name="EditProfileFragment__support_link" translatable="false">https://support.signal.org/hc/articles/360007459591</string>
+    <string name="EditProfileFragment__support_link" translatable="false">https://www.telemessage.com/contact-us</string><!--//**TM_SA**//-->
 
     <!-- EditProfileNameFragment -->
     <string name="EditProfileNameFragment_your_name">Your name</string>
@@ -2306,8 +2308,8 @@
     <string name="HelpFragment__emoji_3" translatable="false">emoji_3</string>
     <string name="HelpFragment__emoji_2" translatable="false">emoji_2</string>
     <string name="HelpFragment__emoji_1" translatable="false">emoji_1</string>
-    <string name="HelpFragment__link__debug_info" translatable="false">https://support.signal.org/hc/articles/360007318591</string>
-    <string name="HelpFragment__link__faq" translatable="false">https://support.signal.org</string>
+    <string name="HelpFragment__link__debug_info" translatable="false">https://www.telemessage.com/contact-us/</string><!--//**TM_SA**//-->
+    <string name="HelpFragment__link__faq" translatable="false">https://www.telemessage.com/faqs</string><!--//**TM_SA**//-->
     <string name="HelpFragment__support_info">Support Info</string>
     <string name="HelpFragment__signal_android_support_request">TM SGNL Android Support Request</string>
     <string name="HelpFragment__debug_log">Debug Log:</string>
