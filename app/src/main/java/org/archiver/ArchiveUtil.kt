@@ -145,7 +145,7 @@ class ArchiveUtil {
               inboxRecipient
             }
             else -> {
-              ""
+              recipient.requireE164()
             }
           }
         }
