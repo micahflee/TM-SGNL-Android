@@ -1409,7 +1409,7 @@ public final class MessageContentProcessor {
         for (int i = 0; i < attachments.size(); i++) {
           DatabaseAttachment att = attachments.get(i);
           if (att != null) {
-            String fileNameWithType = ArchiveFileUtil.getFileNameWithType(att.getFileName(), insertResult.get().getMessageId(), att.getAttachmentId().getUniqueId(), att.getContentType());
+            String fileNameWithType = ArchiveFileUtil.getFileNameWithType(att.getFileName(), insertResult.get().getMessageId(), att.getAttachmentId().getUniqueId(), att.getContentType(), true);
             File tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, fileNameWithType);
             filesToArchive[i] = tempFileForArchiving;
           }
