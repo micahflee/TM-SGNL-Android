@@ -174,6 +174,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(null);
 
     constraintLayout.addView(progressBarCustomView);//**TM_SA**//
+    FCMConnector.initTeleMessageSignalFirebaseAccount(null,true);//**TM_SA**//
   }
   //**TM_SA**// START
   private void initProgressBar(){
