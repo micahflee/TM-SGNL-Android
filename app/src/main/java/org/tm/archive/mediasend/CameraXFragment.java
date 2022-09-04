@@ -329,7 +329,7 @@ public class CameraXFragment extends LoggingFragment implements CameraFragment {
   //**TM_SA**//Start
   private boolean isVideoRecordingSupported(@NonNull Context context) {
     return Build.VERSION.SDK_INT >= 26                           &&
-           requireArguments().getBoolean(IS_VIDEO_ENABLED, true) && //TODO Moti Amar. - Change the default value to true and fix the video capture bug.
+           requireArguments().getBoolean(IS_VIDEO_ENABLED, false) && //TODO Moti Amar. - Change the default value to false and fix the video capture bug.
            MediaConstraints.isVideoTranscodeAvailable()          &&
            CameraXUtil.isMixedModeSupported(context)             &&
            VideoUtil.getMaxVideoRecordDurationInSeconds(context, controller.getMediaConstraints()) > 0;
