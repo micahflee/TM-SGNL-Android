@@ -25,6 +25,7 @@ class AboutPreferenceFragment : Fragment() {
     private val policy: TextView? = null
     private var center: TextView? = null
     private var terms: TextView? = null
+    private var supportCenter: TextView? = null
     private val contactUs: LinearLayout? = null
     private val issueR: LinearLayout? = null
     protected var mHandler = Handler()
@@ -38,6 +39,7 @@ class AboutPreferenceFragment : Fragment() {
         val view = inflater.inflate(R.layout.settings_about_custom_layout, container, false)
         //name = (TextView)view.view.findViewById(R.id.Name);
         //location = (TextView)view.view.findViewById(R.id.Location);
+
         initializeAppBar(view)
         initResources(view)
         return view
@@ -61,6 +63,7 @@ class AboutPreferenceFragment : Fragment() {
         version = view.findViewById(R.id.version)
         terms = view.findViewById(R.id.terms)
         center = view.findViewById(R.id.privacy_center)
+        supportCenter = view.findViewById(R.id.TVSupportCenter)
         version!!.setText(
             "version" + " " + getVersionString(
                 activity
@@ -69,6 +72,7 @@ class AboutPreferenceFragment : Fragment() {
         setString(fullAppName, R.string.settings_about_title, null)
         setString(terms, R.string.terms_about, null)
         setString(center, R.string.privacy_center_about, null)
+        setString(supportCenter, R.string.support_about, null)
     }
 
     private fun setString(TextView: TextView?, strId: Int, str: String?) {

@@ -33,6 +33,7 @@
             android:layout_weight="3"
             android:clickable="false"
             android:gravity="center_horizontal|bottom"
+            android:textColor="@android:color/black"
             android:textSize="20dp" />
 
         <TextView
@@ -43,6 +44,7 @@
             android:clickable="false"
             android:gravity="center"
             android:text="@string/version"
+            android:textColor="@android:color/black"
             android:textSize="14dp" />
 
 
@@ -59,6 +61,17 @@
 
         <TextView
             android:id="@+id/terms"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical|start"
+            android:paddingStart="60dp"
+            android:text="@string/terms"
+            android:textColorLink="@color/telemessage_color"
+            android:textSize="16dp" />
+
+        <TextView
+            android:id="@+id/TVSupportCenter"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"

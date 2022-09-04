@@ -1306,7 +1306,7 @@
     <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group and share your name and photo with its members? They won\'t know you\'ve seen their messages until you accept.</string>
     <string name="MessageRequestBottomView_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group? They won’t know you’ve seen their messages until you accept.</string>
     <string name="MessageRequestBottomView_unblock_this_group_and_share_your_name_and_photo_with_its_members">Unblock this group and share your name and photo with its members? You won\'t receive any messages until you unblock them.</string>
-    <string name="MessageRequestBottomView_legacy_learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007459591</string>
+    <string name="MessageRequestBottomView_legacy_learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
     <string name="MessageRequestProfileView_view">View</string>
     <string name="MessageRequestProfileView_member_of_one_group">Member of %1$s</string>
     <string name="MessageRequestProfileView_member_of_two_groups">Member of %1$s and %2$s</string>
@@ -1399,7 +1399,7 @@
     <string name="PinRestoreLockedFragment_create_your_pin">Create your PIN</string>
     <string name="PinRestoreLockedFragment_youve_run_out_of_pin_guesses">You\'ve run out of PIN guesses, but you can still access your TM SGNL account by creating a new PIN. For your privacy and security your account will be restored without any saved profile information or settings.</string>
     <string name="PinRestoreLockedFragment_create_new_pin">Create new PIN</string>
-    <string name="PinRestoreLockedFragment_learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
+    <string name="PinRestoreLockedFragment_learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- PinOptOutDialog -->
     <string name="PinOptOutDialog_warning">Warning</string>
@@ -2478,7 +2478,7 @@
     <string name="preferences__if_typing_indicators_are_disabled_you_wont_be_able_to_see_typing_indicators">If typing indicators are disabled, you won\'t be able to see typing indicators from others.</string>
     <string name="preferences__request_keyboard_to_disable">Request keyboard to disable personalized learning.</string>
     <string name="preferences__this_setting_is_not_a_guarantee">This setting is not a guarantee, and your keyboard may ignore it.</string>
-    <string name="preferences__incognito_keyboard_learn_more" translatable="false">https://support.signal.org/hc/articles/360055276112</string>
+    <string name="preferences__incognito_keyboard_learn_more" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
     <string name="preferences_app_protection__blocked_users">Blocked users</string>
     <string name="preferences_chats__when_using_mobile_data">When using mobile data</string>
     <string name="preferences_chats__when_using_wifi">When using Wi-Fi</string>
@@ -2672,7 +2672,7 @@
     <string name="PaymentsHomeFragment__payments_deactivated">Payments deactivated.</string>
     <string name="PaymentsHomeFragment__payment_failed">Payment failed</string>
     <string name="PaymentsHomeFragment__details">Details</string>
-    <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate </string>
+    <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
     <string name="PaymentsHomeFragment__you_can_use_signal_to_send">You can use TM SGNL to send and receive MobileCoin. All payments are subject to the Terms of Use for MobileCoins and the MobileCoin Wallet. This is a beta feature so you may encounter some issues and payments or balances you may lose can\'t be recovered. </string>
     <string name="PaymentsHomeFragment__activate">Activate</string>
     <string name="PaymentsHomeFragment__view_mobile_coin_terms">View MobileCoin terms</string>
@@ -2686,7 +2686,7 @@
     <string name="PaymentsAddMoneyFragment__copy">Copy</string>
     <string name="PaymentsAddMoneyFragment__copied_to_clipboard">Copied to clipboard</string>
     <string name="PaymentsAddMoneyFragment__to_add_funds">To add funds, send MobileCoin to your wallet address. Start a transaction from your account on an exchange that supports MobileCoin, then scan the QR code or copy your wallet address.</string>
-    <string name="PaymentsAddMoneyFragment__learn_more__information" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_transfer_from_exchange</string>
+    <string name="PaymentsAddMoneyFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- PaymentsDetailsFragment -->
     <string name="PaymentsDetailsFragment__details">Details</string>
@@ -2706,8 +2706,8 @@
     <string name="PaymentsDetailsFragment__coin_cleanup_fee">Coin cleanup fee</string>
     <string name="PaymentsDetailsFragment__coin_cleanup_information">A “coin cleanup fee” is charged when the coins in your possession can not be combined to complete a transaction. Cleanup will allow you to continue sending payments.</string>
     <string name="PaymentsDetailsFragment__no_details_available">No further details available for this transaction</string>
-    <string name="PaymentsDetailsFragment__learn_more__information" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_details</string>
-    <string name="PaymentsDetailsFragment__learn_more__cleanup_fee" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_details_fees</string>
+    <string name="PaymentsDetailsFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="PaymentsDetailsFragment__learn_more__cleanup_fee" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
     <string name="PaymentsDetailsFragment__sent_payment">Sent payment</string>
     <string name="PaymentsDetailsFragment__received_payment">Received payment</string>
     <string name="PaymentsDeatilsFragment__payment_completed_s">Payment completed %1$s</string>
@@ -2751,7 +2751,7 @@
     <string name="CreatePaymentFragment__backspace">Backspace</string>
     <string name="CreatePaymentFragment__add_note">Add note</string>
     <string name="CreatePaymentFragment__conversions_are_just_estimates">Conversions are just estimates and may not be accurate.</string>
-    <string name="CreatePaymentFragment__learn_more__conversions" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_currency_conversion</string>
+    <string name="CreatePaymentFragment__learn_more__conversions" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- EditNoteFragment -->
     <string name="EditNoteFragment_note">Note</string>
@@ -2954,7 +2954,7 @@
     <string name="BaseKbsPinFragment__next">Next</string>
     <string name="BaseKbsPinFragment__create_alphanumeric_pin">Create alphanumeric PIN</string>
     <string name="BaseKbsPinFragment__create_numeric_pin">Create numeric PIN</string>
-    <string name="BaseKbsPinFragment__learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
+    <string name="BaseKbsPinFragment__learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- CreateKbsPinFragment -->
     <plurals name="CreateKbsPinFragment__pin_must_be_at_least_characters">
@@ -2984,7 +2984,7 @@
     <string name="KbsSplashFragment__introducing_pins">Introducing PINs</string>
     <string name="KbsSplashFragment__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with TM SGNL encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won\'t need your PIN to open the app.</string>
     <string name="KbsSplashFragment__learn_more">Learn More</string>
-    <string name="KbsSplashFragment__learn_more_link" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
+    <string name="KbsSplashFragment__learn_more_link" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
     <string name="KbsSplashFragment__registration_lock_equals_pin">Registration Lock = PIN</string>
     <string name="KbsSplashFragment__your_registration_lock_is_now_called_a_pin">Your Registration Lock is now called a PIN, and it does more. Update it now.</string>
     <string name="KbsSplashFragment__update_pin">Update PIN</string>
@@ -3005,7 +3005,7 @@
     <string name="AccountLockedFragment__your_account_has_been_locked_to_protect_your_privacy">Your account has been locked to protect your privacy and security. After %1$d days of inactivity in your account you\'ll be able to re-register this phone number without needing your PIN. All content will be deleted.</string>
     <string name="AccountLockedFragment__next">Next</string>
     <string name="AccountLockedFragment__learn_more">Learn More</string>
-    <string name="AccountLockedFragment__learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
+    <string name="AccountLockedFragment__learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- KbsLockFragment -->
     <string name="RegistrationLockFragment__enter_your_pin">Enter your PIN</string>
@@ -3501,9 +3501,9 @@
     <string name="payment_info_card_with_a_high_balance">With a high balance, you may want to update to an alphanumeric PIN to add more protection to your account.</string>
     <string name="payment_info_card_update_pin">Update PIN</string>
 
-    <string name="payment_info_card__learn_more__about_mobilecoin" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_which_ones</string>
-    <string name="payment_info_card__learn_more__adding_to_your_wallet" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_transfer_from_exchange</string>
-    <string name="payment_info_card__learn_more__cashing_out" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_transfer_to_exchange</string>
+    <string name="payment_info_card__learn_more__about_mobilecoin" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="payment_info_card__learn_more__adding_to_your_wallet" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="payment_info_card__learn_more__cashing_out" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- DeactivateWalletFragment -->
     <string name="DeactivateWalletFragment__deactivate_wallet">Deactivate Wallet</string>
@@ -3515,7 +3515,7 @@
     <string name="DeactivateWalletFragment__deactivate_without_transferring_question">Deactivate without transferring?</string>
     <string name="DeactivateWalletFragment__your_balance_will_remain">Your balance will remain in your wallet linked to TM SGNL if you choose to reactivate payments.</string>
     <string name="DeactivateWalletFragment__error_deactivating_wallet">Error deactivating wallet.</string>
-    <string name="DeactivateWalletFragment__learn_more__we_recommend_transferring_your_funds" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_deactivate</string>
+    <string name="DeactivateWalletFragment__learn_more__we_recommend_transferring_your_funds" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- PaymentsRecoveryStartFragment -->
     <string name="PaymentsRecoveryStartFragment__recovery_phrase">Recovery phrase</string>
@@ -3534,8 +3534,8 @@
     <string name="PaymentsRecoveryPasteFragment__invalid_recovery_phrase">Invalid recovery phrase</string>
     <string name="PaymentsRecoveryPasteFragment__make_sure">Make sure you\'ve entered %1$d words and try again.</string>
 
-    <string name="PaymentsRecoveryStartFragment__learn_more__view" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_wallet_view_passphrase</string>
-    <string name="PaymentsRecoveryStartFragment__learn_more__restore" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_wallet_restore_passphrase</string>
+    <string name="PaymentsRecoveryStartFragment__learn_more__view" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="PaymentsRecoveryStartFragment__learn_more__restore" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- PaymentsRecoveryPhraseFragment -->
     <string name="PaymentsRecoveryPhraseFragment__next">Next</string>
@@ -3587,7 +3587,7 @@
     <string name="GroupsInCommonMessageRequest__none_of_your_contacts_or_people_you_chat_with_are_in_this_group">None of your contacts or people you chat with are in this group. Review requests carefully before accepting to avoid unwanted messages.</string>
     <string name="GroupsInCommonMessageRequest__about_message_requests">About message requests</string>
     <string name="GroupsInCommonMessageRequest__okay">Okay</string>
-    <string name="GroupsInCommonMessageRequest__support_article" translatable="false">https://support.signal.org/hc/articles/360007459591</string>
+    <string name="GroupsInCommonMessageRequest__support_article" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
     <string name="ChatColorSelectionFragment__heres_a_preview_of_the_chat_color">Here\'s a preview of the chat color.</string>
     <string name="ChatColorSelectionFragment__the_color_is_visible_to_only_you">The color is visible to only you.</string>
 
@@ -4269,6 +4269,7 @@
 
     <string name="privacy_center_about">&lt;a href=http://www.telemessage.com/Privacy-Policy/&gt;&lt;b>Privacy Center&lt;/b>&lt;/a&gt;</string>
     <string name="terms_about">&lt;a href=http://www.telemessage.com/terms-conditions/&gt;&lt;b>Terms Of Service&lt;/b>&lt;/a&gt;</string>
+    <string name="support_about">&lt;a href=https://www.telemessage.com/contact-us/&gt;&lt;b>Support Center&lt;/b>&lt;/a&gt;</string>
     <string name="version">version</string>
     <string name="privacy_center">privacy_center</string>
     <string name="terms">terms</string>
