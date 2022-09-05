@@ -2222,7 +2222,7 @@
     <string name="EditProfileFragment__edit_group">Edit group</string>
     <string name="EditProfileFragment__group_name">Group name</string>
     <string name="EditProfileFragment__group_description">Group description</string>
-    <string name="EditProfileFragment__support_link" translatable="false">https://www.telemessage.com/contact-us</string><!--//**TM_SA**//-->
+    <string name="EditProfileFragment__support_link" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
 
     <!-- EditProfileNameFragment -->
     <string name="EditProfileNameFragment_your_name">Your name</string>
