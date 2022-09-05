@@ -6,7 +6,7 @@
     <!--//**TM_SA**// START Change the URL's to our-->
     <string name="install_url" translatable="false">https://play.google.com/store/apps/details?id=org.tm.archive</string>
     <string name="donate_url" translatable="false">https://www.telemessage.com/faqs</string>
-    <string name="backup_support_url" translatable="false">https://www.telemessage.com/contact-us</string>
+    <string name="backup_support_url" translatable="false">https://www.telemessage.com/faqs</string>
     <string name="transfer_support_url" translatable="false">https://www.telemessage.com/contact-us</string>
     <string name="support_center_url" translatable="false">https://www.telemessage.com/contact-us</string>
     <string name="terms_and_privacy_policy_url" translatable="false">http://www.telemessage.com/Privacy-Policy</string>
