@@ -305,6 +305,12 @@ class ArchiveUtil {
         return arrayOf(Contact())
       }
 
+      //SIG-437 - Clean list from [FSI]*[PDI]
+      recipientListFromRecipient.forEachIndexed { index, contact ->
+        contact.firstName = contact.firstName.replace("\u2068", "").replace("\u2069","").replace("\u202c","")
+        contact.lastName = contact.lastName.replace("\u2068", "").replace("\u2069","").replace("\u202c","")
+      }
+
       return recipientListFromRecipient.toTypedArray()
     }
 
