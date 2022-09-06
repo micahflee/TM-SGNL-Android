@@ -68,7 +68,15 @@ public class StorageAccountRestoreJob extends BaseJob {
     StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
     Log.i(TAG, "Retrieving manifest...");
-    Optional<SignalStorageManifest> manifest = accountManager.getStorageManifest(storageServiceKey);
+    //**TM_SA**//Change the next code like this
+    Optional<SignalStorageManifest> manifest = null;
+    try {
+       manifest = accountManager.getStorageManifest(storageServiceKey);
+    }catch (Exception e){
+      ApplicationDependencies.getJobManager().add(new StorageForcePushJob());
+      return;
+    }
+    //**TM_SA**//
 
     if (!manifest.isPresent()) {
       Log.w(TAG, "Manifest did not exist or was undecryptable (bad key). Not restoring. Force-pushing.");
