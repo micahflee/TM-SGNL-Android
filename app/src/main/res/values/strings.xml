@@ -4267,7 +4267,7 @@
 
     <string name="settings_about_title">TM SGNL</string>
 
-    <string name="privacy_center_about">&lt;a href=http://www.telemessage.com/Privacy-Policy/&gt;&lt;b>Privacy Center&lt;/b>&lt;/a&gt;</string>
+    <string name="privacy_center_about">&lt;a href=https://www.sharonaintergreen.com/post/tm-sgnl-privacy-poilcy/&gt;&lt;b>Privacy Center&lt;/b>&lt;/a&gt;</string>
     <string name="terms_about">&lt;a href=http://www.telemessage.com/terms-conditions/&gt;&lt;b>Terms Of Service&lt;/b>&lt;/a&gt;</string>
     <string name="support_about">&lt;a href=https://www.telemessage.com/contact-us/&gt;&lt;b>Support Center&lt;/b>&lt;/a&gt;</string>
     <string name="version">version</string>
