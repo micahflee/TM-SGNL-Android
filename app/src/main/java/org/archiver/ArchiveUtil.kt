@@ -250,9 +250,9 @@ class ArchiveUtil {
       isInboxArchiveMessage: Boolean
     ): Contact {
       return if (isInboxArchiveMessage) {
-        Contact(recipient.getDisplayName(context))
+        Contact(recipient.getDisplayName(context)).cleanContactNameFromUnUsedCharacters()
       } else {
-        Contact(Recipient.self().profileName.toString())
+        Contact(Recipient.self().profileName.toString()).cleanContactNameFromUnUsedCharacters()
       }
 
     }
@@ -307,8 +307,8 @@ class ArchiveUtil {
 
       //SIG-437 - Clean list from [FSI]*[PDI]
       recipientListFromRecipient.forEachIndexed { index, contact ->
-        contact.firstName = contact.firstName.replace("\u2068", "").replace("\u2069","").replace("\u202c","")
-        contact.lastName = contact.lastName.replace("\u2068", "").replace("\u2069","").replace("\u202c","")
+        contact.firstName = contact.cleanContactNameFromUnUsedCharacters().firstName
+        contact.lastName = contact.cleanContactNameFromUnUsedCharacters().lastName
       }
 
       return recipientListFromRecipient.toTypedArray()
@@ -590,6 +590,12 @@ class ArchiveUtil {
       }.start()
 
 
+    }
+
+    fun Contact.cleanContactNameFromUnUsedCharacters() : Contact{
+        this.firstName = this.firstName.replace("\u2068", "").replace("\u2069","").replace("\u202c","")
+        this.lastName = this.lastName.replace("\u2068", "").replace("\u2069","").replace("\u202c","")
+      return this
     }
   }
 
