@@ -20,11 +20,8 @@ class ArchiveConstants {
         const val integration = "https://integration.telemessage.co.il"
         const val integrationKeeper = "https://api-gateway-integration.devops.telemessage.co.il"
 
-      /*  const val charlieProduction = "https://rest.telemessage.com"
-        const val prodKeeper = "https://archive.telemessage.com"*/
-
-      const val charlieProduction = "https://integration.telemessage.co.il"
-      const val prodKeeper = "https://api-gateway-integration.devops.telemessage.co.il"
+        const val charlieProduction = "https://rest.telemessage.com"
+        const val prodKeeper = "https://archive.telemessage.com"
 
         const val ARCHIVE_TYPE_APP_MESSAGE = "Signal message"
         const val ARCHIVE_TYPE_SMS = "SMS"
