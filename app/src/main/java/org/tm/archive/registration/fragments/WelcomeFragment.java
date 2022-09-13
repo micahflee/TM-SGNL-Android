@@ -25,13 +25,20 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.dd.CircularProgressButton;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.tm.androidcopysdk.BackupService;
+import com.tm.androidcopysdk.CommonUtils;
+import com.tm.androidcopysdk.utils.PrefManager;
+import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 import com.tm.authenticatorsdk.selfAuthenticator.api.ApiUtil;
 
 import org.archive.selfAuthentication.SelfAuthenticatorConstants;
+import org.archiver.ArchiveConstants;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.signal.devicetransfer.DeviceToDeviceTransferService;
 import org.signal.devicetransfer.TransferStatus;
+import org.tm.archive.ApplicationContext;
+import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
@@ -156,8 +163,21 @@ public final class WelcomeFragment extends LoggingFragment {
    //**TM_SA**// START
     if (!environmentAlreadySelected) {
       ApiUtil.Companion.selectServerEnvironment(getContext());
-      environmentAlreadySelected = true; //but if it's really pressed move to ab
-    } else {    //**TM_SA**// END
+      environmentAlreadySelected = true;
+    } else {
+
+      if(BuildConfig.DEBUG){
+        if(CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)){
+          CommonUtils.stopBackupService(ApplicationContext.getInstance());
+        }
+
+        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, AuthenticatorConstants.Companion.getBASE_URL().getFirst());
+        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, AuthenticatorConstants.Companion.getBASE_URL().getSecond());
+
+        CommonUtils.setUrl(ApplicationContext.getInstance(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
+        CommonUtils.startBackupService(ApplicationContext.getInstance());
+      }
+      //**TM_SA**// END
       Permissions.with(this)
                  .request(getContinuePermissions(isUserSelectionRequired))
                  .ifNecessary()
