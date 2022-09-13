@@ -1437,6 +1437,29 @@ public final class MessageContentProcessor {
         archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.STICKER, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), filesToArchive);
       }else if(mediaMessage.getMentions().size() > 0){
         archiveInboxMediaMessage(ArchiveUtil.InboxArchiveTypes.MENTIONS, groupTitle, recipient, recipientList, mediaMessage, insertResult.get().getMessageId(), null);
+      }else if(message.getPreviews() != null && message.getPreviews().isPresent() && message.getPreviews().get().size() > 0){
+        //For a hyper link without image preview  - Converted this message to be text message.(SIG-189)
+        IncomingTextMessage textMessage = new IncomingTextMessage(senderRecipient.getId(),
+                content.getSenderDevice(),
+                message.getTimestamp(),
+                content.getServerReceivedTimestamp(),
+                receivedTime,
+                message.getBody().get(),
+                groupId,
+                TimeUnit.SECONDS.toMillis(message.getExpiresInSeconds()),
+                content.isNeedsReceipt(),
+                content.getServerUuid());
+
+        Recipient recipientSender = Recipient.resolved(textMessage.getSender());
+        Recipient groupRecipient;
+
+        if (textMessage.getGroupId() == null) {
+          groupRecipient = null;
+        } else {
+          RecipientId recipientId = SignalDatabase.recipients().getOrInsertFromPossiblyMigratedGroupId(textMessage.getGroupId());
+          groupRecipient = Recipient.resolved(recipientId);
+        }
+        ArchiveSender.Companion.archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, (groupRecipient != null && groupRecipient.isGroup()) ? groupRecipient : recipientSender, textMessage, insertResult.get().getMessageId(), groupTitle);
       }
 
       //**TM_SA**//End

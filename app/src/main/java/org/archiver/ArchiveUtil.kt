@@ -209,7 +209,7 @@ class ArchiveUtil {
         if (groupTitle.isNotEmpty()) {
           groupTitle
         } else {
-          recipient.getGroupName(context)!!
+          recipient.getGroupName(context) ?: ""
         }
       } else {
         ""
