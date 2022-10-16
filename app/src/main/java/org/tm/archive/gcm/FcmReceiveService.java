@@ -35,7 +35,7 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.registration.PushChallengeRequest;
 
 import java.util.Locale;
-
+//**TM_SA**//Add this interface - IOnCredentialsArrived
 public class FcmReceiveService extends FirebaseMessagingService implements IOnCredentialsArrived{
 
   private static final String TAG = Log.tag(FcmReceiveService.class);
