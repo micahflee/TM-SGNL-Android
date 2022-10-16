@@ -12,24 +12,32 @@ import org.signal.core.util.money.FiatMoney
 import org.signal.donations.GooglePayApi
 import org.signal.donations.GooglePayPaymentSource
 import org.signal.donations.StripeApi
-import org.tm.archive.R
+import org.tm.archive.components.settings.app.subscription.errors.DonationError
+import org.tm.archive.components.settings.app.subscription.errors.DonationErrorSource
+import org.tm.archive.database.RecipientDatabase
 import org.tm.archive.database.SignalDatabase
+import org.tm.archive.database.model.DonationReceiptRecord
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobmanager.JobTracker
 import org.tm.archive.jobs.BoostReceiptRequestResponseJob
 import org.tm.archive.jobs.SubscriptionReceiptRequestResponseJob
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.recipients.RecipientId
 import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.subscription.LevelUpdate
 import org.tm.archive.subscription.LevelUpdateOperation
 import org.tm.archive.subscription.Subscriber
 import org.tm.archive.util.Environment
+import org.tm.archive.util.ProfileUtil
+import org.whispersystems.signalservice.api.profiles.SignalServiceProfile
 import org.whispersystems.signalservice.api.subscriptions.IdempotencyKey
 import org.whispersystems.signalservice.api.subscriptions.SubscriberId
 import org.whispersystems.signalservice.api.subscriptions.SubscriptionClientSecret
 import org.whispersystems.signalservice.internal.EmptyResponse
 import org.whispersystems.signalservice.internal.ServiceResponse
+import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -44,7 +52,7 @@ import java.util.concurrent.TimeUnit
  * 1. Confirm the SetupIntent via the Stripe API
  * 1. Set the default PaymentMethod for the customer, using the PaymentMethod id, via the Signal service
  *
- * For Boosts:
+ * For Boosts and Gifts:
  * 1. Ask GooglePay for a payment token. This will pop up the Google Pay Sheet, which allows the user to select a payment method.
  * 1. Create a PaymentIntent via the Stripe API
  * 1. Create a PaymentMethod vai the Stripe API, utilizing the token from Google Pay
@@ -52,11 +60,8 @@ import java.util.concurrent.TimeUnit
  */
 class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFetcher, StripeApi.SetupIntentHelper {
 
-  private val application = activity.application
   private val googlePayApi = GooglePayApi(activity, StripeApi.Gateway(Environment.Donations.STRIPE_CONFIGURATION), Environment.Donations.GOOGLE_PAY_CONFIGURATION)
   private val stripeApi = StripeApi(Environment.Donations.STRIPE_CONFIGURATION, this, this, ApplicationDependencies.getOkHttpClient())
-
-  fun isGooglePayAvailable(): Completable = googlePayApi.queryIsReadyToPay()
 
   fun scheduleSyncForAccountRecordChange() {
     SignalExecutors.BOUNDED.execute {
@@ -85,19 +90,70 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
     googlePayApi.onActivityResult(requestCode, resultCode, data, expectedRequestCode, paymentsRequestCallback)
   }
 
-  fun continuePayment(price: FiatMoney, paymentData: PaymentData): Completable {
+  /**
+   * Verifies that the given recipient is a supported target for a gift.
+   */
+  fun verifyRecipientIsAllowedToReceiveAGift(badgeRecipient: RecipientId): Completable {
+    return Completable.fromAction {
+      Log.d(TAG, "Verifying badge recipient $badgeRecipient", true)
+      val recipient = Recipient.resolved(badgeRecipient)
+
+      if (recipient.isSelf) {
+        Log.d(TAG, "Cannot send a gift to self.", true)
+        throw DonationError.GiftRecipientVerificationError.SelectedRecipientDoesNotSupportGifts
+      }
+
+      if (recipient.isGroup || recipient.isDistributionList || recipient.registered != RecipientDatabase.RegisteredState.REGISTERED) {
+        Log.w(TAG, "Invalid badge recipient $badgeRecipient. Verification failed.", true)
+        throw DonationError.GiftRecipientVerificationError.SelectedRecipientIsInvalid
+      }
+
+      try {
+        val profile = ProfileUtil.retrieveProfileSync(ApplicationDependencies.getApplication(), recipient, SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL)
+        if (!profile.profile.capabilities.isGiftBadges) {
+          Log.w(TAG, "Badge recipient does not support gifting. Verification failed.", true)
+          throw DonationError.GiftRecipientVerificationError.SelectedRecipientDoesNotSupportGifts
+        } else {
+          Log.d(TAG, "Badge recipient supports gifting. Verification successful.", true)
+        }
+      } catch (e: IOException) {
+        Log.w(TAG, "Failed to retrieve profile for recipient.", e, true)
+        throw DonationError.GiftRecipientVerificationError.FailedToFetchProfile(e)
+      }
+    }.subscribeOn(Schedulers.io())
+  }
+
+  /**
+   * @param price             The amount to charce the local user
+   * @param paymentData       PaymentData from Google Pay that describes the payment method
+   * @param badgeRecipient    Who will be getting the badge
+   * @param additionalMessage An additional message to send along with the badge (only used if badge recipient is not self)
+   */
+  fun continuePayment(price: FiatMoney, paymentData: PaymentData, badgeRecipient: RecipientId, additionalMessage: String?, badgeLevel: Long): Completable {
     Log.d(TAG, "Creating payment intent for $price...", true)
-    return stripeApi.createPaymentIntent(price, application.getString(R.string.Boost__thank_you_for_your_donation))
-      .onErrorResumeNext { Single.error(DonationExceptions.SetupFailed(it)) }
-      .flatMapCompletable { result ->
-        Log.d(TAG, "Created payment intent for $price.", true)
-        when (result) {
-          is StripeApi.CreatePaymentIntentResult.AmountIsTooSmall -> Completable.error(DonationExceptions.SetupFailed(Exception("Boost amount is too small")))
-          is StripeApi.CreatePaymentIntentResult.AmountIsTooLarge -> Completable.error(DonationExceptions.SetupFailed(Exception("Boost amount is too large")))
-          is StripeApi.CreatePaymentIntentResult.CurrencyIsNotSupported -> Completable.error(DonationExceptions.SetupFailed(Exception("Boost currency is not supported")))
-          is StripeApi.CreatePaymentIntentResult.Success -> confirmPayment(paymentData, result.paymentIntent)
+
+    return stripeApi.createPaymentIntent(price, badgeLevel)
+      .onErrorResumeNext {
+        if (it is DonationError) {
+          Single.error(it)
+        } else {
+          val recipient = Recipient.resolved(badgeRecipient)
+          val errorSource = if (recipient.isSelf) DonationErrorSource.BOOST else DonationErrorSource.GIFT
+          Single.error(DonationError.getPaymentSetupError(errorSource, it))
         }
       }
+      .flatMapCompletable { result ->
+        val recipient = Recipient.resolved(badgeRecipient)
+        val errorSource = if (recipient.isSelf) DonationErrorSource.BOOST else DonationErrorSource.GIFT
+
+        Log.d(TAG, "Created payment intent for $price.", true)
+        when (result) {
+          is StripeApi.CreatePaymentIntentResult.AmountIsTooSmall -> Completable.error(DonationError.oneTimeDonationAmountTooSmall(errorSource))
+          is StripeApi.CreatePaymentIntentResult.AmountIsTooLarge -> Completable.error(DonationError.oneTimeDonationAmountTooLarge(errorSource))
+          is StripeApi.CreatePaymentIntentResult.CurrencyIsNotSupported -> Completable.error(DonationError.invalidCurrencyForOneTimeDonation(errorSource))
+          is StripeApi.CreatePaymentIntentResult.Success -> confirmPayment(price, paymentData, result.paymentIntent, badgeRecipient, additionalMessage, badgeLevel)
+        }
+      }.subscribeOn(Schedulers.io())
   }
 
   fun continueSubscriptionSetup(paymentData: PaymentData): Completable {
@@ -114,8 +170,12 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
   fun cancelActiveSubscription(): Completable {
     Log.d(TAG, "Canceling active subscription...", true)
     val localSubscriber = SignalStore.donationsValues().requireSubscriber()
-    return ApplicationDependencies.getDonationsService()
-      .cancelSubscription(localSubscriber.subscriberId)
+    return Single
+      .fromCallable {
+        ApplicationDependencies.getDonationsService()
+          .cancelSubscription(localSubscriber.subscriberId)
+      }
+      .subscribeOn(Schedulers.io())
       .flatMap(ServiceResponse<EmptyResponse>::flattenResult)
       .ignoreElement()
       .doOnComplete { Log.d(TAG, "Cancelled active subscription.", true) }
@@ -124,9 +184,13 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
   fun ensureSubscriberId(): Completable {
     Log.d(TAG, "Ensuring SubscriberId exists on Signal service...", true)
     val subscriberId = SignalStore.donationsValues().getSubscriber()?.subscriberId ?: SubscriberId.generate()
-    return ApplicationDependencies
-      .getDonationsService()
-      .putSubscription(subscriberId)
+    return Single
+      .fromCallable {
+        ApplicationDependencies
+          .getDonationsService()
+          .putSubscription(subscriberId)
+      }
+      .subscribeOn(Schedulers.io())
       .flatMap(ServiceResponse<EmptyResponse>::flattenResult).ignoreElement()
       .doOnComplete {
         Log.d(TAG, "Successfully set SubscriberId exists on Signal service.", true)
@@ -139,16 +203,36 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
       }
   }
 
-  private fun confirmPayment(paymentData: PaymentData, paymentIntent: StripeApi.PaymentIntent): Completable {
+  private fun confirmPayment(price: FiatMoney, paymentData: PaymentData, paymentIntent: StripeApi.PaymentIntent, badgeRecipient: RecipientId, additionalMessage: String?, badgeLevel: Long): Completable {
+    val isBoost = badgeRecipient == Recipient.self().id
+    val donationErrorSource: DonationErrorSource = if (isBoost) DonationErrorSource.BOOST else DonationErrorSource.GIFT
+
     Log.d(TAG, "Confirming payment intent...", true)
-    val confirmPayment = stripeApi.confirmPaymentIntent(GooglePayPaymentSource(paymentData), paymentIntent)
+    val confirmPayment = stripeApi.confirmPaymentIntent(GooglePayPaymentSource(paymentData), paymentIntent).onErrorResumeNext {
+      Completable.error(DonationError.getPaymentSetupError(donationErrorSource, it))
+    }
+
     val waitOnRedemption = Completable.create {
-      Log.d(TAG, "Confirmed payment intent.", true)
+      val donationReceiptRecord = if (isBoost) {
+        DonationReceiptRecord.createForBoost(price)
+      } else {
+        DonationReceiptRecord.createForGift(price)
+      }
+
+      val donationTypeLabel = donationReceiptRecord.type.code.replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase(Locale.US) else c.toString() }
+
+      Log.d(TAG, "Confirmed payment intent. Recording $donationTypeLabel receipt and submitting badge reimbursement job chain.", true)
+      SignalDatabase.donationReceipts.addReceipt(donationReceiptRecord)
 
       val countDownLatch = CountDownLatch(1)
       var finalJobState: JobTracker.JobState? = null
+      val chain = if (isBoost) {
+        BoostReceiptRequestResponseJob.createJobChainForBoost(paymentIntent)
+      } else {
+        BoostReceiptRequestResponseJob.createJobChainForGift(paymentIntent, badgeRecipient, additionalMessage, badgeLevel)
+      }
 
-      BoostReceiptRequestResponseJob.createJobChain(paymentIntent).enqueue { _, jobState ->
+      chain.enqueue { _, jobState ->
         if (jobState.isComplete) {
           finalJobState = jobState
           countDownLatch.countDown()
@@ -159,25 +243,25 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
         if (countDownLatch.await(10, TimeUnit.SECONDS)) {
           when (finalJobState) {
             JobTracker.JobState.SUCCESS -> {
-              Log.d(TAG, "Boost request response job chain succeeded.", true)
+              Log.d(TAG, "$donationTypeLabel request response job chain succeeded.", true)
               it.onComplete()
             }
             JobTracker.JobState.FAILURE -> {
-              Log.d(TAG, "Boost request response job chain failed permanently.", true)
-              it.onError(DonationExceptions.RedemptionFailed)
+              Log.d(TAG, "$donationTypeLabel request response job chain failed permanently.", true)
+              it.onError(DonationError.genericBadgeRedemptionFailure(donationErrorSource))
             }
             else -> {
-              Log.d(TAG, "Boost request response job chain ignored due to in-progress jobs.", true)
-              it.onError(DonationExceptions.TimedOutWaitingForTokenRedemption)
+              Log.d(TAG, "$donationTypeLabel request response job chain ignored due to in-progress jobs.", true)
+              it.onError(DonationError.timeoutWaitingForToken(donationErrorSource))
             }
           }
         } else {
-          Log.d(TAG, "Boost redemption timed out waiting for job completion.", true)
-          it.onError(DonationExceptions.TimedOutWaitingForTokenRedemption)
+          Log.d(TAG, "$donationTypeLabel job chain timed out waiting for job completion.", true)
+          it.onError(DonationError.timeoutWaitingForToken(donationErrorSource))
         }
       } catch (e: InterruptedException) {
-        Log.d(TAG, "Boost redemption job interrupted", e, true)
-        it.onError(DonationExceptions.TimedOutWaitingForTokenRedemption)
+        Log.d(TAG, "$donationTypeLabel job chain interrupted", e, true)
+        it.onError(DonationError.timeoutWaitingForToken(donationErrorSource))
       }
     }
 
@@ -190,68 +274,71 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
         val subscriber = SignalStore.donationsValues().requireSubscriber()
 
         Log.d(TAG, "Attempting to set user subscription level to $subscriptionLevel", true)
-        ApplicationDependencies.getDonationsService().updateSubscriptionLevel(
-          subscriber.subscriberId,
-          subscriptionLevel,
-          subscriber.currencyCode,
-          levelUpdateOperation.idempotencyKey.serialize(),
-          SubscriptionReceiptRequestResponseJob.MUTEX
-        ).flatMapCompletable {
-          if (it.status == 200 || it.status == 204) {
-            Log.d(TAG, "Successfully set user subscription to level $subscriptionLevel with response code ${it.status}", true)
-            SignalStore.donationsValues().clearUserManuallyCancelled()
-            scheduleSyncForAccountRecordChange()
-            SignalStore.donationsValues().clearLevelOperations()
-            LevelUpdate.updateProcessingState(false)
-            Completable.complete()
-          } else {
-            if (it.applicationError.isPresent) {
-              Log.w(TAG, "Failed to set user subscription to level $subscriptionLevel with response code ${it.status}", it.applicationError.get(), true)
-              SignalStore.donationsValues().clearLevelOperations()
+        Single
+          .fromCallable {
+            ApplicationDependencies.getDonationsService().updateSubscriptionLevel(
+              subscriber.subscriberId,
+              subscriptionLevel,
+              subscriber.currencyCode,
+              levelUpdateOperation.idempotencyKey.serialize(),
+              SubscriptionReceiptRequestResponseJob.MUTEX
+            )
+          }
+          .flatMapCompletable {
+            if (it.status == 200 || it.status == 204) {
+              Log.d(TAG, "Successfully set user subscription to level $subscriptionLevel with response code ${it.status}", true)
+              SignalStore.donationsValues().updateLocalStateForLocalSubscribe()
+              scheduleSyncForAccountRecordChange()
+              LevelUpdate.updateProcessingState(false)
+              Completable.complete()
             } else {
-              Log.w(TAG, "Failed to set user subscription to level $subscriptionLevel", it.executionError.orNull(), true)
-            }
-
-            LevelUpdate.updateProcessingState(false)
-            it.flattenResult().ignoreElement()
-          }
-        }.andThen {
-          Log.d(TAG, "Enqueuing request response job chain.", true)
-          val countDownLatch = CountDownLatch(1)
-          var finalJobState: JobTracker.JobState? = null
-
-          SubscriptionReceiptRequestResponseJob.createSubscriptionContinuationJobChain().enqueue { _, jobState ->
-            if (jobState.isComplete) {
-              finalJobState = jobState
-              countDownLatch.countDown()
-            }
-          }
-
-          try {
-            if (countDownLatch.await(10, TimeUnit.SECONDS)) {
-              when (finalJobState) {
-                JobTracker.JobState.SUCCESS -> {
-                  Log.d(TAG, "Subscription request response job chain succeeded.", true)
-                  it.onComplete()
-                }
-                JobTracker.JobState.FAILURE -> {
-                  Log.d(TAG, "Subscription request response job chain failed permanently.", true)
-                  it.onError(DonationExceptions.RedemptionFailed)
-                }
-                else -> {
-                  Log.d(TAG, "Subscription request response job chain ignored due to in-progress jobs.", true)
-                  it.onError(DonationExceptions.TimedOutWaitingForTokenRedemption)
-                }
+              if (it.applicationError.isPresent) {
+                Log.w(TAG, "Failed to set user subscription to level $subscriptionLevel with response code ${it.status}", it.applicationError.get(), true)
+                SignalStore.donationsValues().clearLevelOperations()
+              } else {
+                Log.w(TAG, "Failed to set user subscription to level $subscriptionLevel", it.executionError.orElse(null), true)
               }
-            } else {
-              Log.d(TAG, "Subscription request response job timed out.", true)
-              it.onError(DonationExceptions.TimedOutWaitingForTokenRedemption)
+
+              LevelUpdate.updateProcessingState(false)
+              it.flattenResult().ignoreElement()
             }
-          } catch (e: InterruptedException) {
-            Log.w(TAG, "Subscription request response interrupted.", e, true)
-            it.onError(DonationExceptions.TimedOutWaitingForTokenRedemption)
+          }.andThen {
+            Log.d(TAG, "Enqueuing request response job chain.", true)
+            val countDownLatch = CountDownLatch(1)
+            var finalJobState: JobTracker.JobState? = null
+
+            SubscriptionReceiptRequestResponseJob.createSubscriptionContinuationJobChain().enqueue { _, jobState ->
+              if (jobState.isComplete) {
+                finalJobState = jobState
+                countDownLatch.countDown()
+              }
+            }
+
+            try {
+              if (countDownLatch.await(10, TimeUnit.SECONDS)) {
+                when (finalJobState) {
+                  JobTracker.JobState.SUCCESS -> {
+                    Log.d(TAG, "Subscription request response job chain succeeded.", true)
+                    it.onComplete()
+                  }
+                  JobTracker.JobState.FAILURE -> {
+                    Log.d(TAG, "Subscription request response job chain failed permanently.", true)
+                    it.onError(DonationError.genericBadgeRedemptionFailure(DonationErrorSource.SUBSCRIPTION))
+                  }
+                  else -> {
+                    Log.d(TAG, "Subscription request response job chain ignored due to in-progress jobs.", true)
+                    it.onError(DonationError.timeoutWaitingForToken(DonationErrorSource.SUBSCRIPTION))
+                  }
+                }
+              } else {
+                Log.d(TAG, "Subscription request response job timed out.", true)
+                it.onError(DonationError.timeoutWaitingForToken(DonationErrorSource.SUBSCRIPTION))
+              }
+            } catch (e: InterruptedException) {
+              Log.w(TAG, "Subscription request response interrupted.", e, true)
+              it.onError(DonationError.timeoutWaitingForToken(DonationErrorSource.SUBSCRIPTION))
+            }
           }
-        }
       }.doOnError {
         LevelUpdate.updateProcessingState(false)
       }.subscribeOn(Schedulers.io())
@@ -277,11 +364,14 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
     }
   }
 
-  override fun fetchPaymentIntent(price: FiatMoney, description: String?): Single<StripeApi.PaymentIntent> {
+  override fun fetchPaymentIntent(price: FiatMoney, level: Long): Single<StripeApi.PaymentIntent> {
     Log.d(TAG, "Fetching payment intent from Signal service for $price... (Locale.US minimum precision: ${price.minimumUnitPrecisionString})")
-    return ApplicationDependencies
-      .getDonationsService()
-      .createDonationIntentWithAmount(price.minimumUnitPrecisionString, price.currency.currencyCode, description)
+    return Single
+      .fromCallable {
+        ApplicationDependencies
+          .getDonationsService()
+          .createDonationIntentWithAmount(price.minimumUnitPrecisionString, price.currency.currencyCode, level)
+      }
       .flatMap(ServiceResponse<SubscriptionClientSecret>::flattenResult)
       .map {
         StripeApi.PaymentIntent(it.id, it.clientSecret)
@@ -293,7 +383,13 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
   override fun fetchSetupIntent(): Single<StripeApi.SetupIntent> {
     Log.d(TAG, "Fetching setup intent from Signal service...")
     return Single.fromCallable { SignalStore.donationsValues().requireSubscriber() }
-      .flatMap { ApplicationDependencies.getDonationsService().createSubscriptionPaymentMethod(it.subscriberId) }
+      .flatMap {
+        Single.fromCallable {
+          ApplicationDependencies
+            .getDonationsService()
+            .createSubscriptionPaymentMethod(it.subscriberId)
+        }
+      }
       .flatMap(ServiceResponse<SubscriptionClientSecret>::flattenResult)
       .map { StripeApi.SetupIntent(it.id, it.clientSecret) }
       .doOnSuccess {
@@ -306,7 +402,11 @@ class DonationPaymentRepository(activity: Activity) : StripeApi.PaymentIntentFet
     return Single.fromCallable {
       SignalStore.donationsValues().requireSubscriber()
     }.flatMap {
-      ApplicationDependencies.getDonationsService().setDefaultPaymentMethodId(it.subscriberId, paymentMethodId)
+      Single.fromCallable {
+        ApplicationDependencies
+          .getDonationsService()
+          .setDefaultPaymentMethodId(it.subscriberId, paymentMethodId)
+      }
     }.flatMap(ServiceResponse<EmptyResponse>::flattenResult).ignoreElement().doOnComplete {
       Log.d(TAG, "Set default payment method via Signal service!")
     }

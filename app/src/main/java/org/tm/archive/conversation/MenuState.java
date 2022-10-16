@@ -7,6 +7,7 @@ import org.tm.archive.database.model.MediaMmsMessageRecord;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.util.MessageRecordUtil;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,7 +23,6 @@ final class MenuState {
   private final boolean resend;
   private final boolean copy;
   private final boolean delete;
-  private final boolean info;
   private final boolean reactions;
 
   private MenuState(@NonNull Builder builder) {
@@ -33,7 +33,6 @@ final class MenuState {
     resend         = builder.resend;
     copy           = builder.copy;
     delete         = builder.delete;
-    info           = builder.info;
     reactions      = builder.reactions;
   }
 
@@ -65,10 +64,6 @@ final class MenuState {
     return delete;
   }
 
-  boolean shouldShowInfoAction() {
-    return info;
-  }
-
   boolean shouldShowReactions() {
     return reactions;
   }
@@ -88,6 +83,7 @@ final class MenuState {
     boolean hasInMemory     = false;
     boolean hasPendingMedia = false;
     boolean mediaIsSelected = false;
+    boolean hasGift         = false;
 
     for (MultiselectPart part : selectedParts) {
       MessageRecord messageRecord = part.getMessageRecord();
@@ -121,6 +117,10 @@ final class MenuState {
       if (messageRecord.isRemoteDelete()) {
         remoteDelete = true;
       }
+
+      if (MessageRecordUtil.hasGiftBadge(messageRecord)) {
+        hasGift = true;
+      }
     }
 
     boolean shouldShowForwardAction = !actionMessage   &&
@@ -128,6 +128,7 @@ final class MenuState {
                                       !viewOnce        &&
                                       !remoteDelete    &&
                                       !hasPendingMedia &&
+                                      !hasGift         &&
                                       selectedParts.size() <= MAX_FORWARDABLE_COUNT;
 
     int uniqueRecords = selectedParts.stream()
@@ -150,17 +151,17 @@ final class MenuState {
                                              !viewOnce                                                   &&
                                              messageRecord.isMms()                                       &&
                                              !hasPendingMedia                                            &&
+                                             !hasGift                                                    &&
                                              !messageRecord.isMmsNotification()                          &&
                                              ((MediaMmsMessageRecord)messageRecord).containsMediaSlide() &&
                                              ((MediaMmsMessageRecord)messageRecord).getSlideDeck().getStickerSlide() == null)
              .shouldShowForwardAction(shouldShowForwardAction)
-             .shouldShowDetailsAction(!actionMessage)
+             .shouldShowDetailsAction(!actionMessage && !conversationRecipient.isReleaseNotes())
              .shouldShowReplyAction(canReplyToMessage(conversationRecipient, actionMessage, messageRecord, shouldShowMessageRequest, isNonAdminInAnnouncementGroup));
     }
 
-    return builder.shouldShowCopyAction(!actionMessage && !remoteDelete && hasText)
+    return builder.shouldShowCopyAction(!actionMessage && !remoteDelete && hasText && !hasGift)
                   .shouldShowDeleteAction(!hasInMemory && onlyContainsCompleteMessages(selectedParts))
-                  .shouldShowInfoAction(!conversationRecipient.isReleaseNotes())
                   .shouldShowReactions(!conversationRecipient.isReleaseNotes())
                   .build();
   }
@@ -216,7 +217,6 @@ final class MenuState {
     private boolean resend;
     private boolean copy;
     private boolean delete;
-    private boolean info;
     private boolean reactions;
 
     @NonNull Builder shouldShowForwardAction(boolean forward) {
@@ -251,11 +251,6 @@ final class MenuState {
 
     @NonNull Builder shouldShowDeleteAction(boolean delete) {
       this.delete = delete;
-      return this;
-    }
-
-    @NonNull Builder shouldShowInfoAction(boolean info) {
-      this.info = info;
       return this;
     }
 

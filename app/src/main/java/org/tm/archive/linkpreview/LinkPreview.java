@@ -11,9 +11,9 @@ import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.util.JsonUtils;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class LinkPreview {
 
@@ -61,10 +61,10 @@ public class LinkPreview {
   {
     this.url          = url;
     this.title        = title;
-    this.description  = Optional.fromNullable(description).or("");
+    this.description  = Optional.ofNullable(description).orElse("");
     this.date         = date;
     this.attachmentId = attachmentId;
-    this.thumbnail    = Optional.absent();
+    this.thumbnail    = Optional.empty();
   }
 
   public @NonNull String getUrl() {

@@ -3,9 +3,11 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.SignalProtocolAddress;
+import org.signal.libsignal.protocol.message.SenderKeyDistributionMessage;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.DistributionListRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
@@ -14,9 +16,6 @@ import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
-import org.whispersystems.libsignal.SignalProtocolAddress;
-import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
@@ -25,6 +24,7 @@ import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -39,33 +39,33 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
 
   public static final String KEY = "SenderKeyDistributionSendJob";
 
-  private static final String KEY_RECIPIENT_ID = "recipient_id";
-  private static final String KEY_GROUP_ID     = "group_id";
+  private static final String KEY_TARGET_RECIPIENT_ID = "recipient_id";
+  private static final String KEY_THREAD_RECIPIENT_ID = "thread_recipient_id";
 
-  private final RecipientId recipientId;
-  private final GroupId.V2  groupId;
+  private final RecipientId targetRecipientId;
+  private final RecipientId threadRecipientId;
 
-  public SenderKeyDistributionSendJob(@NonNull RecipientId recipientId, @NonNull GroupId.V2 groupId) {
-    this(recipientId, groupId, new Parameters.Builder()
-                                             .setQueue(recipientId.toQueueKey())
-                                             .addConstraint(NetworkConstraint.KEY)
-                                             .setLifespan(TimeUnit.DAYS.toMillis(1))
-                                             .setMaxAttempts(Parameters.UNLIMITED)
-                                             .setMaxInstancesForQueue(1)
-                                             .build());
+  public SenderKeyDistributionSendJob(@NonNull RecipientId targetRecipientId, RecipientId threadRecipientId) {
+    this(targetRecipientId, threadRecipientId, new Parameters.Builder()
+                                                             .setQueue(targetRecipientId.toQueueKey())
+                                                             .addConstraint(NetworkConstraint.KEY)
+                                                             .setLifespan(TimeUnit.DAYS.toMillis(1))
+                                                             .setMaxAttempts(Parameters.UNLIMITED)
+                                                             .setMaxInstancesForQueue(1)
+                                                             .build());
   }
 
-  private SenderKeyDistributionSendJob(@NonNull RecipientId recipientId, @NonNull GroupId.V2 groupId, @NonNull Parameters parameters) {
+  private SenderKeyDistributionSendJob(@NonNull RecipientId targetRecipientId, @NonNull RecipientId threadRecipientId, @NonNull Parameters parameters) {
     super(parameters);
 
-    this.recipientId = recipientId;
-    this.groupId     = groupId;
+    this.targetRecipientId = targetRecipientId;
+    this.threadRecipientId = threadRecipientId;
   }
 
   @Override
   public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_RECIPIENT_ID, recipientId.serialize())
-                             .putBlobAsString(KEY_GROUP_ID, groupId.getDecodedId())
+    return new Data.Builder().putString(KEY_TARGET_RECIPIENT_ID, targetRecipientId.serialize())
+                             .putString(KEY_THREAD_RECIPIENT_ID, threadRecipientId.serialize())
                              .build();
   }
 
@@ -76,38 +76,62 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    GroupDatabase groupDatabase = SignalDatabase.groups();
+    Recipient targetRecipient = Recipient.resolved(targetRecipientId);
+    Recipient threadRecipient = Recipient.resolved(threadRecipientId);
 
-    if (!groupDatabase.isCurrentMember(groupId, recipientId)) {
-      Log.w(TAG, recipientId + " is no longer a member of " + groupId + "! Not sending.");
+    if (targetRecipient.getSenderKeyCapability() != Recipient.Capability.SUPPORTED) {
+      Log.w(TAG, targetRecipientId + " does not support sender key! Not sending.");
       return;
     }
 
-    Recipient recipient = Recipient.resolved(recipientId);
-
-    if (recipient.getSenderKeyCapability() != Recipient.Capability.SUPPORTED) {
-      Log.w(TAG, recipientId + " does not support sender key! Not sending.");
+    if (targetRecipient.isUnregistered()) {
+      Log.w(TAG, threadRecipient.getId() + " not registered!");
       return;
     }
 
-    if (recipient.isUnregistered()) {
-      Log.w(TAG, recipient.getId() + " not registered!");
+    GroupId.V2     groupId;
+    DistributionId distributionId;
+
+    if (threadRecipient.isPushV2Group()) {
+      groupId = threadRecipient.requireGroupId().requireV2();
+      distributionId = SignalDatabase.groups().getOrCreateDistributionId(groupId);
+    } else if (threadRecipient.isDistributionList()) {
+      groupId        = null;
+      distributionId = SignalDatabase.distributionLists().getDistributionId(threadRecipientId);
+    } else {
+      warn(TAG, "Recipient is not a group or distribution list! Skipping.");
       return;
+    }
+
+    if (distributionId == null) {
+      warn(TAG, "Failed to find a distributionId! Skipping.");
+      return;
+    }
+
+    if (groupId != null && !SignalDatabase.groups().isCurrentMember(groupId, targetRecipientId)) {
+      Log.w(TAG, targetRecipientId + " is no longer a member of " + groupId + "! Not sending.");
+      return;
+    } else if (groupId == null) {
+      DistributionListRecord listRecord = SignalDatabase.distributionLists().getList(threadRecipientId);
+
+      if (listRecord == null || !listRecord.getMembers().contains(targetRecipientId)) {
+        Log.w(TAG, targetRecipientId + " is no longer a member of the distribution list! Not sending.");
+        return;
+      }
     }
 
     SignalServiceMessageSender             messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
-    List<SignalServiceAddress>             address        = Collections.singletonList(RecipientUtil.toSignalServiceAddress(context, recipient));
-    DistributionId                         distributionId = groupDatabase.getOrCreateDistributionId(groupId);
+    List<SignalServiceAddress>             address        = Collections.singletonList(RecipientUtil.toSignalServiceAddress(context, targetRecipient));
     SenderKeyDistributionMessage           message        = messageSender.getOrCreateNewGroupSession(distributionId);
-    List<Optional<UnidentifiedAccessPair>> access         = UnidentifiedAccessUtil.getAccessFor(context, Collections.singletonList(recipient));
+    List<Optional<UnidentifiedAccessPair>> access         = UnidentifiedAccessUtil.getAccessFor(context, Collections.singletonList(targetRecipient));
 
-    SendMessageResult result = messageSender.sendSenderKeyDistributionMessage(distributionId, address, access, message, groupId.getDecodedId()).get(0);
+    SendMessageResult result = messageSender.sendSenderKeyDistributionMessage(distributionId, address, access, message, Optional.ofNullable(groupId).map(GroupId::getDecodedId), false).get(0);
 
     if (result.isSuccess()) {
       List<SignalProtocolAddress> addresses = result.getSuccess()
                                                     .getDevices()
                                                     .stream()
-                                                    .map(device -> new SignalProtocolAddress(recipient.requireServiceId(), device))
+                                                    .map(device -> targetRecipient.requireServiceId().toProtocolAddress(device))
                                                     .collect(Collectors.toList());
 
       ApplicationDependencies.getProtocolStore().aci().markSenderKeySharedWith(distributionId, addresses);
@@ -128,8 +152,8 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
 
     @Override
     public @NonNull SenderKeyDistributionSendJob create(@NonNull Parameters parameters, @NonNull Data data) {
-      return new SenderKeyDistributionSendJob(RecipientId.from(data.getString(KEY_RECIPIENT_ID)),
-                                              GroupId.pushOrThrow(data.getStringAsBlob(KEY_GROUP_ID)).requireV2(),
+      return new SenderKeyDistributionSendJob(RecipientId.from(data.getString(KEY_TARGET_RECIPIENT_ID)),
+                                              RecipientId.from(data.getString(KEY_THREAD_RECIPIENT_ID)),
                                               parameters);
     }
   }

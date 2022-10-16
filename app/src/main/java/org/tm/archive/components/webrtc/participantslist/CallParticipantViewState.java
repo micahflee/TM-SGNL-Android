@@ -5,7 +5,6 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.R;
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.viewholders.RecipientMappingModel;

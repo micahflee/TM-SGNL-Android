@@ -21,7 +21,7 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.SetUtil;
+import org.signal.core.util.SetUtil;
 import org.tm.archive.util.TextSecurePreferences;
 
 import java.util.List;

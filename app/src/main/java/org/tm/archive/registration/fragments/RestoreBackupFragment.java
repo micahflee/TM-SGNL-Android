@@ -26,23 +26,23 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
-
-import com.dd.CircularProgressButton;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.AppInitialization;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
+import org.tm.archive.backup.BackupEvent;
 import org.tm.archive.backup.BackupPassphrase;
-import org.tm.archive.backup.FullBackupBase;
 import org.tm.archive.backup.FullBackupImporter;
 import org.tm.archive.crypto.AttachmentSecretProvider;
 import org.tm.archive.database.NoExternalStorageException;
@@ -54,27 +54,26 @@ import org.tm.archive.service.LocalBackupListener;
 import org.tm.archive.util.BackupUtil;
 import org.tm.archive.util.DateUtils;
 import org.tm.archive.util.Util;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.navigation.SafeNavigation;
+import org.tm.archive.util.views.CircularProgressMaterialButton;
 
 import java.io.IOException;
 import java.util.Locale;
 
 import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
-import static org.tm.archive.util.CircularProgressButtonUtil.cancelSpinning;
-import static org.tm.archive.util.CircularProgressButtonUtil.setSpinning;
 
 public final class RestoreBackupFragment extends LoggingFragment {
 
   private static final String TAG                            = Log.tag(RestoreBackupFragment.class);
   private static final short  OPEN_DOCUMENT_TREE_RESULT_CODE = 13782;
 
-  private TextView               restoreBackupSize;
-  private TextView               restoreBackupTime;
-  private TextView               restoreBackupProgress;
-  private CircularProgressButton restoreButton;
-  private View                   skipRestoreButton;
-  private RegistrationViewModel  viewModel;
+  private TextView                       restoreBackupSize;
+  private TextView                       restoreBackupTime;
+  private TextView                       restoreBackupProgress;
+  private CircularProgressMaterialButton restoreButton;
+  private View                           skipRestoreButton;
+  private RegistrationViewModel          viewModel;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -216,8 +215,34 @@ public final class RestoreBackupFragment extends LoggingFragment {
                          @NonNull Uri backupUri,
                          @NonNull OnBackupSearchResultListener listener)
   {
-    SimpleTask.run(() -> BackupUtil.getBackupInfoFromSingleUri(context, backupUri),
+    SimpleTask.run(() -> {
+                     try {
+                       return BackupUtil.getBackupInfoFromSingleUri(context, backupUri);
+                     } catch (BackupUtil.BackupFileException e) {
+                       Log.w(TAG, "Could not restore backup.", e);
+                       postToastForBackupRestorationFailure(context, e);
+                       return null;
+                     }
+                   },
                    listener::run);
+  }
+
+  private static void postToastForBackupRestorationFailure(@NonNull Context context, @NonNull BackupUtil.BackupFileException exception) {
+    final @StringRes int errorResId;
+    switch (exception.getState()) {
+      case READABLE:
+        throw new AssertionError("Unexpected error state.");
+      case NOT_FOUND:
+        errorResId = R.string.RestoreBackupFragment__backup_not_found;
+        break;
+      case UNSUPPORTED_FILE_EXTENSION:
+        errorResId = R.string.RestoreBackupFragment__backup_has_a_bad_extension;
+        break;
+      default:
+        errorResId = R.string.RestoreBackupFragment__backup_could_not_be_read;
+    }
+
+    ThreadUtil.postToMain(() -> Toast.makeText(context, errorResId, Toast.LENGTH_LONG).show());
   }
 
   private void handleRestore(@NonNull Context context, @NonNull BackupUtil.BackupInfo backup) {
@@ -233,7 +258,7 @@ public final class RestoreBackupFragment extends LoggingFragment {
                      InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
                      inputMethodManager.hideSoftInputFromWindow(prompt.getWindowToken(), 0);
 
-                     setSpinning(restoreButton);
+                     restoreButton.setSpinning();
                      skipRestoreButton.setVisibility(View.INVISIBLE);
 
                      String passphrase = prompt.getText().toString();
@@ -287,7 +312,7 @@ public final class RestoreBackupFragment extends LoggingFragment {
       @Override
       protected void onPostExecute(@NonNull BackupImportResult result) {
         viewModel.markBackupCompleted();
-        cancelSpinning(restoreButton);
+        restoreButton.cancelSpinning();
         skipRestoreButton.setVisibility(View.VISIBLE);
 
         restoreBackupProgress.setText("");
@@ -328,7 +353,7 @@ public final class RestoreBackupFragment extends LoggingFragment {
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void onEvent(@NonNull FullBackupBase.BackupEvent event) {
+  public void onEvent(@NonNull BackupEvent event) {
     long count = event.getCount();
 
     if (count == 0) {
@@ -337,10 +362,10 @@ public final class RestoreBackupFragment extends LoggingFragment {
       restoreBackupProgress.setText(getString(R.string.RegistrationActivity_d_messages_so_far, count));
     }
 
-    setSpinning(restoreButton);
+    restoreButton.setSpinning();
     skipRestoreButton.setVisibility(View.INVISIBLE);
 
-    if (event.getType() == FullBackupBase.BackupEvent.Type.FINISHED) {
+    if (event.getType() == BackupEvent.Type.FINISHED) {
       onBackupComplete();
     }
   }

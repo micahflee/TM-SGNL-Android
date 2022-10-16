@@ -10,6 +10,9 @@ import org.tm.archive.contactshare.Contact;
 import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.database.documents.NetworkFailure;
 import org.tm.archive.database.model.Mention;
+import org.tm.archive.database.model.ParentStoryId;
+import org.tm.archive.database.model.StoryType;
+import org.tm.archive.database.model.databaseprotos.GiftBadge;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.recipients.Recipient;
 
@@ -29,6 +32,10 @@ public class OutgoingMediaMessage {
   private   final long                      expiresIn;
   private   final boolean                   viewOnce;
   private   final QuoteModel                outgoingQuote;
+  private   final StoryType                 storyType;
+  private   final ParentStoryId             parentStoryId;
+  private   final boolean                   isStoryReaction;
+  private   final GiftBadge                 giftBadge;
 
   private   final Set<NetworkFailure>      networkFailures       = new HashSet<>();
   private   final Set<IdentityKeyMismatch> identityKeyMismatches = new HashSet<>();
@@ -36,16 +43,24 @@ public class OutgoingMediaMessage {
   private   final List<LinkPreview>        linkPreviews          = new LinkedList<>();
   private   final List<Mention>            mentions              = new LinkedList<>();
 
-  public OutgoingMediaMessage(Recipient recipient, String message,
-                              List<Attachment> attachments, long sentTimeMillis,
-                              int subscriptionId, long expiresIn, boolean viewOnce,
+  public OutgoingMediaMessage(Recipient recipient,
+                              String message,
+                              List<Attachment> attachments,
+                              long sentTimeMillis,
+                              int subscriptionId,
+                              long expiresIn,
+                              boolean viewOnce,
                               int distributionType,
+                              @NonNull StoryType storyType,
+                              @Nullable ParentStoryId parentStoryId,
+                              boolean isStoryReaction,
                               @Nullable QuoteModel outgoingQuote,
                               @NonNull List<Contact> contacts,
                               @NonNull List<LinkPreview> linkPreviews,
                               @NonNull List<Mention> mentions,
                               @NonNull Set<NetworkFailure> networkFailures,
-                              @NonNull Set<IdentityKeyMismatch> identityKeyMismatches)
+                              @NonNull Set<IdentityKeyMismatch> identityKeyMismatches,
+                              @Nullable GiftBadge giftBadge)
   {
     this.recipient             = recipient;
     this.body                  = message;
@@ -56,6 +71,10 @@ public class OutgoingMediaMessage {
     this.expiresIn             = expiresIn;
     this.viewOnce              = viewOnce;
     this.outgoingQuote         = outgoingQuote;
+    this.storyType             = storyType;
+    this.parentStoryId         = parentStoryId;
+    this.isStoryReaction       = isStoryReaction;
+    this.giftBadge             = giftBadge;
 
     this.contacts.addAll(contacts);
     this.linkPreviews.addAll(linkPreviews);
@@ -64,20 +83,41 @@ public class OutgoingMediaMessage {
     this.identityKeyMismatches.addAll(identityKeyMismatches);
   }
 
-  public OutgoingMediaMessage(Recipient recipient, SlideDeck slideDeck, String message,
-                              long sentTimeMillis, int subscriptionId, long expiresIn,
-                              boolean viewOnce, int distributionType,
+  public OutgoingMediaMessage(Recipient recipient,
+                              SlideDeck slideDeck,
+                              String message,
+                              long sentTimeMillis,
+                              int subscriptionId,
+                              long expiresIn,
+                              boolean viewOnce,
+                              int distributionType,
+                              @NonNull StoryType storyType,
+                              @Nullable ParentStoryId parentStoryId,
+                              boolean isStoryReaction,
                               @Nullable QuoteModel outgoingQuote,
                               @NonNull List<Contact> contacts,
                               @NonNull List<LinkPreview> linkPreviews,
-                              @NonNull List<Mention> mentions)
+                              @NonNull List<Mention> mentions,
+                              @Nullable GiftBadge giftBadge)
   {
     this(recipient,
          buildMessage(slideDeck, message),
          slideDeck.asAttachments(),
-         sentTimeMillis, subscriptionId,
-         expiresIn, viewOnce, distributionType, outgoingQuote,
-         contacts, linkPreviews, mentions, new HashSet<>(), new HashSet<>());
+         sentTimeMillis,
+         subscriptionId,
+         expiresIn,
+         viewOnce,
+         distributionType,
+         storyType,
+         parentStoryId,
+         isStoryReaction,
+         outgoingQuote,
+         contacts,
+         linkPreviews,
+         mentions,
+         new HashSet<>(),
+         new HashSet<>(),
+         giftBadge);
   }
 
   public OutgoingMediaMessage(OutgoingMediaMessage that) {
@@ -90,6 +130,10 @@ public class OutgoingMediaMessage {
     this.expiresIn           = that.expiresIn;
     this.viewOnce            = that.viewOnce;
     this.outgoingQuote       = that.outgoingQuote;
+    this.storyType           = that.storyType;
+    this.parentStoryId       = that.parentStoryId;
+    this.isStoryReaction     = that.isStoryReaction;
+    this.giftBadge           = that.giftBadge;
 
     this.identityKeyMismatches.addAll(that.identityKeyMismatches);
     this.networkFailures.addAll(that.networkFailures);
@@ -108,12 +152,16 @@ public class OutgoingMediaMessage {
         expiresIn,
         viewOnce,
         distributionType,
+        storyType,
+        parentStoryId,
+        isStoryReaction,
         outgoingQuote,
         contacts,
         linkPreviews,
         mentions,
         networkFailures,
-        identityKeyMismatches
+        identityKeyMismatches,
+        giftBadge
     );
   }
 
@@ -161,6 +209,18 @@ public class OutgoingMediaMessage {
     return viewOnce;
   }
 
+  public @NonNull StoryType getStoryType() {
+    return storyType;
+  }
+
+  public @Nullable ParentStoryId getParentStoryId() {
+    return parentStoryId;
+  }
+
+  public boolean isStoryReaction() {
+    return isStoryReaction;
+  }
+
   public @Nullable QuoteModel getOutgoingQuote() {
     return outgoingQuote;
   }
@@ -185,6 +245,14 @@ public class OutgoingMediaMessage {
     return identityKeyMismatches;
   }
 
+  public @Nullable GiftBadge getGiftBadge() {
+    return giftBadge;
+  }
+
+  public boolean isUrgent() {
+    return true;
+  }
+
   private static String buildMessage(SlideDeck slideDeck, String message) {
     if (!TextUtils.isEmpty(message) && !TextUtils.isEmpty(slideDeck.getBody())) {
       return slideDeck.getBody() + "\n\n" + message;
@@ -194,5 +262,4 @@ public class OutgoingMediaMessage {
       return slideDeck.getBody();
     }
   }
-
 }

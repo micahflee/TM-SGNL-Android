@@ -9,17 +9,17 @@ package org.whispersystems.signalservice.api;
 
 import com.google.protobuf.ByteString;
 
-import org.signal.zkgroup.profiles.ProfileKey;
-import org.signal.zkgroup.profiles.ProfileKeyCredential;
-import org.whispersystems.libsignal.IdentityKey;
-import org.whispersystems.libsignal.IdentityKeyPair;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.ecc.ECPublicKey;
-import org.whispersystems.libsignal.logging.Log;
-import org.whispersystems.libsignal.state.PreKeyRecord;
-import org.whispersystems.libsignal.state.SignedPreKeyRecord;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.protocol.IdentityKeyPair;
+import org.signal.libsignal.protocol.InvalidKeyException;
+import org.signal.libsignal.protocol.ecc.ECPublicKey;
+import org.signal.libsignal.protocol.logging.Log;
+import org.signal.libsignal.protocol.state.PreKeyRecord;
+import org.signal.libsignal.protocol.state.SignedPreKeyRecord;
+import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.signalservice.api.account.AccountAttributes;
+import org.whispersystems.signalservice.api.account.ChangePhoneNumberRequest;
 import org.whispersystems.signalservice.api.crypto.InvalidCiphertextException;
 import org.whispersystems.signalservice.api.crypto.ProfileCipher;
 import org.whispersystems.signalservice.api.crypto.ProfileCipherOutputStream;
@@ -31,16 +31,19 @@ import org.whispersystems.signalservice.api.messages.calls.TurnServerInfo;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceInfo;
 import org.whispersystems.signalservice.api.messages.multidevice.VerifyDeviceResponse;
 import org.whispersystems.signalservice.api.payments.CurrencyConversions;
+import org.whispersystems.signalservice.api.profiles.AvatarUploadParams;
 import org.whispersystems.signalservice.api.profiles.ProfileAndCredential;
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfileWrite;
 import org.whispersystems.signalservice.api.push.ACI;
-import org.whispersystems.signalservice.api.push.AccountIdentifier;
+import org.whispersystems.signalservice.api.push.PNI;
+import org.whispersystems.signalservice.api.push.ServiceId;
+import org.whispersystems.signalservice.api.push.ServiceIdType;
 import org.whispersystems.signalservice.api.push.SignedPreKeyEntity;
 import org.whispersystems.signalservice.api.push.exceptions.NoContentException;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.NotFoundException;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
-import org.whispersystems.signalservice.api.services.CdshService;
+import org.whispersystems.signalservice.api.services.CdsiV2Service;
 import org.whispersystems.signalservice.api.storage.SignalStorageCipher;
 import org.whispersystems.signalservice.api.storage.SignalStorageManifest;
 import org.whispersystems.signalservice.api.storage.SignalStorageModels;
@@ -49,7 +52,7 @@ import org.whispersystems.signalservice.api.storage.StorageId;
 import org.whispersystems.signalservice.api.storage.StorageKey;
 import org.whispersystems.signalservice.api.storage.StorageManifestKey;
 import org.whispersystems.signalservice.api.util.CredentialsProvider;
-import org.whispersystems.signalservice.api.util.StreamDetails;
+import org.whispersystems.signalservice.api.util.Preconditions;
 import org.whispersystems.signalservice.internal.ServiceResponse;
 import org.whispersystems.signalservice.internal.configuration.SignalServiceConfiguration;
 import org.whispersystems.signalservice.internal.contacts.crypto.ContactDiscoveryCipher;
@@ -61,12 +64,13 @@ import org.whispersystems.signalservice.internal.contacts.entities.DiscoveryRequ
 import org.whispersystems.signalservice.internal.contacts.entities.DiscoveryResponse;
 import org.whispersystems.signalservice.internal.crypto.PrimaryProvisioningCipher;
 import org.whispersystems.signalservice.internal.push.AuthCredentials;
-import org.whispersystems.signalservice.internal.push.CdshAuthResponse;
+import org.whispersystems.signalservice.internal.push.CdsiAuthResponse;
 import org.whispersystems.signalservice.internal.push.ProfileAvatarData;
 import org.whispersystems.signalservice.internal.push.PushServiceSocket;
 import org.whispersystems.signalservice.internal.push.RemoteAttestationUtil;
 import org.whispersystems.signalservice.internal.push.RemoteConfigResponse;
 import org.whispersystems.signalservice.internal.push.RequestVerificationCodeResponse;
+import org.whispersystems.signalservice.internal.push.ReserveUsernameResponse;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 import org.whispersystems.signalservice.internal.push.VerifyAccountResponse;
 import org.whispersystems.signalservice.internal.push.WhoAmIResponse;
@@ -92,14 +96,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+
+import javax.annotation.Nonnull;
 
 import io.reactivex.rxjava3.core.Single;
 
@@ -116,32 +125,38 @@ public class SignalServiceAccountManager {
 
   private static final String TAG = SignalServiceAccountManager.class.getSimpleName();
 
+  private static final int STORAGE_READ_MAX_ITEMS = 1000;
+
   private final PushServiceSocket          pushServiceSocket;
   private final CredentialsProvider        credentials;
   private final String                     userAgent;
   private final GroupsV2Operations         groupsV2Operations;
   private final SignalServiceConfiguration configuration;
 
+
   /**
    * Construct a SignalServiceAccountManager.
-   *  @param configuration The URL for the Signal Service.
-   * @param aci The Signal Service UUID.
+   * @param configuration The URL for the Signal Service.
+   * @param aci The Signal Service ACI.
+   * @param pni The Signal Service PNI.
    * @param e164 The Signal Service phone number.
    * @param password A Signal Service password.
    * @param signalAgent A string which identifies the client software.
    */
   public SignalServiceAccountManager(SignalServiceConfiguration configuration,
                                      ACI aci,
+                                     PNI pni,
                                      String e164,
                                      int deviceId,
                                      String password,
                                      String signalAgent,
-                                     boolean automaticNetworkRetry)
+                                     boolean automaticNetworkRetry,
+                                     int maxGroupSize)
   {
     this(configuration,
-         new StaticCredentialsProvider(aci, e164, deviceId, password),
+         new StaticCredentialsProvider(aci, pni, e164, deviceId, password),
          signalAgent,
-         new GroupsV2Operations(ClientZkOperations.create(configuration)),
+         new GroupsV2Operations(ClientZkOperations.create(configuration), maxGroupSize),
          automaticNetworkRetry);
   }
 
@@ -170,7 +185,7 @@ public class SignalServiceAccountManager {
    * V1 PINs are no longer used in favor of V2 PINs stored on KBS.
    *
    * You can remove a V1 PIN, but typically this is unnecessary, as setting a V2 PIN via
-   * {@link KeyBackupService.Session#enableRegistrationLock(MasterKey)}} will automatically clear the
+   * {@link KeyBackupService.PinChangeSession#enableRegistrationLock(MasterKey)}} will automatically clear the
    * V1 PIN on the service.
    */
   public void removeRegistrationLockV1() throws IOException {
@@ -269,7 +284,8 @@ public class SignalServiceAccountManager {
                                                               byte[] unidentifiedAccessKey,
                                                               boolean unrestrictedUnidentifiedAccess,
                                                               AccountAttributes.Capabilities capabilities,
-                                                              boolean discoverableByPhoneNumber)
+                                                              boolean discoverableByPhoneNumber,
+                                                              int pniRegistrationId)
   {
     try {
       VerifyAccountResponse response = this.pushServiceSocket.verifyAccountCode(verificationCode,
@@ -281,7 +297,8 @@ public class SignalServiceAccountManager {
                                                                                 unidentifiedAccessKey,
                                                                                 unrestrictedUnidentifiedAccess,
                                                                                 capabilities,
-                                                                                discoverableByPhoneNumber);
+                                                                                discoverableByPhoneNumber,
+                                                                                pniRegistrationId);
       return ServiceResponse.forResult(response, 200, null);
     } catch (IOException e) {
       return ServiceResponse.forUnknownError(e);
@@ -309,7 +326,8 @@ public class SignalServiceAccountManager {
                                                                                      byte[] unidentifiedAccessKey,
                                                                                      boolean unrestrictedUnidentifiedAccess,
                                                                                      AccountAttributes.Capabilities capabilities,
-                                                                                     boolean discoverableByPhoneNumber)
+                                                                                     boolean discoverableByPhoneNumber,
+                                                                                     int pniRegistrationId)
   {
     try {
       VerifyAccountResponse response = this.pushServiceSocket.verifyAccountCode(verificationCode,
@@ -321,7 +339,8 @@ public class SignalServiceAccountManager {
                                                                                 unidentifiedAccessKey,
                                                                                 unrestrictedUnidentifiedAccess,
                                                                                 capabilities,
-                                                                                discoverableByPhoneNumber);
+                                                                                discoverableByPhoneNumber,
+                                                                                pniRegistrationId);
       return ServiceResponse.forResult(response, 200, null);
     } catch (IOException e) {
       return ServiceResponse.forUnknownError(e);
@@ -335,7 +354,8 @@ public class SignalServiceAccountManager {
                                                     boolean unrestrictedUnidentifiedAccess,
                                                     AccountAttributes.Capabilities capabilities,
                                                     boolean discoverableByPhoneNumber,
-                                                    byte[] encryptedDeviceName)
+                                                    byte[] encryptedDeviceName,
+                                                    int pniRegistrationId)
       throws IOException
   {
     AccountAttributes accountAttributes = new AccountAttributes(
@@ -348,15 +368,16 @@ public class SignalServiceAccountManager {
         unrestrictedUnidentifiedAccess,
         capabilities,
         discoverableByPhoneNumber,
-        Base64.encodeBytes(encryptedDeviceName)
+        Base64.encodeBytes(encryptedDeviceName),
+        pniRegistrationId
     );
 
     return this.pushServiceSocket.verifySecondaryDevice(verificationCode, accountAttributes);
   }
 
-  public ServiceResponse<VerifyAccountResponse> changeNumber(String code, String e164NewNumber, String registrationLock) {
+  public @Nonnull ServiceResponse<VerifyAccountResponse> changeNumber(@Nonnull ChangePhoneNumberRequest changePhoneNumberRequest) {
     try {
-      VerifyAccountResponse response = this.pushServiceSocket.changeNumber(code, e164NewNumber, registrationLock);
+      VerifyAccountResponse response = this.pushServiceSocket.changeNumber(changePhoneNumberRequest);
       return ServiceResponse.forResult(response, 200, null);
     } catch (IOException e) {
       return ServiceResponse.forUnknownError(e);
@@ -385,7 +406,8 @@ public class SignalServiceAccountManager {
                                    boolean unrestrictedUnidentifiedAccess,
                                    AccountAttributes.Capabilities capabilities,
                                    boolean discoverableByPhoneNumber,
-                                   byte[] encryptedDeviceName)
+                                   byte[] encryptedDeviceName,
+                                   int pniRegistrationId)
       throws IOException
   {
     this.pushServiceSocket.setAccountAttributes(
@@ -398,7 +420,8 @@ public class SignalServiceAccountManager {
         unrestrictedUnidentifiedAccess,
         capabilities,
         discoverableByPhoneNumber,
-        encryptedDeviceName
+        encryptedDeviceName,
+        pniRegistrationId
     );
   }
 
@@ -412,18 +435,18 @@ public class SignalServiceAccountManager {
    *
    * @throws IOException
    */
-  public void setPreKeys(IdentityKey identityKey, SignedPreKeyRecord signedPreKey, List<PreKeyRecord> oneTimePreKeys)
+  public void setPreKeys(ServiceIdType serviceIdType, IdentityKey identityKey, SignedPreKeyRecord signedPreKey, List<PreKeyRecord> oneTimePreKeys)
       throws IOException
   {
-    this.pushServiceSocket.registerPreKeys(identityKey, signedPreKey, oneTimePreKeys);
+    this.pushServiceSocket.registerPreKeys(serviceIdType, identityKey, signedPreKey, oneTimePreKeys);
   }
 
   /**
    * @return The server's count of currently available (eg. unused) prekeys for this user.
    * @throws IOException
    */
-  public int getPreKeysCount() throws IOException {
-    return this.pushServiceSocket.getAvailablePreKeys();
+  public int getPreKeysCount(ServiceIdType serviceIdType) throws IOException {
+    return this.pushServiceSocket.getAvailablePreKeys(serviceIdType);
   }
 
   /**
@@ -432,22 +455,22 @@ public class SignalServiceAccountManager {
    * @param signedPreKey The client's new signed prekey.
    * @throws IOException
    */
-  public void setSignedPreKey(SignedPreKeyRecord signedPreKey) throws IOException {
-    this.pushServiceSocket.setCurrentSignedPreKey(signedPreKey);
+  public void setSignedPreKey(ServiceIdType serviceIdType, SignedPreKeyRecord signedPreKey) throws IOException {
+    this.pushServiceSocket.setCurrentSignedPreKey(serviceIdType, signedPreKey);
   }
 
   /**
    * @return The server's view of the client's current signed prekey.
    * @throws IOException
    */
-  public SignedPreKeyEntity getSignedPreKey() throws IOException {
-    return this.pushServiceSocket.getCurrentSignedPreKey();
+  public SignedPreKeyEntity getSignedPreKey(ServiceIdType serviceIdType) throws IOException {
+    return this.pushServiceSocket.getCurrentSignedPreKey(serviceIdType);
   }
 
   /**
    * @return True if the identifier corresponds to a registered user, otherwise false.
    */
-  public boolean isIdentifierRegistered(AccountIdentifier identifier) throws IOException {
+  public boolean isIdentifierRegistered(ServiceId identifier) throws IOException {
     return pushServiceSocket.isIdentifierRegistered(identifier);
   }
 
@@ -496,26 +519,44 @@ public class SignalServiceAccountManager {
     }
   }
 
-  public Map<String, ACI> getRegisteredUsersWithCdsh(Set<String> e164numbers, String hexPublicKey, String hexCodeHash)
+  public CdsiV2Service.Response getRegisteredUsersWithCdsi(Set<String> previousE164s,
+                                                           Set<String> newE164s,
+                                                           Map<ServiceId, ProfileKey> serviceIds,
+                                                           boolean requireAcis,
+                                                           Optional<byte[]> token,
+                                                           String mrEnclave,
+                                                           Consumer<byte[]> tokenSaver)
       throws IOException
   {
-    CdshAuthResponse                          auth    = pushServiceSocket.getCdshAuth();
-    CdshService                               service = new CdshService(configuration, hexPublicKey, hexCodeHash);
-    Single<ServiceResponse<Map<String, ACI>>> result  = service.getRegisteredUsers(auth.getUsername(), auth.getPassword(), e164numbers);
+    CdsiAuthResponse                                auth    = pushServiceSocket.getCdsiAuth();
+    CdsiV2Service                                   service = new CdsiV2Service(configuration, mrEnclave);
+    CdsiV2Service.Request                           request = new CdsiV2Service.Request(previousE164s, newE164s, serviceIds, requireAcis, token);
+    Single<ServiceResponse<CdsiV2Service.Response>> single  = service.getRegisteredUsers(auth.getUsername(), auth.getPassword(), request, tokenSaver);
 
-    ServiceResponse<Map<String, ACI>> response;
+    ServiceResponse<CdsiV2Service.Response> serviceResponse;
     try {
-      response = result.blockingGet();
+      serviceResponse = single.blockingGet();
+    } catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof InterruptedException) {
+        throw new IOException("Interrupted", cause);
+      } else {
+        throw e;
+      }
     } catch (Exception e) {
       throw new RuntimeException("Unexpected exception when retrieving registered users!", e);
     }
 
-    if (response.getResult().isPresent()) {
-      return response.getResult().get();
-    } else if (response.getApplicationError().isPresent()) {
-      throw new IOException(response.getApplicationError().get());
-    } else if (response.getExecutionError().isPresent()) {
-      throw new IOException(response.getExecutionError().get());
+    if (serviceResponse.getResult().isPresent()) {
+      return serviceResponse.getResult().get();
+    } else if (serviceResponse.getApplicationError().isPresent()) {
+      if (serviceResponse.getApplicationError().get() instanceof IOException) {
+        throw (IOException) serviceResponse.getApplicationError().get();
+      } else {
+        throw new IOException(serviceResponse.getApplicationError().get());
+      }
+    } else if (serviceResponse.getExecutionError().isPresent()) {
+      throw new IOException(serviceResponse.getExecutionError().get());
     } else {
       throw new IOException("Missing result!");
     }
@@ -530,7 +571,7 @@ public class SignalServiceAccountManager {
       return Optional.of(SignalStorageModels.remoteToLocalStorageManifest(storageManifest, storageKey));
     } catch (InvalidKeyException | NotFoundException e) {
       Log.w(TAG, "Error while fetching manifest.", e);
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 
@@ -552,12 +593,12 @@ public class SignalServiceAccountManager {
 
       if (storageManifest.getValue().isEmpty()) {
         Log.w(TAG, "Got an empty storage manifest!");
-        return Optional.absent();
+        return Optional.empty();
       }
 
       return Optional.of(SignalStorageModels.remoteToLocalStorageManifest(storageManifest, storageKey));
     } catch (NoContentException e) {
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 
@@ -566,29 +607,45 @@ public class SignalServiceAccountManager {
       return Collections.emptyList();
     }
 
-    List<SignalStorageRecord> result    = new ArrayList<>();
-    ReadOperation.Builder     operation = ReadOperation.newBuilder();
-    Map<ByteString, Integer>  typeMap   = new HashMap<>();
+    List<SignalStorageRecord> result           = new ArrayList<>();
+    Map<ByteString, Integer>  typeMap          = new HashMap<>();
+    List<ReadOperation>       readOperations   = new LinkedList<>();
+    ReadOperation.Builder     currentOperation = ReadOperation.newBuilder();
 
     for (StorageId key : storageKeys) {
       typeMap.put(ByteString.copyFrom(key.getRaw()), key.getType());
 
+      if (currentOperation.getReadKeyCount() >= STORAGE_READ_MAX_ITEMS) {
+        Log.i(TAG, "Going over max read items. Starting a new read operation.");
+        readOperations.add(currentOperation.build());
+        currentOperation = ReadOperation.newBuilder();
+      }
+
       if (StorageId.isKnownType(key.getType())) {
-        operation.addReadKey(ByteString.copyFrom(key.getRaw()));
+        currentOperation.addReadKey(ByteString.copyFrom(key.getRaw()));
       } else {
         result.add(SignalStorageRecord.forUnknown(key));
       }
     }
 
-    String       authToken = this.pushServiceSocket.getStorageAuth();
-    StorageItems items     = this.pushServiceSocket.readStorageItems(authToken, operation.build());
+    if (currentOperation.getReadKeyCount() > 0) {
+      readOperations.add(currentOperation.build());
+    }
 
-    for (StorageItem item : items.getItemsList()) {
-      Integer type = typeMap.get(item.getKey());
-      if (type != null) {
-        result.add(SignalStorageModels.remoteToLocalStorageRecord(item, type, storageKey));
-      } else {
-        Log.w(TAG, "No type found! Skipping.");
+    Log.i(TAG, "Reading " + storageKeys.size() + " items split over " + readOperations.size() + " page(s).");
+
+    String authToken = this.pushServiceSocket.getStorageAuth();
+
+    for (ReadOperation readOperation : readOperations) {
+      StorageItems items = this.pushServiceSocket.readStorageItems(authToken, readOperation);
+
+      for (StorageItem item : items.getItemsList()) {
+        Integer type = typeMap.get(item.getKey());
+        if (type != null) {
+          result.add(SignalStorageModels.remoteToLocalStorageRecord(item, type, storageKey));
+        } else {
+          Log.w(TAG, "No type found! Skipping.");
+        }
       }
     }
 
@@ -632,7 +689,7 @@ public class SignalServiceAccountManager {
     for (StorageId id : manifest.getStorageIds()) {
       ManifestRecord.Identifier idProto = ManifestRecord.Identifier.newBuilder()
                                                         .setRaw(ByteString.copyFrom(id.getRaw()))
-                                                        .setType(ManifestRecord.Identifier.Type.forNumber(id.getType())).build();
+                                                        .setTypeValue(id.getType()).build();
       manifestRecordBuilder.addIdentifiers(idProto);
     }
 
@@ -666,14 +723,14 @@ public class SignalServiceAccountManager {
       List<StorageId>    ids               = new ArrayList<>(record.getIdentifiersCount());
 
       for (ManifestRecord.Identifier id : record.getIdentifiersList()) {
-        ids.add(StorageId.forType(id.getRaw().toByteArray(), id.getType().getNumber()));
+        ids.add(StorageId.forType(id.getRaw().toByteArray(), id.getTypeValue()));
       }
 
       SignalStorageManifest conflictManifest = new SignalStorageManifest(record.getVersion(), ids);
 
       return Optional.of(conflictManifest);
     } else {
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 
@@ -695,36 +752,32 @@ public class SignalServiceAccountManager {
 
   public void addDevice(String deviceIdentifier,
                         ECPublicKey deviceKey,
-                        IdentityKeyPair identityKeyPair,
-                        Optional<byte[]> profileKey,
+                        IdentityKeyPair aciIdentityKeyPair,
+                        IdentityKeyPair pniIdentityKeyPair,
+                        ProfileKey profileKey,
                         String code)
       throws InvalidKeyException, IOException
   {
-    PrimaryProvisioningCipher cipher = new PrimaryProvisioningCipher(deviceKey);
-    ProvisionMessage.Builder message = ProvisionMessage.newBuilder()
-                                                       .setIdentityKeyPublic(ByteString.copyFrom(identityKeyPair.getPublicKey().serialize()))
-                                                       .setIdentityKeyPrivate(ByteString.copyFrom(identityKeyPair.getPrivateKey().serialize()))
-                                                       .setProvisioningCode(code)
-                                                       .setProvisioningVersion(ProvisioningVersion.CURRENT_VALUE);
-
     String e164 = credentials.getE164();
     ACI    aci  = credentials.getAci();
+    PNI    pni  = credentials.getPni();
 
-    if (e164 != null) {
-      message.setNumber(e164);
-    } else {
-      throw new AssertionError("Missing phone number!");
-    }
+    Preconditions.checkArgument(e164 != null, "Missing e164!");
+    Preconditions.checkArgument(aci != null, "Missing ACI!");
+    Preconditions.checkArgument(pni != null, "Missing PNI!");
 
-    if (aci != null) {
-      message.setUuid(aci.toString());
-    } else {
-      Log.w(TAG, "[addDevice] Missing UUID.");
-    }
-
-    if (profileKey.isPresent()) {
-      message.setProfileKey(ByteString.copyFrom(profileKey.get()));
-    }
+    PrimaryProvisioningCipher cipher  = new PrimaryProvisioningCipher(deviceKey);
+    ProvisionMessage.Builder  message = ProvisionMessage.newBuilder()
+                                                        .setAciIdentityKeyPublic(ByteString.copyFrom(aciIdentityKeyPair.getPublicKey().serialize()))
+                                                        .setAciIdentityKeyPrivate(ByteString.copyFrom(aciIdentityKeyPair.getPrivateKey().serialize()))
+                                                        .setPniIdentityKeyPublic(ByteString.copyFrom(pniIdentityKeyPair.getPublicKey().serialize()))
+                                                        .setPniIdentityKeyPrivate(ByteString.copyFrom(pniIdentityKeyPair.getPrivateKey().serialize()))
+                                                        .setAci(aci.toString())
+                                                        .setPni(pni.toString())
+                                                        .setNumber(e164)
+                                                        .setProfileKey(ByteString.copyFrom(profileKey.serialize()))
+                                                        .setProvisioningCode(code)
+                                                        .setProvisioningVersion(ProvisioningVersion.CURRENT_VALUE);
 
     byte[] ciphertext = cipher.encrypt(message.build());
     this.pushServiceSocket.sendProvisioningMessage(deviceIdentifier, ciphertext);
@@ -750,8 +803,8 @@ public class SignalServiceAccountManager {
     return this.pushServiceSocket.getCurrencyConversions();
   }
 
-  public void reportSpam(String e164, String serverGuid) throws IOException {
-    this.pushServiceSocket.reportSpam(e164, serverGuid);
+  public void reportSpam(ServiceId serviceId, String serverGuid) throws IOException {
+    this.pushServiceSocket.reportSpam(serviceId, serverGuid);
   }
 
   /**
@@ -763,7 +816,7 @@ public class SignalServiceAccountManager {
                                               String about,
                                               String aboutEmoji,
                                               Optional<SignalServiceProtos.PaymentAddress> paymentsAddress,
-                                              StreamDetails avatar,
+                                              AvatarUploadParams avatar,
                                               List<String> visibleBadgeIds)
       throws IOException
   {
@@ -773,14 +826,13 @@ public class SignalServiceAccountManager {
     byte[]            ciphertextName              = profileCipher.encryptString(name, ProfileCipher.getTargetNameLength(name));
     byte[]            ciphertextAbout             = profileCipher.encryptString(about, ProfileCipher.getTargetAboutLength(about));
     byte[]            ciphertextEmoji             = profileCipher.encryptString(aboutEmoji, ProfileCipher.EMOJI_PADDED_LENGTH);
-    byte[]            ciphertextMobileCoinAddress = paymentsAddress.transform(address -> profileCipher.encryptWithLength(address.toByteArray(), ProfileCipher.PAYMENTS_ADDRESS_CONTENT_SIZE)).orNull();
-    boolean           hasAvatar                   = avatar != null;
+    byte[]            ciphertextMobileCoinAddress = paymentsAddress.map(address -> profileCipher.encryptWithLength(address.toByteArray(), ProfileCipher.PAYMENTS_ADDRESS_CONTENT_SIZE)).orElse(null);
     ProfileAvatarData profileAvatarData           = null;
 
-    if (hasAvatar) {
-      profileAvatarData = new ProfileAvatarData(avatar.getStream(),
-                                                ProfileCipherOutputStream.getCiphertextLength(avatar.getLength()),
-                                                avatar.getContentType(),
+    if (avatar.stream != null && !avatar.keepTheSame) {
+      profileAvatarData = new ProfileAvatarData(avatar.stream.getStream(),
+                                                ProfileCipherOutputStream.getCiphertextLength(avatar.stream.getLength()),
+                                                avatar.stream.getContentType(),
                                                 new ProfileCipherOutputStreamFactory(profileKey));
     }
 
@@ -789,18 +841,19 @@ public class SignalServiceAccountManager {
                                                                              ciphertextAbout,
                                                                              ciphertextEmoji,
                                                                              ciphertextMobileCoinAddress,
-                                                                             hasAvatar,
+                                                                             avatar.hasAvatar,
+                                                                             avatar.keepTheSame,
                                                                              profileKey.getCommitment(aci.uuid()).serialize(),
                                                                              visibleBadgeIds),
                                                                              profileAvatarData);
   }
 
-  public Optional<ProfileKeyCredential> resolveProfileKeyCredential(ACI aci, ProfileKey profileKey, Locale locale)
+  public Optional<ExpiringProfileKeyCredential> resolveProfileKeyCredential(ServiceId serviceId, ProfileKey profileKey, Locale locale)
       throws NonSuccessfulResponseCodeException, PushNetworkException
   {
     try {
-      ProfileAndCredential credential = this.pushServiceSocket.retrieveVersionedProfileAndCredential(aci.uuid(), profileKey, Optional.absent(), locale).get(10, TimeUnit.SECONDS);
-      return credential.getProfileKeyCredential();
+      ProfileAndCredential credential = this.pushServiceSocket.retrieveVersionedProfileAndCredential(serviceId.uuid(), profileKey, Optional.empty(), locale).get(10, TimeUnit.SECONDS);
+      return credential.getExpiringProfileKeyCredential();
     } catch (InterruptedException | TimeoutException e) {
       throw new PushNetworkException(e);
     } catch (ExecutionException e) {
@@ -814,8 +867,20 @@ public class SignalServiceAccountManager {
     }
   }
 
-  public void setUsername(String username) throws IOException {
-    this.pushServiceSocket.setUsername(username);
+  public ACI getAciByUsername(String username) throws IOException {
+    return this.pushServiceSocket.getAciByUsername(username);
+  }
+
+  public void setUsername(String nickname, String existingUsername) throws IOException {
+    this.pushServiceSocket.setUsername(nickname, existingUsername);
+  }
+
+  public ReserveUsernameResponse reserveUsername(String nickname) throws IOException {
+    return this.pushServiceSocket.reserveUsername(nickname);
+  }
+
+  public void confirmUsername(ReserveUsernameResponse reserveUsernameResponse) throws IOException {
+    this.pushServiceSocket.confirmUsername(reserveUsernameResponse);
   }
 
   public void deleteUsername() throws IOException {

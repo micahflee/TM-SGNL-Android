@@ -15,6 +15,7 @@ import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.messages.GroupSendUtil;
 import org.tm.archive.mms.MessageGroupContext;
 import org.tm.archive.mms.OutgoingGroupUpdateMessage;
@@ -30,7 +31,7 @@ import org.whispersystems.signalservice.api.groupsv2.DecryptedGroupUtil;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
 import org.whispersystems.signalservice.api.messages.SignalServiceGroupV2;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
@@ -74,8 +75,8 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
 
     Set<RecipientId> recipients = Stream.concat(Stream.of(memberUuids), Stream.of(pendingUuids))
                                         .filter(uuid -> !UuidUtil.UNKNOWN_UUID.equals(uuid))
-                                        .filter(uuid -> !Recipient.self().requireAci().uuid().equals(uuid))
-                                        .map(uuid -> Recipient.externalPush(context, ACI.from(uuid), null, false))
+                                        .filter(uuid -> !SignalStore.account().requireAci().uuid().equals(uuid))
+                                        .map(uuid -> Recipient.externalPush(ServiceId.from(uuid)))
                                         .filter(recipient -> recipient.getRegistered() != RecipientDatabase.RegisteredState.NOT_REGISTERED)
                                         .map(Recipient::getId)
                                         .collect(Collectors.toSet());
@@ -83,7 +84,7 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
     MessageGroupContext.GroupV2Properties properties   = groupMessage.requireGroupV2Properties();
     SignalServiceProtos.GroupContextV2    groupContext = properties.getGroupContext();
 
-    String queue = Recipient.externalGroupExact(context, groupId).getId().toQueueKey();
+    String queue = Recipient.externalGroupExact(groupId).getId().toQueueKey();
 
     return new PushGroupSilentUpdateSendJob(new ArrayList<>(recipients),
                                             recipients.size(),
@@ -132,7 +133,7 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
 
     GroupId.V2 groupId = GroupId.v2(GroupUtil.requireMasterKey(groupContextV2.getMasterKey().toByteArray()));
 
-    if (Recipient.externalGroupExact(context, groupId).isBlocked()) {
+    if (Recipient.externalGroupExact(groupId).isBlocked()) {
       Log.i(TAG, "Not updating group state for blocked group " + groupId);
       return;
     }
@@ -174,9 +175,9 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
                                                                         .asGroupMessage(group)
                                                                         .build();
 
-    List<SendMessageResult> results = GroupSendUtil.sendUnresendableDataMessage(context, groupId, destinations, false, ContentHint.IMPLICIT, groupDataMessage);
+    List<SendMessageResult> results = GroupSendUtil.sendUnresendableDataMessage(context, groupId, destinations, false, ContentHint.IMPLICIT, groupDataMessage, false);
 
-    return GroupSendJobHelper.getCompletedSends(destinations, results);
+    return GroupSendJobHelper.getCompletedSends(destinations, results).completed;
   }
 
   public static class Factory implements Job.Factory<PushGroupSilentUpdateSendJob> {

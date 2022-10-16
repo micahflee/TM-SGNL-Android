@@ -2,9 +2,9 @@ package org.tm.archive.keyvalue;
 
 import androidx.annotation.NonNull;
 
-import org.whispersystems.libsignal.util.guava.Preconditions;
 import org.whispersystems.signalservice.api.storage.SignalStorageManifest;
 import org.whispersystems.signalservice.api.storage.StorageKey;
+import org.whispersystems.signalservice.api.util.Preconditions;
 
 import java.util.Collections;
 import java.util.List;

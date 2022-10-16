@@ -1,6 +1,7 @@
 package org.tm.archive.mediasend.v2
 
 import android.os.Bundle
+import org.tm.archive.contacts.paged.ContactSearchKey
 import org.tm.archive.recipients.RecipientId
 
 sealed class MediaSelectionDestination {
@@ -28,7 +29,7 @@ sealed class MediaSelectionDestination {
   }
 
   class SingleRecipient(private val id: RecipientId) : MediaSelectionDestination() {
-    override fun getRecipientId(): RecipientId = id
+    override fun getRecipientSearchKey(): ContactSearchKey.RecipientSearchKey = ContactSearchKey.RecipientSearchKey.KnownRecipient(id)
 
     override fun toBundle(): Bundle {
       return Bundle().apply {
@@ -37,18 +38,25 @@ sealed class MediaSelectionDestination {
     }
   }
 
-  class MultipleRecipients(val recipientIds: List<RecipientId>) : MediaSelectionDestination() {
-    override fun getRecipientIdList(): List<RecipientId> = recipientIds
+  class MultipleRecipients(val recipientSearchKeys: List<ContactSearchKey.RecipientSearchKey>) : MediaSelectionDestination() {
+
+    companion object {
+      fun fromParcel(parcelables: List<ContactSearchKey.ParcelableRecipientSearchKey>): MultipleRecipients {
+        return MultipleRecipients(parcelables.map { it.asRecipientSearchKey() }.filterIsInstance(ContactSearchKey.RecipientSearchKey::class.java))
+      }
+    }
+
+    override fun getRecipientSearchKeyList(): List<ContactSearchKey.RecipientSearchKey> = recipientSearchKeys
 
     override fun toBundle(): Bundle {
       return Bundle().apply {
-        putParcelableArrayList(RECIPIENT_LIST, ArrayList(recipientIds))
+        putParcelableArrayList(RECIPIENT_LIST, ArrayList(recipientSearchKeys.map { it.requireParcelable() }))
       }
     }
   }
 
-  open fun getRecipientId(): RecipientId? = null
-  open fun getRecipientIdList(): List<RecipientId> = emptyList()
+  open fun getRecipientSearchKey(): ContactSearchKey.RecipientSearchKey? = null
+  open fun getRecipientSearchKeyList(): List<ContactSearchKey.RecipientSearchKey> = emptyList()
 
   abstract fun toBundle(): Bundle
 
@@ -63,7 +71,7 @@ sealed class MediaSelectionDestination {
         bundle.containsKey(WALLPAPER) -> Wallpaper
         bundle.containsKey(AVATAR) -> Avatar
         bundle.containsKey(RECIPIENT) -> SingleRecipient(requireNotNull(bundle.getParcelable(RECIPIENT)))
-        bundle.containsKey(RECIPIENT_LIST) -> MultipleRecipients(requireNotNull(bundle.getParcelableArrayList(RECIPIENT_LIST)))
+        bundle.containsKey(RECIPIENT_LIST) -> MultipleRecipients.fromParcel(requireNotNull(bundle.getParcelableArrayList(RECIPIENT_LIST)))
         else -> ChooseAfterMediaSelection
       }
     }

@@ -25,6 +25,7 @@ class SignalContextMenu private constructor(
   val baseOffsetX: Int = 0,
   val baseOffsetY: Int = 0,
   val horizontalPosition: HorizontalPosition = HorizontalPosition.START,
+  val verticalPosition: VerticalPosition = VerticalPosition.BELOW,
   val onDismiss: Runnable? = null
 ) : PopupWindow(
   LayoutInflater.from(anchor.context).inflate(R.layout.signal_context_menu, null),
@@ -41,6 +42,7 @@ class SignalContextMenu private constructor(
 
   init {
     setBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.signal_context_menu_background))
+    inputMethodMode = INPUT_METHOD_NOT_NEEDED
 
     isFocusable = true
 
@@ -55,10 +57,10 @@ class SignalContextMenu private constructor(
     contextMenuList.setItems(items)
   }
 
-  private fun show() {
+  private fun show(): SignalContextMenu {
     if (anchor.width == 0 || anchor.height == 0) {
       anchor.post(this::show)
-      return
+      return this
     }
 
     contentView.measure(
@@ -80,7 +82,10 @@ class SignalContextMenu private constructor(
 
     val offsetY: Int
 
-    if (menuBottomBound < screenBottomBound) {
+    if (verticalPosition == VerticalPosition.ABOVE && menuTopBound > screenTopBound) {
+      offsetY = -(anchorRect.height() + contentView.measuredHeight + baseOffsetY)
+      contextMenuList.setItems(items.reversed())
+    } else if (menuBottomBound < screenBottomBound) {
       offsetY = baseOffsetY
     } else if (menuTopBound > screenTopBound) {
       offsetY = -(anchorRect.height() + contentView.measuredHeight + baseOffsetY)
@@ -107,10 +112,16 @@ class SignalContextMenu private constructor(
     }
 
     showAsDropDown(anchor, offsetX, offsetY)
+
+    return this
   }
 
   enum class HorizontalPosition {
     START, END
+  }
+
+  enum class VerticalPosition {
+    ABOVE, BELOW
   }
 
   /**
@@ -122,10 +133,11 @@ class SignalContextMenu private constructor(
     val container: ViewGroup
   ) {
 
-    var onDismiss: Runnable? = null
-    var offsetX = 0
-    var offsetY = 0
-    var horizontalPosition = HorizontalPosition.START
+    private var onDismiss: Runnable? = null
+    private var offsetX = 0
+    private var offsetY = 0
+    private var horizontalPosition = HorizontalPosition.START
+    private var verticalPosition = VerticalPosition.BELOW
 
     fun onDismiss(onDismiss: Runnable): Builder {
       this.onDismiss = onDismiss
@@ -147,14 +159,20 @@ class SignalContextMenu private constructor(
       return this
     }
 
-    fun show(items: List<ActionItem>) {
-      SignalContextMenu(
+    fun preferredVerticalPosition(verticalPosition: VerticalPosition): Builder {
+      this.verticalPosition = verticalPosition
+      return this
+    }
+
+    fun show(items: List<ActionItem>): SignalContextMenu {
+      return SignalContextMenu(
         anchor = anchor,
         container = container,
         items = items,
         baseOffsetX = offsetX,
         baseOffsetY = offsetY,
         horizontalPosition = horizontalPosition,
+        verticalPosition = verticalPosition,
         onDismiss = onDismiss
       ).show()
     }

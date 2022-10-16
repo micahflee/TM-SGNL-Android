@@ -6,8 +6,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.RecipientDatabase;
-import org.tm.archive.database.model.RecipientRecord;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.RecipientRecord;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;

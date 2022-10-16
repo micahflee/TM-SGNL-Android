@@ -171,8 +171,9 @@ public final class AttachmentCompressionJob extends BaseJob {
         }
       } else if (constraints.canResize(attachment)) {
         Log.i(TAG, "Compressing image.");
-        MediaStream converted = compressImage(context, attachment, constraints);
-        attachmentDatabase.updateAttachmentData(attachment, converted, false);
+        try (MediaStream converted = compressImage(context, attachment, constraints)) {
+          attachmentDatabase.updateAttachmentData(attachment, converted, false);
+        }
         attachmentDatabase.markAttachmentAsTransformed(attachmentId);
       } else if (constraints.isSatisfied(context, attachment)) {
         Log.i(TAG, "Not compressing.");
@@ -240,8 +241,9 @@ public final class AttachmentCompressionJob extends BaseJob {
                 }, outputStream, cancelationSignal);
               }
 
-              MediaStream mediaStream = new MediaStream(ModernDecryptingPartInputStream.createFor(attachmentSecret, file, 0), MimeTypes.VIDEO_MP4, 0, 0);
-              attachmentDatabase.updateAttachmentData(attachment, mediaStream, transformProperties.isVideoEdited());
+              try (MediaStream mediaStream = new MediaStream(ModernDecryptingPartInputStream.createFor(attachmentSecret, file, 0), MimeTypes.VIDEO_MP4, 0, 0)) {
+                attachmentDatabase.updateAttachmentData(attachment, mediaStream, true);
+              }
             } finally {
               if (!file.delete()) {
                 Log.w(TAG, "Failed to delete temp file");
@@ -259,15 +261,15 @@ public final class AttachmentCompressionJob extends BaseJob {
             if (transcoder.isTranscodeRequired()) {
               Log.i(TAG, "Compressing with android in-memory muxer");
 
-              MediaStream mediaStream = transcoder.transcode(percent -> {
+              try (MediaStream mediaStream = transcoder.transcode(percent -> {
                 notification.setProgress(100, percent);
                 eventBus.postSticky(new PartProgressEvent(attachment,
                                                           PartProgressEvent.Type.COMPRESSION,
                                                           100,
                                                           percent));
-              }, cancelationSignal);
-
-              attachmentDatabase.updateAttachmentData(attachment, mediaStream, transformProperties.isVideoEdited());
+              }, cancelationSignal)) {
+                attachmentDatabase.updateAttachmentData(attachment, mediaStream, true);
+              }
 
               attachmentDatabase.markAttachmentAsTransformed(attachment.getAttachmentId());
 

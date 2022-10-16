@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:viewBindingIgnore="true"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -33,8 +35,9 @@
             android:id="@+id/edit_profile_name_given_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:autofillHints="personGivenName"
             android:inputType="textPersonName"
-            android:maxLines="1" />
+            android:singleLine="true" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -55,27 +58,20 @@
             android:id="@+id/edit_profile_name_family_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:autofillHints="personFamilyName"
             android:inputType="textPersonName"
-            android:maxLines="1" />
+            android:singleLine="true" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.dd.CircularProgressButton
+    <org.tm.archive.util.views.CircularProgressMaterialButton
         android:id="@+id/edit_profile_name_save"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:text="@string/EditProfileNameFragment_save"
-        android:textColor="@color/white"
-        app:cornerRadius="80dp"
-        app:cpb_colorIndicator="@color/white"
-        app:cpb_colorProgress="?colorAccent"
-        app:cpb_cornerRadius="28dp"
-        app:cpb_selectorIdle="@drawable/progress_button_state"
-        app:cpb_textIdle="@string/EditProfileNameFragment_save"
-        app:elevation="4dp"
+        app:circularProgressMaterialButton__label="@string/EditProfileNameFragment_save"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

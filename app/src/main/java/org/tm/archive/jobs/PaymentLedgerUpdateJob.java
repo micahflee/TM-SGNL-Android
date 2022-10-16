@@ -3,6 +3,8 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.mobilecoin.lib.exceptions.FogSyncException;
+
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.PaymentDatabase;
 import org.tm.archive.database.SignalDatabase;
@@ -54,7 +56,7 @@ public final class PaymentLedgerUpdateJob extends BaseJob {
   }
 
   @Override
-  protected void onRun() throws IOException, RetryLaterException {
+  protected void onRun() throws IOException, RetryLaterException, FogSyncException {
     if (!SignalStore.paymentsValues().mobileCoinPaymentsEnabled()) {
       Log.w(TAG, "Payments are not enabled");
       return;

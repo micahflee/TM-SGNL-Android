@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.AppCapabilities;
-import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
@@ -14,6 +13,7 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.KbsValues;
 import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.registration.RegistrationRepository;
 import org.tm.archive.registration.secondary.DeviceNameCipher;
 import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
@@ -23,6 +23,7 @@ import org.whispersystems.signalservice.api.push.exceptions.NetworkFailureExcept
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 public class RefreshAttributesJob extends BaseJob {
 
@@ -49,6 +50,8 @@ public class RefreshAttributesJob extends BaseJob {
                            .addConstraint(NetworkConstraint.KEY)
                            .setQueue("RefreshAttributesJob")
                            .setMaxInstancesForFactory(2)
+                           .setLifespan(TimeUnit.DAYS.toDays(30))
+                           .setMaxAttempts(Parameters.UNLIMITED)
                            .build(),
          forced);
   }
@@ -87,6 +90,7 @@ public class RefreshAttributesJob extends BaseJob {
     String    registrationLockV1          = null;
     String    registrationLockV2          = null;
     KbsValues kbsValues                   = SignalStore.kbsValues();
+    int       pniRegistrationId           = new RegistrationRepository(ApplicationDependencies.getApplication()).getPniRegistrationId();
 
     if (kbsValues.isV2RegistrationLockEnabled()) {
       registrationLockV2 = kbsValues.getRegistrationLockToken();
@@ -98,7 +102,7 @@ public class RefreshAttributesJob extends BaseJob {
     boolean phoneNumberDiscoverable = SignalStore.phoneNumberPrivacy().getPhoneNumberListingMode().isDiscoverable();
 
     String deviceName = SignalStore.account().getDeviceName();
-    byte[] encryptedDeviceName = (deviceName == null) ? null : DeviceNameCipher.encryptDeviceName(deviceName.getBytes(StandardCharsets.UTF_8), IdentityKeyUtil.getIdentityKeyPair(context));
+    byte[] encryptedDeviceName = (deviceName == null) ? null : DeviceNameCipher.encryptDeviceName(deviceName.getBytes(StandardCharsets.UTF_8), SignalStore.account().getAciIdentityKey());
 
     AccountAttributes.Capabilities capabilities = AppCapabilities.getCapabilities(kbsValues.hasPin() && !kbsValues.hasOptedOut());
     Log.i(TAG, "Calling setAccountAttributes() reglockV1? " + !TextUtils.isEmpty(registrationLockV1) + ", reglockV2? " + !TextUtils.isEmpty(registrationLockV2) + ", pin? " + kbsValues.hasPin() +
@@ -111,17 +115,23 @@ public class RefreshAttributesJob extends BaseJob {
                "\n    Sender Key? " + capabilities.isSenderKey() +
                "\n    Announcement Groups? " + capabilities.isAnnouncementGroup() +
                "\n    Change Number? " + capabilities.isChangeNumber() +
+               "\n    Stories? " + capabilities.isStories() +
+               "\n    Gift Badges? " + capabilities.isGiftBadges() +
+               "\n    PNP? " + capabilities.isPnp() +
                "\n    UUID? " + capabilities.isUuid());
 
     SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
-    signalAccountManager.setAccountAttributes(null, registrationId, fetchesMessages,
-                                              registrationLockV1, registrationLockV2,
-                                              unidentifiedAccessKey, universalUnidentifiedAccess,
+    signalAccountManager.setAccountAttributes(null,
+                                              registrationId,
+                                              fetchesMessages,
+                                              registrationLockV1,
+                                              registrationLockV2,
+                                              unidentifiedAccessKey,
+                                              universalUnidentifiedAccess,
                                               capabilities,
                                               phoneNumberDiscoverable,
-                                              encryptedDeviceName);
-
-    ApplicationDependencies.getJobManager().add(new RefreshOwnProfileJob());
+                                              encryptedDeviceName,
+                                              pniRegistrationId);
 
     hasRefreshedThisAppCycle = true;
   }

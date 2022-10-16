@@ -8,7 +8,7 @@ import androidx.core.content.ContextCompat;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 public final class PinOptOutDialog {

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
@@ -9,7 +10,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:alpha="0"
-        android:background="@color/signal_background_primary"
+        android:background="@color/signal_colorSurface2"
         app:layout_constraintBottom_toBottomOf="@id/toolbar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -18,8 +19,8 @@
     <org.tm.archive.util.views.DarkOverflowToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="56dp"
+        android:layout_height="@dimen/signal_m3_toolbar_height"
+        android:minHeight="@dimen/signal_m3_toolbar_height"
         android:theme="?attr/settingsToolbarStyle"
         app:contentInsetStartWithNavigation="60dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -27,55 +28,52 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_arrow_left_24">
 
-        <FrameLayout
-            android:id="@+id/toolbar_avatar_container"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:alpha="0"
-            android:translationY="56dp"
-            tools:alpha="1"
-            tools:translationY="0dp">
+            android:gravity="start">
 
-            <org.tm.archive.components.AvatarImageView
-                android:id="@+id/toolbar_avatar"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                app:fallbackImageSize="small" />
+            <FrameLayout
+                android:id="@+id/toolbar_avatar_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0"
+                android:translationY="56dp"
+                tools:alpha="1"
+                tools:translationY="0dp">
 
-            <org.tm.archive.badges.BadgeImageView
-                android:id="@+id/toolbar_badge"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="23dp"
-                app:badge_size="small" />
+                <org.tm.archive.components.AvatarImageView
+                    android:id="@+id/toolbar_avatar"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    app:fallbackImageSize="small" />
 
-        </FrameLayout>
+                <org.tm.archive.badges.BadgeImageView
+                    android:id="@+id/toolbar_badge"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="23dp"
+                    app:badge_size="small" />
 
-        <org.tm.archive.components.emoji.EmojiTextView
-            android:id="@+id/toolbar_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:alpha="0"
-            android:ellipsize="end"
-            android:gravity="center_vertical"
-            android:maxLines="1"
-            android:textAppearance="@style/Signal.Text.Title"
-            android:translationY="56dp"
-            tools:alpha="1"
-            tools:text="Miles Morales"
-            tools:translationY="0dp" />
+            </FrameLayout>
+
+            <org.tm.archive.components.emoji.EmojiTextView
+                android:id="@+id/toolbar_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="16dp"
+                android:alpha="0"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/Signal.Text.TitleLarge"
+                android:translationY="56dp"
+                tools:alpha="1"
+                tools:text="Miles Morales"
+                tools:translationY="0dp" />
+
+        </LinearLayout>
 
     </org.tm.archive.util.views.DarkOverflowToolbar>
-
-    <View
-        android:id="@+id/toolbar_shadow"
-        android:layout_width="match_parent"
-        android:layout_height="5dp"
-        android:alpha="0"
-        android:background="@drawable/toolbar_shadow"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
 </merge>

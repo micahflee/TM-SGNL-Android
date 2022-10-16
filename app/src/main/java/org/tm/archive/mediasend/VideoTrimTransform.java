@@ -7,7 +7,9 @@ import androidx.annotation.WorkerThread;
 
 import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.mms.SentMediaQuality;
-import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.util.Optional;
+
 
 public final class VideoTrimTransform implements MediaTransform {
 

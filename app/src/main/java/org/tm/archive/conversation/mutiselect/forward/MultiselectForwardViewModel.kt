@@ -1,86 +1,92 @@
 package org.tm.archive.conversation.mutiselect.forward
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.plusAssign
+import org.tm.archive.contacts.paged.ContactSearchKey
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.recipients.RecipientId
+import org.tm.archive.mediasend.v2.UntrustedRecords
 import org.tm.archive.sharing.MultiShareArgs
-import org.tm.archive.sharing.ShareContact
-import org.tm.archive.sharing.ShareSelectionMappingModel
+import org.tm.archive.stories.Stories
 import org.tm.archive.util.livedata.Store
-import org.whispersystems.libsignal.util.guava.Optional
 
 class MultiselectForwardViewModel(
+  private val storySendRequirements: Stories.MediaTransform.SendRequirements,
   private val records: List<MultiShareArgs>,
-  private val repository: MultiselectForwardRepository
+  private val isSelectionOnly: Boolean,
+  private val repository: MultiselectForwardRepository,
+  private val identityChangesSince: Long = System.currentTimeMillis()
 ) : ViewModel() {
 
-  private val store = Store(MultiselectForwardState())
+  private val store = Store(
+    MultiselectForwardState(
+      storySendRequirements = storySendRequirements
+    )
+  )
 
   val state: LiveData<MultiselectForwardState> = store.stateLiveData
+  val snapshot: MultiselectForwardState get() = store.state
 
-  val shareContactMappingModels: LiveData<List<ShareSelectionMappingModel>> = Transformations.map(state) { s -> s.selectedContacts.mapIndexed { i, c -> ShareSelectionMappingModel(c, i == 0) } }
+  private val disposables = CompositeDisposable()
 
-  fun addSelectedContact(recipientId: Optional<RecipientId>, number: String?): Single<Boolean> {
-    return repository
-      .canSelectRecipient(recipientId)
-      .doOnSuccess { allowed ->
-        if (allowed) {
-          store.update { it.copy(selectedContacts = it.selectedContacts + ShareContact(recipientId, number)) }
-        }
+  init {
+    if (records.isNotEmpty()) {
+      disposables += repository.checkAllSelectedMediaCanBeSentToStories(records).subscribe { sendRequirements ->
+        store.update { it.copy(storySendRequirements = sendRequirements) }
       }
+    }
   }
 
-  fun removeSelectedContact(recipientId: Optional<RecipientId>, number: String?) {
-    store.update { it.copy(selectedContacts = it.selectedContacts - ShareContact(recipientId, number)) }
+  override fun onCleared() {
+    disposables.clear()
   }
 
-  fun send(additionalMessage: String) {
+  fun send(additionalMessage: String, selectedContacts: Set<ContactSearchKey>) {
     if (SignalStore.tooltips().showMultiForwardDialog()) {
       SignalStore.tooltips().markMultiForwardDialogSeen()
       store.update { it.copy(stage = MultiselectForwardState.Stage.FirstConfirmation) }
     } else {
       store.update { it.copy(stage = MultiselectForwardState.Stage.LoadingIdentities) }
-      repository.checkForBadIdentityRecords(store.state.selectedContacts) { identityRecords ->
+      UntrustedRecords.checkForBadIdentityRecords(selectedContacts.filterIsInstance(ContactSearchKey.RecipientSearchKey::class.java).toSet(), identityChangesSince) { identityRecords ->
         if (identityRecords.isEmpty()) {
-          performSend(additionalMessage)
+          performSend(additionalMessage, selectedContacts)
         } else {
-          store.update { it.copy(stage = MultiselectForwardState.Stage.SafetyConfirmation(identityRecords)) }
+          store.update { state ->
+            state.copy(
+              stage = MultiselectForwardState.Stage.SafetyConfirmation(
+                identityRecords,
+                selectedContacts.filterIsInstance<ContactSearchKey.RecipientSearchKey>()
+              )
+            )
+          }
         }
       }
     }
   }
 
-  fun confirmFirstSend(additionalMessage: String) {
-    send(additionalMessage)
+  fun confirmFirstSend(additionalMessage: String, selectedContacts: Set<ContactSearchKey>) {
+    send(additionalMessage, selectedContacts)
   }
 
-  fun confirmSafetySend(additionalMessage: String) {
-    send(additionalMessage)
+  fun confirmSafetySend(additionalMessage: String, selectedContacts: Set<ContactSearchKey>) {
+    send(additionalMessage, selectedContacts)
   }
 
   fun cancelSend() {
     store.update { it.copy(stage = MultiselectForwardState.Stage.Selection) }
   }
 
-  private fun performSend(additionalMessage: String) {
+  private fun performSend(additionalMessage: String, selectedContacts: Set<ContactSearchKey>) {
     store.update { it.copy(stage = MultiselectForwardState.Stage.SendPending) }
-    if (records.isEmpty()) {
-      store.update { state ->
-        state.copy(
-          stage = MultiselectForwardState.Stage.SelectionConfirmed(
-            state.selectedContacts.filter { it.recipientId.isPresent }.map { it.recipientId.get() }.distinct()
-          )
-        )
-      }
+    if (records.isEmpty() || isSelectionOnly) {
+      store.update { it.copy(stage = MultiselectForwardState.Stage.SelectionConfirmed(selectedContacts)) }
     } else {
       repository.send(
         additionalMessage = additionalMessage,
         multiShareArgs = records,
-        shareContacts = store.state.selectedContacts,
+        shareContacts = selectedContacts,
         MultiselectForwardRepository.MultiselectForwardResultHandlers(
           onAllMessageSentSuccessfully = { store.update { it.copy(stage = MultiselectForwardState.Stage.Success) } },
           onAllMessagesFailed = { store.update { it.copy(stage = MultiselectForwardState.Stage.AllFailed) } },
@@ -91,11 +97,13 @@ class MultiselectForwardViewModel(
   }
 
   class Factory(
+    private val storySendRequirements: Stories.MediaTransform.SendRequirements,
     private val records: List<MultiShareArgs>,
-    private val repository: MultiselectForwardRepository
+    private val isSelectionOnly: Boolean,
+    private val repository: MultiselectForwardRepository,
   ) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-      return requireNotNull(modelClass.cast(MultiselectForwardViewModel(records, repository)))
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+      return requireNotNull(modelClass.cast(MultiselectForwardViewModel(storySendRequirements, records, isSelectionOnly, repository)))
     }
   }
 }

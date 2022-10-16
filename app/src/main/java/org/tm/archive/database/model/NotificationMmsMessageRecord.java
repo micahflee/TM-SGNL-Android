@@ -20,10 +20,12 @@ import android.content.Context;
 import android.text.SpannableString;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.tm.archive.R;
 import org.tm.archive.database.MmsDatabase;
 import org.tm.archive.database.SmsDatabase.Status;
+import org.tm.archive.database.model.databaseprotos.GiftBadge;
 import org.tm.archive.mms.SlideDeck;
 import org.tm.archive.recipients.Recipient;
 
@@ -52,13 +54,14 @@ public class NotificationMmsMessageRecord extends MmsMessageRecord {
                                       long threadId, byte[] contentLocation, long messageSize,
                                       long expiry, int status, byte[] transactionId, long mailbox,
                                       int subscriptionId, SlideDeck slideDeck, int readReceiptCount,
-                                      int viewedReceiptCount, long receiptTimestamp)
+                                      int viewedReceiptCount, long receiptTimestamp, @NonNull StoryType storyType,
+                                      @Nullable ParentStoryId parentStoryId, @Nullable GiftBadge giftBadge)
   {
     super(id, "", conversationRecipient, individualRecipient, recipientDeviceId,
           dateSent, dateReceived, -1, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox,
           new HashSet<>(), new HashSet<>(), subscriptionId,
           0, 0, false, slideDeck, readReceiptCount, null, Collections.emptyList(), Collections.emptyList(), false,
-          Collections.emptyList(), false, 0, viewedReceiptCount, receiptTimestamp);
+          Collections.emptyList(), false, 0, viewedReceiptCount, receiptTimestamp, storyType, parentStoryId, giftBadge);
 
     this.contentLocation = contentLocation;
     this.messageSize     = messageSize;

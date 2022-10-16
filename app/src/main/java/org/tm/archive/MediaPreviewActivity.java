@@ -44,17 +44,23 @@ import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.signal.core.util.logging.Log;
 import org.tm.archive.animation.DepthPageTransformer;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.components.viewpager.ExtendedOnPageChangedListener;
+import org.tm.archive.components.voice.VoiceNoteMediaController;
+import org.tm.archive.components.voice.VoiceNoteMediaControllerOwner;
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment;
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs;
 import org.tm.archive.database.MediaDatabase;
 import org.tm.archive.database.MediaDatabase.MediaRecord;
 import org.tm.archive.database.loaders.PagingMediaLoader;
@@ -67,7 +73,6 @@ import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.sharing.ShareActivity;
 import org.tm.archive.util.AttachmentUtil;
 import org.tm.archive.util.DateUtils;
 import org.tm.archive.util.FullscreenHelper;
@@ -87,7 +92,8 @@ import java.util.Objects;
 public final class MediaPreviewActivity extends PassphraseRequiredActivity
   implements LoaderManager.LoaderCallbacks<Pair<Cursor, Integer>>,
              MediaRailAdapter.RailItemListener,
-             MediaPreviewFragment.Events
+             MediaPreviewFragment.Events,
+             VoiceNoteMediaControllerOwner
 {
 
   private final static String TAG = Log.tag(MediaPreviewActivity.class);
@@ -127,6 +133,8 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
   private MediaDatabase.Sorting sorting;
   private FullscreenHelper      fullscreenHelper;
 
+  private VoiceNoteMediaController voiceNoteMediaController;
+
   private @Nullable Cursor cursor = null;
 
   public static @NonNull Intent intentFromMediaRecord(@NonNull Context context,
@@ -159,7 +167,8 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
 
     setSupportActionBar(findViewById(R.id.toolbar));
 
-    viewModel = ViewModelProviders.of(this).get(MediaPreviewViewModel.class);
+    voiceNoteMediaController = new VoiceNoteMediaController(this);
+    viewModel = new ViewModelProvider(this).get(MediaPreviewViewModel.class);
 
     fullscreenHelper = new FullscreenHelper(this);
 
@@ -203,23 +212,25 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
     else                                  from = "";
 
     if (showThread) {
-      String    to              = null;
+      String    titleText       = null;
       Recipient threadRecipient = mediaItem.threadRecipient;
 
       if (threadRecipient != null) {
-        if (mediaItem.outgoing || threadRecipient.isGroup()) {
+        if (mediaItem.outgoing) {
           if (threadRecipient.isSelf()) {
-            from = getString(R.string.note_to_self);
+            titleText = getString(R.string.note_to_self);
           } else {
-            to = threadRecipient.getDisplayName(this);
+            titleText = getString(R.string.MediaPreviewActivity_you_to_s, threadRecipient.getDisplayName(this));
           }
         } else {
-          to = getString(R.string.MediaPreviewActivity_you);
+          if (threadRecipient.isGroup()) {
+            titleText = getString(R.string.MediaPreviewActivity_s_to_s, from, threadRecipient.getDisplayName(this));
+          } else {
+            titleText = getString(R.string.MediaPreviewActivity_s_to_you, from);
+          }
         }
       }
-
-      return to != null ? getString(R.string.MediaPreviewActivity_s_to_s, from, to)
-                        : from;
+      return titleText != null ? titleText : from;
     } else {
       return from;
     }
@@ -286,7 +297,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
 
     anchorMarginsToBottomInsets(detailsContainer);
 
-    fullscreenHelper.configureToolbarSpacer(findViewById(R.id.toolbar_cutout_spacer));
+    fullscreenHelper.configureToolbarLayout(findViewById(R.id.toolbar_cutout_spacer), findViewById(R.id.toolbar));
 
     fullscreenHelper.showAndHideWithSystemUI(getWindow(), detailsContainer, toolbarLayout);
   }
@@ -386,10 +397,13 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
     MediaItem mediaItem = getCurrentMediaItem();
 
     if (mediaItem != null) {
-      Intent composeIntent = new Intent(this, ShareActivity.class);
-      composeIntent.putExtra(Intent.EXTRA_STREAM, mediaItem.uri);
-      composeIntent.setType(mediaItem.type);
-      startActivity(composeIntent);
+      MultiselectForwardFragmentArgs.create(
+          this,
+          threadId,
+          mediaItem.uri,
+          mediaItem.type,
+          args -> MultiselectForwardFragment.showBottomSheet(getSupportFragmentManager(), args)
+      );
     }
   }
 
@@ -452,7 +466,7 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
       return;
     }
 
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
     builder.setIcon(R.drawable.ic_warning);
     builder.setTitle(R.string.MediaPreviewActivity_media_delete_confirmation_title);
     builder.setMessage(R.string.MediaPreviewActivity_media_delete_confirmation_message);
@@ -553,19 +567,27 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
       }
       cursor = Objects.requireNonNull(data.first);
 
-      int mediaPosition = Objects.requireNonNull(data.second);
-
-      CursorPagerAdapter adapter = new CursorPagerAdapter(getSupportFragmentManager(),this, cursor, mediaPosition, leftIsRecent);
-      mediaPager.setAdapter(adapter);
-      adapter.setActive(true);
-
       viewModel.setCursor(this, cursor, leftIsRecent);
 
-      int item = restartItem >= 0 ? restartItem : mediaPosition;
-      mediaPager.setCurrentItem(item);
+      int mediaPosition = Objects.requireNonNull(data.second);
 
-      if (item == 0) {
-        viewPagerListener.onPageSelected(0);
+      CursorPagerAdapter oldAdapter = (CursorPagerAdapter) mediaPager.getAdapter();
+      if (oldAdapter == null) {
+        CursorPagerAdapter adapter = new CursorPagerAdapter(getSupportFragmentManager(), this, cursor, mediaPosition, leftIsRecent);
+        mediaPager.setAdapter(adapter);
+        adapter.setActive(true);
+      } else {
+        oldAdapter.setCursor(cursor, mediaPosition);
+        oldAdapter.setActive(true);
+      }
+
+      if (oldAdapter == null || restartItem >= 0) {
+        int item = restartItem >= 0 ? restartItem : mediaPosition;
+        mediaPager.setCurrentItem(item);
+
+        if (item == 0) {
+          viewPagerListener.onPageSelected(0);
+        }
       }
     } else {
       mediaNotAvailable();
@@ -587,6 +609,15 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
   public void mediaNotAvailable() {
     Toast.makeText(this, R.string.MediaPreviewActivity_media_no_longer_available, Toast.LENGTH_LONG).show();
     finish();
+  }
+
+  @Override
+  public void onMediaReady() {
+  }
+
+  @Override
+  public @NonNull VoiceNoteMediaController getVoiceNoteMediaController() {
+    return voiceNoteMediaController;
   }
 
   private class ViewPagerListener extends ExtendedOnPageChangedListener {
@@ -713,10 +744,10 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
     private final Map<Integer, MediaPreviewFragment> mediaFragments = new HashMap<>();
 
     private final Context context;
-    private final Cursor  cursor;
     private final boolean leftIsRecent;
 
     private boolean active;
+    private Cursor  cursor;
     private int     autoPlayPosition;
 
     CursorPagerAdapter(@NonNull FragmentManager fragmentManager,
@@ -735,6 +766,11 @@ public final class MediaPreviewActivity extends PassphraseRequiredActivity
     public void setActive(boolean active) {
       this.active = active;
       notifyDataSetChanged();
+    }
+
+    public void setCursor(@NonNull Cursor cursor, int autoPlayPosition) {
+      this.cursor           = cursor;
+      this.autoPlayPosition = autoPlayPosition;
     }
 
     @Override

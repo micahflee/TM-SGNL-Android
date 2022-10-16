@@ -11,14 +11,14 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.concurrent.SerialMonoLifoExecutor;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 
 /**
  * LiveData encapsulating the logic to watch the Payments database for changes to payments and supply
- * a list of unread payments to listeners. If there are no unread payments, Optional.absent() will be passed
+ * a list of unread payments to listeners. If there are no unread payments, Optional.empty() will be passed
  * through instead.
  */
 public final class UnreadPaymentsLiveData extends LiveData<Optional<UnreadPayments>> {
@@ -45,7 +45,7 @@ public final class UnreadPaymentsLiveData extends LiveData<Optional<UnreadPaymen
   }
 
   private void refreshUnreadPayments() {
-    executor.execute(() -> postValue(Optional.fromNullable(getUnreadPayments())));
+    executor.execute(() -> postValue(Optional.ofNullable(getUnreadPayments())));
   }
 
   @WorkerThread

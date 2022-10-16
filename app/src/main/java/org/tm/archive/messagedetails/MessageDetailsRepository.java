@@ -12,9 +12,11 @@ import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.conversation.ConversationMessage.ConversationMessageFactory;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.GroupReceiptDatabase;
+import org.tm.archive.database.MmsSmsDatabase;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.database.documents.NetworkFailure;
+import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
@@ -27,7 +29,7 @@ final class MessageDetailsRepository {
   private final Context context = ApplicationDependencies.getApplication();
 
   @NonNull LiveData<MessageRecord> getMessageRecord(String type, Long messageId) {
-    return new MessageRecordLiveData(context, type, messageId);
+    return new MessageRecordLiveData(new MessageId(messageId, type.equals(MmsSmsDatabase.MMS_TRANSPORT)));
   }
 
   @NonNull LiveData<MessageDetails> getMessageDetails(@Nullable MessageRecord messageRecord) {
@@ -130,6 +132,7 @@ final class MessageDetailsRepository {
     else if (groupStatus == GroupReceiptDatabase.STATUS_UNDELIVERED)             return RecipientDeliveryStatus.Status.PENDING;
     else if (groupStatus == GroupReceiptDatabase.STATUS_UNKNOWN)                 return RecipientDeliveryStatus.Status.UNKNOWN;
     else if (groupStatus == GroupReceiptDatabase.STATUS_VIEWED)                  return RecipientDeliveryStatus.Status.VIEWED;
+    else if (groupStatus == GroupReceiptDatabase.STATUS_SKIPPED)                 return RecipientDeliveryStatus.Status.SKIPPED;
     throw new AssertionError();
   }
 }

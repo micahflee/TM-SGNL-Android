@@ -97,7 +97,7 @@ public final class RegistrationViewModel extends BaseRegistrationViewModel {
     return super.requestVerificationCode(mode)
                 .doOnSuccess(processor -> {
                   if (processor.hasResult()) {
-                    setFcmToken(processor.getResult().getFcmToken().orNull());
+                    setFcmToken(processor.getResult().getFcmToken().orElse(null));
                   }
                 });
   }
@@ -130,7 +130,8 @@ public final class RegistrationViewModel extends BaseRegistrationViewModel {
                                 getRegistrationSecret(),
                                 registrationRepository.getRegistrationId(),
                                 registrationRepository.getProfileKey(getNumber().getE164Number()),
-                                getFcmToken());
+                                getFcmToken(),
+                                registrationRepository.getPniRegistrationId());
   }
 
   public static final class Factory extends AbstractSavedStateViewModelFactory {

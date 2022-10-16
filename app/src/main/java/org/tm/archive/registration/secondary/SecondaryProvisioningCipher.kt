@@ -1,12 +1,12 @@
 package org.tm.archive.registration.secondary
 
-import org.signal.zkgroup.profiles.ProfileKey
+import org.signal.libsignal.protocol.IdentityKey
+import org.signal.libsignal.protocol.IdentityKeyPair
+import org.signal.libsignal.protocol.ecc.Curve
+import org.signal.libsignal.protocol.ecc.ECPublicKey
+import org.signal.libsignal.protocol.kdf.HKDF
+import org.signal.libsignal.zkgroup.profiles.ProfileKey
 import org.tm.archive.crypto.IdentityKeyUtil
-import org.whispersystems.libsignal.IdentityKey
-import org.whispersystems.libsignal.IdentityKeyPair
-import org.whispersystems.libsignal.ecc.Curve
-import org.whispersystems.libsignal.ecc.ECPublicKey
-import org.whispersystems.libsignal.kdf.HKDF
 import org.whispersystems.signalservice.api.util.UuidUtil
 import org.whispersystems.signalservice.internal.crypto.PrimaryProvisioningCipher
 import org.whispersystems.signalservice.internal.push.ProvisioningProtos
@@ -67,9 +67,9 @@ class SecondaryProvisioningCipher private constructor(private val secondaryIdent
     val provisioningMessage = ProvisioningProtos.ProvisionMessage.parseFrom(plaintext)
 
     return ProvisionDecryptResult.Success(
-      uuid = UuidUtil.parseOrThrow(provisioningMessage.uuid),
+      uuid = UuidUtil.parseOrThrow(provisioningMessage.aci),
       e164 = provisioningMessage.number,
-      identityKeyPair = IdentityKeyPair(IdentityKey(provisioningMessage.identityKeyPublic.toByteArray()), Curve.decodePrivatePoint(provisioningMessage.identityKeyPrivate.toByteArray())),
+      identityKeyPair = IdentityKeyPair(IdentityKey(provisioningMessage.aciIdentityKeyPublic.toByteArray()), Curve.decodePrivatePoint(provisioningMessage.aciIdentityKeyPrivate.toByteArray())),
       profileKey = ProfileKey(provisioningMessage.profileKey.toByteArray()),
       areReadReceiptsEnabled = provisioningMessage.readReceipts,
       primaryUserAgent = provisioningMessage.userAgent,

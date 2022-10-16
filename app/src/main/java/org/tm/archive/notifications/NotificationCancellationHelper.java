@@ -14,7 +14,8 @@ import com.annimon.stream.Stream;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.notifications.v2.MessageNotifierV2;
+import org.tm.archive.notifications.v2.DefaultMessageNotifier;
+import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.BubbleUtil;
 import org.tm.archive.util.ConversationUtil;
@@ -22,6 +23,7 @@ import org.tm.archive.util.ServiceUtil;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -45,7 +47,7 @@ public final class NotificationCancellationHelper {
 
   /**
    * Cancels all Message-Based notifications. Specifically, this is any notification that is not the
-   * summary notification assigned to the {@link MessageNotifierV2#NOTIFICATION_GROUP} group.
+   * summary notification assigned to the {@link DefaultMessageNotifier#NOTIFICATION_GROUP} group.
    *
    * We utilize our wrapped cancellation methods and a counter to make sure that we do not lose
    * bubble notifications that do not have unread messages in them.
@@ -111,7 +113,7 @@ public final class NotificationCancellationHelper {
   @RequiresApi(23)
   private static boolean isSingleThreadNotification(@NonNull StatusBarNotification statusBarNotification) {
     return statusBarNotification.getId() != NotificationIds.MESSAGE_SUMMARY &&
-           Objects.equals(statusBarNotification.getNotification().getGroup(), MessageNotifierV2.NOTIFICATION_GROUP);
+           Objects.equals(statusBarNotification.getNotification().getGroup(), DefaultMessageNotifier.NOTIFICATION_GROUP);
   }
 
   /**
@@ -183,10 +185,12 @@ public final class NotificationCancellationHelper {
       return true;
     }
 
-    Long threadId        = SignalDatabase.threads().getThreadIdFor(recipientId);
-    long focusedThreadId = ApplicationDependencies.getMessageNotifier().getVisibleThread();
+    Long                     threadId            = SignalDatabase.threads().getThreadIdFor(recipientId);
+    Optional<ConversationId> focusedThread       = ApplicationDependencies.getMessageNotifier().getVisibleThread();
+    Long                     focusedThreadId     = focusedThread.map(ConversationId::getThreadId).orElse(null);
+    Long                     focusedGroupStoryId = focusedThread.map(ConversationId::getGroupStoryId).orElse(null);
 
-    if (Objects.equals(threadId, focusedThreadId)) {
+    if (Objects.equals(threadId, focusedThreadId) && focusedGroupStoryId == null) {
       Log.d(TAG, "isCancellable: user entered full screen thread.");
       return true;
     }

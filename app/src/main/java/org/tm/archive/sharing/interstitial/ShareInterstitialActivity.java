@@ -7,11 +7,10 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.annimon.stream.Stream;
-import com.dd.CircularProgressButton;
 
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
@@ -28,6 +27,7 @@ import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.text.AfterTextChanged;
+import org.tm.archive.util.views.CircularProgressMaterialButton;
 
 import java.util.Objects;
 
@@ -39,12 +39,12 @@ public class ShareInterstitialActivity extends PassphraseRequiredActivity {
 
   private static final String ARGS = "args";
 
-  private ShareInterstitialViewModel viewModel;
-  private LinkPreviewViewModel       linkPreviewViewModel;
-  private CircularProgressButton     confirm;
-  private RecyclerView               contactsRecycler;
-  private Toolbar                    toolbar;
-  private LinkPreviewView            preview;
+  private ShareInterstitialViewModel     viewModel;
+  private LinkPreviewViewModel           linkPreviewViewModel;
+  private CircularProgressMaterialButton confirm;
+  private RecyclerView                   contactsRecycler;
+  private Toolbar                        toolbar;
+  private LinkPreviewView                preview;
 
   private final DynamicTheme                      dynamicTheme = new DynamicNoActionBarTheme();
   private final ShareInterstitialSelectionAdapter adapter      = new ShareInterstitialSelectionAdapter();
@@ -79,21 +79,25 @@ public class ShareInterstitialActivity extends PassphraseRequiredActivity {
     ShareInterstitialRepository        repository = new ShareInterstitialRepository();
     ShareInterstitialViewModel.Factory factory    = new ShareInterstitialViewModel.Factory(args, repository);
 
-    viewModel = ViewModelProviders.of(this, factory).get(ShareInterstitialViewModel.class);
+    viewModel = new ViewModelProvider(this, factory).get(ShareInterstitialViewModel.class);
 
     LinkPreviewRepository        linkPreviewRepository       = new LinkPreviewRepository();
     LinkPreviewViewModel.Factory linkPreviewViewModelFactory = new LinkPreviewViewModel.Factory(linkPreviewRepository);
 
-    linkPreviewViewModel = ViewModelProviders.of(this, linkPreviewViewModelFactory).get(LinkPreviewViewModel.class);
+    linkPreviewViewModel = new ViewModelProvider(this, linkPreviewViewModelFactory).get(LinkPreviewViewModel.class);
 
-    boolean hasSms = Stream.of(args.getShareContactAndThreads())
+    boolean hasSms = Stream.of(args.getRecipientSearchKeys())
                            .anyMatch(c -> {
                              Recipient recipient = Recipient.resolved(c.getRecipientId());
+                             if (recipient.isDistributionList()) {
+                               return false;
+                             }
+
                              return !recipient.isRegistered() || recipient.isForceSmsSelection();
                            });
 
     if (hasSms) {
-      linkPreviewViewModel.onTransportChanged(hasSms);
+      linkPreviewViewModel.onTransportChanged(true);
     }
   }
 
@@ -167,9 +171,7 @@ public class ShareInterstitialActivity extends PassphraseRequiredActivity {
   }
 
   private void onConfirm() {
-    confirm.setClickable(false);
-    confirm.setIndeterminateProgressMode(true);
-    confirm.setProgress(50);
+    confirm.setSpinning();
 
     viewModel.send(results -> {
       MultiShareDialogs.displayResultDialog(this, results, () -> {

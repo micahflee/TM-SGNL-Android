@@ -16,8 +16,8 @@ import com.makeramen.roundedimageview.RoundedDrawable;
 
 import org.jetbrains.annotations.NotNull;
 import org.tm.archive.R;
-import org.tm.archive.avatar.Avatars;
 import org.tm.archive.conversation.colors.AvatarColor;
+import org.tm.archive.conversation.colors.AvatarColorPair;
 
 import java.util.Objects;
 
@@ -63,14 +63,18 @@ public class ResourceContactPhoto implements FallbackContactPhoto {
   }
 
   private @NonNull Drawable buildDrawable(@NonNull Context context, int resourceId, @NonNull AvatarColor color, boolean inverted) {
-    Avatars.ForegroundColor foregroundColor = Avatars.getForegroundColor(color);
-    Drawable                background      = Objects.requireNonNull(ContextCompat.getDrawable(context, R.drawable.circle_tintable));
-    RoundedDrawable         foreground      = (RoundedDrawable) RoundedDrawable.fromDrawable(AppCompatResources.getDrawable(context, resourceId));
+    AvatarColorPair avatarColorPair = AvatarColorPair.create(context, color);
+
+    final int backgroundColor = avatarColorPair.getBackgroundColor();
+    final int foregroundColor = avatarColorPair.getForegroundColor();
+
+    Drawable        background = Objects.requireNonNull(ContextCompat.getDrawable(context, R.drawable.circle_tintable));
+    RoundedDrawable foreground = (RoundedDrawable) RoundedDrawable.fromDrawable(AppCompatResources.getDrawable(context, resourceId));
 
     //noinspection ConstantConditions
     foreground.setScaleType(scaleType);
-    background.setColorFilter(inverted ? foregroundColor.getColorInt() : color.colorInt(), PorterDuff.Mode.SRC_IN);
-    foreground.setColorFilter(inverted ? color.colorInt() : foregroundColor.getColorInt(), PorterDuff.Mode.SRC_ATOP);
+    background.setColorFilter(inverted ? foregroundColor : backgroundColor, PorterDuff.Mode.SRC_IN);
+    foreground.setColorFilter(inverted ? backgroundColor : foregroundColor, PorterDuff.Mode.SRC_ATOP);
 
     return new ExpandingLayerDrawable(new Drawable[] {background, foreground});
   }

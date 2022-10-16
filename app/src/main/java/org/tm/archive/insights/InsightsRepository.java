@@ -18,10 +18,10 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.MessageSender;
 import org.tm.archive.sms.OutgoingTextMessage;
 import org.tm.archive.util.Util;
-import org.tm.archive.util.concurrent.SimpleTask;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.core.util.concurrent.SimpleTask;
 
 import java.util.List;
+import java.util.Optional;
 
 public class InsightsRepository implements InsightsDashboardViewModel.Repository, InsightsModalViewModel.Repository {
 
@@ -63,9 +63,9 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
   public void getUserAvatar(@NonNull Consumer<InsightsUserAvatar> avatarConsumer) {
     SimpleTask.run(() -> {
       Recipient self = Recipient.self().resolve();
-      String    name = Optional.fromNullable(self.getDisplayName(context)).or("");
+      String    name = Optional.of(self.getDisplayName(context)).orElse("");
 
-      return new InsightsUserAvatar(new ProfileContactPhoto(self, self.getProfileAvatar()),
+      return new InsightsUserAvatar(new ProfileContactPhoto(self),
                                     self.getAvatarColor(),
                                     new GeneratedContactPhoto(name, R.drawable.ic_profile_outline_40));
     }, avatarConsumer::accept);
@@ -75,7 +75,7 @@ public class InsightsRepository implements InsightsDashboardViewModel.Repository
   public void sendSmsInvite(@NonNull Recipient recipient, Runnable onSmsMessageSent) {
     SimpleTask.run(() -> {
       Recipient resolved       = recipient.resolve();
-      int       subscriptionId = resolved.getDefaultSubscriptionId().or(-1);
+      int       subscriptionId = resolved.getDefaultSubscriptionId().orElse(-1);
       String    message        = context.getString(R.string.InviteActivity_lets_switch_to_signal, context.getString(R.string.install_url));
 
       MessageSender.send(context, new OutgoingTextMessage(resolved, message, subscriptionId), -1L, true, null, null);

@@ -1,8 +1,16 @@
 package org.tm.archive.jobs;
 
+import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 
+import com.google.protobuf.ByteString;
+
+import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.signal.storageservice.protos.groups.local.DecryptedMember;
+import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupChangeFailedException;
 import org.tm.archive.groups.GroupId;
@@ -13,10 +21,14 @@ import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.DecryptionsDrainedConstraint;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.recipients.Recipient;
 import org.whispersystems.signalservice.api.groupsv2.NoCredentialForRedemptionTimeException;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
+import org.whispersystems.signalservice.api.util.UuidUtil;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -65,6 +77,67 @@ public final class GroupV2UpdateSelfProfileKeyJob extends BaseJob {
                                                             .build(),
                                               groupId);
   }
+
+  /**
+   * Updates GV2 groups with the correct profile key if we find any that are out of date. Will run at most once per day.
+   */
+  @AnyThread
+  public static void enqueueForGroupsIfNecessary() {
+    if (!SignalStore.account().isRegistered() || SignalStore.account().getAci() == null || !Recipient.self().isRegistered()) {
+      Log.w(TAG, "Not yet registered!");
+      return;
+    }
+
+    byte[] rawProfileKey = Recipient.self().getProfileKey();
+
+    if (rawProfileKey == null) {
+      Log.w(TAG, "No profile key set!");
+      return;
+    }
+
+    ByteString selfProfileKey = ByteString.copyFrom(rawProfileKey);
+
+    long timeSinceLastCheck = System.currentTimeMillis() - SignalStore.misc().getLastGv2ProfileCheckTime();
+
+    if (timeSinceLastCheck < TimeUnit.DAYS.toMillis(1)) {
+      Log.d(TAG, "Too soon. Last check was " + timeSinceLastCheck + " ms ago.");
+      return;
+    }
+
+    Log.i(TAG, "Running routine check.");
+
+    SignalStore.misc().setLastGv2ProfileCheckTime(System.currentTimeMillis());
+
+    SignalExecutors.BOUNDED.execute(() -> {
+      boolean foundMismatch = false;
+
+      for (GroupId.V2 id : SignalDatabase.groups().getAllGroupV2Ids()) {
+        Optional<GroupDatabase.GroupRecord> group = SignalDatabase.groups().getGroup(id);
+        if (!group.isPresent()) {
+          Log.w(TAG, "Group " + group + " no longer exists?");
+          continue;
+        }
+
+        ByteString      selfUuidBytes = UuidUtil.toByteString(Recipient.self().requireServiceId().uuid());
+        DecryptedMember selfMember    = group.get().requireV2GroupProperties().getDecryptedGroup().getMembersList()
+                                                                                                  .stream()
+                                                                                                  .filter(m -> m.getUuid().equals(selfUuidBytes))
+                                                                                                  .findFirst()
+                                                                                                  .orElse(null);
+
+        if (selfMember != null && !selfMember.getProfileKey().equals(selfProfileKey)) {
+          Log.w(TAG, "Profile key mismatch for group " + id + " -- enqueueing job");
+          foundMismatch = true;
+          ApplicationDependencies.getJobManager().add(GroupV2UpdateSelfProfileKeyJob.withQueueLimits(id));
+        }
+      }
+
+      if (!foundMismatch) {
+        Log.i(TAG, "No mismatches found.");
+      }
+    });
+  }
+
 
   private GroupV2UpdateSelfProfileKeyJob(@NonNull Parameters parameters, @NonNull GroupId.V2 groupId) {
     super(parameters);

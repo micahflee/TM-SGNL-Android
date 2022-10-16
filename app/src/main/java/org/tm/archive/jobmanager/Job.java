@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
@@ -13,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import static androidx.annotation.VisibleForTesting.PACKAGE_PRIVATE;
 
 /**
  * A durable unit of work.
@@ -193,15 +196,18 @@ public abstract class Job {
       return new Result(ResultType.FAILURE, runtimeException, null, INVALID_BACKOFF);
     }
 
-    boolean isSuccess() {
+    @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
+    public boolean isSuccess() {
       return resultType == ResultType.SUCCESS;
     }
 
-    boolean isRetry() {
+    @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
+    public boolean isRetry() {
       return resultType == ResultType.RETRY;
     }
 
-    boolean isFailure() {
+    @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
+    public boolean isFailure() {
       return resultType == ResultType.FAILURE;
     }
 
@@ -242,7 +248,7 @@ public abstract class Job {
   public static final class Parameters {
 
     public static final String MIGRATION_QUEUE_KEY = "MIGRATION";
-    public static final int    IMMORTAL            = -1;
+    public static final long   IMMORTAL            = -1;
     public static final int    UNLIMITED           = -1;
 
     private final String       id;

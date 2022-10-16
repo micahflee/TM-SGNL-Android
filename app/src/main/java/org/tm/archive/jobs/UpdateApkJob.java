@@ -21,7 +21,7 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.service.UpdateApkReadyListener;
 import org.tm.archive.util.FileUtils;
-import org.tm.archive.util.Hex;
+import org.signal.core.util.Hex;
 import org.tm.archive.util.JsonUtils;
 import org.tm.archive.util.TextSecurePreferences;
 

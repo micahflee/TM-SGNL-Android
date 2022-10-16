@@ -69,7 +69,7 @@ public class IncomingRinger {
         player = null;
       }
     } else {
-      Log.w(TAG, "Not ringing, player: " + (player != null ? "available" : "null") + " mode: " + ringerMode);
+      Log.w(TAG, "Not ringing, player: " + (player != null ? "available" : "null") + " modeInt: " + ringerMode + " mode: " + (ringerMode == AudioManager.RINGER_MODE_SILENT ? "silent" : "vibrate only"));
     }
   }
 
@@ -117,14 +117,14 @@ public class IncomingRinger {
       if (Build.VERSION.SDK_INT <= 21) {
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_RING);
       } else {
-        mediaPlayer.setAudioAttributes(new AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                                                                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION_SIGNALLING)
+        mediaPlayer.setAudioAttributes(new AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                                                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                                                                     .build());
       }
 
       return mediaPlayer;
     } catch (IOException e) {
-      Log.e(TAG, "Failed to create player for incoming call ringer");
+      Log.e(TAG, "Failed to create player for incoming call ringer", e);
       return null;
     }
   }
@@ -134,21 +134,19 @@ public class IncomingRinger {
       MediaPlayer mediaPlayer = new MediaPlayer();
       mediaPlayer.setDataSource(context, ringtoneUri);
       return mediaPlayer;
-    } catch (SecurityException e) {
+    } catch (IOException | SecurityException e) {
       Log.w(TAG, "Failed to create player with ringtone the normal way", e);
     }
 
-    if (ringtoneUri.equals(Settings.System.DEFAULT_RINGTONE_URI)) {
-      try {
-        Uri defaultRingtoneUri = RingtoneUtil.getActualDefaultRingtoneUri(context);
-        if (defaultRingtoneUri != null) {
-          MediaPlayer mediaPlayer = new MediaPlayer();
-          mediaPlayer.setDataSource(context, defaultRingtoneUri);
-          return mediaPlayer;
-        }
-      } catch (SecurityException e) {
-        Log.w(TAG, "Failed to set default ringtone with fallback approach", e);
+    try {
+      Uri defaultRingtoneUri = RingtoneUtil.getActualDefaultRingtoneUri(context);
+      if (defaultRingtoneUri != null) {
+        MediaPlayer mediaPlayer = new MediaPlayer();
+        mediaPlayer.setDataSource(context, defaultRingtoneUri);
+        return mediaPlayer;
       }
+    } catch (SecurityException e) {
+      Log.w(TAG, "Failed to set default ringtone with fallback approach", e);
     }
 
     return null;

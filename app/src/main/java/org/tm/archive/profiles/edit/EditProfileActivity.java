@@ -1,12 +1,13 @@
 package org.tm.archive.profiles.edit;
 
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import org.tm.archive.BaseActivity;
@@ -18,7 +19,6 @@ import org.tm.archive.util.DynamicTheme;
 /**
  * Shows editing screen for your profile during registration. Also handles group name editing.
  */
-@SuppressLint("StaticFieldLeak")
 public class EditProfileActivity extends BaseActivity implements EditProfileFragment.Controller {
 
   public static final String NEXT_INTENT       = "next_intent";
@@ -32,13 +32,6 @@ public class EditProfileActivity extends BaseActivity implements EditProfileFrag
   public static @NonNull Intent getIntentForUserProfile(@NonNull Context context) {
     Intent intent = new Intent(context, EditProfileActivity.class);
     intent.putExtra(EditProfileActivity.SHOW_TOOLBAR, false);
-    return intent;
-  }
-
-  public static @NonNull Intent getIntentForUserProfileEdit(@NonNull Context context) {
-    Intent intent = new Intent(context, EditProfileActivity.class);
-    intent.putExtra(EditProfileActivity.EXCLUDE_SYSTEM, true);
-    intent.putExtra(EditProfileActivity.NEXT_BUTTON_TEXT, R.string.save);
     return intent;
   }
 
@@ -64,6 +57,14 @@ public class EditProfileActivity extends BaseActivity implements EditProfileFrag
                                  .add(R.id.fragment_container, fragment)
                                  .commit();
     }
+
+    getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+      @Override public void handleOnBackPressed() {
+        if (!Navigation.findNavController(EditProfileActivity.this, R.id.fragment_container).popBackStack()) {
+          finish();
+        }
+      }
+    });
   }
 
   @Override

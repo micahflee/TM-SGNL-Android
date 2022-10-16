@@ -8,8 +8,8 @@ import androidx.annotation.NonNull;
 
 import com.annimon.stream.Stream;
 
-import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
@@ -19,7 +19,7 @@ import org.tm.archive.jobmanager.persistence.ConstraintSpec;
 import org.tm.archive.jobmanager.persistence.DependencySpec;
 import org.tm.archive.jobmanager.persistence.FullSpec;
 import org.tm.archive.jobmanager.persistence.JobSpec;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -95,6 +95,7 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabaseOpenH
         if (instance == null) {
           SqlCipherLibraryLoader.load();
           instance = new JobDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context));
+          instance.setWriteAheadLoggingEnabled(true);
         }
       }
     }
@@ -140,7 +141,6 @@ public class JobDatabase extends SQLiteOpenHelper implements SignalDatabaseOpenH
   public void onOpen(SQLiteDatabase db) {
     Log.i(TAG, "onOpen()");
 
-    db.enableWriteAheadLogging();
     db.setForeignKeyConstraintsEnabled(true);
 
     SignalExecutors.BOUNDED.execute(() -> {

@@ -26,11 +26,8 @@ public class GroupJoiningActionProcessor extends GroupActionProcessor {
 
   private static final String TAG = Log.tag(GroupJoiningActionProcessor.class);
 
-  private final CallSetupActionProcessorDelegate callSetupDelegate;
-
   public GroupJoiningActionProcessor(@NonNull WebRtcInteractor webRtcInteractor) {
     super(webRtcInteractor, TAG);
-    callSetupDelegate = new CallSetupActionProcessorDelegate(webRtcInteractor, TAG);
   }
 
   @Override
@@ -44,6 +41,8 @@ public class GroupJoiningActionProcessor extends GroupActionProcessor {
   @Override
   protected @NonNull WebRtcServiceState handleGroupLocalDeviceStateChanged(@NonNull WebRtcServiceState currentState) {
     Log.i(tag, "handleGroupLocalDeviceStateChanged():");
+
+    currentState = super.handleGroupLocalDeviceStateChanged(currentState);
 
     GroupCall                  groupCall = currentState.getCallInfoState().requireGroupCall();
     GroupCall.LocalDeviceState device    = groupCall.getLocalDeviceState();
@@ -97,6 +96,7 @@ public class GroupJoiningActionProcessor extends GroupActionProcessor {
                  .changeLocalDeviceState()
                  .commit()
                  .actionProcessor(new GroupConnectedActionProcessor(webRtcInteractor));
+
         } else if (device.getJoinState() == GroupCall.JoinState.JOINING) {
           builder.changeCallInfoState()
                  .groupCallState(WebRtcViewModel.GroupCallState.CONNECTED_AND_JOINING)

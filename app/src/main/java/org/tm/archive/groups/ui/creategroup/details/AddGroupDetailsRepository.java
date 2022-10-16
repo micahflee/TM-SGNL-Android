@@ -4,7 +4,6 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
 import com.annimon.stream.Stream;
@@ -14,7 +13,6 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupChangeException;
 import org.tm.archive.groups.GroupManager;
-import org.tm.archive.groups.GroupsV2CapabilityChecker;
 import org.tm.archive.groups.ui.GroupMemberEntry;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
@@ -60,7 +58,8 @@ final class AddGroupDetailsRepository {
       Set<Recipient> recipients = new HashSet<>(Stream.of(members).map(Recipient::resolved).toList());
 
       try {
-        GroupManager.GroupActionResult result = GroupManager.createGroup(context,
+        GroupManager.GroupActionResult result = GroupManager.createGroup(SignalStore.account().requireAci(),
+                                                                         context,
                                                                          recipients,
                                                                          avatar,
                                                                          name,
@@ -77,18 +76,5 @@ final class AddGroupDetailsRepository {
         resultConsumer.accept(GroupCreateResult.error(GroupCreateResult.Error.Type.ERROR_IO));
       }
     });
-  }
-
-  @WorkerThread
-  List<Recipient> checkCapabilities(@NonNull Collection<RecipientId> newPotentialMemberList) {
-    try {
-        GroupsV2CapabilityChecker.refreshCapabilitiesIfNecessary(Recipient.resolvedList(newPotentialMemberList));
-      } catch (IOException e) {
-        Log.w(TAG, "Could not get latest profiles for users, using known gv2 capability state", e);
-      }
-
-      return Stream.of(Recipient.resolvedList(newPotentialMemberList))
-                   .filter(m -> m.getGroupsV2Capability() != Recipient.Capability.SUPPORTED)
-                   .toList();
   }
 }

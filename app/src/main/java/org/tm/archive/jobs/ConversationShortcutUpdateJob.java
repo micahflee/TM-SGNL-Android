@@ -13,6 +13,7 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.ConversationUtil;
 import org.tm.archive.util.TextSecurePreferences;
+import org.tm.archive.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,7 @@ public class ConversationShortcutUpdateJob extends BaseJob {
     int             maxShortcuts   = ConversationUtil.getMaxShortcuts(context);
     List<Recipient> ranked         = new ArrayList<>(maxShortcuts);
 
-    try (ThreadDatabase.Reader reader = threadDatabase.readerFor(threadDatabase.getRecentConversationList(maxShortcuts, false, false))) {
+    try (ThreadDatabase.Reader reader = threadDatabase.readerFor(threadDatabase.getRecentConversationList(maxShortcuts, false, false, false, true, !Util.isDefaultSmsProvider(context), false))) {
       ThreadRecord record;
       while ((record = reader.getNext()) != null) {
         ranked.add(record.getRecipient().resolve());
@@ -79,6 +80,8 @@ public class ConversationShortcutUpdateJob extends BaseJob {
     if (!success) {
       throw new RetryLaterException();
     }
+
+    ConversationUtil.removeLongLivedShortcuts(context, threadDatabase.getArchivedRecipients());
   }
 
   @Override

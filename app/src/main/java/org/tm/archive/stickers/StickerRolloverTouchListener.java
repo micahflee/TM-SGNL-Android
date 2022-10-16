@@ -9,11 +9,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.R;
 import org.tm.archive.keyboard.sticker.KeyboardStickerListAdapter;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.util.ViewUtil;
-import org.whispersystems.libsignal.util.Pair;
 
 import java.lang.ref.WeakReference;
 

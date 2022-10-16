@@ -9,10 +9,10 @@ import androidx.appcompat.app.AlertDialog;
 
 import org.tm.archive.R;
 import org.tm.archive.crypto.ReentrantSessionLock;
-import org.tm.archive.crypto.storage.TextSecureIdentityKeyStore;
+import org.tm.archive.crypto.storage.SignalIdentityKeyStore;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.whispersystems.signalservice.api.SignalSessionLock;
 
 import java.util.List;
@@ -40,7 +40,7 @@ public class UntrustedSendDialog extends AlertDialog.Builder implements DialogIn
 
   @Override
   public void onClick(DialogInterface dialog, int which) {
-    final TextSecureIdentityKeyStore identityStore = ApplicationDependencies.getProtocolStore().aci().identities();
+    final SignalIdentityKeyStore identityStore = ApplicationDependencies.getProtocolStore().aci().identities();
 
     SimpleTask.run(() -> {
       try(SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {

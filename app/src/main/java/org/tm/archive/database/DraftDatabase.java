@@ -10,14 +10,14 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.util.CursorUtil;
-import org.tm.archive.util.SqlUtil;
+import org.signal.core.util.CursorUtil;
+import org.signal.core.util.SqlUtil;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-public class DraftDatabase extends Database {
+public class DraftDatabase extends Database implements ThreadIdDatabaseReference {
 
   private static final String TAG = Log.tag(DraftDatabase.class);
 
@@ -123,6 +123,13 @@ public class DraftDatabase extends Database {
     }
   }
 
+  @Override
+  public void remapThread(long fromId, long toId) {
+    ContentValues values = new ContentValues();
+    values.put(THREAD_ID, toId);
+    getWritableDatabase().update(TABLE_NAME, values, THREAD_ID + " = ?", SqlUtil.buildArgs(fromId));
+  }
+
   public static class Draft {
     public static final String TEXT       = "text";
     public static final String IMAGE      = "image";
@@ -164,6 +171,12 @@ public class DraftDatabase extends Database {
   }
 
   public static class Drafts extends LinkedList<Draft> {
+    public void addIfNotNull(@Nullable Draft draft) {
+      if (draft != null) {
+        add(draft);
+      }
+    }
+
     public @Nullable Draft getDraftOfType(String type) {
       for (Draft draft : this) {
         if (type.equals(draft.getType())) {

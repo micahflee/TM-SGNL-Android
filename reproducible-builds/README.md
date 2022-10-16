@@ -21,7 +21,7 @@ cd ..
 docker run --rm -v $(pwd):/project -w /project signal-android ./gradlew clean assemblePlayProdRelease
 
 # Verify the APKs
-python3 apkdiff/apkdiff.py build/outputs/apks/project-release-unsigned.apk path/to/SignalFromPlay.apk
+python3 apkdiff/apkdiff.py app/build/outputs/apks/project-release-unsigned.apk path/to/SignalFromPlay.apk
 ```
 
 ***
@@ -60,7 +60,7 @@ First make sure that the Signal version you want to verify is installed on your 
 Plug your device to your computer and run this command to pull the APK from the device:
 
 ```bash
-adb pull $(adb shell pm path org.tm.archive | grep /base.apk | awk -F':' '{print $2}') ~/reproducible-signal/apk-from-google-play-store/Signal-$(adb shell dumpsys package org.tm.archive | grep versionName | awk -F'=' '{print $2}').apk
+adb pull $(adb shell pm path org.tm.archive| grep /base.apk | awk -F':' '{print $2}') ~/reproducible-signal/apk-from-google-play-store/Signal-$(adb shell dumpsys package org.tm.archive| grep versionName | awk -F'=' '{print $2}').apk
 ```
 
 This will pull a file into `~/reproducible-signal/apk-from-google-play-store/` with the name `Signal-<version>.apk`

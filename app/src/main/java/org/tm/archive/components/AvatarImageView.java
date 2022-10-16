@@ -3,9 +3,6 @@ package org.tm.archive.components;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
@@ -42,7 +39,6 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
 import org.tm.archive.util.AvatarUtil;
 import org.tm.archive.util.BlurTransformation;
-import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
 
@@ -58,24 +54,8 @@ public final class AvatarImageView extends AppCompatImageView {
   @SuppressWarnings("unused")
   private static final String TAG = Log.tag(AvatarImageView.class);
 
-  private static final Paint LIGHT_THEME_OUTLINE_PAINT = new Paint();
-  private static final Paint DARK_THEME_OUTLINE_PAINT  = new Paint();
-
-  static {
-    LIGHT_THEME_OUTLINE_PAINT.setColor(Color.argb((int) (255 * 0.2), 0, 0, 0));
-    LIGHT_THEME_OUTLINE_PAINT.setStyle(Paint.Style.STROKE);
-    LIGHT_THEME_OUTLINE_PAINT.setStrokeWidth(1);
-    LIGHT_THEME_OUTLINE_PAINT.setAntiAlias(true);
-
-    DARK_THEME_OUTLINE_PAINT.setColor(Color.argb((int) (255 * 0.2), 255, 255, 255));
-    DARK_THEME_OUTLINE_PAINT.setStyle(Paint.Style.STROKE);
-    DARK_THEME_OUTLINE_PAINT.setStrokeWidth(1);
-    DARK_THEME_OUTLINE_PAINT.setAntiAlias(true);
-  }
-
   private int                             size;
   private boolean                         inverted;
-  private Paint                           outlinePaint;
   private OnClickListener                 listener;
   private Recipient.FallbackPhotoProvider fallbackPhotoProvider;
   private boolean                         blurred;
@@ -84,6 +64,7 @@ public final class AvatarImageView extends AppCompatImageView {
 
   private @Nullable RecipientContactPhoto recipientContactPhoto;
   private @NonNull  Drawable              unknownRecipientDrawable;
+  private @Nullable AvatarColor           fallbackPhotoColor;
 
   public AvatarImageView(Context context) {
     super(context);
@@ -95,7 +76,7 @@ public final class AvatarImageView extends AppCompatImageView {
     initialize(context, attrs);
   }
 
-  private void initialize(@NonNull Context context, @Nullable AttributeSet attrs) {
+  public void initialize(@NonNull Context context, @Nullable AttributeSet attrs) {
     setScaleType(ScaleType.CENTER_CROP);
 
     if (attrs != null) {
@@ -104,8 +85,6 @@ public final class AvatarImageView extends AppCompatImageView {
       size     = typedArray.getInt(R.styleable.AvatarImageView_fallbackImageSize, SIZE_LARGE);
       typedArray.recycle();
     }
-
-    outlinePaint = ThemeUtil.isDarkTheme(context) ? DARK_THEME_OUTLINE_PAINT : LIGHT_THEME_OUTLINE_PAINT;
 
     unknownRecipientDrawable = new ResourceContactPhoto(R.drawable.ic_profile_outline_40, R.drawable.ic_profile_outline_20).asDrawable(context, AvatarColor.UNKNOWN, inverted);
     blurred                  = false;
@@ -118,20 +97,6 @@ public final class AvatarImageView extends AppCompatImageView {
   }
 
   @Override
-  protected void onDraw(Canvas canvas) {
-    super.onDraw(canvas);
-
-    float width  = getWidth() - getPaddingRight() - getPaddingLeft();
-    float height = getHeight() - getPaddingBottom() - getPaddingTop();
-    float cx     = width / 2f;
-    float cy     = height / 2f;
-    float radius = Math.min(cx, cy) - (outlinePaint.getStrokeWidth() / 2f);
-
-    canvas.translate(getPaddingLeft(), getPaddingTop());
-    canvas.drawCircle(cx, cy, radius, outlinePaint);
-  }
-
-  @Override
   public void setOnClickListener(OnClickListener listener) {
     this.listener = listener;
     super.setOnClickListener(listener);
@@ -139,6 +104,10 @@ public final class AvatarImageView extends AppCompatImageView {
 
   public void setFallbackPhotoProvider(Recipient.FallbackPhotoProvider fallbackPhotoProvider) {
     this.fallbackPhotoProvider = fallbackPhotoProvider;
+  }
+
+  public void setFallbackPhotoColor(@Nullable AvatarColor fallbackPhotoColor) {
+    this.fallbackPhotoColor = fallbackPhotoColor;
   }
 
   /**
@@ -196,8 +165,7 @@ public final class AvatarImageView extends AppCompatImageView {
   private void setAvatar(@NonNull GlideRequests requestManager, @Nullable Recipient recipient, @NonNull AvatarOptions avatarOptions) {
     if (recipient != null) {
       RecipientContactPhoto photo = (recipient.isSelf() && avatarOptions.useSelfProfileAvatar) ? new RecipientContactPhoto(recipient,
-                                                                                                                           new ProfileContactPhoto(Recipient.self(),
-                                                                                                                                                   Recipient.self().getProfileAvatar()))
+                                                                                                                           new ProfileContactPhoto(Recipient.self()))
                                                                                                : new RecipientContactPhoto(recipient);
 
       boolean    shouldBlur = recipient.shouldBlurAvatar();
@@ -250,7 +218,7 @@ public final class AvatarImageView extends AppCompatImageView {
       requestManager.clear(this);
       if (fallbackPhotoProvider != null) {
         setImageDrawable(fallbackPhotoProvider.getPhotoForRecipientWithoutName()
-                                              .asDrawable(getContext(), AvatarColor.UNKNOWN, inverted));
+                                              .asDrawable(getContext(), Util.firstNonNull(fallbackPhotoColor, AvatarColor.UNKNOWN), inverted));
       } else {
         setImageDrawable(unknownRecipientDrawable);
       }

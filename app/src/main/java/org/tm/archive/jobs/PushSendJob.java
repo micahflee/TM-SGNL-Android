@@ -2,6 +2,7 @@ package org.tm.archive.jobs;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.media.Image;
 import android.os.Build;
 import android.text.TextUtils;
 
@@ -13,9 +14,12 @@ import com.annimon.stream.Stream;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.signal.core.util.Hex;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
 import org.signal.libsignal.metadata.certificate.SenderCertificate;
+import org.signal.libsignal.zkgroup.InvalidInputException;
+import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation;
 import org.tm.archive.TextSecureExpiredException;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.DatabaseAttachment;
@@ -25,7 +29,9 @@ import org.tm.archive.contactshare.ContactModelMapper;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.Mention;
+import org.tm.archive.database.model.ParentStoryId;
 import org.tm.archive.database.model.StickerRecord;
+import org.tm.archive.database.model.databaseprotos.GiftBadge;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.PartProgressEvent;
 import org.tm.archive.jobmanager.Job;
@@ -36,29 +42,29 @@ import org.tm.archive.keyvalue.CertificateType;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mms.DecryptableStreamUriLoader;
+import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.mms.OutgoingMediaMessage;
 import org.tm.archive.mms.PartAuthority;
+import org.tm.archive.mms.QuoteModel;
 import org.tm.archive.net.NotPushRegisteredException;
+import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.transport.RetryLaterException;
+import org.tm.archive.transport.UndeliverableMessageException;
 import org.tm.archive.util.Base64;
 import org.tm.archive.util.BitmapDecodingException;
-import org.tm.archive.util.BitmapUtil;
 import org.tm.archive.util.FeatureFlags;
-import org.tm.archive.util.Hex;
+import org.tm.archive.util.ImageCompressionUtil;
 import org.tm.archive.util.MediaUtil;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentRemoteId;
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
-import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage.Preview;
+import org.whispersystems.signalservice.api.messages.SignalServicePreview;
 import org.whispersystems.signalservice.api.messages.shared.SharedContact;
-import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.ProofRequiredException;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
@@ -71,6 +77,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -96,8 +103,8 @@ public abstract class PushSendJob extends SendJob {
 
   @Override
   protected final void onSend() throws Exception {
-    if (TextSecurePreferences.getSignedPreKeyFailureCount(context) > 5) {
-      ApplicationDependencies.getJobManager().add(new RotateSignedPreKeyJob());
+    if (SignalStore.account().aciPreKeys().getSignedPreKeyFailureCount() > 5) {
+      PreKeysSyncJob.enqueue(true);
       throw new TextSecureExpiredException("Too many signed prekey rotation failures");
     }
 
@@ -167,10 +174,10 @@ public abstract class PushSendJob extends SendJob {
 
   protected Optional<byte[]> getProfileKey(@NonNull Recipient recipient) {
     if (!recipient.resolve().isSystemContact() && !recipient.resolve().isProfileSharing()) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
-    return Optional.of(ProfileKeyUtil.getProfileKey(context));
+    return Optional.of(ProfileKeyUtil.getSelfProfileKey().serialize());
   }
 
   protected SignalServiceAttachment getAttachmentFor(Attachment attachment) {
@@ -267,16 +274,16 @@ public abstract class PushSendJob extends SendJob {
                                                 attachment.getContentType(),
                                                 key,
                                                 Optional.of(Util.toIntExact(attachment.getSize())),
-                                                Optional.absent(),
+                                                Optional.empty(),
                                                 width,
                                                 height,
-                                                Optional.fromNullable(attachment.getDigest()),
-                                                Optional.fromNullable(attachment.getFileName()),
+                                                Optional.ofNullable(attachment.getDigest()),
+                                                Optional.ofNullable(attachment.getFileName()),
                                                 attachment.isVoiceNote(),
                                                 attachment.isBorderless(),
                                                 attachment.isVideoGif(),
-                                                Optional.fromNullable(attachment.getCaption()),
-                                                Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash),
+                                                Optional.ofNullable(attachment.getCaption()),
+                                                Optional.ofNullable(attachment.getBlurHash()).map(BlurHash::getHash),
                                                 attachment.getUploadTimestamp());
     } catch (IOException | ArithmeticException e) {
       Log.w(TAG, e);
@@ -285,52 +292,54 @@ public abstract class PushSendJob extends SendJob {
   }
 
   protected static void notifyMediaMessageDeliveryFailed(Context context, long messageId) {
-    long      threadId  = SignalDatabase.mms().getThreadIdForMessage(messageId);
-    Recipient recipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
+    long                     threadId           = SignalDatabase.mms().getThreadIdForMessage(messageId);
+    Recipient                recipient          = SignalDatabase.threads().getRecipientForThreadId(threadId);
+    ParentStoryId.GroupReply groupReplyStoryId  = SignalDatabase.mms().getParentStoryIdForGroupReply(messageId);
 
     if (threadId != -1 && recipient != null) {
-      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);
+      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, ConversationId.fromThreadAndReply(threadId, groupReplyStoryId));
     }
   }
 
   protected Optional<SignalServiceDataMessage.Quote> getQuoteFor(OutgoingMediaMessage message) throws IOException {
-    if (message.getOutgoingQuote() == null) return Optional.absent();
+    if (message.getOutgoingQuote() == null) return Optional.empty();
 
-    long                                                  quoteId             = message.getOutgoingQuote().getId();
-    String                                                quoteBody           = message.getOutgoingQuote().getText();
-    RecipientId                                           quoteAuthor         = message.getOutgoingQuote().getAuthor();
-    List<SignalServiceDataMessage.Mention>                quoteMentions       = getMentionsFor(message.getOutgoingQuote().getMentions());
-    List<SignalServiceDataMessage.Quote.QuotedAttachment> quoteAttachments    = new LinkedList<>();
-    List<Attachment>                                      filteredAttachments = Stream.of(message.getOutgoingQuote().getAttachments())
-                                                                                      .filterNot(a -> MediaUtil.isViewOnceType(a.getContentType()))
-                                                                                      .toList();
+    long                                                  quoteId              = message.getOutgoingQuote().getId();
+    String                                                quoteBody            = message.getOutgoingQuote().getText();
+    RecipientId                                           quoteAuthor          = message.getOutgoingQuote().getAuthor();
+    List<SignalServiceDataMessage.Mention>                quoteMentions        = getMentionsFor(message.getOutgoingQuote().getMentions());
+    QuoteModel.Type                                       quoteType            = message.getOutgoingQuote().getType();
+    List<SignalServiceDataMessage.Quote.QuotedAttachment> quoteAttachments     = new LinkedList<>();
+    Optional<Attachment>                                  localQuoteAttachment = message.getOutgoingQuote()
+                                                                                        .getAttachments()
+                                                                                        .stream()
+                                                                                        .filter(a -> !MediaUtil.isViewOnceType(a.getContentType()))
+                                                                                        .findFirst();
 
-    for (Attachment attachment : filteredAttachments) {
-      BitmapUtil.ScaleResult  thumbnailData = null;
-      SignalServiceAttachment thumbnail     = null;
-      String                  thumbnailType = MediaUtil.IMAGE_JPEG;
+    if (localQuoteAttachment.isPresent()) {
+      Attachment attachment = localQuoteAttachment.get();
+
+      ImageCompressionUtil.Result thumbnailData = null;
+      SignalServiceAttachment     thumbnail     = null;
 
       try {
         if (MediaUtil.isImageType(attachment.getContentType()) && attachment.getUri() != null) {
-          Bitmap.CompressFormat format = BitmapUtil.getCompressFormatForContentType(attachment.getContentType());
-
-          thumbnailData = BitmapUtil.createScaledBytes(context, new DecryptableStreamUriLoader.DecryptableUri(attachment.getUri()), 100, 100, 500 * 1024, format);
-          thumbnailType = attachment.getContentType();
+          thumbnailData = ImageCompressionUtil.compress(context, attachment.getContentType(), new DecryptableUri(attachment.getUri()), 100, 50);
         } else if (Build.VERSION.SDK_INT >= 23 && MediaUtil.isVideoType(attachment.getContentType()) && attachment.getUri() != null) {
           Bitmap bitmap = MediaUtil.getVideoThumbnail(context, attachment.getUri(), 1000);
 
           if (bitmap != null) {
-            thumbnailData = BitmapUtil.createScaledBytes(context, bitmap, 100, 100, 500 * 1024);
+            thumbnailData = ImageCompressionUtil.compress(context, attachment.getContentType(), new DecryptableUri(attachment.getUri()), 100, 50);
           }
         }
 
         if (thumbnailData != null) {
           SignalServiceAttachment.Builder builder = SignalServiceAttachment.newStreamBuilder()
-                                                                           .withContentType(thumbnailType)
+                                                                           .withContentType(thumbnailData.getMimeType())
                                                                            .withWidth(thumbnailData.getWidth())
                                                                            .withHeight(thumbnailData.getHeight())
-                                                                           .withLength(thumbnailData.getBitmap().length)
-                                                                           .withStream(new ByteArrayInputStream(thumbnailData.getBitmap()))
+                                                                           .withLength(thumbnailData.getData().length)
+                                                                           .withStream(new ByteArrayInputStream(thumbnailData.getData()))
                                                                            .withResumableUploadSpec(ApplicationDependencies.getSignalServiceMessageSender().getResumableUploadSpec());
 
           thumbnail = builder.build();
@@ -347,10 +356,9 @@ public abstract class PushSendJob extends SendJob {
     Recipient quoteAuthorRecipient = Recipient.resolved(quoteAuthor);
 
     if (quoteAuthorRecipient.isMaybeRegistered()) {
-      SignalServiceAddress quoteAddress = RecipientUtil.toSignalServiceAddress(context, quoteAuthorRecipient);
-      return Optional.of(new SignalServiceDataMessage.Quote(quoteId, quoteAddress, quoteBody, quoteAttachments, quoteMentions));
+      return Optional.of(new SignalServiceDataMessage.Quote(quoteId, RecipientUtil.getOrFetchServiceId(context, quoteAuthorRecipient), quoteBody, quoteAttachments, quoteMentions, quoteType.getDataMessageType()));
     } else {
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 
@@ -358,7 +366,7 @@ public abstract class PushSendJob extends SendJob {
     Attachment stickerAttachment = Stream.of(message.getAttachments()).filter(Attachment::isSticker).findFirst().orElse(null);
 
     if (stickerAttachment == null) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     try {
@@ -372,7 +380,18 @@ public abstract class PushSendJob extends SendJob {
       return Optional.of(new SignalServiceDataMessage.Sticker(packId, packKey, stickerId, emoji, attachment));
     } catch (IOException e) {
       Log.w(TAG, "Failed to decode sticker id/key", e);
-      return Optional.absent();
+      return Optional.empty();
+    }
+  }
+
+  protected Optional<SignalServiceDataMessage.Reaction> getStoryReactionFor(@NonNull OutgoingMediaMessage message, @NonNull SignalServiceDataMessage.StoryContext storyContext) {
+    if (message.isStoryReaction()) {
+      return Optional.of(new SignalServiceDataMessage.Reaction(message.getBody(),
+                                                               false,
+                                                               storyContext.getAuthorServiceId(),
+                                                               storyContext.getSentTimestamp()));
+    } else {
+      return Optional.empty();
     }
   }
 
@@ -396,17 +415,32 @@ public abstract class PushSendJob extends SendJob {
     return sharedContacts;
   }
 
-  List<Preview> getPreviewsFor(OutgoingMediaMessage mediaMessage) {
+  List<SignalServicePreview> getPreviewsFor(OutgoingMediaMessage mediaMessage) {
     return Stream.of(mediaMessage.getLinkPreviews()).map(lp -> {
       SignalServiceAttachment attachment = lp.getThumbnail().isPresent() ? getAttachmentPointerFor(lp.getThumbnail().get()) : null;
-      return new Preview(lp.getUrl(), lp.getTitle(), lp.getDescription(), lp.getDate(), Optional.fromNullable(attachment));
+      return new SignalServicePreview(lp.getUrl(), lp.getTitle(), lp.getDescription(), lp.getDate(), Optional.ofNullable(attachment));
     }).toList();
   }
 
   List<SignalServiceDataMessage.Mention> getMentionsFor(@NonNull List<Mention> mentions) {
     return Stream.of(mentions)
-                 .map(m -> new SignalServiceDataMessage.Mention(Recipient.resolved(m.getRecipientId()).requireAci(), m.getStart(), m.getLength()))
+                 .map(m -> new SignalServiceDataMessage.Mention(Recipient.resolved(m.getRecipientId()).requireServiceId(), m.getStart(), m.getLength()))
                  .toList();
+  }
+
+  @Nullable SignalServiceDataMessage.GiftBadge getGiftBadgeFor(@NonNull OutgoingMediaMessage message) throws UndeliverableMessageException {
+    GiftBadge giftBadge = message.getGiftBadge();
+    if (giftBadge == null) {
+      return null;
+    }
+
+    try {
+      ReceiptCredentialPresentation presentation = new ReceiptCredentialPresentation(giftBadge.getRedemptionToken().toByteArray());
+
+      return new SignalServiceDataMessage.GiftBadge(presentation);
+    } catch (InvalidInputException invalidInputException) {
+      throw new UndeliverableMessageException(invalidInputException);
+    }
   }
 
   protected void rotateSenderCertificateIfNecessary() throws IOException {
@@ -442,7 +476,7 @@ public abstract class PushSendJob extends SendJob {
     }
   }
 
-  protected void handleProofRequiredException(@NonNull ProofRequiredException proofRequired, @Nullable Recipient recipient, long threadId, long messageId, boolean isMms)
+  protected static void handleProofRequiredException(@NonNull Context context, @NonNull ProofRequiredException proofRequired, @Nullable Recipient recipient, long threadId, long messageId, boolean isMms)
       throws ProofRequiredException, RetryLaterException
   {
     Log.w(TAG, "[Proof Required] Options: " + proofRequired.getOptions());
@@ -450,25 +484,25 @@ public abstract class PushSendJob extends SendJob {
     try {
       if (proofRequired.getOptions().contains(ProofRequiredException.Option.PUSH_CHALLENGE)) {
         ApplicationDependencies.getSignalServiceAccountManager().requestRateLimitPushChallenge();
-        log(TAG, "[Proof Required] Successfully requested a challenge. Waiting up to " + PUSH_CHALLENGE_TIMEOUT + " ms.");
+        Log.i(TAG, "[Proof Required] Successfully requested a challenge. Waiting up to " + PUSH_CHALLENGE_TIMEOUT + " ms.");
 
         boolean success = new PushChallengeRequest(PUSH_CHALLENGE_TIMEOUT).blockUntilSuccess();
 
         if (success) {
-          log(TAG, "Successfully responded to a push challenge. Retrying message send.");
+          Log.i(TAG, "Successfully responded to a push challenge. Retrying message send.");
           throw new RetryLaterException(1);
         } else {
-          warn(TAG, "Failed to respond to the push challenge in time. Falling back.");
+          Log.w(TAG, "Failed to respond to the push challenge in time. Falling back.");
         }
       }
     } catch (NonSuccessfulResponseCodeException e) {
-      warn(TAG, "[Proof Required] Could not request a push challenge (" + e.getCode() + "). Falling back.", e);
+      Log.w(TAG, "[Proof Required] Could not request a push challenge (" + e.getCode() + "). Falling back.", e);
     } catch (IOException e) {
-      warn(TAG, "[Proof Required] Network error when requesting push challenge. Retrying later.");
+      Log.w(TAG, "[Proof Required] Network error when requesting push challenge. Retrying later.");
       throw new RetryLaterException(e);
     }
 
-    warn(TAG, "[Proof Required] Marking message as rate-limited. (id: " + messageId + ", mms: " + isMms + ", thread: " + threadId + ")");
+    Log.w(TAG, "[Proof Required] Marking message as rate-limited. (id: " + messageId + ", mms: " + isMms + ", thread: " + threadId + ")");
     if (isMms) {
       SignalDatabase.mms().markAsRateLimited(messageId);
     } else {
@@ -476,13 +510,14 @@ public abstract class PushSendJob extends SendJob {
     }
 
     if (proofRequired.getOptions().contains(ProofRequiredException.Option.RECAPTCHA)) {
-      log(TAG, "[Proof Required] ReCAPTCHA required.");
+      Log.i(TAG, "[Proof Required] ReCAPTCHA required.");
       SignalStore.rateLimit().markNeedsRecaptcha(proofRequired.getToken());
 
       if (recipient != null) {
-        ApplicationDependencies.getMessageNotifier().notifyProofRequired(context, recipient, threadId);
+        ParentStoryId.GroupReply groupReply = SignalDatabase.mms().getParentStoryIdForGroupReply(messageId);
+        ApplicationDependencies.getMessageNotifier().notifyProofRequired(context, recipient, ConversationId.fromThreadAndReply(threadId, groupReply));
       } else {
-        warn(TAG, "[Proof Required] No recipient! Couldn't notify.");
+        Log.w(TAG, "[Proof Required] No recipient! Couldn't notify.");
       }
     }
 

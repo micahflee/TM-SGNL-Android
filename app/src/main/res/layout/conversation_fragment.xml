@@ -2,6 +2,7 @@
 
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="match_parent">
@@ -24,6 +25,7 @@
         android:clipToPadding="false"
         android:paddingBottom="@dimen/conversation_bottom_padding"
         android:scrollbars="vertical"
+        android:splitMotionEvents="false"
         android:overScrollMode="ifContentScrolls"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -37,7 +39,7 @@
 
     <TextView
         android:id="@+id/scroll_date_header"
-        style="@style/Signal.Text.Preview"
+        style="@style/Signal.Text.BodySmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -48,7 +50,7 @@
         android:paddingTop="4dp"
         android:paddingEnd="12dp"
         android:paddingBottom="4dp"
-        android:textColor="@color/signal_text_secondary"
+        android:textColor="@color/signal_colorOnSurfaceVariant"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

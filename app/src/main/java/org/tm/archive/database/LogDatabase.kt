@@ -6,16 +6,19 @@ import android.content.ContentValues
 import android.database.Cursor
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper
+import org.signal.core.util.CursorUtil
+import org.signal.core.util.SqlUtil
+import org.signal.core.util.Stopwatch
+import org.signal.core.util.delete
+import org.signal.core.util.getTableRowCount
 import org.signal.core.util.logging.Log
 import org.tm.archive.crypto.DatabaseSecret
 import org.tm.archive.crypto.DatabaseSecretProvider
 import org.tm.archive.database.model.LogEntry
 import org.tm.archive.util.ByteUnit
-import org.tm.archive.util.CursorUtil
-import org.tm.archive.util.SqlUtil
-import org.tm.archive.util.Stopwatch
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 /**
  * Stores logs.
@@ -46,7 +49,7 @@ class LogDatabase private constructor(
 
     private val MAX_FILE_SIZE = ByteUnit.MEGABYTES.toBytes(20)
     private val DEFAULT_LIFESPAN = TimeUnit.DAYS.toMillis(3)
-    private val LONGER_LIFESPAN = TimeUnit.DAYS.toMillis(14)
+    private val LONGER_LIFESPAN = TimeUnit.DAYS.toMillis(21)
 
     private const val DATABASE_VERSION = 2
     private const val DATABASE_NAME = "signal-logs.db"
@@ -84,6 +87,7 @@ class LogDatabase private constructor(
           if (instance == null) {
             SqlCipherLibraryLoader.load()
             instance = LogDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context))
+            instance!!.setWriteAheadLoggingEnabled(true)
           }
         }
       }
@@ -109,7 +113,6 @@ class LogDatabase private constructor(
   }
 
   override fun onOpen(db: SQLiteDatabase) {
-    db.enableWriteAheadLogging()
     db.setForeignKeyConstraintsEnabled(true)
   }
 
@@ -164,7 +167,13 @@ class LogDatabase private constructor(
     stopwatch.split("keepers-size")
 
     if (remainingSize <= 0) {
-      writableDatabase.delete(TABLE_NAME, "$KEEP_LONGER = ?", arrayOf("0"))
+      if (abs(remainingSize) > MAX_FILE_SIZE / 2) {
+        // Not only are KEEP_LONGER logs putting us over the storage limit, it's doing it by a lot! Delete half.
+        val logCount = readableDatabase.getTableRowCount(TABLE_NAME)
+        writableDatabase.execSQL("DELETE FROM $TABLE_NAME WHERE $ID < (SELECT MAX($ID) FROM (SELECT $ID FROM $TABLE_NAME LIMIT ${logCount / 2}))")
+      } else {
+        writableDatabase.delete(TABLE_NAME, "$KEEP_LONGER = ?", arrayOf("0"))
+      }
       return
     }
 
@@ -208,6 +217,12 @@ class LogDatabase private constructor(
         0
       }
     }
+  }
+
+  fun clearKeepLonger() {
+    writableDatabase.delete(TABLE_NAME)
+      .where("$KEEP_LONGER = ?", 1)
+      .run()
   }
 
   private fun buildValues(log: LogEntry): ContentValues {

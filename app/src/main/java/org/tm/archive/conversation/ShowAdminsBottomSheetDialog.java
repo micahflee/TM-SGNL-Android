@@ -94,7 +94,7 @@ public final class ShowAdminsBottomSheetDialog extends BottomSheetDialogFragment
   private static @NonNull List<Recipient> getAdmins(@NonNull Context context, @NonNull GroupId groupId) {
     return SignalDatabase.groups()
                          .getGroup(groupId)
-                         .transform(GroupDatabase.GroupRecord::getAdmins)
-                         .or(Collections.emptyList());
+                         .map(GroupDatabase.GroupRecord::getAdmins)
+                         .orElse(Collections.emptyList());
   }
 }

@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:background="@color/signal_background_secondary">
+    tools:background="?mediaKeyboardBackgroundColor">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/signal_background_secondary"
+        android:background="?mediaKeyboardBackgroundColor"
         app:elevation="0dp">
 
         <org.tm.archive.keyboard.emoji.KeyboardPageSearchView
@@ -37,7 +38,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/keyboard_toolbar_height"
         android:layout_gravity="bottom"
-        android:background="@drawable/keyboard_bottom_bar_background"
+        android:background="?mediaKeyboardBottomBarBackgroundColor"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior">

@@ -14,15 +14,22 @@ import org.signal.paging.PagedDataSource;
 import org.tm.archive.conversationlist.model.Conversation;
 import org.tm.archive.conversationlist.model.ConversationReader;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.SmsDatabase;
 import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.ThreadRecord;
+import org.tm.archive.database.model.UpdateDescription;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.Stopwatch;
+import org.tm.archive.recipients.RecipientId;
+import org.signal.core.util.Stopwatch;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 abstract class ConversationListDataSource implements PagedDataSource<Long, Conversation> {
 
@@ -52,22 +59,33 @@ abstract class ConversationListDataSource implements PagedDataSource<Long, Conve
   public @NonNull List<Conversation> load(int start, int length, @NonNull CancellationSignal cancellationSignal) {
     Stopwatch stopwatch = new Stopwatch("load(" + start + ", " + length + "), " + getClass().getSimpleName());
 
-    List<Conversation> conversations  = new ArrayList<>(length);
-    List<Recipient>    recipients     = new LinkedList<>();
+    List<Conversation> conversations = new ArrayList<>(length);
+    List<Recipient>    recipients    = new LinkedList<>();
+    Set<RecipientId>   needsResolve  = new HashSet<>();
 
     try (ConversationReader reader = new ConversationReader(getCursor(start, length))) {
       ThreadRecord record;
       while ((record = reader.getNext()) != null && !cancellationSignal.isCanceled()) {
         conversations.add(new Conversation(record));
         recipients.add(record.getRecipient());
+        needsResolve.add(record.getGroupMessageSender());
+
+        if (!SmsDatabase.Types.isGroupV2(record.getType())) {
+          needsResolve.add(record.getRecipient().getId());
+        } else if (SmsDatabase.Types.isGroupUpdate(record.getType())) {
+          UpdateDescription description = MessageRecord.getGv2ChangeDescription(ApplicationDependencies.getApplication(), record.getBody(), null);
+          needsResolve.addAll(description.getMentioned().stream().map(RecipientId::from).collect(Collectors.toList()));
+        }
       }
     }
 
     stopwatch.split("cursor");
 
     ApplicationDependencies.getRecipientCache().addToCache(recipients);
-
     stopwatch.split("cache-recipients");
+
+    Recipient.resolvedList(needsResolve);
+    stopwatch.split("recipient-resolve");
 
     stopwatch.stop(TAG);
 

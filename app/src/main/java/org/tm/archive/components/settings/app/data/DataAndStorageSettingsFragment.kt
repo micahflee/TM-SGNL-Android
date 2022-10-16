@@ -5,12 +5,12 @@ import androidx.navigation.Navigation
 import androidx.preference.PreferenceManager
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.mms.SentMediaQuality
 import org.tm.archive.util.Util
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 import org.tm.archive.webrtc.CallBandwidthMode
 import kotlin.math.abs
@@ -31,7 +31,7 @@ class DataAndStorageSettingsFragment : DSLSettingsFragment(R.string.preferences_
     viewModel.refresh()
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
     val repository = DataAndStorageSettingsRepository()
     val factory = DataAndStorageSettingsViewModel.Factory(preferences, repository)

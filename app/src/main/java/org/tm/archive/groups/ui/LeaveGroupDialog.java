@@ -19,7 +19,7 @@ import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
 import org.tm.archive.groups.ui.chooseadmin.ChooseNewAdminActivity;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 import java.io.IOException;
@@ -56,8 +56,8 @@ public final class LeaveGroupDialog {
     SimpleTask.run(activity.getLifecycle(), () -> {
       GroupDatabase.V2GroupProperties groupProperties = SignalDatabase.groups()
                                                                       .getGroup(groupId)
-                                                                      .transform(GroupDatabase.GroupRecord::requireV2GroupProperties)
-                                                                      .orNull();
+                                                                      .map(GroupDatabase.GroupRecord::requireV2GroupProperties)
+                                                                      .orElse(null);
 
       if (groupProperties != null && groupProperties.isAdmin(Recipient.self())) {
         List<Recipient> otherMemberRecipients = groupProperties.getMemberRecipients(GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2014-2016 Open Whisper Systems
  *
  * Licensed according to the LICENSE file in this repository.
@@ -17,11 +17,13 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.google.protobuf.ByteString;
 
-import org.whispersystems.libsignal.IdentityKey;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.logging.Log;
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.protocol.InvalidKeyException;
+import org.signal.libsignal.protocol.logging.Log;
 import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.exceptions.MalformedResponseException;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.util.Base64;
@@ -29,6 +31,9 @@ import org.whispersystems.util.Base64;
 import java.io.IOException;
 import java.util.UUID;
 
+import javax.annotation.Nonnull;
+
+@SuppressWarnings("unused")
 public class JsonUtil {
 
   private static final String TAG = JsonUtil.class.getSimpleName();
@@ -46,6 +51,10 @@ public class JsonUtil {
       Log.w(TAG, e);
       return "";
     }
+  }
+
+  public static @Nonnull ByteString toJsonByteString(@Nonnull Object object) {
+    return ByteString.copyFrom(toJson(object).getBytes());
   }
 
   public static <T> T fromJson(String json, Class<T> clazz)
@@ -129,6 +138,22 @@ public class JsonUtil {
     @Override
     public ACI deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
       return ACI.parseOrNull(p.getValueAsString());
+    }
+  }
+
+  public static class ServiceIdSerializer extends JsonSerializer<ServiceId> {
+    @Override
+    public void serialize(ServiceId value, JsonGenerator gen, SerializerProvider serializers)
+        throws IOException
+    {
+      gen.writeString(value.toString());
+    }
+  }
+
+  public static class ServiceIdDeserializer extends JsonDeserializer<ServiceId> {
+    @Override
+    public ServiceId deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+      return ServiceId.parseOrNull(p.getValueAsString());
     }
   }
 }

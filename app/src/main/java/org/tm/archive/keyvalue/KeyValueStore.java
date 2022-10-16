@@ -3,7 +3,6 @@ package org.tm.archive.keyvalue;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.concurrent.SignalExecutors;
@@ -131,9 +130,7 @@ public final class KeyValueStore implements KeyValueReader {
 
   /**
    * Forces the store to re-fetch all of it's data from the database.
-   * Should only be used for testing!
    */
-  @VisibleForTesting
   synchronized void resetCache() {
     dataSet = null;
     initializeIfNecessary();

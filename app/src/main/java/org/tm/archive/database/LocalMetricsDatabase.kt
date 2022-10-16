@@ -5,12 +5,12 @@ import android.app.Application
 import android.content.ContentValues
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper
+import org.signal.core.util.CursorUtil
+import org.signal.core.util.SqlUtil
 import org.signal.core.util.logging.Log
 import org.tm.archive.crypto.DatabaseSecret
 import org.tm.archive.crypto.DatabaseSecretProvider
 import org.tm.archive.database.model.LocalMetricsEvent
-import org.tm.archive.util.CursorUtil
-import org.tm.archive.util.SqlUtil
 import java.util.concurrent.TimeUnit
 
 /**
@@ -83,6 +83,7 @@ class LocalMetricsDatabase private constructor(
           if (instance == null) {
             SqlCipherLibraryLoader.load()
             instance = LocalMetricsDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context))
+            instance!!.setWriteAheadLoggingEnabled(true)
           }
         }
       }
@@ -114,7 +115,6 @@ class LocalMetricsDatabase private constructor(
   }
 
   override fun onOpen(db: SQLiteDatabase) {
-    db.enableWriteAheadLogging()
     db.setForeignKeyConstraintsEnabled(true)
   }
 

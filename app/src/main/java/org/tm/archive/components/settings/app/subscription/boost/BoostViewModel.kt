@@ -12,18 +12,22 @@ import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.subjects.PublishSubject
+import org.signal.core.util.StringUtil
 import org.signal.core.util.logging.Log
 import org.signal.core.util.money.FiatMoney
 import org.signal.donations.GooglePayApi
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.components.settings.app.subscription.DonationEvent
 import org.tm.archive.components.settings.app.subscription.DonationPaymentRepository
+import org.tm.archive.components.settings.app.subscription.errors.DonationError
+import org.tm.archive.components.settings.app.subscription.errors.DonationErrorSource
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.InternetConnectionObserver
 import org.tm.archive.util.PlatformCurrencyUtil
-import org.tm.archive.util.StringUtil
 import org.tm.archive.util.livedata.Store
-import java.lang.NumberFormatException
+import org.whispersystems.signalservice.api.subscriptions.SubscriptionLevels
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -35,7 +39,7 @@ class BoostViewModel(
   private val fetchTokenRequestCode: Int
 ) : ViewModel() {
 
-  private val store = Store(BoostState(currencySelection = SignalStore.donationsValues().getBoostCurrency()))
+  private val store = Store(BoostState(currencySelection = SignalStore.donationsValues().getOneTimeCurrency()))
   private val eventPublisher: PublishSubject<DonationEvent> = PublishSubject.create()
   private val disposables = CompositeDisposable()
   private val networkDisposable: Disposable
@@ -75,7 +79,7 @@ class BoostViewModel(
   fun refresh() {
     disposables.clear()
 
-    val currencyObservable = SignalStore.donationsValues().observableBoostCurrency
+    val currencyObservable = SignalStore.donationsValues().observableOneTimeCurrency
     val allBoosts = boostRepository.getBoosts()
     val boostBadge = boostRepository.getBoostBadge()
 
@@ -83,7 +87,7 @@ class BoostViewModel(
       val boostList = if (currency in boostMap) {
         boostMap[currency]!!
       } else {
-        SignalStore.donationsValues().setBoostCurrency(PlatformCurrencyUtil.USD)
+        SignalStore.donationsValues().setOneTimeCurrency(PlatformCurrencyUtil.USD)
         listOf()
       }
 
@@ -106,11 +110,6 @@ class BoostViewModel(
           it.copy(stage = BoostState.Stage.FAILURE)
         }
       }
-    )
-
-    disposables += donationPaymentRepository.isGooglePayAvailable().subscribeBy(
-      onComplete = { store.update { it.copy(isGooglePayAvailable = true) } },
-      onError = { eventPublisher.onNext(DonationEvent.GooglePayUnavailableError(it)) }
     )
 
     disposables += currencyObservable.subscribeBy { currency ->
@@ -143,10 +142,16 @@ class BoostViewModel(
 
             store.update { it.copy(stage = BoostState.Stage.PAYMENT_PIPELINE) }
 
-            donationPaymentRepository.continuePayment(boost.price, paymentData).subscribeBy(
+            donationPaymentRepository.continuePayment(boost.price, paymentData, Recipient.self().id, null, SubscriptionLevels.BOOST_LEVEL.toLong()).subscribeBy(
               onError = { throwable ->
                 store.update { it.copy(stage = BoostState.Stage.READY) }
-                eventPublisher.onNext(DonationEvent.PaymentConfirmationError(throwable))
+                val donationError: DonationError = if (throwable is DonationError) {
+                  throwable
+                } else {
+                  Log.w(TAG, "Failed to complete payment or redemption", throwable, true)
+                  DonationError.genericBadgeRedemptionFailure(DonationErrorSource.BOOST)
+                }
+                DonationError.routeDonationError(ApplicationDependencies.getApplication(), donationError)
               },
               onComplete = {
                 store.update { it.copy(stage = BoostState.Stage.READY) }
@@ -160,7 +165,7 @@ class BoostViewModel(
 
         override fun onError(googlePayException: GooglePayApi.GooglePayException) {
           store.update { it.copy(stage = BoostState.Stage.READY) }
-          eventPublisher.onNext(DonationEvent.RequestTokenError(googlePayException))
+          DonationError.routeDonationError(ApplicationDependencies.getApplication(), DonationError.getGooglePayRequestTokenError(DonationErrorSource.BOOST, googlePayException))
         }
 
         override fun onCancelled() {
@@ -228,7 +233,7 @@ class BoostViewModel(
     private val donationPaymentRepository: DonationPaymentRepository,
     private val fetchTokenRequestCode: Int
   ) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return modelClass.cast(BoostViewModel(boostRepository, donationPaymentRepository, fetchTokenRequestCode))!!
     }
   }

@@ -17,28 +17,18 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.ActivityNavigator;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.dd.CircularProgressButton;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.tm.androidcopysdk.BackupService;
-import com.tm.androidcopysdk.CommonUtils;
-import com.tm.androidcopysdk.utils.PrefManager;
-import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
-import com.tm.authenticatorsdk.selfAuthenticator.api.ApiUtil;
 
-import org.archive.selfAuthentication.SelfAuthenticatorConstants;
-import org.archiver.ArchiveConstants;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.signal.devicetransfer.DeviceToDeviceTransferService;
 import org.signal.devicetransfer.TransferStatus;
-import org.tm.archive.ApplicationContext;
-import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
@@ -49,15 +39,12 @@ import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.navigation.SafeNavigation;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.tm.archive.util.views.CircularProgressMaterialButton;
+
+import java.util.Optional;
 
 import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
-import static org.tm.archive.util.CircularProgressButtonUtil.cancelSpinning;
-import static org.tm.archive.util.CircularProgressButtonUtil.setSpinning;
 
-//In order to change the environment base url call to this method:
-//ApiUtil.Companion.selectServerEnvironment(Context)
-//The default environment is charlieProduction = https://rest.telemessage.com
 public final class WelcomeFragment extends LoggingFragment {
 
   private static final String TAG = Log.tag(WelcomeFragment.class);
@@ -85,10 +72,8 @@ public final class WelcomeFragment extends LoggingFragment {
   private static final            int[] HEADERS          = { R.drawable.ic_contacts_white_48dp, R.drawable.ic_folder_white_48dp };
   private static final            int[] HEADERS_API_29   = { R.drawable.ic_contacts_white_48dp };
 
-  private CircularProgressButton continueButton;
-  private RegistrationViewModel  viewModel;
-
-  private Boolean environmentAlreadySelected = false; //**TM_SA**//
+  private CircularProgressMaterialButton continueButton;
+  private RegistrationViewModel          viewModel;
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -99,11 +84,7 @@ public final class WelcomeFragment extends LoggingFragment {
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    viewModel = ViewModelProviders.of(requireActivity()).get(RegistrationViewModel.class);
-
-    //**TM_SA**//
-    SelfAuthenticatorConstants.Companion.setAuthenticationProcessOpened(true);
-    //**TM_SA**//
+    viewModel = new ViewModelProvider(requireActivity()).get(RegistrationViewModel.class);
 
     if (viewModel.isReregister()) {
       if (viewModel.hasRestoreFlowBeenShown()) {
@@ -120,7 +101,7 @@ public final class WelcomeFragment extends LoggingFragment {
 
       Log.i(TAG, "Skipping restore because this is a reregistration.");
       viewModel.setWelcomeSkippedOnRestore();
-      SafeNavigation.safeNavigate(Navigation.findNavController(view),
+      SafeNavigation.safeNavigate(NavHostFragment.findNavController(this),
                                   WelcomeFragmentDirections.actionSkipRestore());
     } else {
 
@@ -160,31 +141,13 @@ public final class WelcomeFragment extends LoggingFragment {
 
   private void continueClicked(@NonNull View view) {
     boolean isUserSelectionRequired = BackupUtil.isUserSelectionRequired(requireContext());
-   //**TM_SA**// START
-    if (!environmentAlreadySelected) {
-      ApiUtil.Companion.selectServerEnvironment(getContext());
-      environmentAlreadySelected = true;
-    } else {
 
-      if(BuildConfig.DEBUG){
-        if(CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)){
-          CommonUtils.stopBackupService(ApplicationContext.getInstance());
-        }
-
-        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, AuthenticatorConstants.Companion.getBASE_URL().getFirst());
-        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, AuthenticatorConstants.Companion.getBASE_URL().getSecond());
-
-        CommonUtils.setUrl(ApplicationContext.getInstance(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
-        CommonUtils.startBackupService(ApplicationContext.getInstance());
-      }
-      //**TM_SA**// END
-      Permissions.with(this)
-                 .request(getContinuePermissions(isUserSelectionRequired))
-                 .ifNecessary()
-                 .withRationaleDialog(getString(getContinueRationale(isUserSelectionRequired)), getContinueHeaders(isUserSelectionRequired))
-                 .onAnyResult(() -> gatherInformationAndContinue(continueButton))
-                 .execute();
-    }
+    Permissions.with(this)
+               .request(getContinuePermissions(isUserSelectionRequired))
+               .ifNecessary()
+               .withRationaleDialog(getString(getContinueRationale(isUserSelectionRequired)), getContinueHeaders(isUserSelectionRequired))
+               .onAnyResult(() -> gatherInformationAndContinue(continueButton))
+               .execute();
   }
 
   private void restoreFromBackupClicked(@NonNull View view) {
@@ -199,7 +162,7 @@ public final class WelcomeFragment extends LoggingFragment {
   }
 
   private void gatherInformationAndContinue(@NonNull View view) {
-    setSpinning(continueButton);
+    continueButton.setSpinning();
 
     RestoreBackupFragment.searchForBackup(backup -> {
       Context context = getContext();
@@ -212,14 +175,14 @@ public final class WelcomeFragment extends LoggingFragment {
 
       initializeNumber();
 
-      cancelSpinning(continueButton);
+      continueButton.cancelSpinning();
 
       if (backup == null) {
         Log.i(TAG, "Skipping backup. No backup found, or no permission to look.");
-        SafeNavigation.safeNavigate(Navigation.findNavController(view),
+        SafeNavigation.safeNavigate(NavHostFragment.findNavController(this),
                                     WelcomeFragmentDirections.actionSkipRestore());
       } else {
-        SafeNavigation.safeNavigate(Navigation.findNavController(view),
+        SafeNavigation.safeNavigate(NavHostFragment.findNavController(this),
                                     WelcomeFragmentDirections.actionRestore());
       }
     });
@@ -230,13 +193,13 @@ public final class WelcomeFragment extends LoggingFragment {
 
     initializeNumber();
 
-    SafeNavigation.safeNavigate(Navigation.findNavController(view),
+    SafeNavigation.safeNavigate(NavHostFragment.findNavController(this),
                                 WelcomeFragmentDirections.actionTransferOrRestore());
   }
 
   @SuppressLint("MissingPermission")
   private void initializeNumber() {
-    Optional<Phonenumber.PhoneNumber> localNumber = Optional.absent();
+    Optional<Phonenumber.PhoneNumber> localNumber = Optional.empty();
 
     if (Permissions.hasAll(requireContext(), Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS)) {
       localNumber = Util.getDeviceNumber(requireContext());

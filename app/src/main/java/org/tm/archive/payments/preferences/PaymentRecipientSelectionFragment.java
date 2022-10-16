@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.navigation.Navigation;
 
+import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.ContactSelectionListFragment;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
@@ -22,10 +23,10 @@ import org.tm.archive.payments.preferences.model.PayeeParcelable;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.ViewUtil;
-import org.tm.archive.util.concurrent.SimpleTask;
 import org.tm.archive.util.navigation.SafeNavigation;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.whispersystems.signalservice.api.util.ExpiringProfileCredentialUtil;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 
@@ -70,7 +71,7 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
   }
 
   @Override
-  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, @Nullable String number, Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, @Nullable String number, @NonNull Consumer<Boolean> callback) {
     if (recipientId.isPresent()) {
       SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
                      () -> Recipient.resolved(recipientId.get()),
@@ -81,7 +82,7 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
   }
 
   @Override
-  public void onContactDeselected(@NonNull Optional<RecipientId> recipientId, @Nullable String number) { }
+  public void onContactDeselected(@NonNull Optional<RecipientId> recipientId, @Nullable String number) {}
 
   @Override
   public void onSelectionChanged() {
@@ -98,9 +99,9 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
   }
 
   private void createPaymentOrShowWarningDialog(@NonNull Recipient recipient) {
-    if (recipient.hasProfileKeyCredential()) {
+    if (ExpiringProfileCredentialUtil.isValid(recipient.getExpiringProfileKeyCredential())) {
       createPayment(recipient.getId());
-      } else {
+    } else {
       showWarningDialog(recipient.getId());
     }
   }

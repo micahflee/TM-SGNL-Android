@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -36,38 +37,40 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:orientation="vertical"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/icon"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/Signal.Text.Title.SettingsBio"
             android:textAlignment="viewStart"
+            android:textAppearance="@style/Signal.Text.TitleLarge"
             tools:text="Peter Parker" />
 
         <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/about"
+            style="@style/Signal.Text.BodyMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Signal.Text.Preview.Secondary"
-            android:maxLines="1"
             android:ellipsize="end"
+            android:maxLines="1"
             android:textAlignment="viewStart"
+            android:textColor="@color/signal_colorOnSurfaceVariant"
             tools:text="Crusin' the web" />
 
         <org.tm.archive.components.emoji.EmojiTextView
             android:id="@+id/summary"
+            style="@style/Signal.Text.BodyMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Signal.Text.Preview.Secondary"
             android:textAlignment="viewStart"
+            android:textColor="@color/signal_colorOnSurfaceVariant"
+            android:textDirection="ltr"
             tools:text="+1 (999) 555-1234" />
 
     </LinearLayout>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

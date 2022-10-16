@@ -1,6 +1,7 @@
 package org.tm.archive.components.settings.app.subscription
 
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.money.FiatMoney
 import org.tm.archive.badges.Badges
 import org.tm.archive.keyvalue.SignalStore
@@ -22,14 +23,17 @@ class SubscriptionsRepository(private val donationsService: DonationsService) {
   fun getActiveSubscription(): Single<ActiveSubscription> {
     val localSubscription = SignalStore.donationsValues().getSubscriber()
     return if (localSubscription != null) {
-      donationsService.getSubscription(localSubscription.subscriberId)
+      Single.fromCallable { donationsService.getSubscription(localSubscription.subscriberId) }
+        .subscribeOn(Schedulers.io())
         .flatMap(ServiceResponse<ActiveSubscription>::flattenResult)
     } else {
-      Single.just(ActiveSubscription(null))
+      Single.just(ActiveSubscription.EMPTY)
     }
   }
 
-  fun getSubscriptions(): Single<List<Subscription>> = donationsService.getSubscriptionLevels(Locale.getDefault())
+  fun getSubscriptions(): Single<List<Subscription>> = Single
+    .fromCallable { donationsService.getSubscriptionLevels(Locale.getDefault()) }
+    .subscribeOn(Schedulers.io())
     .flatMap(ServiceResponse<SubscriptionLevels>::flattenResult)
     .map { subscriptionLevels ->
       subscriptionLevels.levels.map { (code, level) ->

@@ -6,37 +6,51 @@ import android.content.Context
 import android.content.DialogInterface
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.signal.core.util.AppUtil
 import org.signal.core.util.concurrent.SignalExecutors
+import org.signal.core.util.concurrent.SimpleTask
 import org.signal.ringrtc.CallManager
 import org.tm.archive.BuildConfig
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.database.LocalMetricsDatabase
+import org.tm.archive.database.LogDatabase
+import org.tm.archive.database.MegaphoneDatabase
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobmanager.JobTracker
 import org.tm.archive.jobs.DownloadLatestEmojiDataJob
+import org.tm.archive.jobs.EmojiSearchIndexDownloadJob
 import org.tm.archive.jobs.RefreshAttributesJob
 import org.tm.archive.jobs.RefreshOwnProfileJob
 import org.tm.archive.jobs.RemoteConfigRefreshJob
+import org.tm.archive.jobs.RetrieveRemoteAnnouncementsJob
 import org.tm.archive.jobs.RotateProfileKeyJob
 import org.tm.archive.jobs.StorageForcePushJob
+import org.tm.archive.jobs.SubscriptionKeepAliveJob
 import org.tm.archive.jobs.SubscriptionReceiptRequestResponseJob
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.megaphone.MegaphoneRepository
+import org.tm.archive.megaphone.Megaphones
 import org.tm.archive.payments.DataExportUtil
+import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.ConversationUtil
-import org.tm.archive.util.FeatureFlags
-import org.tm.archive.util.concurrent.SimpleTask
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.navigation.safeNavigate
+import java.util.Optional
+import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__internal_preferences) {
 
   private lateinit var viewModel: InternalSettingsViewModel
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     val repository = InternalSettingsRepository(requireContext())
     val factory = InternalSettingsViewModel.Factory(repository)
     viewModel = ViewModelProvider(this, factory)[InternalSettingsViewModel::class.java]
@@ -48,18 +62,6 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
 
   private fun getConfiguration(state: InternalSettingsState): DSLConfiguration {
     return configure {
-      sectionHeaderPref(R.string.preferences__internal_payments)
-
-      clickPref(
-        title = DSLSettingsText.from(R.string.preferences__internal_payment_copy_data),
-        summary = DSLSettingsText.from(R.string.preferences__internal_payment_copy_data_description),
-        onClick = {
-          copyPaymentsDataToClipboard()
-        }
-      )
-
-      dividerPref()
-
       sectionHeaderPref(R.string.preferences__internal_account)
 
       clickPref(
@@ -67,6 +69,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         summary = DSLSettingsText.from(R.string.preferences__internal_refresh_attributes_description),
         onClick = {
           refreshAttributes()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_refresh_profile),
+        summary = DSLSettingsText.from(R.string.preferences__internal_refresh_profile_description),
+        onClick = {
+          refreshProfile()
         }
       )
 
@@ -108,6 +118,25 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         }
       )
 
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_clear_keep_longer_logs),
+        onClick = {
+          clearKeepLongerLogs()
+        }
+      )
+
+      dividerPref()
+
+      sectionHeaderPref(R.string.preferences__internal_payments)
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_payment_copy_data),
+        summary = DSLSettingsText.from(R.string.preferences__internal_payment_copy_data_description),
+        onClick = {
+          copyPaymentsDataToClipboard()
+        }
+      )
+
       dividerPref()
 
       sectionHeaderPref(R.string.preferences__internal_storage_service)
@@ -122,25 +151,24 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       )
 
       clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_sync_now),
+        summary = DSLSettingsText.from(R.string.preferences__internal_sync_now_description),
+        onClick = {
+          enqueueStorageServiceSync()
+        }
+      )
+
+      clickPref(
         title = DSLSettingsText.from(R.string.preferences__internal_force_storage_service_sync),
         summary = DSLSettingsText.from(R.string.preferences__internal_force_storage_service_sync_description),
         onClick = {
-          forceStorageServiceSync()
+          enqueueStorageServiceForcePush()
         }
       )
 
       dividerPref()
 
       sectionHeaderPref(R.string.preferences__internal_preferences_groups_v2)
-
-      switchPref(
-        title = DSLSettingsText.from(R.string.preferences__internal_do_not_create_gv2),
-        summary = DSLSettingsText.from(R.string.preferences__internal_do_not_create_gv2_description),
-        isChecked = state.gv2doNotCreateGv2Groups,
-        onClick = {
-          viewModel.setGv2DoNotCreateGv2Groups(!state.gv2doNotCreateGv2Groups)
-        }
-      )
 
       switchPref(
         title = DSLSettingsText.from(R.string.preferences__internal_force_gv2_invites),
@@ -171,36 +199,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
 
       dividerPref()
 
-      sectionHeaderPref(R.string.preferences__internal_preferences_groups_v1_migration)
-
-      switchPref(
-        title = DSLSettingsText.from(R.string.preferences__internal_do_not_initiate_automigrate),
-        summary = DSLSettingsText.from(R.string.preferences__internal_do_not_initiate_automigrate_description),
-        isChecked = state.disableAutoMigrationInitiation,
-        onClick = {
-          viewModel.setDisableAutoMigrationInitiation(!state.disableAutoMigrationInitiation)
-        }
-      )
-
-      switchPref(
-        title = DSLSettingsText.from(R.string.preferences__internal_do_not_notify_automigrate),
-        summary = DSLSettingsText.from(R.string.preferences__internal_do_not_notify_automigrate_description),
-        isChecked = state.disableAutoMigrationNotification,
-        onClick = {
-          viewModel.setDisableAutoMigrationNotification(!state.disableAutoMigrationNotification)
-        }
-      )
-
-      dividerPref()
-
       sectionHeaderPref(R.string.preferences__internal_network)
 
       switchPref(
-        title = DSLSettingsText.from(R.string.preferences__internal_force_censorship),
-        summary = DSLSettingsText.from(R.string.preferences__internal_force_censorship_description),
-        isChecked = state.forceCensorship,
+        title = DSLSettingsText.from(R.string.preferences__internal_allow_censorship_toggle),
+        summary = DSLSettingsText.from(R.string.preferences__internal_allow_censorship_toggle_description),
+        isChecked = state.allowCensorshipSetting,
         onClick = {
-          viewModel.setForceCensorship(!state.forceCensorship)
+          viewModel.setAllowCensorshipSetting(!state.allowCensorshipSetting)
         }
       )
 
@@ -244,6 +250,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         summary = DSLSettingsText.from(R.string.preferences__internal_force_emoji_download_description),
         onClick = {
           ApplicationDependencies.getJobManager().add(DownloadLatestEmojiDataJob(true))
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_force_search_index_download),
+        summary = DSLSettingsText.from(R.string.preferences__internal_force_search_index_download_description),
+        onClick = {
+          EmojiSearchIndexDownloadJob.scheduleImmediately()
         }
       )
 
@@ -299,10 +313,10 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
 
       dividerPref()
 
-      sectionHeaderPref(R.string.preferences__internal_calling)
+      sectionHeaderPref(R.string.preferences__internal_calling_server)
 
       radioPref(
-        title = DSLSettingsText.from(R.string.preferences__internal_calling_default),
+        title = DSLSettingsText.from(R.string.preferences__internal_calling_server_default),
         summary = DSLSettingsText.from(BuildConfig.SIGNAL_SFU_URL),
         isChecked = state.callingServer == BuildConfig.SIGNAL_SFU_URL,
         onClick = {
@@ -313,7 +327,7 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       BuildConfig.SIGNAL_SFU_INTERNAL_NAMES.zip(BuildConfig.SIGNAL_SFU_INTERNAL_URLS)
         .forEach { (name, server) ->
           radioPref(
-            title = DSLSettingsText.from(requireContext().getString(R.string.preferences__internal_calling_s_server, name)),
+            title = DSLSettingsText.from(requireContext().getString(R.string.preferences__internal_calling_server_s, name)),
             summary = DSLSettingsText.from(server),
             isChecked = state.callingServer == server,
             onClick = {
@@ -322,20 +336,37 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           )
         }
 
-      sectionHeaderPref(R.string.preferences__internal_audio)
+      sectionHeaderPref(R.string.preferences__internal_calling)
 
       radioListPref(
-        title = DSLSettingsText.from(R.string.preferences__internal_audio_processing_method),
+        title = DSLSettingsText.from(R.string.preferences__internal_calling_audio_processing_method),
         listItems = CallManager.AudioProcessingMethod.values().map { it.name }.toTypedArray(),
-        selected = CallManager.AudioProcessingMethod.values().indexOf(state.audioProcessingMethod),
+        selected = CallManager.AudioProcessingMethod.values().indexOf(state.callingAudioProcessingMethod),
         onSelected = {
-          viewModel.setInternalAudioProcessingMethod(CallManager.AudioProcessingMethod.values()[it])
+          viewModel.setInternalCallingAudioProcessingMethod(CallManager.AudioProcessingMethod.values()[it])
         }
       )
 
-      dividerPref()
+      radioListPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_calling_bandwidth_mode),
+        listItems = CallManager.BandwidthMode.values().map { it.name }.toTypedArray(),
+        selected = CallManager.BandwidthMode.values().indexOf(state.callingBandwidthMode),
+        onSelected = {
+          viewModel.setInternalCallingBandwidthMode(CallManager.BandwidthMode.values()[it])
+        }
+      )
 
-      if (FeatureFlags.donorBadges() && SignalStore.donationsValues().getSubscriber() != null) {
+      switchPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_calling_disable_telecom),
+        isChecked = state.callingDisableTelecom,
+        onClick = {
+          viewModel.setInternalCallingDisableTelecom(!state.callingDisableTelecom)
+        }
+      )
+
+      if (SignalStore.donationsValues().getSubscriber() != null) {
+        dividerPref()
+
         sectionHeaderPref(R.string.preferences__internal_badges)
 
         clickPref(
@@ -344,7 +375,108 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
             enqueueSubscriptionRedemption()
           }
         )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__internal_badges_enqueue_keep_alive),
+          onClick = {
+            enqueueSubscriptionKeepAlive()
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__internal_badges_set_error_state),
+          onClick = {
+            findNavController().safeNavigate(InternalSettingsFragmentDirections.actionInternalSettingsFragmentToDonorErrorConfigurationFragment())
+          }
+        )
       }
+
+      dividerPref()
+
+      sectionHeaderPref(R.string.preferences__internal_release_channel)
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_release_channel_set_last_version),
+        onClick = {
+          SignalStore.releaseChannelValues().highestVersionNoteReceived = max(SignalStore.releaseChannelValues().highestVersionNoteReceived - 10, 0)
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_reset_donation_megaphone),
+        onClick = {
+          SignalDatabase.remoteMegaphones.debugRemoveAll()
+          MegaphoneDatabase.getInstance(ApplicationDependencies.getApplication()).let {
+            it.delete(Megaphones.Event.REMOTE_MEGAPHONE)
+            it.markFirstVisible(Megaphones.Event.DONATE_Q2_2022, System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31))
+          }
+          // Force repository database cache refresh
+          MegaphoneRepository(ApplicationDependencies.getApplication()).onFirstEverAppLaunch()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_fetch_release_channel),
+        onClick = {
+          SignalStore.releaseChannelValues().previousManifestMd5 = ByteArray(0)
+          RetrieveRemoteAnnouncementsJob.enqueue(force = true)
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_add_sample_note),
+        onClick = {
+          viewModel.addSampleReleaseNote()
+        }
+      )
+
+      dividerPref()
+
+      sectionHeaderPref(R.string.preferences__internal_cds)
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_clear_history),
+        summary = DSLSettingsText.from(R.string.preferences__internal_clear_history_description),
+        onClick = {
+          clearCdsHistory()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_clear_all_service_ids),
+        summary = DSLSettingsText.from(R.string.preferences__internal_clear_all_service_ids_description),
+        onClick = {
+          clearAllServiceIds()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_clear_all_profile_keys),
+        summary = DSLSettingsText.from(R.string.preferences__internal_clear_all_profile_keys_description),
+        onClick = {
+          clearAllProfileKeys()
+        }
+      )
+
+      dividerPref()
+
+      sectionHeaderPref(R.string.ConversationListTabs__stories)
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_clear_onboarding_state),
+        summary = DSLSettingsText.from(R.string.preferences__internal_clears_onboarding_flag_and_triggers_download_of_onboarding_stories),
+        isEnabled = state.canClearOnboardingState,
+        onClick = {
+          viewModel.onClearOnboardingState()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences__internal_stories_dialog_launcher),
+        onClick = {
+          findNavController().safeNavigate(InternalSettingsFragmentDirections.actionInternalSettingsFragmentToStoryDialogsLauncherFragment())
+        }
+      )
     }
   }
 
@@ -392,17 +524,35 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
     Toast.makeText(context, "Scheduled attribute refresh", Toast.LENGTH_SHORT).show()
   }
 
+  private fun refreshProfile() {
+    ApplicationDependencies.getJobManager().add(RefreshOwnProfileJob())
+    Toast.makeText(context, "Scheduled profile refresh", Toast.LENGTH_SHORT).show()
+  }
+
   private fun rotateProfileKey() {
     ApplicationDependencies.getJobManager().add(RotateProfileKeyJob())
     Toast.makeText(context, "Scheduled profile key rotation", Toast.LENGTH_SHORT).show()
   }
 
   private fun refreshRemoteValues() {
-    ApplicationDependencies.getJobManager().add(RemoteConfigRefreshJob())
-    Toast.makeText(context, "Scheduled remote config refresh", Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, "Running remote config refresh, app will restart after completion.", Toast.LENGTH_LONG).show()
+    SignalExecutors.BOUNDED.execute {
+      val result: Optional<JobTracker.JobState> = ApplicationDependencies.getJobManager().runSynchronously(RemoteConfigRefreshJob(), TimeUnit.SECONDS.toMillis(10))
+
+      if (result.isPresent && result.get() == JobTracker.JobState.SUCCESS) {
+        AppUtil.restart(requireContext())
+      } else {
+        Toast.makeText(context, "Failed to refresh config remote config.", Toast.LENGTH_SHORT).show()
+      }
+    }
   }
 
-  private fun forceStorageServiceSync() {
+  private fun enqueueStorageServiceSync() {
+    StorageSyncHelper.scheduleSyncForDataChange()
+    Toast.makeText(context, "Scheduled routine storage sync", Toast.LENGTH_SHORT).show()
+  }
+
+  private fun enqueueStorageServiceForcePush() {
     ApplicationDependencies.getJobManager().add(StorageForcePushJob())
     Toast.makeText(context, "Scheduled storage force push", Toast.LENGTH_SHORT).show()
   }
@@ -430,5 +580,51 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
 
   private fun enqueueSubscriptionRedemption() {
     SubscriptionReceiptRequestResponseJob.createSubscriptionContinuationJobChain().enqueue()
+  }
+
+  private fun enqueueSubscriptionKeepAlive() {
+    SubscriptionKeepAliveJob.enqueueAndTrackTime(System.currentTimeMillis())
+  }
+
+  private fun clearCdsHistory() {
+    SignalDatabase.cds.clearAll()
+    SignalStore.misc().cdsToken = null
+    Toast.makeText(context, "Cleared all CDS history.", Toast.LENGTH_SHORT).show()
+  }
+
+  private fun clearAllServiceIds() {
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle("Clear all serviceIds?")
+      .setMessage("Are you sure? Never do this on a non-test device.")
+      .setPositiveButton(android.R.string.ok) { _, _ ->
+        SignalDatabase.recipients.debugClearServiceIds()
+        Toast.makeText(context, "Cleared all service IDs.", Toast.LENGTH_SHORT).show()
+      }
+      .setNegativeButton(android.R.string.cancel) { d, _ ->
+        d.dismiss()
+      }
+      .show()
+  }
+
+  private fun clearAllProfileKeys() {
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle("Clear all profile keys?")
+      .setMessage("Are you sure? Never do this on a non-test device.")
+      .setPositiveButton(android.R.string.ok) { _, _ ->
+        SignalDatabase.recipients.debugClearProfileData()
+        Toast.makeText(context, "Cleared all profile keys.", Toast.LENGTH_SHORT).show()
+      }
+      .setNegativeButton(android.R.string.cancel) { d, _ ->
+        d.dismiss()
+      }
+      .show()
+  }
+
+  private fun clearKeepLongerLogs() {
+    SimpleTask.run({
+      LogDatabase.getInstance(requireActivity().application).clearKeepLonger()
+    }) {
+      Toast.makeText(requireContext(), "Cleared keep longer logs", Toast.LENGTH_SHORT).show()
+    }
   }
 }

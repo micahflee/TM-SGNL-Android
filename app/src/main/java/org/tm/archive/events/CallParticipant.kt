@@ -1,11 +1,11 @@
 package org.tm.archive.events
 
 import android.content.Context
+import org.signal.libsignal.protocol.IdentityKey
 import org.tm.archive.R
 import org.tm.archive.components.webrtc.BroadcastVideoSink
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.ringrtc.CameraState
-import org.whispersystems.libsignal.IdentityKey
 
 data class CallParticipant constructor(
   val callParticipantId: CallParticipantId = CallParticipantId(Recipient.UNKNOWN),
@@ -13,9 +13,11 @@ data class CallParticipant constructor(
   val identityKey: IdentityKey? = null,
   val videoSink: BroadcastVideoSink = BroadcastVideoSink(),
   val cameraState: CameraState = CameraState.UNKNOWN,
+  val isForwardingVideo: Boolean = true,
   val isVideoEnabled: Boolean = false,
   val isMicrophoneEnabled: Boolean = false,
   val lastSpoke: Long = 0,
+  val audioLevel: AudioLevel? = null,
   val isMediaKeysReceived: Boolean = true,
   val addedToCallTime: Long = 0,
   val isScreenSharing: Boolean = false,
@@ -73,6 +75,32 @@ data class CallParticipant constructor(
     PRIMARY, SECONDARY
   }
 
+  enum class AudioLevel {
+    LOWEST,
+    LOW,
+    MEDIUM,
+    HIGH,
+    HIGHEST;
+
+    companion object {
+
+      /**
+       * Converts a raw audio level from RingRTC (value in [0, 32767]) to a level suitable for
+       * display in the UI.
+       */
+      @JvmStatic
+      fun fromRawAudioLevel(raw: Int): AudioLevel {
+        return when {
+          raw < 500 -> LOWEST
+          raw < 1000 -> LOW
+          raw < 5000 -> MEDIUM
+          raw < 16000 -> HIGH
+          else -> HIGHEST
+        }
+      }
+    }
+  }
+
   companion object {
     @JvmField
     val EMPTY: CallParticipant = CallParticipant()
@@ -99,6 +127,7 @@ data class CallParticipant constructor(
       recipient: Recipient,
       identityKey: IdentityKey?,
       renderer: BroadcastVideoSink,
+      isForwardingVideo: Boolean,
       audioEnabled: Boolean,
       videoEnabled: Boolean,
       lastSpoke: Long,
@@ -112,6 +141,7 @@ data class CallParticipant constructor(
         recipient = recipient,
         identityKey = identityKey,
         videoSink = renderer,
+        isForwardingVideo = isForwardingVideo,
         isVideoEnabled = videoEnabled,
         isMicrophoneEnabled = audioEnabled,
         lastSpoke = lastSpoke,

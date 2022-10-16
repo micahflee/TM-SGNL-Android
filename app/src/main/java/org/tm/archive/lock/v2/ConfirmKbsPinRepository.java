@@ -6,10 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.core.util.Consumer;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.InvalidKeyException;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.pin.PinState;
-import org.tm.archive.util.concurrent.SimpleTask;
-import org.whispersystems.libsignal.InvalidKeyException;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.whispersystems.signalservice.internal.contacts.crypto.UnauthenticatedResponseException;
 
 import java.io.IOException;

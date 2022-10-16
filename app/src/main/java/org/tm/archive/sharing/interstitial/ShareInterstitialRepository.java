@@ -7,22 +7,22 @@ import androidx.core.util.Consumer;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
+import org.tm.archive.contacts.paged.ContactSearchKey;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.sharing.ShareContactAndThread;
 
 import java.util.List;
 import java.util.Set;
 
 class ShareInterstitialRepository {
 
-  void loadRecipients(@NonNull Set<ShareContactAndThread> shareContactAndThreads, Consumer<List<Recipient>> consumer) {
-    SignalExecutors.BOUNDED.execute(() -> consumer.accept(resolveRecipients(shareContactAndThreads)));
+  void loadRecipients(@NonNull Set<ContactSearchKey.RecipientSearchKey> recipientSearchKeys, Consumer<List<Recipient>> consumer) {
+    SignalExecutors.BOUNDED.execute(() -> consumer.accept(resolveRecipients(recipientSearchKeys)));
   }
 
   @WorkerThread
-  private List<Recipient> resolveRecipients(@NonNull Set<ShareContactAndThread> shareContactAndThreads) {
-    return Stream.of(shareContactAndThreads)
-                 .map(ShareContactAndThread::getRecipientId)
+  private List<Recipient> resolveRecipients(@NonNull Set<ContactSearchKey.RecipientSearchKey> recipientSearchKeys) {
+    return Stream.of(recipientSearchKeys)
+                 .map(ContactSearchKey.RecipientSearchKey::getRecipientId)
                  .map(Recipient::resolved)
                  .toList();
   }

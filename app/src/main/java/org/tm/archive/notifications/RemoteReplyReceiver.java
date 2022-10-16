@@ -28,9 +28,12 @@ import androidx.core.app.RemoteInput;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.database.MessageDatabase.MarkedMessageInfo;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.ParentStoryId;
+import org.tm.archive.database.model.StoryType;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.mms.OutgoingMediaMessage;
-import org.tm.archive.notifications.v2.MessageNotifierV2;
+import org.tm.archive.notifications.v2.DefaultMessageNotifier;
+import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.MessageSender;
@@ -47,10 +50,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class RemoteReplyReceiver extends BroadcastReceiver {
 
-  public static final String REPLY_ACTION       = "org.tm.archive.notifications.WEAR_REPLY";
-  public static final String RECIPIENT_EXTRA    = "recipient_extra";
-  public static final String REPLY_METHOD       = "reply_method";
-  public static final String EARLIEST_TIMESTAMP = "earliest_timestamp";
+  public static final String REPLY_ACTION         = "org.tm.archive.notifications.WEAR_REPLY";
+  public static final String RECIPIENT_EXTRA      = "recipient_extra";
+  public static final String REPLY_METHOD         = "reply_method";
+  public static final String EARLIEST_TIMESTAMP   = "earliest_timestamp";
+  public static final String GROUP_STORY_ID_EXTRA = "group_story_id_extra";
 
   @SuppressLint("StaticFieldLeak")
   @Override
@@ -63,7 +67,8 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
 
     final RecipientId  recipientId  = intent.getParcelableExtra(RECIPIENT_EXTRA);
     final ReplyMethod  replyMethod  = (ReplyMethod) intent.getSerializableExtra(REPLY_METHOD);
-    final CharSequence responseText = remoteInput.getCharSequence(MessageNotifierV2.EXTRA_REMOTE_REPLY);
+    final CharSequence responseText = remoteInput.getCharSequence(DefaultMessageNotifier.EXTRA_REMOTE_REPLY);
+    final long         groupStoryId = intent.getLongExtra(GROUP_STORY_ID_EXTRA, Long.MIN_VALUE);
 
     if (recipientId == null) throw new AssertionError("No recipientId specified");
     if (replyMethod == null) throw new AssertionError("No reply method specified");
@@ -72,9 +77,10 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
       SignalExecutors.BOUNDED.execute(() -> {
         long threadId;
 
-        Recipient recipient      = Recipient.resolved(recipientId);
-        int       subscriptionId = recipient.getDefaultSubscriptionId().or(-1);
-        long      expiresIn      = TimeUnit.SECONDS.toMillis(recipient.getExpiresInSeconds());
+        Recipient     recipient      = Recipient.resolved(recipientId);
+        int           subscriptionId = recipient.getDefaultSubscriptionId().orElse(-1);
+        long          expiresIn      = TimeUnit.SECONDS.toMillis(recipient.getExpiresInSeconds());
+        ParentStoryId parentStoryId  = groupStoryId != Long.MIN_VALUE ? ParentStoryId.deserialize(groupStoryId) : null;
 
         switch (replyMethod) {
           case GroupMessage: {
@@ -86,12 +92,16 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
                                                                   expiresIn,
                                                                   false,
                                                                   0,
+                                                                  StoryType.NONE,
+                                                                  parentStoryId,
+                                                                  false,
                                                                   null,
                                                                   Collections.emptyList(),
                                                                   Collections.emptyList(),
                                                                   Collections.emptyList(),
                                                                   Collections.emptySet(),
-                                                                  Collections.emptySet());
+                                                                  Collections.emptySet(),
+                                                                  null);
             threadId = MessageSender.send(context, reply, -1, false, null, null);
             break;
           }
@@ -109,7 +119,9 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
             throw new AssertionError("Unknown Reply method");
         }
 
-        ApplicationDependencies.getMessageNotifier().addStickyThread(threadId, intent.getLongExtra(EARLIEST_TIMESTAMP, System.currentTimeMillis()));
+        ApplicationDependencies.getMessageNotifier()
+                               .addStickyThread(new ConversationId(threadId, groupStoryId != Long.MIN_VALUE ? groupStoryId : null),
+                                                intent.getLongExtra(EARLIEST_TIMESTAMP, System.currentTimeMillis()));
 
         List<MarkedMessageInfo> messageIds = SignalDatabase.threads().setRead(threadId, true);
 

@@ -7,7 +7,7 @@ import org.tm.archive.components.settings.DSLSettingsBottomSheetFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.app.subscription.DonationPaymentComponent
 import org.tm.archive.components.settings.configure
-import org.tm.archive.keyboard.findListener
+import org.tm.archive.util.fragments.requireListener
 import java.util.Locale
 
 /**
@@ -25,7 +25,7 @@ class SetCurrencyFragment : DSLSettingsBottomSheetFragment() {
   )
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
-    donationPaymentComponent = findListener()!!
+    donationPaymentComponent = requireListener()
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())

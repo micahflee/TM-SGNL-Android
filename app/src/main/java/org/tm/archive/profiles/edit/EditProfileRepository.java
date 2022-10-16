@@ -6,7 +6,9 @@ import androidx.core.util.Consumer;
 
 import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.profiles.ProfileName;
-import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.util.Optional;
+
 
 interface EditProfileRepository {
 

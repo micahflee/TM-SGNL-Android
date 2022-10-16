@@ -15,7 +15,7 @@ import org.tm.archive.crypto.DatabaseSecret;
 import org.tm.archive.crypto.DatabaseSecretProvider;
 import org.tm.archive.database.model.MegaphoneRecord;
 import org.tm.archive.megaphone.Megaphones.Event;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,6 +58,7 @@ public class MegaphoneDatabase extends SQLiteOpenHelper implements SignalDatabas
         if (instance == null) {
           SqlCipherLibraryLoader.load();
           instance = new MegaphoneDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context));
+          instance.setWriteAheadLoggingEnabled(true);
         }
       }
     }
@@ -91,7 +92,6 @@ public class MegaphoneDatabase extends SQLiteOpenHelper implements SignalDatabas
   public void onOpen(SQLiteDatabase db) {
     Log.i(TAG, "onOpen()");
 
-    db.enableWriteAheadLogging();
     db.setForeignKeyConstraintsEnabled(true);
 
     SignalExecutors.BOUNDED.execute(() -> {

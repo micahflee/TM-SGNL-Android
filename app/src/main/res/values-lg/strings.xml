@@ -176,7 +176,7 @@ a</string>
   <!--DocumentView-->
   <!--DozeReminder-->
   <!--ShareActivity-->
-  <string name="ShareActivity_share_with">Gabana ne</string>
+  <!-- Removed by excludeNonTranslatables <string name="ShareActivity_share_with">Gabana ne</string> -->
   <!--ExperienceUpgradeActivity-->
   <!-- Removed by excludeNonTranslatables <string name="ExperienceUpgradeActivity_welcome_to_signal_dgaf">Tukwaniriza ku Signal</string> -->
   <!-- Removed by excludeNonTranslatables <string name="ExperienceUpgradeActivity_welcome_to_signal_excited">Tukwaniriza ku Signal</string> -->
@@ -534,10 +534,10 @@ gy\'olonze (%s) sintuufu.</string>
   <!--webrtc_answer_decline_button-->
   <!--message_details_header-->
   <string name="message_details_header__issues_need_your_attention">Ensonga ezimu zetaaga gwe</string>
-  <string name="message_details_header__sent">Esindikiddwa</string>
-  <string name="message_details_header__received">Etuuse</string>
-  <string name="message_details_header__disappears">Kibula</string>
-  <string name="message_details_header__via">Okuyita</string>
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__sent">Esindikiddwa</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__received">Etuuse</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__disappears">Kibula</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__via">Okuyita</string> -->
   <!-- Removed by excludeNonTranslatables <string name="message_details_header__to">Eri:</string> -->
   <!-- Removed by excludeNonTranslatables <string name="message_details_header__from">Okuva:</string> -->
   <!-- Removed by excludeNonTranslatables <string name="message_details_header__with">Wamu</string> -->

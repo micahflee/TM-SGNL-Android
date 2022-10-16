@@ -18,9 +18,11 @@ import org.signal.core.util.logging.Log
 import org.signal.core.util.money.FiatMoney
 import org.signal.donations.GooglePayApi
 import org.tm.archive.components.settings.app.subscription.DonationEvent
-import org.tm.archive.components.settings.app.subscription.DonationExceptions
 import org.tm.archive.components.settings.app.subscription.DonationPaymentRepository
 import org.tm.archive.components.settings.app.subscription.SubscriptionsRepository
+import org.tm.archive.components.settings.app.subscription.errors.DonationError
+import org.tm.archive.components.settings.app.subscription.errors.DonationErrorSource
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.MultiDeviceSubscriptionSyncRequestJob
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.subscription.LevelUpdate
@@ -129,11 +131,6 @@ class SubscribeViewModel(
       onError = this::handleSubscriptionDataLoadFailure
     )
 
-    disposables += donationPaymentRepository.isGooglePayAvailable().subscribeBy(
-      onComplete = { store.update { it.copy(isGooglePayAvailable = true) } },
-      onError = { eventPublisher.onNext(DonationEvent.GooglePayUnavailableError(it)) }
-    )
-
     disposables += currency.subscribe { selection ->
       store.update { it.copy(currencySelection = selection) }
     }
@@ -151,7 +148,7 @@ class SubscribeViewModel(
       .getActiveSubscription()
       .subscribeBy(
         onSuccess = { activeSubscriptionSubject.onNext(it) },
-        onError = { activeSubscriptionSubject.onNext(ActiveSubscription(null)) }
+        onError = { activeSubscriptionSubject.onNext(ActiveSubscription.EMPTY) }
       )
   }
 
@@ -167,9 +164,7 @@ class SubscribeViewModel(
     return Single.just(SignalStore.donationsValues().shouldCancelSubscriptionBeforeNextSubscribeAttempt).flatMapCompletable {
       if (it) {
         donationPaymentRepository.cancelActiveSubscription().doOnComplete {
-          SignalStore.donationsValues().setLastEndOfPeriod(0L)
-          SignalStore.donationsValues().clearLevelOperations()
-          SignalStore.donationsValues().shouldCancelSubscriptionBeforeNextSubscribeAttempt = false
+          SignalStore.donationsValues().updateLocalStateForManualCancellation()
           MultiDeviceSubscriptionSyncRequestJob.enqueue()
         }
       } else {
@@ -183,9 +178,7 @@ class SubscribeViewModel(
     disposables += donationPaymentRepository.cancelActiveSubscription().subscribeBy(
       onComplete = {
         eventPublisher.onNext(DonationEvent.SubscriptionCancelled)
-        SignalStore.donationsValues().setLastEndOfPeriod(0L)
-        SignalStore.donationsValues().clearLevelOperations()
-        SignalStore.donationsValues().markUserManuallyCancelled()
+        SignalStore.donationsValues().updateLocalStateForManualCancellation()
         refreshActiveSubscription()
         MultiDeviceSubscriptionSyncRequestJob.enqueue()
         donationPaymentRepository.scheduleSyncForAccountRecordChange()
@@ -222,13 +215,20 @@ class SubscribeViewModel(
             val setup = ensureSubscriberId
               .andThen(cancelActiveSubscriptionIfNecessary())
               .andThen(continueSetup)
-              .onErrorResumeNext { Completable.error(DonationExceptions.SetupFailed(it)) }
+              .onErrorResumeNext { Completable.error(DonationError.getPaymentSetupError(DonationErrorSource.SUBSCRIPTION, it)) }
 
             setup.andThen(setLevel).subscribeBy(
               onError = { throwable ->
                 refreshActiveSubscription()
                 store.update { it.copy(stage = SubscribeState.Stage.READY) }
-                eventPublisher.onNext(DonationEvent.PaymentConfirmationError(throwable))
+
+                val donationError: DonationError = if (throwable is DonationError) {
+                  throwable
+                } else {
+                  Log.w(TAG, "Failed to complete payment or redemption", throwable, true)
+                  DonationError.genericBadgeRedemptionFailure(DonationErrorSource.SUBSCRIPTION)
+                }
+                DonationError.routeDonationError(ApplicationDependencies.getApplication(), donationError)
               },
               onComplete = {
                 store.update { it.copy(stage = SubscribeState.Stage.READY) }
@@ -242,7 +242,7 @@ class SubscribeViewModel(
 
         override fun onError(googlePayException: GooglePayApi.GooglePayException) {
           store.update { it.copy(stage = SubscribeState.Stage.READY) }
-          eventPublisher.onNext(DonationEvent.RequestTokenError(googlePayException))
+          DonationError.routeDonationError(ApplicationDependencies.getApplication(), DonationError.getGooglePayRequestTokenError(DonationErrorSource.SUBSCRIPTION, googlePayException))
         }
 
         override fun onCancelled() {
@@ -262,7 +262,13 @@ class SubscribeViewModel(
         },
         onError = { throwable ->
           store.update { it.copy(stage = SubscribeState.Stage.READY) }
-          eventPublisher.onNext(DonationEvent.PaymentConfirmationError(throwable))
+          val donationError: DonationError = if (throwable is DonationError) {
+            throwable
+          } else {
+            Log.w(TAG, "Failed to complete payment or redemption", throwable, true)
+            DonationError.genericBadgeRedemptionFailure(DonationErrorSource.SUBSCRIPTION)
+          }
+          DonationError.routeDonationError(ApplicationDependencies.getApplication(), donationError)
         }
       )
   }
@@ -290,7 +296,7 @@ class SubscribeViewModel(
     private val donationPaymentRepository: DonationPaymentRepository,
     private val fetchTokenRequestCode: Int
   ) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return modelClass.cast(SubscribeViewModel(subscriptionsRepository, donationPaymentRepository, fetchTokenRequestCode))!!
     }
   }

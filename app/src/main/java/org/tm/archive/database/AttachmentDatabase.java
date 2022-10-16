@@ -36,6 +36,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.signal.core.util.CursorUtil;
+import org.signal.core.util.SetUtil;
+import org.signal.core.util.SqlUtil;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
@@ -54,15 +57,11 @@ import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.mms.SentMediaQuality;
 import org.tm.archive.stickers.StickerLocator;
 import org.tm.archive.util.Base64;
-import org.tm.archive.util.CursorUtil;
 import org.tm.archive.util.FileUtils;
 import org.tm.archive.util.JsonUtils;
 import org.tm.archive.util.MediaUtil;
-import org.tm.archive.util.SetUtil;
-import org.tm.archive.util.SqlUtil;
 import org.tm.archive.util.StorageUtil;
 import org.tm.archive.video.EncryptedMediaDataSource;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.internal.util.JsonUtil;
 
 import java.io.File;
@@ -81,6 +80,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -278,7 +279,7 @@ public class AttachmentDatabase extends Database {
     }
 
     SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
-    SqlUtil.Query  query    = SqlUtil.buildCollectionQuery(MMS_ID, mmsIds);
+    SqlUtil.Query  query    = SqlUtil.buildSingleCollectionQuery(MMS_ID, mmsIds);
 
     Map<Long, List<DatabaseAttachment>> output = new HashMap<>();
 
@@ -744,13 +745,17 @@ public class AttachmentDatabase extends Database {
     return databaseAttachment;
   }
 
-  public void updateMessageId(@NonNull Collection<AttachmentId> attachmentIds, long mmsId) {
+  public void updateMessageId(@NonNull Collection<AttachmentId> attachmentIds, long mmsId, boolean isStory) {
     SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
 
     db.beginTransaction();
     try {
       ContentValues values = new ContentValues(1);
       values.put(MMS_ID, mmsId);
+
+      if (!isStory) {
+        values.putNull(CAPTION);
+      }
 
       for (AttachmentId attachmentId : attachmentIds) {
         db.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
@@ -785,8 +790,8 @@ public class AttachmentDatabase extends Database {
   }
 
   /**
-   * @param onlyModifyThisAttachment If false and more than one attachment shares this file, they will all be updated.
-   *                                 If true, then guarantees not to affect other attachments.
+   * @param onlyModifyThisAttachment If false and more than one attachment shares this file and quality, they will all
+   *                                 be updated. If true, then guarantees not to affect other attachments.
    */
   public void updateAttachmentData(@NonNull DatabaseAttachment databaseAttachment,
                                    @NonNull MediaStream mediaStream,
@@ -802,7 +807,8 @@ public class AttachmentDatabase extends Database {
 
     File destination = oldDataInfo.file;
 
-    if (onlyModifyThisAttachment) {
+    boolean isSingleUseOfData = onlyModifyThisAttachment || oldDataInfo.hash == null;
+    if (isSingleUseOfData) {
       if (fileReferencedByMoreThanOneAttachment(destination)) {
         Log.i(TAG, "Creating a new file as this one is used by more than one attachment");
         destination = newFile();
@@ -822,7 +828,10 @@ public class AttachmentDatabase extends Database {
     contentValues.put(DATA_RANDOM, dataInfo.random);
     contentValues.put(DATA_HASH, dataInfo.hash);
 
-    int updateCount = updateAttachmentAndMatchingHashes(database, databaseAttachment.getAttachmentId(), oldDataInfo.hash, contentValues);
+    int updateCount = updateAttachmentAndMatchingHashes(database,
+                                                        databaseAttachment.getAttachmentId(),
+                                                        isSingleUseOfData ? dataInfo.hash : oldDataInfo.hash,
+                                                        contentValues);
     Log.i(TAG, "[updateAttachmentData] Updated " + updateCount + " rows.");
   }
 
@@ -841,10 +850,32 @@ public class AttachmentDatabase extends Database {
   }
 
   public void markAttachmentAsTransformed(@NonNull AttachmentId attachmentId) {
-    updateAttachmentTransformProperties(attachmentId, TransformProperties.forSkipTransform());
+    getWritableDatabase().beginTransaction();
+    try {
+      updateAttachmentTransformProperties(attachmentId, getTransformProperties(attachmentId).withSkipTransform());
+      getWritableDatabase().setTransactionSuccessful();
+    } catch (Exception e) {
+      Log.w(TAG, "Could not mark attachment as transformed.", e);
+    } finally {
+      getWritableDatabase().endTransaction();
+    }
   }
 
-  public void updateAttachmentTransformProperties(@NonNull AttachmentId attachmentId, @NonNull TransformProperties transformProperties) {
+  public @NonNull TransformProperties getTransformProperties(@NonNull AttachmentId attachmentId) {
+    String[] projection = SqlUtil.buildArgs(TRANSFORM_PROPERTIES);
+    String[] args       = attachmentId.toStrings();
+
+    try (Cursor cursor = getWritableDatabase().query(TABLE_NAME, projection, PART_ID_WHERE, args, null, null, null, null)) {
+      if (cursor.moveToFirst()) {
+        String serializedProperties = CursorUtil.requireString(cursor, TRANSFORM_PROPERTIES);
+        return TransformProperties.parse(serializedProperties);
+      } else {
+        throw new AssertionError("No such attachment.");
+      }
+    }
+  }
+
+  private void updateAttachmentTransformProperties(@NonNull AttachmentId attachmentId, @NonNull TransformProperties transformProperties) {
     DataInfo dataInfo = getAttachmentDataFileInfo(attachmentId, DATA);
 
     if (dataInfo == null) {
@@ -1012,15 +1043,12 @@ public class AttachmentDatabase extends Database {
     }
   }
 
-  private @Nullable DataInfo getAttachmentDataFileInfo(@NonNull AttachmentId attachmentId, @NonNull String dataType)
+  @VisibleForTesting
+  @Nullable DataInfo getAttachmentDataFileInfo(@NonNull AttachmentId attachmentId, @NonNull String dataType)
   {
     SQLiteDatabase database = databaseHelper.getSignalReadableDatabase();
-    Cursor         cursor   = null;
 
-    try {
-      cursor = database.query(TABLE_NAME, new String[]{dataType, SIZE, DATA_RANDOM, DATA_HASH}, PART_ID_WHERE, attachmentId.toStrings(),
-                              null, null, null);
-
+    try (Cursor cursor = database.query(TABLE_NAME, new String[] { dataType, SIZE, DATA_RANDOM, DATA_HASH }, PART_ID_WHERE, attachmentId.toStrings(), null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
         if (cursor.isNull(cursor.getColumnIndexOrThrow(dataType))) {
           return null;
@@ -1033,9 +1061,6 @@ public class AttachmentDatabase extends Database {
       } else {
         return null;
       }
-    } finally {
-      if (cursor != null)
-        cursor.close();
     }
 
   }
@@ -1122,7 +1147,7 @@ public class AttachmentDatabase extends Database {
 
     Pair<String, String[]> selectorArgs = buildSharedFileSelectorArgs(hash, excludedAttachmentId);
     try (Cursor cursor = database.query(TABLE_NAME,
-                                        new String[]{DATA, DATA_RANDOM, SIZE},
+                                        new String[]{DATA, DATA_RANDOM, SIZE, TRANSFORM_PROPERTIES},
                                         selectorArgs.first,
                                         selectorArgs.second,
                                         null,
@@ -1130,7 +1155,7 @@ public class AttachmentDatabase extends Database {
                                         null,
                                         "1"))
     {
-      if (cursor == null || !cursor.moveToFirst()) return Optional.absent();
+      if (cursor == null || !cursor.moveToFirst()) return Optional.empty();
 
       if (cursor.getCount() > 0) {
         DataInfo dataInfo = new DataInfo(new File(CursorUtil.requireString(cursor, DATA)),
@@ -1139,7 +1164,7 @@ public class AttachmentDatabase extends Database {
                                          hash);
         return Optional.of(dataInfo);
       } else {
-        return Optional.absent();
+        return Optional.empty();
       }
     }
   }
@@ -1293,7 +1318,8 @@ public class AttachmentDatabase extends Database {
                                   template.getTransferState() == TRANSFER_PROGRESS_DONE           &&
                                   template.getTransformProperties().shouldSkipTransform()         &&
                                   template.getDigest() != null                                    &&
-                                  !attachment.getTransformProperties().isVideoEdited();
+                                  !attachment.getTransformProperties().isVideoEdited()            &&
+                                  template.getTransformProperties().sentMediaQuality == attachment.getTransformProperties().getSentMediaQuality();
 
       ContentValues contentValues = new ContentValues();
       contentValues.put(MMS_ID, mmsId);
@@ -1321,7 +1347,7 @@ public class AttachmentDatabase extends Database {
         contentValues.put(TRANSFORM_PROPERTIES, attachment.getTransformProperties().serialize());
       } else {
         contentValues.put(VISUAL_HASH, getVisualHashStringOrNull(template));
-        contentValues.put(TRANSFORM_PROPERTIES, template.getTransformProperties().serialize());
+        contentValues.put(TRANSFORM_PROPERTIES, (useTemplateUpload ? template : attachment).getTransformProperties().serialize());
       }
 
       if (attachment.isSticker()) {
@@ -1335,7 +1361,7 @@ public class AttachmentDatabase extends Database {
         contentValues.put(DATA, dataInfo.file.getAbsolutePath());
         contentValues.put(SIZE, dataInfo.length);
         contentValues.put(DATA_RANDOM, dataInfo.random);
-        if (attachment.getTransformProperties().isVideoEdited()) {
+        if (attachment.getTransformProperties().isVideoEdited() || attachment.getTransformProperties().sentMediaQuality != template.getTransformProperties().getSentMediaQuality()) {
           contentValues.putNull(DATA_HASH);
         } else {
           contentValues.put(DATA_HASH, dataInfo.hash);
@@ -1403,7 +1429,8 @@ public class AttachmentDatabase extends Database {
     return EncryptedMediaDataSource.createFor(attachmentSecret, dataInfo.file, dataInfo.random, dataInfo.length);
   }
 
-  private static class DataInfo {
+  @VisibleForTesting
+  static class DataInfo {
     private final File   file;
     private final long   length;
     private final byte[] random;
@@ -1414,6 +1441,22 @@ public class AttachmentDatabase extends Database {
       this.length = length;
       this.random = random;
       this.hash   = hash;
+    }
+
+    @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final DataInfo dataInfo = (DataInfo) o;
+      return length == dataInfo.length &&
+             Objects.equals(file, dataInfo.file) &&
+             Arrays.equals(random, dataInfo.random) &&
+             Objects.equals(hash, dataInfo.hash);
+    }
+
+    @Override public int hashCode() {
+      int result = Objects.hash(file, length, hash);
+      result = 31 * result + Arrays.hashCode(random);
+      return result;
     }
   }
 
@@ -1487,7 +1530,7 @@ public class AttachmentDatabase extends Database {
     }
 
     public static @NonNull TransformProperties forSentMediaQuality(@NonNull Optional<TransformProperties> currentProperties, @NonNull SentMediaQuality sentMediaQuality) {
-      TransformProperties existing = currentProperties.or(empty());
+      TransformProperties existing = currentProperties.orElse(empty());
       return new TransformProperties(existing.skipTransform, existing.videoTrim, existing.videoTrimStartTimeUs, existing.videoTrimEndTimeUs, sentMediaQuality.getCode());
     }
 
@@ -1515,6 +1558,10 @@ public class AttachmentDatabase extends Database {
       return sentMediaQuality;
     }
 
+    @NonNull TransformProperties withSkipTransform() {
+      return new TransformProperties(true, false, 0, 0, sentMediaQuality);
+    }
+
     @NonNull String serialize() {
       return JsonUtil.toJson(this);
     }
@@ -1530,6 +1577,19 @@ public class AttachmentDatabase extends Database {
         Log.w(TAG, "Failed to parse TransformProperties!", e);
         return empty();
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final TransformProperties that = (TransformProperties) o;
+      return skipTransform == that.skipTransform && videoTrim == that.videoTrim && videoTrimStartTimeUs == that.videoTrimStartTimeUs && videoTrimEndTimeUs == that.videoTrimEndTimeUs && sentMediaQuality == that.sentMediaQuality;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(skipTransform, videoTrim, videoTrimStartTimeUs, videoTrimEndTimeUs, sentMediaQuality);
     }
   }
 }

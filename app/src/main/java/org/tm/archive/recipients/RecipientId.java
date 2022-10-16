@@ -11,10 +11,11 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
-import org.tm.archive.dependencies.ApplicationDependencies;
+import org.signal.core.util.DatabaseId;
+import org.signal.core.util.LongSerializer;
 import org.tm.archive.util.DelimiterUtil;
 import org.tm.archive.util.Util;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 
@@ -23,12 +24,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class RecipientId implements Parcelable, Comparable<RecipientId> {
+public class RecipientId implements Parcelable, Comparable<RecipientId>, DatabaseId {
 
   private static final long UNKNOWN_ID = -1;
   private static final char DELIMITER  = ',';
 
   public static final RecipientId UNKNOWN = RecipientId.from(UNKNOWN_ID);
+  public static final LongSerializer<RecipientId> SERIALIZER = new Serializer();
 
   private final long id;
 
@@ -54,7 +56,17 @@ public class RecipientId implements Parcelable, Comparable<RecipientId> {
 
   @AnyThread
   public static @NonNull RecipientId from(@NonNull SignalServiceAddress address) {
-    return from(address.getAci(), address.getNumber().orNull(), false);
+    return from(address.getServiceId(), address.getNumber().orElse(null));
+  }
+
+  @AnyThread
+  public static @NonNull RecipientId from(@NonNull ServiceId serviceId) {
+    return from(serviceId, null);
+  }
+
+  @AnyThread
+  public static @NonNull RecipientId fromE164(@NonNull String identifier) {
+    return from(null, identifier);
   }
 
   /**
@@ -63,39 +75,25 @@ public class RecipientId implements Parcelable, Comparable<RecipientId> {
    * @param identifier A UUID or e164
    */
   @AnyThread
-  public static @NonNull RecipientId fromExternalPush(@NonNull String identifier) {
+  public static @NonNull RecipientId fromSidOrE164(@NonNull String identifier) {
     if (UuidUtil.isUuid(identifier)) {
-      return from(ACI.parseOrThrow(identifier), null);
+      return from(ServiceId.parseOrThrow(identifier));
     } else {
       return from(null, identifier);
     }
   }
 
-  /**
-   * Indicates that the pairing is from a high-trust source.
-   * See {@link Recipient#externalHighTrustPush(Context, SignalServiceAddress)}
-   */
-  @AnyThread
-  public static @NonNull RecipientId fromHighTrust(@NonNull SignalServiceAddress address) {
-    return from(address.getAci(), address.getNumber().orNull(), true);
-  }
-
-  /**
-   * Always supply both {@param uuid} and {@param e164} if you have both.
-   */
   @AnyThread
   @SuppressLint("WrongThread")
-  public static @NonNull RecipientId from(@Nullable ACI aci, @Nullable String e164) {
-    return from(aci, e164, false);
-  }
+  private static @NonNull RecipientId from(@Nullable ServiceId serviceId, @Nullable String e164) {
+    if (serviceId != null && serviceId.isUnknown()) {
+      return RecipientId.UNKNOWN;
+    }
 
-  @AnyThread
-  @SuppressLint("WrongThread")
-  private static @NonNull RecipientId from(@Nullable ACI aci, @Nullable String e164, boolean highTrust) {
-    RecipientId recipientId = RecipientIdCache.INSTANCE.get(aci, e164);
+    RecipientId recipientId = RecipientIdCache.INSTANCE.get(serviceId, e164);
 
     if (recipientId == null) {
-      Recipient recipient = Recipient.externalPush(ApplicationDependencies.getApplication(), aci, e164, highTrust);
+      Recipient recipient = Recipient.externalPush(serviceId, e164);
       RecipientIdCache.INSTANCE.put(recipient);
       recipientId = recipient.getId();
     }
@@ -142,6 +140,7 @@ public class RecipientId implements Parcelable, Comparable<RecipientId> {
     return id == UNKNOWN_ID;
   }
 
+  @Override
   public @NonNull String serialize() {
     return String.valueOf(id);
   }
@@ -207,4 +206,16 @@ public class RecipientId implements Parcelable, Comparable<RecipientId> {
 
   private static class InvalidLongRecipientIdError extends AssertionError {}
   private static class InvalidStringRecipientIdError extends AssertionError {}
+
+  private static class Serializer implements LongSerializer<RecipientId> {
+    @Override
+    public Long serialize(RecipientId data) {
+      return data.toLong();
+    }
+
+    @Override
+    public @NonNull RecipientId deserialize(Long data) {
+      return RecipientId.from(data);
+    }
+  }
 }

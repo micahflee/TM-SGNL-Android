@@ -30,11 +30,11 @@ import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.sms.MessageSender;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.internal.push.exceptions.GroupPatchNotAcceptedException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 
 final class MessageRequestRepository {
@@ -60,14 +60,14 @@ final class MessageRequestRepository {
     executor.execute(() -> {
       GroupDatabase                       groupDatabase = SignalDatabase.groups();
       Optional<GroupDatabase.GroupRecord> groupRecord   = groupDatabase.getGroup(recipientId);
-      onGroupInfoLoaded.accept(groupRecord.transform(record -> {
+      onGroupInfoLoaded.accept(groupRecord.map(record -> {
         if (record.isV2Group()) {
           DecryptedGroup decryptedGroup = record.requireV2GroupProperties().getDecryptedGroup();
           return new GroupInfo(decryptedGroup.getMembersCount(), decryptedGroup.getPendingMembersCount(), decryptedGroup.getDescription());
         } else {
           return new GroupInfo(record.getMembers().size(), 0, "");
         }
-      }).or(GroupInfo.ZERO));
+      }).orElse(GroupInfo.ZERO));
     });
   }
 
@@ -102,7 +102,7 @@ final class MessageRequestRepository {
       }
     } else if (recipient.isPushV1Group()) {
       if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
-        if (recipient.getParticipants().size() > FeatureFlags.groupLimits().getHardLimit()) {
+        if (recipient.getParticipantIds().size() > FeatureFlags.groupLimits().getHardLimit()) {
           return MessageRequestState.DEPRECATED_GROUP_V1_TOO_LARGE;
         } else {
           return MessageRequestState.DEPRECATED_GROUP_V1;
@@ -144,7 +144,7 @@ final class MessageRequestRepository {
         RecipientDatabase recipientDatabase = SignalDatabase.recipients();
         recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
 
-        MessageSender.sendProfileKey(context, threadId);
+        MessageSender.sendProfileKey(threadId);
 
         List<MessageDatabase.MarkedMessageInfo> messageIds = SignalDatabase.threads().setEntireThreadRead(threadId);
         ApplicationDependencies.getMessageNotifier().updateNotification(context);
@@ -266,8 +266,8 @@ final class MessageRequestRepository {
   private GroupDatabase.MemberLevel getGroupMemberLevel(@NonNull RecipientId recipientId) {
     return SignalDatabase.groups()
                           .getGroup(recipientId)
-                          .transform(g -> g.memberLevel(Recipient.self()))
-                          .or(GroupDatabase.MemberLevel.NOT_A_MEMBER);
+                          .map(g -> g.memberLevel(Recipient.self()))
+                          .orElse(GroupDatabase.MemberLevel.NOT_A_MEMBER);
   }
 
 

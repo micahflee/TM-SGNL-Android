@@ -22,6 +22,7 @@ import com.google.android.mms.pdu_alt.SendReq;
 import com.google.android.mms.smil.SmilHelper;
 import com.klinker.android.send_message.Utils;
 
+import org.signal.core.util.Hex;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
@@ -44,11 +45,11 @@ import org.tm.archive.mms.MmsException;
 import org.tm.archive.mms.MmsSendResult;
 import org.tm.archive.mms.OutgoingMediaMessage;
 import org.tm.archive.mms.PartAuthority;
+import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.phonenumbers.NumberUtil;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.transport.InsecureFallbackApprovalException;
 import org.tm.archive.transport.UndeliverableMessageException;
-import org.tm.archive.util.Hex;
 import org.tm.archive.util.Util;
 
 import java.io.ByteArrayOutputStream;
@@ -347,7 +348,7 @@ public final class MmsSendJob extends SendJob {
     Recipient recipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
 
     if (recipient != null) {
-      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);
+      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, ConversationId.forConversation(threadId));
     }
   }
 

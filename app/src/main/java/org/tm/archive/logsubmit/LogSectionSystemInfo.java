@@ -17,10 +17,13 @@ import org.tm.archive.BuildConfig;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.emoji.EmojiFiles;
 import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.net.StandardUserAgentInterceptor;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.service.webrtc.AndroidTelecomUtil;
 import org.tm.archive.util.AppSignatureUtil;
 import org.tm.archive.util.ByteUnit;
 import org.tm.archive.util.DeviceProperties;
+import org.tm.archive.util.NetworkUtil;
 import org.tm.archive.util.ScreenDensity;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.TextSecurePreferences;
@@ -52,9 +55,10 @@ public class LogSectionSystemInfo implements LogSection {
                                       .append(ScreenDensity.get(context)).append(", ")
                                       .append(getScreenRefreshRate(context)).append("\n");
     builder.append("Font Scale    : ").append(context.getResources().getConfiguration().fontScale).append("\n");
-    builder.append("Android       : ").append(Build.VERSION.RELEASE).append(" (")
-                                     .append(Build.VERSION.INCREMENTAL).append(", ")
-                                     .append(Build.DISPLAY).append(")\n");
+    builder.append("Android       : ").append(Build.VERSION.RELEASE).append(", API ")
+                                      .append(Build.VERSION.SDK_INT).append(" (")
+                                      .append(Build.VERSION.INCREMENTAL).append(", ")
+                                      .append(Build.DISPLAY).append(")\n");
     builder.append("ABIs          : ").append(TextUtils.join(", ", getSupportedAbis())).append("\n");
     builder.append("Memory        : ").append(getMemoryUsage()).append("\n");
     builder.append("Memclass      : ").append(getMemoryClass(context)).append("\n");
@@ -62,7 +66,9 @@ public class LogSectionSystemInfo implements LogSection {
     builder.append("OS Host       : ").append(Build.HOST).append("\n");
     builder.append("RecipientId   : ").append(SignalStore.registrationValues().isRegistrationComplete() ? Recipient.self().getId() : "N/A").append("\n");
     builder.append("ACI           : ").append(getCensoredAci(context)).append("\n");
+    builder.append("Device ID     : ").append(SignalStore.account().getDeviceId()).append("\n");
     builder.append("Censored      : ").append(ApplicationDependencies.getSignalServiceNetworkAccess().isCensored()).append("\n");
+    builder.append("Network Status: ").append(NetworkUtil.getNetworkStatus(context)).append("\n");
     builder.append("Play Services : ").append(getPlayServicesString(context)).append("\n");
     builder.append("FCM           : ").append(SignalStore.account().isFcmEnabled()).append("\n");
     builder.append("BkgRestricted : ").append(Build.VERSION.SDK_INT >= 28 ? DeviceProperties.isBackgroundRestricted(context) : "N/A").append("\n");
@@ -72,6 +78,8 @@ public class LogSectionSystemInfo implements LogSection {
     builder.append("Days Installed: ").append(VersionTracker.getDaysSinceFirstInstalled(context)).append("\n");
     builder.append("Build Variant : ").append(BuildConfig.BUILD_DISTRIBUTION_TYPE).append(BuildConfig.BUILD_ENVIRONMENT_TYPE).append(BuildConfig.BUILD_VARIANT_TYPE).append("\n");
     builder.append("Emoji Version : ").append(getEmojiVersionString(context)).append("\n");
+    builder.append("Telecom       : ").append(AndroidTelecomUtil.getTelecomSupported()).append("\n");
+    builder.append("User-Agent    : ").append(StandardUserAgentInterceptor.USER_AGENT).append("\n");
     builder.append("App           : ");
     try {
       builder.append(pm.getApplicationLabel(pm.getApplicationInfo(context.getPackageName(), 0)))
@@ -145,7 +153,7 @@ public class LogSectionSystemInfo implements LogSection {
   }
 
   private static String getSigningString(@NonNull Context context) {
-    return AppSignatureUtil.getAppSignature(context).or("Unknown");
+    return AppSignatureUtil.getAppSignature(context);
   }
 
   private static String getPlayServicesString(@NonNull Context context) {

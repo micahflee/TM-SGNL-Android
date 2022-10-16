@@ -1,6 +1,7 @@
 package org.tm.archive.jobs
 
 import org.signal.core.util.logging.Log
+import org.signal.libsignal.protocol.InvalidMessageException
 import org.tm.archive.database.IdentityDatabase.VerifiedStatus
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
@@ -11,11 +12,11 @@ import org.tm.archive.net.NotPushRegisteredException
 import org.tm.archive.profiles.AvatarHelper
 import org.tm.archive.providers.BlobProvider
 import org.tm.archive.recipients.Recipient
-import org.whispersystems.libsignal.InvalidMessageException
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceContact
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceContactsInputStream
 import org.whispersystems.signalservice.api.messages.multidevice.VerifiedMessage.VerifiedState
+import org.whispersystems.signalservice.api.push.SignalServiceAddress
 import org.whispersystems.signalservice.api.push.exceptions.MissingConfigurationException
 import org.whispersystems.signalservice.api.util.AttachmentPointerUtil
 import java.io.File
@@ -75,7 +76,7 @@ class MultiDeviceContactSyncJob(parameters: Parameters, private val attachmentPo
 
     var contact: DeviceContact? = deviceContacts.read()
     while (contact != null) {
-      val recipient = Recipient.externalPush(context, contact.address.aci, contact.address.number.orNull(), true)
+      val recipient = Recipient.externalPush(SignalServiceAddress(contact.address.serviceId, contact.address.number.orElse(null)))
 
       if (recipient.isSelf) {
         contact = deviceContacts.read()

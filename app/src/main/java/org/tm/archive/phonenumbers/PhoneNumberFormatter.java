@@ -11,15 +11,15 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import com.google.i18n.phonenumbers.ShortNumberInfo;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.util.SetUtil;
-import org.tm.archive.util.StringUtil;
+import org.signal.core.util.SetUtil;
+import org.signal.core.util.StringUtil;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.util.Pair;
-import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -57,7 +57,7 @@ public class PhoneNumberFormatter {
 
       return formatter;
     } else {
-      return new PhoneNumberFormatter(Util.getSimCountryIso(context).or("US"), true);
+      return new PhoneNumberFormatter(Util.getSimCountryIso(context).orElse("US"), true);
     }
   }
 
@@ -74,7 +74,7 @@ public class PhoneNumberFormatter {
   }
 
   PhoneNumberFormatter(@NonNull String localCountryCode, boolean countryCode) {
-    this.localNumber      = Optional.absent();
+    this.localNumber      = Optional.empty();
     this.localCountryCode = localCountryCode;
   }
 
@@ -95,7 +95,7 @@ public class PhoneNumberFormatter {
         return StringUtil.isolateBidi(phoneNumberUtil.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL));
       }
     } catch (NumberParseException e) {
-      Log.w(TAG, "Failed to format number.");
+      Log.w(TAG, "Failed to format number: " + e.toString());
       return StringUtil.isolateBidi(e164);
     }
   }
@@ -106,7 +106,7 @@ public class PhoneNumberFormatter {
   }
 
 
-  public String format(@Nullable String number) {
+  public @NonNull String format(@Nullable String number) {
     if (number == null)                       return "Unknown";
     if (GroupId.isEncodedGroup(number))       return number;
     if (ALPHA_PATTERN.matcher(number).find()) return number.trim();
@@ -136,7 +136,7 @@ public class PhoneNumberFormatter {
       Phonenumber.PhoneNumber parsedNumber = phoneNumberUtil.parse(processedNumber, localCountryCode);
       return phoneNumberUtil.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
     } catch (NumberParseException e) {
-      Log.w(TAG, e);
+      Log.w(TAG, e.toString());
       if (bareNumber.charAt(0) == '+') {
         return bareNumber;
       }
@@ -213,7 +213,7 @@ public class PhoneNumberFormatter {
     PhoneNumber(String e164Number, int countryCode, @Nullable String areaCode) {
       this.e164Number  = e164Number;
       this.countryCode = countryCode;
-      this.areaCode    = Optional.fromNullable(areaCode);
+      this.areaCode    = Optional.ofNullable(areaCode);
     }
 
     String getE164Number() {

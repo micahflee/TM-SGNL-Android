@@ -1,34 +1,37 @@
 package org.tm.archive.mediasend.v2
 
 import android.content.Context
+import androidx.annotation.WorkerThread
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mms.MediaConstraints
+import org.tm.archive.stories.Stories
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.Util
 
 object MediaValidator {
 
-  fun filterMedia(context: Context, media: List<Media>, mediaConstraints: MediaConstraints, maxSelection: Int): FilterResult {
-    val filteredMedia = filterForValidMedia(context, media, mediaConstraints)
+  @WorkerThread
+  fun filterMedia(context: Context, media: List<Media>, mediaConstraints: MediaConstraints, maxSelection: Int, isStory: Boolean): FilterResult {
+    val filteredMedia = filterForValidMedia(context, media, mediaConstraints, isStory)
     val isAllMediaValid = filteredMedia.size == media.size
 
     var error: FilterError? = null
     if (!isAllMediaValid) {
       error = if (media.all { MediaUtil.isImageOrVideoType(it.mimeType) }) {
-        FilterError.ITEM_TOO_LARGE
+        FilterError.ItemTooLarge
       } else {
-        FilterError.ITEM_INVALID_TYPE
+        FilterError.ItemInvalidType
       }
     }
 
     if (filteredMedia.size > maxSelection) {
-      error = FilterError.TOO_MANY_ITEMS
+      error = FilterError.TooManyItems
     }
 
     val truncatedMedia = filteredMedia.take(maxSelection)
     val bucketId = if (truncatedMedia.isNotEmpty()) {
-      truncatedMedia.drop(1).fold(truncatedMedia.first().bucketId.or(Media.ALL_MEDIA_BUCKET_ID)) { acc, m ->
-        if (Util.equals(acc, m.bucketId.or(Media.ALL_MEDIA_BUCKET_ID))) {
+      truncatedMedia.drop(1).fold(truncatedMedia.first().bucketId.orElse(Media.ALL_MEDIA_BUCKET_ID)) { acc, m ->
+        if (Util.equals(acc, m.bucketId.orElse(Media.ALL_MEDIA_BUCKET_ID))) {
           acc
         } else {
           Media.ALL_MEDIA_BUCKET_ID
@@ -39,17 +42,21 @@ object MediaValidator {
     }
 
     if (truncatedMedia.isEmpty()) {
-      error = FilterError.NO_ITEMS
+      error = FilterError.NoItems(error)
     }
 
     return FilterResult(truncatedMedia, error, bucketId)
   }
 
-  private fun filterForValidMedia(context: Context, media: List<Media>, mediaConstraints: MediaConstraints): List<Media> {
+  @WorkerThread
+  private fun filterForValidMedia(context: Context, media: List<Media>, mediaConstraints: MediaConstraints, isStory: Boolean): List<Media> {
     return media
       .filter { m -> isSupportedMediaType(m.mimeType) }
       .filter { m ->
         MediaUtil.isImageAndNotGif(m.mimeType) || isValidGif(context, m, mediaConstraints) || isValidVideo(context, m, mediaConstraints)
+      }
+      .filter { m ->
+        !isStory || Stories.MediaTransform.getSendRequirements(m) != Stories.MediaTransform.SendRequirements.CAN_NOT_SEND
       }
   }
 
@@ -67,10 +74,14 @@ object MediaValidator {
 
   data class FilterResult(val filteredMedia: List<Media>, val filterError: FilterError?, val bucketId: String?)
 
-  enum class FilterError {
-    ITEM_TOO_LARGE,
-    ITEM_INVALID_TYPE,
-    TOO_MANY_ITEMS,
-    NO_ITEMS
+  sealed class FilterError {
+    object ItemTooLarge : FilterError()
+    object ItemInvalidType : FilterError()
+    object TooManyItems : FilterError()
+    class NoItems(val cause: FilterError? = null) : FilterError() {
+      init {
+        require(cause !is NoItems)
+      }
+    }
   }
 }

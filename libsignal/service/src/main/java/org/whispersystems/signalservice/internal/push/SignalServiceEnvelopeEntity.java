@@ -23,6 +23,9 @@ public class SignalServiceEnvelopeEntity {
   private int sourceDevice;
 
   @JsonProperty
+  private String destinationUuid;
+
+  @JsonProperty
   private byte[] message;
 
   @JsonProperty
@@ -33,6 +36,12 @@ public class SignalServiceEnvelopeEntity {
 
   @JsonProperty
   private String guid;
+
+  @JsonProperty
+  private Boolean urgent;
+
+  @JsonProperty
+  private Boolean story;
 
   public SignalServiceEnvelopeEntity() {}
 
@@ -78,5 +87,17 @@ public class SignalServiceEnvelopeEntity {
 
   public String getServerUuid() {
     return guid;
+  }
+
+  public String getDestinationUuid() {
+    return destinationUuid;
+  }
+
+  public boolean isUrgent() {
+    return urgent == null || urgent;
+  }
+
+  public boolean isStory() {
+    return story != null && story;
   }
 }

@@ -13,13 +13,13 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.animation.doOnEnd
 import androidx.core.text.isDigitsOnly
 import com.google.android.material.button.MaterialButton
+import org.signal.core.util.StringUtil
 import org.signal.core.util.money.FiatMoney
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.payments.FiatMoneyUtil
-import org.tm.archive.util.StringUtil
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter

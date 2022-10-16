@@ -1,6 +1,7 @@
 package org.tm.archive.service.webrtc;
 
 import android.os.ResultReceiver;
+import android.util.LongSparseArray;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,13 +12,17 @@ import org.signal.core.util.logging.Log;
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.GroupCall;
 import org.signal.ringrtc.PeekInfo;
+import org.tm.archive.events.CallParticipant;
+import org.tm.archive.events.CallParticipantId;
 import org.tm.archive.events.WebRtcViewModel;
-import org.tm.archive.recipients.Recipient;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.ringrtc.Camera;
 import org.tm.archive.ringrtc.RemotePeer;
+import org.tm.archive.service.webrtc.state.WebRtcEphemeralState;
 import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,6 +48,8 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
   @Override
   protected @NonNull WebRtcServiceState handleGroupLocalDeviceStateChanged(@NonNull WebRtcServiceState currentState) {
     Log.i(tag, "handleGroupLocalDeviceStateChanged():");
+
+    currentState = super.handleGroupLocalDeviceStateChanged(currentState);
 
     GroupCall                  groupCall       = currentState.getCallInfoState().requireGroupCall();
     GroupCall.LocalDeviceState device          = groupCall.getLocalDeviceState();
@@ -105,6 +112,28 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
   }
 
   @Override
+  protected @NonNull WebRtcEphemeralState handleGroupAudioLevelsChanged(@NonNull WebRtcServiceState currentState, @NonNull WebRtcEphemeralState ephemeralState) {
+    GroupCall                                    groupCall          = currentState.getCallInfoState().requireGroupCall();
+    LongSparseArray<GroupCall.RemoteDeviceState> remoteDeviceStates = groupCall.getRemoteDeviceStates();
+
+    CallParticipant.AudioLevel localAudioLevel = CallParticipant.AudioLevel.fromRawAudioLevel(groupCall.getLocalDeviceState().getAudioLevel());
+
+    HashMap<CallParticipantId, CallParticipant.AudioLevel> remoteAudioLevels = new HashMap<>();
+    for (CallParticipant participant : currentState.getCallInfoState().getRemoteCallParticipants()) {
+      CallParticipantId callParticipantId = participant.getCallParticipantId();
+
+      if (remoteDeviceStates != null) {
+        GroupCall.RemoteDeviceState state = remoteDeviceStates.get(callParticipantId.getDemuxId());
+        if (state != null) {
+          remoteAudioLevels.put(callParticipantId, CallParticipant.AudioLevel.fromRawAudioLevel(state.getAudioLevel()));
+        }
+      }
+    }
+
+    return ephemeralState.copy(localAudioLevel, remoteAudioLevels);
+  }
+
+  @Override
   protected @NonNull WebRtcServiceState handleGroupJoinedMembershipChanged(@NonNull WebRtcServiceState currentState) {
     Log.i(tag, "handleGroupJoinedMembershipChanged():");
 
@@ -123,8 +152,8 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
     webRtcInteractor.sendGroupCallMessage(currentState.getCallInfoState().getCallRecipient(), eraId);
 
     List<UUID> members = new ArrayList<>(peekInfo.getJoinedMembers());
-    if (!members.contains(Recipient.self().requireAci().uuid())) {
-      members.add(Recipient.self().requireAci().uuid());
+    if (!members.contains(SignalStore.account().requireAci().uuid())) {
+      members.add(SignalStore.account().requireAci().uuid());
     }
     webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members, WebRtcUtil.isCallFull(peekInfo));
 
@@ -149,7 +178,7 @@ public class GroupConnectedActionProcessor extends GroupActionProcessor {
     String eraId = WebRtcUtil.getGroupCallEraId(groupCall);
     webRtcInteractor.sendGroupCallMessage(currentState.getCallInfoState().getCallRecipient(), eraId);
 
-    List<UUID> members = Stream.of(currentState.getCallInfoState().getRemoteCallParticipants()).map(p -> p.getRecipient().requireAci().uuid()).toList();
+    List<UUID> members = Stream.of(currentState.getCallInfoState().getRemoteCallParticipants()).map(p -> p.getRecipient().requireServiceId().uuid()).toList();
     webRtcInteractor.updateGroupCallUpdateMessage(currentState.getCallInfoState().getCallRecipient().getId(), eraId, members, false);
 
     currentState = currentState.builder()

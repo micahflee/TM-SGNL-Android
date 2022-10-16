@@ -10,12 +10,12 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import org.signal.core.util.concurrent.SignalExecutors;
+import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.database.DatabaseObserver;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.util.concurrent.SerialMonoLifoExecutor;
-import org.whispersystems.libsignal.util.Pair;
 
 import java.util.concurrent.Executor;
 
@@ -37,6 +37,10 @@ public class MessageCountsViewModel extends ViewModel {
 
       if (id == -1L) {
         return counts;
+      }
+
+      if (observer != null) {
+        ApplicationDependencies.getDatabaseObserver().unregisterObserver(observer);
       }
 
       observer = new DatabaseObserver.Observer() {

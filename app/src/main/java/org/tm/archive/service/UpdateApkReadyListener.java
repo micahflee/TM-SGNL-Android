@@ -13,12 +13,13 @@ import android.net.Uri;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import org.signal.core.util.PendingIntentFlags;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.util.FileProviderUtil;
 import org.tm.archive.util.FileUtils;
-import org.tm.archive.util.Hex;
+import org.signal.core.util.Hex;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.TextSecurePreferences;
 
@@ -61,7 +62,7 @@ public class UpdateApkReadyListener extends BroadcastReceiver {
     intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
     intent.setData(uri);
 
-    PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+    PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntentFlags.mutable());
 
     Notification notification = new NotificationCompat.Builder(context, NotificationChannels.APP_UPDATES)
         .setOngoing(true)

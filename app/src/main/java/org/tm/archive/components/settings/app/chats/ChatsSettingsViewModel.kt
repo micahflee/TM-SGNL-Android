@@ -4,9 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobs.MultiDeviceContactUpdateJob
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.BackupUtil
 import org.tm.archive.util.ConversationUtil
 import org.tm.archive.util.ThrottledDebouncer
@@ -36,10 +34,9 @@ class ChatsSettingsViewModel(private val repository: ChatsSettingsRepository) : 
 
   fun setUseAddressBook(enabled: Boolean) {
     store.update { it.copy(useAddressBook = enabled) }
-    SignalStore.settings().isPreferSystemContactPhotos = enabled
     refreshDebouncer.publish { ConversationUtil.refreshRecipientShortcuts() }
-    ApplicationDependencies.getJobManager().add(MultiDeviceContactUpdateJob(true))
-    StorageSyncHelper.scheduleSyncForDataChange()
+    SignalStore.settings().isPreferSystemContactPhotos = enabled
+    repository.syncPreferSystemContactPhotos()
   }
 
   fun setUseSystemEmoji(enabled: Boolean) {
@@ -60,7 +57,7 @@ class ChatsSettingsViewModel(private val repository: ChatsSettingsRepository) : 
   }
 
   class Factory(private val repository: ChatsSettingsRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return requireNotNull(modelClass.cast(ChatsSettingsViewModel(repository)))
     }
   }

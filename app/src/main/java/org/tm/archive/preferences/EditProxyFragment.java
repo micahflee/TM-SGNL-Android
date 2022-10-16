@@ -1,6 +1,5 @@
 package org.tm.archive.preferences;
 
-import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,9 +13,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ShareCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
-import com.dd.CircularProgressButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.tm.archive.R;
 import org.tm.archive.contactshare.SimpleTextWatcher;
@@ -25,20 +24,22 @@ import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.SignalProxyUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
+import org.tm.archive.util.views.CircularProgressMaterialButton;
 import org.tm.archive.util.views.LearnMoreTextView;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState;
 import org.whispersystems.signalservice.internal.configuration.SignalProxy;
 
+import java.util.Optional;
+
 public class EditProxyFragment extends Fragment {
 
-  private SwitchCompat                 proxySwitch;
-  private EditText                     proxyText;
-  private TextView                     proxyTitle;
-  private TextView                     proxyStatus;
-  private View                         shareButton;
-  private CircularProgressButton       saveButton;
-  private EditProxyViewModel           viewModel;
+  private SwitchCompat                   proxySwitch;
+  private EditText                       proxyText;
+  private TextView                       proxyTitle;
+  private TextView                       proxyStatus;
+  private View                           shareButton;
+  private CircularProgressMaterialButton saveButton;
+  private EditProxyViewModel             viewModel;
 
   public static EditProxyFragment newInstance() {
     return new EditProxyFragment();
@@ -65,7 +66,7 @@ public class EditProxyFragment extends Fragment {
       }
     });
 
-    this.proxyText.setText(Optional.fromNullable(SignalStore.proxy().getProxy()).transform(SignalProxy::getHost).or(""));
+    this.proxyText.setText(Optional.ofNullable(SignalStore.proxy().getProxy()).map(SignalProxy::getHost).orElse(""));
     this.proxySwitch.setChecked(SignalStore.proxy().isProxyEnabled());
 
     initViewModel();
@@ -76,7 +77,7 @@ public class EditProxyFragment extends Fragment {
 
     LearnMoreTextView description = view.findViewById(R.id.edit_proxy_switch_title_description);
     description.setLearnMoreVisible(true);
-    description.setOnLinkClickListener(v -> CommunicationActions.openBrowserLink(requireContext(), "https://www.telemessage.com/faqs/")); //**TM_SA**// change the link
+    description.setOnLinkClickListener(v -> CommunicationActions.openBrowserLink(requireContext(), "https://support.signal.org/hc/articles/360056052052"));
 
     requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
   }
@@ -89,7 +90,7 @@ public class EditProxyFragment extends Fragment {
   }
 
   private void initViewModel() {
-    viewModel = ViewModelProviders.of(this).get(EditProxyViewModel.class);
+    viewModel = new ViewModelProvider(this).get(EditProxyViewModel.class);
 
     viewModel.getUiState().observe(getViewLifecycleOwner(), this::presentUiState);
     viewModel.getProxyState().observe(getViewLifecycleOwner(), this::presentProxyState);
@@ -146,25 +147,25 @@ public class EditProxyFragment extends Fragment {
     switch (event) {
       case PROXY_SUCCESS:
         proxyStatus.setVisibility(View.VISIBLE);
-        proxyText.setText(Optional.fromNullable(SignalStore.proxy().getProxy()).transform(SignalProxy::getHost).or(""));
-        new AlertDialog.Builder(requireContext())
-                       .setTitle(R.string.preferences_success)
-                       .setMessage(R.string.preferences_you_are_connected_to_the_proxy)
-                       .setPositiveButton(android.R.string.ok, (d, i) -> {
-                         requireActivity().onBackPressed();
-                         d.dismiss();
-                       })
-                       .show();
+        proxyText.setText(Optional.ofNullable(SignalStore.proxy().getProxy()).map(SignalProxy::getHost).orElse(""));
+        new MaterialAlertDialogBuilder(requireContext())
+           .setTitle(R.string.preferences_success)
+           .setMessage(R.string.preferences_you_are_connected_to_the_proxy)
+           .setPositiveButton(android.R.string.ok, (d, i) -> {
+             requireActivity().onBackPressed();
+             d.dismiss();
+           })
+           .show();
         break;
       case PROXY_FAILURE:
         proxyStatus.setVisibility(View.INVISIBLE);
-        proxyText.setText(Optional.fromNullable(SignalStore.proxy().getProxy()).transform(SignalProxy::getHost).or(""));
+        proxyText.setText(Optional.ofNullable(SignalStore.proxy().getProxy()).map(SignalProxy::getHost).orElse(""));
         ViewUtil.focusAndMoveCursorToEndAndOpenKeyboard(proxyText);
-        new AlertDialog.Builder(requireContext())
-                       .setTitle(R.string.preferences_failed_to_connect)
-                       .setMessage(R.string.preferences_couldnt_connect_to_the_proxy)
-                       .setPositiveButton(android.R.string.ok, (d, i) -> d.dismiss())
-                       .show();
+        new MaterialAlertDialogBuilder(requireContext())
+           .setTitle(R.string.preferences_failed_to_connect)
+           .setMessage(R.string.preferences_couldnt_connect_to_the_proxy)
+           .setPositiveButton(android.R.string.ok, (d, i) -> d.dismiss())
+           .show();
         break;
     }
   }
@@ -172,14 +173,10 @@ public class EditProxyFragment extends Fragment {
   private void presentSaveState(@NonNull EditProxyViewModel.SaveState state) {
     switch (state) {
       case IDLE:
-        saveButton.setClickable(true);
-        saveButton.setIndeterminateProgressMode(false);
-        saveButton.setProgress(0);
+        saveButton.cancelSpinning();
         break;
       case IN_PROGRESS:
-        saveButton.setClickable(false);
-        saveButton.setIndeterminateProgressMode(true);
-        saveButton.setProgress(50);
+        saveButton.setSpinning();
         break;
     }
   }

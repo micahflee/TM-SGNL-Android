@@ -23,6 +23,8 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
@@ -110,7 +112,7 @@ public class BackupDialog {
 
   @RequiresApi(29)
   public static void showChooseBackupLocationDialog(@NonNull Fragment fragment, int requestCode) {
-    new AlertDialog.Builder(fragment.requireContext())
+    new MaterialAlertDialogBuilder(fragment.requireContext())
                    .setView(R.layout.backup_choose_location_dialog)
                    .setCancelable(true)
                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
@@ -141,7 +143,7 @@ public class BackupDialog {
   }
 
   public static void showDisableBackupDialog(@NonNull Context context, @NonNull Runnable onBackupsDisabled) {
-    new AlertDialog.Builder(context)
+    new MaterialAlertDialogBuilder(context)
                    .setTitle(R.string.BackupDialog_delete_backups)
                    .setMessage(R.string.BackupDialog_disable_and_delete_all_local_backups)
                    .setNegativeButton(android.R.string.cancel, null)
@@ -157,12 +159,12 @@ public class BackupDialog {
   public static void showVerifyBackupPassphraseDialog(@NonNull Context context) {
     View        view   = LayoutInflater.from(context).inflate(R.layout.enter_backup_passphrase_dialog, null);
     EditText    prompt = view.findViewById(R.id.restore_passphrase_input);
-    AlertDialog dialog = new AlertDialog.Builder(context)
-                                        .setTitle(R.string.BackupDialog_enter_backup_passphrase_to_verify)
-                                        .setView(view)
-                                        .setPositiveButton(R.string.BackupDialog_verify, null)
-                                        .setNegativeButton(android.R.string.cancel, null)
-                                        .show();
+    AlertDialog dialog = new MaterialAlertDialogBuilder(context)
+                            .setTitle(R.string.BackupDialog_enter_backup_passphrase_to_verify)
+                            .setView(view)
+                            .setPositiveButton(R.string.BackupDialog_verify, null)
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .show();
 
     Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
     positiveButton.setEnabled(false);

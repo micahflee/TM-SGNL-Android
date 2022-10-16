@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:background="@color/signal_dark_colorBackground"
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
+
+    <org.tm.archive.components.ClippedCardView
+        android:id="@+id/link_preview_card"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="24dp"
+        app:cardBackgroundColor="#F6F8FB"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_max="280dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <org.tm.archive.components.ThumbnailView
+                android:id="@+id/link_preview_large"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:background="#FAFAFA"
+                android:importantForAccessibility="no"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                app:layout_constraintDimensionRatio="280:161"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:thumbnail_radius="0dp" />
+
+            <ImageView
+                android:id="@+id/link_preview_fallback_icon"
+                android:layout_width="94dp"
+                android:layout_height="0dp"
+                android:background="#FAFAFA"
+                android:importantForAccessibility="no"
+                android:padding="12dp"
+                android:scaleType="centerInside"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_link_24"
+                app:tint="@color/core_grey_75" />
+
+            <org.tm.archive.components.ThumbnailView
+                android:id="@+id/link_preview_image"
+                android:layout_width="94dp"
+                android:layout_height="0dp"
+                android:background="#FAFAFA"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:thumbnail_radius="0dp"
+                tools:src="@drawable/test_gradient" />
+
+            <androidx.constraintlayout.widget.Barrier
+                android:id="@+id/image_barrier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:barrierDirection="end"
+                app:barrierMargin="12dp"
+                app:constraint_referenced_ids="link_preview_fallback_icon,link_preview_image" />
+
+            <org.tm.archive.components.emoji.EmojiTextView
+                android:id="@+id/link_preview_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="16dp"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:textAppearance="@style/Signal.Text.LabelLarge"
+                android:textColor="@color/signal_light_colorOnSurface"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@id/link_preview_description"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/image_barrier"
+                app:layout_constraintTop_toBottomOf="@+id/link_preview_large"
+                app:layout_goneMarginBottom="12dp"
+                app:layout_goneMarginStart="0dp"
+                tools:text="ASDF dot com, the resource of your asdf dreams and whatnot. This needs to be 3 lines for testing." />
+
+            <org.tm.archive.components.emoji.EmojiTextView
+                android:id="@+id/link_preview_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/Signal.Text.BodyMedium"
+                android:textColor="@color/signal_light_colorOnSurfaceVariant"
+                app:layout_constraintBottom_toTopOf="@id/link_preview_url"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@id/link_preview_title"
+                app:layout_constraintTop_toBottomOf="@id/link_preview_title"
+                app:layout_goneMarginBottom="12dp"
+                tools:text="Blah blah blah" />
+
+            <org.tm.archive.components.emoji.EmojiTextView
+                android:id="@+id/link_preview_url"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/Signal.Text.BodySmall"
+                android:textColor="@color/signal_light_colorOnSurfaceVariant"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@id/link_preview_title"
+                app:layout_constraintTop_toBottomOf="@id/link_preview_description"
+                tools:text="www.asdf.com" />
+
+            <ViewStub
+                android:id="@+id/loading_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inflatedId="@id/loading_spinner"
+                android:layout="@layout/stories_text_post_link_preview_spinner"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </org.tm.archive.components.ClippedCardView>
+
+    <org.tm.archive.components.ClippedCardView
+        android:id="@+id/link_preview_placeholder_card"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="24dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#F6F8FB"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/link_preview_placeholder_title"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:drawablePadding="12dp"
+            android:padding="16dp"
+            android:textAppearance="@style/Signal.Text.TitleSmall"
+            android:textColor="@color/signal_light_colorOnSurface"
+            app:drawableStartCompat="@drawable/ic_link_24"
+            app:drawableTint="@color/signal_light_colorOnSurface"
+            tools:text="apple.com" />
+
+    </org.tm.archive.components.ClippedCardView>
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/card_barrier_end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="end"
+        app:constraint_referenced_ids="link_preview_placeholder_card,link_preview_card" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/link_preview_close"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@color/transparent_white_80"
+        android:padding="6dp"
+        android:scaleType="centerInside"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@id/card_barrier_end"
+        app:layout_constraintStart_toEndOf="@id/card_barrier_end"
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Signal.Circle"
+        app:srcCompat="@drawable/ic_x_24"
+        app:tint="@color/signal_light_colorOnSurface"
+        tools:visibility="visible" />
+</merge>

@@ -1,8 +1,8 @@
 package org.tm.archive.components.settings.conversation
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.Rect
@@ -18,11 +18,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import app.cash.exhaustive.Exhaustive
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import org.signal.core.util.DimensionUnit
 import org.tm.archive.AvatarPreviewActivity
 import org.tm.archive.BlockUnblockDialog
 import org.tm.archive.InviteActivity
@@ -37,9 +39,7 @@ import org.tm.archive.badges.models.Badge
 import org.tm.archive.badges.view.ViewBadgeBottomSheetDialogFragment
 import org.tm.archive.components.AvatarImageView
 import org.tm.archive.components.recyclerview.OnScrollAnimationHelper
-import org.tm.archive.components.recyclerview.ToolbarShadowAnimationHelper
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsIcon
 import org.tm.archive.components.settings.DSLSettingsText
@@ -74,12 +74,16 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientExporter
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment
+import org.tm.archive.stories.Stories
+import org.tm.archive.stories.StoryViewerArgs
+import org.tm.archive.stories.dialogs.StoryDialogs
+import org.tm.archive.stories.viewer.StoryViewerActivity
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.ContextUtil
 import org.tm.archive.util.ExpirationUtil
-import org.tm.archive.util.FeatureFlags
-import org.tm.archive.util.ThemeUtil
+import org.tm.archive.util.Material3OnScrollHelper
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 import org.tm.archive.util.views.SimpleProgressDialog
 import org.tm.archive.verify.VerifyIdentityActivity
@@ -92,8 +96,7 @@ private const val REQUEST_CODE_RETURN_FROM_MEDIA = 4
 
 class ConversationSettingsFragment : DSLSettingsFragment(
   layoutId = R.layout.conversation_settings_fragment,
-  menuId = R.menu.conversation_settings,
-  layoutManagerProducer = Badges::createLayoutManagerForGridWithBadges
+  menuId = R.menu.conversation_settings
 ) {
 
   private val alertTint by lazy { ContextCompat.getColor(requireContext(), R.color.signal_alert_primary) }
@@ -151,7 +154,14 @@ class ConversationSettingsFragment : DSLSettingsFragment(
     toolbarTitle = view.findViewById(R.id.toolbar_title)
     toolbarBackground = view.findViewById(R.id.toolbar_background)
 
+    val args: ConversationSettingsFragmentArgs = ConversationSettingsFragmentArgs.fromBundle(requireArguments())
+    if (args.recipientId != null) {
+      layoutManagerProducer = Badges::createLayoutManagerForGridWithBadges
+    }
+
     super.onViewCreated(view, savedInstanceState)
+
+    recyclerView?.addOnScrollListener(ConversationSettingsOnUserScrolledAnimationHelper(toolbarAvatarContainer, toolbarTitle, toolbarBackground))
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -170,10 +180,6 @@ class ConversationSettingsFragment : DSLSettingsFragment(
     }
   }
 
-  override fun getOnScrollAnimationHelper(toolbarShadow: View): OnScrollAnimationHelper {
-    return ConversationSettingsOnUserScrolledAnimationHelper(toolbarAvatarContainer, toolbarTitle, toolbarBackground, toolbarShadow)
-  }
-
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
     return if (item.itemId == R.id.action_edit) {
       val args = ConversationSettingsFragmentArgs.fromBundle(requireArguments())
@@ -186,7 +192,16 @@ class ConversationSettingsFragment : DSLSettingsFragment(
     }
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun getMaterial3OnScrollHelper(toolbar: Toolbar?): Material3OnScrollHelper {
+    return object : Material3OnScrollHelper(requireActivity(), toolbar!!) {
+      override val inactiveColorSet = ColorSet(
+        toolbarColorRes = R.color.signal_colorBackground_0,
+        statusBarColorRes = R.color.signal_colorBackground
+      )
+    }
+  }
+
+  override fun bindAdapter(adapter: MappingAdapter) {
     val args = ConversationSettingsFragmentArgs.fromBundle(requireArguments())
 
     BioTextPreference.register(adapter)
@@ -215,12 +230,12 @@ class ConversationSettingsFragment : DSLSettingsFragment(
           .withFixedSize(ViewUtil.dpToPx(80))
           .load(state.recipient)
 
-        if (FeatureFlags.displayDonorBadges() && !state.recipient.isSelf) {
+        if (!state.recipient.isSelf) {
           toolbarBadge.setBadgeFromRecipient(state.recipient)
         }
 
         state.withRecipientSettingsState {
-          toolbarTitle.text = state.recipient.getDisplayName(requireContext())
+          toolbarTitle.text = if (state.recipient.isSelf) getString(R.string.note_to_self) else state.recipient.getDisplayName(requireContext())
         }
 
         state.withGroupSettingsState {
@@ -261,14 +276,27 @@ class ConversationSettingsFragment : DSLSettingsFragment(
       customPref(
         AvatarPreference.Model(
           recipient = state.recipient,
+          storyViewState = state.storyViewState,
           onAvatarClick = { avatar ->
-            if (!state.recipient.isSelf) {
-              requireActivity().apply {
-                startActivity(
-                  AvatarPreviewActivity.intentFromRecipientId(this, state.recipient.id),
-                  AvatarPreviewActivity.createTransitionBundle(this, avatar)
+            val viewAvatarIntent = AvatarPreviewActivity.intentFromRecipientId(requireContext(), state.recipient.id)
+            val viewAvatarTransitionBundle = AvatarPreviewActivity.createTransitionBundle(requireActivity(), avatar)
+
+            if (Stories.isFeatureEnabled() && avatar.hasStory()) {
+              val viewStoryIntent = StoryViewerActivity.createIntent(
+                requireContext(),
+                StoryViewerArgs(
+                  recipientId = state.recipient.id,
+                  isInHiddenStoryMode = state.recipient.shouldHideStory(),
+                  isFromQuote = true
                 )
-              }
+              )
+              StoryDialogs.displayStoryOrProfileImage(
+                context = requireContext(),
+                onViewStory = { startActivity(viewStoryIntent) },
+                onViewAvatar = { startActivity(viewAvatarIntent, viewAvatarTransitionBundle) }
+              )
+            } else if (!state.recipient.isSelf) {
+              startActivity(viewAvatarIntent, viewAvatarTransitionBundle)
             }
           },
           onBadgeClick = { badge ->
@@ -382,18 +410,18 @@ class ConversationSettingsFragment : DSLSettingsFragment(
       dividerPref()
 
       val summary = DSLSettingsText.from(formatDisappearingMessagesLifespan(state.disappearingMessagesLifespan))
-      val icon = if (state.disappearingMessagesLifespan <= 0) {
+      val icon = if (state.disappearingMessagesLifespan <= 0 || state.recipient.isBlocked) {
         R.drawable.ic_update_timer_disabled_16
       } else {
         R.drawable.ic_update_timer_16
       }
 
-      var enabled = true
+      var enabled = !state.recipient.isBlocked
       state.withGroupSettingsState {
-        enabled = it.canEditGroupAttributes
+        enabled = it.canEditGroupAttributes && !state.recipient.isBlocked
       }
 
-      if (!state.recipient.isReleaseNotes) {
+      if (!state.recipient.isReleaseNotes && !state.recipient.isBlocked) {
         clickPref(
           title = DSLSettingsText.from(R.string.ConversationSettingsFragment__disappearing_messages),
           summary = summary,
@@ -450,7 +478,11 @@ class ConversationSettingsFragment : DSLSettingsFragment(
               title = DSLSettingsText.from(R.string.ConversationSettingsFragment__add_as_a_contact),
               icon = DSLSettingsIcon.from(R.drawable.ic_plus_24),
               onClick = {
-                startActivityForResult(RecipientExporter.export(state.recipient).asAddContactIntent(), REQUEST_CODE_ADD_CONTACT)
+                try {
+                  startActivityForResult(RecipientExporter.export(state.recipient).asAddContactIntent(), REQUEST_CODE_ADD_CONTACT)
+                } catch (e: ActivityNotFoundException) {
+                  Toast.makeText(context, R.string.ConversationSettingsFragment__contacts_app_not_found, Toast.LENGTH_SHORT).show()
+                }
               }
             )
           }
@@ -530,15 +562,17 @@ class ConversationSettingsFragment : DSLSettingsFragment(
             )
           )
 
-          customPref(
-            LargeIconClickPreference.Model(
-              title = DSLSettingsText.from(R.string.ConversationSettingsFragment__add_to_a_group),
-              icon = DSLSettingsIcon.from(R.drawable.add_to_a_group, NO_TINT),
-              onClick = {
-                viewModel.onAddToGroup()
-              }
+          if (!state.recipient.isBlocked) {
+            customPref(
+              LargeIconClickPreference.Model(
+                title = DSLSettingsText.from(R.string.ConversationSettingsFragment__add_to_a_group),
+                icon = DSLSettingsIcon.from(R.drawable.add_to_a_group, NO_TINT),
+                onClick = {
+                  viewModel.onAddToGroup()
+                }
+              )
             )
-          )
+          }
 
           for (group in recipientSettingsState.groupsInCommon) {
             customPref(
@@ -746,25 +780,29 @@ class ConversationSettingsFragment : DSLSettingsFragment(
       showMembersAdded.membersAddedCount
     )
 
-    Snackbar.make(requireView(), string, Snackbar.LENGTH_SHORT).setTextColor(Color.WHITE).show()
+    Snackbar.make(requireView(), string, Snackbar.LENGTH_SHORT).show()
   }
 
   private class ConversationSettingsOnUserScrolledAnimationHelper(
     private val toolbarAvatar: View,
     private val toolbarTitle: View,
-    private val toolbarBackground: View,
-    toolbarShadow: View
-  ) : ToolbarShadowAnimationHelper(toolbarShadow) {
+    private val toolbarBackground: View
+  ) : OnScrollAnimationHelper() {
 
     override val duration: Long = 200L
 
-    private val actionBarSize = ThemeUtil.getThemedDimen(toolbarShadow.context, R.attr.actionBarSize)
+    private val actionBarSize = DimensionUnit.DP.toPixels(64f)
     private val rect = Rect()
 
     override fun getAnimationState(recyclerView: RecyclerView): AnimationState {
-      val layoutManager = recyclerView.layoutManager as FlexboxLayoutManager
+      val layoutManager = recyclerView.layoutManager!!
+      val firstVisibleItemPosition = if (layoutManager is FlexboxLayoutManager) {
+        layoutManager.findFirstVisibleItemPosition()
+      } else {
+        (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+      }
 
-      return if (layoutManager.findFirstVisibleItemPosition() == 0) {
+      return if (firstVisibleItemPosition == 0) {
         val firstChild = requireNotNull(layoutManager.getChildAt(0))
         firstChild.getLocalVisibleRect(rect)
 
@@ -779,8 +817,6 @@ class ConversationSettingsFragment : DSLSettingsFragment(
     }
 
     override fun show(duration: Long) {
-      super.show(duration)
-
       toolbarAvatar
         .animate()
         .setDuration(duration)
@@ -800,8 +836,6 @@ class ConversationSettingsFragment : DSLSettingsFragment(
     }
 
     override fun hide(duration: Long) {
-      super.hide(duration)
-
       toolbarAvatar
         .animate()
         .setDuration(duration)

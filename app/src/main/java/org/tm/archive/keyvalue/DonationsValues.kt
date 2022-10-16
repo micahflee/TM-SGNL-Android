@@ -1,18 +1,30 @@
 package org.tm.archive.keyvalue
 
+import androidx.annotation.WorkerThread
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.BehaviorSubject
 import io.reactivex.rxjava3.subjects.Subject
 import org.signal.core.util.logging.Log
 import org.signal.donations.StripeApi
+import org.signal.libsignal.zkgroup.InvalidInputException
+import org.signal.libsignal.zkgroup.VerificationFailedException
+import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation
+import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialRequestContext
+import org.signal.libsignal.zkgroup.receipts.ReceiptSerial
 import org.tm.archive.badges.Badges
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.database.model.databaseprotos.BadgeList
+import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobs.SubscriptionReceiptRequestResponseJob
 import org.tm.archive.payments.currency.CurrencyUtil
 import org.tm.archive.subscription.LevelUpdateOperation
 import org.tm.archive.subscription.Subscriber
+import org.tm.archive.util.Util
+import org.whispersystems.signalservice.api.subscriptions.ActiveSubscription
 import org.whispersystems.signalservice.api.subscriptions.IdempotencyKey
 import org.whispersystems.signalservice.api.subscriptions.SubscriberId
+import org.whispersystems.signalservice.internal.util.JsonUtil
+import java.security.SecureRandom
 import java.util.Currency
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -23,33 +35,91 @@ internal class DonationsValues internal constructor(store: KeyValueStore) : Sign
     private val TAG = Log.tag(DonationsValues::class.java)
 
     private const val KEY_SUBSCRIPTION_CURRENCY_CODE = "donation.currency.code"
-    private const val KEY_CURRENCY_CODE_BOOST = "donation.currency.code.boost"
+    private const val KEY_CURRENCY_CODE_ONE_TIME = "donation.currency.code.boost"
     private const val KEY_SUBSCRIBER_ID_PREFIX = "donation.subscriber.id."
     private const val KEY_LAST_KEEP_ALIVE_LAUNCH = "donation.last.successful.ping"
+
+    /**
+     * Our last known "end of period" for a subscription. This value is used to determine
+     * when a user should try to redeem a badge for their subscription, and as a hint that
+     * a user has an active subscription.
+     */
     private const val KEY_LAST_END_OF_PERIOD_SECONDS = "donation.last.end.of.period"
+
     private const val EXPIRED_BADGE = "donation.expired.badge"
+    private const val EXPIRED_GIFT_BADGE = "donation.expired.gift.badge"
     private const val USER_MANUALLY_CANCELLED = "donation.user.manually.cancelled"
     private const val KEY_LEVEL_OPERATION_PREFIX = "donation.level.operation."
     private const val KEY_LEVEL_HISTORY = "donation.level.history"
     private const val DISPLAY_BADGES_ON_PROFILE = "donation.display.badges.on.profile"
     private const val SUBSCRIPTION_REDEMPTION_FAILED = "donation.subscription.redemption.failed"
     private const val SHOULD_CANCEL_SUBSCRIPTION_BEFORE_NEXT_SUBSCRIBE_ATTEMPT = "donation.should.cancel.subscription.before.next.subscribe.attempt"
+    private const val SUBSCRIPTION_CANCELATION_CHARGE_FAILURE = "donation.subscription.cancelation.charge.failure"
+    private const val SUBSCRIPTION_CANCELATION_REASON = "donation.subscription.cancelation.reason"
+    private const val SUBSCRIPTION_CANCELATION_TIMESTAMP = "donation.subscription.cancelation.timestamp"
+    private const val SUBSCRIPTION_CANCELATION_WATERMARK = "donation.subscription.cancelation.watermark"
+    private const val SHOW_CANT_PROCESS_DIALOG = "show.cant.process.dialog"
+
+    /**
+     * The current request context for subscription. This should be stored until either
+     * it is successfully converted into a response, the end of period changes, or the user
+     * manually cancels the subscription.
+     */
+    private const val SUBSCRIPTION_CREDENTIAL_REQUEST = "subscription.credential.request"
+
+    /**
+     * The current response presentation that can be submitted for a badge. This should be
+     * stored until it is successfully redeemed, the end of period changes, or the user
+     * manually cancels their subscription.
+     */
+    private const val SUBSCRIPTION_CREDENTIAL_RECEIPT = "subscription.credential.receipt"
+
+    /**
+     * Notes the "end of period" time for the latest subscription that we have started
+     * to get a response presentation for. When this is equal to the latest "end of period"
+     * it can be assumed that we have a request context that can be safely reused.
+     */
+    private const val SUBSCRIPTION_EOP_STARTED_TO_CONVERT = "subscription.eop.convert"
+
+    /**
+     * Notes the "end of period" time for the latest subscription that we have started
+     * to redeem a response presentation for. When this is equal to the latest "end of
+     * period" it can be assumed that we have a response presentation that we can submit
+     * to get an active token for.
+     */
+    private const val SUBSCRIPTION_EOP_STARTED_TO_REDEEM = "subscription.eop.redeem"
+
+    /**
+     * Notes the "end of period" time for the latest subscription that we have successfully
+     * and fully redeemed a token for. If this is equal to the latest "end of period" it is
+     * assumed that there is no work to be done.
+     */
+    private const val SUBSCRIPTION_EOP_REDEEMED = "subscription.eop.redeemed"
   }
 
   override fun onFirstEverAppLaunch() = Unit
 
   override fun getKeysToIncludeInBackup(): MutableList<String> = mutableListOf(
-    KEY_CURRENCY_CODE_BOOST,
+    KEY_CURRENCY_CODE_ONE_TIME,
     KEY_LAST_KEEP_ALIVE_LAUNCH,
     KEY_LAST_END_OF_PERIOD_SECONDS,
-    SHOULD_CANCEL_SUBSCRIPTION_BEFORE_NEXT_SUBSCRIBE_ATTEMPT
+    SHOULD_CANCEL_SUBSCRIPTION_BEFORE_NEXT_SUBSCRIBE_ATTEMPT,
+    SUBSCRIPTION_CANCELATION_REASON,
+    SUBSCRIPTION_CANCELATION_TIMESTAMP,
+    SUBSCRIPTION_CANCELATION_WATERMARK,
+    SHOW_CANT_PROCESS_DIALOG,
+    SUBSCRIPTION_CREDENTIAL_REQUEST,
+    SUBSCRIPTION_CREDENTIAL_RECEIPT,
+    SUBSCRIPTION_EOP_STARTED_TO_CONVERT,
+    SUBSCRIPTION_EOP_STARTED_TO_REDEEM,
+    SUBSCRIPTION_EOP_REDEEMED
   )
 
   private val subscriptionCurrencyPublisher: Subject<Currency> by lazy { BehaviorSubject.createDefault(getSubscriptionCurrency()) }
   val observableSubscriptionCurrency: Observable<Currency> by lazy { subscriptionCurrencyPublisher }
 
-  private val boostCurrencyPublisher: Subject<Currency> by lazy { BehaviorSubject.createDefault(getBoostCurrency()) }
-  val observableBoostCurrency: Observable<Currency> by lazy { boostCurrencyPublisher }
+  private val oneTimeCurrencyPublisher: Subject<Currency> by lazy { BehaviorSubject.createDefault(getOneTimeCurrency()) }
+  val observableOneTimeCurrency: Observable<Currency> by lazy { oneTimeCurrencyPublisher }
 
   fun getSubscriptionCurrency(): Currency {
     val currencyCode = getString(KEY_SUBSCRIPTION_CURRENCY_CODE, null)
@@ -69,27 +139,27 @@ internal class DonationsValues internal constructor(store: KeyValueStore) : Sign
       CurrencyUtil.getCurrencyByCurrencyCode(currencyCode)
     }
 
-    return if (currency != null && StripeApi.Validation.supportedCurrencyCodes.contains(currency.currencyCode.toUpperCase(Locale.ROOT))) {
+    return if (currency != null && StripeApi.Validation.supportedCurrencyCodes.contains(currency.currencyCode.uppercase(Locale.ROOT))) {
       currency
     } else {
       Currency.getInstance("USD")
     }
   }
 
-  fun getBoostCurrency(): Currency {
-    val boostCurrencyCode = getString(KEY_CURRENCY_CODE_BOOST, null)
-    return if (boostCurrencyCode == null) {
+  fun getOneTimeCurrency(): Currency {
+    val oneTimeCurrency = getString(KEY_CURRENCY_CODE_ONE_TIME, null)
+    return if (oneTimeCurrency == null) {
       val currency = getSubscriptionCurrency()
-      setBoostCurrency(currency)
+      setOneTimeCurrency(currency)
       currency
     } else {
-      Currency.getInstance(boostCurrencyCode)
+      Currency.getInstance(oneTimeCurrency)
     }
   }
 
-  fun setBoostCurrency(currency: Currency) {
-    putString(KEY_CURRENCY_CODE_BOOST, currency.currencyCode)
-    boostCurrencyPublisher.onNext(currency)
+  fun setOneTimeCurrency(currency: Currency) {
+    putString(KEY_CURRENCY_CODE_ONE_TIME, currency.currencyCode)
+    oneTimeCurrencyPublisher.onNext(currency)
   }
 
   fun getSubscriber(currency: Currency): Subscriber? {
@@ -112,6 +182,7 @@ internal class DonationsValues internal constructor(store: KeyValueStore) : Sign
   }
 
   fun setSubscriber(subscriber: Subscriber) {
+    Log.i(TAG, "Setting subscriber for currency ${subscriber.currencyCode}", Exception(), true)
     val currencyCode = subscriber.currencyCode
     store.beginWrite()
       .putBlob("$KEY_SUBSCRIBER_ID_PREFIX$currencyCode", subscriber.subscriberId.bytes)
@@ -163,6 +234,20 @@ internal class DonationsValues internal constructor(store: KeyValueStore) : Sign
 
   fun getExpiredBadge(): Badge? {
     val badgeBytes = getBlob(EXPIRED_BADGE, null) ?: return null
+
+    return Badges.fromDatabaseBadge(BadgeList.Badge.parseFrom(badgeBytes))
+  }
+
+  fun setExpiredGiftBadge(badge: Badge?) {
+    if (badge != null) {
+      putBlob(EXPIRED_GIFT_BADGE, Badges.toDatabaseBadge(badge).toByteArray())
+    } else {
+      remove(EXPIRED_GIFT_BADGE)
+    }
+  }
+
+  fun getExpiredGiftBadge(): Badge? {
+    val badgeBytes = getBlob(EXPIRED_GIFT_BADGE, null) ?: return null
 
     return Badges.fromDatabaseBadge(BadgeList.Badge.parseFrom(badgeBytes))
   }
@@ -224,6 +309,30 @@ internal class DonationsValues internal constructor(store: KeyValueStore) : Sign
     putBoolean(SUBSCRIPTION_REDEMPTION_FAILED, false)
   }
 
+  fun setUnexpectedSubscriptionCancelationChargeFailure(chargeFailure: ActiveSubscription.ChargeFailure?) {
+    if (chargeFailure == null) {
+      remove(SUBSCRIPTION_CANCELATION_CHARGE_FAILURE)
+    } else {
+      putString(SUBSCRIPTION_CANCELATION_CHARGE_FAILURE, JsonUtil.toJson(chargeFailure))
+    }
+  }
+
+  fun getUnexpectedSubscriptionCancelationChargeFailure(): ActiveSubscription.ChargeFailure? {
+    val json = getString(SUBSCRIPTION_CANCELATION_CHARGE_FAILURE, null)
+    return if (json.isNullOrEmpty()) {
+      null
+    } else {
+      JsonUtil.fromJson(json, ActiveSubscription.ChargeFailure::class.java)
+    }
+  }
+
+  var unexpectedSubscriptionCancelationReason: String? by stringValue(SUBSCRIPTION_CANCELATION_REASON, null)
+  var unexpectedSubscriptionCancelationTimestamp: Long by longValue(SUBSCRIPTION_CANCELATION_TIMESTAMP, 0L)
+  var unexpectedSubscriptionCancelationWatermark: Long by longValue(SUBSCRIPTION_CANCELATION_WATERMARK, 0L)
+
+  @get:JvmName("showCantProcessDialog")
+  var showCantProcessDialog: Boolean by booleanValue(SHOW_CANT_PROCESS_DIALOG, true)
+
   /**
    * Denotes that the previous attempt to subscribe failed in some way. Either an
    * automatic renewal failed resulting in an unexpected expiration, or payment failed
@@ -236,4 +345,122 @@ internal class DonationsValues internal constructor(store: KeyValueStore) : Sign
   var shouldCancelSubscriptionBeforeNextSubscribeAttempt: Boolean
     get() = getBoolean(SHOULD_CANCEL_SUBSCRIPTION_BEFORE_NEXT_SUBSCRIBE_ATTEMPT, false)
     set(value) = putBoolean(SHOULD_CANCEL_SUBSCRIPTION_BEFORE_NEXT_SUBSCRIBE_ATTEMPT, value)
+
+  /**
+   * Consolidates a bunch of data clears that should occur whenever a user manually cancels their
+   * subscription:
+   *
+   * 1. Clears keep-alive flag
+   * 1. Clears level operation
+   * 1. Marks the user as manually cancelled
+   * 1. Clears out unexpected cancelation state
+   * 1. Clears expired badge if it is for a subscription
+   */
+  @WorkerThread
+  fun updateLocalStateForManualCancellation() {
+    synchronized(SubscriptionReceiptRequestResponseJob.MUTEX) {
+      Log.d(TAG, "[updateLocalStateForManualCancellation] Clearing donation values.")
+
+      setLastEndOfPeriod(0L)
+      clearLevelOperations()
+      markUserManuallyCancelled()
+      shouldCancelSubscriptionBeforeNextSubscribeAttempt = false
+      setUnexpectedSubscriptionCancelationChargeFailure(null)
+      unexpectedSubscriptionCancelationReason = null
+      unexpectedSubscriptionCancelationTimestamp = 0L
+
+      clearSubscriptionRequestCredential()
+      clearSubscriptionReceiptCredential()
+
+      val expiredBadge = getExpiredBadge()
+      if (expiredBadge != null && expiredBadge.isSubscription()) {
+        Log.d(TAG, "[updateLocalStateForManualCancellation] Clearing expired badge.")
+        setExpiredBadge(null)
+      }
+    }
+  }
+
+  /**
+   * Consolidates a bunch of data clears that should occur whenever a user begins a new subscription:
+   *
+   * 1. Manual cancellation marker
+   * 1. Any set level operations
+   * 1. Unexpected cancelation flags
+   * 1. Expired badge, if it is of a subscription
+   */
+  @WorkerThread
+  fun updateLocalStateForLocalSubscribe() {
+    synchronized(SubscriptionReceiptRequestResponseJob.MUTEX) {
+      Log.d(TAG, "[updateLocalStateForLocalSubscribe] Clearing donation values.")
+
+      clearUserManuallyCancelled()
+      clearLevelOperations()
+      shouldCancelSubscriptionBeforeNextSubscribeAttempt = false
+      setUnexpectedSubscriptionCancelationChargeFailure(null)
+      unexpectedSubscriptionCancelationReason = null
+      unexpectedSubscriptionCancelationTimestamp = 0L
+      refreshSubscriptionRequestCredential()
+      clearSubscriptionReceiptCredential()
+
+      val expiredBadge = getExpiredBadge()
+      if (expiredBadge != null && expiredBadge.isSubscription()) {
+        Log.d(TAG, "[updateLocalStateForLocalSubscribe] Clearing expired badge.")
+        setExpiredBadge(null)
+      }
+    }
+  }
+
+  fun refreshSubscriptionRequestCredential() {
+    putBlob(SUBSCRIPTION_CREDENTIAL_REQUEST, generateRequestCredential().serialize())
+  }
+
+  fun setSubscriptionRequestCredential(requestContext: ReceiptCredentialRequestContext) {
+    putBlob(SUBSCRIPTION_CREDENTIAL_REQUEST, requestContext.serialize())
+  }
+
+  fun getSubscriptionRequestCredential(): ReceiptCredentialRequestContext? {
+    val bytes = getBlob(SUBSCRIPTION_CREDENTIAL_REQUEST, null) ?: return null
+
+    return ReceiptCredentialRequestContext(bytes)
+  }
+
+  fun clearSubscriptionRequestCredential() {
+    remove(SUBSCRIPTION_CREDENTIAL_REQUEST)
+  }
+
+  fun setSubscriptionReceiptCredential(receiptCredentialPresentation: ReceiptCredentialPresentation) {
+    putBlob(SUBSCRIPTION_CREDENTIAL_RECEIPT, receiptCredentialPresentation.serialize())
+  }
+
+  fun getSubscriptionReceiptCredential(): ReceiptCredentialPresentation? {
+    val bytes = getBlob(SUBSCRIPTION_CREDENTIAL_RECEIPT, null) ?: return null
+
+    return ReceiptCredentialPresentation(bytes)
+  }
+
+  fun clearSubscriptionReceiptCredential() {
+    remove(SUBSCRIPTION_CREDENTIAL_RECEIPT)
+  }
+
+  var subscriptionEndOfPeriodConversionStarted by longValue(SUBSCRIPTION_EOP_STARTED_TO_CONVERT, 0L)
+  var subscriptionEndOfPeriodRedemptionStarted by longValue(SUBSCRIPTION_EOP_STARTED_TO_REDEEM, 0L)
+  var subscriptionEndOfPeriodRedeemed by longValue(SUBSCRIPTION_EOP_REDEEMED, 0L)
+
+  private fun generateRequestCredential(): ReceiptCredentialRequestContext {
+    Log.d(TAG, "Generating request credentials context for token redemption...", true)
+    val secureRandom = SecureRandom()
+    val randomBytes = Util.getSecretBytes(ReceiptSerial.SIZE)
+
+    return try {
+      val receiptSerial = ReceiptSerial(randomBytes)
+      val operations = ApplicationDependencies.getClientZkReceiptOperations()
+      operations.createReceiptCredentialRequestContext(secureRandom, receiptSerial)
+    } catch (e: InvalidInputException) {
+      Log.e(TAG, "Failed to create credential.", e)
+      throw AssertionError(e)
+    } catch (e: VerificationFailedException) {
+      Log.e(TAG, "Failed to create credential.", e)
+      throw AssertionError(e)
+    }
+  }
 }

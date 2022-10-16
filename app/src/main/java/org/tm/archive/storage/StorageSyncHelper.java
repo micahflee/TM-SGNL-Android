@@ -9,10 +9,11 @@ import androidx.annotation.VisibleForTesting;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.SetUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.RecipientDatabase;
-import org.tm.archive.database.model.RecipientRecord;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.RecipientRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.RetrieveProfileAvatarJob;
 import org.tm.archive.jobs.StorageSyncJob;
@@ -22,10 +23,8 @@ import org.tm.archive.payments.Entropy;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.subscription.Subscriber;
 import org.tm.archive.util.Base64;
-import org.tm.archive.util.SetUtil;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.storage.SignalAccountRecord;
 import org.whispersystems.signalservice.api.storage.SignalContactRecord;
 import org.whispersystems.signalservice.api.storage.SignalStorageManifest;
@@ -38,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -111,8 +111,7 @@ public final class StorageSyncHelper {
                                                     .map(recipientDatabase::getRecordForSync)
                                                     .toList();
 
-    SignalAccountRecord account = new SignalAccountRecord.Builder(self.getStorageServiceId())
-                                                         .setUnknownFields(record != null ? record.getSyncExtras().getStorageProto() : null)
+    SignalAccountRecord account = new SignalAccountRecord.Builder(self.getStorageServiceId(), record != null ? record.getSyncExtras().getStorageProto() : null)
                                                          .setProfileKey(self.getProfileKey())
                                                          .setGivenName(self.getProfileName().getGivenName())
                                                          .setFamilyName(self.getProfileName().getFamilyName())
@@ -127,7 +126,7 @@ public final class StorageSyncHelper {
                                                          .setPhoneNumberSharingMode(StorageSyncModels.localToRemotePhoneNumberSharingMode(SignalStore.phoneNumberPrivacy().getPhoneNumberSharingMode()))
                                                          .setPinnedConversations(StorageSyncModels.localToRemotePinnedConversations(pinned))
                                                          .setPreferContactAvatars(SignalStore.settings().isPreferSystemContactPhotos())
-                                                         .setPayments(SignalStore.paymentsValues().mobileCoinPaymentsEnabled(), Optional.fromNullable(SignalStore.paymentsValues().getPaymentsEntropy()).transform(Entropy::getBytes).orNull())
+                                                         .setPayments(SignalStore.paymentsValues().mobileCoinPaymentsEnabled(), Optional.ofNullable(SignalStore.paymentsValues().getPaymentsEntropy()).map(Entropy::getBytes).orElse(null))
                                                          .setPrimarySendsSms(Util.isDefaultSmsProvider(context))
                                                          .setUniversalExpireTimer(SignalStore.settings().getUniversalExpireTimer())
                                                          .setE164(self.requireE164())
@@ -135,6 +134,10 @@ public final class StorageSyncHelper {
                                                          .setSubscriber(StorageSyncModels.localToRemoteSubscriber(SignalStore.donationsValues().getSubscriber()))
                                                          .setDisplayBadgesOnProfile(SignalStore.donationsValues().getDisplayBadgesOnProfile())
                                                          .setSubscriptionManuallyCancelled(SignalStore.donationsValues().isUserManuallyCancelled())
+                                                         .setKeepMutedChatsArchived(SignalStore.settings().shouldKeepMutedChatsArchived())
+                                                         .setHasSetMyStoriesPrivacy(SignalStore.storyValues().getUserHasBeenNotifiedAboutStories())
+                                                         .setHasViewedOnboardingStory(SignalStore.storyValues().getUserHasSeenOnboardingStory())
+                                                         .setStoriesDisabled(SignalStore.storyValues().isFeatureDisabled())
                                                          .build();
 
     return SignalStorageRecord.forAccount(account);
@@ -155,13 +158,17 @@ public final class StorageSyncHelper {
     SignalStore.phoneNumberPrivacy().setPhoneNumberListingMode(update.getNew().isPhoneNumberUnlisted() ? PhoneNumberPrivacyValues.PhoneNumberListingMode.UNLISTED : PhoneNumberPrivacyValues.PhoneNumberListingMode.LISTED);
     SignalStore.phoneNumberPrivacy().setPhoneNumberSharingMode(StorageSyncModels.remoteToLocalPhoneNumberSharingMode(update.getNew().getPhoneNumberSharingMode()));
     SignalStore.settings().setPreferSystemContactPhotos(update.getNew().isPreferContactAvatars());
-    SignalStore.paymentsValues().setEnabledAndEntropy(update.getNew().getPayments().isEnabled(), Entropy.fromBytes(update.getNew().getPayments().getEntropy().orNull()));
+    SignalStore.paymentsValues().setEnabledAndEntropy(update.getNew().getPayments().isEnabled(), Entropy.fromBytes(update.getNew().getPayments().getEntropy().orElse(null)));
     SignalStore.settings().setUniversalExpireTimer(update.getNew().getUniversalExpireTimer());
     SignalStore.emojiValues().setReactions(update.getNew().getDefaultReactions());
     SignalStore.donationsValues().setDisplayBadgesOnProfile(update.getNew().isDisplayBadgesOnProfile());
+    SignalStore.settings().setKeepMutedChatsArchived(update.getNew().isKeepMutedChatsArchived());
+    SignalStore.storyValues().setUserHasBeenNotifiedAboutStories(update.getNew().hasSetMyStoriesPrivacy());
+    SignalStore.storyValues().setUserHasSeenOnboardingStory(update.getNew().hasViewedOnboardingStory());
+    SignalStore.storyValues().setFeatureDisabled(update.getNew().isStoriesDisabled());
 
     if (update.getNew().isSubscriptionManuallyCancelled()) {
-      SignalStore.donationsValues().markUserManuallyCancelled();
+      SignalStore.donationsValues().updateLocalStateForManualCancellation();
     } else {
       SignalStore.donationsValues().clearUserManuallyCancelled();
     }

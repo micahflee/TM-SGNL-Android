@@ -28,6 +28,7 @@ import org.tm.archive.giph.model.ChunkedImageUrl;
 import org.tm.archive.glide.BadgeLoader;
 import org.tm.archive.glide.ChunkedImageUrlLoader;
 import org.tm.archive.glide.ContactPhotoLoader;
+import org.tm.archive.glide.GiftBadgeModel;
 import org.tm.archive.glide.OkHttpUrlLoader;
 import org.tm.archive.glide.cache.ApngBufferCacheDecoder;
 import org.tm.archive.glide.cache.ApngFrameDrawableTranscoder;
@@ -41,6 +42,7 @@ import org.tm.archive.mms.AttachmentStreamUriLoader.AttachmentModel;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.stickers.StickerRemoteUri;
 import org.tm.archive.stickers.StickerRemoteUriLoader;
+import org.tm.archive.stories.StoryTextPostModel;
 import org.tm.archive.util.ConversationShortcutPhoto;
 
 import java.io.File;
@@ -78,7 +80,9 @@ public class SignalGlideComponents implements RegisterGlideComponents {
     registry.register(APNGDecoder.class, Drawable.class, new ApngFrameDrawableTranscoder());
 
     registry.prepend(BlurHash.class, Bitmap.class, new BlurHashResourceDecoder());
+    registry.prepend(StoryTextPostModel.class, Bitmap.class, new StoryTextPostModel.Decoder());
 
+    registry.append(StoryTextPostModel.class, StoryTextPostModel.class, UnitModelLoader.Factory.getInstance());
     registry.append(ConversationShortcutPhoto.class, Bitmap.class, new ConversationShortcutPhoto.Loader.Factory(context));
     registry.append(ContactPhoto.class, InputStream.class, new ContactPhotoLoader.Factory(context));
     registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
@@ -87,6 +91,7 @@ public class SignalGlideComponents implements RegisterGlideComponents {
     registry.append(StickerRemoteUri.class, InputStream.class, new StickerRemoteUriLoader.Factory());
     registry.append(BlurHash.class, BlurHash.class, new BlurHashModelLoader.Factory());
     registry.append(Badge.class, InputStream.class, BadgeLoader.createFactory());
+    registry.append(GiftBadgeModel.class, InputStream.class, GiftBadgeModel.createFactory());
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
   }
 }

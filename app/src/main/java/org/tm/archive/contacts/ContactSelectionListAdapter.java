@@ -40,8 +40,8 @@ import org.tm.archive.contacts.ContactSelectionListAdapter.ViewHolder;
 import org.tm.archive.database.CursorRecyclerViewAdapter;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.CharacterIterable;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CharacterIterable;
+import org.signal.core.util.CursorUtil;
 import org.tm.archive.util.StickyHeaderDecoration.StickyHeaderAdapter;
 import org.tm.archive.util.Util;
 
@@ -73,6 +73,7 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
   private final ItemClickListener clickListener;
   private final GlideRequests     glideRequests;
   private final Set<RecipientId>  currentContacts;
+  private final int               checkboxResource;
 
   private final SelectedContactSet selectedContacts = new SelectedContactSet();
 
@@ -128,6 +129,14 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
       super(itemView);
       itemView.setOnClickListener(v -> {
         if (clickListener != null) clickListener.onItemClick(getView());
+      });
+
+      itemView.setOnLongClickListener(v -> {
+        if (clickListener != null) {
+          return clickListener.onItemLongClick(getView());
+        } else {
+          return false;
+        }
       });
     }
 
@@ -205,14 +214,16 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
                                      @Nullable Cursor cursor,
                                      @Nullable ItemClickListener clickListener,
                                      boolean multiSelect,
-                                     @NonNull Set<RecipientId> currentContacts)
+                                     @NonNull Set<RecipientId> currentContacts,
+                                     int checkboxResource)
   {
     super(context, cursor);
-    this.layoutInflater  = LayoutInflater.from(context);
-    this.glideRequests   = glideRequests;
-    this.multiSelect     = multiSelect;
-    this.clickListener   = clickListener;
-    this.currentContacts = currentContacts;
+    this.layoutInflater   = LayoutInflater.from(context);
+    this.glideRequests    = glideRequests;
+    this.multiSelect      = multiSelect;
+    this.clickListener    = clickListener;
+    this.currentContacts  = currentContacts;
+    this.checkboxResource = checkboxResource;
   }
 
   @Override
@@ -229,7 +240,9 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
   @Override
   public ViewHolder onCreateItemViewHolder(ViewGroup parent, int viewType) {
     if (viewType == VIEW_TYPE_CONTACT) {
-      return new ContactViewHolder(layoutInflater.inflate(R.layout.contact_selection_list_item, parent, false), clickListener);
+      View view = layoutInflater.inflate(R.layout.contact_selection_list_item, parent, false);
+      view.findViewById(R.id.check_box).setBackgroundResource(checkboxResource);
+      return new ContactViewHolder(view, clickListener);
     } else {
       return new DividerViewHolder(layoutInflater.inflate(R.layout.contact_selection_list_divider, parent, false));
     }
@@ -295,6 +308,11 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
 
   private @Nullable String getHeaderLetterForDisplayName(@NonNull Cursor cursor) {
     String           name              = CursorUtil.requireString(cursor, ContactRepository.NAME_COLUMN);
+
+    if (name == null) {
+      return null;
+    }
+
     Iterator<String> characterIterator = new CharacterIterable(name).iterator();
 
     if (!TextUtils.isEmpty(name) && characterIterator.hasNext()) {
@@ -425,5 +443,6 @@ public class ContactSelectionListAdapter extends CursorRecyclerViewAdapter<ViewH
 
   public interface ItemClickListener {
     void onItemClick(ContactSelectionListItem item);
+    boolean onItemLongClick(ContactSelectionListItem item);
   }
 }

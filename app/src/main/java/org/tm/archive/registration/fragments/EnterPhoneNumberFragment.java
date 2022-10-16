@@ -1,6 +1,5 @@
 package org.tm.archive.registration.fragments;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -26,7 +25,6 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.dd.CircularProgressButton;
 import com.google.android.gms.auth.api.phone.SmsRetriever;
 import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
 import com.google.android.gms.common.ConnectionResult;
@@ -45,16 +43,16 @@ import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.archiver.ArchiveLogger;
 import org.archiver.ArchivePreferenceConstants;
 import org.archiver.ArchiveUtil;
-import org.signal.core.util.ThreadUtil;
-import org.signal.core.util.logging.Log;
-import org.tm.archive.LoggingFragment;
 import org.archiver.FCMConnector;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
 import org.selfAuthentication.SelfAuthenticatorManager;
+import org.signal.core.util.ThreadUtil;
+import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
+import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.components.LabeledEditText;
 import org.tm.archive.keyvalue.SignalStore;
@@ -69,30 +67,28 @@ import org.tm.archive.util.PlayServicesUtil;
 import org.tm.archive.util.SupportEmailUtil;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.navigation.SafeNavigation;
+import org.tm.archive.util.views.CircularProgressMaterialButton;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
 
 import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
 import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
-import static org.tm.archive.util.CircularProgressButtonUtil.cancelSpinning;
-import static org.tm.archive.util.CircularProgressButtonUtil.setSpinning;
 
 public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks, IAuthenticationStatus {
 
   private static final String TAG = Log.tag(EnterPhoneNumberFragment.class);
 
-  private LabeledEditText        countryCode;
-  private LabeledEditText        number;
-  private CircularProgressButton register;
-  private Spinner                countrySpinner;
-  private View                   cancel;
-  private ScrollView            scrollView;
-  private ConstraintLayout      constraintLayout;
+  private LabeledEditText                countryCode;
+  private LabeledEditText                number;
+  private CircularProgressMaterialButton register;
+  private Spinner                        countrySpinner;
+  private View                           cancel;
+  private ScrollView                     scrollView;
   private RegistrationViewModel viewModel;
+  private ConstraintLayout      constraintLayout;//**TM_SA**//
 
   private final LifecycleDisposable disposables = new LifecycleDisposable();
-
   public static boolean mIsLoginAuthenticationInProgress = false;
   private Context mContext;
 
@@ -111,7 +107,6 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       EventBus.getDefault().register(this);
     }
     // <!--//**TM_SA**//--> END
-
   }
 
   //**TM_SA**// START
@@ -176,6 +171,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     constraintLayout.addView(progressBarCustomView);//**TM_SA**//
     FCMConnector.initTeleMessageSignalFirebaseAccount(null,true);//**TM_SA**//
   }
+
   //**TM_SA**// START
   private void initProgressBar(){
     progressBarShown = false;
@@ -256,6 +252,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
       mIsLoginAuthenticationInProgress = true;
       startAutoAuthentication(e164number);
+      //confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
       //**TM_SA**//End
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
       confirmNumberPrompt(context, e164number, () -> handlePromptForNoPlayServices(context));
@@ -267,10 +264,11 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
                               getString(R.string.RegistrationActivity_google_play_services_is_updating_or_unavailable));
     }
   }
+
   //**TM_SA**//START
   private void startAutoAuthentication(String e164number) {
-      SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
-      SelfAuthenticatorManager.INSTANCE.startAuthentication(this);
+    SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
+    SelfAuthenticatorManager.INSTANCE.startAuthentication(this);
     if (!progressBarShown) {
       showProgressBar();
     }
@@ -278,7 +276,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   //**TM_SA**//END
 
   private void handleRequestVerification(@NonNull Context context, boolean fcmSupported) {
-    setSpinning(register);
+    register.setSpinning();
     disableAllEntries();
 
     if (fcmSupported) {
@@ -346,7 +344,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
                                       Toast.makeText(register.getContext(), R.string.RegistrationActivity_unable_to_connect_to_service, Toast.LENGTH_LONG).show();
                                     }
 
-                                    cancelSpinning(register);
+                                    register.cancelSpinning();
                                     enableAllEntries();
                                   });
 
@@ -439,7 +437,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   }
 
   //**TM_SA**//START
-  @Subscribe(threadMode = ThreadMode.BACKGROUND)
+  @Subscribe(threadMode = ThreadMode.MAIN)
   public void onMessageEvent(MessageEvent event) {
     if (event.message != null) {
       com.tm.logger.Log.d(TAG, "event.message = " + event.message);
@@ -449,7 +447,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
     //check if listener is valid
     if (event.message != null && (event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed()) ||
-        event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()))) {
+                                  event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()))) {
       if (progressBarShown) {
         hideProgressBar();
       }
@@ -479,8 +477,8 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
   public void updatedSelfAuthenticatorDonePreference() {
 
-    SharedPreferences preferences = ApplicationContext.getInstance().getSharedPreferences(SelfAuthenticatorManager.SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = preferences.edit();
+    SharedPreferences        preferences = ApplicationContext.getInstance().getSharedPreferences(SelfAuthenticatorManager.SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor      = preferences.edit();
     editor.putBoolean("isAlreadyDoneSelfAuthentication", true);
     editor.apply();
   }
@@ -495,5 +493,4 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     }
   }
   //**TM_SA**//End
-
 }

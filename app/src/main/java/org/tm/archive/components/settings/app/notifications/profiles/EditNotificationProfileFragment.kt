@@ -11,26 +11,23 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.dd.CircularProgressButton
 import com.google.android.material.textfield.TextInputLayout
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.BreakIteratorCompat
 import org.signal.core.util.EditTextUtil
 import org.tm.archive.R
 import org.tm.archive.components.emoji.EmojiUtil
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.app.notifications.profiles.EditNotificationProfileViewModel.SaveNotificationProfileResult
 import org.tm.archive.components.settings.app.notifications.profiles.models.NotificationProfileNamePreset
-import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.megaphone.Megaphones
 import org.tm.archive.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment
 import org.tm.archive.util.BottomSheetUtil
-import org.tm.archive.util.CircularProgressButtonUtil
 import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 import org.tm.archive.util.text.AfterTextChanged
+import org.tm.archive.util.views.CircularProgressMaterialButton
 
 /**
  * Dual use Edit/Create notification profile fragment. Use to create in the create profile flow,
@@ -49,11 +46,6 @@ class EditNotificationProfileFragment : DSLSettingsFragment(layoutId = R.layout.
     return EditNotificationProfileViewModel.Factory(profileId)
   }
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    ApplicationDependencies.getMegaphoneRepository().markFinished(Megaphones.Event.NOTIFICATION_PROFILES)
-  }
-
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
@@ -65,7 +57,7 @@ class EditNotificationProfileFragment : DSLSettingsFragment(layoutId = R.layout.
 
     val title: TextView = view.findViewById(R.id.edit_notification_profile_title)
     val countView: TextView = view.findViewById(R.id.edit_notification_profile_count)
-    val saveButton: CircularProgressButton = view.findViewById(R.id.edit_notification_profile_save)
+    val saveButton: CircularProgressMaterialButton = view.findViewById(R.id.edit_notification_profile_save)
     val emojiView: ImageView = view.findViewById(R.id.edit_notification_profile_emoji)
     val nameView: EditText = view.findViewById(R.id.edit_notification_profile_name)
     val nameTextWrapper: TextInputLayout = view.findViewById(R.id.edit_notification_profile_name_wrapper)
@@ -97,8 +89,8 @@ class EditNotificationProfileFragment : DSLSettingsFragment(layoutId = R.layout.
       }
 
       lifecycleDisposable += viewModel.save(nameView.text.toString())
-        .doOnSubscribe { CircularProgressButtonUtil.setSpinning(saveButton) }
-        .doAfterTerminate { CircularProgressButtonUtil.cancelSpinning(saveButton) }
+        .doOnSubscribe { saveButton.setSpinning() }
+        .doAfterTerminate { saveButton.cancelSpinning() }
         .subscribeBy(
           onSuccess = { saveResult ->
             when (saveResult) {
@@ -139,7 +131,7 @@ class EditNotificationProfileFragment : DSLSettingsFragment(layoutId = R.layout.
     this.emojiView = emojiView
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     NotificationProfileNamePreset.register(adapter)
 
     val onClick = { preset: NotificationProfileNamePreset.Model ->

@@ -4,18 +4,23 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import net.zetetic.database.sqlcipher.SQLiteConstraintException
+import org.signal.core.util.SqlUtil
+import org.signal.core.util.requireBoolean
+import org.signal.core.util.requireInt
+import org.signal.core.util.requireLong
+import org.signal.core.util.requireString
+import org.signal.core.util.toInt
 import org.tm.archive.conversation.colors.AvatarColor
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.notifications.profiles.NotificationProfile
 import org.tm.archive.notifications.profiles.NotificationProfileSchedule
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.util.SqlUtil
 import java.time.DayOfWeek
 
 /**
  * Database for maintaining Notification Profiles, Notification Profile Schedules, and Notification Profile allowed memebers.
  */
-class NotificationProfileDatabase(context: Context, databaseHelper: SignalDatabase) : Database(context, databaseHelper) {
+class NotificationProfileDatabase(context: Context, databaseHelper: SignalDatabase) : Database(context, databaseHelper), RecipientIdDatabaseReference {
 
   companion object {
     @JvmField
@@ -287,7 +292,7 @@ class NotificationProfileDatabase(context: Context, databaseHelper: SignalDataba
     ApplicationDependencies.getDatabaseObserver().notifyNotificationProfileObservers()
   }
 
-  fun remapRecipient(oldId: RecipientId, newId: RecipientId) {
+  override fun remapRecipient(oldId: RecipientId, newId: RecipientId) {
     val query = "${NotificationProfileAllowedMembersTable.RECIPIENT_ID} = ?"
     val args = SqlUtil.buildArgs(oldId)
     val values = ContentValues().apply {

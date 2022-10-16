@@ -17,8 +17,8 @@ import org.tm.archive.keyboard.emoji.EmojiKeyboardPageCategoryMappingModel;
 import org.tm.archive.keyboard.emoji.search.EmojiSearchRepository;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.reactions.ReactionsRepository;
-import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.TextSecurePreferences;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 
 import java.util.List;
 import java.util.stream.Collectors;

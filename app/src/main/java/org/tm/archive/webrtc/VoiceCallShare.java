@@ -11,7 +11,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.WebRtcCallActivity;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 
 public class VoiceCallShare extends Activity {
   

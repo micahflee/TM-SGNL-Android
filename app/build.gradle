@@ -8,14 +8,9 @@ apply from: 'translations.gradle'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'app.cash.exhaustive'
 apply plugin: 'kotlin-parcelize'
+apply from: 'static-ips.gradle'
 
 repositories {
-    maven {
-        url "https://raw.github.com/signalapp/maven/master/circular-progress-button/releases/"
-        content {
-            includeGroupByRegex "com\\.github\\.dmytrodanylyk\\.circular-progress-button\\.*"
-        }
-    }
     maven {
         url "https://raw.github.com/signalapp/maven/master/sqlcipher/release/"
         content {
@@ -25,18 +20,17 @@ repositories {
     maven {
         url "https://www.jitpack.io"
     }
-
+    //**TM_SA**//Start
+    flatDir {
+        dirs 'libs'
+    }
+    //**TM_SA**//end
     google()
     mavenCentral()
     mavenLocal()
     maven {
         url "https://dl.cloudsmith.io/qxAgwaeEE1vN8aLU/mobilecoin/mobilecoin/maven/"
     }
-    //**TM_SA**//Start
-    flatDir {
-        dirs 'libs'
-    }
-    //**TM_SA**//end
     jcenter {
         content {
             includeVersion "mobi.upod", "time-duration-picker", "1.1.3"
@@ -70,32 +64,37 @@ ktlint {
 
 //**TM_SA**//Start - Change the version code and version name upon the current version
 def canonicalVersionCode = 1051
-    def canonicalVersionName = "5.31.6.31"
+def canonicalVersionName = "5.31.6.31"
 def signal_teleMessage_version = "5.31.6.31"//Change this param in Jenkins builder and delete it.
 //**TM_SA**//end
 
+/*def canonicalVersionCode = 1134
+def canonicalVersionName = "5.51.5"*/
+
 def postFixSize = 100
-def abiPostFix = ['universal'   : 5,
-                  'armeabi-v7a' : 6,
-                  'arm64-v8a'   : 7,
-                  'x86'         : 8,
-                  'x86_64'      : 9]
+def abiPostFix = ['universal'   : 0,
+                  'armeabi-v7a' : 1,
+                  'arm64-v8a'   : 2,
+                  'x86'         : 3,
+                  'x86_64'      : 4]
 
 def keystores = [ 'debug'  : loadKeystoreProperties('keystore.debug.properties') ]
 
 def selectableVariants = [
-        'nightlyProdFlipper',
+        'nightlyProdSpinner',
         'nightlyProdPerf',
         'nightlyProdRelease',
         'playProdDebug',
-        'playProdFlipper',
+        'playProdSpinner',
         'playProdPerf',
+        'playProdInstrumentation',
         'playProdRelease',
         'playStagingDebug',
-        'playStagingFlipper',
+        'playStagingSpinner',
         'playStagingPerf',
+        'playStagingInstrumentation',
         'playStagingRelease',
-        'websiteProdFlipper',
+        'websiteProdSpinner',
         'websiteProdRelease',
 ]
 
@@ -105,6 +104,7 @@ android {
 
     flavorDimensions 'distribution', 'environment'
     useLibrary 'org.apache.http.legacy'
+    testBuildType 'instrumentation'
 
     kotlinOptions {
         jvmTarget = "1.8"
@@ -134,84 +134,34 @@ android {
         //**TM_SA**//End
     }
 
-    defaultConfig {
-        versionCode canonicalVersionCode * postFixSize
-        versionName canonicalVersionName
-
-        minSdkVersion MINIMUM_SDK
-        targetSdkVersion TARGET_SDK
-
-        multiDexEnabled true
-
-        vectorDrawables.useSupportLibrary = true
-        project.ext.set("archivesBaseName", "Signal");
-
-        buildConfigField "long", "BUILD_TIMESTAMP", getLastCommitTimestamp() + "L"
-        buildConfigField "String", "GIT_HASH", "\"${getGitHash()}\""
-        buildConfigField "String", "SIGNAL_URL", "\"https://chat.signal.org\""
-        buildConfigField "String", "STORAGE_URL", "\"https://storage.signal.org\""
-        buildConfigField "String", "SIGNAL_CDN_URL", "\"https://cdn.signal.org\""
-        buildConfigField "String", "SIGNAL_CDN2_URL", "\"https://cdn2.signal.org\""
-        buildConfigField "String", "SIGNAL_CONTACT_DISCOVERY_URL", "\"https://api.directory.signal.org\""
-        buildConfigField "String", "SIGNAL_CDSH_URL", "\"https://cdsh.staging.signal.org\""
-        buildConfigField "String", "SIGNAL_SERVICE_STATUS_URL", "\"uptime.signal.org\""
-        buildConfigField "String", "SIGNAL_KEY_BACKUP_URL", "\"https://api.backup.signal.org\""
-        buildConfigField "String", "SIGNAL_SFU_URL", "\"https://sfu.voip.signal.org\""
-        buildConfigField "String[]", "SIGNAL_SFU_INTERNAL_NAMES", "new String[]{\"Test\", \"Staging\"}"
-        buildConfigField "String[]", "SIGNAL_SFU_INTERNAL_URLS", "new String[]{\"https://sfu.test.voip.signal.org\", \"https://sfu.staging.voip.signal.org\"}"
-        buildConfigField "String", "CONTENT_PROXY_HOST", "\"contentproxy.signal.org\""
-        buildConfigField "int", "CONTENT_PROXY_PORT", "443"
-        buildConfigField "String", "SIGNAL_AGENT", "\"OWA\""
-        buildConfigField "String", "CDSH_PUBLIC_KEY", "\"2fe57da347cd62431528daac5fbb290730fff684afc4cfc2ed90995f58cb3b74\""
-        buildConfigField "String", "CDSH_CODE_HASH", "\"ec58c0d7561de8d5657f3a4b22a635eaa305204e9359dcc80a99dfd0c5f1cbf2\""
-        buildConfigField "String", "CDS_MRENCLAVE", "\"c98e00a4e3ff977a56afefe7362a27e4961e4f19e211febfbb19b897e6b80b15\""
-        buildConfigField "org.tm.archive.KbsEnclave", "KBS_ENCLAVE", "new org.tm.archive.KbsEnclave(\"0cedba03535b41b67729ce9924185f831d7767928a1d1689acb689bc079c375f\", " +
-                                                                                                                           "\"187d2739d22be65e74b65f0055e74d31310e4267e5fac2b1246cc8beba81af39\", " +
-                                                                                                                           "\"ee19f1965b1eefa3dc4204eb70c04f397755f771b8c1909d080c04dad2a6a9ba\")"
-        buildConfigField "org.tm.archive.KbsEnclave[]", "KBS_FALLBACKS", "new org.tm.archive.KbsEnclave[] {" +
-                "new org.tm.archive.KbsEnclave(\"fe7c1bfae98f9b073d220366ea31163ee82f6d04bead774f71ca8e5c40847bfe\", " +
-                                                          "\"fe7c1bfae98f9b073d220366ea31163ee82f6d04bead774f71ca8e5c40847bfe\", " +
-                                                          "\"a3baab19ef6ce6f34ab9ebb25ba722725ae44a8872dc0ff08ad6d83a9489de87\")" +
-            "}"
-        buildConfigField "String", "UNIDENTIFIED_SENDER_TRUST_ROOT", "\"BXu6QIKVz5MA8gstzfOgRQGqyLqOwNKHL6INkv3IHWMF\""
-        buildConfigField "String", "ZKGROUP_SERVER_PUBLIC_PARAMS", "\"AMhf5ywVwITZMsff/eCyudZx9JDmkkkbV6PInzG4p8x3VqVJSFiMvnvlEKWuRob/1eaIetR31IYeAbm0NdOuHH8Qi+Rexi1wLlpzIo1gstHWBfZzy1+qHRV5A4TqPp15YzBPm0WSggW6PbSn+F4lf57VCnHF7p8SvzAA2ZZJPYJURt8X7bbg+H3i+PEjH9DXItNEqs2sNcug37xZQDLm7X36nOoGPs54XsEGzPdEV+itQNGUFEjY6X9Uv+Acuks7NpyGvCoKxGwgKgE5XyJ+nNKlyHHOLb6N1NuHyBrZrgtY/JYJHRooo5CEqYKBqdFnmbTVGEkCvJKxLnjwKWf+fEPoWeQFj5ObDjcKMZf2Jm2Ae69x+ikU5gBXsRmoF94GXQ==\""
-        buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
-        buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
-        //**TM_SA**//Start
-        buildConfigField "String", "signal_teleMessage_version", "\"$signal_teleMessage_version\""
-        //**TM_SA**//End
-        buildConfigField "String", "DEFAULT_CURRENCIES", "\"EUR,AUD,GBP,CAD,CNY\""
-        buildConfigField "int[]", "MOBILE_COIN_BLACKLIST", "new int[]{98,963,53,850,7}"
-        buildConfigField "String", "GIPHY_API_KEY", "\"3o6ZsYH6U6Eri53TXy\""
-        buildConfigField "String", "RECAPTCHA_PROOF_URL", "\"https://signalcaptchas.org/challenge/generate.html\""
-
-        buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"unset\""
-        buildConfigField "String", "BUILD_ENVIRONMENT_TYPE", "\"unset\""
-        buildConfigField "String", "BUILD_VARIANT_TYPE", "\"unset\""
-        buildConfigField "String", "BADGE_STATIC_ROOT", "\"https://updates2.signal.org/static/badges/\""
-        buildConfigField "String", "STRIPE_PUBLISHABLE_KEY", "\"pk_live_6cmGZopuTsV8novGgJJW9JpC00vLIgtQ1D\""
-
-        ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-        }
-
-        resConfigs autoResConfig()
-
-        splits {
-            abi {
-                enable true
-                reset()
-                include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                universalApk true
-            }
-        }
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments clearPackageData: 'true'
-    }
-
     testOptions {
         execution 'ANDROIDX_TEST_ORCHESTRATOR'
+
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+
+    //**TM_SA**//Start
+    configurations {
+        all*.exclude group: 'commons-codec', module: 'commons-codec'
+
+    }
+
+/*    packagingOptions {
+        pickFirst 'lib/arm64-v8a/libsqlcipher.so'
+        pickFirst 'lib/armeabi-v7a/libsqlcipher.so'
+        pickFirst 'lib/x86/libsqlcipher.so'
+        pickFirst 'lib/x86_64/libsqlcipher.so'
+
+    }*/
+    //**TM_SA**//End
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError true
+        baseline file("lint-baseline.xml")
+        disable "LintError"
     }
 
     sourceSets {
@@ -238,6 +188,96 @@ android {
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/NOTICE'
         exclude 'META-INF/proguard/androidx-annotations.pro'
+        exclude 'libsignal_jni.dylib'
+        exclude 'signal_jni.dll'
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    defaultConfig {
+        versionCode canonicalVersionCode * postFixSize
+        versionName canonicalVersionName
+
+        minSdkVersion MINIMUM_SDK
+        targetSdkVersion TARGET_SDK
+
+        multiDexEnabled true
+
+        vectorDrawables.useSupportLibrary = true
+        project.ext.set("archivesBaseName", "Signal");
+
+        //**TM_SA**// change key
+        manifestPlaceholders = [mapsKey:"AIzaSyAVa3EZMZWSbiUAfgiJTb-7Ljo0se6YWys"]
+
+        buildConfigField "long", "BUILD_TIMESTAMP", getLastCommitTimestamp() + "L"
+        buildConfigField "String", "GIT_HASH", "\"${getGitHash()}\""
+        buildConfigField "String", "SIGNAL_URL", "\"https://chat.signal.org\""
+        buildConfigField "String", "STORAGE_URL", "\"https://storage.signal.org\""
+        buildConfigField "String", "SIGNAL_CDN_URL", "\"https://cdn.signal.org\""
+        buildConfigField "String", "SIGNAL_CDN2_URL", "\"https://cdn2.signal.org\""
+        buildConfigField "String", "SIGNAL_CONTACT_DISCOVERY_URL", "\"https://api.directory.signal.org\""
+        buildConfigField "String", "SIGNAL_CDSI_URL", "\"https://cdsi.signal.org\""
+        buildConfigField "String", "SIGNAL_SERVICE_STATUS_URL", "\"uptime.signal.org\""
+        buildConfigField "String", "SIGNAL_KEY_BACKUP_URL", "\"https://api.backup.signal.org\""
+        buildConfigField "String", "SIGNAL_SFU_URL", "\"https://sfu.voip.signal.org\""
+        buildConfigField "String[]", "SIGNAL_SFU_INTERNAL_NAMES", "new String[]{\"Test\", \"Staging\"}"
+        buildConfigField "String[]", "SIGNAL_SFU_INTERNAL_URLS", "new String[]{\"https://sfu.test.voip.signal.org\", \"https://sfu.staging.voip.signal.org\"}"
+        buildConfigField "String", "CONTENT_PROXY_HOST", "\"contentproxy.signal.org\""
+        buildConfigField "int", "CONTENT_PROXY_PORT", "443"
+        buildConfigField "String[]", "SIGNAL_SERVICE_IPS", service_ips
+        buildConfigField "String[]", "SIGNAL_STORAGE_IPS", storage_ips
+        buildConfigField "String[]", "SIGNAL_CDN_IPS", cdn_ips
+        buildConfigField "String[]", "SIGNAL_CDN2_IPS", cdn2_ips
+        buildConfigField "String[]", "SIGNAL_CDS_IPS", cds_ips
+        buildConfigField "String[]", "SIGNAL_KBS_IPS", kbs_ips
+        buildConfigField "String[]", "SIGNAL_SFU_IPS", sfu_ips
+        buildConfigField "String[]", "SIGNAL_CONTENT_PROXY_IPS", content_proxy_ips
+        buildConfigField "String", "SIGNAL_AGENT", "\"OWA\""
+        buildConfigField "String", "CDS_MRENCLAVE", "\"74778bb0f93ae1f78c26e67152bab0bbeb693cd56d1bb9b4e9244157acc58081\""
+        buildConfigField "String", "CDSI_MRENCLAVE", "\"ef4787a56a154ac6d009138cac17155acd23cfe4329281252365dd7c252e7fbf\""
+        buildConfigField "org.tm.archive.KbsEnclave", "KBS_ENCLAVE", "new org.tm.archive.KbsEnclave(\"e18376436159cda3ad7a45d9320e382e4a497f26b0dca34d8eab0bd0139483b5\", " +
+                "\"3a485adb56e2058ef7737764c738c4069dd62bc457637eafb6bbce1ce29ddb89\", " +
+                "\"45627094b2ea4a66f4cf0b182858a8dcf4b8479122c3820fe7fd0551a6d4cf5c\")"
+        buildConfigField "org.tm.archive.KbsEnclave[]", "KBS_FALLBACKS", "new org.tm.archive.KbsEnclave[] { new org.tm.archive.KbsEnclave(\"0cedba03535b41b67729ce9924185f831d7767928a1d1689acb689bc079c375f\", " +
+                "\"187d2739d22be65e74b65f0055e74d31310e4267e5fac2b1246cc8beba81af39\", " +
+                "\"ee19f1965b1eefa3dc4204eb70c04f397755f771b8c1909d080c04dad2a6a9ba\") }"
+        buildConfigField "String", "UNIDENTIFIED_SENDER_TRUST_ROOT", "\"BXu6QIKVz5MA8gstzfOgRQGqyLqOwNKHL6INkv3IHWMF\""
+        buildConfigField "String", "ZKGROUP_SERVER_PUBLIC_PARAMS", "\"AMhf5ywVwITZMsff/eCyudZx9JDmkkkbV6PInzG4p8x3VqVJSFiMvnvlEKWuRob/1eaIetR31IYeAbm0NdOuHH8Qi+Rexi1wLlpzIo1gstHWBfZzy1+qHRV5A4TqPp15YzBPm0WSggW6PbSn+F4lf57VCnHF7p8SvzAA2ZZJPYJURt8X7bbg+H3i+PEjH9DXItNEqs2sNcug37xZQDLm7X36nOoGPs54XsEGzPdEV+itQNGUFEjY6X9Uv+Acuks7NpyGvCoKxGwgKgE5XyJ+nNKlyHHOLb6N1NuHyBrZrgtY/JYJHRooo5CEqYKBqdFnmbTVGEkCvJKxLnjwKWf+fEPoWeQFj5ObDjcKMZf2Jm2Ae69x+ikU5gBXsRmoF94GXTLfN0/vLt98KDPnxwAQL9j5V1jGOY8jQl6MLxEs56cwXN0dqCnImzVH3TZT1cJ8SW1BRX6qIVxEzjsSGx3yxF3suAilPMqGRp4ffyopjMD1JXiKR2RwLKzizUe5e8XyGOy9fplzhw3jVzTRyUZTRSZKkMLWcQ/gv0E4aONNqs4P\""
+        buildConfigField "String[]", "LANGUAGES", "new String[]{\"" + autoResConfig().collect { s -> s.replace('-r', '_') }.join('", "') + '"}'
+        buildConfigField "int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode"
+        //**TM_SA**//Start
+        buildConfigField "String", "signal_teleMessage_version", "\"$signal_teleMessage_version\""
+        //**TM_SA**//End
+        buildConfigField "String", "DEFAULT_CURRENCIES", "\"EUR,AUD,GBP,CAD,CNY\""
+        buildConfigField "String", "GIPHY_API_KEY", "\"3o6ZsYH6U6Eri53TXy\""
+        buildConfigField "String", "SIGNAL_CAPTCHA_URL", "\"https://signalcaptchas.org/registration/generate.html\""
+        buildConfigField "String", "RECAPTCHA_PROOF_URL", "\"https://signalcaptchas.org/challenge/generate.html\""
+
+        buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"unset\""
+        buildConfigField "String", "BUILD_ENVIRONMENT_TYPE", "\"unset\""
+        buildConfigField "String", "BUILD_VARIANT_TYPE", "\"unset\""
+        buildConfigField "String", "BADGE_STATIC_ROOT", "\"https://updates2.signal.org/static/badges/\""
+        buildConfigField "String", "STRIPE_PUBLISHABLE_KEY", "\"pk_live_6cmGZopuTsV8novGgJJW9JpC00vLIgtQ1D\""
+
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
+
+        resConfigs autoResConfig()
+
+        splits {
+            abi {
+                enable true
+                reset()
+                include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                universalApk true
+            }
+        }
+
+        testInstrumentationRunner "org.tm.archive.testing.SignalTestRunner"
+        testInstrumentationRunnerArguments clearPackageData: 'true'
     }
 
     buildTypes {
@@ -264,20 +304,33 @@ android {
                     'proguard/proguard-retrolambda.pro',
                     'proguard/proguard-okhttp.pro',
                     'proguard/proguard-ez-vcard.pro',
-                    'proguard/proguard.cfg',
-                    //**TM_SA**//
-                    'proguard/proguard-event_bus.pro'
+                    'proguard/proguard.cfg'
+            //**TM_SA**//
+            'proguard/proguard-event_bus.pro'
             testProguardFiles 'proguard/proguard-automation.pro',
                     'proguard/proguard.cfg'
 
+            manifestPlaceholders = [mapsKey:getMapsKey()]
+
             buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Debug\""
         }
-        flipper {
+
+        instrumentation {
             initWith debug
             isDefault false
             minifyEnabled false
             matchingFallbacks = ['debug']
-            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Flipper\""
+            applicationIdSuffix ".instrumentation"
+
+            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Instrumentation\""
+        }
+
+        spinner {
+            initWith debug
+            isDefault false
+            minifyEnabled false
+            matchingFallbacks = ['debug']
+            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Spinner\""
         }
         release {
             minifyEnabled true
@@ -343,19 +396,19 @@ android {
             buildConfigField "String", "SIGNAL_CDN_URL", "\"https://cdn-staging.signal.org\""
             buildConfigField "String", "SIGNAL_CDN2_URL", "\"https://cdn2-staging.signal.org\""
             buildConfigField "String", "SIGNAL_CONTACT_DISCOVERY_URL", "\"https://api-staging.directory.signal.org\""
+            buildConfigField "String", "SIGNAL_CDSI_URL", "\"https://cdsi.staging.signal.org\""
             buildConfigField "String", "SIGNAL_KEY_BACKUP_URL", "\"https://api-staging.backup.signal.org\""
-            buildConfigField "String", "CDS_MRENCLAVE", "\"c98e00a4e3ff977a56afefe7362a27e4961e4f19e211febfbb19b897e6b80b15\""
-            buildConfigField "org.tm.archive.KbsEnclave", "KBS_ENCLAVE", "new org.tm.archive.KbsEnclave(\"dd6f66d397d9e8cf6ec6db238e59a7be078dd50e9715427b9c89b409ffe53f99\", " +
-                                                                                                                               "\"4200003414528c151e2dccafbc87aa6d3d66a5eb8f8c05979a6e97cb33cd493a\", " +
-                                                                                                                               "\"ee19f1965b1eefa3dc4204eb70c04f397755f771b8c1909d080c04dad2a6a9ba\")"
-            buildConfigField "org.tm.archive.KbsEnclave[]", "KBS_FALLBACKS", "new org.tm.archive.KbsEnclave[] {" +
-                    "new org.tm.archive.KbsEnclave(\"823a3b2c037ff0cbe305cc48928cfcc97c9ed4a8ca6d49af6f7d6981fb60a4e9\", " +
-                                                              "\"16b94ac6d2b7f7b9d72928f36d798dbb35ed32e7bb14c42b4301ad0344b46f29\", " +
-                                                              "\"a3baab19ef6ce6f34ab9ebb25ba722725ae44a8872dc0ff08ad6d83a9489de87\")" +
-                "}"
+            buildConfigField "String", "CDS_MRENCLAVE", "\"74778bb0f93ae1f78c26e67152bab0bbeb693cd56d1bb9b4e9244157acc58081\""
+            buildConfigField "org.tm.archive.KbsEnclave", "KBS_ENCLAVE", "new org.tm.archive.KbsEnclave(\"39963b736823d5780be96ab174869a9499d56d66497aa8f9b2244f777ebc366b\", " +
+                    "\"9dbc6855c198e04f21b5cc35df839fdcd51b53658454dfa3f817afefaffc95ef\", " +
+                    "\"45627094b2ea4a66f4cf0b182858a8dcf4b8479122c3820fe7fd0551a6d4cf5c\")"
+            buildConfigField "org.tm.archive.KbsEnclave[]", "KBS_FALLBACKS", "new org.tm.archive.KbsEnclave[] { new org.tm.archive.KbsEnclave(\"dd6f66d397d9e8cf6ec6db238e59a7be078dd50e9715427b9c89b409ffe53f99\", " +
+                    "\"4200003414528c151e2dccafbc87aa6d3d66a5eb8f8c05979a6e97cb33cd493a\", " +
+                    "\"ee19f1965b1eefa3dc4204eb70c04f397755f771b8c1909d080c04dad2a6a9ba\") }"
             buildConfigField "String", "UNIDENTIFIED_SENDER_TRUST_ROOT", "\"BbqY1DzohE4NUZoVF+L18oUPrK3kILllLEJh2UnPSsEx\""
-            buildConfigField "String", "ZKGROUP_SERVER_PUBLIC_PARAMS", "\"ABSY21VckQcbSXVNCGRYJcfWHiAMZmpTtTELcDmxgdFbtp/bWsSxZdMKzfCp8rvIs8ocCU3B37fT3r4Mi5qAemeGeR2X+/YmOGR5ofui7tD5mDQfstAI9i+4WpMtIe8KC3wU5w3Inq3uNWVmoGtpKndsNfwJrCg0Hd9zmObhypUnSkfYn2ooMOOnBpfdanRtrvetZUayDMSC5iSRcXKpdlukrpzzsCIvEwjwQlJYVPOQPj4V0F4UXXBdHSLK05uoPBCQG8G9rYIGedYsClJXnbrgGYG3eMTG5hnx4X4ntARBgELuMWWUEEfSK0mjXg+/2lPmWcTZWR9nkqgQQP0tbzuiPm74H2wMO4u1Wafe+UwyIlIT9L7KLS19Aw8r4sPrXQ==\""
+            buildConfigField "String", "ZKGROUP_SERVER_PUBLIC_PARAMS", "\"ABSY21VckQcbSXVNCGRYJcfWHiAMZmpTtTELcDmxgdFbtp/bWsSxZdMKzfCp8rvIs8ocCU3B37fT3r4Mi5qAemeGeR2X+/YmOGR5ofui7tD5mDQfstAI9i+4WpMtIe8KC3wU5w3Inq3uNWVmoGtpKndsNfwJrCg0Hd9zmObhypUnSkfYn2ooMOOnBpfdanRtrvetZUayDMSC5iSRcXKpdlukrpzzsCIvEwjwQlJYVPOQPj4V0F4UXXBdHSLK05uoPBCQG8G9rYIGedYsClJXnbrgGYG3eMTG5hnx4X4ntARBgELuMWWUEEfSK0mjXg+/2lPmWcTZWR9nkqgQQP0tbzuiPm74H2wMO4u1Wafe+UwyIlIT9L7KLS19Aw8r4sPrXZSSsOZ6s7M1+rTJN0bI5CKY2PX29y5Ok3jSWufIKcgKOnWoP67d5b2du2ZVJjpjfibNIHbT/cegy/sBLoFwtHogVYUewANUAXIaMPyCLRArsKhfJ5wBtTminG/PAvuBdJ70Z/bXVPf8TVsR292zQ65xwvWTejROW6AZX6aqucUj\""
             buildConfigField "String", "MOBILE_COIN_ENVIRONMENT", "\"testnet\""
+            buildConfigField "String", "SIGNAL_CAPTCHA_URL", "\"https://signalcaptchas.org/staging/registration/generate.html\""
             buildConfigField "String", "RECAPTCHA_PROOF_URL", "\"https://signalcaptchas.org/staging/challenge/generate.html\""
 
             buildConfigField "String", "BUILD_ENVIRONMENT_TYPE", "\"Staging\""
@@ -369,6 +422,9 @@ android {
                 output.versionCodeOverride = canonicalVersionCode * postFixSize + 5
                 def tag = getCurrentGitTag()
                 if (tag != null && tag.length() > 0) {
+                    if (tag.startsWith("v")) {
+                        tag = tag.substring(1)
+                    }
                     output.versionNameOverride = tag
                 }
             } else {
@@ -394,33 +450,11 @@ android {
         }
     }
 
-    lintOptions {
-        checkReleaseBuilds false
-        abortOnError true
-        baseline file("lint-baseline.xml")
-        disable "LintError"
-    }
-
-    testOptions {
-        unitTests {
-            includeAndroidResources = true
-        }
-    }
     //**TM_SA**//Start
     configurations {
         all*.exclude group: 'commons-codec', module: 'commons-codec'
 
     }
-
-/*    packagingOptions {
-        pickFirst 'lib/arm64-v8a/libsqlcipher.so'
-        pickFirst 'lib/armeabi-v7a/libsqlcipher.so'
-        pickFirst 'lib/x86/libsqlcipher.so'
-        pickFirst 'lib/x86_64/libsqlcipher.so'
-
-    }*/
-    //**TM_SA**//End
-
 }
 
 dependencies {
@@ -432,10 +466,11 @@ dependencies {
 
     implementation (libs.androidx.appcompat) {
         version {
-            strictly '1.2.0'
+            strictly '1.5.1'
         }
     }
-    implementation libs.androidx.window
+    implementation libs.androidx.window.window
+    implementation libs.androidx.window.java
     implementation libs.androidx.recyclerview
     implementation libs.material.material
     implementation libs.androidx.legacy.support
@@ -448,7 +483,9 @@ dependencies {
     implementation libs.androidx.multidex
     implementation libs.androidx.navigation.fragment.ktx
     implementation libs.androidx.navigation.ui.ktx
-    implementation libs.androidx.lifecycle.extensions
+    implementation libs.androidx.lifecycle.viewmodel.ktx
+    implementation libs.androidx.lifecycle.livedata.ktx
+    implementation libs.androidx.lifecycle.process
     implementation libs.androidx.lifecycle.viewmodel.savedstate
     implementation libs.androidx.lifecycle.common.java8
     implementation libs.androidx.lifecycle.reactivestreams.ktx
@@ -483,8 +520,11 @@ dependencies {
     implementation project(':device-transfer')
     implementation project(':image-editor')
     implementation project(':donations')
+    implementation project(':contacts')
+    implementation project(':qr')
+    implementation project(':sms-exporter')
 
-    implementation libs.signal.client.android
+    implementation libs.libsignal.android
     implementation libs.google.protobuf.javalite
 
     implementation(libs.mobilecoin) {
@@ -509,7 +549,6 @@ dependencies {
     implementation libs.materialish.progress
     implementation libs.greenrobot.eventbus
     implementation libs.waitingdots
-    implementation libs.floatingactionbutton
     implementation libs.google.zxing.android.integration
     implementation libs.time.duration.picker
     implementation libs.google.zxing.core
@@ -535,7 +574,6 @@ dependencies {
     implementation libs.lottie
 
     implementation libs.stickyheadergrid
-    implementation libs.circular.progress.button
 
     implementation libs.signal.android.database.sqlcipher
     implementation libs.androidx.sqlite
@@ -546,17 +584,13 @@ dependencies {
     }
     implementation libs.dnsjava
 
-    flipperImplementation libs.facebook.flipper
-    flipperImplementation libs.facebook.soloader
-    flipperImplementation libs.square.leakcanary
+    spinnerImplementation project(":spinner")
+    spinnerImplementation libs.square.leakcanary
 
     testImplementation testLibs.junit.junit
     testImplementation testLibs.assertj.core
     testImplementation testLibs.mockito.core
-    testImplementation testLibs.powermock.api.mockito
-    testImplementation testLibs.powermock.module.junit4.core
-    testImplementation testLibs.powermock.module.junit4.rule
-    testImplementation testLibs.powermock.classloading.xstream
+    testImplementation testLibs.mockito.kotlin
 
     testImplementation testLibs.androidx.test.core
     testImplementation (testLibs.robolectric.robolectric) {
@@ -572,6 +606,16 @@ dependencies {
 
     androidTestImplementation testLibs.androidx.test.ext.junit
     androidTestImplementation testLibs.espresso.core
+    androidTestImplementation testLibs.androidx.test.core
+    androidTestImplementation testLibs.androidx.test.core.ktx
+    androidTestImplementation testLibs.androidx.test.ext.junit.ktx
+    androidTestImplementation testLibs.mockito.android
+    androidTestImplementation testLibs.mockito.kotlin
+    androidTestImplementation testLibs.square.okhttp.mockserver
+
+    instrumentationImplementation (libs.androidx.fragment.testing) {
+        exclude group: 'androidx.test', module: 'core'
+    }
 
     testImplementation testLibs.espresso.core
 
@@ -583,7 +627,7 @@ dependencies {
     implementation libs.rxjava3.rxkotlin
     implementation libs.rxdogtag
 
-    androidTestUtil 'androidx.test:orchestrator:1.4.0'
+    androidTestUtil testLibs.androidx.test.orchestrator
 
     //**TM_SA**//Start
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
@@ -685,4 +729,12 @@ def getDateSuffix() {
     def date = new Date()
     def formattedDate = date.format('yyyy-MM-dd-HH:mm')
     return formattedDate
+}
+//**TM_SA**// change key
+def getMapsKey() {
+    def mapKey = file("${project.rootDir}/maps.key")
+    if (mapKey.exists()) {
+        return mapKey.readLines()[0]
+    }
+    return "AIzaSyAVa3EZMZWSbiUAfgiJTb-7Ljo0se6YWys"//**TM_SA**// change key
 }

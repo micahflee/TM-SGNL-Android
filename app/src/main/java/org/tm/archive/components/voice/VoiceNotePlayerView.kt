@@ -47,6 +47,7 @@ class VoiceNotePlayerView @JvmOverloads constructor(
 
   init {
     inflate(context, R.layout.voice_note_player_view, this)
+    layoutDirection = LAYOUT_DIRECTION_LTR
 
     playPauseToggleView = findViewById(R.id.voice_note_player_play_pause_toggle)
     infoView = findViewById(R.id.voice_note_player_info)
@@ -93,7 +94,7 @@ class VoiceNotePlayerView @JvmOverloads constructor(
       playPauseToggleView.addValueCallback(
         KeyPath("**"),
         LottieProperty.COLOR_FILTER,
-        LottieValueCallback(SimpleColorFilter(ContextCompat.getColor(context, R.color.signal_icon_tint_primary)))
+        LottieValueCallback(SimpleColorFilter(ContextCompat.getColor(context, R.color.signal_colorOnSurface)))
       )
     }
 

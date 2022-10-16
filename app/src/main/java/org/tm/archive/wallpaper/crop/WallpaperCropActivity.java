@@ -20,16 +20,16 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.BaseActivity;
-import org.tm.archive.R;
-import org.tm.archive.conversation.colors.ColorizerView;
 import org.signal.imageeditor.core.ImageEditorView;
 import org.signal.imageeditor.core.model.EditorElement;
 import org.signal.imageeditor.core.model.EditorModel;
 import org.signal.imageeditor.core.renderers.FaceBlurRenderer;
+import org.tm.archive.BaseActivity;
+import org.tm.archive.R;
+import org.tm.archive.conversation.colors.ColorizerView;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.scribbles.UriGlideRenderer;
 import org.tm.archive.util.AsynchronousCallback;
@@ -84,7 +84,7 @@ public final class WallpaperCropActivity extends BaseActivity {
     Log.i(TAG, "Cropping wallpaper for " + (recipientId == null ? "default wallpaper" : recipientId));
 
     WallpaperCropViewModel.Factory factory = new WallpaperCropViewModel.Factory(recipientId);
-    viewModel = ViewModelProviders.of(this, factory).get(WallpaperCropViewModel.class);
+    viewModel = new ViewModelProvider(this, factory).get(WallpaperCropViewModel.class);
 
     imageEditor = findViewById(R.id.image_editor);
     View          sentBubble     = findViewById(R.id.preview_bubble_2);
@@ -179,7 +179,7 @@ public final class WallpaperCropActivity extends BaseActivity {
     int   width  = displayMetrics.widthPixels;
     float ratio  = width / (float) height;
 
-    EditorModel editorModel = EditorModel.createForWallpaperEditing(ratio);
+    EditorModel editorModel = EditorModel.createForWallpaperEditing(ratio, ContextCompat.getColor(this, R.color.signal_colorBackground));
 
     EditorElement image = new EditorElement(new UriGlideRenderer(imageUri, true, width, height, UriGlideRenderer.WEAK_BLUR));
     image.getFlags()

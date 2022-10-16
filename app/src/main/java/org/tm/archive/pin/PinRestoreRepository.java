@@ -7,7 +7,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.StorageAccountRestoreJob;
 import org.tm.archive.jobs.StorageSyncJob;
-import org.tm.archive.util.Stopwatch;
+import org.signal.core.util.Stopwatch;
 import org.whispersystems.signalservice.api.KbsPinData;
 import org.whispersystems.signalservice.api.KeyBackupSystemNoDataException;
 

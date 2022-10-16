@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.annimon.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.signal.core.util.ListUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.database.MessageDatabase.SyncMessageId;
@@ -19,7 +20,6 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.util.JsonUtils;
 import org.tm.archive.util.TextSecurePreferences;
-import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.multidevice.ReadMessage;
@@ -68,7 +68,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob {
    */
   public static void enqueue(@NonNull List<SyncMessageId> messageIds) {
     JobManager                jobManager      = ApplicationDependencies.getJobManager();
-    List<List<SyncMessageId>> messageIdChunks = Util.chunk(messageIds, SendReadReceiptJob.MAX_TIMESTAMPS);
+    List<List<SyncMessageId>> messageIdChunks = ListUtil.chunk(messageIds, SendReadReceiptJob.MAX_TIMESTAMPS);
 
     if (messageIdChunks.size() > 1) {
       Log.w(TAG, "Large receipt count! Had to break into multiple chunks. Total count: " + messageIds.size());
@@ -114,8 +114,8 @@ public class MultiDeviceReadUpdateJob extends BaseJob {
 
     for (SerializableSyncMessageId messageId : messageIds) {
       Recipient recipient = Recipient.resolved(RecipientId.from(messageId.recipientId));
-      if (!recipient.isGroup() && recipient.isMaybeRegistered()) {
-        readMessages.add(new ReadMessage(RecipientUtil.toSignalServiceAddress(context, recipient), messageId.timestamp));
+      if (!recipient.isGroup() && !recipient.isDistributionList() && recipient.isMaybeRegistered()) {
+        readMessages.add(new ReadMessage(RecipientUtil.getOrFetchServiceId(context, recipient), messageId.timestamp));
       }
     }
 

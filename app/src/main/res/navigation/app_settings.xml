@@ -6,7 +6,6 @@
     app:startDestination="@id/appSettingsFragment">
 
     <fragment
-
         android:id="@+id/appSettingsFragment"
         android:name="org.tm.archive.components.settings.app.AppSettingsFragment"
         android:label="app_settings_fragment"
@@ -55,7 +54,7 @@
             app:popExitAnim="@anim/fragment_close_exit" />
         <action
             android:id="@+id/action_appSettingsFragment_to_privacySettingsFragment"
-            app:destination="@id/privacySettingsFragment"
+            app:destination="@id/privacy_settings"
             app:enterAnim="@anim/fragment_open_enter"
             app:exitAnim="@anim/fragment_open_exit"
             app:popEnterAnim="@anim/fragment_close_enter"
@@ -112,14 +111,14 @@
             app:enterAnim="@anim/fragment_open_enter"
             app:exitAnim="@anim/fragment_open_exit"
             app:popEnterAnim="@anim/fragment_close_enter"
-            app:popExitAnim="@anim/fragment_close_exit"></action>
+            app:popExitAnim="@anim/fragment_close_exit" />
         <action
             android:id="@+id/action_appSettingsFragment_to_subscribeFragment"
             app:destination="@id/subscribeFragment"
             app:enterAnim="@anim/fragment_open_enter"
             app:exitAnim="@anim/fragment_open_exit"
             app:popEnterAnim="@anim/fragment_close_enter"
-            app:popExitAnim="@anim/fragment_close_exit"></action>
+            app:popExitAnim="@anim/fragment_close_exit" />
         <action
             android:id="@+id/action_appSettingsFragment_to_boostsFragment"
             app:destination="@id/boosts"
@@ -317,46 +316,8 @@
     </fragment>
 
     <!-- region Privacy -->
-    <fragment
-        android:id="@+id/privacySettingsFragment"
-        android:name="org.tm.archive.components.settings.app.privacy.PrivacySettingsFragment"
-        android:label="privacy_settings_fragment">
-        <action
-            android:id="@+id/action_privacySettingsFragment_to_blockedUsersActivity"
-            app:destination="@id/blockedUsersActivity"
-            app:enterAnim="@anim/fragment_open_enter"
-            app:exitAnim="@anim/fragment_open_exit"
-            app:popEnterAnim="@anim/fragment_close_enter"
-            app:popExitAnim="@anim/fragment_close_exit" />
-        <action
-            android:id="@+id/action_privacySettingsFragment_to_advancedPrivacySettingsFragment"
-            app:destination="@id/advancedPrivacySettingsFragment"
-            app:enterAnim="@anim/fragment_open_enter"
-            app:exitAnim="@anim/fragment_open_exit"
-            app:popEnterAnim="@anim/fragment_close_enter"
-            app:popExitAnim="@anim/fragment_close_exit" />
-        <action
-            android:id="@+id/action_privacySettingsFragment_to_disappearingMessagesTimerSelectFragment"
-            app:destination="@id/app_settings_expire_timer"
-            app:enterAnim="@anim/fragment_open_enter"
-            app:exitAnim="@anim/fragment_open_exit"
-            app:popEnterAnim="@anim/fragment_close_enter"
-            app:popExitAnim="@anim/fragment_close_exit" />
 
-    </fragment>
-
-    <activity
-        android:id="@+id/blockedUsersActivity"
-        android:name="org.tm.archive.blocked.BlockedUsersActivity"
-        android:label="blocked_users_activity" />
-
-    <fragment
-        android:id="@+id/advancedPrivacySettingsFragment"
-        android:name="org.tm.archive.components.settings.app.privacy.advanced.AdvancedPrivacySettingsFragment"
-        android:label="advanced_privacy_settings_fragment" />
-
-    <include app:graph="@navigation/app_settings_expire_timer" />
-    <!-- endregion -->
+    <include app:graph="@navigation/privacy_settings" />
 
     <!-- region Data and Storage -->
 
@@ -454,7 +415,9 @@
         app:enterAnim="@anim/fragment_open_enter"
         app:exitAnim="@anim/fragment_open_exit"
         app:popEnterAnim="@anim/fragment_close_enter"
-        app:popExitAnim="@anim/fragment_close_exit" />
+        app:popExitAnim="@anim/fragment_close_exit"
+        app:popUpTo="@id/app_settings"
+        app:popUpToInclusive="true" />
 
     <action
         android:id="@+id/action_direct_to_editProxyFragment"
@@ -486,7 +449,9 @@
         app:enterAnim="@anim/fragment_open_enter"
         app:exitAnim="@anim/fragment_open_exit"
         app:popEnterAnim="@anim/fragment_close_enter"
-        app:popExitAnim="@anim/fragment_close_exit" />
+        app:popExitAnim="@anim/fragment_close_exit"
+        app:popUpTo="@id/app_settings"
+        app:popUpToInclusive="true" />
 
     <action
         android:id="@+id/action_direct_to_manageDonations"
@@ -494,7 +459,9 @@
         app:enterAnim="@anim/fragment_open_enter"
         app:exitAnim="@anim/fragment_open_exit"
         app:popEnterAnim="@anim/fragment_close_enter"
-        app:popExitAnim="@anim/fragment_close_exit" />
+        app:popExitAnim="@anim/fragment_close_exit"
+        app:popUpTo="@id/app_settings"
+        app:popUpToInclusive="true" />
 
     <action
         android:id="@+id/action_direct_to_notificationProfiles"
@@ -524,6 +491,16 @@
         app:popUpTo="@id/app_settings"
         app:popUpToInclusive="true" />
 
+    <action
+        android:id="@+id/action_direct_to_privacy"
+        app:destination="@id/privacy_settings"
+        app:enterAnim="@anim/fragment_open_enter"
+        app:exitAnim="@anim/fragment_open_exit"
+        app:popEnterAnim="@anim/fragment_close_enter"
+        app:popExitAnim="@anim/fragment_close_exit"
+        app:popUpTo="@id/app_settings"
+        app:popUpToInclusive="true" />
+
     <!-- endregion -->
 
     <!-- Internal Settings -->
@@ -531,7 +508,24 @@
     <fragment
         android:id="@+id/internalSettingsFragment"
         android:name="org.tm.archive.components.settings.app.internal.InternalSettingsFragment"
-        android:label="internal_settings_fragment" />
+        android:label="internal_settings_fragment" >
+        <action
+            android:id="@+id/action_internalSettingsFragment_to_donorErrorConfigurationFragment"
+            app:destination="@id/donorErrorConfigurationFragment" />
+        <action
+            android:id="@+id/action_internalSettingsFragment_to_storyDialogsLauncherFragment"
+            app:destination="@id/storyDialogsLauncherFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/donorErrorConfigurationFragment"
+        android:name="org.tm.archive.components.settings.app.internal.donor.DonorErrorConfigurationFragment"
+        android:label="donor_error_configuration_fragment" />
+
+    <fragment
+        android:id="@+id/storyDialogsLauncherFragment"
+        android:name="org.tm.archive.components.settings.app.internal.StoryDialogLauncherFragment"
+        android:label="story_dialogs_launcher_fragment" />
 
     <!-- endregion -->
 
@@ -565,6 +559,41 @@
             app:exitAnim="@anim/fragment_open_exit"
             app:popEnterAnim="@anim/fragment_close_enter"
             app:popExitAnim="@anim/fragment_close_exit" />
+        <action
+            android:id="@+id/action_manageDonationsFragment_to_donationReceiptListFragment"
+            app:destination="@id/donationReceiptListFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" />
+        <action
+            android:id="@+id/action_manageDonationsFragment_to_subscribeLearnMoreBottomSheetDialog"
+            app:destination="@id/subscribeLearnMoreBottomSheetDialog" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/donationReceiptListFragment"
+        android:name="org.tm.archive.components.settings.app.subscription.receipts.list.DonationReceiptListFragment"
+        android:label="donation_receipt_list_fragment"
+        tools:layout="@layout/donation_receipt_list_fragment">
+        <action
+            android:id="@+id/action_donationReceiptListFragment_to_donationReceiptDetailFragment"
+            app:destination="@id/donationReceiptDetailFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/donationReceiptDetailFragment"
+        android:name="org.tm.archive.components.settings.app.subscription.receipts.detail.DonationReceiptDetailFragment"
+        android:label="donation_receipt_detail_fragment"
+        tools:layout="@layout/donation_receipt_detail_fragment">
+
+        <argument
+            android:name="id"
+            app:argType="long" />
     </fragment>
 
     <fragment
@@ -800,5 +829,7 @@
             app:popUpToInclusive="true" />
 
     </fragment>
+
+    <include app:graph="@navigation/story_privacy_settings" />
 
 </navigation>

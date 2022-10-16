@@ -1,21 +1,22 @@
 package org.tm.archive.jobs;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.SetUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.messages.GroupSendUtil;
 import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
@@ -23,6 +24,7 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.GroupUtil;
+import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.crypto.ContentHint;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
@@ -51,9 +53,7 @@ public class RemoteDeleteSendJob extends BaseJob {
 
 
   @WorkerThread
-  public static @NonNull RemoteDeleteSendJob create(@NonNull Context context,
-                                                    long messageId,
-                                                    boolean isMms)
+  public static @NonNull JobManager.Chain create(long messageId, boolean isMms)
       throws NoSuchMessageException
   {
     MessageRecord message = isMms ? SignalDatabase.mms().getMessageRecord(messageId)
@@ -65,20 +65,36 @@ public class RemoteDeleteSendJob extends BaseJob {
       throw new AssertionError("We have a message, but couldn't find the thread!");
     }
 
-    List<RecipientId> recipients = conversationRecipient.isGroup() ? Stream.of(RecipientUtil.getEligibleForSending(conversationRecipient.getParticipants())).map(Recipient::getId).toList()
-                                                                   : Stream.of(conversationRecipient.getId()).toList();
+    List<RecipientId> recipients;
+    if (conversationRecipient.isDistributionList()) {
+      recipients = SignalDatabase.storySends().getRemoteDeleteRecipients(message.getId(), message.getTimestamp());
+      if (recipients.isEmpty()) {
+        return ApplicationDependencies.getJobManager().startChain(MultiDeviceStorySendSyncJob.create(message.getDateSent(), messageId));
+      }
+    } else {
+      recipients = conversationRecipient.isGroup() ? Stream.of(conversationRecipient.getParticipantIds()).toList()
+                                                   : Stream.of(conversationRecipient.getId()).toList();
+    }
 
     recipients.remove(Recipient.self().getId());
 
-    return new RemoteDeleteSendJob(messageId,
-                               isMms,
-                               recipients,
-                               recipients.size(),
-                               new Parameters.Builder()
-                                             .setQueue(conversationRecipient.getId().toQueueKey())
-                                             .setLifespan(TimeUnit.DAYS.toMillis(1))
-                                             .setMaxAttempts(Parameters.UNLIMITED)
-                                             .build());
+    RemoteDeleteSendJob sendJob = new RemoteDeleteSendJob(messageId,
+                                                          isMms,
+                                                          recipients,
+                                                          recipients.size(),
+                                                          new Parameters.Builder()
+                                                                        .setQueue(conversationRecipient.getId().toQueueKey())
+                                                                        .setLifespan(TimeUnit.DAYS.toMillis(1))
+                                                                        .setMaxAttempts(Parameters.UNLIMITED)
+                                                                        .build());
+
+    if (conversationRecipient.isDistributionList()) {
+      return ApplicationDependencies.getJobManager()
+                                    .startChain(sendJob)
+                                    .then(MultiDeviceStorySendSyncJob.create(message.getDateSent(), messageId));
+    } else {
+      return ApplicationDependencies.getJobManager().startChain(sendJob);
+    }
   }
 
   private RemoteDeleteSendJob(long messageId,
@@ -137,14 +153,27 @@ public class RemoteDeleteSendJob extends BaseJob {
       throw new IllegalStateException("Cannot delete a message that isn't yours!");
     }
 
-    List<Recipient> destinations = Stream.of(recipients).map(Recipient::resolved).toList();
-    List<Recipient> completions  = deliver(conversationRecipient, destinations, targetSentTimestamp);
+    List<Recipient>   possible = Stream.of(recipients).map(Recipient::resolved).toList();
+    List<Recipient>   eligible = RecipientUtil.getEligibleForSending(Stream.of(recipients).map(Recipient::resolved).toList());
+    List<RecipientId> skipped  = Stream.of(SetUtil.difference(possible, eligible)).map(Recipient::getId).toList();
 
-    for (Recipient completion : completions) {
+    GroupSendJobHelper.SendResult sendResult   = deliver(conversationRecipient, eligible, targetSentTimestamp);
+
+    for (Recipient completion : sendResult.completed) {
       recipients.remove(completion.getId());
     }
 
-    Log.i(TAG, "Completed now: " + completions.size() + ", Remaining: " + recipients.size());
+    for (RecipientId skip : skipped) {
+      recipients.remove(skip);
+    }
+
+    List<RecipientId> totalSkips = Util.join(skipped, sendResult.skipped);
+
+    Log.i(TAG, "Completed now: " + sendResult.completed.size() + ", Skipped: " + totalSkips.size() + ", Remaining: " + recipients.size());
+
+    if (totalSkips.size() > 0 && isMms && message.getRecipient().isGroup()) {
+      SignalDatabase.groupReceipts().setSkipped(totalSkips, messageId);
+    }
 
     if (recipients.isEmpty()) {
       db.markAsSent(messageId, true);
@@ -167,7 +196,7 @@ public class RemoteDeleteSendJob extends BaseJob {
     Log.w(TAG, "Failed to send remote delete to all recipients! (" + (initialRecipientCount - recipients.size() + "/" + initialRecipientCount + ")") );
   }
 
-  private @NonNull List<Recipient> deliver(@NonNull Recipient conversationRecipient, @NonNull List<Recipient> destinations, long targetSentTimestamp)
+  private @NonNull GroupSendJobHelper.SendResult deliver(@NonNull Recipient conversationRecipient, @NonNull List<Recipient> destinations, long targetSentTimestamp)
       throws IOException, UntrustedIdentityException
   {
     SignalServiceDataMessage.Builder dataMessageBuilder = SignalServiceDataMessage.newBuilder()
@@ -180,12 +209,13 @@ public class RemoteDeleteSendJob extends BaseJob {
 
     SignalServiceDataMessage dataMessage = dataMessageBuilder.build();
     List<SendMessageResult>  results     = GroupSendUtil.sendResendableDataMessage(context,
-                                                                                   conversationRecipient.getGroupId().transform(GroupId::requireV2).orNull(),
+                                                                                   conversationRecipient.getGroupId().map(GroupId::requireV2).orElse(null),
                                                                                    destinations,
                                                                                    false,
                                                                                    ContentHint.RESENDABLE,
                                                                                    new MessageId(messageId, isMms),
-                                                                                   dataMessage);
+                                                                                   dataMessage,
+                                                                                   true);
 
     return GroupSendJobHelper.getCompletedSends(destinations, results);
   }

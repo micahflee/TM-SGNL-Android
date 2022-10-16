@@ -44,9 +44,10 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
                                                                             remotePeer.getRecipient(),
                                                                             null,
                                                                             new BroadcastVideoSink(currentState.getVideoState().getLockableEglBase(),
-                                                                                                   false,
+                                                                                                   true,
                                                                                                    true,
                                                                                                    currentState.getLocalDeviceState().getOrientation().getDegrees()),
+                                                                            true,
                                                                             true,
                                                                             false,
                                                                             0,
@@ -69,16 +70,26 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleStartIncomingCall(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
+  protected @NonNull WebRtcServiceState handleStartIncomingCall(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer, @NonNull OfferMessage.Type offerType) {
     remotePeer.answering();
 
     Log.i(tag, "assign activePeer callId: " + remotePeer.getCallId() + " key: " + remotePeer.hashCode());
 
     webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, remotePeer);
     webRtcInteractor.retrieveTurnServers(remotePeer);
+    webRtcInteractor.initializeAudioForCall();
+
+    if (!webRtcInteractor.addNewIncomingCall(remotePeer.getId(), remotePeer.getCallId().longValue(), offerType == OfferMessage.Type.VIDEO_CALL)) {
+      Log.i(tag, "Unable to add new incoming call");
+      return handleDropCall(currentState, remotePeer.getCallId().longValue());
+    }
 
     return currentState.builder()
                        .actionProcessor(new IncomingCallActionProcessor(webRtcInteractor))
+                       .changeCallSetupState(remotePeer.getCallId())
+                       .waitForTelecom(AndroidTelecomUtil.getTelecomSupported())
+                       .telecomApproved(false)
+                       .commit()
                        .changeCallInfoState()
                        .callRecipient(remotePeer.getRecipient())
                        .activePeer(remotePeer)
@@ -88,9 +99,10 @@ public class BeginCallActionProcessorDelegate extends WebRtcActionProcessor {
                                                                     remotePeer.getRecipient(),
                                                                     null,
                                                                     new BroadcastVideoSink(currentState.getVideoState().getLockableEglBase(),
-                                                                                           false,
+                                                                                           true,
                                                                                            true,
                                                                                            currentState.getLocalDeviceState().getOrientation().getDegrees()),
+                                                                    true,
                                                                     true,
                                                                     false,
                                                                     0,

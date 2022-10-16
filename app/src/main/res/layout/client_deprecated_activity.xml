@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:viewBindingIgnore="true"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -43,20 +45,21 @@
 
   </LinearLayout>
 
-  <Button
+  <com.google.android.material.button.MaterialButton
       android:id="@+id/client_deprecated_update_button"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:text="@string/ClientDeprecatedActivity_update"
-      style="@style/Button.Primary"
+      style="@style/Signal.Widget.Button.Large.Primary"
       app:layout_constraintBottom_toTopOf="@id/client_deprecated_dont_update_button"/>
 
-  <Button
+  <com.google.android.material.button.MaterialButton
       android:id="@+id/client_deprecated_dont_update_button"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:text="@string/ClientDeprecatedActivity_dont_update"
-      style="@style/Button.Borderless.LowPriority"
+      style="@style/Signal.Widget.Button.Large.Secondary"
+      android:textColor="@color/low_priority_button_text_color"
       app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,7 @@
 package org.signal.imageeditor.core;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -15,14 +16,20 @@ import android.widget.FrameLayout;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.TypedArrayUtils;
 import androidx.core.view.GestureDetectorCompat;
 
+import org.signal.imageeditor.R;
 import org.signal.imageeditor.core.model.EditorElement;
 import org.signal.imageeditor.core.model.EditorModel;
 import org.signal.imageeditor.core.model.ThumbRenderer;
 import org.signal.imageeditor.core.renderers.BezierDrawingRenderer;
 import org.signal.imageeditor.core.renderers.MultiLineTextRenderer;
 import org.signal.imageeditor.core.renderers.TrashRenderer;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * ImageEditorView
@@ -41,6 +48,8 @@ import org.signal.imageeditor.core.renderers.TrashRenderer;
  * which centers the new item in the current crop area.
  */
 public final class ImageEditorView extends FrameLayout {
+
+  private static final int DEFAULT_BLACKOUT_COLOR = 0xFF000000;
 
   private HiddenEditText editText;
 
@@ -71,13 +80,16 @@ public final class ImageEditorView extends FrameLayout {
   @Nullable
   private DragListener dragListener;
 
+  private final List<HiddenEditText.TextFilter> textFilters = new LinkedList<>();
+
   private final Matrix viewMatrix      = new Matrix();
   private final RectF  viewPort        = Bounds.newFullBounds();
   private final RectF  visibleViewPort = Bounds.newFullBounds();
   private final RectF  screen          = new RectF();
 
-  private TapListener     tapListener;
-  private RendererContext rendererContext;
+  private TapListener                      tapListener;
+  private RendererContext                  rendererContext;
+  private RendererContext.TypefaceProvider typefaceProvider;
 
   @Nullable
   private EditSession editSession;
@@ -85,22 +97,32 @@ public final class ImageEditorView extends FrameLayout {
 
   public ImageEditorView(Context context) {
     super(context);
-    init();
+    init(null);
   }
 
   public ImageEditorView(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
-    init();
+    init(attrs);
   }
 
   public ImageEditorView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
-    init();
+    init(attrs);
   }
 
-  private void init() {
+  private void init(@Nullable AttributeSet attributeSet) {
     setWillNotDraw(false);
-    setModel(EditorModel.create());
+
+    final int blackoutColor;
+    if (attributeSet != null) {
+      TypedArray typedArray = getContext().obtainStyledAttributes(attributeSet, R.styleable.ImageEditorView);
+      blackoutColor = typedArray.getColor(R.styleable.ImageEditorView_imageEditorView_blackoutColor, DEFAULT_BLACKOUT_COLOR);
+      typedArray.recycle();
+    } else {
+      blackoutColor = DEFAULT_BLACKOUT_COLOR;
+    }
+
+    setModel(EditorModel.create(blackoutColor));
 
     editText = createAHiddenTextEntryField();
 
@@ -115,6 +137,8 @@ public final class ImageEditorView extends FrameLayout {
     editText.clearFocus();
     editText.setOnEndEdit(this::doneTextEditing);
     editText.setOnEditOrSelectionChange(this::zoomToFitText);
+    editText.addTextFilters(textFilters);
+
     return editText;
   }
 
@@ -145,10 +169,24 @@ public final class ImageEditorView extends FrameLayout {
     }
   }
 
+  public void setTypefaceProvider(@NonNull RendererContext.TypefaceProvider typefaceProvider) {
+    this.typefaceProvider = typefaceProvider;
+  }
+
+  public void addTextInputFilter(@NonNull HiddenEditText.TextFilter inputFilter) {
+    textFilters.add(inputFilter);
+    editText = createAHiddenTextEntryField();
+  }
+
+  public void removeTextInputFilter(@NonNull HiddenEditText.TextFilter inputFilter) {
+    textFilters.remove(inputFilter);
+    editText = createAHiddenTextEntryField();
+  }
+
   @Override
   protected void onDraw(Canvas canvas) {
-    if (rendererContext == null || rendererContext.canvas != canvas) {
-      rendererContext = new RendererContext(getContext(), canvas, rendererReady, rendererInvalidate);
+    if (rendererContext == null || rendererContext.canvas != canvas || rendererContext.typefaceProvider != typefaceProvider) {
+      rendererContext = new RendererContext(getContext(), canvas, rendererReady, rendererInvalidate, typefaceProvider);
     }
     rendererContext.save();
     try {

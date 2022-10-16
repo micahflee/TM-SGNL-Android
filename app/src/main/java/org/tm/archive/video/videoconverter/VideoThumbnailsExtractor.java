@@ -76,7 +76,7 @@ final class VideoThumbnailsExtractor {
           outputHeightRotated = outputHeight;
         }
 
-        Log.i(TAG, "video: " + width + "x" + height + " " + rotation);
+        Log.i(TAG, "video :" + width + "x" + height + " " + rotation);
         Log.i(TAG, "output: " + outputWidthRotated + "x" + outputHeightRotated);
 
         outputSurface = new OutputSurface(outputWidthRotated, outputHeightRotated, true);
@@ -97,8 +97,8 @@ final class VideoThumbnailsExtractor {
 
         doExtract(extractor, decoder, outputSurface, outputWidthRotated, outputHeightRotated, duration, thumbnailCount, callback);
       }
-    } catch (IOException | TranscodingException | MediaCodec.CodecException e) {
-      Log.w(TAG, e);
+    } catch (Throwable t) {
+      Log.w(TAG, t);
       callback.failed();
     } finally {
       if (outputSurface != null) {
@@ -161,7 +161,14 @@ final class VideoThumbnailsExtractor {
         }
       }
 
-      int outputBufIndex = decoder.dequeueOutputBuffer(info, TIMEOUT_USEC);
+      final int outputBufIndex;
+      try {
+        outputBufIndex = decoder.dequeueOutputBuffer(info, TIMEOUT_USEC);
+      } catch (IllegalStateException e) {
+        Log.w(TAG, "Decoder not in the Executing state, or codec is configured in asynchronous mode.", e);
+        throw new TranscodingException("Decoder not in the Executing state, or codec is configured in asynchronous mode.", e);
+      }
+
       if (outputBufIndex >= 0) {
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
           outputDone = true;

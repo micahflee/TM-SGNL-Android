@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.contacts.sync.DirectoryHelper;
+import org.tm.archive.contacts.sync.ContactDiscovery;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -71,9 +71,9 @@ public class DirectoryRefreshJob extends BaseJob {
     Log.i(TAG, "DirectoryRefreshJob.onRun()");
 
     if (recipient == null) {
-      DirectoryHelper.refreshDirectory(context, notifyOfNewUsers);
+      ContactDiscovery.refreshAll(context, notifyOfNewUsers);
     } else {
-      DirectoryHelper.refreshDirectoryFor(context, recipient, notifyOfNewUsers);
+      ContactDiscovery.refresh(context, recipient, notifyOfNewUsers);
     }
   }
 

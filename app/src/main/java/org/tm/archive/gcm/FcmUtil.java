@@ -1,15 +1,17 @@
 package org.tm.archive.gcm;
 
+import android.content.Context;
 import android.text.TextUtils;
 
 import androidx.annotation.WorkerThread;
 
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.signal.core.util.logging.Log;
-import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 public final class FcmUtil {
@@ -20,8 +22,12 @@ public final class FcmUtil {
    * Retrieves the current FCM token. If one isn't available, it'll be generated.
    */
   @WorkerThread
-  public static Optional<String> getToken() {
+  public static Optional<String> getToken(Context context) {
     String token = null;
+
+    // Must be called manually if running outside of main process
+    FirebaseApp.initializeApp(context);
+
     try {
       token = Tasks.await(FirebaseMessaging.getInstance().getToken());
     } catch (InterruptedException e) {
@@ -30,6 +36,6 @@ public final class FcmUtil {
       Log.w(TAG, "Failed to get the token.", e.getCause());
     }
 
-    return Optional.fromNullable(TextUtils.isEmpty(token) ? null : token);
+    return Optional.ofNullable(TextUtils.isEmpty(token) ? null : token);
   }
 }

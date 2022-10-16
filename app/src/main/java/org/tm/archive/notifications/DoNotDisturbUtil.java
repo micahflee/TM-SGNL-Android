@@ -16,7 +16,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 import org.tm.archive.util.ServiceUtil;
 
 import java.util.concurrent.TimeUnit;

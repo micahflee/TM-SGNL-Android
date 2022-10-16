@@ -25,7 +25,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import androidx.annotation.AnyThread;
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.LayoutRes;
@@ -40,7 +39,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.exoplayer2.MediaItem;
 
-import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.signal.paging.PagingController;
 import org.tm.archive.BindableConversationItem;
@@ -62,17 +60,15 @@ import org.tm.archive.util.ProjectionList;
 import org.tm.archive.util.StickyHeaderDecoration;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.ViewUtil;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -104,6 +100,7 @@ public class ConversationAdapter
 
   private static final int PAYLOAD_TIMESTAMP   = 0;
   public  static final int PAYLOAD_NAME_COLORS = 1;
+  public  static final int PAYLOAD_SELECTED    = 2;
 
   private final ItemClickListener clickListener;
   private final Context           context;
@@ -113,8 +110,6 @@ public class ConversationAdapter
   private final Recipient         recipient;
 
   private final Set<MultiselectPart>         selected;
-  private final List<ConversationMessage>    fastRecords;
-  private final Set<Long>                    releasedFastRecords;
   private final Calendar                     calendar;
   private final MessageDigest                digest;
 
@@ -128,8 +123,9 @@ public class ConversationAdapter
   private ConversationMessage inlineContent;
   private Colorizer           colorizer;
   private boolean             isTypingViewEnabled;
+  private boolean             condensedMode;
 
-  ConversationAdapter(@NonNull Context context,
+  public ConversationAdapter(@NonNull Context context,
                       @NonNull LifecycleOwner lifecycleOwner,
                       @NonNull GlideRequests glideRequests,
                       @NonNull Locale locale,
@@ -157,8 +153,6 @@ public class ConversationAdapter
     this.clickListener                = clickListener;
     this.recipient                    = recipient;
     this.selected                     = new HashSet<>();
-    this.fastRecords                  = new ArrayList<>();
-    this.releasedFastRecords          = new HashSet<>();
     this.calendar                     = Calendar.getInstance();
     this.digest                       = getMessageDigestOrThrow();
     this.hasWallpaper                 = recipient.hasWallpaper();
@@ -184,9 +178,9 @@ public class ConversationAdapter
     } else if (messageRecord.isUpdate()) {
       return MESSAGE_TYPE_UPDATE;
     } else if (messageRecord.isOutgoing()) {
-      return MessageRecordUtil.isTextOnly(messageRecord, context) ? MESSAGE_TYPE_OUTGOING_TEXT : MESSAGE_TYPE_OUTGOING_MULTIMEDIA;
+      return MessageRecordUtil.isTextOnly(messageRecord, context) && !conversationMessage.hasBeenQuoted() ? MESSAGE_TYPE_OUTGOING_TEXT : MESSAGE_TYPE_OUTGOING_MULTIMEDIA;
     } else {
-      return MessageRecordUtil.isTextOnly(messageRecord, context) ? MESSAGE_TYPE_INCOMING_TEXT : MESSAGE_TYPE_INCOMING_MULTIMEDIA;
+      return MessageRecordUtil.isTextOnly(messageRecord, context) && !conversationMessage.hasBeenQuoted() ? MESSAGE_TYPE_INCOMING_TEXT : MESSAGE_TYPE_INCOMING_MULTIMEDIA;
     }
   }
 
@@ -233,7 +227,7 @@ public class ConversationAdapter
   }
 
   private boolean containsValidPayload(@NonNull List<Object> payloads) {
-    return payloads.contains(PAYLOAD_TIMESTAMP) || payloads.contains(PAYLOAD_NAME_COLORS);
+    return payloads.contains(PAYLOAD_TIMESTAMP) || payloads.contains(PAYLOAD_NAME_COLORS) || payloads.contains(PAYLOAD_SELECTED);
   }
 
   @Override
@@ -254,12 +248,21 @@ public class ConversationAdapter
             conversationViewHolder.getBindable().updateContactNameColor();
           }
 
+          if (payloads.contains(PAYLOAD_SELECTED)) {
+            conversationViewHolder.getBindable().updateSelectedState();
+          }
+
         default:
           return;
       }
     } else {
       super.onBindViewHolder(holder, position, payloads);
     }
+  }
+
+  public void setCondensedMode(boolean condensedMode) {
+    this.condensedMode = condensedMode;
+    notifyDataSetChanged();
   }
 
   @Override
@@ -279,18 +282,19 @@ public class ConversationAdapter
 
         conversationViewHolder.getBindable().bind(lifecycleOwner,
                                                   conversationMessage,
-                                                  Optional.fromNullable(previousMessage != null ? previousMessage.getMessageRecord() : null),
-                                                  Optional.fromNullable(nextMessage != null ? nextMessage.getMessageRecord() : null),
+                                                  Optional.ofNullable(previousMessage != null ? previousMessage.getMessageRecord() : null),
+                                                  Optional.ofNullable(nextMessage != null ? nextMessage.getMessageRecord() : null),
                                                   glideRequests,
                                                   locale,
                                                   selected,
                                                   recipient,
                                                   searchQuery,
                                                   conversationMessage == recordToPulse,
-                                                  hasWallpaper,
+                                                  hasWallpaper && !condensedMode,
                                                   isMessageRequestAccepted,
                                                   conversationMessage == inlineContent,
-                                                  colorizer);
+                                                  colorizer,
+                                                  condensedMode);
 
         if (conversationMessage == recordToPulse) {
           recordToPulse = null;
@@ -308,7 +312,7 @@ public class ConversationAdapter
   @Override
   public int getItemCount() {
     boolean hasFooter = footerView != null;
-    return super.getItemCount() + fastRecords.size() + (isTypingViewEnabled ? 1 : 0) + (hasFooter ? 1 : 0);
+    return super.getItemCount() + (isTypingViewEnabled ? 1 : 0) + (hasFooter ? 1 : 0);
   }
 
   @Override
@@ -329,7 +333,7 @@ public class ConversationAdapter
 
     if (conversationMessage == null) return -1;
 
-    calendar.setTimeInMillis(conversationMessage.getMessageRecord().getDateReceived());
+    calendar.setTimeInMillis(conversationMessage.getMessageRecord().getDateSent());
     return calendar.get(Calendar.YEAR) * 1000L + calendar.get(Calendar.DAY_OF_YEAR);
   }
 
@@ -343,54 +347,46 @@ public class ConversationAdapter
     Context             context             = viewHolder.itemView.getContext();
     ConversationMessage conversationMessage = Objects.requireNonNull(getItem(position));
 
-    viewHolder.setText(DateUtils.getConversationDateHeaderString(viewHolder.itemView.getContext(), locale, conversationMessage.getMessageRecord().getDateReceived()));
+    viewHolder.setText(DateUtils.getConversationDateHeaderString(viewHolder.itemView.getContext(), locale, conversationMessage.getMessageRecord().getDateSent()));
 
     if (type == HEADER_TYPE_POPOVER_DATE) {
       if (hasWallpaper) {
-        viewHolder.setBackgroundRes(R.drawable.wallpaper_bubble_background_8);
+        viewHolder.setBackgroundRes(R.drawable.wallpaper_bubble_background_18);
       } else {
         viewHolder.setBackgroundRes(R.drawable.sticky_date_header_background);
       }
     } else if (type == HEADER_TYPE_INLINE_DATE) {
       if (hasWallpaper) {
-        viewHolder.setBackgroundRes(R.drawable.wallpaper_bubble_background_8);
+        viewHolder.setBackgroundRes(R.drawable.wallpaper_bubble_background_18);
       } else {
         viewHolder.clearBackground();
       }
     }
 
     if (hasWallpaper && ThemeUtil.isDarkTheme(context)) {
-      viewHolder.setTextColor(ContextCompat.getColor(context, R.color.core_grey_15));
+      viewHolder.setTextColor(ContextCompat.getColor(context, R.color.signal_colorNeutralInverse));
     } else {
-      viewHolder.setTextColor(ContextCompat.getColor(context, R.color.signal_text_secondary));
+      viewHolder.setTextColor(ContextCompat.getColor(context, R.color.signal_colorOnSurfaceVariant));
     }
   }
 
   public @Nullable ConversationMessage getItem(int position) {
     position = isTypingViewEnabled() ? position - 1 : position;
 
-    if (position == -1) {
+    if (position < 0) {
       return null;
-    } else if (position < fastRecords.size()) {
-      return fastRecords.get(position);
     } else {
-      int correctedPosition = position - fastRecords.size();
       if (pagingController != null) {
-        pagingController.onDataNeededAroundIndex(correctedPosition);
+        pagingController.onDataNeededAroundIndex(position);
       }
 
-      if (correctedPosition < getItemCount()) {
-        return super.getItem(correctedPosition);
+      if (position < super.getItemCount()) {
+        return super.getItem(position);
       } else {
-        Log.d(TAG, "Could not access corrected position " + correctedPosition + " as it is out of bounds.");
+        Log.d(TAG, "Could not access corrected position " + position + " as it is out of bounds.");
         return null;
       }
     }
-  }
-
-  public void submitList(@Nullable List<ConversationMessage> pagedList) {
-    cleanFastRecords();
-    super.submitList(pagedList);
   }
 
   public void setPagingController(@Nullable PagingController pagingController) {
@@ -401,13 +397,11 @@ public class ConversationAdapter
     return recipient.getId().equals(recipientId);
   }
 
-  void onBindLastSeenViewHolder(StickyHeaderViewHolder viewHolder, int position) {
-    int messagePosition = isTypingViewEnabled ? position - 1 : position;
-    int count = messagePosition + 1;
-    viewHolder.setText(viewHolder.itemView.getContext().getResources().getQuantityString(R.plurals.ConversationAdapter_n_unread_messages, count, count));
+  void onBindLastSeenViewHolder(StickyHeaderViewHolder viewHolder, long unreadCount) {
+    viewHolder.setText(viewHolder.itemView.getContext().getResources().getQuantityString(R.plurals.ConversationAdapter_n_unread_messages, (int) unreadCount, (int) unreadCount));
 
     if (hasWallpaper) {
-      viewHolder.setBackgroundRes(R.drawable.wallpaper_bubble_background_8);
+      viewHolder.setBackgroundRes(R.drawable.wallpaper_bubble_background_18);
       viewHolder.setDividerColor(viewHolder.itemView.getResources().getColor(R.color.transparent_black_80));
     } else {
       viewHolder.clearBackground();
@@ -416,7 +410,7 @@ public class ConversationAdapter
   }
 
   boolean hasNoConversationMessages() {
-    return getItemCount() + fastRecords.size() == 0;
+    return super.getItemCount() == 0;
   }
 
   /**
@@ -526,27 +520,6 @@ public class ConversationAdapter
   }
 
   /**
-   * Adds a record to a memory cache to allow it to be rendered immediately, as opposed to waiting
-   * for a database change.
-   */
-  @MainThread
-  void addFastRecord(ConversationMessage conversationMessage) {
-    fastRecords.add(0, conversationMessage);
-    notifyDataSetChanged();
-  }
-
-  /**
-   * Marks a record as no-longer-needed. Will be removed from the adapter the next time the database
-   * changes.
-   */
-  @AnyThread
-  void releaseFastRecord(long id) {
-    synchronized (releasedFastRecords) {
-      releasedFastRecords.add(id);
-    }
-  }
-
-  /**
    * Returns set of records that are selected in multi-select mode.
    */
   public Set<MultiselectPart> getSelectedItems() {
@@ -555,6 +528,7 @@ public class ConversationAdapter
 
   public void removeFromSelection(@NonNull Set<MultiselectPart> parts) {
     selected.removeAll(parts);
+    updateSelected();
   }
 
   /**
@@ -562,6 +536,7 @@ public class ConversationAdapter
    */
   void clearSelection() {
     selected.clear();
+    updateSelected();
   }
 
   /**
@@ -573,6 +548,11 @@ public class ConversationAdapter
     } else {
       selected.add(multiselectPart);
     }
+    updateSelected();
+  }
+
+  private void updateSelected() {
+    notifyItemRangeChanged(0, getItemCount(), PAYLOAD_SELECTED);
   }
 
   /**
@@ -588,22 +568,6 @@ public class ConversationAdapter
     pool.setMaxRecycledViews(MESSAGE_TYPE_HEADER, 1);
     pool.setMaxRecycledViews(MESSAGE_TYPE_FOOTER, 1);
     pool.setMaxRecycledViews(MESSAGE_TYPE_UPDATE, 5);
-  }
-
-  @MainThread
-  private void cleanFastRecords() {
-    ThreadUtil.assertMainThread();
-
-    synchronized (releasedFastRecords) {
-      Iterator<ConversationMessage> messageIterator = fastRecords.iterator();
-      while (messageIterator.hasNext()) {
-        long id = messageIterator.next().getMessageRecord().getId();
-        if (releasedFastRecords.contains(id)) {
-          messageIterator.remove();
-          releasedFastRecords.remove(id);
-        }
-      }
-    }
   }
 
   public boolean isTypingViewEnabled() {
@@ -817,7 +781,7 @@ public class ConversationAdapter
     }
   }
 
-  interface ItemClickListener extends BindableConversationItem.EventListener {
+  public interface ItemClickListener extends BindableConversationItem.EventListener {
     void onItemClick(MultiselectPart item);
     void onItemLongClick(View itemView, MultiselectPart item);
   }

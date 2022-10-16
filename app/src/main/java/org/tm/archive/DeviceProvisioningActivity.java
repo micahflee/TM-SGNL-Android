@@ -1,6 +1,5 @@
 package org.tm.archive;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Window;
@@ -19,7 +18,6 @@ public class DeviceProvisioningActivity extends PassphraseRequiredActivity {
     supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
   }
 
-  @SuppressLint("UseCompatLoadingForDrawables")
   @Override
   protected void onCreate(Bundle bundle, boolean ready) {
     AlertDialog dialog = new AlertDialog.Builder(this)

@@ -22,6 +22,8 @@ import com.google.i18n.phonenumbers.ShortNumberInfo;
 
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.protocol.InvalidMessageException;
 import org.tm.archive.crypto.AttachmentSecret;
 import org.tm.archive.crypto.ClassicDecryptingPartInputStream;
 import org.tm.archive.crypto.MasterCipher;
@@ -44,13 +46,11 @@ import org.tm.archive.permissions.Permissions;
 import org.tm.archive.phonenumbers.NumberUtil;
 import org.tm.archive.util.Base64;
 import org.tm.archive.util.DelimiterUtil;
-import org.tm.archive.util.Hex;
+import org.signal.core.util.Hex;
 import org.tm.archive.util.JsonUtils;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.IdentityKey;
-import org.whispersystems.libsignal.InvalidMessageException;
 
 import java.io.File;
 import java.io.FileInputStream;

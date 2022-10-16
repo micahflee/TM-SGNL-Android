@@ -2,7 +2,11 @@ package org.tm.archive.messages;
 
 import android.app.Application;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.IBinder;
 
 import androidx.annotation.NonNull;
@@ -17,20 +21,22 @@ import org.tm.archive.R;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.impl.BackoffUtil;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
-import org.tm.archive.jobmanager.impl.NetworkConstraintObserver;
 import org.tm.archive.jobs.PushDecryptDrainedJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.messages.IncomingMessageProcessor.Processor;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.push.SignalServiceNetworkAccess;
 import org.tm.archive.util.AppForegroundObserver;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.SignalWebSocket;
 import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
 import org.whispersystems.signalservice.api.websocket.WebSocketUnavailableException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,13 +53,15 @@ public class IncomingMessageObserver {
 
   public static final  int  FOREGROUND_ID           = 313399;
   private static final long REQUEST_TIMEOUT_MINUTES = 1;
+  private static final long OLD_REQUEST_WINDOW_MS   = TimeUnit.MINUTES.toMillis(5);
 
   private static final AtomicInteger INSTANCE_COUNT = new AtomicInteger(0);
 
-  private final Application                               context;
-  private final SignalServiceNetworkAccess                networkAccess;
-  private final List<Runnable>                            decryptionDrainedListeners;
-  private final NetworkConstraintObserver.NetworkListener networkListener;
+  private final Application                context;
+  private final SignalServiceNetworkAccess networkAccess;
+  private final List<Runnable>             decryptionDrainedListeners;
+  private final BroadcastReceiver          connectionReceiver;
+  private final Map<String, Long>          keepAliveTokens;
 
   private boolean appVisible;
 
@@ -69,6 +77,7 @@ public class IncomingMessageObserver {
     this.context                    = context;
     this.networkAccess              = ApplicationDependencies.getSignalServiceNetworkAccess();
     this.decryptionDrainedListeners = new CopyOnWriteArrayList<>();
+    this.keepAliveTokens            = new HashMap<>();
 
     new MessageRetrievalThread().start();
 
@@ -88,18 +97,22 @@ public class IncomingMessageObserver {
       }
     });
 
-    networkListener = this::networkChanged;
-    NetworkConstraintObserver.getInstance(this.context).addListener(networkListener);
-  }
+    connectionReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        synchronized (IncomingMessageObserver.this) {
+          if (!NetworkConstraint.isMet(context)) {
+            Log.w(TAG, "Lost network connection. Shutting down our websocket connections and resetting the drained state.");
+            networkDrained    = false;
+            decryptionDrained = false;
+            disconnect();
+          }
+          IncomingMessageObserver.this.notifyAll();
+        }
+      }
+    };
 
-  private synchronized void networkChanged() {
-    if (!NetworkConstraint.isMet(context)) {
-      Log.w(TAG, "Lost network connection. Shutting down our websocket connections and resetting the drained state.");
-      networkDrained    = false;
-      decryptionDrained = false;
-      disconnect();
-    }
-    IncomingMessageObserver.this.notifyAll();
+    context.registerReceiver(connectionReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
   }
 
   public synchronized void notifyRegistrationChanged() {
@@ -148,12 +161,18 @@ public class IncomingMessageObserver {
     boolean fcmEnabled = SignalStore.account().isFcmEnabled();
     boolean hasNetwork = NetworkConstraint.isMet(context);
     boolean hasProxy   = SignalStore.proxy().isProxyEnabled();
+    long    oldRequest = System.currentTimeMillis() - OLD_REQUEST_WINDOW_MS;
 
-    Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Censored: %s, Registered: %s, Proxy: %s",
-                             hasNetwork, appVisible, fcmEnabled, networkAccess.isCensored(), registered, hasProxy));
+    boolean removedRequests = keepAliveTokens.entrySet().removeIf(e -> e.getValue() < oldRequest);
+    if (removedRequests) {
+      Log.d(TAG, "Removed old keep web socket open requests.");
+    }
+
+    Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Stay open requests: [%s], Censored: %s, Registered: %s, Proxy: %s",
+                             hasNetwork, appVisible, fcmEnabled, Util.join(keepAliveTokens.entrySet(), ","), networkAccess.isCensored(), registered, hasProxy));
 
     return registered &&
-           (appVisible || !fcmEnabled) &&
+           (appVisible || !fcmEnabled || Util.hasItems(keepAliveTokens)) &&
            hasNetwork &&
            !networkAccess.isCensored();
   }
@@ -169,7 +188,7 @@ public class IncomingMessageObserver {
   public void terminateAsync() {
     INSTANCE_COUNT.decrementAndGet();
 
-    NetworkConstraintObserver.getInstance(context).removeListener(networkListener);
+    context.unregisterReceiver(connectionReceiver);
 
     SignalExecutors.BOUNDED.execute(() -> {
       Log.w(TAG, "Beginning termination.");
@@ -180,6 +199,16 @@ public class IncomingMessageObserver {
 
   private void disconnect() {
     ApplicationDependencies.getSignalWebSocket().disconnect();
+  }
+
+  public synchronized void registerKeepAliveToken(String key) {
+    keepAliveTokens.put(key, System.currentTimeMillis());
+    notifyAll();
+  }
+
+  public synchronized void removeKeepAliveToken(String key) {
+    keepAliveTokens.remove(key);
+    notifyAll();
   }
 
   private class MessageRetrievalThread extends Thread implements Thread.UncaughtExceptionHandler {
@@ -264,7 +293,7 @@ public class IncomingMessageObserver {
     public int onStartCommand(Intent intent, int flags, int startId) {
       super.onStartCommand(intent, flags, startId);
 
-      NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), NotificationChannels.OTHER);
+      NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), NotificationChannels.BACKGROUND);
       builder.setContentTitle(getApplicationContext().getString(R.string.MessageRetrievalService_signal));
       builder.setContentText(getApplicationContext().getString(R.string.MessageRetrievalService_background_connection_enabled));
       builder.setPriority(NotificationCompat.PRIORITY_MIN);

@@ -6,7 +6,9 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.components.location.SignalPlace;
-import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.util.Optional;
+
 
 public class LocationSlide extends ImageSlide {
 

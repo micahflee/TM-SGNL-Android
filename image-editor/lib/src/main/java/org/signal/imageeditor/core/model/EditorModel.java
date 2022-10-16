@@ -10,6 +10,7 @@ import android.graphics.RectF;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
@@ -116,26 +117,26 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
     this.cropUndoRedoStacks     = new UndoRedoStacks(50);
   }
 
-  public static EditorModel create() {
-    EditorModel model = new EditorModel(EditingPurpose.IMAGE, 0, EditorElementHierarchy.create());
+  public static EditorModel create(@ColorInt int blackoutColor) {
+    EditorModel model = new EditorModel(EditingPurpose.IMAGE, 0, EditorElementHierarchy.create(blackoutColor));
     model.setCropAspectLock(false);
     return model;
   }
 
-  public static EditorModel createForAvatarCapture() {
-    EditorModel editorModel = new EditorModel(EditingPurpose.AVATAR_CAPTURE, 1, EditorElementHierarchy.createForCircleEditing());
+  public static EditorModel createForAvatarCapture(@ColorInt int blackoutColor) {
+    EditorModel editorModel = new EditorModel(EditingPurpose.AVATAR_CAPTURE, 1, EditorElementHierarchy.createForCircleEditing(blackoutColor));
     editorModel.setCropAspectLock(true);
     return editorModel;
   }
 
-  public static EditorModel createForAvatarEdit() {
-    EditorModel editorModel = new EditorModel(EditingPurpose.AVATAR_EDIT, 1, EditorElementHierarchy.createForCircleEditing());
+  public static EditorModel createForAvatarEdit(@ColorInt int blackoutColor) {
+    EditorModel editorModel = new EditorModel(EditingPurpose.AVATAR_EDIT, 1, EditorElementHierarchy.createForCircleEditing(blackoutColor));
     editorModel.setCropAspectLock(true);
     return editorModel;
   }
 
-  public static EditorModel createForWallpaperEditing(float fixedRatio) {
-    EditorModel editorModel = new EditorModel(EditingPurpose.WALLPAPER, fixedRatio, EditorElementHierarchy.createForPinchAndPanCropping());
+  public static EditorModel createForWallpaperEditing(float fixedRatio, @ColorInt int blackoutColor) {
+    EditorModel editorModel = new EditorModel(EditingPurpose.WALLPAPER, fixedRatio, EditorElementHierarchy.createForPinchAndPanCropping(blackoutColor));
     editorModel.setCropAspectLock(true);
     return editorModel;
   }
@@ -716,15 +717,15 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
    * Blocking render of the model.
    */
   @WorkerThread
-  public @NonNull Bitmap render(@NonNull Context context) {
-    return render(context, null);
+  public @NonNull Bitmap render(@NonNull Context context, @NonNull RendererContext.TypefaceProvider typefaceProvider) {
+    return render(context, null, typefaceProvider);
   }
 
   /**
    * Blocking render of the model.
    */
   @WorkerThread
-  public @NonNull Bitmap render(@NonNull Context context, @Nullable Point size) {
+  public @NonNull Bitmap render(@NonNull Context context, @Nullable Point size, @NonNull RendererContext.TypefaceProvider typefaceProvider) {
     EditorElement image      = editorElementHierarchy.getFlipRotate();
     RectF         cropRect   = editorElementHierarchy.getCropRect();
     Point         outputSize = size != null ? size : getOutputSize();
@@ -732,7 +733,7 @@ public final class EditorModel implements Parcelable, RendererContext.Ready {
     Bitmap bitmap = Bitmap.createBitmap(outputSize.x, outputSize.y, Bitmap.Config.ARGB_8888);
     try {
       Canvas canvas = new Canvas(bitmap);
-      RendererContext rendererContext = new RendererContext(context, canvas, RendererContext.Ready.NULL, RendererContext.Invalidate.NULL);
+      RendererContext rendererContext = new RendererContext(context, canvas, RendererContext.Ready.NULL, RendererContext.Invalidate.NULL, typefaceProvider);
 
       RectF bitmapArea = new RectF();
       bitmapArea.right = bitmap.getWidth();

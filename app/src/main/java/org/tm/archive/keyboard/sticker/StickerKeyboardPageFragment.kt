@@ -10,12 +10,12 @@ import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.SmoothScroller
 import com.google.android.material.appbar.AppBarLayout
+import org.signal.libsignal.protocol.util.Pair
 import org.tm.archive.LoggingFragment
 import org.tm.archive.R
 import org.tm.archive.database.DatabaseObserver
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyboard.emoji.KeyboardPageSearchView
-import org.tm.archive.keyboard.findListener
 import org.tm.archive.mms.GlideApp
 import org.tm.archive.stickers.StickerEventListener
 import org.tm.archive.stickers.StickerRolloverTouchListener
@@ -25,7 +25,8 @@ import org.tm.archive.util.InsetItemDecoration
 import org.tm.archive.util.Throttler
 import org.tm.archive.util.adapter.mapping.MappingModel
 import org.tm.archive.util.adapter.mapping.MappingModelList
-import org.whispersystems.libsignal.util.Pair
+import org.tm.archive.util.fragments.findListener
+import org.tm.archive.util.fragments.requireListener
 import java.util.Optional
 import kotlin.math.abs
 import kotlin.math.max
@@ -87,12 +88,12 @@ class StickerKeyboardPageFragment :
 
     view.findViewById<KeyboardPageSearchView>(R.id.sticker_keyboard_search_text).callbacks = object : KeyboardPageSearchView.Callbacks {
       override fun onClicked() {
-        findListener<Callback>()!!.openStickerSearch()
+        requireListener<Callback>().openStickerSearch()
       }
     }
 
     view.findViewById<View>(R.id.sticker_search).setOnClickListener {
-      findListener<Callback>()!!.openStickerSearch()
+      requireListener<Callback>().openStickerSearch()
     }
 
     view.findViewById<View>(R.id.sticker_manage).setOnClickListener { findListener<StickerEventListener>()?.onStickerManagementClicked() }
@@ -113,7 +114,7 @@ class StickerKeyboardPageFragment :
   override fun onActivityCreated(savedInstanceState: Bundle?) {
     super.onActivityCreated(savedInstanceState)
 
-    viewModel = ViewModelProvider(requireActivity(), StickerKeyboardPageViewModel.Factory(requireContext()))
+    viewModel = ViewModelProvider(requireActivity(), StickerKeyboardPageViewModel.Factory())
       .get(StickerKeyboardPageViewModel::class.java)
 
     viewModel.stickers.observe(viewLifecycleOwner, this::updateStickerList)

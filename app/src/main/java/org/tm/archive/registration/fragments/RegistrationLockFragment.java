@@ -1,11 +1,10 @@
 package org.tm.archive.registration.fragments;
 
-import static org.tm.archive.util.CircularProgressButtonUtil.cancelSpinning;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -16,9 +15,8 @@ import org.tm.archive.registration.viewmodel.BaseRegistrationViewModel;
 import org.tm.archive.registration.viewmodel.RegistrationViewModel;
 import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.FeatureFlags;
-import org.tm.archive.util.Stopwatch;
+import org.signal.core.util.Stopwatch;
 import org.tm.archive.util.SupportEmailUtil;
-import org.tm.archive.util.concurrent.SimpleTask;
 import org.tm.archive.util.navigation.SafeNavigation;
 
 import java.io.IOException;
@@ -68,7 +66,7 @@ public final class RegistrationLockFragment extends BaseRegistrationLockFragment
 
       return null;
     }, none -> {
-      cancelSpinning(pinButton);
+      pinButton.cancelSpinning();
       SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), RegistrationLockFragmentDirections.actionSuccessfulRegistration());
     });
   }

@@ -2,11 +2,11 @@ package org.tm.archive.components.settings.app.account
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.Typeface
 import android.text.InputType
 import android.util.DisplayMetrics
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -16,10 +16,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
@@ -31,9 +31,8 @@ import org.tm.archive.lock.v2.KbsConstants
 import org.tm.archive.lock.v2.PinKeyboardType
 import org.tm.archive.pin.RegistrationLockV2Dialog
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.util.FeatureFlags
-import org.tm.archive.util.ServiceUtil
-import org.tm.archive.util.ThemeUtil
+import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
 class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFragment__account) {
@@ -42,7 +41,7 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     if (requestCode == CreateKbsPinActivity.REQUEST_NEW_PIN && resultCode == CreateKbsPinActivity.RESULT_OK) {
-      Snackbar.make(requireView(), R.string.ConfirmKbsPinFragment__pin_created, Snackbar.LENGTH_LONG).setTextColor(Color.WHITE).show()
+      Snackbar.make(requireView(), R.string.ConfirmKbsPinFragment__pin_created, Snackbar.LENGTH_LONG).show()
     }
   }
 
@@ -51,7 +50,7 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
     viewModel.refreshState()
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     viewModel = ViewModelProvider(this)[AccountSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
@@ -107,7 +106,7 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
 
       sectionHeaderPref(R.string.AccountSettingsFragment__account)
 
-      if (FeatureFlags.changeNumber() && Recipient.self().changeNumberCapability == Recipient.Capability.SUPPORTED && SignalStore.account().isRegistered) {
+      if (Recipient.self().changeNumberCapability == Recipient.Capability.SUPPORTED && SignalStore.account().isRegistered) {
         clickPref(
           title = DSLSettingsText.from(R.string.AccountSettingsFragment__change_phone_number),
           onClick = {
@@ -146,7 +145,7 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
       val context: Context = requireContext()
       val metrics: DisplayMetrics = resources.displayMetrics
 
-      val dialog: AlertDialog = AlertDialog.Builder(context, if (ThemeUtil.isDarkTheme(context)) R.style.Theme_Signal_AlertDialog_Dark_Cornered_ColoredAccent else R.style.Theme_Signal_AlertDialog_Light_Cornered_ColoredAccent)
+      val dialog: AlertDialog = MaterialAlertDialogBuilder(context)
         .setView(R.layout.pin_disable_reminders_dialog)
         .create()
 
@@ -157,18 +156,34 @@ class AccountSettingsFragment : DSLSettingsFragment(R.string.AccountSettingsFrag
       val statusText = DialogCompat.requireViewById(dialog, R.id.reminder_disable_status) as TextView
       val cancelButton = DialogCompat.requireViewById(dialog, R.id.reminder_disable_cancel)
       val turnOffButton = DialogCompat.requireViewById(dialog, R.id.reminder_disable_turn_off)
+      val changeKeyboard = DialogCompat.requireViewById(dialog, R.id.reminder_change_keyboard) as Button
+
+      changeKeyboard.setOnClickListener {
+        if (pinEditText.inputType and InputType.TYPE_CLASS_NUMBER == 0) {
+          pinEditText.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+          changeKeyboard.setText(R.string.PinRestoreEntryFragment_enter_alphanumeric_pin)
+        } else {
+          pinEditText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+          changeKeyboard.setText(R.string.PinRestoreEntryFragment_enter_numeric_pin)
+        }
+        pinEditText.typeface = Typeface.DEFAULT
+      }
 
       pinEditText.post {
-        if (pinEditText.requestFocus()) {
-          ServiceUtil.getInputMethodManager(pinEditText.context).showSoftInput(pinEditText, 0)
-        }
+        ViewUtil.focusAndShowKeyboard(pinEditText)
       }
 
       ViewCompat.setAutofillHints(pinEditText, HintConstants.AUTOFILL_HINT_PASSWORD)
 
       when (SignalStore.pinValues().keyboardType) {
-        PinKeyboardType.NUMERIC -> pinEditText.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-        PinKeyboardType.ALPHA_NUMERIC -> pinEditText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        PinKeyboardType.NUMERIC -> {
+          pinEditText.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+          changeKeyboard.setText(R.string.PinRestoreEntryFragment_enter_alphanumeric_pin)
+        }
+        PinKeyboardType.ALPHA_NUMERIC -> {
+          pinEditText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+          changeKeyboard.setText(R.string.PinRestoreEntryFragment_enter_numeric_pin)
+        }
       }
 
       pinEditText.addTextChangedListener(object : SimpleTextWatcher() {

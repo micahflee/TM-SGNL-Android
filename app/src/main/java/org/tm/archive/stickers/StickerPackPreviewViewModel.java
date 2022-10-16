@@ -12,7 +12,9 @@ import androidx.lifecycle.ViewModelProvider;
 import org.tm.archive.database.DatabaseObserver;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.stickers.StickerPackPreviewRepository.StickerManifestResult;
-import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.util.Optional;
+
 
 final class StickerPackPreviewViewModel extends ViewModel {
 

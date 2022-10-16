@@ -14,7 +14,7 @@ import org.tm.archive.mediasend.Media;
 import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.profiles.edit.EditProfileRepository.UploadResult;
 import org.tm.archive.util.SingleLiveEvent;
-import org.tm.archive.util.StringUtil;
+import org.signal.core.util.StringUtil;
 import org.tm.archive.util.livedata.LiveDataUtil;
 
 import java.util.Arrays;

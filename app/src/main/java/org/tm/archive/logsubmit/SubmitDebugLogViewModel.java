@@ -1,6 +1,9 @@
 package org.tm.archive.logsubmit;
 
+import android.net.Uri;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -10,24 +13,29 @@ import androidx.lifecycle.ViewModelProvider;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.signal.core.util.tracing.Tracer;
+import org.signal.paging.LivePagedData;
 import org.signal.paging.PagedData;
 import org.signal.paging.PagingConfig;
 import org.signal.paging.PagingController;
 import org.signal.paging.ProxyPagingController;
 import org.tm.archive.database.LogDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.tm.archive.util.SingleLiveEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class SubmitDebugLogViewModel extends ViewModel {
+
+  private static final String TAG = Log.tag(SubmitDebugLogViewModel.class);
 
   private final SubmitDebugLogRepository        repo;
   private final MutableLiveData<Mode>           mode;
   private final ProxyPagingController<Long>     pagingController;
   private final List<LogLine>                   staticLines;
   private final MediatorLiveData<List<LogLine>> lines;
+  private final SingleLiveEvent<Event>          event;
   private final long                            firstViewTime;
   private final byte[]                          trace;
 
@@ -40,6 +48,7 @@ public class SubmitDebugLogViewModel extends ViewModel {
     this.firstViewTime    = System.currentTimeMillis();
     this.staticLines      = new ArrayList<>();
     this.lines            = new MediatorLiveData<>();
+    this.event            = new SingleLiveEvent<>();
 
     repo.getPrefixLogLines(staticLines -> {
       this.staticLines.addAll(staticLines);
@@ -53,7 +62,7 @@ public class SubmitDebugLogViewModel extends ViewModel {
                                                            .setStartIndex(0)
                                                            .build();
 
-      PagedData<Long, LogLine> pagedData = PagedData.create(dataSource, config);
+      LivePagedData<Long, LogLine> pagedData = PagedData.createForLiveData(dataSource, config);
 
       ThreadUtil.runOnMain(() -> {
         pagingController.set(pagedData.getController());
@@ -88,6 +97,26 @@ public class SubmitDebugLogViewModel extends ViewModel {
     return result;
   }
 
+  @NonNull LiveData<Event> getEvents() {
+    return event;
+  }
+
+  void onDiskSaveLocationReady(@Nullable Uri uri) {
+    if (uri == null) {
+      Log.w(TAG, "Null URI!");
+      event.postValue(Event.FILE_SAVE_ERROR);
+      return;
+    }
+
+    repo.writeLogToDisk(uri, firstViewTime, success -> {
+      if (success) {
+        event.postValue(Event.FILE_SAVE_SUCCESS);
+      } else {
+        event.postValue(Event.FILE_SAVE_ERROR);
+      }
+    });
+  }
+
   void onQueryUpdated(@NonNull String query) {
     throw new UnsupportedOperationException("Not yet implemented.");
   }
@@ -119,6 +148,10 @@ public class SubmitDebugLogViewModel extends ViewModel {
 
   enum Mode {
     NORMAL, EDIT, SUBMITTING
+  }
+
+  enum Event {
+    FILE_SAVE_SUCCESS, FILE_SAVE_ERROR
   }
 
   public static class Factory extends ViewModelProvider.NewInstanceFactory {

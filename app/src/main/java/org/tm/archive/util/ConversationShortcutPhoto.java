@@ -17,16 +17,17 @@ import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoaderFactory;
 import com.bumptech.glide.load.model.MultiModelLoaderFactory;
 
+import org.signal.libsignal.protocol.util.ByteUtil;
 import org.tm.archive.R;
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.FallbackPhoto80dp;
 import org.tm.archive.contacts.avatars.GeneratedContactPhoto;
 import org.tm.archive.contacts.avatars.SystemContactPhoto;
 import org.tm.archive.conversation.colors.AvatarColor;
+import org.tm.archive.database.model.ProfileAvatarFileDetails;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.profiles.AvatarHelper;
 import org.tm.archive.recipients.Recipient;
-import org.whispersystems.libsignal.util.ByteUtil;
 
 import java.security.MessageDigest;
 import java.util.Objects;
@@ -41,13 +42,15 @@ public final class ConversationShortcutPhoto implements Key {
    */
   private static final long VERSION = 1L;
 
-  private final Recipient recipient;
-  private final String    avatarObject;
+  private final Recipient                recipient;
+  private final String                   avatarObject;
+  private final ProfileAvatarFileDetails profileAvatarFileDetails;
 
   @WorkerThread
   public ConversationShortcutPhoto(@NonNull Recipient recipient) {
-    this.recipient    = recipient.resolve();
-    this.avatarObject = Util.firstNonNull(recipient.getProfileAvatar(), "");
+    this.recipient                = recipient.resolve();
+    this.avatarObject             = Util.firstNonNull(recipient.getProfileAvatar(), "");
+    this.profileAvatarFileDetails = recipient.getProfileAvatarFileDetails();
   }
 
   @Override
@@ -55,7 +58,7 @@ public final class ConversationShortcutPhoto implements Key {
     messageDigest.update(recipient.getDisplayName(ApplicationDependencies.getApplication()).getBytes());
     messageDigest.update(avatarObject.getBytes());
     messageDigest.update(isSystemContactPhoto() ? (byte) 1 : (byte) 0);
-    messageDigest.update(ByteUtil.longToByteArray(getFileLastModified()));
+    messageDigest.update(profileAvatarFileDetails.getDiskCacheKeyBytes());
     messageDigest.update(ByteUtil.longToByteArray(VERSION));
   }
 
@@ -67,20 +70,16 @@ public final class ConversationShortcutPhoto implements Key {
     return Objects.equals(recipient, that.recipient)             &&
            Objects.equals(avatarObject, that.avatarObject)       &&
            isSystemContactPhoto() == that.isSystemContactPhoto() &&
-           getFileLastModified() == that.getFileLastModified();
+           Objects.equals(profileAvatarFileDetails, that.profileAvatarFileDetails);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(recipient, avatarObject, isSystemContactPhoto(), getFileLastModified());
+    return Objects.hash(recipient, avatarObject, isSystemContactPhoto(), profileAvatarFileDetails);
   }
 
   private boolean isSystemContactPhoto() {
     return recipient.getContactPhoto() instanceof SystemContactPhoto;
-  }
-
-  private long getFileLastModified() {
-    return AvatarHelper.getLastModified(ApplicationDependencies.getApplication(), recipient.getId());
   }
 
   public static final class Loader implements ModelLoader<ConversationShortcutPhoto, Bitmap> {

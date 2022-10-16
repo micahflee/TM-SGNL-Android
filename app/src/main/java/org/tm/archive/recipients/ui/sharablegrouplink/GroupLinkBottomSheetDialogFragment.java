@@ -1,7 +1,6 @@
 package org.tm.archive.recipients.ui.sharablegrouplink;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,14 +17,17 @@ import androidx.fragment.app.FragmentManager;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import org.tm.archive.R;
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment;
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.LiveGroup;
 import org.tm.archive.recipients.ui.sharablegrouplink.qr.GroupLinkShareQrDialogFragment;
-import org.tm.archive.sharing.ShareActivity;
+import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
 
+import java.util.Collections;
 import java.util.Objects;
 
 public final class GroupLinkBottomSheetDialogFragment extends BottomSheetDialogFragment {
@@ -77,10 +79,16 @@ public final class GroupLinkBottomSheetDialogFragment extends BottomSheetDialogF
       hint.setVisibility(View.VISIBLE);
 
       shareViaSignalButton.setOnClickListener(v -> {
-        Context context = requireContext();
-        Intent  intent  = new Intent(context, ShareActivity.class);
-        intent.putExtra(Intent.EXTRA_TEXT, groupLink.getUrl());
-        context.startActivity(intent);
+        MultiselectForwardFragment.showBottomSheet(
+            getParentFragmentManager(),
+            new MultiselectForwardFragmentArgs(
+                true,
+                Collections.singletonList(new MultiShareArgs.Builder()
+                                              .withDraftText(groupLink.getUrl())
+                                              .build()),
+                R.string.MultiselectForwardFragment__share_with
+            )
+        );
 
         dismiss();
       });

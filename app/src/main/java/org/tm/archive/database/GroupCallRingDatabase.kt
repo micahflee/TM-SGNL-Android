@@ -2,9 +2,9 @@ package org.tm.archive.database
 
 import android.content.ContentValues
 import android.content.Context
+import org.signal.core.util.CursorUtil
+import org.signal.core.util.SqlUtil
 import org.signal.ringrtc.CallManager
-import org.tm.archive.util.CursorUtil
-import org.tm.archive.util.SqlUtil
 import java.util.concurrent.TimeUnit
 
 /**

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--//**TM_SA**//Chnage App Name-->
+    <!--//**TM_SA**//Change App Name-->
     <string name="app_name" translatable="false">TM SGNL</string>
 
     <!--//**TM_SA**// START Change the URL's to our-->
@@ -12,6 +12,11 @@
     <string name="terms_and_privacy_policy_url" translatable="false">http://www.telemessage.com/Privacy-Policy</string>
     <string name="sustainer_boost_and_badges" translatable="false">https://www.telemessage.com/faqs/</string>
     <!--//**TM_SA**// END Change the URL's to our-->
+
+    <string name="google_pay_url" translatable="false">https://pay.google.com</string>
+    <string name="donation_decline_code_error_url" translatable="false">https://support.signal.org/hc/articles/4408365318426#errors</string>
+    <string name="signal_me_username_url" translatable="false">https://signal.me/#u/%1$s</string>
+    <string name="signal_me_username_url_no_scheme" translatable="false">signal.me/#u/%1$s</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -59,6 +64,20 @@
     <string name="ApplicationPreferencesActivity_record_payments_recovery_phrase">Record payments recovery phrase</string>
     <string name="ApplicationPreferencesActivity_record_phrase">Record phrase</string>
     <string name="ApplicationPreferencesActivity_before_you_can_disable_your_pin">Before you can disable your PIN, you must record your payments recovery phrase to ensure you can recover your payments account.</string>
+
+    <!-- NumericKeyboardView -->
+    <string name="NumericKeyboardView__1" translatable="false">1</string>
+    <string name="NumericKeyboardView__2" translatable="false">2</string>
+    <string name="NumericKeyboardView__3" translatable="false">3</string>
+    <string name="NumericKeyboardView__4" translatable="false">4</string>
+    <string name="NumericKeyboardView__5" translatable="false">5</string>
+    <string name="NumericKeyboardView__6" translatable="false">6</string>
+    <string name="NumericKeyboardView__7" translatable="false">7</string>
+    <string name="NumericKeyboardView__8" translatable="false">8</string>
+    <string name="NumericKeyboardView__9" translatable="false">9</string>
+    <string name="NumericKeyboardView__0" translatable="false">0</string>
+    <!-- Back button on numeric keyboard -->
+    <string name="NumericKeyboardView__backspace">Backspace</string>
 
     <!-- AppProtectionPreferenceFragment -->
     <plurals name="AppProtectionPreferenceFragment_minutes">
@@ -115,11 +134,15 @@
     <string name="BlockUnblockDialog_you_will_no_longer_receive_messages_or_updates">You will no longer receive messages or updates from this group, and members won\'t be able to add you to this group again.</string>
     <string name="BlockUnblockDialog_group_members_wont_be_able_to_add_you">Group members won\'t be able to add you to this group again.</string>
     <string name="BlockUnblockDialog_group_members_will_be_able_to_add_you">Group members will be able to add you to this group again.</string>
+    <!-- Text that is shown when unblocking a TM SGNL contact -->
     <string name="BlockUnblockDialog_you_will_be_able_to_call_and_message_each_other">You will be able to message and call each other and your name and photo will be shared with them.</string>
+    <!-- Text that is shown when unblocking an SMS contact -->
+    <string name="BlockUnblockDialog_you_will_be_able_to_message_each_other">You will be able to message each other.</string>
     <string name="BlockUnblockDialog_blocked_people_wont_be_able_to_call_you_or_send_you_messages">Blocked people won\'t be able to call you or send you messages.</string>
-    <!-- Message shown on block dialog when blocking the Signal release notes recipient -->
+    <string name="BlockUnblockDialog_blocked_people_wont_be_able_to_send_you_messages">Blocked people won\'t be able to send you messages.</string>
+    <!-- Message shown on block dialog when blocking the TM SGNL release notes recipient -->
     <string name="BlockUnblockDialog_block_getting_signal_updates_and_news">Block getting TM SGNL updates and news.</string>
-    <!-- Message shown on unblock dialog when unblocking the Signal release notes recipient -->
+    <!-- Message shown on unblock dialog when unblocking the TM SGNL release notes recipient -->
     <string name="BlockUnblockDialog_resume_getting_signal_updates_and_news">Resume getting TM SGNL updates and news.</string>
     <string name="BlockUnblockDialog_unblock_s">Unblock %1$s?</string>
     <string name="BlockUnblockDialog_block">Block</string>
@@ -152,6 +175,16 @@
     <string name="CameraContacts_cant_find_who_youre_looking_for">Can\'t find who you\'re looking for?</string>
     <string name="CameraContacts_invite_a_contact_to_join_signal">Invite a contact to join TM SGNL</string>
     <string name="CameraContacts__menu_search">Search</string>
+
+    <!-- Censorship Circumvention Megaphone -->
+    <!-- Title for an alert that shows at the bottom of the chat list letting people know that circumvention is no longer needed -->
+    <string name="CensorshipCircumventionMegaphone_turn_off_censorship_circumvention">Turn off censorship circumvention?</string>
+    <!-- Body for an alert that shows at the bottom of the chat list letting people know that circumvention is no longer needed -->
+    <string name="CensorshipCircumventionMegaphone_you_can_now_connect_to_the_signal_service">You can now connect to the TM SGNL service directly for a better experience.</string>
+    <!-- Action to prompt the user to disable circumvention since it is no longer needed -->
+    <string name="CensorshipCircumventionMegaphone_turn_off">Turn off</string>
+    <!-- Action to prompt the user to dismiss the alert at the bottom of the chat list -->
+    <string name="CensorshipCircumventionMegaphone_no_thanks">No thanks</string>
 
     <!-- ClearProfileActivity -->
     <string name="ClearProfileActivity_remove">Remove</string>
@@ -186,13 +219,20 @@
     <string name="ContactsCursorLoader_contacts">Contacts</string>
     <string name="ContactsCursorLoader_groups">Groups</string>
     <string name="ContactsCursorLoader_phone_number_search">Phone number search</string>
-    <string name="ContactsCursorLoader_username_search">Username search</string>
+    <!-- Header for username search -->
+    <string name="ContactsCursorLoader_find_by_username">Find by username</string>
+    <!-- Label for my stories when selecting who to send media to -->
+    <string name="ContactsCursorLoader_my_stories">My Stories</string>
+    <!-- Action for creating a new story -->
+    <string name="ContactsCursorLoader_new_story">New story</string>
 
     <!-- ContactsDatabase -->
     <string name="ContactsDatabase_message_s">Message %s</string>
     <string name="ContactsDatabase_signal_call_s">TM SGNL Call %s</string>
 
     <!-- ContactNameEditActivity -->
+    <!-- Toolbar title for contact name edit activity -->
+    <string name="ContactNameEditActivity__edit_name">Edit name</string>
     <string name="ContactNameEditActivity_given_name">Given name</string>
     <string name="ContactNameEditActivity_family_name">Family name</string>
     <string name="ContactNameEditActivity_prefix">Prefix</string>
@@ -200,11 +240,17 @@
     <string name="ContactNameEditActivity_middle_name">Middle name</string>
 
     <!-- ContactShareEditActivity -->
+    <!-- ContactShareEditActivity toolbar title -->
+    <string name="ContactShareEditActivity__send_contact">Send contact</string>
     <string name="ContactShareEditActivity_type_home">Home</string>
     <string name="ContactShareEditActivity_type_mobile">Mobile</string>
     <string name="ContactShareEditActivity_type_work">Work</string>
     <string name="ContactShareEditActivity_type_missing">Other</string>
     <string name="ContactShareEditActivity_invalid_contact">Selected contact was invalid</string>
+    <!-- Content descrption for name edit button on contact share edit activity -->
+    <string name="ContactShareEditActivity__edit_name">Edit name</string>
+    <!-- Content description for user avatar in edit activity -->
+    <string name="ContactShareEditActivity__avatar">Avatar</string>
 
     <!-- ConversationItem -->
     <string name="ConversationItem_error_not_sent_tap_for_details">Not sent, tap for details</string>
@@ -242,8 +288,12 @@
     <string name="ConversationActivity_calls_not_supported">Calls not supported</string>
     <string name="ConversationActivity_this_device_does_not_appear_to_support_dial_actions">This device does not appear to support dial actions.</string>
     <string name="ConversationActivity_transport_insecure_sms">Insecure SMS</string>
+    <!-- A title for the option to send an SMS with a placeholder to put the name of their SIM card -->
+    <string name="ConversationActivity_transport_insecure_sms_with_sim">Insecure SMS (%1$s)</string>
     <string name="ConversationActivity_transport_insecure_mms">Insecure MMS</string>
-    <string name="ConversationActivity_transport_signal">TM SGNL</string>
+    <!-- A title for the option to send an SMS with a placeholder to put the name of their SIM card -->
+    <string name="ConversationActivity_transport_insecure_mms_with_sim">Insecure MMS (%1$s)</string>
+    <string name="ConversationActivity_transport_signal">TM SGNL message</string>
     <string name="ConversationActivity_lets_switch_to_signal">Let\'s switch to TM SGNL %1$s</string>
     <string name="ConversationActivity_specify_recipient">Please choose a contact</string>
     <string name="ConversationActivity_unblock">Unblock</string>
@@ -270,7 +320,7 @@
     <string name="ConversationActivity_signal_needs_recording_permissions_to_capture_video">TM SGNL needs microphone permissions to record videos.</string>
 
     <string name="ConversationActivity_quoted_contact_message">%1$s %2$s</string>
-    <string name="ConversationActivity_signal_cannot_sent_sms_mms_messages_because_it_is_not_your_default_sms_app">Signal cannot send SMS/MMS messages because it is not your default SMS app. Would you like to change this in your Android settings?</string>
+    <string name="ConversationActivity_signal_cannot_sent_sms_mms_messages_because_it_is_not_your_default_sms_app">TM SGNL cannot send SMS/MMS messages because it is not your default SMS app. Would you like to change this in your Android settings?</string>
     <string name="ConversationActivity_yes">Yes</string>
     <string name="ConversationActivity_no">No</string>
     <string name="ConversationActivity_search_position">%1$d of %2$d</string>
@@ -304,6 +354,8 @@
     </plurals>
 
     <!-- ConversationFragment -->
+    <!-- Toast text when contacts activity is not found -->
+    <string name="ConversationFragment__contacts_app_not_found">Contacts app not found.</string>
     <plurals name="ConversationFragment_delete_selected_messages">
         <item quantity="one">Delete selected message?</item>
         <item quantity="other">Delete selected messages?</item>
@@ -327,7 +379,7 @@
         <item quantity="other">Saving %1$d attachments to storage…</item>
     </plurals>
     <string name="ConversationFragment_pending">Pending…</string>
-    <string name="ConversationFragment_push">Data (TM SGNL)</string>
+    <string name="ConversationFragment_push">Data (Signal)</string>
     <string name="ConversationFragment_mms">MMS</string>
     <string name="ConversationFragment_sms">SMS</string>
     <string name="ConversationFragment_deleting">Deleting</string>
@@ -354,6 +406,16 @@
     <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">Your safety number with %s changed, likely because they reinstalled TM SGNL or changed devices. Tap Verify to confirm the new safety number. This is optional.</string>
     <!-- Message shown to indicate which notification profile is on/active -->
     <string name="ConversationFragment__s_on">%1$s on</string>
+    <!-- Dialog title for block group link join requests -->
+    <string name="ConversationFragment__block_request">Block request?</string>
+    <!-- Dialog message for block group link join requests -->
+    <string name="ConversationFragment__s_will_not_be_able_to_join_or_request_to_join_this_group_via_the_group_link">%1$s will not be able to join or request to join this group via the group link. They can still be added to the group manually.</string>
+    <!-- Dialog confirm block request button -->
+    <string name="ConversationFragment__block_request_button">Block request</string>
+    <!-- Dialog cancel block request button -->
+    <string name="ConversationFragment__cancel">Cancel</string>
+    <!-- Message shown after successfully blocking join requests for a user -->
+    <string name="ConversationFragment__blocked">Blocked</string>
 
     <plurals name="ConversationListFragment_delete_selected_conversations">
         <item quantity="one">Delete selected conversation?</item>
@@ -369,7 +431,7 @@
         <item quantity="one">Conversation archived</item>
         <item quantity="other">%d conversations archived</item>
     </plurals>
-    <string name="ConversationListFragment_undo">UNDO</string>
+    <string name="ConversationListFragment_undo">Undo</string>
     <plurals name="ConversationListFragment_moved_conversations_to_inbox">
         <item quantity="one">Moved conversation to inbox</item>
         <item quantity="other">Moved %d conversations to inbox</item>
@@ -438,7 +500,6 @@
     <string name="ConversationTypingView__plus_d">+%1$d</string>
 
     <!-- CreateGroupActivity -->
-    <string name="CreateGroupActivity_some_contacts_cannot_be_in_legacy_groups">Some contacts cannot be in legacy groups.</string>
     <string name="CreateGroupActivity__select_members">Select members</string>
 
     <!-- CreateProfileActivity -->
@@ -446,8 +507,22 @@
     <string name="CreateProfileActivity_error_setting_profile_photo">Error setting profile photo</string>
     <string name="CreateProfileActivity_problem_setting_profile">Problem setting profile</string>
     <string name="CreateProfileActivity_set_up_your_profile">Set up your profile</string>
-    <string name="CreateProfileActivity_signal_profiles_are_end_to_end_encrypted">Your profile is end-to-end encrypted. Your profile and changes to it will be visible to your contacts, when you initiate or accept new conversations, and when you join new groups.</string>
+    <string name="CreateProfileActivity_signal_profiles_are_end_to_end_encrypted">Your profile and changes to it will be visible to people you message, contacts, and groups.</string>
     <string name="CreateProfileActivity_set_avatar_description">Set avatar</string>
+
+    <!-- ProfileCreateFragment -->
+    <!-- Displayed at the top of the screen and explains how profiles can be viewed. -->
+    <string name="ProfileCreateFragment__profiles_are_visible_to_contacts_and_people_you_message">Profiles are visible to people you message, contacts, and groups.</string>
+    <!-- Title of clickable row to select phone number privacy settings -->
+    <string name="ProfileCreateFragment__who_can_find_me">Who can find me by number?</string>
+
+    <!-- WhoCanSeeMyPhoneNumberFragment -->
+    <!-- Toolbar title for this screen -->
+    <string name="WhoCanSeeMyPhoneNumberFragment__who_can_find_me_by_number">Who can find me by number?</string>
+    <!-- Description for radio item stating anyone can see your phone number -->
+    <string name="WhoCanSeeMyPhoneNumberFragment__anyone_who_has">Anyone who has your phone number in their contacts will see you as a contact on TM SGNL. Others will be able to find you with your number in search.</string>
+    <!-- Description for radio item stating no one will be able to see your phone number -->
+    <string name="WhoCanSeeMyPhoneNumberFragment__nobody_on_signal">Nobody on TM SGNL will be able to find you with your phone number.</string>
 
     <!-- ChooseBackupFragment -->
     <string name="ChooseBackupFragment__restore_from_backup">Restore from backup?</string>
@@ -462,6 +537,12 @@
     <string name="RestoreBackupFragment__to_continue_using_backups_please_choose_a_folder">To continue using backups, please choose a folder. New backups will be saved to this location.</string>
     <string name="RestoreBackupFragment__choose_folder">Choose folder</string>
     <string name="RestoreBackupFragment__not_now">Not now</string>
+    <!-- Couldn\'t find the selected backup -->
+    <string name="RestoreBackupFragment__backup_not_found">Backup not found.</string>
+    <!-- Couldn\'t read the selected backup -->
+    <string name="RestoreBackupFragment__backup_could_not_be_read">Backup could not be read.</string>
+    <!-- Backup has an unsupported file extension -->
+    <string name="RestoreBackupFragment__backup_has_a_bad_extension">Backup has a bad extension.</string>
 
     <!-- BackupsPreferenceFragment -->
     <string name="BackupsPreferenceFragment__chat_backups">Chat backups</string>
@@ -476,6 +557,8 @@
     <string name="BackupsPreferenceFragment__to_restore_a_backup">To restore a backup, install a new copy of TM SGNL. Open the app and tap "Restore backup", then locate a backup file. %1$s</string>
     <string name="BackupsPreferenceFragment__learn_more">Learn more</string>
     <string name="BackupsPreferenceFragment__in_progress">In progress…</string>
+    <!-- Status text shown in backup preferences when verifying a backup -->
+    <string name="BackupsPreferenceFragment__verifying_backup">Verifying backup…</string>
     <string name="BackupsPreferenceFragment__d_so_far">%1$d so far…</string>
     <!-- Show percentage of completion of backup -->
     <string name="BackupsPreferenceFragment__s_so_far">%1$s%% so far…</string>
@@ -537,11 +620,6 @@
         <item quantity="other">%d pending member requests.</item>
     </plurals>
     <string name="PendingGroupJoinRequestsReminder_view">View</string>
-
-    <!-- ShareActivity -->
-    <string name="ShareActivity_share_with">Share with</string>
-    <string name="ShareActivity_multiple_attachments_are_only_supported">Multiple attachments are only supported for images and videos</string>
-    <string name="ShareActivity_you_do_not_have_permission_to_send_to_this_group">You do not have permission to send to this group</string>
 
     <!-- GcmRefreshJob -->
     <string name="GcmRefreshJob_Permanent_Signal_communication_failure">Permanent TM SGNL communication failure!</string>
@@ -728,31 +806,11 @@
     <string name="AddGroupDetailsFragment__this_field_is_required">This field is required.</string>
     <string name="AddGroupDetailsFragment__group_creation_failed">Group creation failed.</string>
     <string name="AddGroupDetailsFragment__try_again_later">Try again later.</string>
-    <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt">You\'ve selected a contact that doesn\'t support TM SGNL groups, so this group will be MMS.</string>
-    <string name="AddGroupDetailsFragment_custom_mms_group_names_and_photos_will_only_be_visible_to_you">Custom MMS group names and photos will only be visible to you.</string>
+    <!-- Displayed when adding group details to an MMS Group -->
+    <string name="AddGroupDetailsFragment__youve_selected_a_contact_that_doesnt_support">You\'ve selected a contact that doesn\'t support TM SGNL groups, so this group will be MMS. Custom MMS group names and photos will only be visible to you.</string>
     <string name="AddGroupDetailsFragment__remove">Remove</string>
     <string name="AddGroupDetailsFragment__sms_contact">SMS contact</string>
     <string name="AddGroupDetailsFragment__remove_s_from_this_group">Remove %1$s from this group?</string>
-    <plurals name="AddGroupDetailsFragment__d_members_do_not_support_new_groups">
-        <item quantity="one">%d member does not support New Groups, so this will be a Legacy Group.</item>
-        <item quantity="other">%d members do not support New Groups, so this group will be a Legacy Group.</item>
-    </plurals>
-    <plurals name="AddGroupDetailsFragment__d_members_do_not_support_new_groups_so_this_group_cannot_be_created">
-        <item quantity="one">%d member does not support New Groups, so this group cannot be created.</item>
-        <item quantity="other">%d members do not support New Groups, so this group cannot be created.</item>
-    </plurals>
-
-    <!-- NonGv2MemberDialog -->
-    <string name="NonGv2MemberDialog_single_users_are_non_gv2_capable">A Legacy Group will be created because “%1$s” is using an old version of TM SGNL. You can create a New Style Group with them after they update TM SGNL, or remove them before creating the group.</string>
-    <plurals name="NonGv2MemberDialog_d_users_are_non_gv2_capable">
-        <item quantity="one">A Legacy Group will be created because %1$d member is using an old version of TM SGNL. You can create a New Style Group with them after they update TM SGNL, or remove them before creating the group.</item>
-        <item quantity="other">A Legacy Group will be created because %1$d members are using an old version of TM SGNL. You can create a New Style Group with them after they update TM SGNL, or remove them before creating the group.</item>
-    </plurals>
-    <string name="NonGv2MemberDialog_single_users_are_non_gv2_capable_forced_migration">This group cannot be created because “%1$s” is using an old version of TM SGNL. You must remove them before creating the group.</string>
-    <plurals name="NonGv2MemberDialog_d_users_are_non_gv2_capable_forced_migration">
-        <item quantity="one">This group cannot be created because %1$d member is using an old version of TM SGNL. You must remove them before creating the group.</item>
-        <item quantity="other">This group cannot be created because %1$d members are using an old version of TM SGNL. You must remove them before creating the group.</item>
-    </plurals>
 
     <!-- ManageGroupActivity -->
     <string name="ManageGroupActivity_member_requests_and_invites">Member requests &amp; invites</string>
@@ -819,6 +877,11 @@
     <string name="ManageProfileFragment_failed_to_set_avatar">Failed to set avatar</string>
     <string name="ManageProfileFragment_badges">Badges</string>
     <string name="ManageProfileFragment__edit_photo">Edit photo</string>
+    <!-- Snackbar message after creating username -->
+    <string name="ManageProfileFragment__username_created">Username created</string>
+    <!-- Snackbar message after copying username -->
+    <string name="ManageProfileFragment__username_copied">Username copied</string>
+
 
     <!-- ManageRecipientActivity -->
     <string name="ManageRecipientActivity_no_groups_in_common">No groups in common</string>
@@ -838,6 +901,9 @@
     <string name="CustomNotificationsDialogFragment__use_custom_notifications">Use custom notifications</string>
     <string name="CustomNotificationsDialogFragment__notification_sound">Notification sound</string>
     <string name="CustomNotificationsDialogFragment__vibrate">Vibrate</string>
+    <!-- Button text for customizing notification options -->
+    <string name="CustomNotificationsDialogFragment__customize">Customize</string>
+    <string name="CustomNotificationsDialogFragment__change_sound_and_vibration">Change sound and vibration</string>
     <string name="CustomNotificationsDialogFragment__call_settings">Call settings</string>
     <string name="CustomNotificationsDialogFragment__ringtone">Ringtone</string>
     <string name="CustomNotificationsDialogFragment__enabled">Enabled</string>
@@ -875,8 +941,17 @@
     <string name="GroupJoinBottomSheetDialogFragment_unable_to_join_group_please_try_again_later">Unable to join group. Please try again later</string>
     <string name="GroupJoinBottomSheetDialogFragment_encountered_a_network_error">Encountered a network error.</string>
     <string name="GroupJoinBottomSheetDialogFragment_this_group_link_is_not_active">This group link is not active</string>
+    <!-- Title shown when there was an known issue getting group information from a group link -->
+    <string name="GroupJoinBottomSheetDialogFragment_cant_join_group">Can\'t join group</string>
+    <!-- Message shown when you try to get information for a group via link but an admin has removed you -->
+    <string name="GroupJoinBottomSheetDialogFragment_you_cant_join_this_group_via_the_group_link_because_an_admin_removed_you">You can\'t join this group via the group link because an admin removed you.</string>
+    <!-- Message shown when you try to get information for a group via link but the link is no longer valid -->
+    <string name="GroupJoinBottomSheetDialogFragment_this_group_link_is_no_longer_valid">This group link is no longer valid.</string>
+    <!-- Title shown when there was an unknown issue getting group information from a group link -->
+    <string name="GroupJoinBottomSheetDialogFragment_link_error">Link error</string>
+    <!-- Message shown when you try to get information for a group via link but an unknown issue occurred -->
+    <string name="GroupJoinBottomSheetDialogFragment_joining_via_this_link_failed_try_joining_again_later">Joining via this link failed. Try joining again later.</string>
 
-    <string name="GroupJoinBottomSheetDialogFragment_unable_to_get_group_information_please_try_again_later">Unable to get group information, please try again later</string>
     <string name="GroupJoinBottomSheetDialogFragment_direct_join">Do you want to join this group and share your name and photo with its members?</string>
     <string name="GroupJoinBottomSheetDialogFragment_admin_approval_needed">An admin of this group must approve your request before you can join this group. When you request to join, your name and photo will be shared with its members.</string>
     <plurals name="GroupJoinBottomSheetDialogFragment_group_dot_d_members">
@@ -906,6 +981,8 @@
     <!-- GV2 Request confirmation dialog -->
     <string name="RequestConfirmationDialog_add_s_to_the_group">Add “%1$s” to the group?</string>
     <string name="RequestConfirmationDialog_deny_request_from_s">Deny request from “%1$s”?</string>
+    <!-- Confirm dialog message shown when deny a group link join request and group link is enabled. -->
+    <string name="RequestConfirmationDialog_deny_request_from_s_they_will_not_be_able_to_request">Deny request from “%1$s”? They will not be able to request to join via the group link again.</string>
     <string name="RequestConfirmationDialog_add">Add</string>
     <string name="RequestConfirmationDialog_deny">Deny</string>
 
@@ -1016,11 +1093,16 @@
     <string name="Megaphones_appearance">Appearance</string>
     <string name="Megaphones_add_photo">Add photo</string>
 
+    <!-- Title of a bottom sheet to render messages that all quote a specific message -->
+    <string name="MessageQuotesBottomSheet_replies">Replies</string>
+
     <!-- NotificationBarManager -->
     <string name="NotificationBarManager_signal_call_in_progress">TM SGNL call in progress</string>
     <string name="NotificationBarManager__establishing_signal_call">Establishing TM SGNL call</string>
     <string name="NotificationBarManager__incoming_signal_call">Incoming TM SGNL call</string>
     <string name="NotificationBarManager__incoming_signal_group_call">Incoming TM SGNL group call</string>
+    <!-- Temporary notification shown when starting the calling service -->
+    <string name="NotificationBarManager__starting_signal_call_service">Starting TM SGNL call service</string>
     <string name="NotificationBarManager__stopping_signal_call_service">Stopping TM SGNL call service</string>
     <string name="NotificationBarManager__decline_call">Decline call</string>
     <string name="NotificationBarManager__answer_call">Answer call</string>
@@ -1236,6 +1318,11 @@
     <!-- GV2 group link requests -->
     <string name="MessageRecord_you_sent_a_request_to_join_the_group">You sent a request to join the group.</string>
     <string name="MessageRecord_s_requested_to_join_via_the_group_link">%1$s requested to join via the group link.</string>
+    <!-- Update message shown when someone requests to join via group link and cancels the request back to back -->
+    <plurals name="MessageRecord_s_requested_and_cancelled_their_request_to_join_via_the_group_link">
+        <item quantity="one">%1$s requested and cancelled their request to join via the group link.</item>
+        <item quantity="other">%1$s requested and cancelled %2$d requests to join via the group link.</item>
+    </plurals>
 
     <!-- GV2 group link approvals -->
     <string name="MessageRecord_s_approved_your_request_to_join_the_group">%1$s approved your request to join the group.</string>
@@ -1261,9 +1348,11 @@
     <string name="MessageRecord_a_message_from_s_couldnt_be_delivered">A message from %s couldn\'t be delivered</string>
     <string name="MessageRecord_s_changed_their_phone_number">%1$s changed their phone number.</string>
     <!-- Update item message shown in the release channel when someone is already a sustainer so we ask them if they want to boost. -->
-    <string name="MessageRecord_like_this_new_feature_say_thanks_with_a_boost">Like this new feature? Say thanks with a Boost.</string>
-    <!-- Update item message shown in the release channel when someone is not a sustainer so we ask them to consider becoming one -->
-    <string name="MessageRecord_signal_is_powered_by_people_like_you_become_a_sustainer_today">TM SGNL is powered by people like you. Become a sustainer today.</string>
+    <string name="MessageRecord_like_this_new_feature_help_support_signal_with_a_one_time_donation">Like this new feature? Help support TM SGNL with a one-time donation.</string>
+    <!-- Update item message shown when we merge two threads together -->
+    <string name="MessageRecord_your_message_history_with_s_and_their_number_s_has_been_merged">Your message history with %1$s and their number %2$s has been merged.</string>
+    <!-- Update item message shown when we merge two threads together and we don't know the phone number of the other thread -->
+    <string name="MessageRecord_your_message_history_with_s_and_another_chat_has_been_merged">Your message history with %1$s and another chat that belonged to them has been merged.</string>
 
     <!-- Group Calling update messages -->
     <string name="MessageRecord_s_started_a_group_call_s">%1$s started a group call · %2$s</string>
@@ -1297,13 +1386,17 @@
     <string name="MessageRequestBottomView_block">Block</string>
     <string name="MessageRequestBottomView_unblock">Unblock</string>
     <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_they_wont_know_youve_seen_their_messages_until_you_accept">Let %1$s message you and share your name and photo with them? They won\'t know you\'ve seen their message until you accept.</string>
+    <!-- Shown in message request flow. Describes what will happen if you unblock a TM SGNL user -->
     <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them">Let %1$s message you and share your name and photo with them? You won\'t receive any messages until you unblock them.</string>
+    <!-- Shown in message request flow. Describes what will happen if you unblock an SMS user -->
+    <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them_SMS">Let %1$s message you? You won\'t receive any messages until you unblock them.</string>
     <string name="MessageRequestBottomView_get_updates_and_news_from_s_you_wont_receive_any_updates_until_you_unblock_them">Get updates and news from %1$s? You won\'t receive any updates until you unblock them.</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_this_group_and_share_your_name_and_photo">Continue your conversation with this group and share your name and photo with its members?</string>
     <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">Upgrade this group to activate new features like @mentions and admins. Members who have not shared their name or photo in this group will be invited to join.</string>
     <string name="MessageRequestBottomView_this_legacy_group_can_no_longer_be_used">This Legacy Group can no longer be used because it is too large. The maximum group size is %1$d.</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_s_and_share_your_name_and_photo">Continue your conversation with %1$s and share your name and photo with them?</string>
     <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group and share your name and photo with its members? They won\'t know you\'ve seen their messages until you accept.</string>
+    <string name="MessageRequestBottomView_do_you_want_to_join_this_group_you_wont_see_their_messages">Join this group and share your name and photo with its members? You won\'t see their messages until you accept.</string>
     <string name="MessageRequestBottomView_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group? They won’t know you’ve seen their messages until you accept.</string>
     <string name="MessageRequestBottomView_unblock_this_group_and_share_your_name_and_photo_with_its_members">Unblock this group and share your name and photo with its members? You won\'t receive any messages until you unblock them.</string>
     <string name="MessageRequestBottomView_legacy_learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
@@ -1315,9 +1408,15 @@
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
+    <!-- Describes the number of members in a group. The string MessageRequestProfileView_invited is nested in the parentheses. -->
     <plurals name="MessageRequestProfileView_members_and_invited">
-        <item quantity="one">%1$d member (+%2$d invited)</item>
-        <item quantity="other">%1$d members (+%2$d invited)</item>
+        <item quantity="one">%1$d member (%2$s)</item>
+        <item quantity="other">%1$d members (%2$s)</item>
+    </plurals>
+    <!-- Describes the number of people invited to a group. Nested inside of the string MessageRequestProfileView_members_and_invited -->
+    <plurals name="MessageRequestProfileView_invited">
+        <item quantity="one">+%1$d invited</item>
+        <item quantity="other">+%1$d invited</item>
     </plurals>
     <plurals name="MessageRequestProfileView_member_of_d_additional_groups">
         <item quantity="one">%d additional group</item>
@@ -1429,6 +1528,8 @@
 
     <!-- Recipient -->
     <string name="Recipient_you">You</string>
+    <!-- Name of recipient representing user\'s \'My Story\' -->
+    <string name="Recipient_my_story">My Story</string>
 
     <!-- RecipientPreferencesActivity -->
     <string name="RecipientPreferenceActivity_block">Block</string>
@@ -1460,6 +1561,16 @@
     <string name="WebRtcCallActivity__signal_s">TM SGNL %1$s</string>
     <string name="WebRtcCallActivity__calling">Calling…</string>
     <string name="WebRtcCallActivity__group_is_too_large_to_ring_the_participants">Group is too large to ring the participants.</string>
+    <!-- Call status shown when an active call was disconnected (e.g., network hiccup) and is trying to reconnect -->
+    <string name="WebRtcCallActivity__reconnecting">Reconnecting…</string>
+    <!-- Title for dialog warning about lacking bluetooth permissions during a call -->
+    <string name="WebRtcCallActivity__bluetooth_permission_denied">Bluetooth permission denied</string>
+    <!-- Message for dialog warning about lacking bluetooth permissions during a call and references the permission needed by name -->
+    <string name="WebRtcCallActivity__please_enable_the_nearby_devices_permission_to_use_bluetooth_during_a_call">Please enable the \"Nearby devices\" permission to use bluetooth during a call.</string>
+    <!-- Positive action for bluetooth warning dialog to open settings -->
+    <string name="WebRtcCallActivity__open_settings">Open settings</string>
+    <!-- Negative aciton for bluetooth warning dialog to dismiss dialog -->
+    <string name="WebRtcCallActivity__not_now">Not now</string>
 
     <!-- WebRtcCallView -->
     <string name="WebRtcCallView__signal_call">TM SGNL Call</string>
@@ -1517,6 +1628,7 @@
     <string name="WebRtcCallView__flip">Flip</string>
     <string name="WebRtcCallView__speaker">Speaker</string>
     <string name="WebRtcCallView__camera">Camera</string>
+    <string name="WebRtcCallView__unmute">Unmute</string>
     <string name="WebRtcCallView__mute">Mute</string>
     <string name="WebRtcCallView__ring">Ring</string>
     <string name="WebRtcCallView__end_call">End call</string>
@@ -1591,7 +1703,7 @@
     <string name="RegistrationActivity_enter_your_phone_number">Enter your phone number</string>
     <string name="RegistrationActivity_you_will_receive_a_verification_code">You will receive a verification code. Carrier rates may apply.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Enter the code we sent to %s</string>
-    <string name="RegistrationActivity_make_sure_your_phone_has_a_cellular_signal">Make sure your phone has a cellular signal to receive your SMS or call</string>
+    <string name="RegistrationActivity_make_sure_your_phone_has_a_cellular_signal">Make sure your phone has a cellular TM SGNL to receive your SMS or call</string>
 
     <string name="RegistrationActivity_phone_number_description">Phone number</string>
     <string name="RegistrationActivity_country_code_description">Country code</string>
@@ -1635,16 +1747,16 @@
     <string name="SharedContactView_invite_to_signal">Invite to TM SGNL</string>
     <string name="SharedContactView_message">TM SGNL Message</string>
 
-    <!-- SignalBottomActionBar -->
+    <!-- TM SGNLBottomActionBar -->
     <string name="SignalBottomActionBar_more">More</string>
 
-    <!-- SignalPinReminders -->
-    <string name="SignalPinReminders_well_remind_you_again_later">We\'ll remind you again later.</string>
-    <string name="SignalPinReminders_well_remind_you_again_tomorrow">We\'ll remind you again tomorrow.</string>
-    <string name="SignalPinReminders_well_remind_you_again_in_a_few_days">We\'ll remind you again in a few days.</string>
-    <string name="SignalPinReminders_well_remind_you_again_in_a_week">We\'ll remind you again in a week.</string>
-    <string name="SignalPinReminders_well_remind_you_again_in_a_couple_weeks">We\'ll remind you again in a couple weeks.</string>
-    <string name="SignalPinReminders_well_remind_you_again_in_a_month">We\'ll remind you again in a month.</string>
+    <!-- TM SGNLPinReminders -->
+    <string name="SignalPinReminders_well_remind_you_again_later">PIN verified successfully. We\'ll remind you again later.</string>
+    <string name="SignalPinReminders_well_remind_you_again_tomorrow">PIN verified successfully. We\'ll remind you again tomorrow.</string>
+    <string name="SignalPinReminders_well_remind_you_again_in_a_few_days">PIN verified successfully. We\'ll remind you again in a few days.</string>
+    <string name="SignalPinReminders_well_remind_you_again_in_a_week">PIN verified successfully. We\'ll remind you again in a week.</string>
+    <string name="SignalPinReminders_well_remind_you_again_in_a_couple_weeks">PIN verified successfully. We\'ll remind you again in a couple weeks.</string>
+    <string name="SignalPinReminders_well_remind_you_again_in_a_month">PIN verified successfully. We\'ll remind you again in a month.</string>
 
     <!-- Slide -->
     <string name="Slide_image">Image</string>
@@ -1689,6 +1801,12 @@
     <!-- SubmitDebugLogActivity -->
     <string name="SubmitDebugLogActivity_edit">Edit</string>
     <string name="SubmitDebugLogActivity_done">Done</string>
+    <!-- Menu option to save a debug log file to disk. -->
+    <string name="SubmitDebugLogActivity_save">Save</string>
+    <!-- Error that is show in a toast when we fail to save a debug log file to disk. -->
+    <string name="SubmitDebugLogActivity_failed_to_save">Failed to save</string>
+    <!-- Toast that is show to notify that we have saved the debug log file to disk. -->
+    <string name="SubmitDebugLogActivity_save_complete">Save complete</string>
     <string name="SubmitDebugLogActivity_tap_a_line_to_delete_it">Tap a line to delete it</string>
     <string name="SubmitDebugLogActivity_submit">Submit</string>
     <string name="SubmitDebugLogActivity_failed_to_submit_logs">Failed to submit logs</string>
@@ -1739,6 +1857,16 @@
     <string name="ThreadRecord_file">File</string>
     <string name="ThreadRecord_video">Video</string>
     <string name="ThreadRecord_chat_session_refreshed">Chat session refreshed</string>
+    <!-- Displayed in the notification when the user is sent a gift -->
+    <string name="ThreadRecord__you_received_a_gift">You received a gift</string>
+    <!-- Displayed in the notification when the user sends a gift -->
+    <string name="ThreadRecord__you_sent_a_gift">You sent a gift</string>
+    <!-- Displayed in the notification when the user has opened a received gift -->
+    <string name="ThreadRecord__you_redeemed_a_gift_badge">You redeemed a gift badge</string>
+    <!-- Displayed in the conversation list when someone reacted to your story -->
+    <string name="ThreadRecord__reacted_s_to_your_story">Reacted %1$s to your story</string>
+    <!-- Displayed in the conversation list when you reacted to someone\'s story -->
+    <string name="ThreadRecord__reacted_s_to_their_story">Reacted %1$s to their story</string>
 
     <!-- UpdateApkReadyListener -->
     <string name="UpdateApkReadyListener_Signal_update">TM SGNL update</string>
@@ -1753,6 +1881,10 @@
     <string name="UnverifiedSendDialog_send">Send</string>
 
     <!-- UsernameEditFragment -->
+    <!-- Toolbar title when entering from registration -->
+    <string name="UsernameEditFragment__add_a_username">Add a username</string>
+    <!-- Instructional text at the top of the username edit screen -->
+    <string name="UsernameEditFragment__choose_your_username">Choose your username</string>
     <string name="UsernameEditFragment_username">Username</string>
     <string name="UsernameEditFragment_delete">Delete</string>
     <string name="UsernameEditFragment_successfully_set_username">Successfully set username.</string>
@@ -1764,12 +1896,24 @@
     <string name="UsernameEditFragment_usernames_cannot_begin_with_a_number">Usernames cannot begin with a number.</string>
     <string name="UsernameEditFragment_username_is_invalid">Username is invalid.</string>
     <string name="UsernameEditFragment_usernames_must_be_between_a_and_b_characters">Usernames must be between %1$d and %2$d characters.</string>
-    <string name="UsernameEditFragment_usernames_on_signal_are_optional">Usernames on TM SGNL are optional. If you choose to create a username, other TM SGNL users will be able to find you by this username and contact you without knowing your phone number.</string>
+    <!-- Explanation about what usernames provide -->
+    <string name="UsernameEditFragment__usernames_let_others_message">Usernames let others message you without needing your phone number. They are paired with a set of digits to help keep your address private.</string>
+    <!-- Dialog title for explanation about numbers at the end of the username -->
+    <string name="UsernameEditFragment__what_is_this_number">What is this number?</string>
+    <string name="UsernameEditFragment__these_digits_help_keep">These digits help keep your username private so you can avoid unwanted messages. Share your username with only the people and groups you\'d like to chat with. If you change usernames you\'ll get a new set of digits.</string>
+    <!-- Button to allow user to skip -->
+    <string name="UsernameEditFragment__skip">Skip</string>
+    <!-- Content description for done button -->
+    <string name="UsernameEditFragment__done">Done</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="one">%d contact is on TM SGNL!</item>
         <item quantity="other">%d contacts are on TM SGNL!</item>
     </plurals>
+
+    <!-- UsernameShareBottomSheet -->
+    <!-- Explanation of what the sheet enables the user to do -->
+    <string name="UsernameShareBottomSheet__copy_or_share_a_username_link">Copy or share a username link</string>
 
     <!-- VerifyIdentityActivity -->
     <string name="VerifyIdentityActivity_your_contact_is_running_an_old_version_of_signal">Your contact is running an old version of TM SGNL. Please ask them to update before verifying your safety number.</string>
@@ -1819,6 +1963,10 @@
     <string name="MediaPreviewActivity_media_delete_confirmation_title">Delete message?</string>
     <string name="MediaPreviewActivity_media_delete_confirmation_message">This will permanently delete this message.</string>
     <string name="MediaPreviewActivity_s_to_s">%1$s to %2$s</string>
+    <!-- All media preview title when viewing media send by you to another recipient (allows changing of \'You\' based on context) -->
+    <string name="MediaPreviewActivity_you_to_s">You to %1$s</string>
+    <!-- All media preview title when viewing media sent by another recipient to you (allows changing of \'You\' based on context) -->
+    <string name="MediaPreviewActivity_s_to_you">%1$s to you</string>
     <string name="MediaPreviewActivity_media_no_longer_available">Media no longer available.</string>
     <string name="MediaPreviewActivity_cant_find_an_app_able_to_share_this_media">Can\'t find an app able to share this media.</string>
 
@@ -1868,6 +2016,10 @@
     <string name="NotificationChannel_voice_notes">Voice Notes</string>
     <string name="NotificationChannel_contact_joined_signal">Contact joined TM SGNL</string>
     <string name="NotificationChannels__no_activity_available_to_open_notification_channel_settings">No activity available to open notification channel settings.</string>
+    <!-- Notification channel name for showing persistent background connection on devices without push notifications -->
+    <string name="NotificationChannel_background_connection">Background connection</string>
+    <!-- Notification channel name for showing call status information (like connection, ongoing, etc.) Not ringing. -->
+    <string name="NotificationChannel_call_status">Call status</string>
     <!-- ProfileEditNameFragment -->
 
     <!-- QuickResponseService -->
@@ -1882,6 +2034,10 @@
     <string name="SearchToolbar_search">Search</string>
     <string name="SearchToolbar_search_for_conversations_contacts_and_messages">Search for conversations, contacts, and messages</string>
 
+    <!-- Material3 Search Toolbar -->
+    <string name="Material3SearchToolbar__close">Close</string>
+    <string name="Material3SearchToolbar__clear">Clear</string>
+
     <!-- ShortcutLauncherActivity -->
     <string name="ShortcutLauncherActivity_invalid_shortcut">Invalid shortcut</string>
 
@@ -1890,6 +2046,8 @@
     <string name="SingleRecipientNotificationBuilder_new_message">New message</string>
     <string name="SingleRecipientNotificationBuilder_message_request">Message request</string>
     <string name="SingleRecipientNotificationBuilder_you">You</string>
+    <!-- Notification subtext for group stories -->
+    <string name="SingleRecipientNotificationBuilder__s_dot_story">%1$s &#8226; Story</string>
 
     <!-- ThumbnailView -->
     <string name="ThumbnailView_Play_video_description">Play video</string>
@@ -1978,6 +2136,11 @@
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
+    <!-- Displays number of viewers for a story -->
+    <plurals name="contact_selection_list_item__number_of_viewers">
+        <item quantity="one">%1$d viewer</item>
+        <item quantity="other">%1$d viewers</item>
+    </plurals>
 
     <!-- conversation_activity -->
     <string name="conversation_activity__type_message_push">TM SGNL message</string>
@@ -2021,14 +2184,14 @@
     <string name="ConversationUpdateItem_invite_friends">Invite friends</string>
     <string name="ConversationUpdateItem_enable_call_notifications">Enable Call Notifications</string>
     <string name="ConversationUpdateItem_update_contact">Update contact</string>
+    <!-- Update item button text to show to block a recipient from requesting to join via group link -->
+    <string name="ConversationUpdateItem_block_request">Block request</string>
     <string name="ConversationUpdateItem_no_groups_in_common_review_requests_carefully">No groups in common. Review requests carefully.</string>
     <string name="ConversationUpdateItem_no_contacts_in_this_group_review_requests_carefully">No contacts in this group. Review requests carefully.</string>
     <string name="ConversationUpdateItem_view">View</string>
     <string name="ConversationUpdateItem_the_disappearing_message_time_will_be_set_to_s_when_you_message_them">The disappearing message time will be set to %1$s when you message them.</string>
     <!-- Update item button text to show to boost a feature -->
-    <string name="ConversationUpdateItem_signal_boost">TM SGNL Boost</string>
-    <!-- Update item button text to show to become a sustainer in the release notes channel -->
-    <string name="ConversationUpdateItem_become_a_sustainer">Become a Sustainer</string>
+    <string name="ConversationUpdateItem_donate">Donate</string>
 
     <!-- audio_view -->
     <string name="audio_view__play_pause_accessibility_description">Play … Pause</string>
@@ -2043,6 +2206,14 @@
     <string name="QuoteView_sticker">Sticker</string>
     <string name="QuoteView_you">You</string>
     <string name="QuoteView_original_missing">Original message not found</string>
+    <!-- Author formatting for group stories -->
+    <string name="QuoteView_s_story">%1$s · Story</string>
+    <!-- Label indicating that a quote is for a reply to a story you created -->
+    <string name="QuoteView_your_story">You · Story</string>
+    <!-- Label indicating that the story being replied to no longer exists -->
+    <string name="QuoteView_no_longer_available">No longer available</string>
+    <!-- Label for quoted gift -->
+    <string name="QuoteView__gift">Gift</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">Scroll to the bottom</string>
@@ -2175,8 +2346,13 @@
     <string name="media_overview_activity__no_media">No media</string>
 
     <!-- message_recipients_list_item -->
-    <string name="message_recipients_list_item__view">VIEW</string>
-    <string name="message_recipients_list_item__resend">RESEND</string>
+    <string name="message_recipients_list_item__view">View</string>
+    <string name="message_recipients_list_item__resend">Resend</string>
+
+    <!-- Displayed in a toast when user long presses an item in MyStories -->
+    <string name="MyStoriesFragment__copied_sent_timestamp_to_clipboard">Copied sent timestamp to clipboard.</string>
+    <!-- Displayed when there are no outgoing stories -->
+    <string name="MyStoriesFragment__updates_to_your_story_will_show_up_here">Updates to your story will show up here.</string>
 
     <!-- GroupUtil -->
     <plurals name="GroupUtil_joined_the_group">
@@ -2258,10 +2434,10 @@
 
     <!-- message_details_header -->
     <string name="message_details_header__issues_need_your_attention">Some issues need your attention.</string>
-    <string name="message_details_header__sent">Sent:</string>
-    <string name="message_details_header__received">Received:</string>
-    <string name="message_details_header__disappears">Disappears:</string>
-    <string name="message_details_header__via">Via:</string>
+    <string name="message_details_header_sent">Sent</string>
+    <string name="message_details_header_received">Received</string>
+    <string name="message_details_header_disappears">Disappears</string>
+    <string name="message_details_header_via">Via</string>
 
     <!-- message_details_recipient_header -->
     <string name="message_details_recipient_header__pending_send">Pending</string>
@@ -2271,6 +2447,7 @@
     <string name="message_details_recipient_header__read_by">Read by</string>
     <string name="message_details_recipient_header__not_sent">Not sent</string>
     <string name="message_details_recipient_header__viewed">Viewed by</string>
+    <string name="message_details_recipient_header__skipped">Skipped</string>
 
     <!-- message_Details_recipient -->
     <string name="message_details_recipient__failed_to_send">Failed to send</string>
@@ -2315,7 +2492,7 @@
     <string name="HelpFragment__debug_log">Debug Log:</string>
     <string name="HelpFragment__could_not_upload_logs">Could not upload logs</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">Please be as descriptive as possible to help us understand the issue.</string>
-    <string-array name="HelpFragment__categories_3">
+    <string-array name="HelpFragment__categories_4">
         <item>\-\- Please select an option \-\-</item>
         <item>Something\'s Not Working</item>
         <item>Feature Request</item>
@@ -2323,7 +2500,7 @@
         <item>Feedback</item>
         <item>Other</item>
         <item>Payments (MobileCoin)</item>
-        <item>Sustainers &amp; TM SGNL Boost</item>
+        <item>Donations &amp; Badges</item>
     </string-array>
 
     <!-- ReactWithAnyEmojiBottomSheetDialogFragment -->
@@ -2406,6 +2583,8 @@
     <string name="preferences__led_color">LED color</string>
     <string name="preferences__led_color_unknown">Unknown</string>
     <string name="preferences__pref_led_blink_title">LED blink pattern</string>
+    <string name="preferences__customize">Customize</string>
+    <string name="preferences__change_sound_and_vibration">Change sound and vibration</string>
     <string name="preferences__sound">Sound</string>
     <string name="preferences__silent">Silent</string>
     <string name="preferences__default">Default</string>
@@ -2431,10 +2610,11 @@
     <string name="preferences__help">Help</string>
     <string name="preferences__advanced">Advanced</string>
     <string name="preferences__donate_to_signal">Donate to TM SGNL</string>
-    <string name="preferences__subscription">Subscription</string>
-    <string name="preferences__become_a_signal_sustainer">Become a TM SGNL Sustainer</string>
-    <string name="preferences__signal_boost">TM SGNL Boost</string>
+    <!-- Preference label for making one-time donations to TM SGNL -->
+    <string name="preferences__one_time_donation">One-time Donation</string>
     <string name="preferences__privacy">Privacy</string>
+    <!-- Preference label for stories -->
+    <string name="preferences__stories">Stories</string>
     <string name="preferences__mms_user_agent">MMS User Agent</string>
     <string name="preferences__advanced_mms_access_point_names">Manual MMS settings</string>
     <string name="preferences__mmsc_url">MMSC URL</string>
@@ -2447,6 +2627,8 @@
     <string name="preferences__data_and_storage">Data and storage</string>
     <string name="preferences__storage">Storage</string>
     <string name="preferences__payments">Payments</string>
+    <!-- Privacy settings payments section description -->
+    <string name="preferences__payment_lock">Payment lock</string>
     <string name="preferences__payments_beta">Payments (Beta)</string>
     <string name="preferences__conversation_length_limit">Conversation length limit</string>
     <string name="preferences__keep_messages">Keep messages</string>
@@ -2513,6 +2695,8 @@
     <string name="preferences_app_protection__who_can">Who can…</string>
     <string name="preferences_app_protection__app_access">App access</string>
     <string name="preferences_app_protection__communication">Communication</string>
+    <!-- Privacy settings payments section title -->
+    <string name="preferences_app_protection__payments">Payments</string>
     <string name="preferences_chats__chats">Chats</string>
     <string name="preferences_data_and_storage__manage_storage">Manage storage</string>
     <string name="preferences_data_and_storage__calls">Calls</string>
@@ -2532,6 +2716,19 @@
     <string name="preferences_chats__message_text_size">Message font size</string>
     <string name="preferences_events__contact_joined_signal">Contact joined TM SGNL</string>
     <string name="preferences_notifications__priority">Priority</string>
+    <!-- Heading for the \'censorship circumvention\' section of privacy preferences -->
+    <string name="preferences_communication__category_censorship_circumvention">Censorship circumvention</string>
+    <!-- Title of the \'censorship circumvention\' toggle switch -->
+    <string name="preferences_communication__censorship_circumvention">Censorship circumvention</string>
+    <string name="preferences_communication__censorship_circumvention_if_enabled_signal_will_attempt_to_circumvent_censorship">If enabled, TM SGNL will attempt to circumvent censorship. Do not enable this feature unless you are in a location where TM SGNL is censored.</string>
+    <!-- Summary text for \'censorship circumvention\' toggle. Indicates that we automatically enabled it because we believe you\'re in a censored country -->
+    <string name="preferences_communication__censorship_circumvention_has_been_activated_based_on_your_accounts_phone_number">Censorship circumvention has been activated based on your account\'s phone number.</string>
+    <!-- Summary text for \'censorship circumvention\' toggle. Indicates that you disabled it even though we believe you\'re in a censored country -->
+    <string name="preferences_communication__censorship_circumvention_you_have_manually_disabled">You have manually disabled censorship circumvention.</string>
+    <!-- Summary text for \'censorship circumvention\' toggle. Indicates that you cannot use it because you\'re already connected to the TM SGNL service -->
+    <string name="preferences_communication__censorship_circumvention_is_not_necessary_you_are_already_connected">Censorship circumvention is not necessary; you are already connected to the TM SGNL service.</string>
+    <!-- Summary text for \'censorship circumvention\' toggle. Indicates that you cannot use it because you\'re not connected to the internet -->
+    <string name="preferences_communication__censorship_circumvention_can_only_be_activated_when_connected_to_the_internet">Censorship circumvention can only be activated when connected to the internet.</string>
     <string name="preferences_communication__category_sealed_sender">Sealed Sender</string>
     <string name="preferences_communication__sealed_sender_display_indicators">Display indicators</string>
     <string name="preferences_communication__sealed_sender_display_indicators_description">Show a status icon when you select "Message details" on messages that were delivered using sealed sender.</string>
@@ -2560,27 +2757,28 @@
     <string name="configurable_single_select__customize_option">Customize option</string>
 
     <!-- Internal only preferences -->
+    <string name="preferences__internal_hide_story" translatable="false">Hide story</string>
+    <string name="preferences__internal_story_or_profile_selector" translatable="false">Story or profile selector</string>
+    <string name="preferences__internal_stories_dialog_launcher" translatable="false">Stories dialog launcher</string>
+    <string name="preferences__internal_retry_send" translatable="false">Retry send</string>
+    <string name="preferences__internal_clear_onboarding_state" translatable="false">Clear onboarding state</string>
+    <string name="preferences__internal_clears_onboarding_flag_and_triggers_download_of_onboarding_stories" translatable="false">Clears onboarding flag and triggers download of onboarding stories.</string>
     <string name="preferences__internal_preferences" translatable="false">Internal Preferences</string>
     <string name="preferences__internal_preferences_groups_v2" translatable="false">Groups V2</string>
-    <string name="preferences__internal_preferences_groups_v1_migration" translatable="false">Groups V1 Migration</string>
-    <string name="preferences__internal_do_not_create_gv2" translatable="false">Do not create GV2 groups</string>
-    <string name="preferences__internal_do_not_create_gv2_description" translatable="false">Do not attempt to create GV2 groups, i.e. will force creation of GV1 or MMS groups.</string>
     <string name="preferences__internal_force_gv2_invites" translatable="false">Force Invites</string>
     <string name="preferences__internal_force_gv2_invites_description" translatable="false">Members will not be added directly to a GV2 even if they could be.</string>
     <string name="preferences__internal_ignore_gv2_server_changes" translatable="false">Ignore server changes</string>
     <string name="preferences__internal_ignore_gv2_server_changes_description" translatable="false">Changes in server\'s response will be ignored, causing passive voice update messages if P2P is also ignored.</string>
     <string name="preferences__internal_ignore_gv2_p2p_changes" translatable="false">Ignore P2P changes</string>
     <string name="preferences__internal_ignore_gv2_p2p_changes_description" translatable="false">Changes sent P2P will be ignored. In conjunction with ignoring server changes, will cause passive voice.</string>
-    <string name="preferences__internal_do_not_initiate_automigrate" translatable="false">Disable Auto-Migration Initiation</string>
-    <string name="preferences__internal_do_not_initiate_automigrate_description" translatable="false">Do not attempt to initiate an auto-migration. You will still recognize migrated groups.</string>
-    <string name="preferences__internal_do_not_notify_automigrate" translatable="false">Disable Auto-Migration Notification</string>
-    <string name="preferences__internal_do_not_notify_automigrate_description" translatable="false">Do not attempt to notify other users of an auto-migration. They will have to discover it on their own.</string>
     <string name="preferences__internal_payments" translatable="false">Payments</string>
     <string name="preferences__internal_payment_copy_data" translatable="false">Copy payments data</string>
     <string name="preferences__internal_payment_copy_data_description" translatable="false">Copy all payment records to clipboard.</string>
     <string name="preferences__internal_account" translatable="false">Account</string>
     <string name="preferences__internal_refresh_attributes" translatable="false">Refresh attributes</string>
     <string name="preferences__internal_refresh_attributes_description" translatable="false">Forces a write of capabilities on to the server followed by a read.</string>
+    <string name="preferences__internal_refresh_profile" translatable="false">Refresh profile</string>
+    <string name="preferences__internal_refresh_profile_description" translatable="false">Forces a refresh of your own profile.</string>
     <string name="preferences__internal_rotate_profile_key" translatable="false">Rotate profile key</string>
     <string name="preferences__internal_rotate_profile_key_description" translatable="false">Creates a new versioned profile, and triggers an update of any GV2 group you belong to.</string>
     <string name="preferences__internal_refresh_remote_config" translatable="false">Refresh remote config</string>
@@ -2590,19 +2788,24 @@
     <string name="preferences__internal_user_details_description" translatable="false">Show a button in conversation settings that lets you see more information about a user.</string>
     <string name="preferences__internal_shake_to_report" translatable="false">Shake to Report</string>
     <string name="preferences__internal_shake_to_report_description" translatable="false">Shake your phone to easily submit and share a debug log.</string>
+    <string name="preferences__internal_clear_keep_longer_logs" translatable="false">Clear keep longer logs</string>
     <string name="preferences__internal_storage_service" translatable="false">Storage service</string>
     <string name="preferences__internal_disable_storage_service" translatable="false">Disable syncing</string>
     <string name="preferences__internal_disable_storage_service_description" translatable="false">Prevent syncing any data to/from storage service.</string>
     <string name="preferences__internal_force_storage_service_sync" translatable="false">Overwrite remote data</string>
+    <string name="preferences__internal_sync_now" translatable="false">Sync now</string>
+    <string name="preferences__internal_sync_now_description" translatable="false">Enqueue a normal storage service sync.</string>
     <string name="preferences__internal_force_storage_service_sync_description" translatable="false">Forces remote storage to match the local device state.</string>
     <string name="preferences__internal_network" translatable="false">Network</string>
-    <string name="preferences__internal_force_censorship" translatable="false">Force censorship</string>
-    <string name="preferences__internal_force_censorship_description" translatable="false">Force the app to behave as if it is in a country where TM SGNL is censored.</string>
+    <string name="preferences__internal_allow_censorship_toggle" translatable="false">Allow censorship circumvention toggle</string>
+    <string name="preferences__internal_allow_censorship_toggle_description" translatable="false">Allow changing the censorship circumvention toggle regardless of network connectivity.</string>
     <string name="preferences__internal_conversations_and_shortcuts" translatable="false">Conversations and Shortcuts</string>
     <string name="preferences__internal_emoji" translatable="false">Emoji</string>
     <string name="preferences__internal_use_built_in_emoji_set" translatable="false">Use built-in emoji set</string>
     <string name="preferences__internal_force_emoji_download" translatable="false">Force emoji download</string>
     <string name="preferences__internal_force_emoji_download_description" translatable="false">Download the latest emoji set if it\'s newer than what we have.</string>
+    <string name="preferences__internal_force_search_index_download" translatable="false">Force search index download</string>
+    <string name="preferences__internal_force_search_index_download_description" translatable="false">Download the latest emoji search index if it\'s newer than what we have.</string>
     <string name="preferences__internal_current_version_builtin" translatable="false">Current version: Built-In</string>
     <string name="preferences__internal_current_version_d_at_density_s" translatable="false">Current version: %1$d at density %2$s</string>
     <string name="preferences__internal_delete_all_dynamic_shortcuts" translatable="false">Delete all dynamic shortcuts</string>
@@ -2622,13 +2825,35 @@
     <string name="preferences__internal_local_metrics" translatable="false">Local Metrics</string>
     <string name="preferences__internal_clear_local_metrics" translatable="false">Clear local metrics</string>
     <string name="preferences__internal_click_to_clear_all_local_metrics_state" translatable="false">Click to clear all local metrics state.</string>
-    <string name="preferences__internal_calling" translatable="false">Group call server</string>
-    <string name="preferences__internal_calling_default" translatable="false">Default</string>
-    <string name="preferences__internal_calling_s_server" translatable="false">%1$s server</string>
-    <string name="preferences__internal_audio" translatable="false">Audio options</string>
-    <string name="preferences__internal_audio_processing_method" translatable="false">Audio processing method</string>
+    <string name="preferences__internal_calling_server" translatable="false">Group call server</string>
+    <string name="preferences__internal_calling_server_default" translatable="false">Default</string>
+    <string name="preferences__internal_calling_server_s" translatable="false">%1$s server</string>
+    <string name="preferences__internal_calling" translatable="false">Calling options</string>
+    <string name="preferences__internal_calling_audio_processing_method" translatable="false">Audio processing method</string>
+    <string name="preferences__internal_calling_bandwidth_mode" translatable="false">Bandwidth mode</string>
+    <string name="preferences__internal_calling_disable_telecom" translatable="false">Disable Telecom integration</string>
     <string name="preferences__internal_badges" translatable="false">Badges</string>
     <string name="preferences__internal_badges_enqueue_redemption" translatable="false">Enqueue redemption.</string>
+    <string name="preferences__internal_badges_enqueue_keep_alive" translatable="false">Enqueue keep-alive.</string>
+    <string name="preferences__internal_badges_set_error_state" translatable="false">Set error state.</string>
+    <string name="preferences__internal_release_channel" translatable="false">Release channel</string>
+    <string name="preferences__internal_fetch_release_channel" translatable="false">Fetch release channel</string>
+    <string name="preferences__internal_release_channel_set_last_version" translatable="false">Set last version seen back 10 versions</string>
+    <string name="preferences__internal_reset_donation_megaphone" translatable="false">Reset donation megaphone</string>
+    <string name="preferences__internal_add_sample_note" translatable="false">Add sample note</string>
+    <string name="preferences__internal_disable_stories" translatable="false">Disable stories</string>
+    <string name="preferences__internal_cds" translatable="false">CDS</string>
+    <string name="preferences__internal_clear_history" translatable="false">Clear history</string>
+    <string name="preferences__internal_clear_history_description" translatable="false">Clears all CDS history, meaning the next sync will consider all numbers to be new.</string>
+    <string name="preferences__internal_clear_all_service_ids" translatable="false">Clear all service IDs</string>
+    <string name="preferences__internal_clear_all_service_ids_description" translatable="false">Clears all known service IDs (except your own) for people that have phone numbers. Do not use on your personal device!</string>
+    <string name="preferences__internal_clear_all_profile_keys" translatable="false">Clear all profile keys</string>
+    <string name="preferences__internal_clear_all_profile_keys_description" translatable="false">Clears all known profile keys (except your own). Do not use on your personal device!</string>
+    <string name="preferences__internal_donor_error_expired_badge" translatable="false">Expired Badge</string>
+    <string name="preferences__internal_donor_error_charge_failure" translatable="false">Charge Failure</string>
+    <string name="preferences__internal_donor_error_cancelation_reason" translatable="false">Cancelation Reason</string>
+    <string name="preferences__internal_donor_error_save_and_finish" translatable="false">Save and Finish</string>
+    <string name="preferences__internal_donor_error_clear" translatable="false">Clear</string>
 
 
     <!-- Payments -->
@@ -2679,6 +2904,14 @@
     <string name="PaymentsHomeFragment__payments_not_available">Payments in TM SGNL is no longer available. You can still transfer funds to an exchange but you can no longer send and receive payments or add funds.</string>
 
     <string name="PaymentsHomeFragment__mobile_coin_terms_url" translatable="false">https://www.mobilecoin.com/terms-of-use.html</string>
+    <!-- Alert dialog title which shows up after a payment to turn on payment lock -->
+    <string name="PaymentsHomeFragment__turn_on">Turn on Payment Lock for future sends?</string>
+    <!-- Alert dialog description for why payment lock should be enabled before sending payments -->
+    <string name="PaymentsHomeFragment__add_an_additional_layer">Add an additional layer of security and require Android screen lock or fingerprint to transfer funds.</string>
+    <!-- Alert dialog button to enable payment lock -->
+    <string name="PaymentsHomeFragment__enable">Turn On</string>
+    <!-- Alert dialog button to not enable payment lock for now -->
+    <string name="PaymentsHomeFragment__not_now">Not Now</string>
 
     <!-- PaymentsAddMoneyFragment -->
     <string name="PaymentsAddMoneyFragment__add_funds">Add funds</string>
@@ -2770,8 +3003,19 @@
     <string name="ConfirmPayment__payment_failed">Payment failed</string>
     <string name="ConfirmPayment__payment_will_continue_processing">Payment will continue processing</string>
     <string name="ConfirmPaymentFragment__invalid_recipient">Invalid recipient</string>
+    <!-- Title of a dialog show when we were unable to present the user\'s screenlock before sending a payment -->
+    <string name="ConfirmPaymentFragment__failed_to_show_payment_lock">Failed to show payment lock</string>
+    <!-- Body of a dialog show when we were unable to present the user\'s screenlock before sending a payment -->
+    <string name="ConfirmPaymentFragment__you_enabled_payment_lock_in_the_settings">You enabled payment lock in the settings, but it cannot be shown.</string>
+    <!-- Button in a dialog that will take the user to the privacy settings -->
+    <string name="ConfirmPaymentFragment__go_to_settings">Go to settings</string>
     <string name="ConfirmPaymentFragment__this_person_has_not_activated_payments">This person has not activated payments</string>
     <string name="ConfirmPaymentFragment__unable_to_request_a_network_fee">Unable to request a network fee. To continue this payment tap okay to try again.</string>
+
+    <!-- BiometricDeviceAuthentication -->
+    <!-- Biometric/Device authentication prompt title -->
+    <string name="BiometricDeviceAuthentication__signal">TM SGNL</string>
+
 
     <!-- CurrencyAmountFormatter_s_at_s -->
     <string name="CurrencyAmountFormatter_s_at_s">%1$s at %2$s</string>
@@ -3061,7 +3305,7 @@
     <string name="ConversationActivity_signal_needs_sms_permission_in_order_to_send_an_sms">TM SGNL needs SMS permission in order to send an SMS, but it has been permanently denied. Please continue to app settings, select \"Permissions\" and enable \"SMS\".</string>
     <string name="Permissions_continue">Continue</string>
     <string name="Permissions_not_now">Not now</string>
-    <string name="conversation_activity__enable_signal_messages">ENABLE SIGNAL MESSAGES</string>
+    <string name="conversation_activity__enable_signal_messages">ENABLE TM SGNL MESSAGES</string>
     <string name="SQLCipherMigrationHelper_migrating_signal_database">Migrating TM SGNL database</string>
     <string name="PushDecryptJob_new_locked_message">New locked message</string>
     <string name="PushDecryptJob_unlock_to_view_pending_messages">Unlock to view pending messages</string>
@@ -3103,10 +3347,16 @@
     <string name="BackupDialog_you_successfully_entered_your_backup_passphrase">You successfully entered your backup passphrase</string>
     <string name="BackupDialog_passphrase_was_not_correct">Passphrase was not correct</string>
     <string name="LocalBackupJob_creating_signal_backup">Creating TM SGNL backup…</string>
+    <!-- Title for progress notification shown in a system notification while verifying a recent backup. -->
+    <string name="LocalBackupJob_verifying_signal_backup">Verifying TM SGNL backup…</string>
     <string name="LocalBackupJobApi29_backup_failed">Backup failed</string>
     <string name="LocalBackupJobApi29_your_backup_directory_has_been_deleted_or_moved">Your backup directory has been deleted or moved.</string>
     <string name="LocalBackupJobApi29_your_backup_file_is_too_large">Your backup file is too large to store on this volume.</string>
     <string name="LocalBackupJobApi29_there_is_not_enough_space">There is not enough space to store your backup.</string>
+    <!-- Error message shown if a newly created backup could not be verified as accurate -->
+    <string name="LocalBackupJobApi29_your_backup_could_not_be_verified">Your recent backup could not be created and verified. Please create a new one.</string>
+    <!-- Error message shown if a very large attachment is encountered during the backup creation and causes the backup to fail -->
+    <string name="LocalBackupJobApi29_your_backup_contains_a_very_large_file">Your backup contains a very large file that cannot be backed up. Please delete it and create a new backup.</string>
     <string name="LocalBackupJobApi29_tap_to_manage_backups">Tap to manage backups.</string>
     <string name="ProgressPreference_d_messages_so_far">%d messages so far</string>
     <string name="RegistrationActivity_wrong_number">Wrong number</string>
@@ -3306,6 +3556,8 @@
     <string name="RecipientBottomSheet_s_will_be_able_to_edit_group">"%1$s" will be able to edit this group and its members.</string>
 
     <string name="RecipientBottomSheet_remove_s_from_the_group">Remove %1$s from the group?</string>
+    <!-- Dialog message shown when removing someone from a group with group link being active to indicate they will not be able to rejoin -->
+    <string name="RecipientBottomSheet_remove_s_from_the_group_they_will_not_be_able_to_rejoin">Remove %1$s from the group? They will not be able to rejoin via the group link.</string>
     <string name="RecipientBottomSheet_remove">Remove</string>
     <string name="RecipientBottomSheet_copied_to_clipboard">Copied to clipboard</string>
 
@@ -3388,6 +3640,10 @@
     <string name="CallParticipant__you_on_another_device">You (on another device)</string>
     <string name="CallParticipant__s_on_another_device">%1$s (on another device)</string>
 
+    <!-- WifiToCellularPopupWindow -->
+    <!-- Message shown during a call when the WiFi network is unusable, and cellular data starts to be used for the call instead. -->
+    <string name="WifiToCellularPopupWindow__weak_wifi_switched_to_cellular">Weak Wi-Fi. Switched to cellular.</string>
+
     <!-- DeleteAccountFragment -->
     <string name="DeleteAccountFragment__deleting_your_account_will">Deleting your account will:</string>
     <string name="DeleteAccountFragment__enter_your_phone_number">Enter your phone number</string>
@@ -3407,6 +3663,8 @@
     <string name="DeleteAccountFragment__leaving_groups">Leaving groups…</string>
     <!-- Title of progress dialog shown when a user deletes their account and the process has left all groups -->
     <string name="DeleteAccountFragment__deleting_account">Deleting account…</string>
+    <!-- Message of progress dialog shown when a user deletes their account and the process is canceling their subscription -->
+    <string name="DeleteAccountFragment__canceling_your_subscription">Canceling your subscription…</string>
     <!-- Message of progress dialog shown when a user deletes their account and the process is leaving groups -->
     <string name="DeleteAccountFragment__depending_on_the_number_of_groups">Depending on the number of groups you\'re in, this might take a few minutes</string>
     <!-- Message of progress dialog shown when a user deletes their account and the process has left all groups -->
@@ -3431,13 +3689,12 @@
     <string name="ShareActivity__send">Send</string>
     <string name="ShareActivity__comma_s">, %1$s</string>
     <string name="ShareActivity__sharing_to_multiple_chats_is">Sharing to multiple chats is only supported for TM SGNL messages</string>
+    <!-- Toast when the incoming intent is invalid -->
+    <string name="ShareActivity__could_not_get_share_data_from_intent">Could not get share data from intent.</string>
 
     <!-- MultiShareDialogs -->
     <string name="MultiShareDialogs__failed_to_send_to_some_users">Failed to send to some users</string>
     <string name="MultiShareDialogs__you_can_only_share_with_up_to">You can only share with up to %1$d chats</string>
-
-    <!-- ShareInterstitialActivity -->
-    <string name="ShareInterstitialActivity__forward_message">Forward message</string>
 
     <!-- ChatWallpaperActivity -->
     <string name="ChatWallpaperActivity__chat_wallpaper">Chat wallpaper</string>
@@ -3494,9 +3751,11 @@
     <string name="payment_info_card_you_can_cash_out_mobilecoin">You can cash out MobileCoin anytime on an exchange that supports MobileCoin. Just make a transfer to your account at that exchange.</string>
     <string name="payment_info_card_hide_this_card">Hide this card?</string>
     <string name="payment_info_card_hide">Hide</string>
-    <string name="payment_info_card_record_recovery_phrase">Record recovery phrase</string>
+    <!-- Title of save recovery phrase card -->
+    <string name="payment_info_card_save_recovery_phrase">Save recovery phrase</string>
     <string name="payment_info_card_your_recovery_phrase_gives_you">Your recovery phrase gives you another way to restore your payments account.</string>
-    <string name="payment_info_card_record_your_phrase">Record your phrase</string>
+    <!-- Button in save recovery phrase card -->
+    <string name="payment_info_card_save_your_phrase">Save your phrase</string>
     <string name="payment_info_card_update_your_pin">Update your PIN</string>
     <string name="payment_info_card_with_a_high_balance">With a high balance, you may want to update to an alphanumeric PIN to add more protection to your account.</string>
     <string name="payment_info_card_update_pin">Update PIN</string>
@@ -3520,12 +3779,26 @@
     <!-- PaymentsRecoveryStartFragment -->
     <string name="PaymentsRecoveryStartFragment__recovery_phrase">Recovery phrase</string>
     <string name="PaymentsRecoveryStartFragment__view_recovery_phrase">View recovery phrase</string>
+    <!-- Title in save recovery phrase screen -->
+    <string name="PaymentsRecoveryStartFragment__save_recovery_phrase">Save recovery phrase</string>
     <string name="PaymentsRecoveryStartFragment__enter_recovery_phrase">Enter recovery phrase</string>
     <string name="PaymentsRecoveryStartFragment__your_balance_will_automatically_restore">Your balance will automatically restore when you reinstall TM SGNL if you confirm your TM SGNL PIN. You can also restore your balance using a recovery phrase, which is a %1$d-word phrase unique to you. Write it down and store it in a safe place.</string>
+    <!-- Description in save recovery phrase screen which shows up when user has non zero balance -->
+    <string name="PaymentsRecoveryStartFragment__got_balance">You’ve got a balance! Time to save your recovery phrase—a 24-word key you can use to restore your balance.</string>
+    <!-- Description in save recovery phrase screen which shows up when user navigates from info card -->
+    <string name="PaymentsRecoveryStartFragment__time_to_save">Time to save your recovery phrase—a 24-word key you can use to restore your balance. Learn more</string>
     <string name="PaymentsRecoveryStartFragment__your_recovery_phrase_is_a">Your recovery phrase is a %1$d-word phrase unique to you. Use this phrase to restore your balance.</string>
     <string name="PaymentsRecoveryStartFragment__start">Start</string>
     <string name="PaymentsRecoveryStartFragment__enter_manually">Enter manually</string>
     <string name="PaymentsRecoveryStartFragment__paste_from_clipboard">Paste from clipboard</string>
+    <!-- Alert dialog title which asks before going back if user wants to save recovery phrase -->
+    <string name="PaymentsRecoveryStartFragment__continue_without_saving">Continue Without Saving?</string>
+    <!-- Alert dialog description to let user know why recovery phrase needs to be saved -->
+    <string name="PaymentsRecoveryStartFragment__your_recovery_phrase">Your recovery phrase lets you restore your balance in a worst-case scenario. We strongly recommend you save it.</string>
+    <!-- Alert dialog option to skip recovery phrase -->
+    <string name="PaymentsRecoveryStartFragment__skip_recovery_phrase">Skip Recovery Phrase</string>
+    <!-- Alert dialog option to cancel dialog-->
+    <string name="PaymentsRecoveryStartFragment__cancel">Cancel</string>
 
     <!-- PaymentsRecoveryPasteFragment -->
     <string name="PaymentsRecoveryPasteFragment__paste_recovery_phrase">Paste recovery phrase</string>
@@ -3603,6 +3876,7 @@
 
     <!-- AppSettingsFragment -->
     <string name="AppSettingsFragment__invite_your_friends">Invite your friends</string>
+    <string name="AppSettingsFragment__copied_subscriber_id_to_clipboard">Copied subscriber id to clipboard</string>
 
     <!-- AccountSettingsFragment -->
     <string name="AccountSettingsFragment__account">Account</string>
@@ -3673,6 +3947,14 @@
 
     <!--SmsSettingsFragment -->
     <string name="SmsSettingsFragment__use_as_default_sms_app">Use as default SMS app</string>
+    <!-- Preference title to export sms -->
+    <string name="SmsSettingsFragment__export_sms_messages">Export SMS messages</string>
+    <!-- Preference title to delete sms -->
+    <string name="SmsSettingsFragment__remove_sms_messages">Remove SMS messages</string>
+    <!-- Snackbar text to confirm deletion -->
+    <string name="SmsSettingsFragment__removing_sms_messages_from_signal">Removing SMS messages from TM SGNL…</string>
+    <!-- Snackbar text to indicate can delete later -->
+    <string name="SmsSettingsFragment__you_can_remove_sms_messages_from_signal_in_settings">You can remove SMS messages from TM SGNL in Settings at any time.</string>
 
     <!-- NotificationsSettingsFragment -->
     <string name="NotificationsSettingsFragment__messages">Messages</string>
@@ -3702,6 +3984,19 @@
     <string name="PrivacySettingsFragment__signal_message_and_calls">TM SGNL messages and calls, always relay calls, and sealed sender</string>
     <string name="PrivacySettingsFragment__default_timer_for_new_changes">Default timer for new chats</string>
     <string name="PrivacySettingsFragment__set_a_default_disappearing_message_timer_for_all_new_chats_started_by_you">Set a default disappearing message timer for all new chats started by you.</string>
+    <!-- Summary for stories preference to launch into story privacy settings -->
+    <string name="PrivacySettingsFragment__manage_your_stories">Manage your stories and who can view them</string>
+    <string name="PrivacySettingsFragment__payment_lock_require_lock">Require Android screen lock or fingerprint to transfer funds</string>
+    <!-- Alert dialog title when payment lock cannot be enabled -->
+    <string name="PrivacySettingsFragment__cant_enable_title">Can\’t enable payment lock</string>
+    <!-- Alert dialog description to setup screen lock or fingerprint in phone settings -->
+    <string name="PrivacySettingsFragment__cant_enable_description">To use Payment Lock, you must first enable a screen lock or fingerprint ID in your phone’s settings.</string>
+    <!-- Shown in a toast when we can\'t navigate to the user\'s system fingerprint settings -->
+    <string name="PrivacySettingsFragment__failed_to_navigate_to_system_settings">Failed to navigate to system settings</string>
+    <!-- Alert dialog button to go to phone settings -->
+    <string name="PrivacySettingsFragment__go_to_settings">Go to settings</string>
+    <!-- Alert dialog button to cancel the dialog -->
+    <string name="PrivacySettingsFragment__cancel">Cancel</string>
 
     <!-- AdvancedPrivacySettingsFragment -->
     <string name="AdvancedPrivacySettingsFragment__sealed_sender_link" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
@@ -3778,6 +4073,15 @@
     <string name="ChatColorGradientTool_top_edge_selector">Top edge selector</string>
     <string name="ChatColorGradientTool_bottom_edge_selector">Bottom edge selector</string>
 
+    <!-- Title text for prompt to donate. Shown in a popup at the bottom of the chat list. -->
+    <string name="Donate2022Q2Megaphone_donate_to_signal">Donate to TM SGNL</string>
+    <!-- Body text for prompt to donate. Shown in a popup at the bottom of the chat list. -->
+    <string name="Donate2022Q2Megaphone_signal_is_powered_by_people_like_you">TM SGNL is powered by people like you. Donate monthly and receive a badge.</string>
+    <!-- Button label that brings a user to the donate screen. Shown in a popup at the bottom of the chat list. -->
+    <string name="Donate2022Q2Megaphone_donate">Donate</string>
+    <!-- Button label that dismissed a prompt to donate. Shown in a popup at the bottom of the chat list. -->
+    <string name="Donate2022Q2Megaphone_not_now">Not now</string>
+
     <!-- EditReactionsFragment -->
     <string name="EditReactionsFragment__customize_reactions">Customize reactions</string>
     <string name="EditReactionsFragment__tap_to_replace_an_emoji">Tap to replace an emoji</string>
@@ -3785,12 +4089,6 @@
     <string name="EditReactionsFragment_save">Save</string>
     <string name="ChatColorSelectionFragment__auto_matches_the_color_to_the_wallpaper">Auto matches the color to the wallpaper</string>
     <string name="CustomChatColorCreatorFragment__drag_to_change_the_direction_of_the_gradient">Drag to change the direction of the gradient</string>
-
-    <!-- ChatColorsMegaphone -->
-    <string name="ChatColorsMegaphone__new_chat_colors">New Chat Colors</string>
-    <string name="ChatColorsMegaphone__we_switched_up_chat_colors">We switched up chat colors to give you more options and make chats easier to read.</string>
-    <string name="ChatColorsMegaphone__appearance">Appearance</string>
-    <string name="ChatColorsMegaphone__not_now">Not now</string>
 
     <!-- AddAProfilePhotoMegaphone -->
     <string name="AddAProfilePhotoMegaphone__add_a_profile_photo">Add a profile photo</string>
@@ -3800,9 +4098,10 @@
 
     <!-- BecomeASustainerMegaphone -->
     <string name="BecomeASustainerMegaphone__become_a_sustainer">Become a Sustainer</string>
-    <string name="BecomeASustainerMegaphone__signal_is_powered">TM SGNL is powered by people like you. Contribute and receive a profile badge.</string>
-    <string name="BecomeASustainerMegaphone__no_thanks">No thanks</string>
-    <string name="BecomeASustainerMegaphone__contribute">Contribute</string>
+    <!-- Displayed in the Become a Sustainer megaphone -->
+    <string name="BecomeASustainerMegaphone__signal_is_powered_by">TM SGNL is powered by people like you. Donate and receive a badge.</string>
+    <string name="BecomeASustainerMegaphone__not_now">Not now</string>
+    <string name="BecomeASustainerMegaphone__donate">Donate</string>
 
     <!-- KeyboardPagerFragment -->
     <string name="KeyboardPagerFragment_emoji">Emoji</string>
@@ -3824,6 +4123,8 @@
     <string name="NotificationsSettingsFragment__unknown_ringtone">Unknown ringtone</string>
 
     <!-- ConversationSettingsFragment -->
+    <!-- Error toasted when no activity can handle the add contact intent -->
+    <string name="ConversationSettingsFragment__contacts_app_not_found">Contacts app not found</string>
     <string name="ConversationSettingsFragment__send_message">Send message</string>
     <string name="ConversationSettingsFragment__start_video_call">Start video call</string>
     <string name="ConversationSettingsFragment__start_audio_call">Start audio call</string>
@@ -3890,6 +4191,30 @@
 
     <!-- NewConversationActivity -->
     <string name="NewConversationActivity__new_message">New message</string>
+    <!-- Context menu item message -->
+    <string name="NewConversationActivity__message">Message</string>
+    <!-- Context menu item audio call -->
+    <string name="NewConversationActivity__audio_call">Audio call</string>
+    <!-- Context menu item video call -->
+    <string name="NewConversationActivity__video_call">Video call</string>
+    <!-- Context menu item remove -->
+    <string name="NewConversationActivity__remove">Remove</string>
+    <!-- Context menu item block -->
+    <string name="NewConversationActivity__block">Block</string>
+    <!-- Dialog title when removing a contact -->
+    <string name="NewConversationActivity__remove_s">Remove %1$s?</string>
+    <!-- Dialog message when removing a contact -->
+    <string name="NewConversationActivity__you_wont_see_this_person">You won\'t see this person when searching. You\'ll get a message request if they message you in the future.</string>
+    <!-- Snackbar message after removing a contact -->
+    <string name="NewConversationActivity__s_has_been_removed">%1$s has been removed</string>
+    <!-- Snackbar message after blocking a contact -->
+    <string name="NewConversationActivity__s_has_been_blocked">%1$s has been blocked</string>
+    <!-- Dialog title when remove target contact is in system contacts -->
+    <string name="NewConversationActivity__unable_to_remove_s">Unable to remove %1$s</string>
+    <!-- Dialog message when remove target contact is in system contacts -->
+    <string name="NewConversationActivity__this_person_is_saved_to_your">This person is saved to your device\'s Contacts. Delete them from your Contacts and try again.</string>
+    <!-- Dialog action to view contact when they can't be removed otherwise -->
+    <string name="NewConversationActivity__view_contact">View contact</string>
 
     <!-- ContactFilterView -->
     <string name="ContactFilterView__search_name_or_number">Search name or number</string>
@@ -3929,11 +4254,20 @@
     <string name="ContactSelectionListItem__sms">SMS</string>
     <string name="ContactSelectionListItem__dot_s">· %1$s</string>
 
+    <!-- Displayed in the toolbar when externally sharing text to multiple recipients -->
+    <string name="ShareInterstitialActivity__share">Share</string>
+
     <!-- DSLSettingsToolbar -->
     <string name="DSLSettingsToolbar__navigate_up">Navigate up</string>
     <string name="MultiselectForwardFragment__forward_to">Forward to</string>
+    <!-- Displayed when sharing content via the fragment -->
+    <string name="MultiselectForwardFragment__share_with">Share with</string>
     <string name="MultiselectForwardFragment__add_a_message">Add a message</string>
     <string name="MultiselectForwardFragment__faster_forwards">Faster forwards</string>
+    <!-- Displayed when user selects a video that will be clipped before sharing to a story -->
+    <string name="MultiselectForwardFragment__videos_will_be_trimmed">Videos will be trimmed to 30s clips and sent as multiple Stories.</string>
+    <!-- Displayed when user selects a video that cannot be sent as a story -->
+    <string name="MultiselectForwardFragment__videos_sent_to_stories_cant">Videos sent to Stories can\'t be longer than 30s.</string>
     <string name="MultiselectForwardFragment__forwarded_messages_are_now">Forwarded messages are now sent immediately.</string>
     <plurals name="MultiselectForwardFragment_send_d_messages">
         <item quantity="one">Send %1$d message</item>
@@ -3951,6 +4285,8 @@
         <item quantity="one">Couldn\'t forward message because it\'s no longer available.</item>
         <item quantity="other">Couldn\'t forward messages because they\'re no longer available.</item>
     </plurals>
+    <!-- Error message shown when attempting to select a group to forward/share but it\'s announcement only and you are not an admin -->
+    <string name="MultiselectForwardFragment__only_admins_can_send_messages_to_this_group">Only admins can send messages to this group.</string>
     <string name="MultiselectForwardFragment__limit_reached">Limit reached</string>
 
     <!-- Media V2 -->
@@ -4005,6 +4341,7 @@
     <string name="SubscribeFragment__signal_is_powered_by_people_like_you">TM SGNL is powered by people like you.</string>
     <string name="SubscribeFragment__support_technology_that_is_built_for_you">Support technology that is built for you—not for your data—by joining the community of people that sustain it.</string>
     <string name="SubscribeFragment__support_technology_that_is_built_for_you_not">Support technology that is built for you, not for your data, by joining the community that sustains TM SGNL.</string>
+    <string name="SubscribeFragment__make_a_recurring_monthly_donation">Make a recurring monthly donation to TM SGNL to support technology built for you, not your data.</string>
     <string name="SubscribeFragment__currency">Currency</string>
     <string name="SubscribeFragment__more_payment_options">More Payment Options</string>
     <string name="SubscribeFragment__cancel_subscription">Cancel Subscription</string>
@@ -4016,22 +4353,22 @@
     <string name="SubscribeFragment__your_subscription_has_been_cancelled">Your subscription has been cancelled.</string>
     <string name="SubscribeFragment__update_subscription_question">Update subscription?</string>
     <string name="SubscribeFragment__update">Update</string>
-    <string name="SubscribeFragment__you_will_be_charged_the_full_amount">You will be charged the full amount of the new subscription price today. Your subscription will renew %1$s.</string>
     <string name="SubscribeFragment__you_will_be_charged_the_full_amount_s_of">You will be charged the full amount (%1$s) of the new subscription price today. Your subscription will renew monthly.</string>
 
     <string name="Subscription__s_per_month">%s/month</string>
     <string name="Subscription__s_per_month_dot_renews_s">%1$s/month · Renews %2$s</string>
     <string name="Subscription__s_per_month_dot_expires_s">%1$s/month · Expires %2$s</string>
 
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_a_non_profit_with_no">TM SGNL is a non-profit with no advertisers or investors, sustained only by the people who use and value it. Make a recurring monthly contribution and receive a profile badge to share your support.</string>
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__why_contribute">Why Contribute?</string>
+    <!-- First small text blurb on learn more sheet -->
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_a_nonprofit_with_no">TM SGNL is a nonprofit with no advertisers or investors, sustained only by the people who use and value it. Make a recurring monthly donation and receive a profile badge to share your support.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__why_donate">Why Donate?</string>
     <string name="SubscribeLearnMoreBottomSheetDialogFragment__signal_is_committed_to_developing">TM SGNL is committed to developing open source privacy technology that protects free expression and enables secure global communication.</string>
-    <string name="SubscribeLearnMoreBottomSheetDialogFragment__your_contribution">Your contribution fuels this cause and pays for the development and operations of an app used by millions for private communication. No ads. No trackers. No kidding.</string>
+    <string name="SubscribeLearnMoreBottomSheetDialogFragment__your_donation">Your donation fuels this cause and pays for the development and operations of an app used by millions for private communication. No ads. No trackers. No kidding.</string>
 
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support">Thanks for your Support!</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_the_boost">Thanks for the Boost!</string>
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_s_badge_help_signal">You\'ve earned %s badge! Help TM SGNL build awareness by displaying this badge on your profile.</string>
-    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_help_signal">You\'ve earned a Boost badge! Help TM SGNL build awareness by displaying this badge on your profile.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_s_badge_display">You\'ve earned %s badge! Display this badge on your profile to build awareness for donating to TM SGNL.</string>
+    <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_display">You\'ve earned a Boost badge! Display this badge on your profile to build awareness for donating to TM SGNL.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also">You can also</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer">become a monthly Sustainer.</string>
     <string name="SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile">Display on Profile</string>
@@ -4042,14 +4379,28 @@
     <string name="BecomeASustainerFragment__get_badges">Get badges for your profile by supporting TM SGNL.</string>
     <string name="BecomeASustainerFragment__signal_is_a_non_profit">TM SGNL is a nonprofit with no advertisers or investors, supported only by people like you.</string>
 
-    <string name="ManageDonationsFragment__my_support">My support</string>
+    <!-- Button label for creating a monthly donation -->
+    <string name="ManageDonationsFragment__make_a_monthly_donation">Make a monthly donation</string>
+    <!-- Heading for more area of manage subscriptions page -->
+    <string name="ManageDonationsFragment__more">More</string>
+    <!-- Heading for receipts area of manage subscriptions page -->
+    <string name="ManageDonationsFragment__receipts">Receipts</string>
+    <!-- Heading for my subscription area of manage subscriptions page -->
+    <string name="ManageDonationsFragment__my_subscription">My subscription</string>
     <string name="ManageDonationsFragment__manage_subscription">Manage subscription</string>
+    <!-- Label for Donation Receipts button -->
+    <string name="ManageDonationsFragment__donation_receipts">Donation Receipts</string>
     <string name="ManageDonationsFragment__badges">Badges</string>
     <string name="ManageDonationsFragment__subscription_faq">Subscription FAQ</string>
     <string name="ManageDonationsFragment__error_getting_subscription">Error getting subscription.</string>
+    <!-- Preference heading for other ways to donate -->
+    <string name="ManageDonationsFragment__other_ways_to_give">Other ways to give</string>
+    <!-- Preference label to launch badge gifting -->
+    <string name="ManageDonationsFragment__gift_a_badge">Gift a badge</string>
 
     <string name="BoostFragment__give_signal_a_boost">Give TM SGNL a Boost</string>
-    <string name="BoostFragment__say_thanks_and_earn">Say \"Thanks!\" and earn the Boost badge for %1$d days.</string>
+    <!-- Description text in boost sheet -->
+    <string name="BoostFragment__make_a_one_time">Make a one-time donation and earn a Boost badge for %1$d days.</string>
 
     <string name="Boost__enter_custom_amount">Enter Custom Amount</string>
     <string name="Boost__one_time_contribution">One-time contribution</string>
@@ -4062,18 +4413,32 @@
     <string name="MySupportPreference__couldnt_add_badge_s">Couldn\'t add badge. %1$s</string>
     <string name="MySupportPreference__please_contact_support">Please contact support.</string>
 
-    <string name="ExpiredBadgeBottomSheetDialogFragment__your_badge_has_expired">Your Badge has Expired</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__badge_expired">Badge expired</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__subscription_cancelled">Subscription cancelled</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__your_boost_badge_has_expired">Your Boost badge has expired and is no longer visible to others on your profile.</string>
+    <!-- Title of expiry sheet when boost badge falls off profile unexpectedly. -->
+    <string name="ExpiredBadgeBottomSheetDialogFragment__boost_badge_expired">Boost Badge Expired</string>
+    <!-- Displayed in the bottom sheet if a monthly donation badge unexpectedly falls off the user\'s profile -->
+    <string name="ExpiredBadgeBottomSheetDialogFragment__monthly_donation_cancelled">Monthly Donation Cancelled</string>
+    <!-- Displayed in the bottom sheet when a boost badge expires -->
+    <string name="ExpiredBadgeBottomSheetDialogFragment__your_boost_badge_has_expired_and">Your Boost badge has expired and is no longer visible on your profile.</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__you_can_reactivate">You can reactivate your Boost badge for another 30 days with a one-time contribution.</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting_technology">To continue supporting technology that is built for you, please consider becoming a monthly Sustainer.</string>
+    <!-- Displayed when we do not think the user is a subscriber when their boost expires -->
+    <string name="ExpiredBadgeBottomSheetDialogFragment__you_can_keep">You can keep using TM SGNL but to support technology that is built for you, consider becoming a sustainer by making a monthly donation.</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__become_a_sustainer">Become a Sustainer</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__add_a_boost">Add a Boost</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__not_now">Not now</string>
-    <string name="ExpiredBadgeBottomSheetDialogFragment__your_sustainer">Your Sustainer subscription was automatically cancelled because you were inactive for too long. Your %1$s badge is no longer visible on your profile.</string>
+    <!-- Copy displayed when badge expires after user inactivity -->
+    <string name="ExpiredBadgeBottomSheetDialogFragment__your_recurring_monthly_donation_was_automatically">Your recurring monthly donation was automatically cancelled because you were inactive for too long. Your %1$s badge is no longer visible on your profile.</string>
+    <!-- Copy displayed when badge expires after payment failure -->
+    <string name="ExpiredBadgeBottomSheetDialogFragment__your_recurring_monthly_donation_was_canceled">Your recurring monthly donation was cancelled because we couldn\'t process your payment. Your badge is no longer visible on your profile.</string>
+    <!-- Copy displayed when badge expires after a payment failure and we have a displayable charge failure reason -->
+    <string name="ExpiredBadgeBottomSheetDialogFragment__your_recurring_monthly_donation_was_canceled_s">Your recurring monthly donation was cancelled. %1$s Your %2$s badge is no longer visible on your profile.</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__you_can">You can keep using TM SGNL but to support the app and reactivate your badge, renew now.</string>
     <string name="ExpiredBadgeBottomSheetDialogFragment__renew_subscription">Renew subscription</string>
+    <!-- Button label to send user to Google Pay website -->
+    <string name="ExpiredBadgeBottomSheetDialogFragment__go_to_google_pay">Go to Google Pay</string>
+
+    <string name="CantProcessSubscriptionPaymentBottomSheetDialogFragment__cant_process_subscription_payment">Can\'t process subscription payment</string>
+    <string name="CantProcessSubscriptionPaymentBottomSheetDialogFragment__were_having_trouble">We\'re having trouble collecting your TM SGNL Sustainer payment. Make sure your payment method is up to date. If it isn\'t, update it in Google Pay. TM SGNL will try to process the payment again in a few days.</string>
+    <string name="CantProcessSubscriptionPaymentBottomSheetDialogFragment__dont_show_this_again">Don\'t show this again</string>
 
     <string name="Subscription__please_contact_support_for_more_information">Please contact support for more information.</string>
     <string name="Subscription__contact_support">Contact Support</string>
@@ -4088,6 +4453,14 @@
     <string name="DonationsErrors__your_payment">Your payment couldn\'t be processed and you have not been charged. Please try again.</string>
     <string name="DonationsErrors__still_processing">Still processing</string>
     <string name="DonationsErrors__couldnt_add_badge">Couldn\'t add badge</string>
+    <!-- Displayed when badge credential couldn\'t be verified -->
+    <string name="DonationsErrors__failed_to_validate_badge">Failed to validate badge</string>
+    <!-- Displayed when badge credential couldn\'t be verified -->
+    <string name="DonationsErrors__could_not_validate">Could not validate server response. Please contact support.</string>
+    <!-- Displayed as title when some generic error happens during gift badge sending -->
+    <string name="DonationsErrors__failed_to_send_gift_badge">Failed to send gift badge</string>
+    <!-- Displayed as message when some generic error happens during gift badge sending -->
+    <string name="DonationsErrors__could_not_send_gift_badge">Could not send gift badge. Please contact support.</string>
     <string name="DonationsErrors__your_badge_could_not">Your badge could not be added to your account, but you may have been charged. Please contact support.</string>
     <string name="DonationsErrors__your_payment_is_still">Your payment is still being processed. This can take a few minutes depending on your connection.</string>
     <string name="DonationsErrors__google_pay_unavailable">Google Pay Unavailable</string>
@@ -4097,8 +4470,61 @@
     <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">Your device doesn\'t support Google Pay, so you can\'t subscribe to earn a badge. You can still support TM SGNL by making a donation on our website.</string>
     <string name="NetworkFailure__network_error_check_your_connection_and_try_again">Network error. Check your connection and try again.</string>
     <string name="NetworkFailure__retry">Retry</string>
+    <!-- Displayed as a dialog title when the selected recipient for a gift doesn\'t support gifting -->
+    <string name="DonationsErrors__cant_send_gift">Can\'t send gift</string>
+    <!-- Displayed as a dialog message when the selected recipient for a gift doesn\'t support gifting -->
+    <string name="DonationsErrors__target_does_not_support_gifting">This recipient is using a version of TM SGNL that can\'t receive gift badges. They\'ll be able to receive gifts when they update to the latest version.</string>
+    <!-- Displayed as a dialog title when the user\'s profile could not be fetched, likely due to lack of internet -->
+    <string name="DonationsErrors__couldnt_send_gift">Couldn\'t send gift</string>
+    <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
+    <string name="DonationsErrors__please_check_your_network_connection">Your gift could not be sent because of a network error. Check your connection and try again.</string>
+
+    <!-- Gift message view title -->
+    <string name="GiftMessageView__gift_badge">Gift badge</string>
+    <!-- Gift message view expiry information -->
+    <plurals name="GiftMessageView__lasts_for_d_months">
+        <item quantity="one">Lasts for %1$d month</item>
+        <item quantity="other">Lasts for %1$d months</item>
+    </plurals>
+    <!-- Gift badge redeem action label -->
+    <string name="GiftMessageView__redeem">Redeem</string>
+    <!-- Gift badge view action label -->
+    <string name="GiftMessageView__view">View</string>
+    <!-- Gift badge redeeming action label -->
+    <string name="GiftMessageView__redeeming">Redeeming…</string>
+    <!-- Gift badge redeemed label -->
+    <string name="GiftMessageView__redeemed">Redeemed</string>
 
     <string name="Boost__thank_you_for_your_donation" translatable="false">Thank you for your donation. Your contribution helps fuel the mission of developing open source privacy technology that protects free expression and enables secure global communication for millions around the world. TM SGNL Technology Foundation is a tax-exempt nonprofit organization in the United States under section 501c3 of the Internal Revenue Code. Our Federal Tax ID is 82-4506840. No goods or services were provided in exchange for this donation. Please retain this receipt for your tax records.</string>
+
+    <!-- Stripe decline code generic_failure -->
+    <string name="DeclineCode__try_another_payment_method_or_contact_your_bank">Try another payment method or contact your bank for more information.</string>
+    <!-- Stripe decline code verify on Google Pay and try again -->
+    <string name="DeclineCode__verify_your_payment_method_is_up_to_date_in_google_pay_and_try_again">Verify your payment method is up to date in Google Pay and try again.</string>
+    <!-- Stripe decline code learn more action label -->
+    <string name="DeclineCode__learn_more">Learn more</string>
+    <!-- Stripe decline code contact issuer -->
+    <string name="DeclineCode__verify_your_payment_method_is_up_to_date_in_google_pay_and_try_again_if_the_problem">Verify your payment method is up to date in Google Pay and try again. If the problem continues, contact your bank.</string>
+    <!-- Stripe decline code purchase not supported -->
+    <string name="DeclineCode__your_card_does_not_support_this_type_of_purchase">Your card does not support this type of purchase. Try another payment method.</string>
+    <!-- Stripe decline code your card has expired -->
+    <string name="DeclineCode__your_card_has_expired">Your card has expired. Update your payment method in Google Pay and try again.</string>
+    <!-- Stripe decline code go to google pay action label -->
+    <string name="DeclineCode__go_to_google_pay">Go to Google Pay</string>
+    <!-- Stripe decline code incorrect card number -->
+    <string name="DeclineCode__your_card_number_is_incorrect">Your card number is incorrect. Update it in Google Pay and try again.</string>
+    <!-- Stripe decline code incorrect cvc -->
+    <string name="DeclineCode__your_cards_cvc_number_is_incorrect">Your card\'s CVC number is incorrect. Update it in Google Pay and try again.</string>
+    <!-- Stripe decline code insufficient funds -->
+    <string name="DeclineCode__your_card_does_not_have_sufficient_funds">Your card does not have sufficient funds to complete this purchase. Try another payment method.</string>
+    <!-- Stripe decline code incorrect expiration month -->
+    <string name="DeclineCode__the_expiration_month">The expiration month on your payment method is incorrect. Update it in Google Pay and try again.</string>
+    <!-- Stripe decline code incorrect expiration year -->
+    <string name="DeclineCode__the_expiration_year">The expiration year on your payment method is incorrect. Update it in Google Pay and try again.</string>
+    <!-- Stripe decline code issuer not available -->
+    <string name="DeclineCode__try_completing_the_payment_again">Try completing the payment again or contact your bank for more information.</string>
+    <!-- Stripe decline code processing error -->
+    <string name="DeclineCode__try_again">Try again or contact your bank for more information.</string>
 
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">Name your profile</string>
@@ -4238,22 +4664,635 @@
     <!-- Descriptor text indicating how long a profile will be on when there is a time component associated with it -->
     <string name="NotificationProfileSelection__on_until_s">On until %1$s</string>
 
-    <!-- Title for notification profile megaphone -->
-    <string name="NotificationProfilesMegaphone__notification_profiles">Notification profiles</string>
-    <!-- Description for notification profile megaphone -->
-    <string name="NotificationProfilesMegaphone__only_get_notifications_from_the_people_and_groups_you_choose">Only get notifications from the people and groups you choose.</string>
-    <!-- Call to action button to create a profile from megaphone -->
-    <string name="NotificationProfilesMegaphone__create_a_profile">Create a profile</string>
-    <!-- Button to dismiss notification profile megaphone -->
-    <string name="NotificationProfilesMegaphone__not_now">Not now</string>
-
     <!-- Displayed in a toast when we fail to open the ringtone picker -->
     <string name="NotificationSettingsFragment__failed_to_open_picker">Failed to open picker.</string>
 
-    <!-- Description shown for the Signal Release Notes channel -->
+    <!-- Description shown for the TM SGNL Release Notes channel -->
     <string name="ReleaseNotes__signal_release_notes_and_news">TM SGNL Release Notes &amp; News</string>
 
-    <!-- EOF -->
+    <!-- Donation receipts activity title -->
+    <string name="DonationReceiptListFragment__all_activity">All activity</string>
+    <!-- Donation receipts all tab label -->
+    <string name="DonationReceiptListFragment__all">All</string>
+    <!-- Donation receipts recurring tab label -->
+    <string name="DonationReceiptListFragment__recurring">Recurring</string>
+    <!-- Donation receipts one-time tab label -->
+    <string name="DonationReceiptListFragment__one_time">One-time</string>
+    <!-- Donation receipts gift tab label -->
+    <string name="DonationReceiptListFragment__gift">Gift</string>
+    <!-- Donation receipts boost row label -->
+    <string name="DonationReceiptListFragment__boost">Boost</string>
+    <!-- Donation receipts details title -->
+    <string name="DonationReceiptDetailsFragment__details">Details</string>
+    <!-- Donation receipts donation type heading -->
+    <string name="DonationReceiptDetailsFragment__donation_type">Donation type</string>
+    <!-- Donation receipts date paid heading -->
+    <string name="DonationReceiptDetailsFragment__date_paid">Date paid</string>
+    <!-- Donation receipts share PNG -->
+    <string name="DonationReceiptDetailsFragment__share_receipt">Share receipt</string>
+    <!-- Donation receipts list end note -->
+    <string name="DonationReceiptListFragment__if_you_have">If you have reinstalled TM SGNL, receipts from previous donations will not be available.</string>
+    <!-- Donation receipts document title -->
+    <string name="DonationReceiptDetailsFragment__donation_receipt">Donation receipt</string>
+    <!-- Donation receipts amount title -->
+    <string name="DonationReceiptDetailsFragment__amount">Amount</string>
+    <!-- Donation receipts thanks -->
+    <string name="DonationReceiptDetailsFragment__thank_you_for_supporting">Thank you for supporting TM SGNL. Your contribution helps fuel the mission of developing open source privacy technology that protects free expression and enables secure global communication for millions around the world. If you’re a resident of the United States, please retain this receipt for your tax records. TM SGNL Technology Foundation is a tax–exempt nonprofit organization in the United States under section 501c3 of the Internal Revenue Code. Our Federal Tax ID is 82–4506840.</string>
+    <!-- Donation receipt type -->
+    <string name="DonationReceiptDetailsFragment__s_dash_s">%1$s - %2$s</string>
+    <!-- Donation reciepts screen empty state title -->
+    <string name="DonationReceiptListFragment__no_receipts">No receipts</string>
+
+    <!-- region "Stories Tab" -->
+
+    <!-- Label for Chats tab in home app screen -->
+    <string name="ConversationListTabs__chats">Chats</string>
+    <!-- Label for Stories tab in home app screen -->
+    <string name="ConversationListTabs__stories">Stories</string>
+    <!-- String for counts above 99 in conversation list tabs -->
+    <string name="ConversationListTabs__99p">99+</string>
+    <!-- Menu item on stories landing page -->
+    <string name="StoriesLandingFragment__story_privacy">Story privacy</string>
+    <!-- Title for "My Stories" row item in Stories landing page -->
+    <string name="StoriesLandingFragment__my_stories">My Stories</string>
+    <!-- Subtitle for "My Stories" row item when user has not added stories -->
+    <string name="StoriesLandingFragment__tap_to_add_a_story">Tap to add a story</string>
+    <!-- Displayed when there are no stories to display -->
+    <string name="StoriesLandingFragment__no_recent_updates_to_show_right_now">No recent updates to show right now.</string>
+    <!-- Context menu option to hide a story -->
+    <string name="StoriesLandingItem__hide_story">Hide story</string>
+    <!-- Context menu option to unhide a story -->
+    <string name="StoriesLandingItem__unhide_story">Unhide story</string>
+    <!-- Context menu option to forward a story -->
+    <string name="StoriesLandingItem__forward">Forward</string>
+    <!-- Context menu option to share a story -->
+    <string name="StoriesLandingItem__share">Share…</string>
+    <!-- Context menu option to go to story chat -->
+    <string name="StoriesLandingItem__go_to_chat">Go to chat</string>
+    <!-- Context menu option to go to story info -->
+    <string name="StoriesLandingItem__info">Info</string>
+    <!-- Label when a story is pending sending -->
+    <string name="StoriesLandingItem__sending">Sending…</string>
+    <!-- Label when multiple stories are pending sending -->
+    <string name="StoriesLandingItem__sending_d">Sending %1$d…</string>
+    <!-- Label when a story fails to send due to networking -->
+    <string name="StoriesLandingItem__send_failed">Send failed</string>
+    <!-- Label when a story fails to send due to identity mismatch -->
+    <string name="StoriesLandingItem__partially_sent">Partially sent</string>
+    <!-- Status label when a story fails to send indicating user action to retry -->
+    <string name="StoriesLandingItem__tap_to_retry">Tap to retry</string>
+    <!-- Title of dialog confirming decision to hide a story -->
+    <string name="StoriesLandingFragment__hide_story">Hide story?</string>
+    <!-- Message of dialog confirming decision to hide a story -->
+    <string name="StoriesLandingFragment__new_story_updates">New story updates from %1$s won\'t appear at the top of the stories list anymore.</string>
+    <!-- Positive action of dialog confirming decision to hide a story -->
+    <string name="StoriesLandingFragment__hide">Hide</string>
+    <!-- Displayed in Snackbar after story is hidden -->
+    <string name="StoriesLandingFragment__story_hidden">Story hidden</string>
+    <!-- Section header for hidden stories -->
+    <string name="StoriesLandingFragment__hidden_stories">Hidden stories</string>
+    <!-- Displayed on each sent story under My Stories -->
+    <plurals name="MyStories__d_views">
+        <item quantity="one">%1$d view</item>
+        <item quantity="other">%1$d views</item>
+    </plurals>
+    <!-- Forward story label, displayed in My Stories context menu -->
+    <string name="MyStories_forward">Forward</string>
+    <!-- Label for stories for a single user. Format is {given name}\'s Story -->
+    <string name="MyStories__ss_story">%1$s\'s Story</string>
+    <!-- Title of dialog to confirm deletion of story -->
+    <string name="MyStories__delete_story">Delete story?</string>
+    <!-- Message of dialog to confirm deletion of story -->
+    <string name="MyStories__this_story_will_be_deleted">This story will be deleted for you and everyone who received it.</string>
+    <!-- Toast shown when story media cannot be saved -->
+    <string name="MyStories__unable_to_save">Unable to save</string>
+    <!-- Displayed at bottom of story viewer when current item has views -->
+    <plurals name="StoryViewerFragment__d_views">
+        <item quantity="one">%1$d view</item>
+        <item quantity="other">%1$d views</item>
+    </plurals>
+    <!-- Displayed at bottom of story viewer when current item has replies -->
+    <plurals name="StoryViewerFragment__d_replies">
+        <item quantity="one">%1$d reply</item>
+        <item quantity="other">%1$d replies</item>
+    </plurals>
+    <!-- Used when view receipts are disabled -->
+    <string name="StoryViewerPageFragment__views_off">Views off</string>
+    <!-- Used to join views and replies when both exist on a story item -->
+    <string name="StoryViewerFragment__s_s">%1$s %2$s</string>
+    <!-- Displayed when viewing a post you sent -->
+    <string name="StoryViewerPageFragment__you">You</string>
+    <!-- Displayed when viewing a post displayed to a group -->
+    <string name="StoryViewerPageFragment__s_to_s">%1$s to %2$s</string>
+    <!-- Displayed when viewing a post from another user with no replies -->
+    <string name="StoryViewerPageFragment__reply">Reply</string>
+    <!-- Displayed when viewing a post that has failed to send to some users -->
+    <string name="StoryViewerPageFragment__partially_sent">Partially sent. Tap for details</string>
+    <!-- Displayed when viewing a post that has failed to send -->
+    <string name="StoryViewerPageFragment__send_failed">Send failed. Tap to retry</string>
+    <!-- Label for the reply button in story viewer, which will launch the group story replies bottom sheet. -->
+    <string name="StoryViewerPageFragment__reply_to_group">Reply to group</string>
+    <!-- Displayed when a story has no views -->
+    <string name="StoryViewsFragment__no_views_yet">No views yet</string>
+    <!-- Displayed when user has disabled receipts -->
+    <string name="StoryViewsFragment__enable_read_receipts_to_see_whos_viewed_your_story">Enable read receipts to see who\'s viewed your stories.</string>
+    <!-- Button label displayed when user has disabled receipts -->
+    <string name="StoryViewsFragment__go_to_settings">Go to settings</string>
+    <!-- Dialog action to remove viewer from a story -->
+    <string name="StoryViewsFragment__remove">Remove</string>
+    <!-- Dialog title when removing a viewer from a story -->
+    <string name="StoryViewsFragment__remove_viewer">Remove viewer?</string>
+    <!-- Dialog message when removing a viewer from a story -->
+    <string name="StoryViewsFragment__s_will_still_be_able">%1$s will still be able to view this post, but will not be able to view any future posts you share to %2$s.</string>
+    <!-- Story View context menu action to remove them from a story -->
+    <string name="StoryViewItem__remove_viewer">Remove viewer</string>
+    <!-- Displayed when a story has no replies yet -->
+    <string name="StoryGroupReplyFragment__no_replies_yet">No replies yet</string>
+    <!-- Displayed for each user that reacted to a story when viewing replies -->
+    <string name="StoryGroupReactionReplyItem__reacted_to_the_story">Reacted to the story</string>
+    <!-- Label for story views tab -->
+    <string name="StoryViewsAndRepliesDialogFragment__views">Views</string>
+    <!-- Label for story replies tab -->
+    <string name="StoryViewsAndRepliesDialogFragment__replies">Replies</string>
+    <!-- Description of action for reaction button -->
+    <string name="StoryReplyComposer__react_to_this_story">React to this story</string>
+    <!-- Displayed when the user is replying privately to someone who replied to one of their stories -->
+    <string name="StoryReplyComposer__replying_privately_to_s">Replying privately to %1$s</string>
+    <!-- Context menu item to privately reply to a story response -->
+    <string name="StoryGroupReplyItem__private_reply">Private Reply</string>
+    <!-- Context menu item to copy a story response -->
+    <string name="StoryGroupReplyItem__copy">Copy</string>
+    <!-- Context menu item to delete a story response -->
+    <string name="StoryGroupReplyItem__delete">Delete</string>
+    <!-- Page title for My Story options -->
+    <string name="MyStorySettingsFragment__my_story">My Story</string>
+    <!-- Section heading for story visibility -->
+    <string name="MyStorySettingsFragment__who_can_view_this_story">Who can view this story</string>
+    <!-- Clickable option for selecting people to hide your story from -->
+    <string name="MyStorySettingsFragment__hide_story_from">Hide story from</string>
+    <!-- Privacy setting title for sending stories to all your TM SGNL connections -->
+    <string name="MyStorySettingsFragment__all_signal_connections">All TM SGNL connections</string>
+    <!-- Privacy setting description for sending stories to all your TM SGNL connections -->
+    <string name="MyStorySettingsFragment__share_with_all_connections">Share with all connections</string>
+    <!-- Privacy setting title for sending stories to all except the specified connections -->
+    <string name="MyStorySettingsFragment__all_except">All except…</string>
+    <!-- Privacy setting description for sending stories to all except the specified connections -->
+    <string name="MyStorySettingsFragment__hide_your_story_from_specific_people">Hide your story from specific people</string>
+    <!-- Summary of clickable option displaying how many people you have excluded from your story -->
+    <plurals name="MyStorySettingsFragment__d_people_excluded">
+        <item quantity="one">%1$d person excluded</item>
+        <item quantity="other">%1$d people excluded</item>
+    </plurals>
+    <!-- Privacy setting title for only sharing your story with specified connections -->
+    <string name="MyStorySettingsFragment__only_share_with">Only share with…</string>
+    <!-- Privacy setting description for only sharing your story with specified connections -->
+    <string name="MyStorySettingsFragment__only_share_with_selected_people">Only share with selected people</string>
+    <!-- Summary of clickable option displaying how many people you have included to send to in your story -->
+    <plurals name="MyStorySettingsFragment__d_people">
+        <item quantity="one">%1$d person</item>
+        <item quantity="other">%1$d people</item>
+    </plurals>
+    <!-- My story privacy fine print about what the privacy settings are for -->
+    <string name="MyStorySettingsFragment__choose_who_can_view_your_story">Choose who can view your story. Changes won\'t affect stories you\'ve already sent.</string>
+    <!-- Section header for options related to replies and reactions -->
+    <string name="MyStorySettingsFragment__replies_amp_reactions">Replies &amp; reactions</string>
+    <!-- Switchable option for allowing replies and reactions on your stories -->
+    <string name="MyStorySettingsFragment__allow_replies_amp_reactions">Allow replies &amp; reactions</string>
+    <!-- Summary for switchable option allowing replies and reactions on your story -->
+    <string name="MyStorySettingsFragment__let_people_who_can_view_your_story_react_and_reply">Let people who can view your story react and reply</string>
+    <!-- Note about default sharing -->
+    <string name="MyStorySettingsFragment__hide_your_story_from">Hide your story from specific people. By default, your story is shared with your %1$s</string>
+    <!-- TM SGNL connections bolded text in the TM SGNL Connections sheet -->
+    <string name="SignalConnectionsBottomSheet___signal_connections">TM SGNL Connections</string>
+    <!-- Displayed at the top of the TM SGNL connections sheet. Please remember to insert strong tag as required. -->
+    <string name="SignalConnectionsBottomSheet__signal_connections_are_people">TM SGNL Connections are people you\'ve chosen to trust, either by:</string>
+    <!-- TM SGNL connections sheet bullet point 1 -->
+    <string name="SignalConnectionsBottomSheet__starting_a_conversation">Starting a conversation</string>
+    <!-- TM SGNL connections sheet bullet point 2 -->
+    <string name="SignalConnectionsBottomSheet__accepting_a_message_request">Accepting a message request</string>
+    <!-- TM SGNL connections sheet bullet point 3 -->
+    <string name="SignalConnectionsBottomSheet__having_them_in_your_system_contacts">Having them in your system contacts</string>
+    <!-- Note at the bottom of the TM SGNL connections sheet -->
+    <string name="SignalConnectionsBottomSheet__your_connections_can_see_your_name">Your connections can see your name and photo, and can see posts to "My Story" unless you hide it from them.</string>
+    <!-- Clickable option to add a viewer to a private story -->
+    <string name="PrivateStorySettingsFragment__add_viewer">Add viewer</string>
+    <!-- Clickable option to delete a custom story -->
+    <string name="PrivateStorySettingsFragment__delete_private_story">Delete private story</string>
+    <!-- Dialog title when attempting to remove someone from a private story -->
+    <string name="PrivateStorySettingsFragment__remove_s">Remove %1$s?</string>
+    <!-- Dialog message when attempting to remove someone from a private story -->
+    <string name="PrivateStorySettingsFragment__this_person_will_no_longer">This person will no longer see your story.</string>
+    <!-- Positive action label when attempting to remove someone from a private story -->
+    <string name="PrivateStorySettingsFragment__remove">Remove</string>
+    <!-- Dialog title when deleting a private story -->
+    <string name="PrivateStorySettingsFragment__are_you_sure">Are you sure?</string>
+    <!-- Dialog message when deleting a private story -->
+    <string name="PrivateStorySettingsFragment__this_action_cannot">This action cannot be undone.</string>
+    <!-- Page title for editing a private story name -->
+    <string name="EditPrivateStoryNameFragment__edit_story_name">Edit story name</string>
+    <!-- Input field hint when editing a private story name -->
+    <string name="EditPrivateStoryNameFragment__story_name">Story name</string>
+    <!-- Save button label when editing a private story name -->
+    <string name="EditPrivateStoryNameFragment__save">Save</string>
+    <!-- Displayed in text post creator before user enters text -->
+    <string name="TextStoryPostCreationFragment__tap_to_add_text">Tap to add text</string>
+    <!-- Button label for changing font when creating a text post -->
+    <string name="TextStoryPostTextEntryFragment__aa">Aa</string>
+    <!-- Displayed in text post creator when prompting user to enter text -->
+    <string name="TextStoryPostTextEntryFragment__add_text">Add text</string>
+    <!-- Content description for \'done\' button when adding text to a story post -->
+    <string name="TextStoryPostTextEntryFragment__done_adding_text">Done adding text</string>
+    <!-- Text label for media selection toggle -->
+    <string name="MediaSelectionActivity__text">Text</string>
+    <!-- Camera label for media selection toggle -->
+    <string name="MediaSelectionActivity__camera">Camera</string>
+    <!-- Hint for entering a URL for a text post -->
+    <string name="TextStoryPostLinkEntryFragment__type_or_paste_a_url">Type or paste a URL</string>
+    <!-- Displayed prior to the user entering a URL for a text post -->
+    <string name="TextStoryPostLinkEntryFragment__share_a_link_with_viewers_of_your_story">Share a link with viewers of your story</string>
+    <!-- Hint text for searching for a story text post recipient. -->
+    <string name="TextStoryPostSendFragment__search">Search</string>
+    <!-- Toast shown when an unexpected error occurs while sending a text story -->
+    <string name="TextStoryPostSendFragment__an_unexpected_error_occurred_try_again">An unexpected error occurred</string>
+    <!-- Title for screen allowing user to exclude "My Story" entries from specific people -->
+    <string name="ChangeMyStoryMembershipFragment__all_except">All except…</string>
+    <!-- Title for screen allowing user to only share "My Story" entries with specific people -->
+    <string name="ChangeMyStoryMembershipFragment__only_share_with">Only share with…</string>
+    <!-- Done button label for hide story from screen -->
+    <string name="HideStoryFromFragment__done">Done</string>
+    <!-- Dialog title for first time adding something to a story -->
+    <string name="StoryDialogs__add_to_story_q">Add to story?</string>
+    <!-- Dialog message for first time adding something to a story -->
+    <string name="StoryDialogs__adding_content">Adding content to your story allows your TM SGNL connections to view it for 24 hours. You can change who can view your story in Setttings.</string>
+    <!-- First time share to story dialog: Positive action to go ahead and add to story -->
+    <string name="StoryDialogs__add_to_story">Add to story</string>
+    <!-- First time share to story dialog: Neutral action to edit who can view "My Story" -->
+    <string name="StoryDialogs__edit_viewers">Edit viewers</string>
+    <!-- Error message shown when a failure occurs during story send -->
+    <string name="StoryDialogs__story_could_not_be_sent">Story could not be sent. Check your connection and try again.</string>
+    <!-- Error message dialog button to resend a previously failed story send -->
+    <string name="StoryDialogs__send">Send</string>
+    <!-- Privacy Settings toggle title for stories -->
+    <string name="PrivacySettingsFragment__share_and_view_stories">Share &amp; View Stories</string>
+    <!-- Privacy Settings toggle summary for stories -->
+    <string name="PrivacySettingsFragment__you_will_no_longer_be_able">You will no longer be able to share or view Stories when this option is turned off.</string>
+    <!-- New story viewer selection screen title -->
+    <string name="CreateStoryViewerSelectionFragment__choose_viewers">Choose viewers</string>
+    <!-- New story viewer selection action button label -->
+    <string name="CreateStoryViewerSelectionFragment__next">Next</string>
+    <!-- New story viewer selection screen title as recipients are selected -->
+    <plurals name="SelectViewersFragment__d_viewers">
+        <item quantity="one">%1$d viewer</item>
+        <item quantity="other">%1$d viewers</item>
+    </plurals>
+    <!-- Name story screen title -->
+    <string name="CreateStoryWithViewersFragment__name_story">Name story</string>
+    <!-- Name story screen label hint -->
+    <string name="CreateStoryWithViewersFragment__story_name_required">Story name (required)</string>
+    <!-- Name story screen viewers subheading -->
+    <string name="CreateStoryWithViewersFragment__viewers">Viewers</string>
+    <!-- Name story screen create button label -->
+    <string name="CreateStoryWithViewersFragment__create">Create</string>
+    <!-- Name story screen error when save attempted with no label -->
+    <string name="CreateStoryWithViewersFragment__this_field_is_required">This field is required.</string>
+    <!-- Name story screen error when save attempted but label is duplicate -->
+    <string name="CreateStoryWithViewersFragment__there_is_already_a_story_with_this_name">There is already a story with this name.</string>
+    <!-- Text for select all action when editing recipients for a story -->
+    <string name="BaseStoryRecipientSelectionFragment__select_all">Select all</string>
+    <!-- Choose story type bottom sheet title -->
+    <string name="ChooseStoryTypeBottomSheet__choose_your_story_type">Choose your story type</string>
+    <!-- Choose story type bottom sheet new story row title -->
+    <string name="ChooseStoryTypeBottomSheet__new_private_story">New private story</string>
+    <!-- Choose story type bottom sheet new story row summary -->
+    <string name="ChooseStoryTypeBottomSheet__visible_only_to">Visible only to specific people</string>
+    <!-- Choose story type bottom sheet group story title -->
+    <string name="ChooseStoryTypeBottomSheet__group_story">Group story</string>
+    <!-- Choose story type bottom sheet group story summary -->
+    <string name="ChooseStoryTypeBottomSheet__share_to_an_existing_group">Share to an existing group</string>
+    <!-- Choose groups bottom sheet title -->
+    <string name="ChooseGroupStoryBottomSheet__choose_groups">Choose groups</string>
+    <!-- Displayed when copying group story reply text to clipboard -->
+    <string name="StoryGroupReplyFragment__copied_to_clipboard">Copied to clipboard</string>
+    <!-- Displayed in story caption when content is longer than 5 lines -->
+    <string name="StoryViewerPageFragment__see_more">… See More</string>
+    <!-- Displayed in toast after sending a direct reply -->
+    <string name="StoryDirectReplyDialogFragment__sending_reply">Sending reply…</string>
+    <!-- Displayed in the viewer when a story is no longer available -->
+    <string name="StorySlateView__this_story_is_no_longer_available">This story is no longer available.</string>
+    <!-- Displayed in the viewer when the network is not available -->
+    <string name="StorySlateView__no_internet_connection">No Internet Connection</string>
+    <!-- Displayed in the viewer when network is available but content could not be downloaded -->
+    <string name="StorySlateView__couldnt_load_content">Couldn\'t Load Content</string>
+    <!-- Toasted when the user externally shares to a text story successfully -->
+    <string name="TextStoryPostCreationFragment__sent_story">Sent story</string>
+    <!-- Toasted when the user external share to a text story fails -->
+    <string name="TextStoryPostCreationFragment__failed_to_send_story">Failed to send story</string>
+    <!-- Displayed in a dialog to let the user select a given users story -->
+    <string name="StoryDialogs__view_story">View story</string>
+    <!-- Displayed in a dialog to let the user select a given users profile photo -->
+    <string name="StoryDialogs__view_profile_photo">View profile photo</string>
+
+    <!-- Title for a notification at the bottom of the chat list suggesting that the user disable censorship circumvention because the service has become reachable -->
+    <string name="TurnOffCircumventionMegaphone_turn_off_censorship_circumvention">Turn off censorship circumvention?</string>
+    <!-- Body for a notification at the bottom of the chat list suggesting that the user disable censorship circumvention because the service has become reachable -->
+    <string name="TurnOffCircumventionMegaphone_you_can_now_connect_to_the_signal_service_directly">You can now connect to the TM SGNL service directly for a better experience.</string>
+    <!-- Label for a button to dismiss a notification at the bottom of the chat list suggesting that the user disable censorship circumvention because the service has become reachable -->
+    <string name="TurnOffCircumventionMegaphone_no_thanks">No thanks</string>
+    <!-- Label for a button in a notification at the bottom of the chat list to turn off censorship circumvention -->
+    <string name="TurnOffCircumventionMegaphone_turn_off">Turn off</string>
+
+    <!-- Conversation Item label for when you react to someone else\'s story -->
+    <string name="ConversationItem__you_reacted_to_s_story">You reacted to %1$s\'s story</string>
+    <!-- Conversation Item label for reactions to your story -->
+    <string name="ConversationItem__reacted_to_your_story">Reacted to your story</string>
+    <!-- Conversation Item label for reactions to an unavailable story -->
+    <string name="ConversationItem__reacted_to_a_story">Reacted to a story</string>
+
+    <!-- endregion -->
+    <!-- Content description for expand contacts chevron -->
+    <string name="ExpandModel__view_more">View more</string>
+    <string name="StoriesLinkPopup__visit_link">Visit link</string>
+
+    <!-- Gift price and duration, formatted as: {price} dot {n} day duration -->
+    <plurals name="GiftRowItem_s_dot_d_day_duration">
+        <item quantity="one">%1$s · %2$d day duration</item>
+        <item quantity="other">%1$s · %2$d day duration</item>
+    </plurals>
+    <!-- Tagline for gift row items -->
+    <string name="GiftRowItem__send_a_gift_badge">Send a gift badge</string>
+    <!-- Headline text on start fragment for gifting a badge -->
+    <string name="GiftFlowStartFragment__gift_a_badge">Gift a Badge</string>
+    <!-- Description text on start fragment for gifting a badge -->
+    <string name="GiftFlowStartFragment__gift_someone_a_badge">Gift someone a badge by making a donation to TM SGNL in their name. They\'ll get a badge to display on their profile photo.</string>
+    <!-- Action button label for start fragment for gifting a badge -->
+    <string name="GiftFlowStartFragment__next">Next</string>
+    <!-- Title text on choose recipient page for badge gifting -->
+    <string name="GiftFlowRecipientSelectionFragment__choose_recipient">Choose recipient</string>
+    <!-- Title text on confirm gift page -->
+    <string name="GiftFlowConfirmationFragment__confirm_gift">Confirm gift</string>
+    <!-- Heading text specifying who the gift will be sent to -->
+    <string name="GiftFlowConfirmationFragment__send_to">Send to</string>
+    <!-- Text explaining that gift will be sent to the chosen recipient -->
+    <string name="GiftFlowConfirmationFragment__your_gift_will_be_sent_in">Your gift will be sent in a 1 on 1 message to the recipient. Add your own message below.</string>
+    <!-- Text explaining that this gift is a one time donation -->
+    <string name="GiftFlowConfirmationFragment__one_time_donation">One-time donation</string>
+    <!-- Hint for add message input -->
+    <string name="GiftFlowConfirmationFragment__add_a_message">Add a message</string>
+    <!-- Displayed in the dialog while verifying the chosen recipient -->
+    <string name="GiftFlowConfirmationFragment__verifying_recipient">Verifying recipient…</string>
+    <!-- Title for sheet shown when opening a redeemed gift -->
+    <string name="ViewReceivedGiftBottomSheet__s_sent_you_a_gift">%1$s sent you a gift</string>
+    <!-- Title for sheet shown when opening a sent gift -->
+    <string name="ViewSentGiftBottomSheet__thanks_for_your_support">Thanks for your support!</string>
+    <!-- Description for sheet shown when opening a redeemed gift -->
+    <string name="ViewReceivedGiftBottomSheet__youve_received_a_gift_badge">You\'ve received a gift badge from %1$s! Help TM SGNL build awareness by displaying this badge on your profile.</string>
+    <!-- Description for sheet shown when opening a sent gift -->
+    <string name="ViewSentGiftBottomSheet__youve_gifted_a_badge">You\'ve gifted a badge to %1$s. When they accept, they\'ll be given a choice to show or hide their badge.</string>
+    <!-- Primary action for pending gift sheet to redeem badge now -->
+    <string name="ViewReceivedGiftSheet__redeem">Redeem</string>
+    <!-- Primary action for pending gift sheet to redeem badge later -->
+    <string name="ViewReceivedGiftSheet__not_now">Not now</string>
+    <!-- Dialog text while redeeming a gift -->
+    <string name="ViewReceivedGiftSheet__redeeming_gift">Redeeming gift…</string>
+    <!-- Snackbar text when user presses "not now" on redemption sheet -->
+    <string name="ConversationFragment__you_can_redeem_your_badge_later">You can redeem your badge later.</string>
+    <!-- Description text in gift thanks sheet -->
+    <string name="GiftThanksSheet__youve_gifted_a_badge_to_s">You\'ve gifted a badge to %1$s. When they accept, they\'ll be given a choice to show or hide their badge.</string>
+    <!-- Expired gift sheet title -->
+    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired">Your gift badge has expired</string>
+    <!-- Expired gift sheet top description text -->
+    <string name="ExpiredGiftSheetConfiguration__your_gift_badge_has_expired_and_is">Your gift badge has expired, and is no longer visible to others on your profile.</string>
+    <!-- Expired gift sheet bottom description text -->
+    <string name="ExpiredGiftSheetConfiguration__to_continue">To continue supporting technology that is built for you, please consider becoming a monthly Sustainer.</string>
+    <!-- Expired gift sheet make a monthly donation button -->
+    <string name="ExpiredGiftSheetConfiguration__make_a_monthly_donation">Make a monthly donation</string>
+    <!-- Expired gift sheet not now button -->
+    <string name="ExpiredGiftSheetConfiguration__not_now">Not now</string>
+    <!-- My Story label designating that we will only share with the selected viewers. -->
+    <string name="ContactSearchItems__only_share_with">Only share with</string>
+    <!-- Label under name for private stories -->
+    <plurals name="ContactSearchItems__private_story_d_viewers">
+        <item quantity="one">Private story · %1$d viewer</item>
+        <item quantity="other">Private story · %1$d viewers</item>
+    </plurals>
+    <!-- Label under name for group stories -->
+    <plurals name="ContactSearchItems__group_story_d_viewers">
+        <item quantity="one">Group story · %1$d viewer</item>
+        <item quantity="other">Group story · %1$d viewers</item>
+    </plurals>
+    <!-- Label under name for my story -->
+    <plurals name="ContactSearchItems__my_story_s_dot_d_viewers">
+        <item quantity="one">%1$s · %2$d viewer</item>
+        <item quantity="other">%1$s · %2$d viewers</item>
+    </plurals>
+    <!-- Label under name for My Story when first sending to my story -->
+    <string name="ContactSearchItems__tap_to_choose_your_viewers">Tap to choose your viewers</string>
+    <!-- Label for context menu item to open story settings -->
+    <string name="ContactSearchItems__story_settings">Story settings</string>
+    <!-- Label for context menu item to remove a group story from contact results -->
+    <string name="ContactSearchItems__remove_story">Remove story</string>
+    <!-- Label for context menu item to delete a private story -->
+    <string name="ContactSearchItems__delete_story">Delete story</string>
+    <!-- Dialog title for removing a group story -->
+    <string name="ContactSearchMediator__remove_group_story">Remove group story?</string>
+    <!-- Dialog message for removing a group story -->
+    <string name="ContactSearchMediator__this_will_remove">This will remove the story from this list. You will still be able to view stories from this group.</string>
+    <!-- Dialog action item for removing a group story -->
+    <string name="ContactSearchMediator__remove">Remove</string>
+    <!-- Dialog title for deleting a private story -->
+    <string name="ContactSearchMediator__delete_story">Delete story?</string>
+    <!-- Dialog message for deleting a private story -->
+    <string name="ContactSearchMediator__delete_the_private">Delete the private story \"%1$s\"?</string>
+    <!-- Dialog action item for deleting a private story -->
+    <string name="ContactSearchMediator__delete">Delete</string>
+    <!-- Gift expiry days remaining -->
+    <plurals name="Gifts__d_days_remaining">
+        <item quantity="one">%1$d days remaining</item>
+        <item quantity="other">%1$d days remaining</item>
+    </plurals>
+    <!-- Gift expiry hours remaining -->
+    <plurals name="Gifts__d_hours_remaining">
+        <item quantity="one">%1$d hours remaining</item>
+        <item quantity="other">%1$d hours remaining</item>
+    </plurals>
+    <!-- Gift expiry minutes remaining -->
+    <plurals name="Gifts__d_minutes_remaining">
+        <item quantity="one">%1$d minute remaining</item>
+        <item quantity="other">%1$d minutes remaining</item>
+    </plurals>
+    <!-- Gift expiry expired -->
+    <string name="Gifts__expired">Expired</string>
+
+    <!-- Label indicating that a user can tap to advance to the next post in a story -->
+    <string name="StoryFirstTimeNavigationView__tap_to_advance">Tap to advance</string>
+    <!-- Label indicating swipe direction to skip current story -->
+    <string name="StoryFirstTimeNavigationView__swipe_up_to_skip">Swipe up to skip</string>
+    <!-- Label indicating swipe direction to exit story viewer -->
+    <string name="StoryFirstTimeNavigationView__swipe_right_to_exit">Swipe right to exit</string>
+    <!-- Button label to confirm understanding of story navigation -->
+    <string name="StoryFirstTimeNagivationView__got_it">Got it</string>
+    <!-- Content description for vertical context menu button in safety number sheet rows -->
+    <string name="SafetyNumberRecipientRowItem__open_context_menu">Open context menu</string>
+    <!-- Sub-line when a user is verified. -->
+    <string name="SafetyNumberRecipientRowItem__s_dot_verified">%1$s · Verified</string>
+    <!-- Sub-line when a user is verified. -->
+    <string name="SafetyNumberRecipientRowItem__verified">Verified</string>
+    <!-- Title of safety number changes bottom sheet when showing individual records -->
+    <string name="SafetyNumberBottomSheetFragment__safety_number_changes">Safety number changes</string>
+    <!-- Message of safety number changes bottom sheet when showing individual records -->
+    <string name="SafetyNumberBottomSheetFragment__the_following_people">The following people may have reinstalled TM SGNL or changed devices. Tap a recipient to confirm the new safety number. This is optional.</string>
+    <!-- Title of safety number changes bottom sheet when not showing individual records -->
+    <string name="SafetyNumberBottomSheetFragment__safety_number_checkup">Safety number checkup</string>
+    <!-- Title of safety number changes bottom sheet when not showing individual records and user has seen review screen -->
+    <string name="SafetyNumberBottomSheetFragment__safety_number_checkup_complete">Safety number checkup complete</string>
+    <!-- Message of safety number changes bottom sheet when not showing individual records and user has seen review screen -->
+    <string name="SafetyNumberBottomSheetFragment__all_connections_have_been_reviewed">All connections have been reviewed, tap send to continue.</string>
+    <!-- Message of safety number changes bottom sheet when not showing individual records -->
+    <string name="SafetyNumberBottomSheetFragment__you_have_d_connections">You have %1$d connections who may have reinstalled TM SGNL or changed devices. Before sharing your story with them review their safety numbers or consider removing them from your story.</string>
+    <!-- Menu action to launch safety number verification screen -->
+    <string name="SafetyNumberBottomSheetFragment__verify_safety_number">Verify safety number</string>
+    <!-- Menu action to remove user from story -->
+    <string name="SafetyNumberBottomSheetFragment__remove_from_story">Remove from story</string>
+    <!-- Action button at bottom of SafetyNumberBottomSheetFragment to send anyway -->
+    <string name="SafetyNumberBottomSheetFragment__send_anyway">Send anyway</string>
+    <!-- Action button at bottom of SafetyNumberBottomSheetFragment to review connections -->
+    <string name="SafetyNumberBottomSheetFragment__review_connections">Review connections</string>
+    <!-- Empty state copy for SafetyNumberBottomSheetFragment -->
+    <string name="SafetyNumberBottomSheetFragment__no_more_recipients_to_show">No more recipients to show</string>
+    <!-- Done button on safety number review fragment -->
+    <string name="SafetyNumberReviewConnectionsFragment__done">Done</string>
+    <!-- Title of safety number review fragment -->
+    <string name="SafetyNumberReviewConnectionsFragment__safety_number_changes">Safety number changes</string>
+    <!-- Message of safety number review fragment -->
+    <plurals name="SafetyNumberReviewConnectionsFragment__d_recipients_may_have">
+        <item quantity="one">%1$d recipient may have reinstalled TM SGNL or changed devices. Tap a recipient to confirm the new safety number. This is optional.</item>
+        <item quantity="other">%1$d recipients may have reinstalled TM SGNL or changed devices. Tap a recipient to confirm the new safety number. This is optional.</item>
+    </plurals>
+    <!-- Section header for 1:1 contacts in review fragment -->
+    <string name="SafetyNumberBucketRowItem__contacts">Contacts</string>
+    <!-- Context menu label for distribution list headers in review fragment -->
+    <string name="SafetyNumberReviewConnectionsFragment__remove_all">Remove all</string>
+    <!-- Context menu label for 1:1 contacts to remove from send -->
+    <string name="SafetyNumberReviewConnectionsFragment__remove">Remove</string>
+
+    <!-- Title of initial My Story settings configuration shown when sending to My Story for the first time -->
+    <string name="ChooseInitialMyStoryMembershipFragment__my_story_privacy">My Story Privacy</string>
+    <!-- Subtitle of initial My Story settings configuration shown when sending to My Story for the first time -->
+    <string name="ChooseInitialMyStoryMembershipFragment__choose_who_can_see_posts_to_my_story_you_can_always_make_changes_in_settings">Choose who can see posts to My Story. You can always make changes in settings.</string>
+    <!-- All connections option for initial My Story settings configuration shown when sending to My Story for the first time -->
+    <string name="ChooseInitialMyStoryMembershipFragment__all_signal_connections">All TM SGNL connections</string>
+    <!-- All connections except option for initial My Story settings configuration shown when sending to My Story for the first time -->
+    <string name="ChooseInitialMyStoryMembershipFragment__all_except">All except…</string>
+    <!-- Only with selected connections option for initial My Story settings configuration shown when sending to My Story for the first time -->
+    <string name="ChooseInitialMyStoryMembershipFragment__only_share_with">Only share with…</string>
+
+    <!-- Story info header sent heading -->
+    <string name="StoryInfoHeader__sent">Sent</string>
+    <!-- Story info header received heading -->
+    <string name="StoryInfoHeader__received">Received</string>
+    <!-- Story info header file size heading -->
+    <string name="StoryInfoHeader__file_size">File size</string>
+    <!-- Story info "Sent to" header -->
+    <string name="StoryInfoBottomSheetDialogFragment__sent_to">Sent to</string>
+    <!-- Story info "Sent from" header -->
+    <string name="StoryInfoBottomSheetDialogFragment__sent_from">Sent from</string>
+    <!-- Story info "Failed" header -->
+    <string name="StoryInfoBottomSheetDialogFragment__failed">Failed</string>
+    <!-- Story Info context menu label -->
+    <string name="StoryInfoBottomSheetDialogFragment__info">Info</string>
+
+    <!-- StoriesPrivacySettingsFragment -->
+    <!-- Explanation about how stories are deleted and managed -->
+    <string name="StoriesPrivacySettingsFragment__stories_automatically_disappear">Stories automatically disappear after 24 hours. Choose who can view your story or create new stories with specific viewers or groups.</string>
+    <!-- Preference title to turn off stories -->
+    <string name="StoriesPrivacySettingsFragment__turn_off_stories">Turn off stories</string>
+    <!-- Preference summary to turn off stories -->
+    <string name="StoriesPrivacySettingsFragment__if_you_opt_out">If you opt out of stories you will no longer be able to share or view stories.</string>
+    <!-- Preference title to turn on stories -->
+    <string name="StoriesPrivacySettingsFragment__turn_on_stories">Turn on stories</string>
+    <!-- Preference summary to turn on stories -->
+    <string name="StoriesPrivacySettingsFragment__share_and_view">Share and view stories from others. Stories automatically disappear after 24 hours.</string>
+    <!-- Dialog title to turn off stories -->
+    <string name="StoriesPrivacySettingsFragment__turn_off_stories_question">Turn off stories?</string>
+    <!-- Dialog message to turn off stories -->
+    <string name="StoriesPrivacySettingsFragment__you_will_no_longer_be_able_to">You will no longer be able to share or view stories. Any stories you have recently sent will still be visible by others until they expire.</string>
+    <!-- Page title when launched from stories landing screen -->
+    <string name="StoriesPrivacySettingsFragment__story_privacy">Story privacy</string>
+
+    <!-- GroupStorySettingsFragment -->
+    <!-- Section header for who can view a group story -->
+    <string name="GroupStorySettingsFragment__who_can_view_this_story">Who can view this story</string>
+    <!-- Explanation of who can view a group story -->
+    <string name="GroupStorySettingsFragment__members_of_the_group_s">Members of the group "%1$s" can view and reply to this story. You can update the membership for this chat in the group.</string>
+    <!-- Preference label for removing this group story -->
+    <string name="GroupStorySettingsFragment__remove_group_story">Remove group story</string>
+
+    <!-- Generic title for overflow menus -->
+    <string name="OverflowMenu__overflow_menu">Overflow menu</string>
+
+    <!-- SMS Export Service -->
+    <!-- Displayed in the notification while export is running -->
+    <string name="SignalSmsExportService__exporting_messages">Exporting messages…</string>
+
+    <!-- ExportYourSmsMessagesFragment -->
+    <!-- Title of the screen -->
+    <string name="ExportYourSmsMessagesFragment__export_your_sms_messages">Export your SMS messages</string>
+    <!-- Message of the screen -->
+    <string name="ExportYourSmsMessagesFragment__you_can_export_your_sms_messages_to_your_phones_sms_database">You can export your SMS messages to your phone\'s SMS database. This allows other SMS apps on your phone to access and import them. This does not create a shareable file of your SMS message history.</string>
+    <!-- Button label to begin export -->
+    <string name="ExportYourSmsMessagesFragment__continue">Continue</string>
+
+    <!-- ExportingSmsMessagesFragment -->
+    <!-- Title of the screen -->
+    <string name="ExportingSmsMessagesFragment__exporting_sms_messages">Exporting SMS messages</string>
+    <!-- Progress indicator for export -->
+    <string name="ExportingSmsMessagesFragment__exporting_d_of_d">Exporting %1$d of %2$d…</string>
+
+    <!-- ChooseANewDefaultSmsAppFragment -->
+    <!-- Title of the screen -->
+    <string name="ChooseANewDefaultSmsAppFragment__choose_a_new">Choose a new default SMS app</string>
+    <!-- Button label to launch picker -->
+    <string name="ChooseANewDefaultSmsAppFragment__continue">Continue</string>
+    <!-- Button label for when done with changing default SMS app -->
+    <string name="ChooseANewDefaultSmsAppFragment__done">Done</string>
+    <!-- First step number/bullet for choose new default sms app instructions -->
+    <string name="ChooseANewDefaultSmsAppFragment__bullet_1">1</string>
+    <!-- Second step number/bullet for choose new default sms app instructions -->
+    <string name="ChooseANewDefaultSmsAppFragment__bullet_2">2</string>
+    <!-- Third step number/bullet for choose new default sms app instructions -->
+    <string name="ChooseANewDefaultSmsAppFragment__bullet_3">3</string>
+    <!-- Fourth step number/bullet for choose new default sms app instructions -->
+    <string name="ChooseANewDefaultSmsAppFragment__bullet_4">4</string>
+    <!-- Instruction step for choosing a new default sms app -->
+    <string name="ChooseANewDefaultSmsAppFragment__tap_continue_to_open_the_defaults_apps_screen_in_settings">Tap \"Continue\" to open the \"Default apps\" screen in Settings</string>
+    <!-- Instruction step for choosing a new default sms app -->
+    <string name="ChooseANewDefaultSmsAppFragment__select_sms_app_from_the_list">Select \"SMS app\" from the list</string>
+    <!-- Instruction step for choosing a new default sms app -->
+    <string name="ChooseANewDefaultSmsAppFragment__choose_another_app_to_use_for_sms_messaging">Choose another app to use for SMS messaging</string>
+    <!-- Instruction step for choosing a new default sms app -->
+    <string name="ChooseANewDefaultSmsAppFragment__return_to_signal">Return to TM SGNL</string>
+    <!-- Instruction step for choosing a new default sms app -->
+    <string name="ChooseANewDefaultSmsAppFragment__open_your_phones_settings_app">Open your phone\'s Settings app</string>
+    <!-- Instruction step for choosing a new default sms app -->
+    <string name="ChooseANewDefaultSmsAppFragment__navigate_to_apps_default_apps_sms_app">Navigate to \"Apps\" > \"Default apps\" > \"SMS app\"</string>
+
+    <!-- RemoveSmsMessagesDialogFragment -->
+    <!-- Action button to keep messages -->
+    <string name="RemoveSmsMessagesDialogFragment__keep_messages">Keep messages</string>
+    <!-- Action button to remove messages -->
+    <string name="RemoveSmsMessagesDialogFragment__remove_messages">Remove messages</string>
+    <!-- Title of dialog -->
+    <string name="RemoveSmsMessagesDialogFragment__remove_sms_messages">Remove SMS messages from TM SGNL?</string>
+    <!-- Message of dialog -->
+    <string name="RemoveSmsMessagesDialogFragment__you_can_now_remove_sms_messages_from_signal">You can now remove SMS messages from TM SGNL to clear up storage space. They will still be available to other SMS apps on your phone even if you remove them.</string>
+
+    <!-- SetSignalAsDefaultSmsAppFragment -->
+    <!-- Title of the screen -->
+    <string name="SetSignalAsDefaultSmsAppFragment__set_signal_as_the_default_sms_app">Set TM SGNL as the default SMS app</string>
+    <!-- Message of the screen -->
+    <string name="SetSignalAsDefaultSmsAppFragment__to_export_your_sms_messages">To export your SMS messages, you need to set TM SGNL as the default SMS app.</string>
+    <!-- Button label to start export -->
+    <string name="SetSignalAsDefaultSmsAppFragment__next">Next</string>
 
     <!-- EOF -->
 
@@ -4273,8 +5312,6 @@
     <string name="version">version</string>
     <string name="privacy_center">privacy_center</string>
     <string name="terms">terms</string>
-    <!--//**TM_SA**//End-->
-
 
     <string name="error_self_authentication_process_failed">We couldn\'t locate your TeleMessage TM SGNL Archiver Account. Please contact</string>
 
@@ -4288,7 +5325,6 @@
     <string name="get_self_authentication_second_warning_message_step_2">We could not locate your TeleMessage account.\nYour app has been blocked Please contact TeleMessage support.</string>
 
     <string name="log_report_sent">Log report sent</string>
-
 
 
     <!--//**TM_SA**//End-->

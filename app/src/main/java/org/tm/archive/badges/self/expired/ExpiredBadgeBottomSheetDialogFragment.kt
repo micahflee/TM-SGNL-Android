@@ -2,6 +2,8 @@ package org.tm.archive.badges.self.expired
 
 import androidx.fragment.app.FragmentManager
 import org.signal.core.util.DimensionUnit
+import org.signal.core.util.logging.Log
+import org.signal.donations.StripeDeclineCode
 import org.tm.archive.R
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.badges.models.ExpiredBadge
@@ -10,9 +12,14 @@ import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsBottomSheetFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.app.AppSettingsActivity
+import org.tm.archive.components.settings.app.subscription.errors.UnexpectedSubscriptionCancellation
+import org.tm.archive.components.settings.app.subscription.errors.mapToErrorStringResource
+import org.tm.archive.components.settings.app.subscription.errors.shouldRouteToGooglePay
 import org.tm.archive.components.settings.configure
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.BottomSheetUtil
+import org.tm.archive.util.CommunicationActions
+import org.whispersystems.signalservice.api.subscriptions.ActiveSubscription
 
 /**
  * Bottom sheet displaying a fading badge with a notice and action for becoming a subscriber again.
@@ -27,8 +34,14 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
   }
 
   private fun getConfiguration(): DSLConfiguration {
-    val badge: Badge = ExpiredBadgeBottomSheetDialogFragmentArgs.fromBundle(requireArguments()).badge
+    val args = ExpiredBadgeBottomSheetDialogFragmentArgs.fromBundle(requireArguments())
+    val badge: Badge = args.badge
+    val cancellationReason = UnexpectedSubscriptionCancellation.fromStatus(args.cancelationReason)
+    val declineCode: StripeDeclineCode? = args.chargeFailure?.let { StripeDeclineCode.getFromCode(it) }
     val isLikelyASustainer = SignalStore.donationsValues().isLikelyASustainer()
+    val inactive = cancellationReason == UnexpectedSubscriptionCancellation.INACTIVE
+
+    Log.d(TAG, "Displaying Expired Badge Fragment with bundle: ${requireArguments()}", true)
 
     return configure {
       customPref(ExpiredBadge.Model(badge))
@@ -36,9 +49,9 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
       sectionHeaderPref(
         DSLSettingsText.from(
           if (badge.isBoost()) {
-            R.string.ExpiredBadgeBottomSheetDialogFragment__your_badge_has_expired
+            R.string.ExpiredBadgeBottomSheetDialogFragment__boost_badge_expired
           } else {
-            R.string.ExpiredBadgeBottomSheetDialogFragment__subscription_cancelled
+            R.string.ExpiredBadgeBottomSheetDialogFragment__monthly_donation_cancelled
           },
           DSLSettingsText.CenterModifier
         )
@@ -49,9 +62,17 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
       noPadTextPref(
         DSLSettingsText.from(
           if (badge.isBoost()) {
-            getString(R.string.ExpiredBadgeBottomSheetDialogFragment__your_boost_badge_has_expired)
+            getString(R.string.ExpiredBadgeBottomSheetDialogFragment__your_boost_badge_has_expired_and)
+          } else if (declineCode != null) {
+            getString(
+              R.string.ExpiredBadgeBottomSheetDialogFragment__your_recurring_monthly_donation_was_canceled_s,
+              getString(declineCode.mapToErrorStringResource()),
+              badge.name
+            )
+          } else if (inactive) {
+            getString(R.string.ExpiredBadgeBottomSheetDialogFragment__your_recurring_monthly_donation_was_automatically, badge.name)
           } else {
-            getString(R.string.ExpiredBadgeBottomSheetDialogFragment__your_sustainer, badge.name)
+            getString(R.string.ExpiredBadgeBottomSheetDialogFragment__your_recurring_monthly_donation_was_canceled)
           },
           DSLSettingsText.CenterModifier
         )
@@ -59,22 +80,33 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
 
       space(DimensionUnit.DP.toPixels(16f).toInt())
 
-      noPadTextPref(
-        DSLSettingsText.from(
-          if (badge.isBoost()) {
-            if (isLikelyASustainer) {
-              R.string.ExpiredBadgeBottomSheetDialogFragment__you_can_reactivate
-            } else {
-              R.string.ExpiredBadgeBottomSheetDialogFragment__to_continue_supporting_technology
-            }
-          } else {
-            R.string.ExpiredBadgeBottomSheetDialogFragment__you_can
-          },
-          DSLSettingsText.CenterModifier
-        )
-      )
+      if (badge.isSubscription() && declineCode?.shouldRouteToGooglePay() == true) {
+        space(DimensionUnit.DP.toPixels(68f).toInt())
 
-      space(DimensionUnit.DP.toPixels(92f).toInt())
+        secondaryButtonNoOutline(
+          text = DSLSettingsText.from(R.string.ExpiredBadgeBottomSheetDialogFragment__go_to_google_pay),
+          onClick = {
+            CommunicationActions.openBrowserLink(requireContext(), getString(R.string.google_pay_url))
+          }
+        )
+      } else {
+        noPadTextPref(
+          DSLSettingsText.from(
+            if (badge.isBoost()) {
+              if (isLikelyASustainer) {
+                R.string.ExpiredBadgeBottomSheetDialogFragment__you_can_reactivate
+              } else {
+                R.string.ExpiredBadgeBottomSheetDialogFragment__you_can_keep
+              }
+            } else {
+              R.string.ExpiredBadgeBottomSheetDialogFragment__you_can
+            },
+            DSLSettingsText.CenterModifier
+          )
+        )
+
+        space(DimensionUnit.DP.toPixels(92f).toInt())
+      }
 
       primaryButton(
         text = DSLSettingsText.from(
@@ -108,9 +140,16 @@ class ExpiredBadgeBottomSheetDialogFragment : DSLSettingsBottomSheetFragment(
   }
 
   companion object {
+    private val TAG = Log.tag(ExpiredBadgeBottomSheetDialogFragment::class.java)
+
     @JvmStatic
-    fun show(badge: Badge, fragmentManager: FragmentManager) {
-      val args = ExpiredBadgeBottomSheetDialogFragmentArgs.Builder(badge).build()
+    fun show(
+      badge: Badge,
+      cancellationReason: UnexpectedSubscriptionCancellation?,
+      chargeFailure: ActiveSubscription.ChargeFailure?,
+      fragmentManager: FragmentManager
+    ) {
+      val args = ExpiredBadgeBottomSheetDialogFragmentArgs.Builder(badge, cancellationReason?.status, chargeFailure?.code).build()
       val fragment = ExpiredBadgeBottomSheetDialogFragment()
       fragment.arguments = args.toBundle()
 

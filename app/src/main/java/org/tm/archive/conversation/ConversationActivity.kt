@@ -6,19 +6,27 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.Toolbar
+import io.reactivex.rxjava3.subjects.PublishSubject
+import io.reactivex.rxjava3.subjects.Subject
 import org.tm.archive.PassphraseRequiredActivity
 import org.tm.archive.R
 import org.tm.archive.components.HidingLinearLayout
 import org.tm.archive.components.reminder.ReminderView
+import org.tm.archive.components.settings.app.subscription.DonationPaymentComponent
+import org.tm.archive.components.settings.app.subscription.DonationPaymentRepository
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.DynamicNoActionBarTheme
 import org.tm.archive.util.DynamicTheme
-import org.tm.archive.util.concurrent.ListenableFuture
 import org.tm.archive.util.views.Stub
 
-open class ConversationActivity : PassphraseRequiredActivity(), ConversationParentFragment.Callback {
+open class ConversationActivity : PassphraseRequiredActivity(), ConversationParentFragment.Callback, DonationPaymentComponent {
+
+  companion object {
+    private const val STATE_WATERMARK = "share_data_watermark"
+  }
 
   private lateinit var fragment: ConversationParentFragment
+  private var shareDataTimestamp: Long = -1L
 
   private val dynamicTheme: DynamicTheme = DynamicNoActionBarTheme()
   override fun onPreCreate() {
@@ -26,14 +34,41 @@ open class ConversationActivity : PassphraseRequiredActivity(), ConversationPare
   }
 
   override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
+    shareDataTimestamp = savedInstanceState?.getLong(STATE_WATERMARK, -1L) ?: -1L
+
     setContentView(R.layout.conversation_parent_fragment_container)
 
-    fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as ConversationParentFragment
+    if (savedInstanceState == null) {
+      replaceFragment(intent!!)
+    } else {
+      fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as ConversationParentFragment
+    }
+  }
+
+  override fun onSaveInstanceState(outState: Bundle) {
+    super.onSaveInstanceState(outState)
+    outState.putLong(STATE_WATERMARK, shareDataTimestamp)
   }
 
   override fun onNewIntent(intent: Intent?) {
     super.onNewIntent(intent)
-    fragment.onNewIntent(intent)
+
+    setIntent(intent)
+    replaceFragment(intent!!)
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    googlePayResultPublisher.onNext(DonationPaymentComponent.GooglePayResult(requestCode, resultCode, data))
+  }
+
+  private fun replaceFragment(intent: Intent) {
+    fragment = ConversationParentFragment.create(intent)
+    supportFragmentManager
+      .beginTransaction()
+      .replace(R.id.fragment_container, fragment)
+      .disallowAddToBackStack()
+      .commitNowAllowingStateLoss()
   }
 
   override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
@@ -45,13 +80,17 @@ open class ConversationActivity : PassphraseRequiredActivity(), ConversationPare
     dynamicTheme.onResume(this)
   }
 
+  override fun getShareDataTimestamp(): Long {
+    return shareDataTimestamp
+  }
+
+  override fun setShareDataTimestamp(timestamp: Long) {
+    shareDataTimestamp = timestamp
+  }
+
   override fun onInitializeToolbar(toolbar: Toolbar) {
     toolbar.navigationIcon = AppCompatResources.getDrawable(this, R.drawable.ic_arrow_left_24)
     toolbar.setNavigationOnClickListener { finish() }
-  }
-
-  fun saveDraft(): ListenableFuture<Long> {
-    return fragment.saveDraft()
   }
 
   fun getRecipient(): Recipient {
@@ -73,4 +112,7 @@ open class ConversationActivity : PassphraseRequiredActivity(), ConversationPare
   fun getReminderView(): Stub<ReminderView> {
     return fragment.reminderView
   }
+
+  override val donationPaymentRepository: DonationPaymentRepository by lazy { DonationPaymentRepository(this) }
+  override val googlePayResultPublisher: Subject<DonationPaymentComponent.GooglePayResult> = PublishSubject.create()
 }

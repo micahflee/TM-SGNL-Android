@@ -4,10 +4,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
+import org.tm.archive.keyvalue.SettingsValues
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
 class AppearanceSettingsFragment : DSLSettingsFragment(R.string.preferences__appearance) {
@@ -18,12 +19,12 @@ class AppearanceSettingsFragment : DSLSettingsFragment(R.string.preferences__app
   private val themeValues by lazy { resources.getStringArray(R.array.pref_theme_values) }
 
   private val messageFontSizeLabels by lazy { resources.getStringArray(R.array.pref_message_font_size_entries) }
-  private val messageFontSizeValues by lazy { resources.getStringArray(R.array.pref_message_font_size_values) }
+  private val messageFontSizeValues by lazy { resources.getIntArray(R.array.pref_message_font_size_values) }
 
   private val languageLabels by lazy { resources.getStringArray(R.array.language_entries) }
   private val languageValues by lazy { resources.getStringArray(R.array.language_values) }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     viewModel = ViewModelProvider(this)[AppearanceSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
@@ -36,9 +37,9 @@ class AppearanceSettingsFragment : DSLSettingsFragment(R.string.preferences__app
       radioListPref(
         title = DSLSettingsText.from(R.string.preferences__theme),
         listItems = themeLabels,
-        selected = themeValues.indexOf(state.theme),
+        selected = themeValues.indexOf(state.theme.serialize()),
         onSelected = {
-          viewModel.setTheme(themeValues[it])
+          viewModel.setTheme(activity, SettingsValues.Theme.deserialize(themeValues[it]))
         }
       )
 
@@ -52,7 +53,7 @@ class AppearanceSettingsFragment : DSLSettingsFragment(R.string.preferences__app
       radioListPref(
         title = DSLSettingsText.from(R.string.preferences_chats__message_text_size),
         listItems = messageFontSizeLabels,
-        selected = messageFontSizeValues.indexOf(state.messageFontSize.toString()),
+        selected = messageFontSizeValues.indexOf(state.messageFontSize),
         onSelected = {
           viewModel.setMessageFontSize(messageFontSizeValues[it].toInt())
         }

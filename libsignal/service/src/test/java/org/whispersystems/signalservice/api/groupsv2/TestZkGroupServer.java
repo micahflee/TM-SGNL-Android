@@ -1,16 +1,17 @@
 package org.whispersystems.signalservice.api.groupsv2;
 
-import org.signal.zkgroup.ServerPublicParams;
-import org.signal.zkgroup.ServerSecretParams;
-import org.signal.zkgroup.VerificationFailedException;
-import org.signal.zkgroup.groups.GroupPublicParams;
-import org.signal.zkgroup.profiles.ProfileKeyCommitment;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialPresentation;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialRequest;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialResponse;
-import org.signal.zkgroup.profiles.ServerZkProfileOperations;
+import org.signal.libsignal.zkgroup.ServerPublicParams;
+import org.signal.libsignal.zkgroup.ServerSecretParams;
+import org.signal.libsignal.zkgroup.VerificationFailedException;
+import org.signal.libsignal.zkgroup.groups.GroupPublicParams;
+import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredentialResponse;
+import org.signal.libsignal.zkgroup.profiles.ProfileKeyCommitment;
+import org.signal.libsignal.zkgroup.profiles.ProfileKeyCredentialPresentation;
+import org.signal.libsignal.zkgroup.profiles.ProfileKeyCredentialRequest;
+import org.signal.libsignal.zkgroup.profiles.ServerZkProfileOperations;
 import org.whispersystems.signalservice.testutil.LibSignalLibraryUtil;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -34,13 +35,13 @@ final class TestZkGroupServer {
     return serverPublicParams;
   }
 
-  public ProfileKeyCredentialResponse getProfileKeyCredentialResponse(ProfileKeyCredentialRequest request, UUID uuid, ProfileKeyCommitment commitment) throws VerificationFailedException {
-     return serverZkProfileOperations.issueProfileKeyCredential(request, uuid, commitment);
+  public ExpiringProfileKeyCredentialResponse getExpiringProfileKeyCredentialResponse(ProfileKeyCredentialRequest request, UUID uuid, ProfileKeyCommitment commitment, Instant expiration) throws VerificationFailedException {
+    return serverZkProfileOperations.issueExpiringProfileKeyCredential(request, uuid, commitment, expiration);
   }
 
-  public void assertProfileKeyCredentialPresentation(GroupPublicParams publicParams, ProfileKeyCredentialPresentation profileKeyCredentialPresentation) {
+  public void assertProfileKeyCredentialPresentation(GroupPublicParams publicParams, ProfileKeyCredentialPresentation profileKeyCredentialPresentation, Instant now) {
     try {
-      serverZkProfileOperations.verifyProfileKeyCredentialPresentation(publicParams, profileKeyCredentialPresentation);
+      serverZkProfileOperations.verifyProfileKeyCredentialPresentation(publicParams, profileKeyCredentialPresentation, now);
     } catch (VerificationFailedException e) {
       throw new AssertionError(e);
     }

@@ -5,6 +5,7 @@ import org.signal.core.util.concurrent.SignalExecutors
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.MultiDeviceConfigurationUpdateJob
+import org.tm.archive.jobs.MultiDeviceContactUpdateJob
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.storage.StorageSyncHelper
@@ -28,6 +29,14 @@ class ChatsSettingsRepository {
           isLinkPreviewsEnabled
         )
       )
+    }
+  }
+
+  fun syncPreferSystemContactPhotos() {
+    SignalExecutors.BOUNDED.execute {
+      SignalDatabase.recipients.markNeedsSync(Recipient.self().id)
+      ApplicationDependencies.getJobManager().add(MultiDeviceContactUpdateJob(true))
+      StorageSyncHelper.scheduleSyncForDataChange()
     }
   }
 }

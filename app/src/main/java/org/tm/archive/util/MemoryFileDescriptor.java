@@ -39,6 +39,7 @@ public final class MemoryFileDescriptor implements Closeable {
           fileDescriptor = FileUtils.createMemoryFileDescriptor("CHECK");
         }catch (UnsatisfiedLinkError e){}
         //**TM_SA**//End
+
         if (fileDescriptor < 0) {
           supported = false;
           Log.w(TAG, "MemoryFileDescriptor is not available.");
@@ -121,7 +122,7 @@ public final class MemoryFileDescriptor implements Closeable {
     }else{
       fileDescriptor = FileUtils.createMemoryFileDescriptor(debugName);
     }
-    //**TM_SA**//Ensd
+    //**TM_SA**//End
     if (fileDescriptor < 0) {
       Log.w(TAG, "Failed to create file descriptor: " + fileDescriptor);
       throw new MemoryFileCreationException();
@@ -177,6 +178,10 @@ public final class MemoryFileDescriptor implements Closeable {
 
   public FileDescriptor getFileDescriptor() {
     return parcelFileDescriptor.getFileDescriptor();
+  }
+
+  public ParcelFileDescriptor getParcelFileDescriptor() {
+    return parcelFileDescriptor;
   }
 
   public void seek(long position) throws IOException {

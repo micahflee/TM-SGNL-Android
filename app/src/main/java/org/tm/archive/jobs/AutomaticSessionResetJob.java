@@ -3,7 +3,6 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.crypto.SessionUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.database.MessageDatabase;
 import org.tm.archive.database.SignalDatabase;
@@ -12,17 +11,18 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.DecryptionsDrainedConstraint;
+import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.util.FeatureFlags;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -84,7 +84,7 @@ public class AutomaticSessionResetJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    SessionUtil.archiveSession(recipientId, deviceId);
+    ApplicationDependencies.getProtocolStore().aci().sessions().archiveSession(recipientId, deviceId);
     SignalDatabase.senderKeyShared().deleteAllFor(recipientId);
     insertLocalMessage();
 
@@ -93,21 +93,21 @@ public class AutomaticSessionResetJob extends BaseJob {
       DeviceLastResetTime resetTimes         = SignalDatabase.recipients().getLastSessionResetTimes(recipientId);
       long                timeSinceLastReset = System.currentTimeMillis() - getLastResetTime(resetTimes, deviceId);
 
-      Log.i(TAG, "DeviceId: " + deviceId + ", Reset interval: " + resetInterval + ", Time since last reset: " + timeSinceLastReset);
+      Log.i(TAG, "DeviceId: " + deviceId + ", Reset interval: " + resetInterval + ", Time since last reset: " + timeSinceLastReset, true);
 
       if (timeSinceLastReset > resetInterval) {
-        Log.i(TAG, "We're good! Sending a null message.");
+        Log.i(TAG, "We're good! Sending a null message.", true);
 
         SignalDatabase.recipients().setLastSessionResetTime(recipientId, setLastResetTime(resetTimes, deviceId, System.currentTimeMillis()));
-        Log.i(TAG, "Marked last reset time: " + System.currentTimeMillis());
+        Log.i(TAG, "Marked last reset time: " + System.currentTimeMillis(), true);
 
         sendNullMessage();
-        Log.i(TAG, "Successfully sent!");
+        Log.i(TAG, "Successfully sent!", true);
       } else {
-        Log.w(TAG, "Too soon! Time since last reset: " + timeSinceLastReset);
+        Log.w(TAG, "Too soon! Time since last reset: " + timeSinceLastReset, true);
       }
     } else {
-      Log.w(TAG, "Automatic session reset send disabled!");
+      Log.w(TAG, "Automatic session reset send disabled!", true);
     }
   }
 
@@ -122,7 +122,7 @@ public class AutomaticSessionResetJob extends BaseJob {
 
   private void insertLocalMessage() {
     MessageDatabase.InsertResult result = SignalDatabase.sms().insertChatSessionRefreshedMessage(recipientId, deviceId, sentTimestamp);
-    ApplicationDependencies.getMessageNotifier().updateNotification(context, result.getThreadId());
+    ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(result.getThreadId()));
   }
 
   private void sendNullMessage() throws IOException {

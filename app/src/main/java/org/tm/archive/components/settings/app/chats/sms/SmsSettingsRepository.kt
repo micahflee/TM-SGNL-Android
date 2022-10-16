@@ -1,0 +1,45 @@
+package org.tm.archive.components.settings.app.chats.sms
+
+import androidx.annotation.WorkerThread
+import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
+import org.tm.archive.database.MessageDatabase
+import org.tm.archive.database.SignalDatabase
+import org.tm.archive.util.FeatureFlags
+
+class SmsSettingsRepository(
+  private val smsDatabase: MessageDatabase = SignalDatabase.sms,
+  private val mmsDatabase: MessageDatabase = SignalDatabase.mms
+) {
+  fun getSmsExportState(): Single<SmsSettingsState.SmsExportState> {
+    if (!FeatureFlags.smsExporter()) {
+      return Single.just(SmsSettingsState.SmsExportState.NOT_AVAILABLE)
+    }
+
+    return Single.fromCallable {
+      checkInsecureMessageCount() ?: checkUnexportedInsecureMessageCount()
+    }.subscribeOn(Schedulers.io())
+  }
+
+  @WorkerThread
+  private fun checkInsecureMessageCount(): SmsSettingsState.SmsExportState? {
+    val totalSmsMmsCount = smsDatabase.insecureMessageCount + mmsDatabase.insecureMessageCount
+
+    return if (totalSmsMmsCount == 0) {
+      SmsSettingsState.SmsExportState.NO_SMS_MESSAGES_IN_DATABASE
+    } else {
+      null
+    }
+  }
+
+  @WorkerThread
+  private fun checkUnexportedInsecureMessageCount(): SmsSettingsState.SmsExportState {
+    val totalUnexportedCount = smsDatabase.unexportedInsecureMessagesCount + mmsDatabase.unexportedInsecureMessagesCount
+
+    return if (totalUnexportedCount > 0) {
+      SmsSettingsState.SmsExportState.HAS_UNEXPORTED_MESSAGES
+    } else {
+      SmsSettingsState.SmsExportState.ALL_MESSAGES_EXPORTED
+    }
+  }
+}

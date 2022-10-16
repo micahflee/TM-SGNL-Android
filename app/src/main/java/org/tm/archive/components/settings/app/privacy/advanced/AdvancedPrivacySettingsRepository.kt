@@ -12,9 +12,9 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.TextSecurePreferences
-import org.whispersystems.libsignal.util.guava.Optional
 import org.whispersystems.signalservice.api.push.exceptions.AuthorizationFailedException
 import java.io.IOException
+import java.util.Optional
 import java.util.concurrent.ExecutionException
 
 private val TAG = Log.tag(AdvancedPrivacySettingsRepository::class.java)
@@ -26,7 +26,7 @@ class AdvancedPrivacySettingsRepository(private val context: Context) {
       val result = try {
         val accountManager = ApplicationDependencies.getSignalServiceAccountManager()
         try {
-          accountManager.setGcmId(Optional.absent())
+          accountManager.setGcmId(Optional.empty())
         } catch (e: AuthorizationFailedException) {
           Log.w(TAG, e)
         }

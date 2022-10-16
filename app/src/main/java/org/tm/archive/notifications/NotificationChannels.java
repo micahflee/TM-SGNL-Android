@@ -72,6 +72,8 @@ public class NotificationChannels {
   public static final String OTHER         = "other_v3";
   public static final String VOICE_NOTES   = "voice_notes";
   public static final String JOIN_EVENTS   = "join_events";
+  public static final String BACKGROUND    = "background_connection";
+  public static final String CALL_STATUS   = "call_status";
 
   /**
    * Ensures all of the notification channels are created. No harm in repeat calls. Call is safely
@@ -231,7 +233,7 @@ public class NotificationChannels {
   /**
    * Navigates the user to the system settings for the desired notification channel.
    */
-  public static void openChannelSettings(@NonNull Context context, @NonNull String channelId) {
+  public static void openChannelSettings(@NonNull Context context, @NonNull String channelId, @Nullable String conversationId) {
     if (!supported()) {
       return;
     }
@@ -240,6 +242,9 @@ public class NotificationChannels {
       Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
       intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelId);
       intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+      if (conversationId != null && Build.VERSION.SDK_INT >= CONVERSATION_SUPPORT_VERSION) {
+        intent.putExtra(Settings.EXTRA_CONVERSATION_ID, conversationId);
+      }
       context.startActivity(intent);
     } catch (ActivityNotFoundException e) {
       Log.w(TAG, "Channel settings activity not found", e);
@@ -291,7 +296,8 @@ public class NotificationChannels {
       return null;
     }
 
-    return channel.getSound();
+    Uri channelSound = channel.getSound();
+    return channelSound != null ? channelSound : Uri.EMPTY;
   }
 
   /**
@@ -596,6 +602,8 @@ public class NotificationChannels {
     NotificationChannel other        = new NotificationChannel(OTHER, context.getString(R.string.NotificationChannel_other), NotificationManager.IMPORTANCE_LOW);
     NotificationChannel voiceNotes   = new NotificationChannel(VOICE_NOTES, context.getString(R.string.NotificationChannel_voice_notes), NotificationManager.IMPORTANCE_LOW);
     NotificationChannel joinEvents   = new NotificationChannel(JOIN_EVENTS, context.getString(R.string.NotificationChannel_contact_joined_signal), NotificationManager.IMPORTANCE_DEFAULT);
+    NotificationChannel background   = new NotificationChannel(BACKGROUND, context.getString(R.string.NotificationChannel_background_connection), getDefaultBackgroundChannelImportance(notificationManager));
+    NotificationChannel callStatus   = new NotificationChannel(CALL_STATUS, context.getString(R.string.NotificationChannel_call_status), NotificationManager.IMPORTANCE_LOW);
 
     messages.setGroup(CATEGORY_MESSAGES);
     setVibrationEnabled(messages, SignalStore.settings().isMessageVibrateEnabled());
@@ -609,8 +617,10 @@ public class NotificationChannels {
     setVibrationEnabled(other, false);
     voiceNotes.setShowBadge(false);
     joinEvents.setShowBadge(false);
+    background.setShowBadge(false);
+    callStatus.setShowBadge(false);
 
-    notificationManager.createNotificationChannels(Arrays.asList(messages, calls, failures, backups, lockedStatus, other, voiceNotes, joinEvents));
+    notificationManager.createNotificationChannels(Arrays.asList(messages, calls, failures, backups, lockedStatus, other, voiceNotes, joinEvents, background, callStatus));
 
     if (BuildConfig.PLAY_STORE_DISABLED) {
       NotificationChannel appUpdates = new NotificationChannel(APP_UPDATES, context.getString(R.string.NotificationChannel_app_updates), NotificationManager.IMPORTANCE_HIGH);
@@ -619,6 +629,18 @@ public class NotificationChannels {
       notificationManager.deleteNotificationChannel(APP_UPDATES);
     }
   }
+
+  @TargetApi(26)
+  private static int getDefaultBackgroundChannelImportance(NotificationManager notificationManager) {
+    NotificationChannel existingOther = notificationManager.getNotificationChannel(OTHER);
+
+    if (existingOther != null && existingOther.getImportance() != NotificationManager.IMPORTANCE_LOW) {
+      return existingOther.getImportance();
+    } else {
+      return NotificationManager.IMPORTANCE_LOW;
+    }
+  }
+
 
   @TargetApi(26)
   private static void onUpgrade(@NonNull NotificationManager notificationManager, int oldVersion, int newVersion) {

@@ -18,7 +18,7 @@ import org.tm.archive.scribbles.ImageEditorFragment
 class PhotoEditorFragment : Fragment(R.layout.avatar_photo_editor_fragment), ImageEditorFragment.Controller {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-      val args = PhotoEditorFragmentArgs.fromBundle(requireArguments())
+    val args = PhotoEditorFragmentArgs.fromBundle(requireArguments())
     val photo = AvatarBundler.extractPhoto(args.photoAvatar)
     val imageEditorFragment = ImageEditorFragment.newInstanceForAvatarEdit(photo.uri)
 
@@ -59,6 +59,9 @@ class PhotoEditorFragment : Fragment(R.layout.avatar_photo_editor_fragment), Ima
 
   override fun onCancelEditing() {
     Navigation.findNavController(requireView()).popBackStack()
+  }
+
+  override fun restoreState() {
   }
 
   override fun onMainImageLoaded() {

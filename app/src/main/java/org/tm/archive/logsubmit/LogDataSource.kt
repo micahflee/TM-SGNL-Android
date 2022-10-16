@@ -1,10 +1,9 @@
 package org.tm.archive.logsubmit
 
 import android.app.Application
+import org.signal.core.util.logging.Scrubber
 import org.signal.paging.PagedDataSource
 import org.tm.archive.database.LogDatabase
-import org.tm.archive.logsubmit.util.Scrubber
-import java.lang.UnsupportedOperationException
 
 /**
  * Retrieves logs to show in the [SubmitDebugLogActivity].

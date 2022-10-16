@@ -1,12 +1,13 @@
 package org.tm.archive.shakereport;
 
-import android.app.Activity;
 import android.app.Application;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Lifecycle;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -14,14 +15,17 @@ import org.signal.core.util.ShakeDetector;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment;
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.logsubmit.SubmitDebugLogRepository;
-import org.tm.archive.sharing.ShareIntents;
+import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 
 /**
  * A class that will detect a shake and then prompts the user to submit a debuglog. Basically a
@@ -34,7 +38,7 @@ public final class ShakeToReport implements ShakeDetector.Listener {
   private final Application   application;
   private final ShakeDetector detector;
 
-  private WeakReference<Activity> weakActivity;
+  private WeakReference<AppCompatActivity> weakActivity;
 
   public ShakeToReport(@NonNull Application application) {
     this.application  = application;
@@ -54,7 +58,7 @@ public final class ShakeToReport implements ShakeDetector.Listener {
     detector.stop();
   }
 
-  public void registerActivity(@NonNull Activity activity) {
+  public void registerActivity(@NonNull AppCompatActivity activity) {
     if (!SignalStore.internalValues().shakeToReport()) return;
 
     this.weakActivity = new WeakReference<>(activity);
@@ -64,29 +68,31 @@ public final class ShakeToReport implements ShakeDetector.Listener {
   public void onShakeDetected() {
     if (!SignalStore.internalValues().shakeToReport()) return;
 
-    Activity activity = weakActivity.get();
+    AppCompatActivity activity = weakActivity.get();
     if (activity == null) {
       Log.w(TAG, "No registered activity!");
       return;
     }
 
-    disable();
+    if (activity.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
+      disable();
 
-    new MaterialAlertDialogBuilder(activity)
-        .setTitle(R.string.ShakeToReport_shake_detected)
-        .setMessage(R.string.ShakeToReport_submit_debug_log)
-        .setNegativeButton(android.R.string.cancel, (d, i) -> {
-          d.dismiss();
-          enableIfVisible();
-        })
-        .setPositiveButton(R.string.ShakeToReport_submit, (d, i) -> {
-          d.dismiss();
-          submitLog(activity);
-        })
-        .show();
+      new MaterialAlertDialogBuilder(activity)
+          .setTitle(R.string.ShakeToReport_shake_detected)
+          .setMessage(R.string.ShakeToReport_submit_debug_log)
+          .setNegativeButton(android.R.string.cancel, (d, i) -> {
+            d.dismiss();
+            enableIfVisible();
+          })
+          .setPositiveButton(R.string.ShakeToReport_submit, (d, i) -> {
+            d.dismiss();
+            submitLog(activity);
+          })
+          .show();
+    }
   }
 
-  private void submitLog(@NonNull Activity activity) {
+  private void submitLog(@NonNull AppCompatActivity activity) {
     AlertDialog              spinner = SimpleProgressDialog.show(activity);
     SubmitDebugLogRepository repo    = new SubmitDebugLogRepository();
 
@@ -108,7 +114,7 @@ public final class ShakeToReport implements ShakeDetector.Listener {
     });
   }
 
-  private void showPostSubmitDialog(@NonNull Activity activity, @NonNull String url) {
+  private void showPostSubmitDialog(@NonNull AppCompatActivity activity, @NonNull String url) {
     AlertDialog dialog = new MaterialAlertDialogBuilder(activity)
         .setTitle(R.string.ShakeToReport_success)
         .setMessage(url)
@@ -120,9 +126,16 @@ public final class ShakeToReport implements ShakeDetector.Listener {
           d.dismiss();
           enableIfVisible();
 
-          activity.startActivity(new ShareIntents.Builder(activity)
-                                                 .setText(url)
-                                                 .build());
+          MultiselectForwardFragment.showFullScreen(
+              activity.getSupportFragmentManager(),
+              new MultiselectForwardFragmentArgs(
+                  true,
+                  Collections.singletonList(new MultiShareArgs.Builder()
+                                                .withDraftText(url)
+                                                .build()),
+                  R.string.MultiselectForwardFragment__share_with
+              )
+          );
         })
         .show();
 

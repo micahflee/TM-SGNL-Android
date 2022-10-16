@@ -1,5 +1,6 @@
 package org.tm.archive.database;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 
@@ -12,10 +13,11 @@ import org.tm.archive.util.MediaUtil;
 
 import java.util.List;
 
+@SuppressLint({"RecipientIdDatabaseReferenceUsage", "ThreadIdDatabaseReferenceUsage"}) // Not a real table, just a view
 public class MediaDatabase extends Database {
 
-    public  static final int    ALL_THREADS         = -1;
-    private static final String THREAD_RECIPIENT_ID = "THREAD_RECIPIENT_ID";
+  public  static final int    ALL_THREADS         = -1;
+  private static final String THREAD_RECIPIENT_ID = "THREAD_RECIPIENT_ID";
 
     private static final String BASE_MEDIA_QUERY = "SELECT " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.ROW_ID + " AS " + AttachmentDatabase.ROW_ID + ", "
                                                    + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CONTENT_TYPE + ", "
@@ -71,16 +73,19 @@ public class MediaDatabase extends Database {
         + "MAX(" + AttachmentDatabase.SIZE + ") as " + AttachmentDatabase.SIZE + ", "
         + AttachmentDatabase.CONTENT_TYPE + " "
         + "FROM " + AttachmentDatabase.TABLE_NAME + " "
-        + "WHERE " + AttachmentDatabase.STICKER_PACK_ID + " IS NULL "
+        + "WHERE " + AttachmentDatabase.STICKER_PACK_ID + " IS NULL AND " + AttachmentDatabase.TRANSFER_STATE + " = " + AttachmentDatabase.TRANSFER_PROGRESS_DONE + " "
         + "GROUP BY " + AttachmentDatabase.DATA;
 
-  private static final String GALLERY_MEDIA_QUERY  = String.format(BASE_MEDIA_QUERY, AttachmentDatabase.CONTENT_TYPE + " LIKE 'image/%' OR " + AttachmentDatabase.CONTENT_TYPE + " LIKE 'video/%'");
+  private static final String GALLERY_MEDIA_QUERY  = String.format(BASE_MEDIA_QUERY, AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'image/svg%' AND (" +
+                                                                                     AttachmentDatabase.CONTENT_TYPE + " LIKE 'image/%' OR " +
+                                                                                     AttachmentDatabase.CONTENT_TYPE + " LIKE 'video/%')");
   private static final String AUDIO_MEDIA_QUERY    = String.format(BASE_MEDIA_QUERY, AttachmentDatabase.CONTENT_TYPE + " LIKE 'audio/%'");
   private static final String ALL_MEDIA_QUERY      = String.format(BASE_MEDIA_QUERY, AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'text/x-signal-plain'");
-  private static final String DOCUMENT_MEDIA_QUERY = String.format(BASE_MEDIA_QUERY, AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'image/%' AND " +
+  private static final String DOCUMENT_MEDIA_QUERY = String.format(BASE_MEDIA_QUERY, AttachmentDatabase.CONTENT_TYPE + " LIKE 'image/svg%' OR (" +
+                                                                                     AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'image/%' AND " +
                                                                                      AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'video/%' AND " +
                                                                                      AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'audio/%' AND " +
-                                                                                     AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'text/x-signal-plain'");
+                                                                                     AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'text/x-signal-plain')");
 
   MediaDatabase(Context context, SignalDatabase databaseHelper) {
     super(context, databaseHelper);

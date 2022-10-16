@@ -56,16 +56,15 @@ public class GroupCallUpdateSendJob extends BaseJob {
       throw new AssertionError("We have a recipient, but it's not a V2 Group");
     }
 
-    List<RecipientId> recipients = Stream.of(RecipientUtil.getEligibleForSending(conversationRecipient.getParticipants()))
-                                         .filterNot(Recipient::isSelf)
-                                         .filterNot(Recipient::isBlocked)
-                                         .map(Recipient::getId)
-                                         .toList();
+    List<RecipientId> recipientIds = Stream.of(RecipientUtil.getEligibleForSending(Recipient.resolvedList(conversationRecipient.getParticipantIds())))
+                                           .filterNot(Recipient::isSelf)
+                                           .map(Recipient::getId)
+                                           .toList();
 
     return new GroupCallUpdateSendJob(recipientId,
                                       eraId,
-                                      recipients,
-                                      recipients.size(),
+                                      recipientIds,
+                                      recipientIds.size(),
                                       new Parameters.Builder()
                                                     .setQueue(conversationRecipient.getId().toQueueKey())
                                                     .setLifespan(TimeUnit.MINUTES.toMillis(5))
@@ -162,13 +161,14 @@ public class GroupCallUpdateSendJob extends BaseJob {
                                                                                              nonSelfDestinations,
                                                                                              false,
                                                                                              ContentHint.DEFAULT,
-                                                                                             dataMessage);
+                                                                                             dataMessage,
+                                                                                             false);
 
     if (includesSelf) {
       results.add(ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(dataMessage));
     }
 
-    return GroupSendJobHelper.getCompletedSends(destinations, results);
+    return GroupSendJobHelper.getCompletedSends(destinations, results).completed;
   }
 
   public static class Factory implements Job.Factory<GroupCallUpdateSendJob> {

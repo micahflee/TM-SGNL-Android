@@ -26,17 +26,22 @@ import org.tm.archive.groups.GroupManager;
 import org.tm.archive.groups.GroupsV1MigrationUtil;
 import org.tm.archive.groups.ui.GroupChangeFailureReason;
 import org.tm.archive.groups.ui.invitesandrequests.invite.GroupLinkInviteFriendsBottomSheetDialogFragment;
+import org.tm.archive.groups.v2.GroupBlockJoinRequestResult;
+import org.tm.archive.groups.v2.GroupManagementRepository;
 import org.tm.archive.profiles.spoofing.ReviewRecipient;
 import org.tm.archive.profiles.spoofing.ReviewUtil;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.AsynchronousCallback;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.livedata.LiveDataUtil;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
 
 final class ConversationGroupViewModel extends ViewModel {
 
@@ -46,11 +51,13 @@ final class ConversationGroupViewModel extends ViewModel {
   private final LiveData<Integer>                   actionableRequestingMembers;
   private final LiveData<ReviewState>               reviewState;
   private final LiveData<List<RecipientId>>         gv1MigrationSuggestions;
+  private final GroupManagementRepository           groupManagementRepository;
 
   private boolean firstTimeInviteFriendsTriggered;
 
   private ConversationGroupViewModel() {
-    this.liveRecipient = new MutableLiveData<>();
+    this.liveRecipient             = new MutableLiveData<>();
+    this.groupManagementRepository = new GroupManagementRepository();
 
     LiveData<GroupRecord>     groupRecord = LiveDataUtil.mapAsync(liveRecipient, ConversationGroupViewModel::getGroupRecordForRecipient);
     LiveData<List<Recipient>> duplicates  = LiveDataUtil.mapAsync(groupRecord, record -> {
@@ -119,7 +126,7 @@ final class ConversationGroupViewModel extends ViewModel {
     if (recipient != null && recipient.isGroup()) {
       Application context         = ApplicationDependencies.getApplication();
       GroupDatabase groupDatabase = SignalDatabase.groups();
-      return groupDatabase.getGroup(recipient.getId()).orNull();
+      return groupDatabase.getGroup(recipient.getId()).orElse(null);
     } else {
       return null;
     }
@@ -211,6 +218,11 @@ final class ConversationGroupViewModel extends ViewModel {
 
   void inviteFriends(@NonNull FragmentManager supportFragmentManager, @NonNull GroupId.V2 groupId) {
     GroupLinkInviteFriendsBottomSheetDialogFragment.show(supportFragmentManager, groupId);
+  }
+
+  public Single<GroupBlockJoinRequestResult> blockJoinRequests(@NonNull Recipient groupRecipient, @NonNull Recipient recipient) {
+    return groupManagementRepository.blockJoinRequests(groupRecipient.requireGroupId().requireV2(), recipient)
+        .observeOn(AndroidSchedulers.mainThread());
   }
 
   static final class ReviewState {

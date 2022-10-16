@@ -7,20 +7,20 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import androidx.annotation.WorkerThread
+import org.signal.core.util.CursorUtil
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mediasend.MediaRepository
 import org.tm.archive.providers.BlobProvider
-import org.tm.archive.util.CursorUtil
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.StorageUtil
 import org.tm.archive.video.VideoUtil
-import org.whispersystems.libsignal.util.guava.Optional
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.LinkedList
+import java.util.Optional
 
 private val TAG = Log.tag(MediaCaptureRepository::class.java)
 
@@ -105,8 +105,8 @@ class MediaCaptureRepository(context: Context) {
         false,
         false,
         Optional.of(Media.ALL_MEDIA_BUCKET_ID),
-        Optional.absent(),
-        Optional.absent()
+        Optional.empty(),
+        Optional.empty()
       )
     } catch (e: IOException) {
       return null
@@ -159,8 +159,8 @@ class MediaCaptureRepository(context: Context) {
                 false,
                 false,
                 Optional.of(bucketId),
-                Optional.absent(),
-                Optional.absent()
+                Optional.empty(),
+                Optional.empty()
               )
             )
           )

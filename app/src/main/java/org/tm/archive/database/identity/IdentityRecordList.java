@@ -2,8 +2,8 @@ package org.tm.archive.database.identity;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.IdentityDatabase.VerifiedStatus;
+import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.recipients.Recipient;
 
 import java.util.ArrayList;
@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 public final class IdentityRecordList {
 
   public static final IdentityRecordList EMPTY = new IdentityRecordList(Collections.emptyList());
+
+  public static final long DEFAULT_UNTRUSTED_WINDOW = TimeUnit.SECONDS.toMillis(5);
 
   private final List<IdentityRecord> identityRecords;
   private final boolean              isVerified;
@@ -78,7 +80,7 @@ public final class IdentityRecordList {
         continue;
       }
 
-      if (isUntrusted(identityRecord)) {
+      if (isUntrusted(identityRecord, DEFAULT_UNTRUSTED_WINDOW)) {
         return true;
       }
     }
@@ -87,10 +89,14 @@ public final class IdentityRecordList {
   }
 
   public @NonNull List<IdentityRecord> getUntrustedRecords() {
+    return getUntrustedRecords(DEFAULT_UNTRUSTED_WINDOW);
+  }
+
+  public @NonNull List<IdentityRecord> getUntrustedRecords(long untrustedWindowMillis) {
     List<IdentityRecord> results = new ArrayList<>(identityRecords.size());
 
     for (IdentityRecord identityRecord : identityRecords) {
-      if (isUntrusted(identityRecord)) {
+      if (isUntrusted(identityRecord, untrustedWindowMillis)) {
         results.add(identityRecord);
       }
     }
@@ -102,7 +108,7 @@ public final class IdentityRecordList {
     List<Recipient> untrusted = new ArrayList<>(identityRecords.size());
 
     for (IdentityRecord identityRecord : identityRecords) {
-      if (isUntrusted(identityRecord)) {
+      if (isUntrusted(identityRecord, DEFAULT_UNTRUSTED_WINDOW)) {
         untrusted.add(Recipient.resolved(identityRecord.getRecipientId()));
       }
     }
@@ -134,9 +140,9 @@ public final class IdentityRecordList {
     return unverified;
   }
 
-  private static boolean isUntrusted(@NonNull IdentityRecord identityRecord) {
+  private static boolean isUntrusted(@NonNull IdentityRecord identityRecord, long untrustedWindowMillis) {
     return !identityRecord.isApprovedNonBlocking() &&
-           System.currentTimeMillis() - identityRecord.getTimestamp() < TimeUnit.SECONDS.toMillis(5);
+           System.currentTimeMillis() - identityRecord.getTimestamp() < untrustedWindowMillis;
   }
 
 }

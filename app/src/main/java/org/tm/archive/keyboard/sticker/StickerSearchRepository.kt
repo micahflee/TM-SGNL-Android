@@ -1,6 +1,5 @@
 package org.tm.archive.keyboard.sticker
 
-import android.content.Context
 import androidx.annotation.WorkerThread
 import org.tm.archive.components.emoji.EmojiUtil
 import org.tm.archive.database.EmojiSearchDatabase
@@ -12,7 +11,7 @@ import org.tm.archive.database.model.StickerRecord
 private const val RECENT_LIMIT = 24
 private const val EMOJI_SEARCH_RESULTS_LIMIT = 20
 
-class StickerSearchRepository(context: Context) {
+class StickerSearchRepository {
 
   private val emojiSearchDatabase: EmojiSearchDatabase = SignalDatabase.emojiSearch
   private val stickerDatabase: StickerDatabase = SignalDatabase.stickers

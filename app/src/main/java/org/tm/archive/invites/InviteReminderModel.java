@@ -13,9 +13,9 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.concurrent.SimpleTask;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.core.util.concurrent.SimpleTask;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class InviteReminderModel {
@@ -65,8 +65,8 @@ public final class InviteReminderModel {
 
   public @NonNull Optional<Reminder> getReminder() {
     ReminderInfo info = reminderInfo.get();
-    if (info == null) return Optional.absent();
-    else              return Optional.fromNullable(info.reminder);
+    if (info == null) return Optional.empty();
+    else              return Optional.ofNullable(info.reminder);
   }
 
   public void dismissReminder() {

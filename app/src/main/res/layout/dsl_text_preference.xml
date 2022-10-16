@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    tools:viewBindingIgnore="true"
     android:id="@+id/title"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginStart="@dimen/dsl_settings_gutter"
     android:layout_marginEnd="@dimen/dsl_settings_gutter"
     android:textAlignment="viewStart"
-    android:textAppearance="@style/Signal.Text.Body"
+    android:textAppearance="@style/Signal.Text.BodyLarge"
     tools:text="Message font size" />

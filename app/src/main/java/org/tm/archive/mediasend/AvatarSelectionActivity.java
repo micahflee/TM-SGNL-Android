@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -13,21 +14,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.LiveData;
 
-import org.tm.archive.R;
 import org.signal.imageeditor.core.model.EditorModel;
+import org.tm.archive.R;
 import org.tm.archive.mediasend.v2.gallery.MediaGalleryFragment;
 import org.tm.archive.mms.MediaConstraints;
 import org.tm.archive.profiles.AvatarHelper;
 import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.scribbles.ImageEditorFragment;
-import org.tm.archive.util.DefaultValueLiveData;
 import org.tm.archive.util.MediaUtil;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.FileDescriptor;
 import java.util.Collections;
+import java.util.Optional;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 public class AvatarSelectionActivity extends AppCompatActivity implements CameraFragment.Controller, ImageEditorFragment.Controller, MediaGalleryFragment.Callbacks {
 
@@ -62,6 +63,11 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    getWindow().addFlags(
+        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+    );
+
     setContentView(R.layout.avatar_selection_activity);
 
     if (isGalleryFirst()) {
@@ -94,8 +100,8 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
                               false,
                               false,
                               Optional.of(Media.ALL_MEDIA_BUCKET_ID),
-                              Optional.absent(),
-                              Optional.absent()));
+                              Optional.empty(),
+                              Optional.empty()));
   }
 
   @Override
@@ -126,23 +132,23 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
   }
 
   @Override
-  public int getDisplayRotation() {
-    return getWindowManager().getDefaultDisplay().getRotation();
-  }
-
-  @Override
   public void onCameraCountButtonClicked() {
     throw new UnsupportedOperationException("Cannot select more than one photo");
   }
 
   @Override
-  public @NonNull LiveData<Optional<Media>> getMostRecentMediaItem() {
-    return new DefaultValueLiveData<>(Optional.absent());
+  public @NonNull Flowable<Optional<Media>> getMostRecentMediaItem() {
+    return Flowable.just(Optional.empty());
   }
 
   @Override
   public @NonNull MediaConstraints getMediaConstraints() {
     return MediaConstraints.getPushMediaConstraints();
+  }
+
+  @Override
+  public int getMaxVideoDuration() {
+    return -1;
   }
 
   @Override
@@ -181,6 +187,10 @@ public class AvatarSelectionActivity extends AppCompatActivity implements Camera
   @Override
   public void onMainImageFailedToLoad() {
 
+  }
+
+  @Override
+  public void restoreState() {
   }
 
   public boolean popToRoot() {

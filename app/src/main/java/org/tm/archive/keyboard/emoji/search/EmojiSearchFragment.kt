@@ -2,7 +2,9 @@ package org.tm.archive.keyboard.emoji.search
 
 import android.content.Context
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -15,10 +17,11 @@ import org.tm.archive.components.emoji.EmojiEventListener
 import org.tm.archive.components.emoji.EmojiPageView
 import org.tm.archive.components.emoji.EmojiPageViewGridAdapter
 import org.tm.archive.keyboard.emoji.KeyboardPageSearchView
-import org.tm.archive.keyboard.findListener
+import org.tm.archive.util.ThemedFragment.themedInflate
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.fragments.requireListener
 
-class EmojiSearchFragment : Fragment(R.layout.emoji_search_fragment), EmojiPageViewGridAdapter.VariationSelectorListener {
+class EmojiSearchFragment : Fragment(), EmojiPageViewGridAdapter.VariationSelectorListener {
 
   private lateinit var viewModel: EmojiSearchViewModel
   private lateinit var callback: Callback
@@ -26,7 +29,11 @@ class EmojiSearchFragment : Fragment(R.layout.emoji_search_fragment), EmojiPageV
   override fun onAttach(context: Context) {
     super.onAttach(context)
 
-    callback = findListener<Callback>()!!
+    callback = requireListener()
+  }
+
+  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    return themedInflate(R.layout.emoji_search_fragment, inflater, container)
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -36,7 +43,7 @@ class EmojiSearchFragment : Fragment(R.layout.emoji_search_fragment), EmojiPageV
     viewModel = ViewModelProvider(this, factory)[EmojiSearchViewModel::class.java]
 
     val keyboardAwareLinearLayout: KeyboardAwareLinearLayout = view.findViewById(R.id.kb_aware_layout)
-    val eventListener: EmojiEventListener = requireNotNull(findListener())
+    val eventListener: EmojiEventListener = requireListener()
     val searchBar: KeyboardPageSearchView = view.findViewById(R.id.emoji_search_view)
     val resultsContainer: FrameLayout = view.findViewById(R.id.emoji_search_results_container)
     val noResults: TextView = view.findViewById(R.id.emoji_search_empty)

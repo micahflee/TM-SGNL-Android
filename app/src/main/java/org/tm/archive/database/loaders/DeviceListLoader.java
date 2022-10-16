@@ -9,16 +9,16 @@ import androidx.annotation.VisibleForTesting;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.crypto.IdentityKeyUtil;
+import org.signal.libsignal.protocol.IdentityKeyPair;
+import org.signal.libsignal.protocol.InvalidKeyException;
+import org.signal.libsignal.protocol.ecc.Curve;
+import org.signal.libsignal.protocol.ecc.ECPrivateKey;
+import org.signal.libsignal.protocol.ecc.ECPublicKey;
+import org.signal.libsignal.protocol.util.ByteUtil;
 import org.tm.archive.devicelist.Device;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.AsyncLoader;
 import org.tm.archive.util.Base64;
-import org.whispersystems.libsignal.IdentityKeyPair;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.ecc.Curve;
-import org.whispersystems.libsignal.ecc.ECPrivateKey;
-import org.whispersystems.libsignal.ecc.ECPublicKey;
-import org.whispersystems.libsignal.util.ByteUtil;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceInfo;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
@@ -77,7 +77,7 @@ public class DeviceListLoader extends AsyncLoader<List<Device>> {
         throw new IOException("Got a DeviceName that wasn't properly populated.");
       }
 
-      return new Device(deviceInfo.getId(), new String(decryptName(deviceName, IdentityKeyUtil.getIdentityKeyPair(getContext()))), deviceInfo.getCreated(), deviceInfo.getLastSeen());
+      return new Device(deviceInfo.getId(), new String(decryptName(deviceName, SignalStore.account().getAciIdentityKey())), deviceInfo.getCreated(), deviceInfo.getLastSeen());
 
     } catch (IOException e) {
       Log.w(TAG, "Failed while reading the protobuf.", e);

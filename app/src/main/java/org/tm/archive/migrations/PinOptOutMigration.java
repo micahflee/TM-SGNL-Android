@@ -7,6 +7,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.RefreshAttributesJob;
+import org.tm.archive.jobs.RefreshOwnProfileJob;
 import org.tm.archive.jobs.StorageForcePushJob;
 import org.tm.archive.keyvalue.SignalStore;
 
@@ -40,8 +41,10 @@ public final class PinOptOutMigration extends MigrationJob {
       Log.w(TAG, "Discovered a legacy opt-out user! Resetting the state.");
 
       SignalStore.kbsValues().optOut();
-      ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
-      ApplicationDependencies.getJobManager().add(new StorageForcePushJob());
+      ApplicationDependencies.getJobManager().startChain(new RefreshAttributesJob())
+                                             .then(new RefreshOwnProfileJob())
+                                             .then(new StorageForcePushJob())
+                                             .enqueue();
     } else if (SignalStore.kbsValues().hasOptedOut()) {
       Log.i(TAG, "Discovered an opt-out user, but they're already in a good state. No action required.");
     } else {

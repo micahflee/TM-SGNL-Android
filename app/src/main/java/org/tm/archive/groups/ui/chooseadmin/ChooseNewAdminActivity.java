@@ -9,11 +9,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
-import com.dd.CircularProgressButton;
 
 import org.tm.archive.MainActivity;
 import org.tm.archive.PassphraseRequiredActivity;
@@ -27,6 +26,7 @@ import org.tm.archive.groups.ui.GroupMemberListView;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
+import org.tm.archive.util.views.CircularProgressMaterialButton;
 
 import java.util.Objects;
 
@@ -34,10 +34,10 @@ public final class ChooseNewAdminActivity extends PassphraseRequiredActivity {
 
   private static final String EXTRA_GROUP_ID = "group_id";
 
-  private ChooseNewAdminViewModel viewModel;
-  private GroupMemberListView     groupList;
-  private CircularProgressButton  done;
-  private GroupId.V2              groupId;
+  private ChooseNewAdminViewModel        viewModel;
+  private GroupMemberListView            groupList;
+  private CircularProgressMaterialButton done;
+  private GroupId.V2                     groupId;
 
   private final DynamicTheme dynamicTheme = new DynamicNoActionBarTheme();
 
@@ -70,7 +70,6 @@ public final class ChooseNewAdminActivity extends PassphraseRequiredActivity {
 
     groupList = findViewById(R.id.choose_new_admin_group_list);
     done      = findViewById(R.id.choose_new_admin_done);
-    done.setIndeterminateProgressMode(true);
 
     initializeViewModel();
 
@@ -80,8 +79,7 @@ public final class ChooseNewAdminActivity extends PassphraseRequiredActivity {
                                                                                             .collect(Collectors.toSet())));
 
     done.setOnClickListener(v -> {
-      done.setClickable(false);
-      done.setProgress(50);
+      done.setSpinning();
       viewModel.updateAdminsAndLeave(this::handleUpdateAndLeaveResult);
     });
   }
@@ -103,7 +101,7 @@ public final class ChooseNewAdminActivity extends PassphraseRequiredActivity {
   }
 
   private void initializeViewModel() {
-    viewModel = ViewModelProviders.of(this, new ChooseNewAdminViewModel.Factory(groupId)).get(ChooseNewAdminViewModel.class);
+    viewModel = new ViewModelProvider(this, new ChooseNewAdminViewModel.Factory(groupId)).get(ChooseNewAdminViewModel.class);
 
     viewModel.getNonAdminFullMembers().observe(this, groupList::setMembers);
     viewModel.getSelection().observe(this, selection -> done.setVisibility(selection.isEmpty() ? View.GONE : View.VISIBLE));
@@ -111,13 +109,12 @@ public final class ChooseNewAdminActivity extends PassphraseRequiredActivity {
 
   private void handleUpdateAndLeaveResult(@NonNull GroupChangeResult updateResult) {
     if (updateResult.isSuccess()) {
-      String title = Recipient.externalGroupExact(this, groupId).getDisplayName(this);
+      String title = Recipient.externalGroupExact(groupId).getDisplayName(this);
       Toast.makeText(this, getString(R.string.ChooseNewAdminActivity_you_left, title), Toast.LENGTH_LONG).show();
       startActivity(MainActivity.clearTop(this));
       finish();
     } else {
-      done.setClickable(true);
-      done.setProgress(0);
+      done.cancelSpinning();
       //noinspection ConstantConditions
       Toast.makeText(this, GroupErrors.getUserDisplayMessage(updateResult.getFailureReason()), Toast.LENGTH_LONG).show();
     }

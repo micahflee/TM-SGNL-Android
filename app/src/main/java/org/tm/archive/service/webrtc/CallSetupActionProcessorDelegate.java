@@ -39,6 +39,7 @@ public class CallSetupActionProcessorDelegate extends WebRtcActionProcessor {
 
     ApplicationDependencies.getAppForegroundObserver().removeListener(webRtcInteractor.getForegroundListener());
     webRtcInteractor.startAudioCommunication();
+    webRtcInteractor.activateCall(activePeer.getId());
 
     activePeer.connected();
 
@@ -62,7 +63,6 @@ public class CallSetupActionProcessorDelegate extends WebRtcActionProcessor {
 
     try {
       CallManager callManager = webRtcInteractor.getCallManager();
-      callManager.setCommunicationMode();
       callManager.setAudioEnable(currentState.getLocalDeviceState().isMicrophoneEnabled());
       callManager.setVideoEnable(currentState.getLocalDeviceState().getCameraState().isEnabled());
     } catch (CallException e) {
@@ -74,9 +74,9 @@ public class CallSetupActionProcessorDelegate extends WebRtcActionProcessor {
     }
 
     if (currentState.getCallSetupState(activePeer).isAcceptWithVideo() || currentState.getLocalDeviceState().getCameraState().isEnabled()) {
-      webRtcInteractor.setDefaultAudioDevice(SignalAudioManager.AudioDevice.SPEAKER_PHONE, false);
+      webRtcInteractor.setDefaultAudioDevice(activePeer.getId(), SignalAudioManager.AudioDevice.SPEAKER_PHONE, false);
     } else {
-      webRtcInteractor.setDefaultAudioDevice(SignalAudioManager.AudioDevice.EARPIECE, false);
+      webRtcInteractor.setDefaultAudioDevice(activePeer.getId(), SignalAudioManager.AudioDevice.EARPIECE, false);
     }
 
     return currentState;
@@ -96,6 +96,16 @@ public class CallSetupActionProcessorDelegate extends WebRtcActionProcessor {
                                .changeLocalDeviceState()
                                .cameraState(camera.getCameraState())
                                .build();
+
+    //noinspection SimplifiableBooleanExpression
+    if ((enable && camera.isInitialized()) || !enable) {
+      try {
+        CallManager callManager = webRtcInteractor.getCallManager();
+        callManager.setVideoEnable(enable);
+      } catch (CallException e) {
+        Log.w(tag, "Unable change video enabled state to " + enable, e);
+      }
+    }
 
     WebRtcUtil.enableSpeakerPhoneIfNeeded(webRtcInteractor, currentState);
 

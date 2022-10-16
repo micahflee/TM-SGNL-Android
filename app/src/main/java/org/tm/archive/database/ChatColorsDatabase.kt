@@ -3,12 +3,12 @@ package org.tm.archive.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import org.signal.core.util.CursorUtil
+import org.signal.core.util.SqlUtil
 import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.database.model.databaseprotos.ChatColor
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.util.CursorUtil
-import org.tm.archive.util.SqlUtil
 
 class ChatColorsDatabase(context: Context, databaseHelper: SignalDatabase) : Database(context, databaseHelper) {
 

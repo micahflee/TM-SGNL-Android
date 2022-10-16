@@ -10,7 +10,6 @@ import org.tm.archive.badges.Badges.displayBadges
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.badges.view.ViewBadgeBottomSheetDialogFragment
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.app.subscription.SubscriptionsRepository
@@ -18,6 +17,7 @@ import org.tm.archive.components.settings.configure
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.LifecycleDisposable
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
 /**
@@ -35,10 +35,10 @@ class BadgesOverviewFragment : DSLSettingsFragment(
     }
   )
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     Badge.register(adapter) { badge, _, isFaded ->
       if (badge.isExpired() || isFaded) {
-        findNavController().safeNavigate(BadgesOverviewFragmentDirections.actionBadgeManageFragmentToExpiredBadgeDialog(badge))
+        findNavController().safeNavigate(BadgesOverviewFragmentDirections.actionBadgeManageFragmentToExpiredBadgeDialog(badge, null, null))
       } else {
         ViewBadgeBottomSheetDialogFragment.show(parentFragmentManager, Recipient.self().id, badge)
       }

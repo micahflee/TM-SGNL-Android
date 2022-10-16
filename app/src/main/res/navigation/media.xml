@@ -13,6 +13,13 @@
         <action
             android:id="@+id/action_mediaCaptureFragment_to_mediaGalleryFragment"
             app:destination="@id/mediaGalleryFragment" />
+        <action
+            android:id="@+id/action_mediaCaptureFragment_to_textStoryPostCreationFragment"
+            app:destination="@id/textStoryPostCreationFragment"
+            app:enterAnim="@anim/slide_from_end"
+            app:exitAnim="@null"
+            app:popEnterAnim="@null"
+            app:popExitAnim="@anim/slide_to_end" />
     </fragment>
 
     <fragment
@@ -36,6 +43,12 @@
             app:destination="@id/mediaCaptureFragment" />
     </fragment>
 
+    <fragment
+        android:id="@+id/textStoryPostCreationFragment"
+        android:name="org.tm.archive.mediasend.v2.text.TextStoryPostCreationFragment"
+        android:label="text_story_post_creation_fragment"
+        tools:layout="@layout/stories_text_post_creation_fragment" />
+
     <action
         android:id="@+id/action_directly_to_mediaCaptureFragment"
         app:destination="@id/mediaCaptureFragment" />
@@ -47,5 +60,9 @@
     <action
         android:id="@+id/action_directly_to_mediaReviewFragment"
         app:destination="@id/mediaReviewFragment" />
+
+    <action
+        android:id="@+id/action_directly_to_textPostCreationFragment"
+        app:destination="@id/textStoryPostCreationFragment" />
 
 </navigation>

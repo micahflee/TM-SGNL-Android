@@ -1,7 +1,6 @@
 package org.whispersystems.signalservice.api;
 
-import org.whispersystems.libsignal.logging.Log;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.libsignal.protocol.logging.Log;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccess;
 import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState;
@@ -14,6 +13,7 @@ import org.whispersystems.signalservice.internal.websocket.WebsocketResponse;
 import org.whispersystems.util.Base64;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import io.reactivex.rxjava3.core.Observable;
@@ -207,8 +207,7 @@ public final class SignalWebSocket {
                                              return request(requestMessage);
                                            }
                                            return Single.just(r);
-                                         })
-                                         .onErrorResumeNext(t -> request(requestMessage));
+                                         });
       } catch (IOException e) {
         return Single.error(e);
       }
@@ -220,7 +219,7 @@ public final class SignalWebSocket {
   /**
    * <p>
    * A blocking call that reads a message off the pipe. When this call returns, the message has been
-   * acknowledged and will not be retransmitted. This will return {@link Optional#absent()} when an
+   * acknowledged and will not be retransmitted. This will return {@link Optional#empty()} when an
    * empty response is hit, which indicates the WebSocket is empty.
    * <p>
    * You can specify a {@link MessageReceivedCallback} that will be called before the received message is acknowledged.
@@ -261,7 +260,7 @@ public final class SignalWebSocket {
           callback.onMessage(envelope);
           return Optional.of(envelope);
         } else if (isSocketEmptyRequest(request)) {
-          return Optional.absent();
+          return Optional.empty();
         }
       } finally {
         getWebSocket().sendResponse(response);
@@ -295,7 +294,7 @@ public final class SignalWebSocket {
 
   private static Optional<String> findHeader(WebSocketRequestMessage message) {
     if (message.getHeadersCount() == 0) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     for (String header : message.getHeadersList()) {
@@ -307,7 +306,7 @@ public final class SignalWebSocket {
       }
     }
 
-    return Optional.absent();
+    return Optional.empty();
   }
 
   /**

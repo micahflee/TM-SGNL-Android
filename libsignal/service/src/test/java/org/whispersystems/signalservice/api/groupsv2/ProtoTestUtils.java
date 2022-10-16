@@ -2,16 +2,17 @@ package org.whispersystems.signalservice.api.groupsv2;
 
 import com.google.protobuf.ByteString;
 
+import org.signal.libsignal.zkgroup.InvalidInputException;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.signal.storageservice.protos.groups.Member;
 import org.signal.storageservice.protos.groups.RequestingMember;
 import org.signal.storageservice.protos.groups.local.DecryptedApproveMember;
+import org.signal.storageservice.protos.groups.local.DecryptedBannedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedModifyMemberRole;
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMember;
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMemberRemoval;
 import org.signal.storageservice.protos.groups.local.DecryptedRequestingMember;
-import org.signal.zkgroup.InvalidInputException;
-import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.signalservice.internal.util.Util;
 
@@ -52,6 +53,14 @@ final class ProtoTestUtils {
     System.arraycopy(profileKeyBytes, 0, concat, uuidBytes.length, profileKeyBytes.length);
 
     return ByteString.copyFrom(concat);
+  }
+
+  /**
+   * Emulates a presentation by concatenating the uuid and profile key which makes it suitable for
+   * equality assertions in these tests.
+   */
+  static ByteString presentation(ByteString uuid, ByteString profileKey) {
+    return uuid.concat(profileKey);
   }
 
   static DecryptedModifyMemberRole promoteAdmin(UUID member) {
@@ -122,6 +131,12 @@ final class ProtoTestUtils {
                                     .build();
   }
 
+  static DecryptedBannedMember bannedMember(UUID uuid) {
+    return DecryptedBannedMember.newBuilder()
+                                .setUuid(UuidUtil.toByteString(uuid))
+                                .build();
+  }
+
   static DecryptedApproveMember approveMember(UUID uuid) {
     return approve(uuid, Member.Role.DEFAULT);
   }
@@ -139,6 +154,22 @@ final class ProtoTestUtils {
 
   static DecryptedMember member(UUID uuid, ProfileKey profileKey) {
     return withProfileKey(member(uuid), profileKey);
+  }
+
+  static DecryptedMember pendingPniAciMember(UUID uuid, UUID pni, ProfileKey profileKey) {
+    return DecryptedMember.newBuilder()
+                          .setUuid(UuidUtil.toByteString(uuid))
+                          .setPni(UuidUtil.toByteString(pni))
+                          .setProfileKey(ByteString.copyFrom(profileKey.serialize()))
+                          .build();
+  }
+
+  static DecryptedMember pendingPniAciMember(ByteString uuid, ByteString pni, ByteString profileKey) {
+    return DecryptedMember.newBuilder()
+                          .setUuid(uuid)
+                          .setPni(pni)
+                          .setProfileKey(profileKey)
+                          .build();
   }
 
   static DecryptedMember admin(UUID uuid, ProfileKey profileKey) {

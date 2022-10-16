@@ -7,8 +7,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.tm.archive.ContactSelectionActivity;
 import org.tm.archive.ContactSelectionListFragment;
@@ -19,10 +20,10 @@ import org.tm.archive.groups.SelectionLimits;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class AddMembersActivity extends PushContactSelectionActivity {
@@ -59,8 +60,7 @@ public class AddMembersActivity extends PushContactSelectionActivity {
     AddMembersViewModel.Factory factory = new AddMembersViewModel.Factory(getGroupId());
 
     done      = findViewById(R.id.done);
-    viewModel = ViewModelProviders.of(this, factory)
-                                  .get(AddMembersViewModel.class);
+    viewModel = new ViewModelProvider(this, factory).get(AddMembersViewModel.class);
 
     done.setOnClickListener(v ->
       viewModel.getDialogStateForSelectedContacts(contactsFragment.getSelectedContacts(), this::displayAlertMessage)
@@ -79,7 +79,7 @@ public class AddMembersActivity extends PushContactSelectionActivity {
   }
 
   @Override
-  public void onBeforeContactSelected(Optional<RecipientId> recipientId, String number, Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
     if (getGroupId().isV1() && recipientId.isPresent() && !Recipient.resolved(recipientId.get()).hasE164()) {
       Toast.makeText(this, R.string.AddMembersActivity__this_person_cant_be_added_to_legacy_groups, Toast.LENGTH_SHORT).show();
       callback.accept(false);
@@ -96,7 +96,7 @@ public class AddMembersActivity extends PushContactSelectionActivity {
   }
 
   @Override
-  public void onContactDeselected(Optional<RecipientId> recipientId, String number) {
+  public void onContactDeselected(@NonNull Optional<RecipientId> recipientId, String number) {
     if (contactsFragment.hasQueryFilter()) {
       getContactFilterView().clear();
     }
@@ -140,7 +140,7 @@ public class AddMembersActivity extends PushContactSelectionActivity {
     String message = getResources().getQuantityString(R.plurals.AddMembersActivity__add_d_members_to_s, state.getSelectionCount(),
                                                       recipient.getDisplayName(this), state.getGroupTitle(), state.getSelectionCount());
 
-    new AlertDialog.Builder(this)
+    new MaterialAlertDialogBuilder(this)
                    .setMessage(message)
                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.cancel())
                    .setPositiveButton(R.string.AddMembersActivity__add, (dialog, which) -> {

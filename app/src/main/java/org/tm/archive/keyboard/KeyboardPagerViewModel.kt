@@ -1,7 +1,9 @@
 package org.tm.archive.keyboard
 
+import androidx.annotation.MainThread
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import org.signal.core.util.ThreadUtil
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.stickers.StickerSearchRepository
@@ -35,14 +37,19 @@ class KeyboardPagerViewModel : ViewModel() {
   fun page(): LiveData<KeyboardPage> = page
   fun pages(): LiveData<Set<KeyboardPage>> = pages
 
+  @MainThread
   fun setOnlyPage(page: KeyboardPage) {
-    pages.postValue(setOf(page))
+    pages.value = setOf(page)
     switchToPage(page)
   }
 
   fun switchToPage(page: KeyboardPage) {
     if (this.pages.value.contains(page) && this.page.value != page) {
-      this.page.postValue(page)
+      if (ThreadUtil.isMainThread()) {
+        this.page.value = page
+      } else {
+        this.page.postValue(page)
+      }
     }
   }
 }

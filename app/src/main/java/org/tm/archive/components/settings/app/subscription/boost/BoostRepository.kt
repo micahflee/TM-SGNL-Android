@@ -1,9 +1,11 @@
 package org.tm.archive.components.settings.app.subscription.boost
 
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.money.FiatMoney
 import org.tm.archive.badges.Badges
 import org.tm.archive.badges.models.Badge
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.util.PlatformCurrencyUtil
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile
 import org.whispersystems.signalservice.api.services.DonationsService
@@ -15,7 +17,8 @@ import java.util.Locale
 class BoostRepository(private val donationsService: DonationsService) {
 
   fun getBoosts(): Single<Map<Currency, List<Boost>>> {
-    return donationsService.boostAmounts
+    return Single.fromCallable { donationsService.boostAmounts }
+      .subscribeOn(Schedulers.io())
       .flatMap(ServiceResponse<Map<String, List<BigDecimal>>>::flattenResult)
       .map { result ->
         result
@@ -26,7 +29,12 @@ class BoostRepository(private val donationsService: DonationsService) {
   }
 
   fun getBoostBadge(): Single<Badge> {
-    return donationsService.getBoostBadge(Locale.getDefault())
+    return Single
+      .fromCallable {
+        ApplicationDependencies.getDonationsService()
+          .getBoostBadge(Locale.getDefault())
+      }
+      .subscribeOn(Schedulers.io())
       .flatMap(ServiceResponse<SignalServiceProfile.Badge>::flattenResult)
       .map(Badges::fromServiceBadge)
   }

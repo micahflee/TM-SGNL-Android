@@ -4,15 +4,15 @@ import androidx.navigation.Navigation
 import org.tm.archive.BuildConfig
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
 class HelpSettingsFragment : DSLSettingsFragment(R.string.preferences__help) {
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     adapter.submitList(getConfiguration().toMappingModelList())
   }
 
@@ -37,15 +37,13 @@ class HelpSettingsFragment : DSLSettingsFragment(R.string.preferences__help) {
         summary = DSLSettingsText.from(BuildConfig.VERSION_NAME)
       )
 
-      //**TM_SA**//
-      /*clickPref(
+      clickPref(
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__debug_log),
         onClick = {
           Navigation.findNavController(requireView()).safeNavigate(R.id.action_helpSettingsFragment_to_submitDebugLogActivity)
         }
-      )*/
-      //**TM_SA**//
-      
+      )
+
       externalLinkPref(
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__terms_amp_privacy_policy),
         linkId = R.string.terms_and_privacy_policy_url

@@ -59,7 +59,7 @@ class ArchiveSender {
             val chatName = getChatName(context, archiveRecipient, isGroup)
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
-            val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup, Contact(from))
+            val toName = createMessageNameList(context, archiveRecipient, isInbox, ArchiveUtil.getRecipientsListFromParticipantIds(archiveRecipient), isGroup, Contact(from))
             val messageBody = if(message.messageBody != null){
                 message.messageBody
             }else{
@@ -88,7 +88,7 @@ class ArchiveSender {
 
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
-            val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup, Contact(from))
+            val toName = createMessageNameList(context, archiveRecipient, isInbox, ArchiveUtil.getRecipientsListFromParticipantIds(archiveRecipient), isGroup, Contact(from))
             val cleanMessageBody = cleanMessageBodyFromUnusedCharacters(messageBody)
 
             val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, sendingTime, from)
@@ -116,7 +116,7 @@ class ArchiveSender {
             val chatName = getChatName(context, archiveRecipient, isGroup)
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
-            val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup, Contact(from))
+            val toName = createMessageNameList(context, archiveRecipient, isInbox, ArchiveUtil.getRecipientsListFromParticipantIds(archiveRecipient), isGroup, Contact(from))
             val messageBody = ArchiveUtil.createPreviewLinkBody(null, message)
 
             val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, message.sentTimeMillis, from)
@@ -213,7 +213,7 @@ class ArchiveSender {
 
         val chatId = groupId(archiveRecipient)
         val fromContactName = fromContactName(context, archiveRecipient, isInbox)
-        val toName = createMessageNameList(context, archiveRecipient, isInbox, archiveRecipient.participants, isGroup, Contact(from))
+        val toName = createMessageNameList(context, archiveRecipient, isInbox, ArchiveUtil.getRecipientsListFromParticipantIds(archiveRecipient), isGroup, Contact(from))
         val cleanMessageBody = cleanMessageBodyFromUnusedCharacters(message.body)
         val listFileAsString = getListFileAsString(message)
         val uniqueMessageId = ArchiveUtil.getUniqueDeleteMessageId(message.timestamp, from, true, isDeletedForAll)

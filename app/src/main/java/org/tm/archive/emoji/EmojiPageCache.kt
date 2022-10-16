@@ -5,11 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
+import org.signal.core.util.concurrent.SimpleTask
 import org.signal.core.util.logging.Log
 import org.tm.archive.mms.PartAuthority
 import org.tm.archive.util.ListenableFutureTask
 import org.tm.archive.util.SoftHashMap
-import org.tm.archive.util.concurrent.SimpleTask
 import java.io.IOException
 import java.io.InputStream
 

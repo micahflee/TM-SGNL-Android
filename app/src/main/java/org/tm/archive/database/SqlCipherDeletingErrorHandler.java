@@ -9,7 +9,7 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 
 /**
  * Prints some diagnostics and then deletes the original so the database can be recreated.

@@ -15,7 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
@@ -27,11 +27,9 @@ import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.ResourceContactPhoto;
 import org.tm.archive.conversation.ConversationIntents;
 import org.tm.archive.conversation.colors.AvatarColor;
-import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.ui.managegroup.dialogs.GroupDescriptionDialog;
 import org.tm.archive.groups.v2.GroupDescriptionUtil;
 import org.tm.archive.groups.v2.GroupInviteLinkUrl;
-import org.tm.archive.jobs.RetrieveProfileJob;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.LongClickMovementMethod;
@@ -99,7 +97,7 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
 
     GroupJoinViewModel.Factory factory = new GroupJoinViewModel.Factory(requireContext().getApplicationContext(), getGroupInviteLinkUrl());
 
-    GroupJoinViewModel viewModel = ViewModelProviders.of(this, factory).get(GroupJoinViewModel.class);
+    GroupJoinViewModel viewModel = new ViewModelProvider(this, factory).get(GroupJoinViewModel.class);
 
     viewModel.getGroupDetails().observe(getViewLifecycleOwner(), details -> {
       groupName.setText(details.getGroupName());
@@ -109,26 +107,15 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
         updateGroupDescription(details.getGroupName(), details.getGroupDescription());
       }
 
-      switch (getGroupJoinStatus()) {
-        case UPDATE_LINKED_DEVICE_TO_JOIN:
-          groupJoinExplain.setText(R.string.GroupJoinUpdateRequiredBottomSheetDialogFragment_update_linked_device_message);
-          groupCancelButton.setText(android.R.string.ok);
-          groupJoinButton.setVisibility(View.GONE);
-          ApplicationDependencies.getJobManager()
-                                 .add(RetrieveProfileJob.forRecipient(Recipient.self().getId()));
-          break;
-        case LOCAL_CAN_JOIN:
-          groupJoinExplain.setText(details.joinRequiresAdminApproval() ? R.string.GroupJoinBottomSheetDialogFragment_admin_approval_needed
-                                                                       : R.string.GroupJoinBottomSheetDialogFragment_direct_join);
-          groupJoinButton.setText(details.joinRequiresAdminApproval() ? R.string.GroupJoinBottomSheetDialogFragment_request_to_join
-                                                                      : R.string.GroupJoinBottomSheetDialogFragment_join);
-          groupJoinButton.setOnClickListener(v -> {
-            Log.i(TAG, details.joinRequiresAdminApproval() ? "Attempting to direct join group" : "Attempting to request to join group");
-            viewModel.join(details);
-          });
-          groupJoinButton.setVisibility(View.VISIBLE);
-          break;
-      }
+      groupJoinExplain.setText(details.joinRequiresAdminApproval() ? R.string.GroupJoinBottomSheetDialogFragment_admin_approval_needed
+                                                                   : R.string.GroupJoinBottomSheetDialogFragment_direct_join);
+      groupJoinButton.setText(details.joinRequiresAdminApproval() ? R.string.GroupJoinBottomSheetDialogFragment_request_to_join
+                                                                  : R.string.GroupJoinBottomSheetDialogFragment_join);
+      groupJoinButton.setOnClickListener(v -> {
+        Log.i(TAG, details.joinRequiresAdminApproval() ? "Attempting to direct join group" : "Attempting to request to join group");
+        viewModel.join(details);
+      });
+      groupJoinButton.setVisibility(View.VISIBLE);
 
       avatar.setImageBytesForGroup(details.getAvatarBytes(), new FallbackPhotoProvider(), AvatarColor.UNKNOWN);
 
@@ -137,10 +124,7 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
 
     viewModel.isBusy().observe(getViewLifecycleOwner(), isBusy -> busy.setVisibility(isBusy ? View.VISIBLE : View.GONE));
 
-    viewModel.getErrors().observe(getViewLifecycleOwner(), error -> {
-      Toast.makeText(requireContext(), errorToMessage(error), Toast.LENGTH_SHORT).show();
-      dismiss();
-    });
+    viewModel.getErrors().observe(getViewLifecycleOwner(), this::showError);
 
     viewModel.getJoinErrors().observe(getViewLifecycleOwner(), error -> Toast.makeText(requireContext(), errorToMessage(error), Toast.LENGTH_SHORT).show());
 
@@ -166,24 +150,34 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
                                  () -> GroupDescriptionDialog.show(getChildFragmentManager(), name, description, true));
   }
 
-  private static ExtendedGroupJoinStatus getGroupJoinStatus() {
-    if (Recipient.self().getGroupsV2Capability() != Recipient.Capability.SUPPORTED) {
-      return ExtendedGroupJoinStatus.UPDATE_LINKED_DEVICE_TO_JOIN;
-    } else {
-      return ExtendedGroupJoinStatus.LOCAL_CAN_JOIN;
-    }
-  }
+  private void showError(FetchGroupDetailsError error) {
+    avatar.setVisibility(View.INVISIBLE);
+    groupCancelButton.setVisibility(View.GONE);
+    groupDetails.setVisibility(View.VISIBLE);
+    groupJoinButton.setVisibility(View.VISIBLE);
+    groupJoinButton.setText(getString(android.R.string.ok));
+    groupJoinButton.setOnClickListener(v -> dismissAllowingStateLoss());
 
-  private @NonNull String errorToMessage(@NonNull FetchGroupDetailsError error) {
-    if (error == FetchGroupDetailsError.GroupLinkNotActive) {
-      return getString(R.string.GroupJoinBottomSheetDialogFragment_this_group_link_is_not_active);
+    switch (error) {
+      case GroupLinkNotActive:
+        groupName.setText(R.string.GroupJoinBottomSheetDialogFragment_cant_join_group);
+        groupDetails.setText(R.string.GroupJoinBottomSheetDialogFragment_this_group_link_is_no_longer_valid);
+        break;
+      case BannedFromGroup:
+        groupName.setText(R.string.GroupJoinBottomSheetDialogFragment_cant_join_group);
+        groupDetails.setText(R.string.GroupJoinBottomSheetDialogFragment_you_cant_join_this_group_via_the_group_link_because_an_admin_removed_you);
+        break;
+      case NetworkError:
+        groupName.setText(R.string.GroupJoinBottomSheetDialogFragment_link_error);
+        groupDetails.setText(R.string.GroupJoinBottomSheetDialogFragment_joining_via_this_link_failed_try_joining_again_later);
+        break;
     }
-    return getString(R.string.GroupJoinBottomSheetDialogFragment_unable_to_get_group_information_please_try_again_later);
   }
 
   private @NonNull String errorToMessage(@NonNull JoinGroupError error) {
     switch (error) {
       case GROUP_LINK_NOT_ACTIVE: return getString(R.string.GroupJoinBottomSheetDialogFragment_this_group_link_is_not_active);
+      case BANNED               : return getString(R.string.GroupJoinBottomSheetDialogFragment_you_cant_join_this_group_via_the_group_link_because_an_admin_removed_you);
       case NETWORK_ERROR        : return getString(R.string.GroupJoinBottomSheetDialogFragment_encountered_a_network_error);
       default                   : return getString(R.string.GroupJoinBottomSheetDialogFragment_unable_to_join_group_please_try_again_later);
     }
@@ -208,13 +202,5 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
     public @NonNull FallbackContactPhoto getPhotoForGroup() {
       return new ResourceContactPhoto(R.drawable.ic_group_outline_48);
     }
-  }
-
-  public enum ExtendedGroupJoinStatus {
-    /** Locally we're using a version that can use group links, but one or more linked devices needs updating for GV2. */
-    UPDATE_LINKED_DEVICE_TO_JOIN,
-
-    /** This version of the client allows joining via GV2 group links. */
-    LOCAL_CAN_JOIN
   }
 }

@@ -12,12 +12,12 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.tm.archive.R
 import org.tm.archive.keyboard.emoji.KeyboardPageSearchView
-import org.tm.archive.keyboard.findListener
 import org.tm.archive.mms.GlideApp
 import org.tm.archive.stickers.StickerEventListener
 import org.tm.archive.util.DeviceProperties
 import org.tm.archive.util.InsetItemDecoration
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.fragments.findListener
 import kotlin.math.max
 
 /**

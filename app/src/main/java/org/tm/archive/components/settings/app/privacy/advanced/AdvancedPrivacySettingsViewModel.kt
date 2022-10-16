@@ -4,12 +4,19 @@ import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobmanager.impl.NetworkConstraint
 import org.tm.archive.jobs.RefreshAttributesJob
+import org.tm.archive.jobs.RefreshOwnProfileJob
+import org.tm.archive.keyvalue.SettingsValues
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.util.SingleLiveEvent
 import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.livedata.Store
+import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState
 
 class AdvancedPrivacySettingsViewModel(
   private val sharedPreferences: SharedPreferences,
@@ -21,6 +28,15 @@ class AdvancedPrivacySettingsViewModel(
 
   val state: LiveData<AdvancedPrivacySettingsState> = store.stateLiveData
   val events: LiveData<Event> = singleEvents
+  val disposables: CompositeDisposable = CompositeDisposable()
+
+  init {
+    disposables.add(
+      ApplicationDependencies.getSignalWebSocket().webSocketState
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe { refresh() }
+    )
+  }
 
   fun disablePushMessages() {
     store.update { getState().copy(showProgressSpinner = true) }
@@ -54,7 +70,14 @@ class AdvancedPrivacySettingsViewModel(
 
   fun setAllowSealedSenderFromAnyone(enabled: Boolean) {
     sharedPreferences.edit().putBoolean(TextSecurePreferences.UNIVERSAL_UNIDENTIFIED_ACCESS, enabled).apply()
-    ApplicationDependencies.getJobManager().add(RefreshAttributesJob())
+    ApplicationDependencies.getJobManager().startChain(RefreshAttributesJob()).then(RefreshOwnProfileJob()).enqueue()
+    refresh()
+  }
+
+  fun setCensorshipCircumventionEnabled(enabled: Boolean) {
+    SignalStore.settings().setCensorshipCircumventionEnabled(enabled)
+    SignalStore.misc().isServiceReachableWithoutCircumvention = false
+    ApplicationDependencies.resetNetworkConnectionsAfterProxyChange()
     refresh()
   }
 
@@ -62,17 +85,72 @@ class AdvancedPrivacySettingsViewModel(
     store.update { getState().copy(showProgressSpinner = it.showProgressSpinner) }
   }
 
-  private fun getState() = AdvancedPrivacySettingsState(
-    isPushEnabled = SignalStore.account().isRegistered,
-    alwaysRelayCalls = TextSecurePreferences.isTurnOnly(ApplicationDependencies.getApplication()),
-    showSealedSenderStatusIcon = TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(
-      ApplicationDependencies.getApplication()
-    ),
-    allowSealedSenderFromAnyone = TextSecurePreferences.isUniversalUnidentifiedAccess(
-      ApplicationDependencies.getApplication()
-    ),
-    false
-  )
+  override fun onCleared() {
+    disposables.dispose()
+  }
+
+  private fun getState(): AdvancedPrivacySettingsState {
+    val censorshipCircumventionState = getCensorshipCircumventionState()
+
+    return AdvancedPrivacySettingsState(
+      isPushEnabled = SignalStore.account().isRegistered,
+      alwaysRelayCalls = TextSecurePreferences.isTurnOnly(ApplicationDependencies.getApplication()),
+      censorshipCircumventionState = censorshipCircumventionState,
+      censorshipCircumventionEnabled = getCensorshipCircumventionEnabled(censorshipCircumventionState),
+      showSealedSenderStatusIcon = TextSecurePreferences.isShowUnidentifiedDeliveryIndicatorsEnabled(
+        ApplicationDependencies.getApplication()
+      ),
+      allowSealedSenderFromAnyone = TextSecurePreferences.isUniversalUnidentifiedAccess(
+        ApplicationDependencies.getApplication()
+      ),
+      false
+    )
+  }
+
+  private fun getCensorshipCircumventionState(): CensorshipCircumventionState {
+    val countryCode: Int = PhoneNumberFormatter.getLocalCountryCode()
+    val isCountryCodeCensoredByDefault: Boolean = ApplicationDependencies.getSignalServiceNetworkAccess().isCountryCodeCensoredByDefault(countryCode)
+    val enabledState: SettingsValues.CensorshipCircumventionEnabled = SignalStore.settings().censorshipCircumventionEnabled
+    val hasInternet: Boolean = NetworkConstraint.isMet(ApplicationDependencies.getApplication())
+    val websocketConnected: Boolean = ApplicationDependencies.getSignalWebSocket().webSocketState.firstOrError().blockingGet() == WebSocketConnectionState.CONNECTED
+
+    return when {
+      SignalStore.internalValues().allowChangingCensorshipSetting() -> {
+        CensorshipCircumventionState.AVAILABLE
+      }
+      isCountryCodeCensoredByDefault && enabledState == SettingsValues.CensorshipCircumventionEnabled.DISABLED -> {
+        CensorshipCircumventionState.AVAILABLE_MANUALLY_DISABLED
+      }
+      isCountryCodeCensoredByDefault -> {
+        CensorshipCircumventionState.AVAILABLE_AUTOMATICALLY_ENABLED
+      }
+      !hasInternet && enabledState != SettingsValues.CensorshipCircumventionEnabled.ENABLED -> {
+        CensorshipCircumventionState.UNAVAILABLE_NO_INTERNET
+      }
+      websocketConnected && enabledState != SettingsValues.CensorshipCircumventionEnabled.ENABLED -> {
+        CensorshipCircumventionState.UNAVAILABLE_CONNECTED
+      }
+      else -> {
+        CensorshipCircumventionState.AVAILABLE
+      }
+    }
+  }
+
+  private fun getCensorshipCircumventionEnabled(state: CensorshipCircumventionState): Boolean {
+    return when (state) {
+      CensorshipCircumventionState.UNAVAILABLE_CONNECTED,
+      CensorshipCircumventionState.UNAVAILABLE_NO_INTERNET,
+      CensorshipCircumventionState.AVAILABLE_MANUALLY_DISABLED -> {
+        false
+      }
+      CensorshipCircumventionState.AVAILABLE_AUTOMATICALLY_ENABLED -> {
+        true
+      }
+      else -> {
+        SignalStore.settings().censorshipCircumventionEnabled == SettingsValues.CensorshipCircumventionEnabled.ENABLED
+      }
+    }
+  }
 
   enum class Event {
     DISABLE_PUSH_FAILED
@@ -82,7 +160,7 @@ class AdvancedPrivacySettingsViewModel(
     private val sharedPreferences: SharedPreferences,
     private val repository: AdvancedPrivacySettingsRepository
   ) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return requireNotNull(
         modelClass.cast(
           AdvancedPrivacySettingsViewModel(

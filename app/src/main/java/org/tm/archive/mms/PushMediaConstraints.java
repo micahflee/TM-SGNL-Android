@@ -24,6 +24,11 @@ public class PushMediaConstraints extends MediaConstraints {
   }
 
   @Override
+  public boolean isHighQuality() {
+    return currentConfig == MediaConfig.LEVEL_3;
+  }
+
+  @Override
   public int getImageMaxWidth(Context context) {
     return currentConfig.imageSizeTargets[0];
   }
@@ -115,6 +120,18 @@ public class PushMediaConstraints extends MediaConstraints {
       this.maxImageFileSize = maxImageFileSize;
       this.imageSizeTargets = imageSizeTargets;
       this.qualitySetting   = qualitySetting;
+    }
+
+    public int getMaxImageFileSize() {
+      return maxImageFileSize;
+    }
+
+    public int[] getImageSizeTargets() {
+      return imageSizeTargets;
+    }
+
+    public int getQualitySetting() {
+      return qualitySetting;
     }
 
     public static @Nullable MediaConfig forLevel(int level) {

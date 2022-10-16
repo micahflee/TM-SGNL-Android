@@ -8,8 +8,8 @@ import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.zkgroup.VerificationFailedException;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupJoinInfo;
-import org.signal.zkgroup.VerificationFailedException;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupChangeFailedException;
 import org.tm.archive.groups.GroupManager;
@@ -39,7 +39,9 @@ final class GroupJoinRepository {
         callback.onComplete(getGroupDetails());
       } catch (IOException e) {
         callback.onError(FetchGroupDetailsError.NetworkError);
-      } catch (VerificationFailedException | GroupLinkNotActiveException e) {
+      } catch (GroupLinkNotActiveException e) {
+        callback.onError(e.getReason() == GroupLinkNotActiveException.Reason.BANNED ? FetchGroupDetailsError.BannedFromGroup : FetchGroupDetailsError.GroupLinkNotActive);
+      } catch (VerificationFailedException e) {
         callback.onError(FetchGroupDetailsError.GroupLinkNotActive);
       }
     });
@@ -62,7 +64,7 @@ final class GroupJoinRepository {
       } catch (GroupChangeBusyException e) {
         callback.onError(JoinGroupError.BUSY);
       } catch (GroupLinkNotActiveException e) {
-        callback.onError(JoinGroupError.GROUP_LINK_NOT_ACTIVE);
+        callback.onError(e.getReason() == GroupLinkNotActiveException.Reason.BANNED ? JoinGroupError.BANNED : JoinGroupError.GROUP_LINK_NOT_ACTIVE);
       } catch (GroupChangeFailedException | MembershipNotSuitableForV2Exception e) {
         callback.onError(JoinGroupError.FAILED);
       }

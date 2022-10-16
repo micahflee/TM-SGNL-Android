@@ -6,13 +6,13 @@ import androidx.fragment.app.viewModels
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsIcon
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.v2.GroupLinkUrlAndStatus
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.livedata.LiveDataUtil
 import org.tm.archive.util.views.SimpleProgressDialog
 
@@ -36,7 +36,7 @@ class ShareableGroupLinkFragment : DSLSettingsFragment(
     }
   )
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     LiveDataUtil.combineLatest(viewModel.groupLink, viewModel.canEdit) { groupLink, canEdit ->
       Pair(groupLink, canEdit)
     }.observe(viewLifecycleOwner) { (groupLink, canEdit) ->

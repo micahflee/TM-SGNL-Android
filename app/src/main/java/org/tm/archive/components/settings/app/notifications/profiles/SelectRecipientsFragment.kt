@@ -8,7 +8,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.dd.CircularProgressButton
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.tm.archive.ContactSelectionListFragment
 import org.tm.archive.LoggingFragment
@@ -17,11 +16,11 @@ import org.tm.archive.components.ContactFilterView
 import org.tm.archive.contacts.ContactsCursorLoader
 import org.tm.archive.groups.SelectionLimits
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.util.CircularProgressButtonUtil
 import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.Util
 import org.tm.archive.util.ViewUtil
-import org.whispersystems.libsignal.util.guava.Optional
+import org.tm.archive.util.views.CircularProgressMaterialButton
+import java.util.Optional
 import java.util.function.Consumer
 
 /**
@@ -32,7 +31,7 @@ class SelectRecipientsFragment : LoggingFragment(), ContactSelectionListFragment
   private val viewModel: SelectRecipientsViewModel by viewModels(factoryProducer = this::createFactory)
   private val lifecycleDisposable = LifecycleDisposable()
 
-  private var addToProfile: CircularProgressButton? = null
+  private var addToProfile: CircularProgressMaterialButton? = null
 
   private fun createFactory(): ViewModelProvider.Factory {
     val args = SelectRecipientsFragmentArgs.fromBundle(requireArguments())
@@ -86,8 +85,8 @@ class SelectRecipientsFragment : LoggingFragment(), ContactSelectionListFragment
     addToProfile = view.findViewById(R.id.select_recipients_add)
     addToProfile?.setOnClickListener {
       lifecycleDisposable += viewModel.updateAllowedMembers()
-        .doOnSubscribe { CircularProgressButtonUtil.setSpinning(addToProfile) }
-        .doOnTerminate { CircularProgressButtonUtil.cancelSpinning(addToProfile) }
+        .doOnSubscribe { addToProfile?.setSpinning() }
+        .doOnTerminate { addToProfile?.cancelSpinning() }
         .subscribeBy(onSuccess = { findNavController().navigateUp() })
     }
 

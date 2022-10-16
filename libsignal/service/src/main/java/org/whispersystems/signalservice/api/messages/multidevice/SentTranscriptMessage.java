@@ -6,46 +6,48 @@
 
 package org.whispersystems.signalservice.api.messages.multidevice;
 
-import org.whispersystems.libsignal.util.guava.Optional;
+
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.messages.SignalServiceStoryMessage;
+import org.whispersystems.signalservice.api.messages.SignalServiceStoryMessageRecipient;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class SentTranscriptMessage {
 
-  private final Optional<SignalServiceAddress> destination;
-  private final long                           timestamp;
-  private final long                           expirationStartTimestamp;
-  private final SignalServiceDataMessage       message;
-  private final Map<String, Boolean>           unidentifiedStatusByAci;
-  private final Map<String, Boolean>           unidentifiedStatusByE164;
-  private final Set<SignalServiceAddress>      recipients;
-  private final boolean                        isRecipientUpdate;
+  private final Optional<SignalServiceAddress>          destination;
+  private final long                                    timestamp;
+  private final long                                    expirationStartTimestamp;
+  private final Optional<SignalServiceDataMessage>      message;
+  private final Map<ServiceId, Boolean>                 unidentifiedStatusBySid;
+  private final Set<ServiceId>                          recipients;
+  private final boolean                                 isRecipientUpdate;
+  private final Optional<SignalServiceStoryMessage>     storyMessage;
+  private final Set<SignalServiceStoryMessageRecipient> storyMessageRecipients;
 
-  public SentTranscriptMessage(Optional<SignalServiceAddress> destination, long timestamp, SignalServiceDataMessage message,
-                               long expirationStartTimestamp, Map<SignalServiceAddress, Boolean> unidentifiedStatus,
-                               boolean isRecipientUpdate)
+  public SentTranscriptMessage(Optional<SignalServiceAddress> destination,
+                               long timestamp,
+                               Optional<SignalServiceDataMessage> message,
+                               long expirationStartTimestamp,
+                               Map<ServiceId, Boolean> unidentifiedStatus,
+                               boolean isRecipientUpdate,
+                               Optional<SignalServiceStoryMessage> storyMessage,
+                               Set<SignalServiceStoryMessageRecipient> storyMessageRecipients)
   {
     this.destination              = destination;
     this.timestamp                = timestamp;
     this.message                  = message;
     this.expirationStartTimestamp = expirationStartTimestamp;
-    this.unidentifiedStatusByAci  = new HashMap<>();
-    this.unidentifiedStatusByE164 = new HashMap<>();
+    this.unidentifiedStatusBySid  = new HashMap<>(unidentifiedStatus);
     this.recipients               = unidentifiedStatus.keySet();
     this.isRecipientUpdate        = isRecipientUpdate;
-
-    for (Map.Entry<SignalServiceAddress, Boolean> entry : unidentifiedStatus.entrySet()) {
-      unidentifiedStatusByAci.put(entry.getKey().getAci().toString(), entry.getValue());
-
-      if (entry.getKey().getNumber().isPresent()) {
-        unidentifiedStatusByE164.put(entry.getKey().getNumber().get(), entry.getValue());
-      }
-    }
+    this.storyMessage             = storyMessage;
+    this.storyMessageRecipients   = storyMessageRecipients;
   }
 
   public Optional<SignalServiceAddress> getDestination() {
@@ -60,25 +62,23 @@ public class SentTranscriptMessage {
     return expirationStartTimestamp;
   }
 
-  public SignalServiceDataMessage getMessage() {
+  public Optional<SignalServiceDataMessage> getDataMessage() {
     return message;
   }
 
-  public boolean isUnidentified(ACI aci) {
-    return isUnidentified(aci.toString());
+  public Optional<SignalServiceStoryMessage> getStoryMessage() {
+    return storyMessage;
   }
 
-  public boolean isUnidentified(String destination) {
-    if (unidentifiedStatusByAci.containsKey(destination)) {
-      return unidentifiedStatusByAci.get(destination);
-    } else if (unidentifiedStatusByE164.containsKey(destination)) {
-      return unidentifiedStatusByE164.get(destination);
-    } else {
-      return false;
-    }
+  public Set<SignalServiceStoryMessageRecipient> getStoryMessageRecipients() {
+    return storyMessageRecipients;
   }
 
-  public Set<SignalServiceAddress> getRecipients() {
+  public boolean isUnidentified(ServiceId serviceId) {
+    return unidentifiedStatusBySid.getOrDefault(serviceId, false);
+  }
+
+  public Set<ServiceId> getRecipients() {
     return recipients;
   }
 

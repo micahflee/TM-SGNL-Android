@@ -1,6 +1,6 @@
 package org.tm.archive.registration
 
-import org.signal.zkgroup.profiles.ProfileKey
+import org.signal.libsignal.zkgroup.profiles.ProfileKey
 
 data class RegistrationData(
   val code: String,
@@ -8,7 +8,8 @@ data class RegistrationData(
   val password: String,
   val registrationId: Int,
   val profileKey: ProfileKey,
-  val fcmToken: String?
+  val fcmToken: String?,
+  val pniRegistrationId: Int
 ) {
   val isFcm: Boolean = fcmToken != null
   val isNotFcm: Boolean = fcmToken == null

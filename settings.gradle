@@ -4,23 +4,51 @@ include ':app'
 include ':libsignal-service'
 include ':lintchecks'
 include ':paging'
+include ':paging-app'
 include ':core-util'
 include ':glide-config'
 include ':video'
 include ':device-transfer'
+include ':device-transfer-app'
 include ':image-editor'
+include ':image-editor-app'
+include ':sms-exporter'
+include ':sms-exporter-app'
 include ':donations'
+include ':donations-app'
+include ':spinner'
+include ':spinner-app'
+include ':contacts'
+include ':contacts-app'
+include ':qr'
+include ':qr-app'
 
 project(':app').name = 'Signal-Android'
 project(':paging').projectDir = file('paging/lib')
+project(':paging-app').projectDir = file('paging/app')
 
 project(':device-transfer').projectDir = file('device-transfer/lib')
+project(':device-transfer-app').projectDir = file('device-transfer/app')
 
 project(':libsignal-service').projectDir = file('libsignal/service')
 
 project(':image-editor').projectDir = file('image-editor/lib')
+project(':image-editor-app').projectDir = file('image-editor/app')
+
+project(':sms-exporter').projectDir = file('sms-exporter/lib')
+project(':sms-exporter-app').projectDir = file('sms-exporter/app')
 
 project(':donations').projectDir = file('donations/lib')
+project(':donations-app').projectDir = file('donations/app')
+
+project(':spinner').projectDir = file('spinner/lib')
+project(':spinner-app').projectDir = file('spinner/app')
+
+project(':contacts').projectDir = file('contacts/lib')
+project(':contacts-app').projectDir = file('contacts/app')
+
+project(':qr').projectDir = file('qr/lib')
+project(':qr-app').projectDir = file('qr/app')
 
 rootProject.name='Signal'
 

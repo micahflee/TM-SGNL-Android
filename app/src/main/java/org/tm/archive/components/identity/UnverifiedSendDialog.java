@@ -11,7 +11,7 @@ import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.database.IdentityDatabase;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.whispersystems.signalservice.api.SignalSessionLock;
 
 import java.util.List;

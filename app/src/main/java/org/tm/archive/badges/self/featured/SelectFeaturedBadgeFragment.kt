@@ -3,6 +3,7 @@ package org.tm.archive.badges.self.featured
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import org.tm.archive.R
@@ -11,13 +12,12 @@ import org.tm.archive.badges.Badges
 import org.tm.archive.badges.Badges.displayBadges
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.badges.models.BadgePreview
-import org.tm.archive.components.recyclerview.OnScrollAnimationHelper
-import org.tm.archive.components.recyclerview.ToolbarShadowAnimationHelper
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.configure
 import org.tm.archive.util.LifecycleDisposable
+import org.tm.archive.util.Material3OnScrollHelper
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 
 /**
  * Fragment which allows user to select one of their badges to be their "Featured" badge.
@@ -46,11 +46,11 @@ class SelectFeaturedBadgeFragment : DSLSettingsFragment(
     }
   }
 
-  override fun getOnScrollAnimationHelper(toolbarShadow: View): OnScrollAnimationHelper {
-    return ToolbarShadowAnimationHelper(scrollShadow)
+  override fun getMaterial3OnScrollHelper(toolbar: Toolbar?): Material3OnScrollHelper? {
+    return Material3OnScrollHelper(requireActivity(), scrollShadow)
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     Badge.register(adapter) { badge, isSelected, _ ->
       if (!isSelected) {
         viewModel.setSelectedBadge(badge)
@@ -58,7 +58,7 @@ class SelectFeaturedBadgeFragment : DSLSettingsFragment(
     }
 
     val previewView: View = requireView().findViewById(R.id.preview)
-    val previewViewHolder = BadgePreview.ViewHolder<BadgePreview.Model>(previewView)
+    val previewViewHolder = BadgePreview.ViewHolder<BadgePreview.BadgeModel.FeaturedModel>(previewView)
 
     lifecycleDisposable.bindTo(viewLifecycleOwner.lifecycle)
     lifecycleDisposable += viewModel.events.subscribe { event: SelectFeaturedBadgeEvent ->
@@ -79,7 +79,7 @@ class SelectFeaturedBadgeFragment : DSLSettingsFragment(
         hasBoundPreview = true
       }
 
-      previewViewHolder.bind(BadgePreview.Model(state.selectedBadge))
+      previewViewHolder.bind(BadgePreview.BadgeModel.FeaturedModel(state.selectedBadge))
       adapter.submitList(getConfiguration(state).toMappingModelList())
     }
   }

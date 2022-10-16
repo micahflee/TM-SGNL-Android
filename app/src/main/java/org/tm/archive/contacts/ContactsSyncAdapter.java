@@ -7,21 +7,24 @@ import android.content.Context;
 import android.content.SyncResult;
 import android.os.Bundle;
 
-
 import com.annimon.stream.Stream;
 
+import org.signal.contacts.SystemContactsRepository;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.contacts.sync.DirectoryHelper;
+import org.tm.archive.contacts.sync.ContactDiscovery;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.DirectoryRefreshJob;
 import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.phonenumbers.PhoneNumberFormatter;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.SetUtil;
+import org.signal.core.util.SetUtil;
+import org.tm.archive.util.Util;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
 
@@ -48,36 +51,45 @@ public class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
 
     if (!SignalStore.account().isRegistered()) {
       Log.i(TAG, "Not push registered. Just syncing contact info.");
-      DirectoryHelper.syncRecipientInfoWithSystemContacts(context);
+      ContactDiscovery.syncRecipientInfoWithSystemContacts(context);
       return;
     }
 
-    Set<String> allSystemNumbers     = ContactAccessor.getInstance().getAllContactsWithNumbers(context);
-    Set<String> knownSystemNumbers   = SignalDatabase.recipients().getAllPhoneNumbers();
-    Set<String> unknownSystemNumbers = SetUtil.difference(allSystemNumbers, knownSystemNumbers);
+    Set<String> allSystemE164s     = SystemContactsRepository.getAllDisplayNumbers(context)
+                                                             .stream()
+                                                             .map(number -> PhoneNumberFormatter.get(context).format(number))
+                                                             .collect(Collectors.toSet());
+    Set<String> knownSystemE164s   = SignalDatabase.recipients().getAllE164s();
+    Set<String> unknownSystemE164s = SetUtil.difference(allSystemE164s, knownSystemE164s);
 
-    if (unknownSystemNumbers.size() > FULL_SYNC_THRESHOLD) {
-      Log.i(TAG, "There are " + unknownSystemNumbers.size() + " unknown contacts. Doing a full sync.");
+    if (unknownSystemE164s.size() > FULL_SYNC_THRESHOLD) {
+      Log.i(TAG, "There are " + unknownSystemE164s.size() + " unknown contacts. Doing a full sync.");
       try {
-        DirectoryHelper.refreshDirectory(context, true);
+        ContactDiscovery.refreshAll(context, true);
       } catch (IOException e) {
         Log.w(TAG, e);
       }
-    } else if (unknownSystemNumbers.size() > 0) {
-      Log.i(TAG, "There are " + unknownSystemNumbers.size() + " unknown contacts. Doing an individual sync.");
-      List<Recipient> recipients = Stream.of(unknownSystemNumbers)
+    } else if (unknownSystemE164s.size() > 0) {
+      List<Recipient> recipients = Stream.of(unknownSystemE164s)
                                          .filter(s -> s.startsWith("+"))
                                          .map(s -> Recipient.external(getContext(), s))
                                          .toList();
+
+      Log.i(TAG, "There are " + unknownSystemE164s.size() + " unknown E164s, which are now " + recipients.size() + " recipients. Only syncing these specific contacts.");
+
       try {
-        DirectoryHelper.refreshDirectoryFor(context, recipients, true);
+        ContactDiscovery.refresh(context, recipients, true);
+        
+        if (Util.isDefaultSmsProvider(context)) {
+          ContactDiscovery.syncRecipientInfoWithSystemContacts(context);
+        }
       } catch (IOException e) {
         Log.w(TAG, "Failed to refresh! Scheduling for later.", e);
         ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(true));
       }
     } else {
       Log.i(TAG, "No new contacts. Just syncing system contact data.");
-      DirectoryHelper.syncRecipientInfoWithSystemContacts(context);
+      ContactDiscovery.syncRecipientInfoWithSystemContacts(context);
     }
   }
 

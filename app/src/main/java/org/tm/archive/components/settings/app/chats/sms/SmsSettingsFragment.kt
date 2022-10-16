@@ -1,20 +1,28 @@
 package org.tm.archive.components.settings.app.chats.sms
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import org.signal.core.util.concurrent.SignalExecutors
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
+import org.tm.archive.database.SignalDatabase
+import org.tm.archive.exporter.flow.SmsExportActivity
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.SmsUtil
 import org.tm.archive.util.Util
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
 private const val SMS_REQUEST_CODE: Short = 1234
@@ -22,13 +30,20 @@ private const val SMS_REQUEST_CODE: Short = 1234
 class SmsSettingsFragment : DSLSettingsFragment(R.string.preferences__sms_mms) {
 
   private lateinit var viewModel: SmsSettingsViewModel
+  private lateinit var smsExportLauncher: ActivityResultLauncher<Intent>
 
   override fun onResume() {
     super.onResume()
     viewModel.checkSmsEnabled()
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
+    smsExportLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+      if (it.resultCode == Activity.RESULT_OK) {
+        showSmsRemovalDialog()
+      }
+    }
+
     viewModel = ViewModelProvider(this)[SmsSettingsViewModel::class.java]
 
     viewModel.state.observe(viewLifecycleOwner) {
@@ -42,6 +57,32 @@ class SmsSettingsFragment : DSLSettingsFragment(R.string.preferences__sms_mms) {
 
   private fun getConfiguration(state: SmsSettingsState): DSLConfiguration {
     return configure {
+      when (state.smsExportState) {
+        SmsSettingsState.SmsExportState.FETCHING -> Unit
+        SmsSettingsState.SmsExportState.HAS_UNEXPORTED_MESSAGES -> {
+          clickPref(
+            title = DSLSettingsText.from(R.string.SmsSettingsFragment__export_sms_messages),
+            onClick = {
+              smsExportLauncher.launch(SmsExportActivity.createIntent(requireContext()))
+            }
+          )
+
+          dividerPref()
+        }
+        SmsSettingsState.SmsExportState.ALL_MESSAGES_EXPORTED -> {
+          clickPref(
+            title = DSLSettingsText.from(R.string.SmsSettingsFragment__remove_sms_messages),
+            onClick = {
+              showSmsRemovalDialog()
+            }
+          )
+
+          dividerPref()
+        }
+        SmsSettingsState.SmsExportState.NO_SMS_MESSAGES_IN_DATABASE -> Unit
+        SmsSettingsState.SmsExportState.NOT_AVAILABLE -> Unit
+      }
+
       @Suppress("DEPRECATION")
       clickPref(
         title = DSLSettingsText.from(R.string.SmsSettingsFragment__use_as_default_sms_app),
@@ -95,5 +136,22 @@ class SmsSettingsFragment : DSLSettingsFragment(R.string.preferences__sms_mms) {
     }
 
     startActivityForResult(intent, SMS_REQUEST_CODE.toInt())
+  }
+
+  private fun showSmsRemovalDialog() {
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(R.string.RemoveSmsMessagesDialogFragment__remove_sms_messages)
+      .setMessage(R.string.RemoveSmsMessagesDialogFragment__you_can_now_remove_sms_messages_from_signal)
+      .setPositiveButton(R.string.RemoveSmsMessagesDialogFragment__keep_messages) { _, _ ->
+        Snackbar.make(requireView(), R.string.SmsSettingsFragment__you_can_remove_sms_messages_from_signal_in_settings, Snackbar.LENGTH_SHORT).show()
+      }
+      .setNegativeButton(R.string.RemoveSmsMessagesDialogFragment__remove_messages) { _, _ ->
+        SignalExecutors.BOUNDED.execute {
+          SignalDatabase.sms.deleteExportedMessages()
+          SignalDatabase.mms.deleteExportedMessages()
+        }
+        Snackbar.make(requireView(), R.string.SmsSettingsFragment__removing_sms_messages_from_signal, Snackbar.LENGTH_SHORT).show()
+      }
+      .show()
   }
 }

@@ -7,6 +7,7 @@ import android.os.SystemClock
 import androidx.annotation.MainThread
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.SignalExecutors
+import org.signal.core.util.concurrent.SimpleTask
 import org.signal.core.util.logging.Log
 import org.tm.archive.components.emoji.parsing.EmojiDrawInfo
 import org.tm.archive.emoji.protos.JumbomojiPack
@@ -14,7 +15,6 @@ import org.tm.archive.jobmanager.impl.AutoDownloadEmojiConstraint
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.ListenableFutureTask
 import org.tm.archive.util.SoftHashMap
-import org.tm.archive.util.concurrent.SimpleTask
 import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.ExecutionException

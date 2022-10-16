@@ -2,21 +2,19 @@ package org.whispersystems.signalservice.api.profiles;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import org.signal.zkgroup.InvalidInputException;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialResponse;
-import org.whispersystems.libsignal.logging.Log;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.signal.libsignal.protocol.logging.Log;
+import org.signal.libsignal.zkgroup.InvalidInputException;
+import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredentialResponse;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.internal.util.JsonUtil;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 public class SignalServiceProfile {
 
@@ -55,9 +53,9 @@ public class SignalServiceProfile {
   private Capabilities capabilities;
 
   @JsonProperty
-  @JsonSerialize(using = JsonUtil.AciSerializer.class)
-  @JsonDeserialize(using = JsonUtil.AciDeserializer.class)
-  private ACI uuid;
+  @JsonSerialize(using = JsonUtil.ServiceIdSerializer.class)
+  @JsonDeserialize(using = JsonUtil.ServiceIdDeserializer.class)
+  private ServiceId uuid;
 
   @JsonProperty
   private byte[] credential;
@@ -110,7 +108,7 @@ public class SignalServiceProfile {
     return badges;
   }
 
-  public ACI getAci() {
+  public ServiceId getServiceId() {
     return uuid;
   }
 
@@ -144,6 +142,9 @@ public class SignalServiceProfile {
     @JsonProperty
     private boolean visible;
 
+    @JsonProperty
+    private long duration;
+
     public String getId() {
       return id;
     }
@@ -171,12 +172,16 @@ public class SignalServiceProfile {
     public boolean isVisible() {
       return visible;
     }
+
+    /**
+     * @return Duration badge is valid for, in seconds.
+     */
+    public long getDuration() {
+      return duration;
+    }
   }
 
   public static class Capabilities {
-    @JsonProperty
-    private boolean gv2;
-
     @JsonProperty
     private boolean storage;
 
@@ -192,11 +197,27 @@ public class SignalServiceProfile {
     @JsonProperty
     private boolean changeNumber;
 
+    @JsonProperty
+    private boolean stories;
+
+    @JsonProperty
+    private boolean giftBadges;
+
+    @JsonProperty
+    private boolean pnp;
+
     @JsonCreator
     public Capabilities() {}
 
-    public boolean isGv2() {
-      return gv2;
+    public Capabilities(boolean storage, boolean gv1Migration, boolean senderKey, boolean announcementGroup, boolean changeNumber, boolean stories, boolean giftBadges, boolean pnp) {
+      this.storage           = storage;
+      this.gv1Migration      = gv1Migration;
+      this.senderKey         = senderKey;
+      this.announcementGroup = announcementGroup;
+      this.changeNumber      = changeNumber;
+      this.stories           = stories;
+      this.giftBadges        = giftBadges;
+      this.pnp               = pnp;
     }
 
     public boolean isStorage() {
@@ -218,13 +239,25 @@ public class SignalServiceProfile {
     public boolean isChangeNumber() {
       return changeNumber;
     }
+
+    public boolean isStories() {
+      return stories;
+    }
+
+    public boolean isGiftBadges() {
+      return giftBadges;
+    }
+
+    public boolean isPnp() {
+      return pnp;
+    }
   }
 
-  public ProfileKeyCredentialResponse getProfileKeyCredentialResponse() {
+  public ExpiringProfileKeyCredentialResponse getExpiringProfileKeyCredentialResponse() {
     if (credential == null) return null;
 
     try {
-      return new ProfileKeyCredentialResponse(credential);
+      return new ExpiringProfileKeyCredentialResponse(credential);
     } catch (InvalidInputException e) {
       Log.w(TAG, e);
       return null;

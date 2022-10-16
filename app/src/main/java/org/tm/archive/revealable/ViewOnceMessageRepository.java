@@ -13,9 +13,9 @@ import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.MultiDeviceViewedUpdateJob;
 import org.tm.archive.jobs.SendViewedReceiptJob;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collections;
+import java.util.Optional;
 
 class ViewOnceMessageRepository {
 
@@ -41,9 +41,9 @@ class ViewOnceMessageRepository {
           MultiDeviceViewedUpdateJob.enqueue(Collections.singletonList(info.getSyncMessageId()));
         }
 
-        callback.onComplete(Optional.fromNullable(record));
+        callback.onComplete(Optional.ofNullable(record));
       } catch (NoSuchMessageException e) {
-        callback.onComplete(Optional.absent());
+        callback.onComplete(Optional.empty());
       }
     });
   }

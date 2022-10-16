@@ -8,11 +8,13 @@ import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import org.tm.archive.R
 import org.tm.archive.badges.glide.BadgeSpriteTransformation
 import org.tm.archive.badges.models.Badge
+import org.tm.archive.database.model.databaseprotos.GiftBadge
+import org.tm.archive.glide.GiftBadgeModel
 import org.tm.archive.mms.GlideApp
 import org.tm.archive.mms.GlideRequests
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.util.ScreenDensity
 import org.tm.archive.util.ThemeUtil
-import java.lang.IllegalArgumentException
 
 class BadgeImageView @JvmOverloads constructor(
   context: Context,
@@ -71,6 +73,20 @@ class BadgeImageView @JvmOverloads constructor(
         .into(this)
 
       isClickable = true
+    } else {
+      glideRequests
+        .clear(this)
+      clearDrawable()
+    }
+  }
+
+  fun setGiftBadge(badge: GiftBadge?, glideRequests: GlideRequests) {
+    if (badge != null) {
+      glideRequests
+        .load(GiftBadgeModel(badge))
+        .downsample(DownsampleStrategy.NONE)
+        .transform(BadgeSpriteTransformation(BadgeSpriteTransformation.Size.fromInteger(badgeSize), ScreenDensity.getBestDensityBucketForDevice(), ThemeUtil.isDarkTheme(context)))
+        .into(this)
     } else {
       glideRequests
         .clear(this)

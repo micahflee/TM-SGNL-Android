@@ -15,6 +15,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
@@ -24,7 +25,6 @@ import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.transport.UndeliverableMessageException;
 import org.tm.archive.util.SignalLocalMetrics;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.ContentHint;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
@@ -37,6 +37,7 @@ import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedExcept
 import org.whispersystems.signalservice.api.push.exceptions.UnregisteredUserException;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class PushTextSendJob extends PushSendJob {
 
@@ -126,7 +127,7 @@ public class PushTextSendJob extends PushSendJob {
     } catch (InsecureFallbackApprovalException e) {
       warn(TAG, String.valueOf(record.getDateSent()), "Failure", e);
       database.markAsPendingInsecureSmsFallback(record.getId());
-      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), record.getThreadId());
+      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), ConversationId.forConversation(record.getThreadId()));
       ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
     } catch (UntrustedIdentityException e) {
       warn(TAG, String.valueOf(record.getDateSent()), "Failure", e);
@@ -136,7 +137,7 @@ public class PushTextSendJob extends PushSendJob {
       database.markAsPush(record.getId());
       RetrieveProfileJob.enqueue(recipientId);
     } catch (ProofRequiredException e) {
-      handleProofRequiredException(e, record.getRecipient(), record.getThreadId(), messageId, false);
+      handleProofRequiredException(context, e, record.getRecipient(), record.getThreadId(), messageId, false);
     }
 
     SignalLocalMetrics.IndividualMessageSend.onJobFinished(messageId);
@@ -156,7 +157,7 @@ public class PushTextSendJob extends PushSendJob {
     Recipient recipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
 
     if (threadId != -1 && recipient != null) {
-      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, threadId);
+      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, ConversationId.forConversation(threadId));
     }
   }
 
@@ -183,23 +184,28 @@ public class PushTextSendJob extends PushSendJob {
                                                                            .withTimestamp(message.getDateSent())
                                                                            .withBody(message.getBody())
                                                                            .withExpiration((int)(message.getExpiresIn() / 1000))
-                                                                           .withProfileKey(profileKey.orNull())
+                                                                           .withProfileKey(profileKey.orElse(null))
                                                                            .asEndSessionMessage(message.isEndSession())
                                                                            .build();
 
-      if (Util.equals(SignalStore.account().getAci(), address.getAci())) {
+      if (Util.equals(SignalStore.account().getAci(), address.getServiceId())) {
         Optional<UnidentifiedAccessPair> syncAccess  = UnidentifiedAccessUtil.getAccessForSync(context);
 
         SignalLocalMetrics.IndividualMessageSend.onDeliveryStarted(messageId);
         SendMessageResult result = messageSender.sendSyncMessage(textSecureMessage);
 
-        SignalDatabase.messageLog().insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false));
+        SignalDatabase.messageLog().insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false), false);
         return syncAccess.isPresent();
       } else {
         SignalLocalMetrics.IndividualMessageSend.onDeliveryStarted(messageId);
-        SendMessageResult result = messageSender.sendDataMessage(address, unidentifiedAccess, ContentHint.RESENDABLE, textSecureMessage, new MetricEventListener(messageId));
+        SendMessageResult result = messageSender.sendDataMessage(address, unidentifiedAccess, ContentHint.RESENDABLE, textSecureMessage, new MetricEventListener(messageId), true, messageRecipient.needsPniSignature());
 
-        SignalDatabase.messageLog().insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false));
+        SignalDatabase.messageLog().insertIfPossible(messageRecipient.getId(), message.getDateSent(), result, ContentHint.RESENDABLE, new MessageId(messageId, false), true);
+
+        if (messageRecipient.needsPniSignature()) {
+          SignalDatabase.pendingPniSignatureMessages().insertIfNecessary(messageRecipient.getId(), message.getDateSent(), result);
+        }
+
         return result.getSuccess().isUnidentified();
       }
     } catch (UnregisteredUserException e) {

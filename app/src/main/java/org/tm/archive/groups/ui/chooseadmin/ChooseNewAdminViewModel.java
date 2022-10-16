@@ -15,7 +15,7 @@ import org.tm.archive.groups.LiveGroup;
 import org.tm.archive.groups.ui.GroupChangeResult;
 import org.tm.archive.groups.ui.GroupMemberEntry;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 
 import java.util.Collections;
 import java.util.List;

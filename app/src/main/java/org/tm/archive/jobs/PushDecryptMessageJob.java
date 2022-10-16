@@ -7,10 +7,15 @@ import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import org.signal.core.util.PendingIntentFlags;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.protocol.SignalProtocolAddress;
+import org.signal.libsignal.protocol.message.SenderKeyDistributionMessage;
 import org.tm.archive.MainActivity;
 import org.tm.archive.R;
-import org.tm.archive.crypto.IdentityKeyUtil;
+import org.tm.archive.crypto.storage.SignalIdentityKeyStore;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -20,11 +25,12 @@ import org.tm.archive.messages.MessageDecryptionUtil.DecryptionResult;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.transport.RetryLaterException;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.libsignal.SignalProtocolAddress;
-import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
+import org.whispersystems.signalservice.api.messages.SignalServicePniSignatureMessage;
+import org.whispersystems.signalservice.api.push.PNI;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.util.LinkedList;
@@ -101,6 +107,10 @@ public final class PushDecryptMessageJob extends BaseJob {
         handleSenderKeyDistributionMessage(result.getContent().getSender(), result.getContent().getSenderDevice(), result.getContent().getSenderKeyDistributionMessage().get());
       }
 
+      if (FeatureFlags.phoneNumberPrivacy() && result.getContent().getPniSignatureMessage().isPresent()) {
+        handlePniSignatureMessage(result.getContent().getSender(), result.getContent().getSenderDevice(), result.getContent().getPniSignatureMessage().get());
+      }
+
       jobs.add(new PushProcessMessageJob(result.getContent(), smsMessageId, envelope.getTimestamp()));
     } else if (result.getException() != null && result.getState() != MessageState.NOOP) {
       jobs.add(new PushProcessMessageJob(result.getState(), result.getException(), smsMessageId, envelope.getTimestamp()));
@@ -123,13 +133,47 @@ public final class PushDecryptMessageJob extends BaseJob {
   }
 
   private void handleSenderKeyDistributionMessage(@NonNull SignalServiceAddress address, int deviceId, @NonNull SenderKeyDistributionMessage message) {
-    Log.i(TAG, "Processing SenderKeyDistributionMessage.");
+    Log.i(TAG, "Processing SenderKeyDistributionMessage from " + address.getServiceId() + "." + deviceId);
     SignalServiceMessageSender sender = ApplicationDependencies.getSignalServiceMessageSender();
     sender.processSenderKeyDistributionMessage(new SignalProtocolAddress(address.getIdentifier(), deviceId), message);
   }
 
+  private void handlePniSignatureMessage(@NonNull SignalServiceAddress address, int deviceId, @NonNull SignalServicePniSignatureMessage pniSignatureMessage) {
+    Log.i(TAG, "Processing PniSignatureMessage from " + address.getServiceId() + "." + deviceId);
+
+    PNI pni = pniSignatureMessage.getPni();
+
+    if (SignalDatabase.recipients().isAssociated(address.getServiceId(), pni)) {
+      Log.i(TAG, "[handlePniSignatureMessage] ACI (" + address.getServiceId() + ") and PNI (" + pni + ") are already associated.");
+      return;
+    }
+
+    SignalIdentityKeyStore identityStore = ApplicationDependencies.getProtocolStore().aci().identities();
+    SignalProtocolAddress  aciAddress    = new SignalProtocolAddress(address.getIdentifier(), deviceId);
+    SignalProtocolAddress  pniAddress    = new SignalProtocolAddress(pni.toString(), deviceId);
+    IdentityKey            aciIdentity   = identityStore.getIdentity(aciAddress);
+    IdentityKey            pniIdentity   = identityStore.getIdentity(pniAddress);
+
+    if (aciIdentity == null) {
+      Log.w(TAG, "[validatePniSignature] No identity found for ACI address " + aciAddress);
+      return;
+    }
+
+    if (pniIdentity == null) {
+      Log.w(TAG, "[validatePniSignature] No identity found for PNI address " + pniAddress);
+      return;
+    }
+
+    if (pniIdentity.verifyAlternateIdentity(aciIdentity, pniSignatureMessage.getSignature())) {
+      Log.i(TAG, "[validatePniSignature] PNI signature is valid. Associating ACI (" + address.getServiceId() + ") with PNI (" + pni + ")");
+      SignalDatabase.recipients().getAndPossiblyMergePnpVerified(address.getServiceId(), pni, address.getNumber().orElse(null));
+    } else {
+      Log.w(TAG, "[validatePniSignature] Invalid PNI signature! Cannot associate ACI (" + address.getServiceId() + ") with PNI (" + pni + ")");
+    }
+  }
+
   private boolean needsMigration() {
-    return !IdentityKeyUtil.hasIdentityKey(context) || TextSecurePreferences.getNeedsSqlCipherMigration(context);
+    return TextSecurePreferences.getNeedsSqlCipherMigration(context);
   }
 
   private void postMigrationNotification() {
@@ -140,7 +184,7 @@ public final class PushDecryptMessageJob extends BaseJob {
                                                                          .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                                                                          .setContentTitle(context.getString(R.string.PushDecryptJob_new_locked_message))
                                                                          .setContentText(context.getString(R.string.PushDecryptJob_unlock_to_view_pending_messages))
-                                                                         .setContentIntent(PendingIntent.getActivity(context, 0, MainActivity.clearTop(context), 0))
+                                                                         .setContentIntent(PendingIntent.getActivity(context, 0, MainActivity.clearTop(context), PendingIntentFlags.mutable()))
                                                                          .setDefaults(NotificationCompat.DEFAULT_SOUND | NotificationCompat.DEFAULT_VIBRATE)
                                                                          .build());
 

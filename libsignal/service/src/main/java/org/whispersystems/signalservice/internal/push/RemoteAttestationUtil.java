@@ -1,11 +1,10 @@
 package org.whispersystems.signalservice.internal.push;
 
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.ecc.Curve;
-import org.whispersystems.libsignal.ecc.ECKeyPair;
+import org.signal.libsignal.protocol.InvalidKeyException;
+import org.signal.libsignal.protocol.ecc.Curve;
+import org.signal.libsignal.protocol.ecc.ECKeyPair;
 import org.whispersystems.signalservice.api.crypto.InvalidCiphertextException;
 import org.whispersystems.signalservice.api.push.exceptions.MalformedResponseException;
-import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.internal.contacts.crypto.Quote;
 import org.whispersystems.signalservice.internal.contacts.crypto.RemoteAttestation;
 import org.whispersystems.signalservice.internal.contacts.crypto.RemoteAttestationCipher;
@@ -19,7 +18,6 @@ import org.whispersystems.signalservice.internal.util.JsonUtil;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.SignatureException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;

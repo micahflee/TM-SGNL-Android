@@ -21,7 +21,7 @@ import org.tm.archive.payments.TransactionSubmissionResult;
 import org.tm.archive.payments.Wallet;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.Stopwatch;
+import org.signal.core.util.Stopwatch;
 import org.whispersystems.signalservice.api.payments.Money;
 
 import java.util.Objects;

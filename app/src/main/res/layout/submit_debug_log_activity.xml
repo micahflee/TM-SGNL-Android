@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:viewBindingIgnore="true"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -60,7 +61,7 @@
       android:layout_marginTop="16dp"
       android:padding="5dp"
       android:background="@drawable/circle_tintable"
-      android:tint="@color/grey_600"
+      app:tint="@color/grey_600"
       android:elevation="1dp"
       app:srcCompat="@drawable/ic_chevron_down_20"
       android:scaleY="-1"
@@ -75,27 +76,20 @@
       android:layout_marginBottom="16dp"
       android:padding="5dp"
       android:background="@drawable/circle_tintable"
-      android:tint="@color/grey_600"
       android:elevation="1dp"
+      app:tint="@color/grey_600"
       app:srcCompat="@drawable/ic_chevron_down_20"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintBottom_toTopOf="@id/debug_log_submit_button"/>
 
-  <com.dd.CircularProgressButton
+  <org.tm.archive.util.views.CircularProgressMaterialButton
       android:id="@+id/debug_log_submit_button"
       android:layout_width="0dp"
       android:layout_height="wrap_content"
       android:layout_gravity="center_horizontal"
       android:layout_margin="8dp"
-      android:background="@color/core_ultramarine"
-      android:textAllCaps="true"
-      android:textColor="@color/white"
       android:visibility="gone"
-      app:cpb_colorIndicator="@color/white"
-      app:cpb_colorProgress="@color/core_ultramarine"
-      app:cpb_cornerRadius="4dp"
-      app:cpb_selectorIdle="@drawable/progress_button_state"
-      app:cpb_textIdle="@string/SubmitDebugLogActivity_submit"
+      app:circularProgressMaterialButton__label="@string/SubmitDebugLogActivity_submit"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintBottom_toBottomOf="parent"

@@ -4,6 +4,7 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
+import org.tm.archive.components.settings.app.subscription.errors.DonationErrorSource;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
@@ -29,14 +30,18 @@ public class SubscriptionKeepAliveJob extends BaseJob {
   private static final String TAG         = Log.tag(SubscriptionKeepAliveJob.class);
   private static final long   JOB_TIMEOUT = TimeUnit.DAYS.toMillis(3);
 
-  public static void launchSubscriberIdKeepAliveJobIfNecessary() {
+  public static void enqueueAndTrackTimeIfNecessary() {
     long nextLaunchTime = SignalStore.donationsValues().getLastKeepAliveLaunchTime() + TimeUnit.DAYS.toMillis(3);
     long now            = System.currentTimeMillis();
 
     if (nextLaunchTime <= now) {
-      ApplicationDependencies.getJobManager().add(new SubscriptionKeepAliveJob());
-      SignalStore.donationsValues().setLastKeepAliveLaunchTime(now);
+      enqueueAndTrackTime(now);
     }
+  }
+
+  public static void enqueueAndTrackTime(long now) {
+    ApplicationDependencies.getJobManager().add(new SubscriptionKeepAliveJob());
+    SignalStore.donationsValues().setLastKeepAliveLaunchTime(now);
   }
 
   private SubscriptionKeepAliveJob() {
@@ -70,32 +75,50 @@ public class SubscriptionKeepAliveJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
+    synchronized (SubscriptionReceiptRequestResponseJob.MUTEX) {
+      doRun();
+    }
+  }
+
+  private void doRun() throws Exception {
     Subscriber subscriber = SignalStore.donationsValues().getSubscriber();
     if (subscriber == null) {
       return;
     }
 
     ServiceResponse<EmptyResponse> response = ApplicationDependencies.getDonationsService()
-                                                                     .putSubscription(subscriber.getSubscriberId())
-                                                                     .blockingGet();
+                                                                     .putSubscription(subscriber.getSubscriberId());
 
     verifyResponse(response);
     Log.i(TAG, "Successful call to PUT subscription ID", true);
 
     ServiceResponse<ActiveSubscription> activeSubscriptionResponse = ApplicationDependencies.getDonationsService()
-                                                                                            .getSubscription(subscriber.getSubscriberId())
-                                                                                            .blockingGet();
+                                                                                            .getSubscription(subscriber.getSubscriberId());
 
     verifyResponse(activeSubscriptionResponse);
     Log.i(TAG, "Successful call to GET active subscription", true);
 
     ActiveSubscription activeSubscription = activeSubscriptionResponse.getResult().get();
-    if (activeSubscription.getActiveSubscription() == null || !activeSubscription.getActiveSubscription().isActive()) {
-      Log.i(TAG, "User does not have an active subscription. Exiting.", true);
+    if (activeSubscription.getActiveSubscription() == null) {
+      Log.i(TAG, "User does not have a subscription. Exiting.", true);
       return;
     }
 
-    if (activeSubscription.getActiveSubscription().getEndOfCurrentPeriod() > SignalStore.donationsValues().getLastEndOfPeriod()) {
+    if (activeSubscription.isFailedPayment()) {
+      Log.i(TAG, "User has a subscription with a failed payment. Marking the payment failure. Status message: " + activeSubscription.getActiveSubscription().getStatus(), true);
+      SignalStore.donationsValues().setUnexpectedSubscriptionCancelationChargeFailure(activeSubscription.getChargeFailure());
+      SignalStore.donationsValues().setUnexpectedSubscriptionCancelationReason(activeSubscription.getActiveSubscription().getStatus());
+      SignalStore.donationsValues().setUnexpectedSubscriptionCancelationTimestamp(activeSubscription.getActiveSubscription().getEndOfCurrentPeriod());
+      return;
+    }
+
+    if (!activeSubscription.getActiveSubscription().isActive()) {
+      Log.i(TAG, "User has an inactive subscription. Status message: " + activeSubscription.getActiveSubscription().getStatus() + " Exiting.", true);
+      return;
+    }
+
+    final long endOfCurrentPeriod = activeSubscription.getActiveSubscription().getEndOfCurrentPeriod();
+    if (endOfCurrentPeriod > SignalStore.donationsValues().getLastEndOfPeriod()) {
       Log.i(TAG,
             String.format(Locale.US,
                           "Last end of period change. Requesting receipt refresh. (old: %d to new: %d)",
@@ -103,7 +126,35 @@ public class SubscriptionKeepAliveJob extends BaseJob {
                           activeSubscription.getActiveSubscription().getEndOfCurrentPeriod()),
             true);
 
+      SignalStore.donationsValues().setLastEndOfPeriod(endOfCurrentPeriod);
+      SignalStore.donationsValues().clearSubscriptionRequestCredential();
+      SignalStore.donationsValues().clearSubscriptionReceiptCredential();
+      MultiDeviceSubscriptionSyncRequestJob.enqueue();
+    }
+
+    if (endOfCurrentPeriod > SignalStore.donationsValues().getSubscriptionEndOfPeriodConversionStarted()) {
+      Log.i(TAG, "Subscription end of period is after the conversion end of period. Storing it, generating a credential, and enqueuing the continuation job chain.", true);
+      SignalStore.donationsValues().setSubscriptionEndOfPeriodConversionStarted(endOfCurrentPeriod);
+      SignalStore.donationsValues().refreshSubscriptionRequestCredential();
       SubscriptionReceiptRequestResponseJob.createSubscriptionContinuationJobChain(true).enqueue();
+    } else if (endOfCurrentPeriod > SignalStore.donationsValues().getSubscriptionEndOfPeriodRedemptionStarted()) {
+      if (SignalStore.donationsValues().getSubscriptionRequestCredential() == null) {
+        Log.i(TAG, "We have not started a redemption, but do not have a request credential. Possible that the subscription changed.", true);
+        return;
+      }
+
+      Log.i(TAG, "We have a request credential and have not yet turned it into a redeemable token.", true);
+      SubscriptionReceiptRequestResponseJob.createSubscriptionContinuationJobChain(true).enqueue();
+    } else if (endOfCurrentPeriod > SignalStore.donationsValues().getSubscriptionEndOfPeriodRedeemed()) {
+      if (SignalStore.donationsValues().getSubscriptionReceiptCredential() == null) {
+        Log.i(TAG, "We have successfully started redemption but have no stored token. Possible that the subscription changed.", true);
+        return;
+      }
+
+      Log.i(TAG, "We have a receipt credential and have not yet redeemed it.", true);
+      DonationReceiptRedemptionJob.createJobChainForKeepAlive().enqueue();
+    } else {
+      Log.i(TAG, "Subscription is active, and end of current period (remote) is after the latest checked end of period (local). Nothing to do.");
     }
   }
 

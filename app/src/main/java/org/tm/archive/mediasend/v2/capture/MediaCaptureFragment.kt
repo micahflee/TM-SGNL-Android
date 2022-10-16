@@ -1,26 +1,30 @@
 package org.tm.archive.mediasend.v2.capture
 
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.LiveData
 import androidx.navigation.fragment.findNavController
 import app.cash.exhaustive.Exhaustive
+import io.reactivex.rxjava3.core.Flowable
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.mediasend.CameraFragment
 import org.tm.archive.mediasend.Media
+import org.tm.archive.mediasend.v2.HudCommand
 import org.tm.archive.mediasend.v2.MediaSelectionNavigator
 import org.tm.archive.mediasend.v2.MediaSelectionNavigator.Companion.requestPermissionsForGallery
 import org.tm.archive.mediasend.v2.MediaSelectionViewModel
 import org.tm.archive.mms.MediaConstraints
 import org.tm.archive.permissions.Permissions
-import org.whispersystems.libsignal.util.guava.Optional
+import org.tm.archive.stories.Stories
+import org.tm.archive.util.LifecycleDisposable
+import org.tm.archive.util.navigation.safeNavigate
 import java.io.FileDescriptor
+import java.util.Optional
+import java.util.concurrent.TimeUnit
 
 private val TAG = Log.tag(MediaCaptureFragment::class.java)
 
@@ -39,6 +43,8 @@ class MediaCaptureFragment : Fragment(R.layout.fragment_container), CameraFragme
 
   private lateinit var captureChildFragment: CameraFragment
   private lateinit var navigator: MediaSelectionNavigator
+
+  private val lifecycleDisposable = LifecycleDisposable()
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     captureChildFragment = CameraFragment.newInstance() as CameraFragment
@@ -73,6 +79,13 @@ class MediaCaptureFragment : Fragment(R.layout.fragment_container), CameraFragme
 
     sharedViewModel.state.observe(viewLifecycleOwner) { state ->
       captureChildFragment.presentHud(state.selectedMedia.size)
+    }
+
+    lifecycleDisposable.bindTo(viewLifecycleOwner)
+    lifecycleDisposable += sharedViewModel.hudCommands.subscribe { command ->
+      if (command == HudCommand.GoToText) {
+        findNavController().safeNavigate(R.id.action_mediaCaptureFragment_to_textStoryPostCreationFragment)
+      }
     }
 
     if (isFirst()) {
@@ -129,15 +142,6 @@ class MediaCaptureFragment : Fragment(R.layout.fragment_container), CameraFragme
     }
   }
 
-  override fun getDisplayRotation(): Int {
-    return if (Build.VERSION.SDK_INT >= 30) {
-      requireContext().display?.rotation ?: 0
-    } else {
-      @Suppress("DEPRECATION")
-      requireActivity().windowManager.defaultDisplay.rotation
-    }
-  }
-
   override fun onCameraCountButtonClicked() {
     val controller = findNavController()
     captureChildFragment.fadeOutControls {
@@ -145,12 +149,16 @@ class MediaCaptureFragment : Fragment(R.layout.fragment_container), CameraFragme
     }
   }
 
-  override fun getMostRecentMediaItem(): LiveData<Optional<Media>> {
+  override fun getMostRecentMediaItem(): Flowable<Optional<Media>> {
     return viewModel.getMostRecentMedia()
   }
 
   override fun getMediaConstraints(): MediaConstraints {
     return sharedViewModel.getMediaConstraints()
+  }
+
+  override fun getMaxVideoDuration(): Int {
+    return if (sharedViewModel.isStory()) TimeUnit.MILLISECONDS.toSeconds(Stories.MAX_VIDEO_DURATION_MILLIS).toInt() else -1
   }
 
   private fun isFirst(): Boolean {

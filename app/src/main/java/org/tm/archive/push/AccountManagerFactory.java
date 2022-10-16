@@ -13,6 +13,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.PNI;
 
 public class AccountManagerFactory {
 
@@ -20,6 +21,7 @@ public class AccountManagerFactory {
 
   public static @NonNull SignalServiceAccountManager createAuthenticated(@NonNull Context context,
                                                                          @NonNull ACI aci,
+                                                                         @NonNull PNI pni,
                                                                          @NonNull String number,
                                                                          int deviceId,
                                                                          @NonNull String password)
@@ -36,15 +38,17 @@ public class AccountManagerFactory {
 
     return new SignalServiceAccountManager(ApplicationDependencies.getSignalServiceNetworkAccess().getConfiguration(number),
                                            aci,
+                                           pni,
                                            number,
                                            deviceId,
                                            password,
                                            BuildConfig.SIGNAL_AGENT,
-                                           FeatureFlags.okHttpAutomaticRetry());
+                                           FeatureFlags.okHttpAutomaticRetry(),
+                                           FeatureFlags.groupLimits().getHardLimit());
   }
 
   /**
-   * Should only be used during registration when you haven't yet been assigned a UUID.
+   * Should only be used during registration when you haven't yet been assigned an ACI.
    */
   public static @NonNull SignalServiceAccountManager createUnauthenticated(@NonNull Context context,
                                                                            @NonNull String number,
@@ -61,8 +65,15 @@ public class AccountManagerFactory {
       });
     }
 
-    return new SignalServiceAccountManager(new SignalServiceNetworkAccess(context).getConfiguration(number),
-                                           null, number, deviceId, password, BuildConfig.SIGNAL_AGENT, FeatureFlags.okHttpAutomaticRetry());
+    return new SignalServiceAccountManager(ApplicationDependencies.getSignalServiceNetworkAccess().getConfiguration(number),
+                                           null,
+                                           null,
+                                           number,
+                                           deviceId,
+                                           password,
+                                           BuildConfig.SIGNAL_AGENT,
+                                           FeatureFlags.okHttpAutomaticRetry(),
+                                           FeatureFlags.groupLimits().getHardLimit());
   }
 
 }

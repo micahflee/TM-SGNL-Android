@@ -47,6 +47,7 @@ class ArchiveConstants {
       //**TM_SA**// START
       const val SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY = "sharedPreferenceBaseURLKeyProduction"
       const val SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY = "sharedPreferenceBaseURLKeyKeeper"
+      const val MAX_MEMBER_NAMES = 256
       //**TM_SA**// END
     }
 

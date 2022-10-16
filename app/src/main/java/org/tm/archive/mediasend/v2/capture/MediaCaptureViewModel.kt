@@ -1,18 +1,18 @@
 package org.tm.archive.mediasend.v2.capture
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.reactivex.rxjava3.core.Flowable
 import org.tm.archive.mediasend.Media
 import org.tm.archive.util.SingleLiveEvent
-import org.tm.archive.util.livedata.Store
-import org.whispersystems.libsignal.util.guava.Optional
+import org.tm.archive.util.rx.RxStore
 import java.io.FileDescriptor
+import java.util.Optional
 
 class MediaCaptureViewModel(private val repository: MediaCaptureRepository) : ViewModel() {
 
-  private val store: Store<MediaCaptureState> = Store(MediaCaptureState())
+  private val store: RxStore<MediaCaptureState> = RxStore(MediaCaptureState())
 
   private val internalEvents: SingleLiveEvent<MediaCaptureEvent> = SingleLiveEvent()
 
@@ -34,8 +34,8 @@ class MediaCaptureViewModel(private val repository: MediaCaptureRepository) : Vi
     repository.renderVideoToMedia(fd, this::onMediaRendered, this::onMediaRenderFailed)
   }
 
-  fun getMostRecentMedia(): LiveData<Optional<Media>> {
-    return Transformations.map(store.stateLiveData) { Optional.fromNullable(it.mostRecentMedia) }
+  fun getMostRecentMedia(): Flowable<Optional<Media>> {
+    return store.stateFlowable.map { Optional.ofNullable(it.mostRecentMedia) }
   }
 
   private fun onMediaRendered(media: Media) {
@@ -47,7 +47,7 @@ class MediaCaptureViewModel(private val repository: MediaCaptureRepository) : Vi
   }
 
   class Factory(private val repository: MediaCaptureRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return requireNotNull(modelClass.cast(MediaCaptureViewModel(repository)))
     }
   }

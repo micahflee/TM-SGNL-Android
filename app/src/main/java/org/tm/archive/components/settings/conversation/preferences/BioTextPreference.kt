@@ -2,6 +2,7 @@ package org.tm.archive.components.settings.conversation.preferences
 
 import android.content.ClipData
 import android.content.Context
+import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -9,7 +10,9 @@ import org.tm.archive.R
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.util.ContextUtil
 import org.tm.archive.util.ServiceUtil
+import org.tm.archive.util.SpanUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
@@ -25,17 +28,30 @@ object BioTextPreference {
   }
 
   abstract class BioTextPreferenceModel<T : BioTextPreferenceModel<T>> : PreferenceModel<T>() {
-    abstract fun getHeadlineText(context: Context): String
+    abstract fun getHeadlineText(context: Context): CharSequence
     abstract fun getSubhead1Text(context: Context): String?
     abstract fun getSubhead2Text(): String?
-    abstract fun getCompoundDrawable(): Int
   }
 
   class RecipientModel(
     private val recipient: Recipient,
   ) : BioTextPreferenceModel<RecipientModel>() {
 
-    override fun getHeadlineText(context: Context): String = recipient.getDisplayNameOrUsername(context)
+    override fun getHeadlineText(context: Context): CharSequence {
+      val name = if (recipient.isSelf) {
+        context.getString(R.string.note_to_self)
+      } else {
+        recipient.getDisplayNameOrUsername(context)
+      }
+
+      return if (recipient.showVerified()) {
+        SpannableStringBuilder(name).apply {
+          SpanUtil.appendCenteredImageSpan(this, ContextUtil.requireDrawable(context, R.drawable.ic_official_28), 28, 28)
+        }
+      } else {
+        name
+      }
+    }
 
     override fun getSubhead1Text(context: Context): String? {
       return if (recipient.isReleaseNotes) {
@@ -45,11 +61,7 @@ object BioTextPreference {
       }
     }
 
-    override fun getSubhead2Text(): String? = recipient.e164.transform(PhoneNumberFormatter::prettyPrint).orNull()
-
-    override fun getCompoundDrawable(): Int {
-      return if (recipient.isReleaseNotes) R.drawable.ic_official_28 else 0
-    }
+    override fun getSubhead2Text(): String? = recipient.e164.map(PhoneNumberFormatter::prettyPrint).orElse(null)
 
     override fun areContentsTheSame(newItem: RecipientModel): Boolean {
       return super.areContentsTheSame(newItem) && newItem.recipient.hasSameContent(recipient)
@@ -64,13 +76,11 @@ object BioTextPreference {
     val groupTitle: String,
     val groupMembershipDescription: String?
   ) : BioTextPreferenceModel<GroupModel>() {
-    override fun getHeadlineText(context: Context): String = groupTitle
+    override fun getHeadlineText(context: Context): CharSequence = groupTitle
 
     override fun getSubhead1Text(context: Context): String? = groupMembershipDescription
 
     override fun getSubhead2Text(): String? = null
-
-    override fun getCompoundDrawable(): Int = 0
 
     override fun areContentsTheSame(newItem: GroupModel): Boolean {
       return super.areContentsTheSame(newItem) &&
@@ -91,7 +101,6 @@ object BioTextPreference {
 
     override fun bind(model: T) {
       headline.text = model.getHeadlineText(context)
-      headline.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, model.getCompoundDrawable(), 0)
 
       model.getSubhead1Text(context).let {
         subhead1.text = it

@@ -1,15 +1,19 @@
 package org.tm.archive.database.model;
 
 import android.content.Context;
+import android.text.Spannable;
+import android.text.SpannableString;
 
 import androidx.annotation.NonNull;
 
 import org.tm.archive.R;
 import org.tm.archive.database.model.databaseprotos.GroupCallUpdateDetails;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DateUtils;
 import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,15 +23,15 @@ import java.util.Objects;
 /**
  * Create a group call update message based on time and joined members.
  */
-public class GroupCallUpdateMessageFactory implements UpdateDescription.StringFactory {
+public class GroupCallUpdateMessageFactory implements UpdateDescription.SpannableFactory {
   private final Context                context;
-  private final List<ACI>              joinedMembers;
+  private final List<ServiceId>        joinedMembers;
   private final boolean                withTime;
   private final GroupCallUpdateDetails groupCallUpdateDetails;
   private final ACI                    selfAci;
 
   public GroupCallUpdateMessageFactory(@NonNull Context context,
-                                       @NonNull List<ACI> joinedMembers,
+                                       @NonNull List<ServiceId> joinedMembers,
                                        boolean withTime,
                                        @NonNull GroupCallUpdateDetails groupCallUpdateDetails)
   {
@@ -35,7 +39,7 @@ public class GroupCallUpdateMessageFactory implements UpdateDescription.StringFa
     this.joinedMembers          = new ArrayList<>(joinedMembers);
     this.withTime               = withTime;
     this.groupCallUpdateDetails = groupCallUpdateDetails;
-    this.selfAci                = Recipient.self().requireAci();
+    this.selfAci                = SignalStore.account().requireAci();
 
     boolean removed = this.joinedMembers.remove(selfAci);
     if (removed) {
@@ -44,7 +48,11 @@ public class GroupCallUpdateMessageFactory implements UpdateDescription.StringFa
   }
 
   @Override
-  public @NonNull String create() {
+  public @NonNull Spannable create() {
+    return new SpannableString(createString());
+  }
+
+  private @NonNull String createString() {
     String time = DateUtils.getTimeString(context, Locale.getDefault(), groupCallUpdateDetails.getStartedCallTimestamp());
 
     switch (joinedMembers.size()) {
@@ -86,12 +94,12 @@ public class GroupCallUpdateMessageFactory implements UpdateDescription.StringFa
     }
   }
 
-  private @NonNull String describe(@NonNull ACI aci) {
-    if (aci.isUnknown()) {
+  private @NonNull String describe(@NonNull ServiceId serviceId) {
+    if (serviceId.isUnknown()) {
       return context.getString(R.string.MessageRecord_unknown);
     }
 
-    Recipient recipient = Recipient.resolved(RecipientId.from(aci, null));
+    Recipient recipient = Recipient.resolved(RecipientId.from(serviceId));
 
     if (recipient.isSelf()) {
       return context.getString(R.string.MessageRecord_you);

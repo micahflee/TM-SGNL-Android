@@ -7,7 +7,6 @@ import androidx.preference.PreferenceManager;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.DatabaseAttachment;
-import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.crypto.MasterSecret;
 import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.database.MessageDatabase;
@@ -21,8 +20,8 @@ import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.AttachmentDownloadJob;
-import org.tm.archive.jobs.CreateSignedPreKeyJob;
 import org.tm.archive.jobs.DirectoryRefreshJob;
+import org.tm.archive.jobs.PreKeysSyncJob;
 import org.tm.archive.jobs.PushDecryptMessageJob;
 import org.tm.archive.jobs.RefreshAttributesJob;
 import org.tm.archive.keyvalue.SignalStore;
@@ -113,10 +112,6 @@ public class LegacyMigrationJob extends MigrationJob {
       throw new RetryLaterException();
     }
 
-    if (lastSeenVersion < CURVE25519_VERSION) {
-      IdentityKeyUtil.migrateIdentityKeys(context, masterSecret);
-    }
-
     if (lastSeenVersion < NO_V1_VERSION) {
       File v1sessions = new File(context.getFilesDir(), "sessions");
 
@@ -134,7 +129,7 @@ public class LegacyMigrationJob extends MigrationJob {
     }
 
     if (lastSeenVersion < SIGNED_PREKEY_VERSION) {
-      ApplicationDependencies.getJobManager().add(new CreateSignedPreKeyJob(context));
+      PreKeysSyncJob.enqueueIfNeeded();
     }
 
     if (lastSeenVersion < NO_DECRYPT_QUEUE_VERSION) {
@@ -149,7 +144,6 @@ public class LegacyMigrationJob extends MigrationJob {
 //        new TextSecureSessionStore(context, masterSecret).migrateSessions();
 //        new TextSecurePreKeyStore(context, masterSecret).migrateRecords();
 
-      IdentityKeyUtil.migrateIdentityKeys(context, masterSecret);
       scheduleMessagesInPushDatabase(context);;
     }
 

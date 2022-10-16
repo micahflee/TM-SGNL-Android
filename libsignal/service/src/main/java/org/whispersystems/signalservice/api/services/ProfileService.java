@@ -1,43 +1,54 @@
 package org.whispersystems.signalservice.api.services;
 
-import org.signal.zkgroup.VerificationFailedException;
-import org.signal.zkgroup.profiles.ClientZkProfileOperations;
-import org.signal.zkgroup.profiles.ProfileKey;
-import org.signal.zkgroup.profiles.ProfileKeyCredential;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialRequest;
-import org.signal.zkgroup.profiles.ProfileKeyCredentialRequestContext;
-import org.signal.zkgroup.profiles.ProfileKeyVersion;
-import org.whispersystems.libsignal.util.Pair;
-import org.whispersystems.libsignal.util.guava.Function;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.protocol.util.Pair;
+import org.signal.libsignal.zkgroup.VerificationFailedException;
+import org.signal.libsignal.zkgroup.profiles.ClientZkProfileOperations;
+import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
+import org.signal.libsignal.zkgroup.profiles.ProfileKeyCredentialRequest;
+import org.signal.libsignal.zkgroup.profiles.ProfileKeyCredentialRequestContext;
+import org.signal.libsignal.zkgroup.profiles.ProfileKeyVersion;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.SignalWebSocket;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccess;
 import org.whispersystems.signalservice.api.profiles.ProfileAndCredential;
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.MalformedResponseException;
 import org.whispersystems.signalservice.internal.ServiceResponse;
 import org.whispersystems.signalservice.internal.ServiceResponseProcessor;
+import org.whispersystems.signalservice.internal.push.IdentityCheckRequest;
+import org.whispersystems.signalservice.internal.push.IdentityCheckRequest.AciFingerprintPair;
+import org.whispersystems.signalservice.internal.push.IdentityCheckResponse;
 import org.whispersystems.signalservice.internal.push.http.AcceptLanguagesUtil;
 import org.whispersystems.signalservice.internal.util.Hex;
 import org.whispersystems.signalservice.internal.util.JsonUtil;
 import org.whispersystems.signalservice.internal.websocket.DefaultResponseMapper;
 import org.whispersystems.signalservice.internal.websocket.ResponseMapper;
-import org.whispersystems.signalservice.internal.websocket.WebSocketProtos;
+import org.whispersystems.signalservice.internal.websocket.WebSocketProtos.WebSocketRequestMessage;
 
 import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Single;
 
 /**
  * Provide Profile-related API services, encapsulating the logic to make the request, parse the response,
  * and fallback to appropriate WebSocket or RESTful alternatives.
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public final class ProfileService {
 
   private static final String TAG = ProfileService.class.getSimpleName();
@@ -55,33 +66,33 @@ public final class ProfileService {
     this.signalWebSocket           = signalWebSocket;
   }
 
-  public Single<ServiceResponse<ProfileAndCredential>> getProfile(SignalServiceAddress address,
-                                                                  Optional<ProfileKey> profileKey,
-                                                                  Optional<UnidentifiedAccess> unidentifiedAccess,
-                                                                  SignalServiceProfile.RequestType requestType,
-                                                                  Locale locale)
+  public Single<ServiceResponse<ProfileAndCredential>> getProfile(@Nonnull SignalServiceAddress address,
+                                                                  @Nonnull Optional<ProfileKey> profileKey,
+                                                                  @Nonnull Optional<UnidentifiedAccess> unidentifiedAccess,
+                                                                  @Nonnull SignalServiceProfile.RequestType requestType,
+                                                                  @Nonnull Locale locale)
   {
-    ACI                                aci   = address.getAci();
-    SecureRandom                       random = new SecureRandom();
+    ServiceId                          serviceId      = address.getServiceId();
+    SecureRandom                       random         = new SecureRandom();
     ProfileKeyCredentialRequestContext requestContext = null;
 
-    WebSocketProtos.WebSocketRequestMessage.Builder builder = WebSocketProtos.WebSocketRequestMessage.newBuilder()
-                                                                                                     .setId(random.nextLong())
-                                                                                                     .setVerb("GET");
+    WebSocketRequestMessage.Builder builder = WebSocketRequestMessage.newBuilder()
+                                                                     .setId(random.nextLong())
+                                                                     .setVerb("GET");
 
     if (profileKey.isPresent()) {
-      ProfileKeyVersion profileKeyIdentifier = profileKey.get().getProfileKeyVersion(aci.uuid());
+      ProfileKeyVersion profileKeyIdentifier = profileKey.get().getProfileKeyVersion(serviceId.uuid());
       String            version              = profileKeyIdentifier.serialize();
 
       if (requestType == SignalServiceProfile.RequestType.PROFILE_AND_CREDENTIAL) {
-        requestContext = clientZkProfileOperations.createProfileKeyCredentialRequestContext(random, aci.uuid(), profileKey.get());
+        requestContext = clientZkProfileOperations.createProfileKeyCredentialRequestContext(random, serviceId.uuid(), profileKey.get());
 
         ProfileKeyCredentialRequest request           = requestContext.getRequest();
         String                      credentialRequest = Hex.toStringCondensed(request.serialize());
 
-        builder.setPath(String.format("/v1/profile/%s/%s/%s", aci, version, credentialRequest));
+        builder.setPath(String.format("/v1/profile/%s/%s/%s?credentialType=expiringProfileKey", serviceId, version, credentialRequest));
       } else {
-        builder.setPath(String.format("/v1/profile/%s/%s", aci, version));
+        builder.setPath(String.format("/v1/profile/%s/%s", serviceId, version));
       }
     } else {
       builder.setPath(String.format("/v1/profile/%s", address.getIdentifier()));
@@ -89,7 +100,7 @@ public final class ProfileService {
 
     builder.addHeaders(AcceptLanguagesUtil.getAcceptLanguageHeader(locale));
 
-    WebSocketProtos.WebSocketRequestMessage requestMessage = builder.build();
+    WebSocketRequestMessage requestMessage = builder.build();
 
     ResponseMapper<ProfileAndCredential> responseMapper = DefaultResponseMapper.extend(ProfileAndCredential.class)
                                                                                .withResponseMapper(new ProfileResponseMapper(requestType, requestContext))
@@ -97,19 +108,49 @@ public final class ProfileService {
 
     return signalWebSocket.request(requestMessage, unidentifiedAccess)
                           .map(responseMapper::map)
-                          .onErrorResumeNext(t -> restFallback(address, profileKey, unidentifiedAccess, requestType, locale))
+                          .onErrorResumeNext(t -> getProfileRestFallback(address, profileKey, unidentifiedAccess, requestType, locale))
                           .onErrorReturn(ServiceResponse::forUnknownError);
   }
 
-  private Single<ServiceResponse<ProfileAndCredential>> restFallback(SignalServiceAddress address,
-                                                                     Optional<ProfileKey> profileKey,
-                                                                     Optional<UnidentifiedAccess> unidentifiedAccess,
-                                                                     SignalServiceProfile.RequestType requestType,
-                                                                     Locale locale)
+  public @NonNull Single<ServiceResponse<IdentityCheckResponse>> performIdentityCheck(@Nonnull Map<ServiceId, IdentityKey> aciIdentityKeyMap) {
+    List<AciFingerprintPair> aciKeyPairs = aciIdentityKeyMap.entrySet()
+                                                            .stream()
+                                                            .map(e -> new AciFingerprintPair(e.getKey(), e.getValue()))
+                                                            .collect(Collectors.toList());
+
+    IdentityCheckRequest request = new IdentityCheckRequest(aciKeyPairs);
+
+    WebSocketRequestMessage.Builder builder = WebSocketRequestMessage.newBuilder()
+                                                                     .setId(new SecureRandom().nextLong())
+                                                                     .setVerb("POST")
+                                                                     .setPath("/v1/profile/identity_check/batch")
+                                                                     .addAllHeaders(Collections.singleton("content-type:application/json"))
+                                                                     .setBody(JsonUtil.toJsonByteString(request));
+
+    ResponseMapper<IdentityCheckResponse> responseMapper = DefaultResponseMapper.getDefault(IdentityCheckResponse.class);
+
+    return signalWebSocket.request(builder.build(), Optional.empty())
+                          .map(responseMapper::map)
+                          .onErrorResumeNext(t -> performIdentityCheckRestFallback(request, Optional.empty(), responseMapper))
+                          .onErrorReturn(ServiceResponse::forUnknownError);
+  }
+
+  private Single<ServiceResponse<ProfileAndCredential>> getProfileRestFallback(@Nonnull SignalServiceAddress address,
+                                                                               @Nonnull Optional<ProfileKey> profileKey,
+                                                                               @Nonnull Optional<UnidentifiedAccess> unidentifiedAccess,
+                                                                               @Nonnull SignalServiceProfile.RequestType requestType,
+                                                                               @Nonnull Locale locale)
   {
     return Single.fromFuture(receiver.retrieveProfile(address, profileKey, unidentifiedAccess, requestType, locale), 10, TimeUnit.SECONDS)
-                 .onErrorResumeNext(t -> Single.fromFuture(receiver.retrieveProfile(address, profileKey, Optional.absent(), requestType, locale), 10, TimeUnit.SECONDS))
+                 .onErrorResumeNext(t -> Single.fromFuture(receiver.retrieveProfile(address, profileKey, Optional.empty(), requestType, locale), 10, TimeUnit.SECONDS))
                  .map(p -> ServiceResponse.forResult(p, 0, null));
+  }
+
+  private @NonNull Single<ServiceResponse<IdentityCheckResponse>> performIdentityCheckRestFallback(@Nonnull IdentityCheckRequest request,
+                                                                                                   @Nonnull Optional<UnidentifiedAccess> unidentifiedAccess,
+                                                                                                   @Nonnull ResponseMapper<IdentityCheckResponse> responseMapper) {
+    return receiver.performIdentityCheck(request, unidentifiedAccess, responseMapper)
+                   .onErrorResumeNext(t -> receiver.performIdentityCheck(request, Optional.empty(), responseMapper));
   }
 
   /**
@@ -129,13 +170,13 @@ public final class ProfileService {
         throws MalformedResponseException
     {
       try {
-        SignalServiceProfile signalServiceProfile = JsonUtil.fromJsonResponse(body, SignalServiceProfile.class);
-        ProfileKeyCredential profileKeyCredential = null;
-        if (requestContext != null && signalServiceProfile.getProfileKeyCredentialResponse() != null) {
-          profileKeyCredential = clientZkProfileOperations.receiveProfileKeyCredential(requestContext, signalServiceProfile.getProfileKeyCredentialResponse());
+        SignalServiceProfile         signalServiceProfile         = JsonUtil.fromJsonResponse(body, SignalServiceProfile.class);
+        ExpiringProfileKeyCredential expiringProfileKeyCredential = null;
+        if (requestContext != null && signalServiceProfile.getExpiringProfileKeyCredentialResponse() != null) {
+          expiringProfileKeyCredential = clientZkProfileOperations.receiveExpiringProfileKeyCredential(requestContext, signalServiceProfile.getExpiringProfileKeyCredentialResponse());
         }
 
-        return ServiceResponse.forResult(new ProfileAndCredential(signalServiceProfile, requestType, Optional.fromNullable(profileKeyCredential)), status, body);
+        return ServiceResponse.forResult(new ProfileAndCredential(signalServiceProfile, requestType, Optional.ofNullable(expiringProfileKeyCredential)), status, body);
       } catch (VerificationFailedException e) {
         return ServiceResponse.forApplicationError(e, status, body);
       }
@@ -162,6 +203,11 @@ public final class ProfileService {
     @Override
     public boolean genericIoError() {
       return super.genericIoError();
+    }
+
+    @Override
+    public Throwable getError() {
+      return super.getError();
     }
   }
 }

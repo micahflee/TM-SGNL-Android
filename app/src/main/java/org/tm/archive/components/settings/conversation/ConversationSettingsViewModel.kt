@@ -6,23 +6,27 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.plusAssign
+import org.signal.core.util.CursorUtil
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.SignalExecutors
 import org.tm.archive.components.settings.conversation.preferences.ButtonStripPreference
 import org.tm.archive.components.settings.conversation.preferences.LegacyGroupPreference
 import org.tm.archive.database.AttachmentDatabase
 import org.tm.archive.database.RecipientDatabase
+import org.tm.archive.database.model.StoryViewState
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.LiveGroup
+import org.tm.archive.groups.v2.GroupAddMembersResult
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.recipients.RecipientUtil
-import org.tm.archive.util.CursorUtil
 import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.SingleLiveEvent
 import org.tm.archive.util.livedata.LiveDataUtil
 import org.tm.archive.util.livedata.Store
-import org.whispersystems.libsignal.util.guava.Optional
+import java.util.Optional
 
 sealed class ConversationSettingsViewModel(
   private val repository: ConversationSettingsRepository,
@@ -46,6 +50,8 @@ sealed class ConversationSettingsViewModel(
   val state: LiveData<ConversationSettingsState> = store.stateLiveData
   val events: LiveData<ConversationSettingsEvent> = internalEvents
 
+  protected val disposable = CompositeDisposable()
+
   init {
     val threadId: LiveData<Long> = Transformations.distinctUntilChanged(Transformations.map(state) { it.threadId })
     val updater: LiveData<Long> = LiveDataUtil.combineLatest(threadId, sharedMediaUpdateTrigger) { tId, _ -> tId }
@@ -60,22 +66,22 @@ sealed class ConversationSettingsViewModel(
           openedMediaCursors.add(cursor.get())
         }
 
-        val ids: List<Long> = cursor.transform<List<Long>> {
+        val ids: List<Long> = cursor.map<List<Long>> {
           val result = mutableListOf<Long>()
           while (it.moveToNext()) {
             result.add(CursorUtil.requireLong(it, AttachmentDatabase.ROW_ID))
           }
           result
-        }.or(listOf())
+        }.orElse(listOf())
 
         state.copy(
-          sharedMedia = cursor.orNull(),
+          sharedMedia = cursor.orElse(null),
           sharedMediaIds = ids,
           sharedMediaLoaded = true,
           displayInternalRecipientDetails = repository.isInternalRecipientDetailsEnabled()
         )
       } else {
-        cursor.orNull().ensureClosed()
+        cursor.orElse(null).ensureClosed()
         state.copy(sharedMedia = null)
       }
     }
@@ -105,6 +111,7 @@ sealed class ConversationSettingsViewModel(
     cleared = true
     openedMediaCursors.forEach { it.ensureClosed() }
     store.clear()
+    disposable.clear()
   }
 
   private fun Cursor?.ensureClosed() {
@@ -126,6 +133,10 @@ sealed class ConversationSettingsViewModel(
     private val liveRecipient = Recipient.live(recipientId)
 
     init {
+      disposable += StoryViewState.getForRecipientId(recipientId).subscribe { storyViewState ->
+        store.update { it.copy(storyViewState = storyViewState) }
+      }
+
       store.update(liveRecipient.liveData) { recipient, state ->
         state.copy(
           recipient = recipient,
@@ -141,7 +152,7 @@ sealed class ConversationSettingsViewModel(
           canModifyBlockedState = !recipient.isSelf && RecipientUtil.isBlockable(recipient),
           specificSettingsState = state.requireRecipientSettingsState().copy(
             contactLinkState = when {
-              recipient.isSelf || recipient.isReleaseNotes -> ContactLinkState.NONE
+              recipient.isSelf || recipient.isReleaseNotes || recipient.isBlocked -> ContactLinkState.NONE
               recipient.isSystemContact -> ContactLinkState.OPEN
               else -> ContactLinkState.ADD
             }
@@ -240,6 +251,10 @@ sealed class ConversationSettingsViewModel(
     private val liveGroup = LiveGroup(groupId)
 
     init {
+      disposable += repository.getStoryViewState(groupId).subscribe { storyViewState ->
+        store.update { it.copy(storyViewState = storyViewState) }
+      }
+
       val recipientAndIsActive = LiveDataUtil.combineLatest(liveGroup.groupRecipient, liveGroup.isActive) { r, a -> r to a }
       store.update(recipientAndIsActive) { (recipient, isActive), state ->
         state.copy(
@@ -366,7 +381,7 @@ sealed class ConversationSettingsViewModel(
     private fun getLegacyGroupState(recipient: Recipient): LegacyGroupPreference.State {
       val showLegacyInfo = recipient.requireGroupId().isV1
 
-      return if (showLegacyInfo && recipient.participants.size > FeatureFlags.groupLimits().hardLimit) {
+      return if (showLegacyInfo && recipient.participantIds.size > FeatureFlags.groupLimits().hardLimit) {
         LegacyGroupPreference.State.TOO_LARGE
       } else if (showLegacyInfo) {
         LegacyGroupPreference.State.UPGRADE
@@ -456,7 +471,7 @@ sealed class ConversationSettingsViewModel(
     private val repository: ConversationSettingsRepository,
   ) : ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return requireNotNull(
         modelClass.cast(
           when {

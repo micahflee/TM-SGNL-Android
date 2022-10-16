@@ -17,8 +17,8 @@ import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.sharing.MultiShareSender;
 import org.tm.archive.util.DefaultValueLiveData;
-import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.Util;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 
 class ShareInterstitialViewModel extends ViewModel {
 
@@ -33,7 +33,7 @@ private final MultiShareArgs                      args;
     this.recipients  = new MutableLiveData<>();
     this.draftText   = new DefaultValueLiveData<>(Util.firstNonNull(args.getDraftText(), ""));
 
-    repository.loadRecipients(args.getShareContactAndThreads(),
+    repository.loadRecipients(args.getRecipientSearchKeys(),
                               list -> recipients.postValue(Stream.of(list)
                                                                  .mapIndexed((i, r) -> new ShareInterstitialMappingModel(r, i == 0))
                                                                  .collect(MappingModelList.toMappingModelList())));

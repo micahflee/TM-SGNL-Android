@@ -6,10 +6,10 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.verify.VerifyIdentityActivity;
+import org.signal.libsignal.protocol.IdentityKey;
 import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.recipients.RecipientId;
-import org.whispersystems.libsignal.IdentityKey;
+import org.tm.archive.verify.VerifyIdentityActivity;
 
 public class VerifySpan extends ClickableSpan {
 

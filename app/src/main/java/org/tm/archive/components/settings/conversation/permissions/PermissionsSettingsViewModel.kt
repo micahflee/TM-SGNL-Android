@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import org.tm.archive.groups.GroupAccessControl
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.LiveGroup
-import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.SingleLiveEvent
 import org.tm.archive.util.livedata.Store
 
@@ -36,15 +35,7 @@ class PermissionsSettingsViewModel(
     }
 
     store.update(liveGroup.isAnnouncementGroup) { isAnnouncementGroup, state ->
-      state.copy(
-        announcementGroup = isAnnouncementGroup,
-        announcementGroupPermissionEnabled = state.announcementGroupPermissionEnabled || isAnnouncementGroup
-      )
-    }
-
-    store.update(liveGroup.groupRecipient) { groupRecipient, state ->
-      val allHaveCapability = groupRecipient.participants.map { it.announcementGroupCapability }.all { it == Recipient.Capability.SUPPORTED }
-      state.copy(announcementGroupPermissionEnabled = allHaveCapability || state.announcementGroup)
+      state.copy(announcementGroup = isAnnouncementGroup)
     }
   }
 
@@ -78,7 +69,7 @@ class PermissionsSettingsViewModel(
     private val groupId: GroupId,
     private val repository: PermissionsSettingsRepository
   ) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return requireNotNull(modelClass.cast(PermissionsSettingsViewModel(groupId, repository)))
     }
   }

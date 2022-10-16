@@ -20,7 +20,7 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.service.webrtc.state.WebRtcServiceStateBuilder;
 import org.tm.archive.util.NetworkUtil;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.List;
 
@@ -45,7 +45,8 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
     GroupCall groupCall = webRtcInteractor.getCallManager().createGroupCall(groupId,
                                                                             SignalStore.internalValues().groupCallingServer(),
                                                                             new byte[0],
-                                                                            AudioProcessingMethodSelector.get(),
+                                                                            AUDIO_LEVELS_INTERVAL,
+                                                                            RingRtcDynamicConfiguration.getAudioProcessingMethod(),
                                                                             webRtcInteractor.getGroupCallObserver());
 
     try {
@@ -89,6 +90,8 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
   protected @NonNull WebRtcServiceState handleGroupLocalDeviceStateChanged(@NonNull WebRtcServiceState currentState) {
     Log.i(tag, "handleGroupLocalDeviceStateChanged():");
 
+    currentState = super.handleGroupLocalDeviceStateChanged(currentState);
+
     GroupCall                  groupCall = currentState.getCallInfoState().requireGroupCall();
     GroupCall.LocalDeviceState device    = groupCall.getLocalDeviceState();
 
@@ -113,7 +116,7 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
     }
 
     List<Recipient> callParticipants = Stream.of(peekInfo.getJoinedMembers())
-                                             .map(uuid -> Recipient.externalPush(context, ACI.from(uuid), null, false))
+                                             .map(uuid -> Recipient.externalPush(ServiceId.from(uuid)))
                                              .toList();
 
     WebRtcServiceStateBuilder.CallInfoStateBuilder builder = currentState.builder()
@@ -127,6 +130,7 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
                                                                      recipient,
                                                                      null,
                                                                      new BroadcastVideoSink(),
+                                                                     true,
                                                                      true,
                                                                      true,
                                                                      0,

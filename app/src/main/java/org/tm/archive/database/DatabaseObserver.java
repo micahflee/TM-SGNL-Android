@@ -8,6 +8,8 @@ import androidx.annotation.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.database.model.MessageId;
+import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.concurrent.SerialExecutor;
 
 import java.util.HashMap;
@@ -37,6 +39,8 @@ public class DatabaseObserver {
   private static final String KEY_MESSAGE_UPDATE        = "MessageUpdate:";
   private static final String KEY_MESSAGE_INSERT        = "MessageInsert:";
   private static final String KEY_NOTIFICATION_PROFILES = "NotificationProfiles";
+  private static final String KEY_RECIPIENT             = "Recipient";
+  private static final String KEY_STORY_OBSERVER        = "Story";
 
   private final Application application;
   private final Executor    executor;
@@ -53,6 +57,7 @@ public class DatabaseObserver {
   private final Set<MessageObserver>            messageUpdateObservers;
   private final Map<Long, Set<MessageObserver>> messageInsertObservers;
   private final Set<Observer>                   notificationProfileObservers;
+  private final Map<RecipientId, Set<Observer>> storyObservers;
 
   public DatabaseObserver(Application application) {
     this.application                  = application;
@@ -69,6 +74,7 @@ public class DatabaseObserver {
     this.messageUpdateObservers       = new HashSet<>();
     this.messageInsertObservers       = new HashMap<>();
     this.notificationProfileObservers = new HashSet<>();
+    this.storyObservers               = new HashMap<>();
   }
 
   public void registerConversationListObserver(@NonNull Observer listener) {
@@ -143,6 +149,15 @@ public class DatabaseObserver {
     });
   }
 
+  /**
+   * Adds an observer which will be notified whenever a new Story message is inserted into the database.
+   */
+  public void registerStoryObserver(@NonNull RecipientId recipientId, @NonNull Observer listener) {
+    executor.execute(() -> {
+      registerMapped(storyObservers, recipientId, listener);
+    });
+  }
+
   public void unregisterObserver(@NonNull Observer listener) {
     executor.execute(() -> {
       conversationListObservers.remove(listener);
@@ -154,6 +169,7 @@ public class DatabaseObserver {
       stickerPackObservers.remove(listener);
       attachmentObservers.remove(listener);
       notificationProfileObservers.remove(listener);
+      unregisterMapped(storyObservers, listener);
     });
   }
 
@@ -250,6 +266,18 @@ public class DatabaseObserver {
   public void notifyNotificationProfileObservers() {
     runPostSuccessfulTransaction(KEY_NOTIFICATION_PROFILES, () -> {
       notifySet(notificationProfileObservers);
+    });
+  }
+
+  public void notifyRecipientChanged(@NonNull RecipientId recipientId) {
+    SignalDatabase.runPostSuccessfulTransaction(KEY_RECIPIENT + recipientId.serialize(), () -> {
+      Recipient.live(recipientId).refresh();
+    });
+  }
+
+  public void notifyStoryObservers(@NonNull RecipientId recipientId) {
+    runPostSuccessfulTransaction(KEY_STORY_OBSERVER, () -> {
+      notifyMapped(storyObservers, recipientId);
     });
   }
 

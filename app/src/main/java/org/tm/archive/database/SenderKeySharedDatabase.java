@@ -8,12 +8,12 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.SignalProtocolAddress;
 import org.tm.archive.recipients.Recipient;
-import org.whispersystems.libsignal.SignalProtocolAddress;
-import org.whispersystems.signalservice.api.push.DistributionId;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.CursorUtil;
-import org.tm.archive.util.SqlUtil;
+import org.signal.core.util.CursorUtil;
+import org.signal.core.util.SqlUtil;
+import org.whispersystems.signalservice.api.push.DistributionId;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,7 +23,7 @@ import java.util.Set;
  * Keeps track of which recipients are aware of which distributionIds. For the storage of sender
  * keys themselves, see {@link SenderKeyDatabase}.
  */
-public class  SenderKeySharedDatabase extends Database {
+public class SenderKeySharedDatabase extends Database {
 
   private static final String TAG = Log.tag(SenderKeySharedDatabase.class);
 
@@ -145,8 +145,8 @@ public class  SenderKeySharedDatabase extends Database {
     SQLiteDatabase db        = databaseHelper.getSignalWritableDatabase();
     Recipient      recipient = Recipient.resolved(recipientId);
 
-    if (recipient.hasAci()) {
-      db.delete(TABLE_NAME, ADDRESS + " = ?", SqlUtil.buildArgs(recipient.requireAci().toString()));
+    if (recipient.hasServiceId()) {
+      db.delete(TABLE_NAME, ADDRESS + " = ?", SqlUtil.buildArgs(recipient.requireServiceId().toString()));
     } else {
       Log.w(TAG, "Recipient doesn't have a UUID! " + recipientId);
     }

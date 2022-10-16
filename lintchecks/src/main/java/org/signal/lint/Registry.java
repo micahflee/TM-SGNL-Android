@@ -16,7 +16,10 @@ public final class Registry extends IssueRegistry {
                          SignalLogDetector.LOG_NOT_APP,
                          SignalLogDetector.INLINE_TAG,
                          VersionCodeDetector.VERSION_CODE_USAGE,
-                         AlertDialogBuilderDetector.ALERT_DIALOG_BUILDER_USAGE);
+                         AlertDialogBuilderDetector.ALERT_DIALOG_BUILDER_USAGE,
+                         BlockingGetDetector.UNSAFE_BLOCKING_GET,
+                         RecipientIdDatabaseDetector.RECIPIENT_ID_DATABASE_REFERENCE_ISSUE,
+                         ThreadIdDatabaseDetector.THREAD_ID_DATABASE_REFERENCE_ISSUE);
   }
 
   @Override

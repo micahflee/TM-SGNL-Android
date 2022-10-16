@@ -3,13 +3,15 @@ package org.whispersystems.signalservice.api.groupsv2;
 import com.google.protobuf.ByteString;
 
 import org.junit.Test;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.signal.storageservice.protos.groups.AccessControl;
+import org.signal.storageservice.protos.groups.GroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
+import org.signal.storageservice.protos.groups.local.DecryptedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedString;
 import org.signal.storageservice.protos.groups.local.DecryptedTimer;
 import org.signal.storageservice.protos.groups.local.EnabledState;
-import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.signalservice.internal.util.Util;
 
@@ -19,10 +21,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.admin;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.approveMember;
+import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.bannedMember;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.demoteAdmin;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.member;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.pendingMember;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.pendingMemberRemoval;
+import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.pendingPniAciMember;
+import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.presentation;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.promoteAdmin;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.randomProfileKey;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.requestingMember;
@@ -40,7 +45,7 @@ public final class GroupChangeUtil_resolveConflict_decryptedOnly_Test {
     int maxFieldFound = getMaxDeclaredFieldNumber(DecryptedGroupChange.class);
 
     assertEquals("GroupChangeUtil#resolveConflict and its tests need updating to account for new fields on " + DecryptedGroupChange.class.getName(),
-                 21, maxFieldFound);
+                 24, maxFieldFound);
   }
 
   /**
@@ -53,7 +58,7 @@ public final class GroupChangeUtil_resolveConflict_decryptedOnly_Test {
     int maxFieldFound = getMaxDeclaredFieldNumber(DecryptedGroup.class);
 
     assertEquals("GroupChangeUtil#resolveConflict and its tests need updating to account for new fields on " + DecryptedGroup.class.getName(),
-                 12, maxFieldFound);
+                 13, maxFieldFound);
   }
 
 
@@ -599,5 +604,77 @@ public final class GroupChangeUtil_resolveConflict_decryptedOnly_Test {
     DecryptedGroupChange resolvedChanges = GroupChangeUtil.resolveConflict(groupState, decryptedChange).build();
 
     assertTrue(DecryptedGroupUtil.changeIsEmpty(resolvedChanges));
+  }
+
+  @Test
+  public void field_22__add_banned_members() {
+    UUID                 member1         = UUID.randomUUID();
+    UUID                 member2         = UUID.randomUUID();
+    UUID                 member3         = UUID.randomUUID();
+    DecryptedGroup       groupState      = DecryptedGroup.newBuilder()
+                                                         .addMembers(member(member1))
+                                                         .addBannedMembers(bannedMember(member3))
+                                                         .build();
+    DecryptedGroupChange decryptedChange = DecryptedGroupChange.newBuilder()
+                                                               .addNewBannedMembers(bannedMember(member1))
+                                                               .addNewBannedMembers(bannedMember(member2))
+                                                               .addNewBannedMembers(bannedMember(member3))
+                                                               .build();
+
+    DecryptedGroupChange resolvedChanges = GroupChangeUtil.resolveConflict(groupState, decryptedChange).build();
+
+    DecryptedGroupChange expected = DecryptedGroupChange.newBuilder()
+                                                        .addNewBannedMembers(bannedMember(member1))
+                                                        .addNewBannedMembers(bannedMember(member2))
+                                                        .build();
+
+    assertEquals(expected, resolvedChanges);
+  }
+
+  @Test
+  public void field_23__delete_banned_members() {
+    UUID                 member1         = UUID.randomUUID();
+    UUID                 member2         = UUID.randomUUID();
+    UUID                 member3         = UUID.randomUUID();
+    DecryptedGroup       groupState      = DecryptedGroup.newBuilder()
+                                                         .addMembers(member(member1))
+                                                         .addBannedMembers(bannedMember(member2))
+                                                         .build();
+    DecryptedGroupChange decryptedChange = DecryptedGroupChange.newBuilder()
+                                                               .addDeleteBannedMembers(bannedMember(member1))
+                                                               .addDeleteBannedMembers(bannedMember(member2))
+                                                               .addDeleteBannedMembers(bannedMember(member3))
+                                                               .build();
+
+    DecryptedGroupChange resolvedChanges = GroupChangeUtil.resolveConflict(groupState, decryptedChange).build();
+
+    DecryptedGroupChange expected = DecryptedGroupChange.newBuilder()
+                                                        .addDeleteBannedMembers(bannedMember(member2))
+                                                        .build();
+
+    assertEquals(expected, resolvedChanges);
+  }
+
+  @Test
+  public void field_24__promote_pending_members() {
+    DecryptedMember member1 = pendingPniAciMember(UUID.randomUUID(), UUID.randomUUID(), randomProfileKey());
+    DecryptedMember member2 = pendingPniAciMember(UUID.randomUUID(), UUID.randomUUID(), randomProfileKey());
+
+    DecryptedGroup groupState = DecryptedGroup.newBuilder()
+                                              .addMembers(member(UuidUtil.fromByteString(member1.getUuid())))
+                                              .build();
+
+    DecryptedGroupChange decryptedChange = DecryptedGroupChange.newBuilder()
+                                                               .addPromotePendingPniAciMembers(pendingPniAciMember(member1.getUuid(), member1.getPni(), member1.getProfileKey()))
+                                                               .addPromotePendingPniAciMembers(pendingPniAciMember(member2.getUuid(), member2.getPni(), member2.getProfileKey()))
+                                                               .build();
+
+    DecryptedGroupChange resolvedChanges = GroupChangeUtil.resolveConflict(groupState, decryptedChange).build();
+
+    DecryptedGroupChange expected = DecryptedGroupChange.newBuilder()
+                                                        .addPromotePendingPniAciMembers(pendingPniAciMember(member2.getUuid(), member2.getPni(), member2.getProfileKey()))
+                                                        .build();
+
+    assertEquals(expected, resolvedChanges);
   }
 }

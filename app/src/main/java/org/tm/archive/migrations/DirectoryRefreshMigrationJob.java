@@ -3,7 +3,7 @@ package org.tm.archive.migrations;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.contacts.sync.DirectoryHelper;
+import org.tm.archive.contacts.sync.ContactDiscovery;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
@@ -47,7 +47,7 @@ public final class DirectoryRefreshMigrationJob extends MigrationJob {
       return;
     }
 
-    DirectoryHelper.refreshDirectory(context, true);
+    ContactDiscovery.refreshAll(context, true);
   }
 
   @Override

@@ -3,8 +3,8 @@ package org.tm.archive.payments.preferences;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.tm.archive.payments.currency.CurrencyExchange;
 import org.signal.core.util.money.FiatMoney;
+import org.tm.archive.payments.currency.CurrencyExchange;
 import org.tm.archive.payments.preferences.model.PaymentItem;
 
 import java.util.Collections;

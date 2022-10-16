@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import app.cash.exhaustive.Exhaustive
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import org.tm.archive.R
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mediasend.v2.MediaSelectionNavigator
@@ -17,12 +18,15 @@ import org.tm.archive.mediasend.v2.MediaSelectionViewModel
 import org.tm.archive.mediasend.v2.MediaValidator
 import org.tm.archive.mediasend.v2.review.MediaSelectionItemTouchHelper
 import org.tm.archive.permissions.Permissions
+import org.tm.archive.util.LifecycleDisposable
 
 private const val MEDIA_GALLERY_TAG = "MEDIA_GALLERY"
 
 class MediaSelectionGalleryFragment : Fragment(R.layout.fragment_container), MediaGalleryFragment.Callbacks {
 
   private lateinit var mediaGalleryFragment: MediaGalleryFragment
+
+  private val lifecycleDisposable = LifecycleDisposable()
 
   private val navigator = MediaSelectionNavigator(
     toCamera = R.id.action_mediaGalleryFragment_to_mediaCaptureFragment
@@ -52,13 +56,22 @@ class MediaSelectionGalleryFragment : Fragment(R.layout.fragment_container), Med
       )
     }
 
-    sharedViewModel.mediaErrors.observe(viewLifecycleOwner) { error: MediaValidator.FilterError ->
-      @Exhaustive
-      when (error) {
-        MediaValidator.FilterError.ITEM_TOO_LARGE -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__one_or_more_items_were_too_large, Toast.LENGTH_SHORT).show()
-        MediaValidator.FilterError.ITEM_INVALID_TYPE -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__one_or_more_items_were_invalid, Toast.LENGTH_SHORT).show()
-        MediaValidator.FilterError.TOO_MANY_ITEMS -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__too_many_items_selected, Toast.LENGTH_SHORT).show()
-        MediaValidator.FilterError.NO_ITEMS -> {}
+    lifecycleDisposable.bindTo(viewLifecycleOwner)
+    lifecycleDisposable += sharedViewModel.mediaErrors
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribe(this::handleError)
+  }
+
+  private fun handleError(error: MediaValidator.FilterError) {
+    @Exhaustive
+    when (error) {
+      MediaValidator.FilterError.ItemTooLarge -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__one_or_more_items_were_too_large, Toast.LENGTH_SHORT).show()
+      MediaValidator.FilterError.ItemInvalidType -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__one_or_more_items_were_invalid, Toast.LENGTH_SHORT).show()
+      MediaValidator.FilterError.TooManyItems -> Toast.makeText(requireContext(), R.string.MediaReviewFragment__too_many_items_selected, Toast.LENGTH_SHORT).show()
+      is MediaValidator.FilterError.NoItems -> {
+        if (error.cause != null) {
+          handleError(error.cause)
+        }
       }
     }
   }

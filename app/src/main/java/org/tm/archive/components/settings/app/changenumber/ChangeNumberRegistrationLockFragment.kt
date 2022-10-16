@@ -11,7 +11,6 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.lock.PinHashing
 import org.tm.archive.registration.fragments.BaseRegistrationLockFragment
 import org.tm.archive.registration.viewmodel.BaseRegistrationViewModel
-import org.tm.archive.util.CircularProgressButtonUtil.cancelSpinning
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.SupportEmailUtil
 import org.tm.archive.util.navigation.safeNavigate
@@ -45,7 +44,7 @@ class ChangeNumberRegistrationLockFragment : BaseRegistrationLockFragment(R.layo
   override fun handleSuccessfulPinEntry(pin: String) {
     val pinsDiffer: Boolean = SignalStore.kbsValues().localPinHash?.let { !PinHashing.verifyLocalPinHash(it, pin) } ?: false
 
-    cancelSpinning(pinButton)
+    pinButton.cancelSpinning()
 
     if (pinsDiffer) {
       findNavController().safeNavigate(ChangeNumberRegistrationLockFragmentDirections.actionChangeNumberRegistrationLockToChangeNumberPinDiffers())

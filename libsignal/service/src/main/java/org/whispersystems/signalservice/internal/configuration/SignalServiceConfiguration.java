@@ -1,9 +1,10 @@
 package org.whispersystems.signalservice.internal.configuration;
 
-import org.whispersystems.libsignal.util.guava.Optional;
+
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import okhttp3.Dns;
 import okhttp3.Interceptor;
@@ -13,7 +14,7 @@ public final class SignalServiceConfiguration {
   private final SignalServiceUrl[]           signalServiceUrls;
   private final Map<Integer, SignalCdnUrl[]> signalCdnUrlMap;
   private final SignalContactDiscoveryUrl[]  signalContactDiscoveryUrls;
-  private final SignalCdshUrl[]              signalCdshUrls;
+  private final SignalCdsiUrl[]              signalCdsiUrls;
   private final SignalKeyBackupServiceUrl[]  signalKeyBackupServiceUrls;
   private final SignalStorageUrl[]           signalStorageUrls;
   private final List<Interceptor>            networkInterceptors;
@@ -26,7 +27,7 @@ public final class SignalServiceConfiguration {
                                     SignalContactDiscoveryUrl[] signalContactDiscoveryUrls,
                                     SignalKeyBackupServiceUrl[] signalKeyBackupServiceUrls,
                                     SignalStorageUrl[] signalStorageUrls,
-                                    SignalCdshUrl[] signalCdshUrls,
+                                    SignalCdsiUrl[] signalCdsiUrls,
                                     List<Interceptor> networkInterceptors,
                                     Optional<Dns> dns,
                                     Optional<SignalProxy> proxy,
@@ -35,7 +36,7 @@ public final class SignalServiceConfiguration {
     this.signalServiceUrls          = signalServiceUrls;
     this.signalCdnUrlMap            = signalCdnUrlMap;
     this.signalContactDiscoveryUrls = signalContactDiscoveryUrls;
-    this.signalCdshUrls             = signalCdshUrls;
+    this.signalCdsiUrls             = signalCdsiUrls;
     this.signalKeyBackupServiceUrls = signalKeyBackupServiceUrls;
     this.signalStorageUrls          = signalStorageUrls;
     this.networkInterceptors        = networkInterceptors;
@@ -56,8 +57,8 @@ public final class SignalServiceConfiguration {
     return signalContactDiscoveryUrls;
   }
 
-  public SignalCdshUrl[] getSignalCdshUrls() {
-    return signalCdshUrls;
+  public SignalCdsiUrl[] getSignalCdsiUrls() {
+    return signalCdsiUrls;
   }
 
   public SignalKeyBackupServiceUrl[] getSignalKeyBackupServiceUrls() {

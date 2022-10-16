@@ -12,8 +12,8 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.signal.core.util.logging.Log;
 import org.signal.devicetransfer.ServerTask;
 import org.tm.archive.AppInitialization;
+import org.tm.archive.backup.BackupEvent;
 import org.tm.archive.backup.BackupPassphrase;
-import org.tm.archive.backup.FullBackupBase;
 import org.tm.archive.backup.FullBackupImporter;
 import org.tm.archive.crypto.AttachmentSecretProvider;
 import org.tm.archive.database.SignalDatabase;
@@ -70,10 +70,10 @@ final class NewDeviceServerTask implements ServerTask {
   }
 
   @Subscribe(threadMode = ThreadMode.POSTING)
-  public void onEvent(FullBackupBase.BackupEvent event) {
-    if (event.getType() == FullBackupBase.BackupEvent.Type.PROGRESS) {
+  public void onEvent(BackupEvent event) {
+    if (event.getType() == BackupEvent.Type.PROGRESS) {
       EventBus.getDefault().post(new Status(event.getCount(), Status.State.IN_PROGRESS));
-    } else if (event.getType() == FullBackupBase.BackupEvent.Type.FINISHED) {
+    } else if (event.getType() == BackupEvent.Type.FINISHED) {
       EventBus.getDefault().post(new Status(event.getCount(), Status.State.SUCCESS));
     }
   }

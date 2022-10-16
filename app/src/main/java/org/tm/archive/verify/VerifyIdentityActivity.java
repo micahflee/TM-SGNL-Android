@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
+import org.signal.libsignal.protocol.IdentityKey;
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.crypto.IdentityKeyParcelable;
 import org.tm.archive.database.IdentityDatabase;
@@ -13,7 +14,6 @@ import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
-import org.whispersystems.libsignal.IdentityKey;
 
 /**
  * Activity for verifying identity keys.

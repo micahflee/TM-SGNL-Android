@@ -2,7 +2,6 @@ package org.whispersystems.signalservice.api.services;
 
 import com.google.protobuf.ByteString;
 
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalWebSocket;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccess;
 import org.whispersystems.signalservice.api.push.exceptions.NotFoundException;
@@ -28,6 +27,7 @@ import java.security.SecureRandom;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import io.reactivex.rxjava3.core.Single;
 
@@ -72,13 +72,13 @@ public class MessagingService {
                           .onErrorReturn(ServiceResponse::forUnknownError);
   }
 
-  public Single<ServiceResponse<SendGroupMessageResponse>> sendToGroup(byte[] body, byte[] joinedUnidentifiedAccess, long timestamp, boolean online) {
+  public Single<ServiceResponse<SendGroupMessageResponse>> sendToGroup(byte[] body, byte[] joinedUnidentifiedAccess, long timestamp, boolean online, boolean urgent) {
     List<String> headers = new LinkedList<String>() {{
       add("content-type:application/vnd.signal-messenger.mrm");
       add("Unidentified-Access-Key:" + Base64.encodeBytes(joinedUnidentifiedAccess));
     }};
 
-    String path = String.format(Locale.US, "/v1/messages/multi_recipient?ts=%s&online=%s", timestamp, online);
+    String path = String.format(Locale.US, "/v1/messages/multi_recipient?ts=%s&online=%s&urgent=%s", timestamp, online, urgent);
 
     WebSocketRequestMessage requestMessage = WebSocketRequestMessage.newBuilder()
                                                                     .setId(new SecureRandom().nextLong())

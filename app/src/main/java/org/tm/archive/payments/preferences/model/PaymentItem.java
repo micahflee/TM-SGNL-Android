@@ -17,9 +17,9 @@ import org.tm.archive.payments.State;
 import org.tm.archive.payments.preferences.PaymentType;
 import org.tm.archive.payments.preferences.details.PaymentDetailsParcelable;
 import org.tm.archive.util.DateUtils;
+import org.tm.archive.util.SpanUtil;
 import org.tm.archive.util.adapter.mapping.MappingModel;
 import org.tm.archive.util.adapter.mapping.MappingModelList;
-import org.tm.archive.util.SpanUtil;
 import org.whispersystems.signalservice.api.payments.FormatterOptions;
 import org.whispersystems.signalservice.api.payments.PaymentsConstants;
 

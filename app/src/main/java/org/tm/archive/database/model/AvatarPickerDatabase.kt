@@ -3,14 +3,14 @@ package org.tm.archive.database.model
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import org.signal.core.util.CursorUtil
+import org.signal.core.util.SqlUtil
 import org.tm.archive.avatar.Avatar
 import org.tm.archive.avatar.Avatars
 import org.tm.archive.database.Database
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.databaseprotos.CustomAvatar
 import org.tm.archive.groups.GroupId
-import org.tm.archive.util.CursorUtil
-import org.tm.archive.util.SqlUtil
 
 /**
  * Database which manages the record keeping for custom created avatars.

@@ -10,9 +10,10 @@ import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
+import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.registration.viewmodel.BaseRegistrationViewModel;
@@ -55,7 +56,7 @@ public final class CaptchaFragment extends LoggingFragment {
       }
     });
 
-    webView.loadUrl(RegistrationConstants.SIGNAL_CAPTCHA_URL);
+    webView.loadUrl(BuildConfig.SIGNAL_CAPTCHA_URL);
 
     CaptchaViewModelProvider provider = null;
     if (getArguments() != null) {
@@ -63,7 +64,8 @@ public final class CaptchaFragment extends LoggingFragment {
     }
 
     if (provider == null) {
-      viewModel = ViewModelProviders.of(requireActivity()).get(RegistrationViewModel.class);
+      viewModel = new ViewModelProvider(
+          requireActivity()).get(RegistrationViewModel.class);
     } else {
       viewModel = provider.get(this);
     }

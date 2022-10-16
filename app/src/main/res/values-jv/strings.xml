@@ -123,7 +123,7 @@
   <string name="ContactsCursorLoader_contacts">Kontak</string>
   <string name="ContactsCursorLoader_groups">Grup</string>
   <string name="ContactsCursorLoader_phone_number_search">Padosan nomer telepon</string>
-  <string name="ContactsCursorLoader_username_search">Padosan nami panggina</string>
+  <!-- Removed by excludeNonTranslatables <string name="ContactsCursorLoader_username_search">Padosan nami panggina</string> -->
   <!--ContactsDatabase-->
   <string name="ContactsDatabase_message_s">Pesen %s</string>
   <string name="ContactsDatabase_signal_call_s">Telepon Signal %s</string>
@@ -316,7 +316,7 @@
   <string name="DozeReminder_optimize_for_missing_play_services">Dipuntingkataken kangge pirantos mboten gadhah Play Services</string>
   <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">Pirantos niki mboten ndukung Play Services. Tutul kangge nonaktifaken paningkatan baterai sistem ingkang ngewatesi Signal saking nampi pesen kala mboten aktif.</string>
   <!--ShareActivity-->
-  <string name="ShareActivity_share_with">Diunjukaken kangge</string>
+  <!-- Removed by excludeNonTranslatables <string name="ShareActivity_share_with">Diunjukaken kangge</string> -->
   <!--GcmBroadcastReceiver-->
   <!-- Removed by excludeNonTranslatables <string name="GcmBroadcastReceiver_retrieving_a_message">Taksih nampi pesen…</string> -->
   <!--GcmRefreshJob-->
@@ -1165,10 +1165,10 @@
   <string name="webrtc_answer_decline_button__swipe_down_to_reject">Geser dhateng ngandhap kangge nolak</string>
   <!--message_details_header-->
   <string name="message_details_header__issues_need_your_attention">Enten masalah ingkang betah sampeyan priksa.</string>
-  <string name="message_details_header__sent">Dipunkirimaken</string>
-  <string name="message_details_header__received">Dipuntampi</string>
-  <string name="message_details_header__disappears">Ngical</string>
-  <string name="message_details_header__via">Langkung</string>
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__sent">Dipunkirimaken</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__received">Dipuntampi</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__disappears">Ngical</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__via">Langkung</string> -->
   <!--message_details_recipient_header-->
   <!--message_Details_recipient-->
   <string name="message_details_recipient__failed_to_send">Gagal ngirimaken</string>

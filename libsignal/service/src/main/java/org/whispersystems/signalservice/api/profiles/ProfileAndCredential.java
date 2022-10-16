@@ -1,21 +1,23 @@
 package org.whispersystems.signalservice.api.profiles;
 
-import org.signal.zkgroup.profiles.ProfileKeyCredential;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
+
+import java.util.Optional;
+
 
 public final class ProfileAndCredential {
 
-  private final SignalServiceProfile             profile;
-  private final SignalServiceProfile.RequestType requestType;
-  private final Optional<ProfileKeyCredential>   profileKeyCredential;
+  private final SignalServiceProfile                   profile;
+  private final SignalServiceProfile.RequestType       requestType;
+  private final Optional<ExpiringProfileKeyCredential> expiringProfileKeyCredential;
 
   public ProfileAndCredential(SignalServiceProfile profile,
                               SignalServiceProfile.RequestType requestType,
-                              Optional<ProfileKeyCredential> profileKeyCredential)
+                              Optional<ExpiringProfileKeyCredential> expiringProfileKeyCredential)
   {
-    this.profile              = profile;
-    this.requestType          = requestType;
-    this.profileKeyCredential = profileKeyCredential;
+    this.profile                      = profile;
+    this.requestType                  = requestType;
+    this.expiringProfileKeyCredential = expiringProfileKeyCredential;
   }
 
   public SignalServiceProfile getProfile() {
@@ -26,7 +28,7 @@ public final class ProfileAndCredential {
     return requestType;
   }
 
-  public Optional<ProfileKeyCredential> getProfileKeyCredential() {
-    return profileKeyCredential;
+  public Optional<ExpiringProfileKeyCredential> getExpiringProfileKeyCredential() {
+    return expiringProfileKeyCredential;
   }
 }

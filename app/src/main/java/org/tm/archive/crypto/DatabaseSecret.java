@@ -3,7 +3,7 @@ package org.tm.archive.crypto;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.util.Hex;
+import org.signal.core.util.Hex;
 
 import java.io.IOException;
 

@@ -11,7 +11,7 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.tm.archive.util.AsynchronousCallback;
-import org.tm.archive.util.StringUtil;
+import org.signal.core.util.StringUtil;
 
 final class PaymentsAddMoneyViewModel extends ViewModel {
 

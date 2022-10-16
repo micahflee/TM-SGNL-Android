@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 
 import org.signal.storageservice.protos.groups.GroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedApproveMember;
+import org.signal.storageservice.protos.groups.local.DecryptedBannedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedMember;
@@ -11,7 +12,6 @@ import org.signal.storageservice.protos.groups.local.DecryptedModifyMemberRole;
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMember;
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMemberRemoval;
 import org.signal.storageservice.protos.groups.local.DecryptedRequestingMember;
-import org.signal.storageservice.protos.groups.local.EnabledState;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,25 +25,28 @@ public final class GroupChangeUtil {
    * True iff there are no change actions.
    */
   public static boolean changeIsEmpty(GroupChange.Actions change) {
-    return change.getAddMembersCount()               == 0 && // field 3
-           change.getDeleteMembersCount()            == 0 && // field 4
-           change.getModifyMemberRolesCount()        == 0 && // field 5
-           change.getModifyMemberProfileKeysCount()  == 0 && // field 6
-           change.getAddPendingMembersCount()        == 0 && // field 7
-           change.getDeletePendingMembersCount()     == 0 && // field 8
-           change.getPromotePendingMembersCount()    == 0 && // field 9
-           !change.hasModifyTitle()                       && // field 10
-           !change.hasModifyAvatar()                      && // field 11
-           !change.hasModifyDisappearingMessagesTimer()   && // field 12
-           !change.hasModifyAttributesAccess()            && // field 13
-           !change.hasModifyMemberAccess()                && // field 14
-           !change.hasModifyAddFromInviteLinkAccess()     && // field 15
-           change.getAddRequestingMembersCount()     == 0 && // field 16
-           change.getDeleteRequestingMembersCount()  == 0 && // field 17
-           change.getPromoteRequestingMembersCount() == 0 && // field 18
-           !change.hasModifyInviteLinkPassword()          && // field 19
-           !change.hasModifyDescription()                 && // field 20
-           !change.hasModifyAnnouncementsOnly();             // field 21
+    return change.getAddMembersCount() == 0 &&                // field 3
+           change.getDeleteMembersCount() == 0 &&             // field 4
+           change.getModifyMemberRolesCount() == 0 &&         // field 5
+           change.getModifyMemberProfileKeysCount() == 0 &&   // field 6
+           change.getAddPendingMembersCount() == 0 &&         // field 7
+           change.getDeletePendingMembersCount() == 0 &&      // field 8
+           change.getPromotePendingMembersCount() == 0 &&     // field 9
+           !change.hasModifyTitle() &&                        // field 10
+           !change.hasModifyAvatar() &&                       // field 11
+           !change.hasModifyDisappearingMessagesTimer() &&    // field 12
+           !change.hasModifyAttributesAccess() &&             // field 13
+           !change.hasModifyMemberAccess() &&                 // field 14
+           !change.hasModifyAddFromInviteLinkAccess() &&      // field 15
+           change.getAddRequestingMembersCount() == 0 &&      // field 16
+           change.getDeleteRequestingMembersCount() == 0 &&   // field 17
+           change.getPromoteRequestingMembersCount() == 0 &&  // field 18
+           !change.hasModifyInviteLinkPassword() &&           // field 19
+           !change.hasModifyDescription() &&                  // field 20
+           !change.hasModifyAnnouncementsOnly() &&            // field 21
+           change.getAddBannedMembersCount() == 0 &&          // field 22
+           change.getDeleteBannedMembersCount() == 0 &&       // field 23
+           change.getPromotePendingPniAciMembersCount() == 0; // field 24
   }
 
   /**
@@ -107,6 +110,7 @@ public final class GroupChangeUtil {
     HashMap<ByteString, DecryptedMember>           fullMembersByUuid       = new HashMap<>(groupState.getMembersCount());
     HashMap<ByteString, DecryptedPendingMember>    pendingMembersByUuid    = new HashMap<>(groupState.getPendingMembersCount());
     HashMap<ByteString, DecryptedRequestingMember> requestingMembersByUuid = new HashMap<>(groupState.getMembersCount());
+    HashMap<ByteString, DecryptedBannedMember>     bannedMembersByUuid     = new HashMap<>(groupState.getBannedMembersCount());
 
     for (DecryptedMember member : groupState.getMembersList()) {
       fullMembersByUuid.put(member.getUuid(), member);
@@ -118,6 +122,10 @@ public final class GroupChangeUtil {
 
     for (DecryptedRequestingMember member : groupState.getRequestingMembersList()) {
       requestingMembersByUuid.put(member.getUuid(), member);
+    }
+
+    for (DecryptedBannedMember member : groupState.getBannedMembersList()) {
+      bannedMembersByUuid.put(member.getUuid(), member);
     }
 
     resolveField3AddMembers                      (conflictingChange, changeSetModifier, fullMembersByUuid, pendingMembersByUuid);
@@ -138,6 +146,9 @@ public final class GroupChangeUtil {
     resolveField18PromoteRequestingMembers       (conflictingChange, changeSetModifier, requestingMembersByUuid);
     resolveField20ModifyDescription              (groupState, conflictingChange, changeSetModifier);
     resolveField21ModifyAnnouncementsOnly        (groupState, conflictingChange, changeSetModifier);
+    resolveField22AddBannedMembers               (conflictingChange, changeSetModifier, bannedMembersByUuid);
+    resolveField23DeleteBannedMembers            (conflictingChange, changeSetModifier, bannedMembersByUuid);
+    resolveField24PromotePendingPniAciMembers    (conflictingChange, changeSetModifier, fullMembersByUuid);
   }
 
   private static void resolveField3AddMembers(DecryptedGroupChange conflictingChange, ChangeSetModifier result, HashMap<ByteString, DecryptedMember> fullMembersByUuid, HashMap<ByteString, DecryptedPendingMember> pendingMembersByUuid) {
@@ -317,6 +328,42 @@ public final class GroupChangeUtil {
   private static void resolveField21ModifyAnnouncementsOnly(DecryptedGroup groupState, DecryptedGroupChange conflictingChange, ChangeSetModifier result) {
     if (conflictingChange.getNewIsAnnouncementGroup().equals(groupState.getIsAnnouncementGroup())) {
       result.clearModifyAnnouncementsOnly();
+    }
+  }
+
+  private static void resolveField22AddBannedMembers(DecryptedGroupChange conflictingChange, ChangeSetModifier result, HashMap<ByteString, DecryptedBannedMember> bannedMembersByUuid) {
+    List<DecryptedBannedMember> newBannedMembersList = conflictingChange.getNewBannedMembersList();
+
+    for (int i = newBannedMembersList.size() - 1; i >= 0; i--) {
+      DecryptedBannedMember member = newBannedMembersList.get(i);
+
+      if (bannedMembersByUuid.containsKey(member.getUuid())) {
+        result.removeAddBannedMembers(i);
+      }
+    }
+  }
+
+  private static void resolveField23DeleteBannedMembers(DecryptedGroupChange conflictingChange, ChangeSetModifier result, HashMap<ByteString, DecryptedBannedMember> bannedMembersByUuid) {
+    List<DecryptedBannedMember> deleteBannedMembersList = conflictingChange.getDeleteBannedMembersList();
+
+    for (int i = deleteBannedMembersList.size() - 1; i >= 0; i--) {
+      DecryptedBannedMember member = deleteBannedMembersList.get(i);
+
+      if (!bannedMembersByUuid.containsKey(member.getUuid())) {
+        result.removeDeleteBannedMembers(i);
+      }
+    }
+  }
+
+  private static void resolveField24PromotePendingPniAciMembers(DecryptedGroupChange conflictingChange, ChangeSetModifier result, HashMap<ByteString, DecryptedMember> fullMembersByUuid) {
+    List<DecryptedMember> promotePendingPniAciMembersList = conflictingChange.getPromotePendingPniAciMembersList();
+
+    for (int i = promotePendingPniAciMembersList.size() - 1; i >= 0; i--) {
+      DecryptedMember member = promotePendingPniAciMembersList.get(i);
+
+      if (fullMembersByUuid.containsKey(member.getUuid())) {
+        result.removePromotePendingPniAciMembers(i);
+      }
     }
   }
 }

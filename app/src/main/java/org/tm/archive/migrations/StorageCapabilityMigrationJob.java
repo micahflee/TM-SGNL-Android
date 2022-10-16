@@ -10,6 +10,7 @@ import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.MultiDeviceKeysUpdateJob;
 import org.tm.archive.jobs.MultiDeviceStorageSyncRequestJob;
 import org.tm.archive.jobs.RefreshAttributesJob;
+import org.tm.archive.jobs.RefreshOwnProfileJob;
 import org.tm.archive.jobs.StorageForcePushJob;
 import org.tm.archive.util.TextSecurePreferences;
 
@@ -50,7 +51,7 @@ public class StorageCapabilityMigrationJob extends MigrationJob {
   public void performMigration() {
     JobManager jobManager = ApplicationDependencies.getJobManager();
 
-    jobManager.add(new RefreshAttributesJob());
+    jobManager.startChain(new RefreshAttributesJob()).then(new RefreshOwnProfileJob()).enqueue();
 
     if (TextSecurePreferences.isMultiDevice(context)) {
       Log.i(TAG, "Multi-device.");

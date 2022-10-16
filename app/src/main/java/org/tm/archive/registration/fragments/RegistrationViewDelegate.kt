@@ -2,8 +2,6 @@ package org.tm.archive.registration.fragments
 
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
-import android.os.Looper
 import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.Toast
@@ -60,15 +58,11 @@ object RegistrationViewDelegate {
         .append("\n\n")
         .append(context.getString(R.string.RegistrationActivity_is_your_phone_number_above_correct))
 
-      //**TM_SA**//
-      Handler(Looper.getMainLooper()).post {
-        MaterialAlertDialogBuilder(context)
-          .setMessage(message)
-          .setPositiveButton(android.R.string.ok) { _, _ -> onConfirmed.run() }
-          .setNegativeButton(R.string.RegistrationActivity_edit_number) { _, _ -> onEditNumber.run() }
-          .show()
-      }
-
+      MaterialAlertDialogBuilder(context)
+        .setMessage(message)
+        .setPositiveButton(android.R.string.ok) { _, _ -> onConfirmed.run() }
+        .setNegativeButton(R.string.RegistrationActivity_edit_number) { _, _ -> onEditNumber.run() }
+        .show()
     } else {
       onConfirmed.run()
     }

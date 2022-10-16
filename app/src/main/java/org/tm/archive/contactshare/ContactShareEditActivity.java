@@ -3,26 +3,33 @@ package org.tm.archive.contactshare;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.ViewCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
-import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.util.DynamicLanguage;
+import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
+import org.tm.archive.util.Material3OnScrollHelper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.tm.archive.contactshare.Contact.Name;
@@ -31,20 +38,22 @@ import static org.tm.archive.contactshare.ContactShareEditViewModel.Factory;
 
 public class ContactShareEditActivity extends PassphraseRequiredActivity implements ContactShareEditAdapter.EventListener {
 
-  public  static final String KEY_CONTACTS     = "contacts";
-  private static final String KEY_CONTACT_URIS = "contact_uris";
+  public  static final String KEY_CONTACTS          = "contacts";
+  private static final String KEY_CONTACT_URIS      = "contact_uris";
+  private static final String KEY_SEND_BUTTON_COLOR = "send_button_color";
   private static final int    CODE_NAME_EDIT   = 55;
 
-  private final DynamicTheme    dynamicTheme    = new DynamicTheme();
+  private final DynamicTheme    dynamicTheme    = new DynamicNoActionBarTheme();
   private final DynamicLanguage dynamicLanguage = new DynamicLanguage();
 
   private ContactShareEditViewModel viewModel;
 
-  public static Intent getIntent(@NonNull Context context, @NonNull List<Uri> contactUris) {
+  public static Intent getIntent(@NonNull Context context, @NonNull List<Uri> contactUris, @ColorInt int sendButtonColor) {
     ArrayList<Uri> contactUriList = new ArrayList<>(contactUris);
 
     Intent intent = new Intent(context, ContactShareEditActivity.class);
     intent.putParcelableArrayListExtra(KEY_CONTACT_URIS, contactUriList);
+    intent.putExtra(KEY_SEND_BUTTON_COLOR, sendButtonColor);
     return intent;
   }
 
@@ -68,20 +77,24 @@ public class ContactShareEditActivity extends PassphraseRequiredActivity impleme
     }
 
     View sendButton = findViewById(R.id.contact_share_edit_send);
+    ViewCompat.setBackgroundTintList(sendButton, ColorStateList.valueOf(getIntent().getIntExtra(KEY_SEND_BUTTON_COLOR, Color.RED)));
     sendButton.setOnClickListener(v -> onSendClicked(viewModel.getFinalizedContacts()));
 
     RecyclerView contactList = findViewById(R.id.contact_share_edit_list);
     contactList.setLayoutManager(new LinearLayoutManager(this));
     contactList.getLayoutManager().setAutoMeasureEnabled(true);
 
+    Toolbar toolbar = findViewById(R.id.toolbar);
+    toolbar.setNavigationOnClickListener(unused -> onBackPressed());
+    Material3OnScrollHelper onScrollHelper = new Material3OnScrollHelper(this, Collections.singletonList(toolbar), Collections.emptyList());
+    onScrollHelper.attach(contactList);
+
     ContactShareEditAdapter contactAdapter = new ContactShareEditAdapter(GlideApp.with(this), dynamicLanguage.getCurrentLocale(), this);
     contactList.setAdapter(contactAdapter);
 
-    SharedContactRepository contactRepository = new SharedContactRepository(this,
-                                                                            AsyncTask.THREAD_POOL_EXECUTOR,
-                                                                            SignalDatabase.contacts());
+    SharedContactRepository contactRepository = new SharedContactRepository(this, AsyncTask.THREAD_POOL_EXECUTOR);
 
-    viewModel = ViewModelProviders.of(this, new Factory(contactUris, contactRepository)).get(ContactShareEditViewModel.class);
+    viewModel = new ViewModelProvider(this, new Factory(contactUris, contactRepository)).get(ContactShareEditViewModel.class);
     viewModel.getContacts().observe(this, contacts -> {
       contactAdapter.setContacts(contacts);
       contactList.post(() -> contactList.scrollToPosition(0));

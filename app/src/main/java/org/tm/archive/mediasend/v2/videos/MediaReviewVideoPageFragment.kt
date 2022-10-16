@@ -9,6 +9,8 @@ import org.tm.archive.R
 import org.tm.archive.mediasend.VideoEditorFragment
 import org.tm.archive.mediasend.v2.HudCommand
 import org.tm.archive.mediasend.v2.MediaSelectionViewModel
+import org.tm.archive.mms.MediaConstraints
+import org.tm.archive.stories.Stories
 
 private const val VIDEO_EDITOR_TAG = "video.editor.fragment"
 
@@ -81,7 +83,8 @@ class MediaReviewVideoPageFragment : Fragment(R.layout.fragment_container), Vide
         requireUri(),
         requireMaxCompressedVideoSize(),
         requireMaxAttachmentSize(),
-        requireIsVideoGif()
+        requireIsVideoGif(),
+        requireMaxVideoDuration()
       )
 
       childFragmentManager.beginTransaction()
@@ -100,6 +103,7 @@ class MediaReviewVideoPageFragment : Fragment(R.layout.fragment_container), Vide
   private fun requireMaxCompressedVideoSize(): Long = sharedViewModel.getMediaConstraints().getCompressedVideoMaxSize(requireContext()).toLong()
   private fun requireMaxAttachmentSize(): Long = sharedViewModel.getMediaConstraints().getVideoMaxSize(requireContext()).toLong()
   private fun requireIsVideoGif(): Boolean = requireNotNull(requireArguments().getBoolean(ARG_IS_VIDEO_GIF))
+  private fun requireMaxVideoDuration(): Long = if (sharedViewModel.isStory() && !MediaConstraints.isVideoTranscodeAvailable()) Stories.MAX_VIDEO_DURATION_MILLIS else Long.MAX_VALUE
 
   companion object {
     private const val ARG_URI = "arg.uri"

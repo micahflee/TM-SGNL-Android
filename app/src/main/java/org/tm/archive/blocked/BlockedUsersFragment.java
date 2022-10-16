@@ -1,9 +1,6 @@
 package org.tm.archive.blocked;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,9 +9,10 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.tm.archive.BlockUnblockDialog;
 import org.tm.archive.R;
 import org.tm.archive.recipients.Recipient;
 
@@ -61,7 +59,7 @@ public class BlockedUsersFragment extends Fragment {
       }
     });
 
-    viewModel = ViewModelProviders.of(requireActivity()).get(BlockedUsersViewModel.class);
+    viewModel = new ViewModelProvider(requireActivity()).get(BlockedUsersViewModel.class);
     viewModel.getRecipients().observe(getViewLifecycleOwner(), list -> {
       if (list.isEmpty()) {
         empty.setVisibility(View.VISIBLE);
@@ -74,24 +72,9 @@ public class BlockedUsersFragment extends Fragment {
   }
 
   private void handleRecipientClicked(@NonNull Recipient recipient) {
-    AlertDialog confirmationDialog = new AlertDialog.Builder(requireContext())
-                                                    .setTitle(R.string.BlockedUsersActivity__unblock_user)
-                                                    .setMessage(getString(R.string.BlockedUsersActivity__do_you_want_to_unblock_s, recipient.getDisplayName(requireContext())))
-                                                    .setPositiveButton(R.string.BlockedUsersActivity__unblock, (dialog, which) -> {
-                                                      viewModel.unblock(recipient.getId());
-                                                      dialog.dismiss();
-                                                    })
-                                                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-                                                      dialog.dismiss();
-                                                    })
-                                                    .setCancelable(true)
-                                                    .create();
-
-    confirmationDialog.setOnShowListener(dialog -> {
-      confirmationDialog.getButton(DialogInterface.BUTTON_POSITIVE).setTextColor(Color.RED);
+    BlockUnblockDialog.showUnblockFor(requireContext(), getViewLifecycleOwner().getLifecycle(), recipient, () -> {
+      viewModel.unblock(recipient.getId());
     });
-
-    confirmationDialog.show();
   }
 
   interface Listener {

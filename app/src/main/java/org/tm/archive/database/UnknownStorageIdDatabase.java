@@ -7,13 +7,12 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.annimon.stream.Stream;
-
+import org.signal.core.util.CursorUtil;
 import org.tm.archive.util.Base64;
-import org.tm.archive.util.SqlUtil;
-import org.whispersystems.libsignal.util.guava.Preconditions;
+import org.signal.core.util.SqlUtil;
 import org.whispersystems.signalservice.api.storage.SignalStorageRecord;
 import org.whispersystems.signalservice.api.storage.StorageId;
+import org.whispersystems.signalservice.api.util.Preconditions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,13 +45,10 @@ public class UnknownStorageIdDatabase extends Database {
   public List<StorageId> getAllUnknownIds() {
     List<StorageId> keys  = new ArrayList<>();
 
-    String   query = TYPE + " > ?";
-    String[] args  = SqlUtil.buildArgs(StorageId.largestKnownType());
-
-    try (Cursor cursor = databaseHelper.getSignalReadableDatabase().query(TABLE_NAME, null, query, args, null, null, null)) {
+    try (Cursor cursor = databaseHelper.getSignalReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null)) {
       while (cursor != null && cursor.moveToNext()) {
-        String keyEncoded = cursor.getString(cursor.getColumnIndexOrThrow(STORAGE_ID));
-        int    type       = cursor.getInt(cursor.getColumnIndexOrThrow(TYPE));
+        String keyEncoded = CursorUtil.requireString(cursor, STORAGE_ID);
+        int    type       = CursorUtil.requireInt(cursor, TYPE);
         try {
           keys.add(StorageId.forType(Base64.decode(keyEncoded), type));
         } catch (IOException e) {
@@ -64,33 +60,39 @@ public class UnknownStorageIdDatabase extends Database {
     return keys;
   }
 
+  /**
+   * Gets all StorageIds of items with the specified types.
+   */
+  public List<StorageId> getAllWithTypes(List<Integer> types) {
+    List<StorageId> ids   = new ArrayList<>();
+    SqlUtil.Query   query = SqlUtil.buildSingleCollectionQuery(TYPE, types);
+
+    try (Cursor cursor = databaseHelper.getSignalReadableDatabase().query(TABLE_NAME, null, query.getWhere(), query.getWhereArgs(), null, null, null)) {
+      while (cursor != null && cursor.moveToNext()) {
+        String keyEncoded = CursorUtil.requireString(cursor, STORAGE_ID);
+        int    type       = CursorUtil.requireInt(cursor, TYPE);
+        try {
+          ids.add(StorageId.forType(Base64.decode(keyEncoded), type));
+        } catch (IOException e) {
+          throw new AssertionError(e);
+        }
+      }
+    }
+
+    return ids;
+  }
+
   public @Nullable SignalStorageRecord getById(@NonNull byte[] rawId) {
     String   query = STORAGE_ID + " = ?";
     String[] args  = new String[] { Base64.encodeBytes(rawId) };
 
     try (Cursor cursor = databaseHelper.getSignalReadableDatabase().query(TABLE_NAME, null, query, args, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
-        int type = cursor.getInt(cursor.getColumnIndexOrThrow(TYPE));
+        int type = CursorUtil.requireInt(cursor, TYPE);
         return SignalStorageRecord.forUnknown(StorageId.forType(rawId, type));
       } else {
         return null;
       }
-    }
-  }
-
-  public void applyStorageSyncUpdates(@NonNull Collection<SignalStorageRecord> inserts,
-                                      @NonNull Collection<SignalStorageRecord> deletes)
-  {
-    SQLiteDatabase db = databaseHelper.getSignalWritableDatabase();
-
-    db.beginTransaction();
-    try {
-      insert(inserts);
-      delete(Stream.of(deletes).map(SignalStorageRecord::getId).toList());
-
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
     }
   }
 
@@ -118,13 +120,6 @@ public class UnknownStorageIdDatabase extends Database {
       String[] args = SqlUtil.buildArgs(Base64.encodeBytes(id.getRaw()));
       db.delete(TABLE_NAME, deleteQuery, args);
     }
-  }
-
-  public void deleteByType(int type) {
-    String   query = TYPE + " = ?";
-    String[] args  = new String[]{String.valueOf(type)};
-
-    databaseHelper.getSignalWritableDatabase().delete(TABLE_NAME, query, args);
   }
 
   public void deleteAll() {

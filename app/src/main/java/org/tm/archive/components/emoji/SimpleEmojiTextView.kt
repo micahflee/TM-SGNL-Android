@@ -6,7 +6,7 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.ThrottledDebouncer
-import org.whispersystems.libsignal.util.guava.Optional
+import java.util.Optional
 
 open class SimpleEmojiTextView @JvmOverloads constructor(
   context: Context,
@@ -17,11 +17,15 @@ open class SimpleEmojiTextView @JvmOverloads constructor(
   private var bufferType: BufferType? = null
   private val sizeChangeDebouncer: ThrottledDebouncer = ThrottledDebouncer(200)
 
+  init {
+    isEmojiCompatEnabled = SignalStore.settings().isPreferSystemEmoji
+  }
+
   override fun setText(text: CharSequence?, type: BufferType?) {
     bufferType = type
     val candidates = if (isInEditMode) null else EmojiProvider.getCandidates(text)
     if (SignalStore.settings().isPreferSystemEmoji || candidates == null || candidates.size() == 0) {
-      super.setText(Optional.fromNullable(text).or(""), type)
+      super.setText(Optional.ofNullable(text).orElse(""), type)
     } else {
       val startDrawableSize: Int = compoundDrawables[0]?.let { it.intrinsicWidth + compoundDrawablePadding } ?: 0
       val endDrawableSize: Int = compoundDrawables[1]?.let { it.intrinsicWidth + compoundDrawablePadding } ?: 0

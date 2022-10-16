@@ -11,16 +11,17 @@ import com.google.protobuf.ByteString;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.zkgroup.InvalidInputException;
+import org.signal.libsignal.zkgroup.groups.UuidCiphertext;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMember;
-import org.signal.zkgroup.InvalidInputException;
-import org.signal.zkgroup.groups.UuidCiphertext;
 import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupChangeException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
 import org.tm.archive.groups.GroupProtoUtil;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 
 import java.io.IOException;
@@ -54,7 +55,7 @@ final class PendingMemberInvitesRepository {
       List<DecryptedPendingMember>                 pendingMembersList = decryptedGroup.getPendingMembersList();
       List<SinglePendingMemberInvitedByYou>        byMe               = new ArrayList<>(pendingMembersList.size());
       List<MultiplePendingMembersInvitedByAnother> byOthers           = new ArrayList<>(pendingMembersList.size());
-      ByteString                                   self               = Recipient.self().requireAci().toByteString();
+      ByteString                                   self               = SignalStore.account().requireAci().toByteString();
       boolean                                      selfIsAdmin        = v2GroupProperties.isAdmin(Recipient.self());
 
       Stream.of(pendingMembersList)
@@ -99,7 +100,7 @@ final class PendingMemberInvitesRepository {
   @WorkerThread
   boolean revokeInvites(@NonNull Collection<UuidCiphertext> uuidCipherTexts) {
     try {
-      GroupManager.revokeInvites(context, groupId, uuidCipherTexts);
+      GroupManager.revokeInvites(context, SignalStore.account().requireAci(), groupId, uuidCipherTexts);
       return true;
     } catch (GroupChangeException | IOException e) {
       Log.w(TAG, e);

@@ -1,5 +1,9 @@
 package org.tm.archive.database.model;
 
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
@@ -7,8 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import org.signal.core.util.ThreadUtil;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,21 +24,20 @@ import java.util.Set;
  */
 public final class UpdateDescription {
 
-  public interface StringFactory {
-    @WorkerThread
-    String create();
+  public interface SpannableFactory {
+    Spannable create();
   }
 
-  private final Collection<ACI> mentioned;
-  private final StringFactory   stringFactory;
-  private final String          staticString;
-  private final int             lightIconResource;
-  private final int             lightTint;
-  private final int             darkTint;
+  private final Collection<ServiceId> mentioned;
+  private final SpannableFactory      stringFactory;
+  private final Spannable             staticString;
+  private final int                   lightIconResource;
+  private final int                   lightTint;
+  private final int                   darkTint;
 
-  private UpdateDescription(@NonNull Collection<ACI> mentioned,
-                            @Nullable StringFactory stringFactory,
-                            @Nullable String staticString,
+  private UpdateDescription(@NonNull Collection<ServiceId> mentioned,
+                            @Nullable SpannableFactory stringFactory,
+                            @Nullable Spannable staticString,
                             @DrawableRes int iconResource,
                             @ColorInt int lightTint,
                             @ColorInt int darkTint)
@@ -58,11 +60,11 @@ public final class UpdateDescription {
    * @param mentioned     UUIDs of recipients that are mentioned in the string.
    * @param stringFactory The background method for generating the string.
    */
-  public static UpdateDescription mentioning(@NonNull Collection<ACI> mentioned,
-                                             @NonNull StringFactory stringFactory,
+  public static UpdateDescription mentioning(@NonNull Collection<ServiceId> mentioned,
+                                             @NonNull SpannableFactory stringFactory,
                                              @DrawableRes int iconResource)
   {
-    return new UpdateDescription(ACI.filterKnown(mentioned),
+    return new UpdateDescription(ServiceId.filterKnown(mentioned),
                                  stringFactory,
                                  null,
                                  iconResource,
@@ -76,6 +78,15 @@ public final class UpdateDescription {
   public static UpdateDescription staticDescription(@NonNull String staticString,
                                                     @DrawableRes int iconResource)
   {
+    return new UpdateDescription(Collections.emptyList(), null, new SpannableString(staticString), iconResource, 0, 0);
+  }
+
+  /**
+   * Create an update description that's string value is fixed.
+   */
+  public static UpdateDescription staticDescription(@NonNull Spannable staticString,
+                                                    @DrawableRes int iconResource)
+  {
     return new UpdateDescription(Collections.emptyList(), null, staticString, iconResource, 0, 0);
   }
 
@@ -87,7 +98,7 @@ public final class UpdateDescription {
                                                     @ColorInt int lightTint,
                                                     @ColorInt int darkTint)
   {
-    return new UpdateDescription(Collections.emptyList(), null, staticString, iconResource, lightTint, darkTint);
+    return new UpdateDescription(Collections.emptyList(), null, new SpannableString(staticString), iconResource, lightTint, darkTint);
   }
 
   public boolean isStringStatic() {
@@ -95,7 +106,7 @@ public final class UpdateDescription {
   }
 
   @AnyThread
-  public @NonNull String getStaticString() {
+  public @NonNull Spannable getStaticSpannable() {
     if (staticString == null) {
       throw new UnsupportedOperationException();
     }
@@ -104,19 +115,17 @@ public final class UpdateDescription {
   }
 
   @WorkerThread
-  public @NonNull String getString() {
+  public @NonNull Spannable getSpannable() {
     if (staticString != null) {
       return staticString;
     }
-
-    ThreadUtil.assertNotMainThread();
 
     //noinspection ConstantConditions
     return stringFactory.create();
   }
 
   @AnyThread
-  public Collection<ACI> getMentioned() {
+  public @NonNull Collection<ServiceId> getMentioned() {
     return mentioned;
   }
 
@@ -147,7 +156,7 @@ public final class UpdateDescription {
       );
     }
 
-    Set<ACI> allMentioned = new HashSet<>();
+    Set<ServiceId> allMentioned = new HashSet<>();
 
     for (UpdateDescription updateDescription : updateDescriptions) {
       allMentioned.addAll(updateDescription.getMentioned());
@@ -169,26 +178,26 @@ public final class UpdateDescription {
   }
 
   @WorkerThread
-  private static String concatLines(@NonNull List<UpdateDescription> updateDescriptions) {
-    StringBuilder result = new StringBuilder();
+  private static Spannable concatLines(@NonNull List<UpdateDescription> updateDescriptions) {
+    SpannableStringBuilder result = new SpannableStringBuilder();
 
     for (int i = 0; i < updateDescriptions.size(); i++) {
       if (i > 0) result.append('\n');
-      result.append(updateDescriptions.get(i).getString());
+      result.append(updateDescriptions.get(i).getSpannable());
     }
 
-    return result.toString();
+    return result;
   }
 
   @AnyThread
-  private static String concatStaticLines(@NonNull List<UpdateDescription> updateDescriptions) {
-    StringBuilder result = new StringBuilder();
+  private static Spannable concatStaticLines(@NonNull List<UpdateDescription> updateDescriptions) {
+    SpannableStringBuilder result = new SpannableStringBuilder();
 
     for (int i = 0; i < updateDescriptions.size(); i++) {
       if (i > 0) result.append('\n');
-      result.append(updateDescriptions.get(i).getStaticString());
+      result.append(updateDescriptions.get(i).getStaticSpannable());
     }
 
-    return result.toString();
+    return result;
   }
 }

@@ -3,12 +3,13 @@ package org.tm.archive.components.settings.conversation.preferences
 import android.view.View
 import androidx.core.view.ViewCompat
 import org.tm.archive.R
+import org.tm.archive.avatar.view.AvatarView
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.badges.models.Badge
-import org.tm.archive.components.AvatarImageView
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.contacts.avatars.FallbackContactPhoto
 import org.tm.archive.contacts.avatars.FallbackPhoto
+import org.tm.archive.database.model.StoryViewState
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
@@ -26,7 +27,8 @@ object AvatarPreference {
 
   class Model(
     val recipient: Recipient,
-    val onAvatarClick: (View) -> Unit,
+    val storyViewState: StoryViewState,
+    val onAvatarClick: (AvatarView) -> Unit,
     val onBadgeClick: (Badge) -> Unit
   ) : PreferenceModel<Model>() {
     override fun areItemsTheSame(newItem: Model): Boolean {
@@ -39,7 +41,7 @@ object AvatarPreference {
   }
 
   private class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
-    private val avatar: AvatarImageView = itemView.findViewById<AvatarImageView>(R.id.bio_preference_avatar).apply {
+    private val avatar: AvatarView = itemView.findViewById<AvatarView>(R.id.bio_preference_avatar).apply {
       setFallbackPhotoProvider(AvatarPreferenceFallbackPhotoProvider())
     }
 
@@ -63,7 +65,8 @@ object AvatarPreference {
         }
       }
 
-      avatar.setAvatar(model.recipient)
+      avatar.setStoryRingFromState(model.storyViewState)
+      avatar.displayChatAvatar(model.recipient)
       avatar.disableQuickContact()
       avatar.setOnClickListener { model.onAvatarClick(avatar) }
     }

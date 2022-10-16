@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.RemoteConfigRefreshJob;
-import org.tm.archive.jobs.RetrieveReleaseChannelJob;
+import org.tm.archive.jobs.RetrieveRemoteAnnouncementsJob;
 import org.tm.archive.keyvalue.SignalStore;
 
 import java.util.concurrent.TimeUnit;
@@ -29,7 +29,7 @@ public class VersionTracker {
       Log.i(TAG, "Upgraded from " + lastVersionCode + " to " + currentVersionCode);
       SignalStore.misc().clearClientDeprecated();
       ApplicationDependencies.getJobManager().add(new RemoteConfigRefreshJob());
-      RetrieveReleaseChannelJob.enqueue(true);
+      RetrieveRemoteAnnouncementsJob.enqueue(true);
       LocalMetrics.getInstance().clear();
     }
 

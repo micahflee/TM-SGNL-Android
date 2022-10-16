@@ -24,12 +24,12 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.registration.RegistrationUtil;
 import org.tm.archive.util.concurrent.ListenableFuture;
-import org.tm.archive.util.concurrent.SimpleTask;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.core.util.concurrent.SimpleTask;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 public class EditSelfProfileRepository implements EditProfileRepository {

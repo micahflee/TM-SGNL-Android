@@ -17,6 +17,7 @@ import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.messages.GroupSendUtil;
 import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
@@ -76,7 +77,7 @@ public class ReactionSendJob extends BaseJob {
     }
 
     RecipientId       selfId     = Recipient.self().getId();
-    List<RecipientId> recipients = conversationRecipient.isGroup() ? RecipientUtil.getEligibleForSending(conversationRecipient.getParticipants())
+    List<RecipientId> recipients = conversationRecipient.isGroup() ? RecipientUtil.getEligibleForSending(Recipient.resolvedList(conversationRecipient.getParticipantIds()))
                                                                                   .stream()
                                                                                   .map(Recipient::getId)
                                                                                   .filter(r -> !r.equals(selfId))
@@ -149,6 +150,10 @@ public class ReactionSendJob extends BaseJob {
 
     Recipient targetAuthor        = message.isOutgoing() ? Recipient.self() : message.getIndividualRecipient();
     long      targetSentTimestamp = message.getDateSent();
+
+    if (targetAuthor.getId().equals(SignalStore.releaseChannelValues().getReleaseChannelRecipientId())) {
+      return;
+    }
 
     if (!remove && !reactionDatabase.hasReaction(messageId, reaction)) {
       Log.w(TAG, "Went to add a reaction, but it's no longer present on the message!");
@@ -232,18 +237,19 @@ public class ReactionSendJob extends BaseJob {
     List<Recipient>          nonSelfDestinations = destinations.stream().filter(r -> !r.isSelf()).collect(Collectors.toList());
     boolean                  includesSelf        = nonSelfDestinations.size() != destinations.size();
     List<SendMessageResult>  results             = GroupSendUtil.sendResendableDataMessage(context,
-                                                                                           conversationRecipient.getGroupId().transform(GroupId::requireV2).orNull(),
+                                                                                           conversationRecipient.getGroupId().map(GroupId::requireV2).orElse(null),
                                                                                            nonSelfDestinations,
                                                                                            false,
                                                                                            ContentHint.RESENDABLE,
                                                                                            messageId,
-                                                                                           dataMessage);
+                                                                                           dataMessage,
+                                                                                           true);
 
     if (includesSelf) {
       results.add(ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(dataMessage));
     }
 
-    return GroupSendJobHelper.getCompletedSends(destinations, results);
+    return GroupSendJobHelper.getCompletedSends(destinations, results).completed;
   }
 
   private static SignalServiceDataMessage.Reaction buildReaction(@NonNull Context context,
@@ -255,7 +261,7 @@ public class ReactionSendJob extends BaseJob {
   {
     return new SignalServiceDataMessage.Reaction(reaction.getEmoji(),
                                                  remove,
-                                                 RecipientUtil.toSignalServiceAddress(context, targetAuthor),
+                                                 RecipientUtil.getOrFetchServiceId(context, targetAuthor),
                                                  targetSentTimestamp);
   }
 

@@ -10,7 +10,9 @@ import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveFileUtil;
 import org.archiver.ArchiveSender;
 import org.greenrobot.eventbus.EventBus;
+import org.signal.core.util.Hex;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.InvalidMessageException;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.DatabaseAttachment;
@@ -24,15 +26,14 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobLogger;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.mms.MmsException;
+import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.releasechannel.ReleaseChannel;
+import org.tm.archive.s3.S3;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.AttachmentUtil;
 import org.tm.archive.util.Base64;
 import org.tm.archive.util.FileUtils;
-import org.tm.archive.util.Hex;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.InvalidMessageException;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentRemoteId;
@@ -45,9 +46,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Okio;
@@ -122,7 +123,10 @@ public final class AttachmentDownloadJob extends BaseJob {
   @Override
   public void onRun() throws Exception {
     doWork();
-    ApplicationDependencies.getMessageNotifier().updateNotification(context, 0);
+
+    if (!SignalDatabase.mms().isStory(messageId)) {
+      ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(0));
+    }
   }
 
   public void doWork() throws IOException, RetryLaterException {
@@ -188,8 +192,8 @@ public final class AttachmentDownloadJob extends BaseJob {
 
       //**TM_SA**//Start
       Pair<InputStream, InputStream> inputStreamPair  = FileUtils.duplicateInputStream(stream);
-      String                              fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.getFileName(), messageId, attachmentId.getUniqueId(), attachment.getContentType(), true);
-      File                                tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, fileNameWithType, inputStreamPair.first);
+      String                         fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.getFileName(), messageId, attachmentId.getUniqueId(), attachment.getContentType(), true);
+      File                           tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, fileNameWithType, inputStreamPair.first);
 
       ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileWithData.getName(), false);
 
@@ -231,15 +235,15 @@ public final class AttachmentDownloadJob extends BaseJob {
 
       return new SignalServiceAttachmentPointer(attachment.getCdnNumber(), remoteId, null, key,
                                                 Optional.of(Util.toIntExact(attachment.getSize())),
-                                                Optional.absent(),
+                                                Optional.empty(),
                                                 0, 0,
-                                                Optional.fromNullable(attachment.getDigest()),
-                                                Optional.fromNullable(attachment.getFileName()),
+                                                Optional.ofNullable(attachment.getDigest()),
+                                                Optional.ofNullable(attachment.getFileName()),
                                                 attachment.isVoiceNote(),
                                                 attachment.isBorderless(),
                                                 attachment.isVideoGif(),
-                                                Optional.absent(),
-                                                Optional.fromNullable(attachment.getBlurHash()).transform(BlurHash::getHash),
+                                                Optional.empty(),
+                                                Optional.ofNullable(attachment.getBlurHash()).map(BlurHash::getHash),
                                                 attachment.getUploadTimestamp());
     } catch (IOException | ArithmeticException e) {
       Log.w(TAG, e);
@@ -252,12 +256,7 @@ public final class AttachmentDownloadJob extends BaseJob {
                                      final Attachment attachment)
       throws IOException
   {
-    Request request = new Request.Builder()
-        .get()
-        .url(Objects.requireNonNull(attachment.getFileName()))
-        .build();
-
-    try (Response response = ApplicationDependencies.getOkHttpClient().newCall(request).execute()) {
+    try (Response response = S3.getObject(Objects.requireNonNull(attachment.getFileName()))) {
       ResponseBody body = response.body();
       if (body != null) {
         SignalDatabase.attachments().insertAttachmentsForPlaceholder(messageId, attachmentId, Okio.buffer(body.source()).inputStream());

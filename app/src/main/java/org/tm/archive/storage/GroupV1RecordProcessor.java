@@ -12,10 +12,10 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.recipients.RecipientId;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.storage.SignalGroupV1Record;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * Handles merging remote storage updates into local group v1 state.
@@ -46,7 +46,7 @@ public final class GroupV1RecordProcessor extends DefaultStorageRecordProcessor<
   @Override
   boolean isInvalid(@NonNull SignalGroupV1Record remote) {
     try {
-      GroupId.V1 id = GroupId.v1(remote.getGroupId());
+      GroupId.V1                          id       = GroupId.v1(remote.getGroupId());
       Optional<GroupDatabase.GroupRecord> v2Record = groupDatabase.getGroup(id.deriveV2MigrationGroupId());
 
       if (v2Record.isPresent()) {
@@ -67,9 +67,9 @@ public final class GroupV1RecordProcessor extends DefaultStorageRecordProcessor<
 
     Optional<RecipientId> recipientId = recipientDatabase.getByGroupId(groupId);
 
-    return recipientId.transform(recipientDatabase::getRecordForSync)
-                      .transform(StorageSyncModels::localToRemoteRecord)
-                      .transform(r -> r.getGroupV1().get());
+    return recipientId.map(recipientDatabase::getRecordForSync)
+                      .map(StorageSyncModels::localToRemoteRecord)
+                      .map(r -> r.getGroupV1().get());
   }
 
   @Override
@@ -89,8 +89,7 @@ public final class GroupV1RecordProcessor extends DefaultStorageRecordProcessor<
     } else if (matchesLocal) {
       return local;
     } else {
-      return new SignalGroupV1Record.Builder(keyGenerator.generate(), remote.getGroupId())
-                                    .setUnknownFields(unknownFields)
+      return new SignalGroupV1Record.Builder(keyGenerator.generate(), remote.getGroupId(), unknownFields)
                                     .setBlocked(blocked)
                                     .setProfileSharingEnabled(blocked)
                                     .setForcedUnread(forcedUnread)

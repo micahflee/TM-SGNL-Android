@@ -1,6 +1,6 @@
 package org.whispersystems.signalservice.internal.contacts.crypto;
 
-import org.whispersystems.libsignal.util.ByteUtil;
+import org.signal.libsignal.protocol.util.ByteUtil;
 import org.whispersystems.signalservice.api.crypto.CryptoUtil;
 import org.whispersystems.signalservice.api.crypto.InvalidCiphertextException;
 import org.whispersystems.signalservice.internal.contacts.crypto.AESCipher.AESEncryptedResult;
@@ -11,7 +11,6 @@ import org.whispersystems.signalservice.internal.util.Util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;

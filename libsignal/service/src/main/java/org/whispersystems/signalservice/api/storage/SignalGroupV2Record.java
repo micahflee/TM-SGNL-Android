@@ -3,9 +3,9 @@ package org.whispersystems.signalservice.api.storage;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import org.signal.zkgroup.InvalidInputException;
-import org.signal.zkgroup.groups.GroupMasterKey;
-import org.whispersystems.libsignal.logging.Log;
+import org.signal.libsignal.protocol.logging.Log;
+import org.signal.libsignal.zkgroup.InvalidInputException;
+import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
 import org.whispersystems.signalservice.api.util.ProtoUtil;
 import org.whispersystems.signalservice.internal.storage.protos.GroupV2Record;
 
@@ -74,6 +74,18 @@ public final class SignalGroupV2Record implements SignalRecord {
         diff.add("MuteUntil");
       }
 
+      if (!Objects.equals(this.notifyForMentionsWhenMuted(), that.notifyForMentionsWhenMuted())) {
+        diff.add("NotifyForMentionsWhenMuted");
+      }
+
+      if (shouldHideStory() != that.shouldHideStory()) {
+        diff.add("HideStory");
+      }
+
+      if (!Objects.equals(this.getStorySendMode(), that.getStorySendMode())) {
+        diff.add("StorySendMode");
+      }
+
       if (!Objects.equals(this.hasUnknownFields(), that.hasUnknownFields())) {
         diff.add("UnknownFields");
       }
@@ -124,8 +136,19 @@ public final class SignalGroupV2Record implements SignalRecord {
     return proto.getMutedUntilTimestamp();
   }
 
+  public boolean notifyForMentionsWhenMuted() {
+    return !proto.getDontNotifyForMentionsIfMuted();
+  }
 
-  GroupV2Record toProto() {
+  public boolean shouldHideStory() {
+    return proto.getHideStory();
+  }
+
+  public GroupV2Record.StorySendMode getStorySendMode() {
+    return proto.getStorySendMode();
+  }
+
+  public GroupV2Record toProto() {
     return proto;
   }
 
@@ -147,22 +170,20 @@ public final class SignalGroupV2Record implements SignalRecord {
     private final StorageId             id;
     private final GroupV2Record.Builder builder;
 
-    private byte[] unknownFields;
-
-    public Builder(byte[] rawId, GroupMasterKey masterKey) {
-      this(rawId, masterKey.serialize());
+    public Builder(byte[] rawId, GroupMasterKey masterKey, byte[] serializedUnknowns) {
+      this(rawId, masterKey.serialize(), serializedUnknowns);
     }
 
-    public Builder(byte[] rawId, byte[] masterKey) {
-      this.id      = StorageId.forGroupV2(rawId);
-      this.builder = GroupV2Record.newBuilder();
+    public Builder(byte[] rawId, byte[] masterKey, byte[] serializedUnknowns) {
+      this.id = StorageId.forGroupV2(rawId);
+
+      if (serializedUnknowns != null) {
+        this.builder = parseUnknowns(serializedUnknowns);
+      } else {
+        this.builder = GroupV2Record.newBuilder();
+      }
 
       builder.setMasterKey(ByteString.copyFrom(masterKey));
-    }
-
-    public Builder setUnknownFields(byte[] serializedUnknowns) {
-      this.unknownFields = serializedUnknowns;
-      return this;
     }
 
     public Builder setBlocked(boolean blocked) {
@@ -190,18 +211,32 @@ public final class SignalGroupV2Record implements SignalRecord {
       return this;
     }
 
-    public SignalGroupV2Record build() {
-      GroupV2Record proto = builder.build();
+    public Builder setNotifyForMentionsWhenMuted(boolean value) {
+      builder.setDontNotifyForMentionsIfMuted(!value);
+      return this;
+    }
 
-      if (unknownFields != null) {
-        try {
-          proto = ProtoUtil.combineWithUnknownFields(proto, unknownFields);
-        } catch (InvalidProtocolBufferException e) {
-          Log.w(TAG, "Failed to combine unknown fields!", e);
-        }
+    public Builder setHideStory(boolean hideStory) {
+      builder.setHideStory(hideStory);
+      return this;
+    }
+
+    public Builder setStorySendMode(GroupV2Record.StorySendMode storySendMode) {
+      builder.setStorySendMode(storySendMode);
+      return this;
+    }
+
+    private static GroupV2Record.Builder parseUnknowns(byte[] serializedUnknowns) {
+      try {
+        return GroupV2Record.parseFrom(serializedUnknowns).toBuilder();
+      } catch (InvalidProtocolBufferException e) {
+        Log.w(TAG, "Failed to combine unknown fields!", e);
+        return GroupV2Record.newBuilder();
       }
+    }
 
-      return new SignalGroupV2Record(id, proto);
+    public SignalGroupV2Record build() {
+      return new SignalGroupV2Record(id, builder.build());
     }
   }
 }

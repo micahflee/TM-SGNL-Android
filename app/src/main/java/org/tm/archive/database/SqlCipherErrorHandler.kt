@@ -5,15 +5,13 @@ import net.zetetic.database.DatabaseErrorHandler
 import net.zetetic.database.sqlcipher.SQLiteConnection
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
+import org.signal.core.util.CursorUtil
 import org.signal.core.util.ExceptionUtil
 import org.signal.core.util.logging.Log
 import org.tm.archive.crypto.DatabaseSecretProvider
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.util.CursorUtil
-import java.lang.Error
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.text.StringBuilder
 
 /**
  * The default error handler wipes the file. This one instead prints some diagnostics and then crashes so the original corrupt file isn't lost.
@@ -94,7 +92,7 @@ class SqlCipherErrorHandler(private val databaseName: String) : DatabaseErrorHan
     try {
       val results = query("PRAGMA integrity_check")
       output.append(results)
-      if (results.toLowerCase().contains("ok")) {
+      if (results.lowercase().contains("ok")) {
         pragma1Passes = true
       }
     } catch (t: Throwable) {

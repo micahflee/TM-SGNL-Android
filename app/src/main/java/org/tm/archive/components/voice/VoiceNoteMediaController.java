@@ -1,7 +1,6 @@
 package org.tm.archive.components.voice;
 
 import android.content.ComponentName;
-import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,9 +27,9 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DefaultValueLiveData;
 import org.tm.archive.util.livedata.LiveDataUtil;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Encapsulates control of voice note playback from an Activity component.
@@ -91,7 +90,7 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
                 playbackState.getTrackDuration(),
                 playbackState.getSpeed())));
       } else {
-        return new DefaultValueLiveData<>(Optional.absent());
+        return new DefaultValueLiveData<>(Optional.empty());
       }
     });
   }
@@ -108,7 +107,6 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
   public void onResume(@NonNull LifecycleOwner owner) {
     mediaBrowser.disconnect();
     mediaBrowser.connect();
-    activity.setVolumeControlStream(AudioManager.STREAM_MUSIC);
   }
 
   @Override
@@ -147,8 +145,12 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
     return playbackStateCompat.getState() <= PlaybackStateCompat.STATE_STOPPED;
   }
 
-  private @NonNull MediaControllerCompat getMediaController() {
-    return MediaControllerCompat.getMediaController(activity);
+  private @Nullable MediaControllerCompat getMediaController() {
+    if (activity != null) {
+      return MediaControllerCompat.getMediaController(activity);
+    } else {
+      return null;
+    }
   }
 
 
@@ -174,6 +176,11 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
    * @param singlePlayback The player will only play back the specified Uri, and not build a playlist.
    */
   private void startPlayback(@NonNull Uri audioSlideUri, long messageId, long threadId, double progress, boolean singlePlayback) {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called startPlayback before controller was set. (" + getActivityName() + ")");
+      return;
+    }
+
     if (isCurrentTrack(audioSlideUri)) {
       long duration = getMediaController().getMetadata().getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
 
@@ -198,6 +205,11 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
    * @param messageId      The Message id of the given audio slide
    */
   public void resumePlayback(@NonNull Uri audioSlideUri, long messageId) {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called resumePlayback before controller was set. (" + getActivityName() + ")");
+      return;
+    }
+
     if (isCurrentTrack(audioSlideUri)) {
       getMediaController().getTransportControls().play();
     } else {
@@ -217,9 +229,26 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
    * @param audioSlideUri The Uri of the audio slide to pause.
    */
   public void pausePlayback(@NonNull Uri audioSlideUri) {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called pausePlayback(uri) before controller was set. (" + getActivityName() + ")");
+      return;
+    }
+
     if (isCurrentTrack(audioSlideUri)) {
       getMediaController().getTransportControls().pause();
     }
+  }
+
+  /**
+   * Pauses playback regardless of which audio slide is playing.
+   */
+  public void pausePlayback() {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called pausePlayback before controller was set. (" + getActivityName() + ")");
+      return;
+    }
+
+    getMediaController().getTransportControls().pause();
   }
 
   /**
@@ -230,6 +259,11 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
    * @param progress      The progress percentage to seek to.
    */
   public void seekToPosition(@NonNull Uri audioSlideUri, double progress) {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called seekToPosition before controller was set. (" + getActivityName() + ")");
+      return;
+    }
+
     if (isCurrentTrack(audioSlideUri)) {
       long duration = getMediaController().getMetadata().getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
 
@@ -245,12 +279,22 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
    * @param audioSlideUri The Uri of the audio slide to stop
    */
   public void stopPlaybackAndReset(@NonNull Uri audioSlideUri) {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called stopPlaybackAndReset before controller was set. (" + getActivityName() + ")");
+      return;
+    }
+
     if (isCurrentTrack(audioSlideUri)) {
       getMediaController().getTransportControls().stop();
     }
   }
 
   public void setPlaybackSpeed(@NonNull Uri audioSlideUri, float playbackSpeed) {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called setPlaybackSpeed before controller was set. (" + getActivityName() + ")");
+      return;
+    }
+
     if (isCurrentTrack(audioSlideUri)) {
       Bundle bundle = new Bundle();
       bundle.putFloat(VoiceNotePlaybackService.ACTION_NEXT_PLAYBACK_SPEED, playbackSpeed);
@@ -260,12 +304,22 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
   }
 
   private boolean isCurrentTrack(@NonNull Uri uri) {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called isCurrentTrack before controller was set. (" + getActivityName() + ")");
+      return false;
+    }
+
     MediaMetadataCompat metadataCompat = getMediaController().getMetadata();
 
     return metadataCompat != null && Objects.equals(metadataCompat.getDescription().getMediaUri(), uri);
   }
 
   private void notifyProgressEventHandler() {
+    if (getMediaController() == null) {
+      Log.w(TAG, "Called notifyProgressEventHandler before controller was set. (" + getActivityName() + ")");
+      return;
+    }
+
     if (progressEventHandler == null && activity != null) {
       progressEventHandler = new ProgressEventHandler(getMediaController(), voiceNotePlaybackState);
       progressEventHandler.sendEmptyMessage(0);
@@ -275,6 +329,14 @@ public class VoiceNoteMediaController implements DefaultLifecycleObserver {
   private void clearProgressEventHandler() {
     if (progressEventHandler != null) {
       progressEventHandler = null;
+    }
+  }
+
+  private @NonNull String getActivityName() {
+    if (activity == null) {
+      return "Activity is null";
+    } else {
+      return activity.getLocalClassName();
     }
   }
 

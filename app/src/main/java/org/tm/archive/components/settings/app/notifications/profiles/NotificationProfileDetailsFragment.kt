@@ -1,6 +1,5 @@
 package org.tm.archive.components.settings.app.notifications.profiles
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.widget.Toolbar
@@ -14,7 +13,6 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.tm.archive.R
 import org.tm.archive.components.emoji.EmojiUtil
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsIcon
 import org.tm.archive.components.settings.DSLSettingsText
@@ -32,6 +30,7 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.SpanUtil
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.formatHours
 import org.tm.archive.util.navigation.safeNavigate
 import org.tm.archive.util.orderOfDaysInWeek
@@ -66,7 +65,7 @@ class NotificationProfileDetailsFragment : DSLSettingsFragment() {
     toolbar = null
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     NotificationProfilePreference.register(adapter)
     NotificationProfileAddMembers.register(adapter)
     NotificationProfileRecipient.register(adapter)
@@ -147,8 +146,6 @@ class NotificationProfileDetailsFragment : DSLSettingsFragment() {
                     view?.let { view ->
                       Snackbar.make(view, getString(R.string.NotificationProfileDetails__s_removed, removed.getDisplayName(requireContext())), Snackbar.LENGTH_LONG)
                         .setAction(R.string.NotificationProfileDetails__undo) { undoRemove(id) }
-                        .setActionTextColor(ContextCompat.getColor(requireContext(), R.color.core_ultramarine_light))
-                        .setTextColor(Color.WHITE)
                         .show()
                     }
                   }

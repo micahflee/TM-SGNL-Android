@@ -26,10 +26,10 @@ import com.annimon.stream.Stream;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 public class SlideDeck {
 

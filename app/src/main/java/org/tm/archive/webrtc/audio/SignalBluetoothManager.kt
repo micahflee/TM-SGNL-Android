@@ -1,5 +1,6 @@
 package org.tm.archive.webrtc.audio
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHeadset
@@ -19,9 +20,10 @@ import java.util.concurrent.TimeUnit
  * reports that to the [SignalAudioManager], and then handles connecting/disconnecting
  * to the device if requested by [SignalAudioManager].
  */
+@SuppressLint("MissingPermission") // targetSdkVersion is still 30 (https://issuetracker.google.com/issues/201454155)
 class SignalBluetoothManager(
   private val context: Context,
-  private val audioManager: SignalAudioManager,
+  private val audioManager: FullSignalAudioManager,
   private val handler: SignalAudioHandler
 ) {
 
@@ -160,7 +162,16 @@ class SignalBluetoothManager(
       return
     }
 
-    val devices: List<BluetoothDevice>? = bluetoothHeadset?.connectedDevices
+    val devices: List<BluetoothDevice>?
+    try {
+      devices = bluetoothHeadset?.connectedDevices
+    } catch (e: SecurityException) {
+      Log.w(TAG, "Unable to get bluetooth devices", e)
+      stop()
+      state = State.PERMISSION_DENIED
+      return
+    }
+
     if (devices == null || devices.isEmpty()) {
       bluetoothDevice = null
       state = State.UNAVAILABLE
@@ -318,6 +329,7 @@ class SignalBluetoothManager(
     DISCONNECTING,
     CONNECTING,
     CONNECTED,
+    PERMISSION_DENIED,
     ERROR;
 
     fun shouldUpdate(): Boolean {

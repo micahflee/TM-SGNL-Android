@@ -21,7 +21,7 @@ import org.tm.archive.groups.MembershipNotSuitableForV2Exception;
 import org.tm.archive.groups.ui.GroupMemberListView;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 import java.io.IOException;

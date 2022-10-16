@@ -2,7 +2,6 @@ package org.tm.archive.components.voice
 
 import android.net.Uri
 import org.tm.archive.database.DraftDatabase
-import java.lang.IllegalArgumentException
 
 private const val SIZE = "size"
 

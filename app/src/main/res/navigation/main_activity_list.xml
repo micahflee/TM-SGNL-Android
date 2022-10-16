@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_activity_list"
+    app:startDestination="@id/conversationListFragment">
+
+    <fragment
+        android:id="@+id/conversationListFragment"
+        android:name="org.tm.archive.conversationlist.ConversationListFragment"
+        android:label="conversation_list_fragment">
+        <action
+            android:id="@+id/action_conversationListFragment_to_conversationListArchiveFragment"
+            app:destination="@id/conversationListArchiveFragment"
+            app:enterAnim="@anim/slide_from_end"
+            app:exitAnim="@anim/slide_to_start"
+            app:popEnterAnim="@anim/slide_from_start"
+            app:popExitAnim="@anim/slide_to_end" />
+        <action
+            android:id="@+id/action_conversationListFragment_to_storiesLandingFragment"
+            app:destination="@id/storiesLandingFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/conversationListArchiveFragment"
+        android:name="org.tm.archive.conversationlist.ConversationListArchiveFragment"
+        android:label="conversation_list_archive_fragment" />
+
+    <fragment
+        android:id="@+id/storiesLandingFragment"
+        android:name="org.tm.archive.stories.landing.StoriesLandingFragment"
+        android:label="stories_landing_fragment" />
+
+</navigation>

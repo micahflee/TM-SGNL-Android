@@ -35,6 +35,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 
+import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
 import org.tm.archive.components.AnimatingToggle;
@@ -46,8 +47,7 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.loaders.MediaLoader;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
-import org.tm.archive.util.concurrent.SimpleTask;
-import org.whispersystems.libsignal.util.Pair;
+import org.signal.core.util.concurrent.SimpleTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -213,11 +213,13 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
   public void onEnterMultiSelect() {
     tabLayout.setEnabled(false);
     viewPager.setEnabled(false);
+    toolbar.setVisibility(View.INVISIBLE);
   }
 
   public void onExitMultiSelect() {
     tabLayout.setEnabled(true);
     viewPager.setEnabled(true);
+    toolbar.setVisibility(View.VISIBLE);
   }
 
   private void showSortOrderDialog(View v) {

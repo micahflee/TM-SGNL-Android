@@ -15,6 +15,7 @@ import org.tm.archive.R;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.phonenumbers.PhoneNumberFormatter;
 import org.tm.archive.recipients.Recipient;
+import org.whispersystems.signalservice.api.util.OptionalUtil;
 
 import java.util.Objects;
 
@@ -64,7 +65,9 @@ final class BlockedUsersAdapter extends ListAdapter<Recipient, BlockedUsersAdapt
       displayName.setText(recipient.getDisplayName(itemView.getContext()));
 
       if (recipient.hasAUserSetDisplayName(itemView.getContext())) {
-        String identifier = recipient.getE164().transform(PhoneNumberFormatter::prettyPrint).or(recipient.getUsername()).orNull();
+        String identifier = OptionalUtil.or(recipient.getE164().map(PhoneNumberFormatter::prettyPrint),
+                                            recipient.getUsername())
+                                        .orElse(null);
 
         if (identifier != null) {
           numberOrUsername.setText(identifier);

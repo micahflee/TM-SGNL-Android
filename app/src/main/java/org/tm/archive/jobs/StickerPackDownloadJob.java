@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.core.util.Preconditions;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.InvalidMessageException;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.StickerDatabase;
 import org.tm.archive.database.model.IncomingSticker;
@@ -13,8 +14,7 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.stickers.BlessedPacks;
-import org.tm.archive.util.Hex;
-import org.whispersystems.libsignal.InvalidMessageException;
+import org.signal.core.util.Hex;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.messages.SignalServiceStickerManifest;
 import org.whispersystems.signalservice.api.messages.SignalServiceStickerManifest.StickerInfo;
@@ -128,11 +128,11 @@ public class StickerPackDownloadJob extends BaseJob {
       stickerDatabase.markPackAsInstalled(packId, notify);
     }
 
-    StickerInfo      cover = manifest.getCover().or(manifest.getStickers().get(0));
+    StickerInfo      cover = manifest.getCover().orElse(manifest.getStickers().get(0));
     JobManager.Chain chain = jobManager.startChain(new StickerDownloadJob(new IncomingSticker(packId,
                                                                                               packKey,
-                                                                                              manifest.getTitle().or(""),
-                                                                                              manifest.getAuthor().or(""),
+                                                                                              manifest.getTitle().orElse(""),
+                                                                                              manifest.getAuthor().orElse(""),
                                                                                               cover.getId(),
                                                                                               "",
                                                                                               cover.getContentType(),
@@ -148,8 +148,8 @@ public class StickerPackDownloadJob extends BaseJob {
       for (StickerInfo stickerInfo : manifest.getStickers()) {
         jobs.add(new StickerDownloadJob(new IncomingSticker(packId,
                                                             packKey,
-                                                            manifest.getTitle().or(""),
-                                                            manifest.getAuthor().or(""),
+                                                            manifest.getTitle().orElse(""),
+                                                            manifest.getAuthor().orElse(""),
                                                             stickerInfo.getId(),
                                                             stickerInfo.getEmoji(),
                                                             stickerInfo.getContentType(),

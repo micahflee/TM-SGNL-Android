@@ -2,7 +2,7 @@ package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.contacts.sync.DirectoryHelper;
+import org.tm.archive.contacts.sync.ContactDiscovery;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -37,7 +37,7 @@ public class RecipientSearchMigrationJob extends MigrationJob {
 
   @Override
   void performMigration() throws Exception {
-    DirectoryHelper.refreshDirectory(context, false);
+    ContactDiscovery.refreshAll(context, false);
   }
 
   @Override

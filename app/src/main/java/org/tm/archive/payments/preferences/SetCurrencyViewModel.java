@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.R;
 import org.tm.archive.components.settings.SettingHeader;
@@ -21,10 +22,9 @@ import org.tm.archive.payments.currency.CurrencyExchange;
 import org.tm.archive.payments.currency.CurrencyExchangeRepository;
 import org.tm.archive.payments.currency.CurrencyUtil;
 import org.tm.archive.util.AsynchronousCallback;
+import org.signal.core.util.SetUtil;
 import org.tm.archive.util.adapter.mapping.MappingModelList;
-import org.tm.archive.util.SetUtil;
 import org.tm.archive.util.livedata.Store;
-import org.whispersystems.libsignal.util.Pair;
 
 import java.util.Collection;
 import java.util.Currency;

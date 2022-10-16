@@ -27,11 +27,13 @@ import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.livedata.LiveDataUtil;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public final class LiveGroup {
 
@@ -57,7 +59,7 @@ public final class LiveGroup {
 
     this.groupDatabase     = SignalDatabase.groups();
     this.recipient         = Transformations.switchMap(liveRecipient, LiveRecipient::getLiveData);
-    this.groupRecord       = LiveDataUtil.filterNotNull(LiveDataUtil.mapAsync(recipient, groupRecipient -> groupDatabase.getGroup(groupRecipient.getId()).orNull()));
+    this.groupRecord       = LiveDataUtil.filterNotNull(LiveDataUtil.mapAsync(recipient, groupRecipient -> groupDatabase.getGroup(groupRecipient.getId()).orElse(null)));
     this.fullMembers       = mapToFullMembers(this.groupRecord);
     this.requestingMembers = mapToRequestingMembers(this.groupRecord);
 
@@ -82,7 +84,7 @@ public final class LiveGroup {
       this.groupLink = new MutableLiveData<>(GroupLinkUrlAndStatus.NONE);
     }
 
-    SignalExecutors.BOUNDED.execute(() -> liveRecipient.postValue(Recipient.externalGroupExact(context, groupId).live()));
+    SignalExecutors.BOUNDED.execute(() -> liveRecipient.postValue(Recipient.externalGroupExact(groupId).live()));
   }
 
   protected static LiveData<List<GroupMemberEntry.FullMember>> mapToFullMembers(@NonNull LiveData<GroupDatabase.GroupRecord> groupRecord) {
@@ -108,7 +110,7 @@ public final class LiveGroup {
 
                                    return Stream.of(requestingMembersList)
                                                 .map(requestingMember -> {
-                                                  Recipient recipient = Recipient.externalPush(ApplicationDependencies.getApplication(), ACI.fromByteString(requestingMember.getUuid()), null, false);
+                                                  Recipient recipient = Recipient.externalPush(ServiceId.fromByteString(requestingMember.getUuid()));
                                                   return new GroupMemberEntry.RequestingMember(recipient, selfAdmin);
                                                 })
                                                 .toList();
@@ -139,6 +141,10 @@ public final class LiveGroup {
 
   public LiveData<Boolean> isSelfAdmin() {
     return Transformations.map(groupRecord, g -> g.isAdmin(Recipient.self()));
+  }
+
+  public LiveData<Set<UUID>> getBannedMembers() {
+    return Transformations.map(groupRecord, g -> g.isV2Group() ? g.requireV2GroupProperties().getBannedMembers() : Collections.emptySet());
   }
 
   public LiveData<Boolean> isActive() {
@@ -220,10 +226,12 @@ public final class LiveGroup {
   }
 
   private static String getMembershipDescription(@NonNull Resources resources, int invitedCount, int fullMemberCount) {
-    return invitedCount > 0 ? resources.getQuantityString(R.plurals.MessageRequestProfileView_members_and_invited, fullMemberCount,
-                                                          fullMemberCount, invitedCount)
-                            : resources.getQuantityString(R.plurals.MessageRequestProfileView_members, fullMemberCount,
-                                                          fullMemberCount);
+    if (invitedCount > 0) {
+      String invited = resources.getQuantityString(R.plurals.MessageRequestProfileView_invited, invitedCount, invitedCount);
+      return resources.getQuantityString(R.plurals.MessageRequestProfileView_members_and_invited, fullMemberCount, fullMemberCount, invited);
+    } else {
+      return resources.getQuantityString(R.plurals.MessageRequestProfileView_members, fullMemberCount, fullMemberCount);
+    }
   }
 
   private LiveData<GroupDatabase.MemberLevel> selfMemberLevel() {

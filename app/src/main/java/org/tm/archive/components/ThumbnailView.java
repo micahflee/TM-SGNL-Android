@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -14,6 +15,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.Px;
 import androidx.annotation.UiThread;
 
 import com.bumptech.glide.RequestBuilder;
@@ -34,16 +37,17 @@ import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.mms.Slide;
 import org.tm.archive.mms.SlideClickListener;
 import org.tm.archive.mms.SlidesClickedListener;
+import org.tm.archive.stories.StoryTextPostModel;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.concurrent.SettableFuture;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
@@ -68,7 +72,7 @@ public class ThumbnailView extends FrameLayout {
   private final int[] bounds        = new int[4];
   private final int[] measureDimens = new int[2];
 
-  private Optional<TransferControlView> transferControls       = Optional.absent();
+  private Optional<TransferControlView> transferControls       = Optional.empty();
   private SlideClickListener            thumbnailClickListener = null;
   private SlidesClickedListener         downloadClickListener  = null;
   private Slide                         slide                  = null;
@@ -154,8 +158,13 @@ public class ThumbnailView extends FrameLayout {
     captionIcon.setScaleY(captionIconScale);
   }
 
-  public void setMinimumThumbnailWidth(int width) {
+  public void setMinimumThumbnailWidth(@Px int width) {
     bounds[MIN_WIDTH] = width;
+    invalidate();
+  }
+
+  public void setMaximumThumbnailHeight(@Px int height) {
+    bounds[MAX_HEIGHT] = height;
     invalidate();
   }
 
@@ -271,6 +280,14 @@ public class ThumbnailView extends FrameLayout {
     bounds[MAX_HEIGHT] = maxHeight;
 
     forceLayout();
+  }
+
+  public void setImageDrawable(@NonNull GlideRequests glideRequests, @Nullable Drawable drawable) {
+    glideRequests.clear(image);
+    glideRequests.clear(blurhash);
+
+    image.setImageDrawable(drawable);
+    blurhash.setImageDrawable(null);
   }
 
   @UiThread
@@ -391,6 +408,32 @@ public class ThumbnailView extends FrameLayout {
     return future;
   }
 
+  public ListenableFuture<Boolean> setImageResource(@NonNull GlideRequests glideRequests, @NonNull StoryTextPostModel model, int width, int height) {
+    SettableFuture<Boolean> future = new SettableFuture<>();
+
+    if (transferControls.isPresent()) getTransferControls().setVisibility(View.GONE);
+
+    GlideRequest request = glideRequests.load(model)
+                                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                        .placeholder(model.getPlaceholder())
+                                        .transition(withCrossFade());
+
+    if (width > 0 && height > 0) {
+      request = request.override(width, height);
+    }
+
+    if (radius > 0) {
+      request = request.transforms(new CenterCrop(), new RoundedCorners(radius));
+    } else {
+      request = request.transforms(new CenterCrop());
+    }
+
+    request.into(new GlideDrawableListeningTarget(image, future));
+    blurhash.setImageDrawable(null);
+
+    return future;
+  }
+
   public void setThumbnailClickListener(SlideClickListener listener) {
     this.thumbnailClickListener = listener;
   }
@@ -401,10 +444,14 @@ public class ThumbnailView extends FrameLayout {
 
   public void clear(GlideRequests glideRequests) {
     glideRequests.clear(image);
+    image.setImageDrawable(null);
 
     if (transferControls.isPresent()) {
       getTransferControls().clear();
     }
+
+    glideRequests.clear(blurhash);
+    blurhash.setImageDrawable(null);
 
     slide = null;
   }

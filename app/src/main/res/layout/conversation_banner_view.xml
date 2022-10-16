@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -60,7 +61,7 @@
     <!--**TM_SA** Add android:textColor="@android:color/black" -->
     <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/message_request_title"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:drawablePadding="4dp"
@@ -83,6 +84,7 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:textColor="@android:color/black"
+        android:textAppearance="@style/Signal.Text.MessageRequest.Subtitle"
         app:emoji_forceCustom="true"
         app:layout_constraintTop_toBottomOf="@id/message_request_title"
         tools:text="Hangin' on the web" />
@@ -107,8 +109,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="15dp"
-        android:gravity="center"
         android:textColor="@android:color/black"
+        android:gravity="center"
+        android:textAppearance="@style/Signal.Text.MessageRequest.Description"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

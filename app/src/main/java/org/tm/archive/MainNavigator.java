@@ -2,17 +2,13 @@ package org.tm.archive;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import org.tm.archive.components.settings.app.AppSettingsActivity;
 import org.tm.archive.conversation.ConversationIntents;
-import org.tm.archive.conversationlist.ConversationListArchiveFragment;
-import org.tm.archive.conversationlist.ConversationListFragment;
 import org.tm.archive.groups.ui.creategroup.CreateGroupActivity;
 import org.tm.archive.insights.InsightsLauncher;
 import org.tm.archive.recipients.RecipientId;
@@ -33,16 +29,6 @@ public class MainNavigator {
     }
 
     return ((MainActivity) activity).getNavigator();
-  }
-
-  public void onCreate(@Nullable Bundle savedInstanceState) {
-    if (savedInstanceState != null) {
-      return;
-    }
-
-    getFragmentManager().beginTransaction()
-                        .add(R.id.fragment_container, ConversationListFragment.newInstance())
-                        .commit();
   }
 
   /**
@@ -71,14 +57,6 @@ public class MainNavigator {
 
   public void goToAppSettings() {
     activity.startActivityForResult(AppSettingsActivity.home(activity), REQUEST_CONFIG_CHANGES);
-  }
-
-  public void goToArchiveList() {
-    getFragmentManager().beginTransaction()
-                        .setCustomAnimations(R.anim.slide_from_end, R.anim.slide_to_start, R.anim.slide_from_start, R.anim.slide_to_end)
-                        .replace(R.id.fragment_container, ConversationListArchiveFragment.newInstance())
-                        .addToBackStack(null)
-                        .commit();
   }
 
   public void goToGroupCreation() {

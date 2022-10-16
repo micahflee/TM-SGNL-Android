@@ -1,10 +1,10 @@
 package org.whispersystems.signalservice.api.services;
 
-import org.signal.zkgroup.receipts.ReceiptCredentialPresentation;
-import org.signal.zkgroup.receipts.ReceiptCredentialRequest;
-import org.signal.zkgroup.receipts.ReceiptCredentialResponse;
-import org.whispersystems.libsignal.logging.Log;
-import org.whispersystems.libsignal.util.Pair;
+import org.signal.libsignal.protocol.logging.Log;
+import org.signal.libsignal.protocol.util.Pair;
+import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation;
+import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialRequest;
+import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialResponse;
 import org.whispersystems.signalservice.api.groupsv2.GroupsV2Operations;
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
@@ -16,7 +16,6 @@ import org.whispersystems.signalservice.api.util.CredentialsProvider;
 import org.whispersystems.signalservice.internal.EmptyResponse;
 import org.whispersystems.signalservice.internal.ServiceResponse;
 import org.whispersystems.signalservice.internal.configuration.SignalServiceConfiguration;
-import org.whispersystems.signalservice.internal.push.DonationIntentResult;
 import org.whispersystems.signalservice.internal.push.PushServiceSocket;
 
 import java.io.IOException;
@@ -24,10 +23,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 
 import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * One-stop shop for Signal service calls related to donations.
@@ -60,15 +59,13 @@ public class DonationsService {
    * @param visible                       Whether the badge will be visible on the user's profile immediately after redemption
    * @param primary                       Whether the badge will be made primary immediately after redemption
    */
-  public Single<ServiceResponse<EmptyResponse>> redeemReceipt(ReceiptCredentialPresentation receiptCredentialPresentation, boolean visible, boolean primary) {
-    return Single.fromCallable(() -> {
-      try {
-        pushServiceSocket.redeemDonationReceipt(receiptCredentialPresentation, visible, primary);
-        return ServiceResponse.forResult(EmptyResponse.INSTANCE, 200, null);
-      } catch (Exception e) {
-        return ServiceResponse.<EmptyResponse>forUnknownError(e);
-      }
-    }).subscribeOn(Schedulers.io());
+  public ServiceResponse<EmptyResponse> redeemReceipt(ReceiptCredentialPresentation receiptCredentialPresentation, boolean visible, boolean primary) {
+    try {
+      pushServiceSocket.redeemDonationReceipt(receiptCredentialPresentation, visible, primary);
+      return ServiceResponse.forResult(EmptyResponse.INSTANCE, 200, null);
+    } catch (Exception e) {
+      return ServiceResponse.<EmptyResponse>forUnknownError(e);
+    }
   }
 
   /**
@@ -78,8 +75,8 @@ public class DonationsService {
    * @param currencyCode  The currency code for the amount
    * @return              A ServiceResponse containing a DonationIntentResult with details given to us by the payment gateway.
    */
-  public Single<ServiceResponse<SubscriptionClientSecret>> createDonationIntentWithAmount(String amount, String currencyCode, String description) {
-    return createServiceResponse(() -> new Pair<>(pushServiceSocket.createBoostPaymentMethod(currencyCode, Long.parseLong(amount), description), 200));
+  public ServiceResponse<SubscriptionClientSecret> createDonationIntentWithAmount(String amount, String currencyCode, long level) {
+    return wrapInServiceResponse(() -> new Pair<>(pushServiceSocket.createBoostPaymentMethod(currencyCode, Long.parseLong(amount), level), 200));
   }
 
   /**
@@ -89,29 +86,65 @@ public class DonationsService {
    * @param paymentIntentId          PaymentIntent ID from a boost donation intent response.
    * @param receiptCredentialRequest Client-generated request token
    */
-  public Single<ServiceResponse<ReceiptCredentialResponse>> submitBoostReceiptCredentialRequest(String paymentIntentId, ReceiptCredentialRequest receiptCredentialRequest) {
-    return createServiceResponse(() -> new Pair<>(pushServiceSocket.submitBoostReceiptCredentials(paymentIntentId, receiptCredentialRequest), 200));
+  public ServiceResponse<ReceiptCredentialResponse> submitBoostReceiptCredentialRequestSync(String paymentIntentId, ReceiptCredentialRequest receiptCredentialRequest) {
+    return wrapInServiceResponse(() -> new Pair<>(pushServiceSocket.submitBoostReceiptCredentials(paymentIntentId, receiptCredentialRequest), 200));
   }
 
   /**
    * @return The suggested amounts for Signal Boost
    */
-  public Single<ServiceResponse<Map<String, List<BigDecimal>>>> getBoostAmounts() {
-    return createServiceResponse(() -> new Pair<>(pushServiceSocket.getBoostAmounts(), 200));
+  public ServiceResponse<Map<String, List<BigDecimal>>> getBoostAmounts() {
+    return wrapInServiceResponse(() -> new Pair<>(pushServiceSocket.getBoostAmounts(), 200));
   }
 
   /**
    * @return The badge configuration for signal boost. Expect for right now only a single level numbered 1.
    */
-  public Single<ServiceResponse<SignalServiceProfile.Badge>> getBoostBadge(Locale locale) {
-    return createServiceResponse(() -> new Pair<>(pushServiceSocket.getBoostLevels(locale).getLevels().get("1").getBadge(), 200));
+  public ServiceResponse<SignalServiceProfile.Badge> getBoostBadge(Locale locale) {
+    return wrapInServiceResponse(() -> new Pair<>(pushServiceSocket.getBoostLevels(locale).getLevels().get(SubscriptionLevels.BOOST_LEVEL).getBadge(), 200));
+  }
+
+  /**
+   * @return A specific gift badge, by level.
+   */
+  public ServiceResponse<SignalServiceProfile.Badge> getGiftBadge(Locale locale, long level) {
+    return wrapInServiceResponse(() -> new Pair<>(pushServiceSocket.getBoostLevels(locale).getLevels().get(String.valueOf(level)).getBadge(), 200));
+  }
+
+  /**
+   * @return All gift badges the server currently has available.
+   */
+  public ServiceResponse<Map<Long, SignalServiceProfile.Badge>> getGiftBadges(Locale locale) {
+    return wrapInServiceResponse(() -> {
+      Map<String, SubscriptionLevels.Level> levels = pushServiceSocket.getBoostLevels(locale).getLevels();
+      Map<Long, SignalServiceProfile.Badge> badges = new TreeMap<>();
+
+      for (Map.Entry<String, SubscriptionLevels.Level> levelEntry : levels.entrySet()) {
+        if (!Objects.equals(levelEntry.getKey(), SubscriptionLevels.BOOST_LEVEL)) {
+          try {
+            badges.put(Long.parseLong(levelEntry.getKey()), levelEntry.getValue().getBadge());
+          } catch (NumberFormatException e) {
+            Log.w(TAG, "Could not parse gift badge for level entry " + levelEntry.getKey(), e);
+          }
+        }
+      }
+
+      return new Pair<>(badges, 200);
+    });
+  }
+
+  /**
+   * Returns the amounts for the gift badge.
+   */
+  public ServiceResponse<Map<String, BigDecimal>> getGiftAmount() {
+    return wrapInServiceResponse(() -> new Pair<>(pushServiceSocket.getGiftAmount(), 200));
   }
 
   /**
    * Returns the subscription levels that are available for the client to choose from along with currencies and current prices
    */
-  public Single<ServiceResponse<SubscriptionLevels>> getSubscriptionLevels(Locale locale) {
-    return createServiceResponse(() -> new Pair<>(pushServiceSocket.getSubscriptionLevels(locale), 200));
+  public ServiceResponse<SubscriptionLevels> getSubscriptionLevels(Locale locale) {
+    return wrapInServiceResponse(() -> new Pair<>(pushServiceSocket.getSubscriptionLevels(locale), 200));
   }
 
   /**
@@ -127,13 +160,13 @@ public class DonationsService {
    * @param idempotencyKey url-safe-base64-encoded random 16-byte value (see description)
    * @param mutex          A mutex to lock on to avoid a situation where this subscription update happens *as* we are trying to get a credential receipt.
    */
-  public Single<ServiceResponse<EmptyResponse>> updateSubscriptionLevel(SubscriberId subscriberId,
-                                                                        String level,
-                                                                        String currencyCode,
-                                                                        String idempotencyKey,
-                                                                        Object mutex
+  public ServiceResponse<EmptyResponse> updateSubscriptionLevel(SubscriberId subscriberId,
+                                                                String level,
+                                                                String currencyCode,
+                                                                String idempotencyKey,
+                                                                Object mutex
   ) {
-    return createServiceResponse(() -> {
+    return wrapInServiceResponse(() -> {
       synchronized(mutex) {
         pushServiceSocket.updateSubscriptionLevel(subscriberId.serialize(), level, currencyCode, idempotencyKey);
       }
@@ -142,10 +175,10 @@ public class DonationsService {
   }
 
   /**
-   * Returns information about the current subscription if one exists.
+   * Synchronously returns information about the current subscription if one exists.
    */
-  public Single<ServiceResponse<ActiveSubscription>> getSubscription(SubscriberId subscriberId) {
-    return createServiceResponse(() -> {
+  public ServiceResponse<ActiveSubscription> getSubscription(SubscriberId subscriberId) {
+    return wrapInServiceResponse(() -> {
       ActiveSubscription response = pushServiceSocket.getSubscription(subscriberId.serialize());
       return new Pair<>(response, 200);
     });
@@ -161,8 +194,8 @@ public class DonationsService {
    *
    * @param subscriberId  The subscriber ID for the user polling their subscription
    */
-  public Single<ServiceResponse<EmptyResponse>> putSubscription(SubscriberId subscriberId) {
-    return createServiceResponse(() -> {
+  public ServiceResponse<EmptyResponse> putSubscription(SubscriberId subscriberId) {
+    return wrapInServiceResponse(() -> {
       pushServiceSocket.putSubscription(subscriberId.serialize());
       return new Pair<>(EmptyResponse.INSTANCE, 200);
     });
@@ -173,15 +206,15 @@ public class DonationsService {
    *
    * @param subscriberId  The subscriber ID for the user cancelling their subscription
    */
-  public Single<ServiceResponse<EmptyResponse>> cancelSubscription(SubscriberId subscriberId) {
-    return createServiceResponse(() -> {
+  public ServiceResponse<EmptyResponse> cancelSubscription(SubscriberId subscriberId) {
+    return wrapInServiceResponse(() -> {
       pushServiceSocket.deleteSubscription(subscriberId.serialize());
       return new Pair<>(EmptyResponse.INSTANCE, 200);
     });
   }
 
-  public Single<ServiceResponse<EmptyResponse>> setDefaultPaymentMethodId(SubscriberId subscriberId, String paymentMethodId) {
-    return createServiceResponse(() -> {
+  public ServiceResponse<EmptyResponse> setDefaultPaymentMethodId(SubscriberId subscriberId, String paymentMethodId) {
+    return wrapInServiceResponse(() -> {
       pushServiceSocket.setDefaultSubscriptionPaymentMethod(subscriberId.serialize(), paymentMethodId);
       return new Pair<>(EmptyResponse.INSTANCE, 200);
     });
@@ -193,33 +226,31 @@ public class DonationsService {
    * @return              Client secret for a SetupIntent. It should not be used with the PaymentIntent stripe APIs
    *                      but instead with the SetupIntent stripe APIs.
    */
-  public Single<ServiceResponse<SubscriptionClientSecret>> createSubscriptionPaymentMethod(SubscriberId subscriberId) {
-    return createServiceResponse(() -> {
+  public ServiceResponse<SubscriptionClientSecret> createSubscriptionPaymentMethod(SubscriberId subscriberId) {
+    return wrapInServiceResponse(() -> {
       SubscriptionClientSecret clientSecret = pushServiceSocket.createSubscriptionPaymentMethod(subscriberId.serialize());
       return new Pair<>(clientSecret, 200);
     });
   }
 
-  public Single<ServiceResponse<ReceiptCredentialResponse>> submitReceiptCredentialRequest(SubscriberId subscriberId, ReceiptCredentialRequest receiptCredentialRequest) {
-    return createServiceResponse(() -> {
+  public ServiceResponse<ReceiptCredentialResponse> submitReceiptCredentialRequestSync(SubscriberId subscriberId, ReceiptCredentialRequest receiptCredentialRequest) {
+    return wrapInServiceResponse(() -> {
       ReceiptCredentialResponse response = pushServiceSocket.submitReceiptCredentials(subscriberId.serialize(), receiptCredentialRequest);
       return new Pair<>(response, 200);
     });
   }
 
-  private <T> Single<ServiceResponse<T>> createServiceResponse(Producer<T> producer) {
-    return Single.fromCallable(() -> {
-      try {
-        Pair<T, Integer> responseAndCode = producer.produce();
-        return ServiceResponse.forResult(responseAndCode.first(), responseAndCode.second(), null);
-      } catch (NonSuccessfulResponseCodeException e) {
-        Log.w(TAG, "Bad response code from server.", e);
-        return ServiceResponse.<T>forApplicationError(e, e.getCode(), e.getMessage());
-      } catch (IOException e) {
-        Log.w(TAG, "An unknown error occurred.", e);
-        return ServiceResponse.<T>forUnknownError(e);
-      }
-    }).subscribeOn(Schedulers.io());
+  private <T> ServiceResponse<T> wrapInServiceResponse(Producer<T> producer) {
+    try {
+      Pair<T, Integer> responseAndCode = producer.produce();
+      return ServiceResponse.forResult(responseAndCode.first(), responseAndCode.second(), null);
+    } catch (NonSuccessfulResponseCodeException e) {
+      Log.w(TAG, "Bad response code from server.", e);
+      return ServiceResponse.forApplicationError(e, e.getCode(), e.getMessage());
+    } catch (IOException e) {
+      Log.w(TAG, "An unknown error occurred.", e);
+      return ServiceResponse.forUnknownError(e);
+    }
   }
 
   private interface Producer<T> {

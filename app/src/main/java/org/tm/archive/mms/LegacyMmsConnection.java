@@ -47,7 +47,6 @@ import org.tm.archive.database.ApnDatabase;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.TelephonyUtil;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -60,6 +59,7 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @SuppressWarnings("deprecation")

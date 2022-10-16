@@ -1,6 +1,5 @@
 package org.tm.archive.database
 
-import android.content.Context
 import androidx.annotation.VisibleForTesting
 import org.tm.archive.database.model.PendingRetryReceiptModel
 import org.tm.archive.recipients.RecipientId
@@ -15,9 +14,8 @@ import org.tm.archive.util.FeatureFlags
  * future reads can happen in memory.
  */
 class PendingRetryReceiptCache @VisibleForTesting constructor(
-  private val database: PendingRetryReceiptDatabase
+  private val database: PendingRetryReceiptDatabase = SignalDatabase.pendingRetryReceipts
 ) {
-  constructor(context: Context) : this(SignalDatabase.pendingRetryReceipts)
 
   private val pendingRetries: MutableMap<RemoteMessageId, PendingRetryReceiptModel> = HashMap()
   private var populated: Boolean = false
@@ -57,6 +55,15 @@ class PendingRetryReceiptCache @VisibleForTesting constructor(
     synchronized(pendingRetries) {
       pendingRetries.remove(RemoteMessageId(model.author, model.sentTimestamp))
       database.delete(model)
+    }
+  }
+
+  fun clear() {
+    if (!FeatureFlags.retryReceipts()) return
+
+    synchronized(pendingRetries) {
+      pendingRetries.clear()
+      populated = false
     }
   }
 

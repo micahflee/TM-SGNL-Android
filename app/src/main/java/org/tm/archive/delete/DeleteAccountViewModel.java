@@ -20,20 +20,20 @@ import org.tm.archive.payments.Balance;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.DefaultValueLiveData;
 import org.tm.archive.util.SingleLiveEvent;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.payments.FormatterOptions;
 import org.whispersystems.signalservice.api.payments.Money;
 
 import java.util.List;
+import java.util.Optional;
 
 public class DeleteAccountViewModel extends ViewModel {
 
-  private final DeleteAccountRepository           repository;
-  private final List<Country>                     allCountries;
-  private final LiveData<List<Country>>           filteredCountries;
-  private final MutableLiveData<String>           regionCode;
-  private final LiveData<String>                  countryDisplayName;
-  private final MutableLiveData<Long>             nationalNumber;
+  private final DeleteAccountRepository             repository;
+  private final List<Country>                       allCountries;
+  private final LiveData<List<Country>>             filteredCountries;
+  private final MutableLiveData<String>             regionCode;
+  private final LiveData<String>                    countryDisplayName;
+  private final MutableLiveData<Long>               nationalNumber;
   private final MutableLiveData<String>             query;
   private final SingleLiveEvent<DeleteAccountEvent> events;
   private final LiveData<Optional<String>>          walletBalance;
@@ -41,7 +41,7 @@ public class DeleteAccountViewModel extends ViewModel {
   public DeleteAccountViewModel(@NonNull DeleteAccountRepository repository) {
     this.repository         = repository;
     this.allCountries       = repository.getAllCountries();
-    this.regionCode         = new DefaultValueLiveData<>(PhoneNumberUtil.REGION_CODE_FOR_NON_GEO_ENTITY);
+    this.regionCode         = new DefaultValueLiveData<>("ZZ"); // PhoneNumberUtil private static final String UNKNOWN_REGION = "ZZ";
     this.nationalNumber     = new MutableLiveData<>();
     this.query              = new DefaultValueLiveData<>("");
     this.countryDisplayName = Transformations.map(regionCode, repository::getRegionDisplayName);
@@ -141,7 +141,7 @@ public class DeleteAccountViewModel extends ViewModel {
     if (amount.isPositive()) {
       return Optional.of(amount.toString(FormatterOptions.defaults()));
     } else {
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 

@@ -4,11 +4,12 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.recipients.RecipientId;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.whispersystems.signalservice.api.util.Preconditions;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -40,12 +41,12 @@ class RemappedRecords {
 
   @NonNull Optional<RecipientId> getRecipient(@NonNull RecipientId oldId) {
     ensureRecipientMapIsPopulated();
-    return Optional.fromNullable(recipientMap.get(oldId));
+    return Optional.ofNullable(recipientMap.get(oldId));
   }
 
   @NonNull Optional<Long> getThread(long oldId) {
     ensureThreadMapIsPopulated();
-    return Optional.fromNullable(threadMap.get(oldId));
+    return Optional.ofNullable(threadMap.get(oldId));
   }
 
   boolean areAnyRemapped(@NonNull Collection<RecipientId> recipientIds) {
@@ -86,6 +87,7 @@ class RemappedRecords {
    */
   void addRecipient(@NonNull RecipientId oldId, @NonNull RecipientId newId) {
     Log.w(TAG, "[Recipient] Remapping " + oldId + " to " + newId);
+    Preconditions.checkArgument(!oldId.equals(newId), "Cannot remap an ID to the same thing!");
     ensureInTransaction();
     ensureRecipientMapIsPopulated();
     recipientMap.put(oldId, newId);
@@ -97,10 +99,18 @@ class RemappedRecords {
    */
   void addThread(long oldId, long newId) {
     Log.w(TAG, "[Thread] Remapping " + oldId + " to " + newId);
+    Preconditions.checkArgument(oldId != newId, "Cannot remap an ID to the same thing!");
     ensureInTransaction();
     ensureThreadMapIsPopulated();
     threadMap.put(oldId, newId);
     SignalDatabase.remappedRecords().addThreadMapping(oldId, newId);
+  }
+
+  /**
+   * Clears out the memory cache. The next read will pull values from disk.
+   */
+  void resetCache() {
+    recipientMap = null;
   }
 
   private void ensureRecipientMapIsPopulated() {

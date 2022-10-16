@@ -7,7 +7,7 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 
 import java.util.HashMap;
 import java.util.LinkedList;

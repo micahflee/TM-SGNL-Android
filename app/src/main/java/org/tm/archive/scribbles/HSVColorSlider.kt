@@ -1,5 +1,6 @@
 package org.tm.archive.scribbles
 
+import android.animation.FloatEvaluator
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorFilter
@@ -15,6 +16,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
 import androidx.appcompat.widget.AppCompatSeekBar
 import androidx.core.graphics.ColorUtils
+import org.tm.archive.scribbles.HSVColorSlider.toHue
 import org.tm.archive.util.Util
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.customizeOnDraw
@@ -30,16 +32,9 @@ object HSVColorSlider {
   private const val WHITE_DIVISIONS = 125
   private const val MAX_SEEK_DIVISIONS = COLOR_DIVISIONS + BLACK_DIVISIONS + WHITE_DIVISIONS
   private const val STANDARD_LIGHTNESS = 0.4f
+  private val EVALUATOR = FloatEvaluator()
 
-  private val colors: IntArray = (0..COLOR_DIVISIONS).map { hue ->
-    ColorUtils.HSLToColor(
-      floatArrayOf(
-        hue.toHue(COLOR_DIVISIONS),
-        1f,
-        calculateLightness(hue.toFloat(), STANDARD_LIGHTNESS)
-      )
-    )
-  }.toIntArray() + (BLACK_DIVISIONS downTo 0).map { value ->
+  private val colors: IntArray = (0..BLACK_DIVISIONS).map { value ->
     ColorUtils.HSLToColor(
       floatArrayOf(
         MAX_HUE.toFloat(),
@@ -47,15 +42,28 @@ object HSVColorSlider {
         value / BLACK_DIVISIONS.toFloat() * STANDARD_LIGHTNESS
       )
     )
+  }.toIntArray() + (0..COLOR_DIVISIONS).map { hue ->
+    ColorUtils.HSLToColor(
+      floatArrayOf(
+        hue.toHue(COLOR_DIVISIONS),
+        1f,
+        calculateLightness(hue.toFloat(), STANDARD_LIGHTNESS)
+      )
+    )
   }.toIntArray() + (0..WHITE_DIVISIONS).map { value ->
     ColorUtils.HSLToColor(
       floatArrayOf(
-        MAX_HUE.toFloat(),
-        0f,
-        value / WHITE_DIVISIONS.toFloat()
+        COLOR_DIVISIONS.toHue(COLOR_DIVISIONS),
+        1f,
+        EVALUATOR.evaluate(value / WHITE_DIVISIONS.toFloat(), calculateLightness(COLOR_DIVISIONS.toFloat(), STANDARD_LIGHTNESS), 1f)
       )
     )
   }.toIntArray()
+
+  @ColorInt
+  fun getLastColor(): Int {
+    return colors.last()
+  }
 
   fun AppCompatSeekBar.getColor(): Int {
     return colors[progress]
@@ -97,7 +105,7 @@ object HSVColorSlider {
       }
     )
 
-    progress = 0
+    progress = BLACK_DIVISIONS + 1
     (thumb as ThumbDrawable).setColor(colors[progress])
   }
 

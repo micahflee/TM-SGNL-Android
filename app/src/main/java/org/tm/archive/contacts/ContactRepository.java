@@ -10,13 +10,13 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
+import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.phonenumbers.PhoneNumberFormatter;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,8 +27,8 @@ import java.util.Map;
  * Repository for all contacts. Allows you to filter them via queries.
  *
  * Currently this is implemented to return cursors. This is to ease the migration between this class
- * and the previous way we'd query contacts: {@link ContactsDatabase}. It's much easier in the
- * short-term to mock the cursor interface rather than try to switch everything over to models.
+ * and the previous way we'd query contacts. It's much easier in the short-term to mock the cursor
+ * interface rather than try to switch everything over to models.
  */
 public class ContactRepository {
 
@@ -140,7 +140,7 @@ public class ContactRepository {
 
       if (shouldAdd) {
         MatrixCursor selfCursor = new MatrixCursor(RecipientDatabase.SEARCH_PROJECTION_NAMES);
-        selfCursor.addRow(new Object[]{ self.getId().serialize(), noteToSelfTitle, self.getE164().or(""), self.getEmail().orNull(), null, -1, RecipientDatabase.RegisteredState.REGISTERED.getId(), self.getAbout(), self.getAboutEmoji(), null, true, noteToSelfTitle, noteToSelfTitle });
+        selfCursor.addRow(new Object[]{ self.getId().serialize(), noteToSelfTitle, self.getE164().orElse(""), self.getEmail().orElse(null), null, -1, RecipientDatabase.RegisteredState.REGISTERED.getId(), self.getAbout(), self.getAboutEmoji(), null, true, noteToSelfTitle, noteToSelfTitle });
 
         cursor = cursor == null ? selfCursor : new MergeCursor(new Cursor[]{ cursor, selfCursor });
       }

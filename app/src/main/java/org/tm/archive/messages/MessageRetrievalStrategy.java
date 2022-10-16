@@ -10,9 +10,9 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.JobTracker;
 import org.tm.archive.jobs.MarkerJob;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**

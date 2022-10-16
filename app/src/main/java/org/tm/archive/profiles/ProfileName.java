@@ -9,7 +9,7 @@ import androidx.annotation.VisibleForTesting;
 
 import com.annimon.stream.Stream;
 
-import org.tm.archive.util.StringUtil;
+import org.signal.core.util.StringUtil;
 import org.tm.archive.util.cjkv.CJKVUtil;
 import org.whispersystems.signalservice.api.crypto.ProfileCipher;
 

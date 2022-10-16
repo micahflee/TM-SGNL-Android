@@ -19,9 +19,9 @@ package org.tm.archive;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
-import org.tm.archive.crypto.IdentityKeyUtil;
 import org.tm.archive.crypto.MasterSecret;
 import org.tm.archive.crypto.MasterSecretUtil;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.VersionTracker;
 
 /**
@@ -61,7 +61,8 @@ public class PassphraseCreateActivity extends PassphraseActivity {
                                                                 passphrase);
 
       MasterSecretUtil.generateAsymmetricMasterSecret(PassphraseCreateActivity.this, masterSecret);
-      IdentityKeyUtil.generateIdentityKeys(PassphraseCreateActivity.this);
+      SignalStore.account().generateAciIdentityKeyIfNecessary();
+      SignalStore.account().generatePniIdentityKeyIfNecessary();
       VersionTracker.updateLastSeenVersion(PassphraseCreateActivity.this);
 
       return null;

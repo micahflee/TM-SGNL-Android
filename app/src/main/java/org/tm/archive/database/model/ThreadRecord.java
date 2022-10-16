@@ -28,7 +28,7 @@ import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.database.ThreadDatabase.Extra;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.whispersystems.libsignal.util.guava.Preconditions;
+import org.whispersystems.signalservice.api.util.Preconditions;
 
 import java.util.Objects;
 
@@ -392,7 +392,6 @@ public final class ThreadRecord {
     public ThreadRecord build() {
       if (distributionType == ThreadDatabase.DistributionTypes.CONVERSATION) {
         Preconditions.checkArgument(threadId > 0);
-        Preconditions.checkArgument(date > 0);
         Preconditions.checkNotNull(body);
         Preconditions.checkNotNull(recipient);
       }

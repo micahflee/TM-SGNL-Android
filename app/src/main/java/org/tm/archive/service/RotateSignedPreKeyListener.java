@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobs.RotateSignedPreKeyJob;
+import org.tm.archive.jobs.PreKeysSyncJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.TextSecurePreferences;
 
@@ -23,7 +23,7 @@ public class RotateSignedPreKeyListener extends PersistentAlarmManagerListener {
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
     if (scheduledTime != 0 && SignalStore.account().isRegistered()) {
-      ApplicationDependencies.getJobManager().add(new RotateSignedPreKeyJob());
+      PreKeysSyncJob.enqueue(true);
     }
 
     long nextTime = System.currentTimeMillis() + INTERVAL;

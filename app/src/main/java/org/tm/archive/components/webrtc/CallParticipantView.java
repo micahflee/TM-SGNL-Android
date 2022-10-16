@@ -13,7 +13,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewKt;
 import androidx.core.widget.ImageViewCompat;
+import androidx.transition.TransitionManager;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
@@ -62,7 +64,7 @@ public class CallParticipantView extends ConstraintLayout {
   private ImageView           pipAvatar;
   private BadgeImageView      pipBadge;
   private ContactPhoto        contactPhoto;
-  private View                audioMuted;
+  private AudioIndicatorView  audioIndicator;
   private View                infoOverlay;
   private EmojiTextView       infoMessage;
   private Button              infoMoreInfo;
@@ -90,7 +92,7 @@ public class CallParticipantView extends ConstraintLayout {
     pipAvatar        = findViewById(R.id.call_participant_item_pip_avatar);
     rendererFrame    = findViewById(R.id.call_participant_renderer_frame);
     renderer         = findViewById(R.id.call_participant_renderer);
-    audioMuted       = findViewById(R.id.call_participant_mic_muted);
+    audioIndicator   = findViewById(R.id.call_participant_audio_indicator);
     infoOverlay      = findViewById(R.id.call_participant_info_overlay);
     infoIcon         = findViewById(R.id.call_participant_info_icon);
     infoMessage      = findViewById(R.id.call_participant_info_message);
@@ -123,7 +125,7 @@ public class CallParticipantView extends ConstraintLayout {
       rendererFrame.setVisibility(View.GONE);
       renderer.setVisibility(View.GONE);
       renderer.attachBroadcastVideoSink(null);
-      audioMuted.setVisibility(View.GONE);
+      audioIndicator.setVisibility(View.GONE);
       avatar.setVisibility(View.GONE);
       badge.setVisibility(View.GONE);
       pipAvatar.setVisibility(View.GONE);
@@ -145,10 +147,10 @@ public class CallParticipantView extends ConstraintLayout {
     } else {
       infoOverlay.setVisibility(View.GONE);
 
-      boolean hasContentToRender = participant.isVideoEnabled() || participant.isScreenSharing();
+      boolean hasContentToRender = (participant.isVideoEnabled() || participant.isScreenSharing()) && participant.isForwardingVideo();
 
-      rendererFrame.setVisibility(hasContentToRender ? View.VISIBLE : View.GONE);
-      renderer.setVisibility(hasContentToRender ? View.VISIBLE : View.GONE);
+      rendererFrame.setVisibility(hasContentToRender ? View.VISIBLE : View.INVISIBLE);
+      renderer.setVisibility(hasContentToRender ? View.VISIBLE : View.INVISIBLE);
 
       if (participant.isVideoEnabled()) {
         participant.getVideoSink().getLockableEglBase().performWithValidEglBase(eglBase -> {
@@ -159,7 +161,8 @@ public class CallParticipantView extends ConstraintLayout {
         renderer.attachBroadcastVideoSink(null);
       }
 
-      audioMuted.setVisibility(participant.isMicrophoneEnabled() ? View.GONE : View.VISIBLE);
+      audioIndicator.setVisibility(View.VISIBLE);
+      audioIndicator.bind(participant.isMicrophoneEnabled(), participant.getAudioLevel());
     }
 
     if (participantChanged || !Objects.equals(contactPhoto, participant.getRecipient().getContactPhoto())) {
@@ -225,6 +228,17 @@ public class CallParticipantView extends ConstraintLayout {
     changeAvatarParams(SMALL_AVATAR);
   }
 
+  void setBottomInset(int bottomInset) {
+    int desiredMargin = getResources().getDimensionPixelSize(R.dimen.webrtc_audio_indicator_margin) + bottomInset;
+    if (ViewKt.getMarginBottom(audioIndicator) == desiredMargin) {
+      return;
+    }
+
+    TransitionManager.beginDelayedTransition(this);
+
+    ViewUtil.setBottomMargin(audioIndicator, desiredMargin);
+  }
+
   void releaseRenderer() {
     renderer.release();
   }
@@ -239,7 +253,7 @@ public class CallParticipantView extends ConstraintLayout {
   }
 
   private void setPipAvatar(@NonNull Recipient recipient) {
-    ContactPhoto         contactPhoto  = recipient.isSelf() ? new ProfileContactPhoto(Recipient.self(), Recipient.self().getProfileAvatar())
+    ContactPhoto         contactPhoto  = recipient.isSelf() ? new ProfileContactPhoto(Recipient.self())
                                                             : recipient.getContactPhoto();
     FallbackContactPhoto fallbackPhoto = recipient.getFallbackContactPhoto(FALLBACK_PHOTO_PROVIDER);
 

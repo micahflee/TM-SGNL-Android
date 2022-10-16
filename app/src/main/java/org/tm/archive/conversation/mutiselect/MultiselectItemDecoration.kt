@@ -21,9 +21,9 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.lottie.SimpleColorFilter
+import org.signal.core.util.SetUtil
 import org.tm.archive.R
 import org.tm.archive.conversation.ConversationAdapter
-import org.tm.archive.util.SetUtil
 import org.tm.archive.util.ThemeUtil
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.wallpaper.ChatWallpaper

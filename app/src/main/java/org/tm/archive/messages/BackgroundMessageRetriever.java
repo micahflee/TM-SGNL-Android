@@ -1,6 +1,7 @@
 package org.tm.archive.messages;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.PowerManager;
 
 import androidx.annotation.NonNull;
@@ -18,6 +19,7 @@ import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.WakeLockUtil;
 
+import java.io.Closeable;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -60,7 +62,7 @@ public class BackgroundMessageRetriever {
     }
 
     synchronized (this) {
-      try (DelayedNotificationController controller = GenericForegroundService.startForegroundTaskDelayed(context, context.getString(R.string.BackgroundMessageRetriever_checking_for_messages), showNotificationAfterMs, R.drawable.ic_signal_refresh)) {
+      try (NoExceptionCloseable unused = startDelayedForegroundServiceIfPossible(context, showNotificationAfterMs)) {
         PowerManager.WakeLock wakeLock = null;
 
         try {
@@ -84,6 +86,14 @@ public class BackgroundMessageRetriever {
           ACTIVE_LOCK.release();
         }
       }
+    }
+  }
+
+  private NoExceptionCloseable startDelayedForegroundServiceIfPossible(@NonNull Context context, long showNotificationAfterMs) {
+    if (Build.VERSION.SDK_INT < 31) {
+      return GenericForegroundService.startForegroundTaskDelayed(context, context.getString(R.string.BackgroundMessageRetriever_checking_for_messages), showNotificationAfterMs, R.drawable.ic_signal_refresh)::close;
+    } else {
+      return () -> {};
     }
   }
 
@@ -128,5 +138,10 @@ public class BackgroundMessageRetriever {
 
   private static String logSuffix(long startTime) {
     return " (" + (System.currentTimeMillis() - startTime) + " ms elapsed)";
+  }
+
+  private interface NoExceptionCloseable extends AutoCloseable {
+    @Override
+    void close();
   }
 }

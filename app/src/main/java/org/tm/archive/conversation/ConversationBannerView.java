@@ -1,6 +1,7 @@
 package org.tm.archive.conversation;
 
 import android.content.Context;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -20,7 +21,9 @@ import org.tm.archive.contacts.avatars.ResourceContactPhoto;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.LongClickMovementMethod;
+import org.tm.archive.util.SpanUtil;
 
 public class ConversationBannerView extends ConstraintLayout {
 
@@ -79,15 +82,12 @@ public class ConversationBannerView extends ConstraintLayout {
   }
 
   public String setTitle(@NonNull Recipient recipient) {
-    if (recipient.isReleaseNotes()) {
-      contactTitle.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.ic_official_28, 0);
-    } else {
-      contactTitle.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0);
+    SpannableStringBuilder title = new SpannableStringBuilder(recipient.isSelf() ? getContext().getString(R.string.note_to_self) : recipient.getDisplayNameOrUsername(getContext()));
+    if (recipient.showVerified()) {
+      SpanUtil.appendCenteredImageSpan(title, ContextUtil.requireDrawable(getContext(), R.drawable.ic_official_28), 28, 28);
     }
-
-    String title = recipient.isSelf() ? getContext().getString(R.string.note_to_self) : recipient.getDisplayNameOrUsername(getContext());
     contactTitle.setText(title);
-    return title;
+    return title.toString();
   }
 
   public void setAbout(@NonNull Recipient recipient) {

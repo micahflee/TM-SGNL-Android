@@ -1,5 +1,6 @@
 package org.tm.archive.database;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
@@ -11,6 +12,7 @@ import com.annimon.stream.Stream;
 /**
  * Contains all databases necessary for full-text search (FTS).
  */
+@SuppressLint({ "RecipientIdDatabaseReferenceUsage", "ThreadIdDatabaseReferenceUsage"}) // Handles updates via triggers
 public class SearchDatabase extends Database {
 
   public static final String SMS_FTS_TABLE_NAME = "sms_fts";
@@ -70,6 +72,9 @@ public class SearchDatabase extends Database {
       "INNER JOIN " + SMS_FTS_TABLE_NAME + " ON " + SMS_FTS_TABLE_NAME + "." + ID + " = " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " " +
       "INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + SMS_FTS_TABLE_NAME + "." + THREAD_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID + " " +
       "WHERE " + SMS_FTS_TABLE_NAME + " MATCH ? " +
+        "AND " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.TYPE + " & " + MmsSmsColumns.Types.GROUP_V2_BIT + " = 0 " +
+        "AND " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + " != " + MmsSmsColumns.Types.PROFILE_CHANGE_TYPE + " " +
+        "AND " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + " != " + MmsSmsColumns.Types.GROUP_CALL_TYPE + " " +
       "UNION ALL " +
       "SELECT " +
         ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.RECIPIENT_ID + " AS " + CONVERSATION_RECIPIENT + ", " +
@@ -83,7 +88,7 @@ public class SearchDatabase extends Database {
       "FROM " + MmsDatabase.TABLE_NAME + " " +
       "INNER JOIN " + MMS_FTS_TABLE_NAME + " ON " + MMS_FTS_TABLE_NAME + "." + ID + " = " + MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID + " " +
       "INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + MMS_FTS_TABLE_NAME + "." + THREAD_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID + " " +
-      "WHERE " + MMS_FTS_TABLE_NAME + " MATCH ? " +
+      "WHERE " + MMS_FTS_TABLE_NAME + " MATCH ? AND " + MmsDatabase.TABLE_NAME + "." + MmsDatabase.MESSAGE_BOX + " & " + MmsSmsColumns.Types.GROUP_V2_BIT + " = 0 " +
       "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_RECEIVED + " DESC " +
       "LIMIT 500";
 

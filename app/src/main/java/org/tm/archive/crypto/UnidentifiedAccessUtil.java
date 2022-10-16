@@ -12,7 +12,10 @@ import com.annimon.stream.Stream;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.metadata.certificate.CertificateValidator;
 import org.signal.libsignal.metadata.certificate.InvalidCertificateException;
-import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.libsignal.protocol.InvalidKeyException;
+import org.signal.libsignal.protocol.ecc.Curve;
+import org.signal.libsignal.protocol.ecc.ECPublicKey;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.keyvalue.CertificateType;
 import org.tm.archive.keyvalue.PhoneNumberPrivacyValues;
@@ -22,10 +25,6 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.Base64;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.ecc.Curve;
-import org.whispersystems.libsignal.ecc.ECPublicKey;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccess;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 
@@ -36,6 +35,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class UnidentifiedAccessUtil {
 
@@ -112,10 +112,10 @@ public class UnidentifiedAccessUtil {
                                                                                    ourUnidentifiedAccessCertificate))));
         } catch (InvalidCertificateException e) {
           Log.w(TAG, e);
-          access.add(Optional.absent());
+          access.add(Optional.empty());
         }
       } else {
-        access.add(Optional.absent());
+        access.add(Optional.empty());
       }
     }
 
@@ -145,10 +145,10 @@ public class UnidentifiedAccessUtil {
                                                                              ourUnidentifiedAccessCertificate)));
       }
 
-      return Optional.absent();
+      return Optional.empty();
     } catch (InvalidCertificateException e) {
       Log.w(TAG, e);
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 

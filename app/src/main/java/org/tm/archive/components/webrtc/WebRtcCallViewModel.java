@@ -30,7 +30,9 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.service.webrtc.state.WebRtcEphemeralState;
 import org.tm.archive.util.DefaultValueLiveData;
+import org.tm.archive.util.NetworkUtil;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.livedata.LiveDataUtil;
@@ -66,12 +68,14 @@ public class WebRtcCallViewModel extends ViewModel {
   private final MutableLiveData<Boolean>                      isLandscapeEnabled        = new MutableLiveData<>();
   private final LiveData<Integer>                             controlsRotation;
   private final Observer<List<GroupMemberEntry.FullMember>>   groupMemberStateUpdater   = m -> participantsState.setValue(CallParticipantsState.update(participantsState.getValue(), m));
+  private final MutableLiveData<WebRtcEphemeralState>         ephemeralState            = new MutableLiveData<>();
 
   private final Handler  elapsedTimeHandler      = new Handler(Looper.getMainLooper());
   private final Runnable elapsedTimeRunnable     = this::handleTick;
   private final Runnable stopOutgoingRingingMode = this::stopOutgoingRingingMode;
 
   private boolean               canDisplayTooltipIfNeeded = true;
+  private boolean               canDisplayPopupIfNeeded   = true;
   private boolean               hasEnabledLocalVideo      = false;
   private boolean               wasInOutgoingRingingMode  = false;
   private long                  callConnectedTime         = -1;
@@ -157,6 +161,10 @@ public class WebRtcCallViewModel extends ViewModel {
 
   public LiveData<Boolean> shouldShowSpeakerHint() {
     return shouldShowSpeakerHint;
+  }
+
+  public LiveData<WebRtcEphemeralState> getEphemeralState() {
+    return ephemeralState;
   }
 
   public boolean canEnterPipMode() {
@@ -286,6 +294,18 @@ public class WebRtcCallViewModel extends ViewModel {
       canDisplayTooltipIfNeeded = false;
       events.setValue(new Event.ShowVideoTooltip());
     }
+
+    if (canDisplayPopupIfNeeded && webRtcViewModel.isCellularConnection() && NetworkUtil.isConnectedWifi(ApplicationDependencies.getApplication())) {
+      canDisplayPopupIfNeeded = false;
+      events.setValue(new Event.ShowWifiToCellularPopup());
+    } else if (!webRtcViewModel.isCellularConnection()) {
+      canDisplayPopupIfNeeded = true;
+    }
+  }
+
+  @MainThread
+  public void updateFromEphemeralState(@NonNull WebRtcEphemeralState state) {
+    ephemeralState.setValue(state);
   }
 
   private int resolveRotation(boolean isLandscapeEnabled, @NonNull Orientation orientation) {
@@ -348,6 +368,9 @@ public class WebRtcCallViewModel extends ViewModel {
         break;
       case NETWORK_FAILURE:
         callState = WebRtcControls.CallState.ERROR;
+        break;
+      case CALL_RECONNECTING:
+        callState = WebRtcControls.CallState.RECONNECTING;
         break;
       default:
         callState = WebRtcControls.CallState.ONGOING;
@@ -465,6 +488,9 @@ public class WebRtcCallViewModel extends ViewModel {
     }
 
     public static class DismissVideoTooltip extends Event {
+    }
+
+    public static class ShowWifiToCellularPopup extends Event {
     }
 
     public static class StartCall extends Event {

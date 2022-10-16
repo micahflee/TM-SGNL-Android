@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.CursorUtil;
 import org.signal.core.util.concurrent.LatestPrioritizedSerialExecutor;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
@@ -29,14 +30,17 @@ import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.CursorUtil;
 import org.tm.archive.util.FtsUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.concurrent.SerialExecutor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -159,25 +163,46 @@ public class SearchRepository {
       return Collections.emptyList();
     }
 
-    Set<RecipientId> recipientIds = new LinkedHashSet<>();
-
+    Set<RecipientId> filteredContacts = new LinkedHashSet<>();
     try (Cursor cursor = SignalDatabase.recipients().queryAllContacts(query)) {
       while (cursor != null && cursor.moveToNext()) {
-        recipientIds.add(RecipientId.from(CursorUtil.requireString(cursor, RecipientDatabase.ID)));
+        filteredContacts.add(RecipientId.from(CursorUtil.requireString(cursor, RecipientDatabase.ID)));
       }
     }
 
-    GroupDatabase.GroupRecord record;
-    try (GroupDatabase.Reader reader = SignalDatabase.groups().getGroupsFilteredByTitle(query, true, false, false)) {
-      while ((record = reader.getNext()) != null) {
-        recipientIds.add(record.getRecipientId());
-      }
-    }
+    Set<RecipientId> contactIds = new LinkedHashSet<>(filteredContacts);
 
     if (noteToSelfTitle.toLowerCase().contains(query.toLowerCase())) {
-      recipientIds.add(Recipient.self().getId());
+      contactIds.add(Recipient.self().getId());
     }
 
+    Set<RecipientId> groupsByTitleIds = new LinkedHashSet<>();
+
+    GroupDatabase.GroupRecord record;
+    try (GroupDatabase.Reader reader = SignalDatabase.groups().queryGroupsByTitle(query, true, false, false)) {
+      while ((record = reader.getNext()) != null) {
+        groupsByTitleIds.add(record.getRecipientId());
+      }
+    }
+
+    Set<RecipientId> groupsByMemberIds = new LinkedHashSet<>();
+
+    try (GroupDatabase.Reader reader = SignalDatabase.groups().queryGroupsByMembership(filteredContacts, true, false, false)) {
+      while ((record = reader.getNext()) != null) {
+        groupsByMemberIds.add(record.getRecipientId());
+      }
+    }
+
+    List<ThreadRecord> output = new ArrayList<>(contactIds.size() + groupsByTitleIds.size() + groupsByMemberIds.size());
+
+    output.addAll(getMatchingThreads(contactIds));
+    output.addAll(getMatchingThreads(groupsByTitleIds));
+    output.addAll(getMatchingThreads(groupsByMemberIds));
+
+    return output;
+  }
+
+  private List<ThreadRecord> getMatchingThreads(@NonNull Collection<RecipientId> recipientIds) {
     try (Cursor cursor = threadDatabase.getFilteredConversationList(new ArrayList<>(recipientIds))) {
       return readToList(cursor, new ThreadModelBuilder(threadDatabase));
     }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:fillViewport="true"
     android:layout_width="match_parent"
@@ -13,12 +14,13 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/payments_add_money_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
+            android:layout_height="@dimen/signal_m3_toolbar_height"
+            android:minHeight="@dimen/signal_m3_toolbar_height"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:navigationIcon="@drawable/ic_arrow_left_24"
             app:title="@string/PaymentsAddMoneyFragment__add_funds"
-            app:titleTextAppearance="@style/TextAppearance.Signal.Body1.Bold" />
+            app:titleTextAppearance="@style/Signal.Text.TitleLarge" />
 
         <LinearLayout
             android:id="@+id/payments_add_money_qr_border"

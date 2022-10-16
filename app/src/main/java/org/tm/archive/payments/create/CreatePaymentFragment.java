@@ -20,6 +20,8 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.transition.TransitionManager;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.components.emoji.EmojiTextView;
@@ -102,15 +104,15 @@ public class CreatePaymentFragment extends LoggingFragment {
 
     //noinspection CodeBlock2Expr
     infoTapTarget.setOnClickListener(v -> {
-      new AlertDialog.Builder(requireContext())
-                     .setMessage(R.string.CreatePaymentFragment__conversions_are_just_estimates)
-                     .setPositiveButton(android.R.string.ok, (dialog, which) -> dialog.dismiss())
-                     .setNegativeButton(R.string.LearnMoreTextView_learn_more, (dialog, which) -> {
-                       dialog.dismiss();
-                       CommunicationActions.openBrowserLink(requireContext(), getString(R.string.CreatePaymentFragment__learn_more__conversions));
-                     })
-                     .show();
-    });
+      new MaterialAlertDialogBuilder(requireContext())
+          .setMessage(R.string.CreatePaymentFragment__conversions_are_just_estimates)
+          .setPositiveButton(android.R.string.ok, (dialog, which) -> dialog.dismiss())
+          .setNegativeButton(R.string.LearnMoreTextView_learn_more, (dialog, which) -> {
+            dialog.dismiss();
+            CommunicationActions.openBrowserLink(requireContext(), getString(R.string.CreatePaymentFragment__learn_more__conversions));
+          })
+          .show();
+         });
 
     initializeInfoIcon();
 

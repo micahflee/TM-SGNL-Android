@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <org.tm.archive.components.KeyboardAwareLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/kb_aware_layout"
     android:layout_width="match_parent"
@@ -10,7 +11,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/signal_background_secondary">
+        android:background="?mediaKeyboardBackgroundColor">
 
         <org.tm.archive.keyboard.emoji.KeyboardPageSearchView
             android:id="@+id/emoji_search_view"

@@ -4,36 +4,37 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.protocol.IdentityKeyPair;
+import org.signal.libsignal.protocol.InvalidKeyIdException;
+import org.signal.libsignal.protocol.NoSessionException;
+import org.signal.libsignal.protocol.SignalProtocolAddress;
+import org.signal.libsignal.protocol.groups.state.SenderKeyRecord;
+import org.signal.libsignal.protocol.state.PreKeyRecord;
+import org.signal.libsignal.protocol.state.SessionRecord;
+import org.signal.libsignal.protocol.state.SignedPreKeyRecord;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.libsignal.IdentityKey;
-import org.whispersystems.libsignal.IdentityKeyPair;
-import org.whispersystems.libsignal.InvalidKeyIdException;
-import org.whispersystems.libsignal.NoSessionException;
-import org.whispersystems.libsignal.SignalProtocolAddress;
-import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
-import org.whispersystems.libsignal.state.PreKeyRecord;
-import org.whispersystems.libsignal.state.SessionRecord;
-import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.signalservice.api.SignalServiceAccountDataStore;
 import org.whispersystems.signalservice.api.push.DistributionId;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 public class SignalServiceAccountDataStoreImpl implements SignalServiceAccountDataStore {
 
-  private final Context                    context;
-  private final TextSecurePreKeyStore      preKeyStore;
-  private final TextSecurePreKeyStore      signedPreKeyStore;
-  private final TextSecureIdentityKeyStore identityKeyStore;
-  private final TextSecureSessionStore     sessionStore;
-  private final SignalSenderKeyStore       senderKeyStore;
+  private final Context                context;
+  private final TextSecurePreKeyStore  preKeyStore;
+  private final TextSecurePreKeyStore  signedPreKeyStore;
+  private final SignalIdentityKeyStore identityKeyStore;
+  private final TextSecureSessionStore sessionStore;
+  private final SignalSenderKeyStore   senderKeyStore;
 
   public SignalServiceAccountDataStoreImpl(@NonNull Context context,
                                            @NonNull TextSecurePreKeyStore preKeyStore,
-                                           @NonNull TextSecureIdentityKeyStore identityKeyStore,
+                                           @NonNull SignalIdentityKeyStore identityKeyStore,
                                            @NonNull TextSecureSessionStore sessionStore,
                                            @NonNull SignalSenderKeyStore senderKeyStore)
   {
@@ -138,6 +139,7 @@ public class SignalServiceAccountDataStoreImpl implements SignalServiceAccountDa
   @Override
   public void archiveSession(SignalProtocolAddress address) {
     sessionStore.archiveSession(address);
+    senderKeyStore.clearSenderKeySharedWith(Collections.singleton(address));
   }
 
   @Override
@@ -190,7 +192,7 @@ public class SignalServiceAccountDataStoreImpl implements SignalServiceAccountDa
     senderKeyStore.clearSenderKeySharedWith(addresses);
   }
 
-  public @NonNull TextSecureIdentityKeyStore identities() {
+  public @NonNull SignalIdentityKeyStore identities() {
     return identityKeyStore;
   }
 

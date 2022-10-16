@@ -10,11 +10,11 @@ import org.tm.archive.jobmanager.JobTracker;
 import org.tm.archive.jobs.MarkerJob;
 import org.tm.archive.jobs.PushDecryptMessageJob;
 import org.tm.archive.jobs.PushProcessMessageJob;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;

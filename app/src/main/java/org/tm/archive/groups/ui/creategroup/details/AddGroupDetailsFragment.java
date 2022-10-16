@@ -19,14 +19,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 
+import com.airbnb.lottie.SimpleColorFilter;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.dd.CircularProgressButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.signal.core.util.EditTextUtil;
@@ -35,7 +36,6 @@ import org.tm.archive.R;
 import org.tm.archive.avatar.picker.AvatarPickerFragment;
 import org.tm.archive.components.settings.app.privacy.expire.ExpireTimerSettingsFragment;
 import org.tm.archive.groups.ui.GroupMemberListView;
-import org.tm.archive.groups.ui.creategroup.dialogs.NonGv2MemberDialog;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mediasend.Media;
 import org.tm.archive.mms.DecryptableStreamUriLoader;
@@ -50,7 +50,7 @@ import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.navigation.SafeNavigation;
 import org.tm.archive.util.text.AfterTextChanged;
-import org.tm.archive.util.views.LearnMoreTextView;
+import org.tm.archive.util.views.CircularProgressMaterialButton;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,13 +61,13 @@ public class AddGroupDetailsFragment extends LoggingFragment {
   private static final int   AVATAR_PLACEHOLDER_INSET_DP = 18;
   private static final short REQUEST_DISAPPEARING_TIMER  = 28621;
 
-  private CircularProgressButton   create;
-  private Callback                 callback;
-  private AddGroupDetailsViewModel viewModel;
-  private Drawable                 avatarPlaceholder;
-  private EditText                 name;
-  private Toolbar                  toolbar;
-  private View                     disappearingMessagesRow;
+  private CircularProgressMaterialButton create;
+  private Callback                       callback;
+  private AddGroupDetailsViewModel       viewModel;
+  private Drawable                       avatarPlaceholder;
+  private EditText                       name;
+  private Toolbar                        toolbar;
+  private View                           disappearingMessagesRow;
 
   @Override
   public void onAttach(@NonNull Context context) {
@@ -95,17 +95,17 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     toolbar                 = view.findViewById(R.id.toolbar);
     disappearingMessagesRow = view.findViewById(R.id.group_disappearing_messages_row);
 
-    setCreateEnabled(false, false);
+    setCreateEnabled(false);
 
     GroupMemberListView members                  = view.findViewById(R.id.member_list);
     ImageView           avatar                   = view.findViewById(R.id.group_avatar);
     View                mmsWarning               = view.findViewById(R.id.mms_warning);
-    LearnMoreTextView   gv2Warning               = view.findViewById(R.id.gv2_warning);
     View                addLater                 = view.findViewById(R.id.add_later);
     TextView            disappearingMessageValue = view.findViewById(R.id.group_disappearing_messages_value);
 
     members.initializeAdapter(getViewLifecycleOwner());
-    avatarPlaceholder = VectorDrawableCompat.create(getResources(), R.drawable.ic_camera_outline_32_ultramarine, requireActivity().getTheme());
+    avatarPlaceholder = Objects.requireNonNull(VectorDrawableCompat.create(getResources(), R.drawable.ic_camera_outline_24, requireActivity().getTheme()));
+    avatarPlaceholder.setColorFilter(new SimpleColorFilter(ContextCompat.getColor(requireContext(), R.color.signal_icon_tint_primary)));
 
     if (savedInstanceState == null) {
       avatar.setImageDrawable(new InsetDrawable(avatarPlaceholder, ViewUtil.dpToPx(AVATAR_PLACEHOLDER_INSET_DP)));
@@ -123,18 +123,12 @@ public class AddGroupDetailsFragment extends LoggingFragment {
       addLater.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
       members.setMembers(list);
     });
-    viewModel.getCanSubmitForm().observe(getViewLifecycleOwner(), isFormValid -> setCreateEnabled(isFormValid, true));
+    viewModel.getCanSubmitForm().observe(getViewLifecycleOwner(), this::setCreateEnabled);
     viewModel.getIsMms().observe(getViewLifecycleOwner(), isMms -> {
       disappearingMessagesRow.setVisibility(isMms ? View.GONE : View.VISIBLE);
       mmsWarning.setVisibility(isMms ? View.VISIBLE : View.GONE);
       name.setHint(isMms ? R.string.AddGroupDetailsFragment__group_name_optional : R.string.AddGroupDetailsFragment__group_name_required);
       toolbar.setTitle(isMms ? R.string.AddGroupDetailsFragment__create_group : R.string.AddGroupDetailsFragment__name_this_group);
-    });
-    viewModel.getNonGv2CapableMembers().observe(getViewLifecycleOwner(), nonGv2CapableMembers -> {
-      gv2Warning.setVisibility(nonGv2CapableMembers.isEmpty() ? View.GONE : View.VISIBLE);
-      gv2Warning.setText(requireContext().getResources().getQuantityString(R.plurals.AddGroupDetailsFragment__d_members_do_not_support_new_groups_so_this_group_cannot_be_created, nonGv2CapableMembers.size(), nonGv2CapableMembers.size()));
-      gv2Warning.setLearnMoreVisible(true);
-      gv2Warning.setOnLinkClickListener(v -> NonGv2MemberDialog.showNonGv2Members(requireContext(), getViewLifecycleOwner(), nonGv2CapableMembers));
     });
     viewModel.getAvatar().observe(getViewLifecycleOwner(), avatarBytes -> {
       if (avatarBytes == null) {
@@ -206,15 +200,17 @@ public class AddGroupDetailsFragment extends LoggingFragment {
     AddGroupDetailsRepository        repository = new AddGroupDetailsRepository(requireContext());
     AddGroupDetailsViewModel.Factory factory    = new AddGroupDetailsViewModel.Factory(Arrays.asList(args.getRecipientIds()), repository);
 
-    viewModel = ViewModelProviders.of(this, factory).get(AddGroupDetailsViewModel.class);
+    viewModel = new ViewModelProvider(this, factory).get(AddGroupDetailsViewModel.class);
 
     viewModel.getGroupCreateResult().observe(getViewLifecycleOwner(), this::handleGroupCreateResult);
   }
 
   private void handleCreateClicked() {
-    create.setClickable(false);
-    create.setIndeterminateProgressMode(true);
-    create.setProgress(50);
+    if (!create.isClickable()) {
+      return;
+    }
+
+    create.setSpinning();
 
     viewModel.create();
   }
@@ -261,15 +257,12 @@ public class AddGroupDetailsFragment extends LoggingFragment {
          .show();
   }
 
-  private void setCreateEnabled(boolean isEnabled, boolean animate) {
-    if (create.isEnabled() == isEnabled) {
+  private void setCreateEnabled(boolean isEnabled) {
+    if (create.isClickable() == isEnabled) {
       return;
     }
 
-    create.setEnabled(isEnabled);
-    create.animate()
-          .setDuration(animate ? 300 : 0)
-          .alpha(isEnabled ? 1f : 0.5f);
+    create.setClickable(isEnabled);
   }
 
   private void showAvatarPicker() {

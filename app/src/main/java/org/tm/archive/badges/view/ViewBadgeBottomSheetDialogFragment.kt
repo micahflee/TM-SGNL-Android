@@ -23,7 +23,6 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.BottomSheetUtil
 import org.tm.archive.util.CommunicationActions
-import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.PlayServicesUtil
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.MappingAdapter
@@ -68,10 +67,7 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
       action.setOnClickListener {
         CommunicationActions.openBrowserLink(requireContext(), getString(R.string.donate_url))
       }
-    } else if (
-      FeatureFlags.donorBadges() &&
-      Recipient.self().badges.none { it.category == Badge.Category.Donor && !it.isBoost() && !it.isExpired() }
-    ) {
+    } else if (Recipient.self().badges.none { it.category == Badge.Category.Donor && !it.isBoost() && !it.isExpired() }) {
       action.setOnClickListener {
         startActivity(AppSettingsActivity.subscriptions(requireContext()))
       }
@@ -143,10 +139,6 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
       recipientId: RecipientId,
       startBadge: Badge? = null
     ) {
-      if (!FeatureFlags.displayDonorBadges() && recipientId != Recipient.self().id) {
-        return
-      }
-
       ViewBadgeBottomSheetDialogFragment().apply {
         arguments = Bundle().apply {
           putParcelable(ARG_START_BADGE, startBadge)

@@ -5,12 +5,12 @@ import androidx.annotation.StringRes
 import androidx.fragment.app.viewModels
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.groups.ParcelableGroupId
 import org.tm.archive.groups.ui.GroupErrors
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 
 class PermissionsSettingsFragment : DSLSettingsFragment(
   titleId = R.string.ConversationSettingsFragment__permissions
@@ -30,7 +30,7 @@ class PermissionsSettingsFragment : DSLSettingsFragment(
     }
   )
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
     }
@@ -73,19 +73,17 @@ class PermissionsSettingsFragment : DSLSettingsFragment(
         }
       )
 
-      if (state.announcementGroupPermissionEnabled) {
-        radioListPref(
-          title = DSLSettingsText.from(R.string.PermissionsSettingsFragment__send_messages),
-          isEnabled = state.selfCanEditSettings,
-          listItems = permissionsOptions,
-          dialogTitle = DSLSettingsText.from(R.string.PermissionsSettingsFragment__who_can_send_messages),
-          selected = getSelected(!state.announcementGroup),
-          confirmAction = true,
-          onSelected = {
-            viewModel.setAnnouncementGroup(it == 0)
-          }
-        )
-      }
+      radioListPref(
+        title = DSLSettingsText.from(R.string.PermissionsSettingsFragment__send_messages),
+        isEnabled = state.selfCanEditSettings,
+        listItems = permissionsOptions,
+        dialogTitle = DSLSettingsText.from(R.string.PermissionsSettingsFragment__who_can_send_messages),
+        selected = getSelected(!state.announcementGroup),
+        confirmAction = true,
+        onSelected = {
+          viewModel.setAnnouncementGroup(it == 0)
+        }
+      )
     }
   }
 

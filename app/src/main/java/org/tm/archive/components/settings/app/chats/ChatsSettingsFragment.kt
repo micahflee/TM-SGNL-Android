@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
 class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__chats) {
@@ -19,7 +19,7 @@ class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__ch
     viewModel.refresh()
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     val repository = ChatsSettingsRepository()
     val factory = ChatsSettingsViewModel.Factory(repository)
     viewModel = ViewModelProvider(this, factory)[ChatsSettingsViewModel::class.java]
@@ -38,6 +38,8 @@ class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__ch
           Navigation.findNavController(requireView()).safeNavigate(R.id.action_chatsSettingsFragment_to_smsSettingsFragment)
         }
       )
+
+      dividerPref()
 
       switchPref(
         title = DSLSettingsText.from(R.string.preferences__generate_link_previews),

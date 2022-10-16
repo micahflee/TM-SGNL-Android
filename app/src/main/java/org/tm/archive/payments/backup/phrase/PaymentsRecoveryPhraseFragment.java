@@ -15,13 +15,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.PendingIntentFlags;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.payments.Mnemonic;
@@ -82,7 +83,7 @@ public class PaymentsRecoveryPhraseFragment extends Fragment {
       if (args.getFinishOnConfirm()) {
         requireActivity().finish();
       } else {
-        toolbar.setNavigationOnClickListener(t -> Navigation.findNavController(view).popBackStack(R.id.paymentsHome, false));
+        Navigation.findNavController(view).popBackStack(R.id.paymentsHome, false);
       }
     });
 
@@ -95,7 +96,7 @@ public class PaymentsRecoveryPhraseFragment extends Fragment {
 
     AlarmManager  alarmManager       = ServiceUtil.getAlarmManager(requireContext());
     Intent        alarmIntent        = new Intent(requireContext(), ClearClipboardAlarmReceiver.class);
-    PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(requireContext(), 0, alarmIntent, 0);
+    PendingIntent pendingAlarmIntent = PendingIntent.getBroadcast(requireContext(), 0, alarmIntent, PendingIntentFlags.mutable());
 
     alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30), pendingAlarmIntent);
   }
@@ -110,7 +111,7 @@ public class PaymentsRecoveryPhraseFragment extends Fragment {
     edit.setVisibility(View.VISIBLE);
     copy.setVisibility(View.GONE);
 
-    PaymentsRecoveryPhraseViewModel viewModel = ViewModelProviders.of(this).get(PaymentsRecoveryPhraseViewModel.class);
+    PaymentsRecoveryPhraseViewModel viewModel = new ViewModelProvider(this).get(PaymentsRecoveryPhraseViewModel.class);
 
     next.setOnClickListener(v -> viewModel.onSubmit(words));
     edit.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());

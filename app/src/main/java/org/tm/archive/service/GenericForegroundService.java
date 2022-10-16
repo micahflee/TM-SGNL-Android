@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
+import org.signal.core.util.PendingIntentFlags;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.MainActivity;
 import org.tm.archive.R;
@@ -111,7 +112,7 @@ public final class GenericForegroundService extends Service {
                                                            .setSmallIcon(active.iconRes)
                                                            .setContentTitle(active.title)
                                                            .setProgress(active.progressMax, active.progress, active.indeterminate)
-                                                           .setContentIntent(PendingIntent.getActivity(this, 0, MainActivity.clearTop(this), 0))
+                                                           .setContentIntent(PendingIntent.getActivity(this, 0, MainActivity.clearTop(this), PendingIntentFlags.mutable()))
                                                            .setVibrate(new long[]{0})
                                                            .build());
   }
@@ -161,6 +162,28 @@ public final class GenericForegroundService extends Service {
 
     Log.i(TAG, String.format(Locale.US, "Stopping foreground service id=%d", id));
     ContextCompat.startForegroundService(context, intent);
+  }
+
+  synchronized void replaceTitle(int id, @NonNull String title) {
+    Entry oldEntry = allActiveMessages.get(id);
+
+    if (oldEntry == null) {
+      Log.w(TAG, "Failed to replace notification, it was not found");
+      return;
+    }
+
+    Entry newEntry = new Entry(title, oldEntry.channelId, oldEntry.iconRes, oldEntry.id, oldEntry.progressMax, oldEntry.progress, oldEntry.indeterminate);
+
+    if (oldEntry.equals(newEntry)) {
+      Log.d(TAG, String.format("handleReplace() skip, no change %s", newEntry));
+      return;
+    }
+
+    Log.i(TAG, String.format("handleReplace() %s", newEntry));
+
+    allActiveMessages.put(newEntry.id, newEntry);
+
+    updateNotification();
   }
 
   synchronized void replaceProgress(int id, int progressMax, int progress, boolean indeterminate) {

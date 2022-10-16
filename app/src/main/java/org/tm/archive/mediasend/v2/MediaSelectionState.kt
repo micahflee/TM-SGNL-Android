@@ -1,15 +1,16 @@
 package org.tm.archive.mediasend.v2
 
 import android.net.Uri
-import org.tm.archive.TransportOption
+import org.tm.archive.conversation.MessageSendType
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mediasend.MediaSendConstants
 import org.tm.archive.mms.SentMediaQuality
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.stories.Stories
 
 data class MediaSelectionState(
-  val transportOption: TransportOption,
+  val sendType: MessageSendType,
   val selectedMedia: List<Media> = listOf(),
   val focusedMedia: Media? = null,
   val recipient: Recipient? = null,
@@ -21,10 +22,12 @@ data class MediaSelectionState(
   val isPreUploadEnabled: Boolean = false,
   val isMeteredConnection: Boolean = false,
   val editorStateMap: Map<Uri, Any> = mapOf(),
-  val cameraFirstCapture: Media? = null
+  val cameraFirstCapture: Media? = null,
+  val isStory: Boolean,
+  val storySendRequirements: Stories.MediaTransform.SendRequirements = Stories.MediaTransform.SendRequirements.CAN_NOT_SEND
 ) {
 
-  val maxSelection = if (transportOption.isSms) {
+  val maxSelection = if (sendType.usesSmsTransport) {
     MediaSendConstants.MAX_SMS
   } else {
     MediaSendConstants.MAX_PUSH

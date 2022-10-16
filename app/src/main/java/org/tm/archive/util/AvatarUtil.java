@@ -25,8 +25,8 @@ import org.tm.archive.contacts.avatars.ProfileContactPhoto;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.GlideRequest;
 import org.tm.archive.recipients.Recipient;
-import org.whispersystems.libsignal.util.guava.Optional;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 public final class AvatarUtil {
@@ -44,7 +44,7 @@ public final class AvatarUtil {
     ContactPhoto photo;
 
     if (recipient.isSelf()) {
-      photo = new ProfileContactPhoto(Recipient.self(), Recipient.self().getProfileAvatar());
+      photo = new ProfileContactPhoto(Recipient.self());
     } else if (recipient.getContactPhoto() == null) {
       target.setImageDrawable(null);
       target.setBackgroundColor(ContextCompat.getColor(target.getContext(), R.color.black));
@@ -150,7 +150,7 @@ public final class AvatarUtil {
   private static <T> GlideRequest<T> request(@NonNull GlideRequest<T> glideRequest, @NonNull Context context, @NonNull Recipient recipient, boolean loadSelf, int targetSize) {
     final ContactPhoto photo;
     if (Recipient.self().equals(recipient) && loadSelf) {
-      photo = new ProfileContactPhoto(recipient, recipient.getProfileAvatar());
+      photo = new ProfileContactPhoto(recipient);
     } else {
       photo = recipient.getContactPhoto();
     }
@@ -167,7 +167,7 @@ public final class AvatarUtil {
   }
 
   private static Drawable getFallback(@NonNull Context context, @NonNull Recipient recipient, int targetSize) {
-    String name = Optional.fromNullable(recipient.getDisplayName(context)).or("");
+    String name = Optional.ofNullable(recipient.getDisplayName(context)).orElse("");
 
     return new GeneratedContactPhoto(name, R.drawable.ic_profile_outline_40, targetSize).asDrawable(context, recipient.getAvatarColor());
   }

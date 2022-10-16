@@ -15,6 +15,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.Interpolator;
 import android.view.animation.TranslateAnimation;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,15 +50,16 @@ import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.mms.QuoteModel;
 import org.tm.archive.mms.SlideDeck;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.AssertedSuccessListener;
 import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.concurrent.SettableFuture;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class InputPanel extends LinearLayout
@@ -77,9 +79,10 @@ public class InputPanel extends LinearLayout
   private LinkPreviewView linkPreview;
   private EmojiToggle     mediaKeyboard;
   private ComposeText     composeText;
-  private View            quickCameraToggle;
-  private View            quickAudioToggle;
-  private View            buttonToggle;
+  private ImageButton     quickCameraToggle;
+  private ImageButton     quickAudioToggle;
+  private AnimatingToggle buttonToggle;
+  private SendButton      sendButton;
   private View            recordingContainer;
   private View            recordLockCancel;
   private ViewGroup       composeContainer;
@@ -93,6 +96,7 @@ public class InputPanel extends LinearLayout
   private @Nullable Listener listener;
   private           boolean  emojiVisible;
 
+  private boolean hideForMessageRequestState;
   private boolean hideForGroupState;
   private boolean hideForBlockedState;
   private boolean hideForSearch;
@@ -127,6 +131,7 @@ public class InputPanel extends LinearLayout
     this.quickCameraToggle      = findViewById(R.id.quick_camera_toggle);
     this.quickAudioToggle       = findViewById(R.id.quick_audio_toggle);
     this.buttonToggle           = findViewById(R.id.button_toggle);
+    this.sendButton             = findViewById(R.id.send_button);
     this.recordingContainer     = findViewById(R.id.recording_container);
     this.recordLockCancel       = findViewById(R.id.record_cancel);
     this.voiceNoteDraftView     = findViewById(R.id.voice_note_draft_view);
@@ -177,15 +182,22 @@ public class InputPanel extends LinearLayout
                        long id,
                        @NonNull Recipient author,
                        @NonNull CharSequence body,
-                       @NonNull SlideDeck attachments)
+                       @NonNull SlideDeck attachments,
+                       @NonNull QuoteModel.Type quoteType)
   {
-    this.quoteView.setQuote(glideRequests, id, author, body, false, attachments, null);
+    this.quoteView.setQuote(glideRequests, id, author, body, false, attachments, null, quoteType);
 
     int originalHeight = this.quoteView.getVisibility() == VISIBLE ? this.quoteView.getMeasuredHeight()
                                                                    : 0;
 
     this.quoteView.setVisibility(VISIBLE);
-    this.quoteView.measure(0, 0);
+
+    int maxWidth = composeContainer.getWidth();
+    if (quoteView.getLayoutParams() instanceof MarginLayoutParams) {
+      MarginLayoutParams layoutParams = (MarginLayoutParams) quoteView.getLayoutParams();
+      maxWidth -= layoutParams.leftMargin + layoutParams.rightMargin;
+    }
+    this.quoteView.measure(MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.AT_MOST), 0);
 
     if (quoteAnimator != null) {
       quoteAnimator.cancel();
@@ -198,6 +210,10 @@ public class InputPanel extends LinearLayout
     if (this.linkPreview.getVisibility() == View.VISIBLE) {
       int cornerRadius = readDimen(R.dimen.message_corner_collapse_radius);
       this.linkPreview.setCorners(cornerRadius, cornerRadius);
+    }
+
+    if (listener != null) {
+      listener.onQuoteChanged(id, author.getId());
     }
   }
 
@@ -219,6 +235,10 @@ public class InputPanel extends LinearLayout
     });
 
     quoteAnimator.start();
+
+    if (listener != null) {
+      listener.onQuoteCleared();
+    }
   }
 
   private static ValueAnimator createHeightAnimator(@NonNull View view,
@@ -248,9 +268,9 @@ public class InputPanel extends LinearLayout
 
   public Optional<QuoteModel> getQuote() {
     if (quoteView.getQuoteId() > 0 && quoteView.getVisibility() == View.VISIBLE) {
-      return Optional.of(new QuoteModel(quoteView.getQuoteId(), quoteView.getAuthor().getId(), quoteView.getBody().toString(), false, quoteView.getAttachments(), quoteView.getMentions()));
+      return Optional.of(new QuoteModel(quoteView.getQuoteId(), quoteView.getAuthor().getId(), quoteView.getBody().toString(), false, quoteView.getAttachments(), quoteView.getMentions(), quoteView.getQuoteType()));
     } else {
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 
@@ -313,13 +333,39 @@ public class InputPanel extends LinearLayout
   }
 
   public void setWallpaperEnabled(boolean enabled) {
+    final int iconTint;
+    final int textColor;
+    final int textHintColor;
+
     if (enabled) {
-      setBackground(new ColorDrawable(getContext().getResources().getColor(R.color.wallpaper_compose_background)));
+      iconTint = getContext().getResources().getColor(R.color.signal_colorOnSurface);
+      textColor = getContext().getResources().getColor(R.color.signal_colorOnSurface);
+      textHintColor = getContext().getResources().getColor(R.color.signal_colorOnSurfaceVariant);
+
+      setBackground(null);
       composeContainer.setBackground(Objects.requireNonNull(ContextCompat.getDrawable(getContext(), R.drawable.compose_background_wallpaper)));
+      quickAudioToggle.setColorFilter(iconTint);
+      quickCameraToggle.setColorFilter(iconTint);
     } else {
-      setBackground(new ColorDrawable(getContext().getResources().getColor(R.color.signal_background_primary)));
+      iconTint = getContext().getResources().getColor(R.color.signal_colorOnSurface);
+      textColor = getContext().getResources().getColor(R.color.signal_colorOnSurface);
+      textHintColor = getContext().getResources().getColor(R.color.signal_colorOnSurfaceVariant);
+
+      setBackground(new ColorDrawable(getContext().getResources().getColor(R.color.signal_colorSurface)));
       composeContainer.setBackground(Objects.requireNonNull(ContextCompat.getDrawable(getContext(), R.drawable.compose_background)));
     }
+
+    mediaKeyboard.setColorFilter(iconTint);
+    quickAudioToggle.setColorFilter(iconTint);
+    quickCameraToggle.setColorFilter(iconTint);
+    composeText.setTextColor(textColor);
+    composeText.setHintTextColor(textHintColor);
+    quoteView.setWallpaperEnabled(enabled);
+  }
+
+  public void setHideForMessageRequestState(boolean hideForMessageRequestState) {
+    this.hideForMessageRequestState = hideForMessageRequestState;
+    updateVisibility();
   }
 
   public void setHideForGroupState(boolean hideForGroupState) {
@@ -354,13 +400,13 @@ public class InputPanel extends LinearLayout
     slideToCancel.display();
 
     if (emojiVisible) {
-      ViewUtil.fadeOut(mediaKeyboard, FADE_TIME, View.INVISIBLE);
+      fadeOut(mediaKeyboard);
     }
 
-    ViewUtil.fadeOut(composeText, FADE_TIME, View.INVISIBLE);
-    ViewUtil.fadeOut(quickCameraToggle, FADE_TIME, View.INVISIBLE);
-    ViewUtil.fadeOut(quickAudioToggle, FADE_TIME, View.INVISIBLE);
-    buttonToggle.animate().alpha(0).setDuration(FADE_TIME).start();
+    fadeOut(composeText);
+    fadeOut(quickCameraToggle);
+    fadeOut(quickAudioToggle);
+    fadeOut(buttonToggle);
   }
 
   @Override
@@ -401,7 +447,7 @@ public class InputPanel extends LinearLayout
   public void onRecordLocked() {
     slideToCancel.hide();
     recordLockCancel.setVisibility(View.VISIBLE);
-    buttonToggle.animate().alpha(1).setDuration(FADE_TIME).start();
+    fadeIn(buttonToggle);
     if (listener != null) listener.onRecorderLocked();
   }
 
@@ -475,6 +521,7 @@ public class InputPanel extends LinearLayout
       voiceNoteDraftView.setDraft(voiceNoteDraft);
       voiceNoteDraftView.setVisibility(VISIBLE);
       hideNormalComposeViews();
+      buttonToggle.displayQuick(sendButton);
     } else {
       voiceNoteDraftView.clearDraft();
       ViewUtil.fadeOut(voiceNoteDraftView, FADE_TIME);
@@ -488,40 +535,37 @@ public class InputPanel extends LinearLayout
 
   private void hideNormalComposeViews() {
     if (emojiVisible) {
-      Animation animation = mediaKeyboard.getAnimation();
-      if (animation != null) {
-        animation.cancel();
-      }
-
-      mediaKeyboard.setVisibility(View.INVISIBLE);
+      mediaKeyboard.animate().cancel();
+      mediaKeyboard.setAlpha(0f);
     }
 
-    for (Animation animation : Arrays.asList(composeText.getAnimation(), quickCameraToggle.getAnimation(), quickAudioToggle.getAnimation())) {
-      if (animation != null) {
-        animation.cancel();
-      }
+    for (View view : Arrays.asList(composeText, quickCameraToggle, quickAudioToggle)) {
+      view.animate().cancel();
+      view.setAlpha(0f);
     }
-
-    buttonToggle.animate().cancel();
-
-    composeText.setVisibility(View.INVISIBLE);
-    quickCameraToggle.setVisibility(View.INVISIBLE);
-    quickAudioToggle.setVisibility(View.INVISIBLE);
   }
 
   private void fadeInNormalComposeViews() {
     if (emojiVisible) {
-      ViewUtil.fadeIn(mediaKeyboard, FADE_TIME);
+      fadeIn(mediaKeyboard);
     }
 
-    ViewUtil.fadeIn(composeText, FADE_TIME);
-    ViewUtil.fadeIn(quickCameraToggle, FADE_TIME);
-    ViewUtil.fadeIn(quickAudioToggle, FADE_TIME);
-    buttonToggle.animate().alpha(1).setDuration(FADE_TIME).start();
+    fadeIn(composeText);
+    fadeIn(quickCameraToggle);
+    fadeIn(quickAudioToggle);
+    fadeIn(buttonToggle);
+  }
+
+  private void fadeIn(@NonNull View v) {
+    v.animate().alpha(1).setDuration(FADE_TIME).start();
+  }
+
+  private void fadeOut(@NonNull View v) {
+    v.animate().alpha(0).setDuration(FADE_TIME).start();
   }
 
   private void updateVisibility() {
-    if (hideForGroupState || hideForBlockedState || hideForSearch || hideForSelection) {
+    if (hideForGroupState || hideForBlockedState || hideForSearch || hideForSelection || hideForMessageRequestState) {
       setVisibility(GONE);
     } else {
       setVisibility(VISIBLE);
@@ -537,6 +581,8 @@ public class InputPanel extends LinearLayout
     void onEmojiToggle();
     void onLinkPreviewCanceled();
     void onStickerSuggestionSelected(@NonNull StickerRecord sticker);
+    void onQuoteChanged(long id, @NonNull RecipientId author);
+    void onQuoteCleared();
   }
 
   private static class SlideToCancel {

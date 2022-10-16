@@ -5,17 +5,17 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
+import org.signal.libsignal.zkgroup.InvalidInputException;
+import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedMember;
-import org.signal.zkgroup.InvalidInputException;
-import org.signal.zkgroup.groups.GroupMasterKey;
 import org.tm.archive.database.model.databaseprotos.DecryptedGroupV2Context;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.Base64;
 import org.whispersystems.signalservice.api.groupsv2.DecryptedGroupUtil;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContext;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContextV2;
@@ -132,7 +132,7 @@ public final class MessageGroupContext {
       return Stream.of(groupContext.getMembersList())
                    .map(GroupContext.Member::getE164)
                    .withoutNulls()
-                   .map(RecipientId::fromExternalPush)
+                   .map(RecipientId::fromE164)
                    .filterNot(selfId::equals)
                    .toList();
     }
@@ -191,7 +191,7 @@ public final class MessageGroupContext {
       List<RecipientId> members = new ArrayList<>(decryptedGroupV2Context.getGroupState().getMembersCount());
 
       for (DecryptedMember member : decryptedGroupV2Context.getGroupState().getMembersList()) {
-        RecipientId recipient = RecipientId.from(ACI.fromByteString(member.getUuid()), null);
+        RecipientId recipient = RecipientId.from(ServiceId.fromByteString(member.getUuid()));
         if (!Recipient.self().getId().equals(recipient)) {
           members.add(recipient);
         }

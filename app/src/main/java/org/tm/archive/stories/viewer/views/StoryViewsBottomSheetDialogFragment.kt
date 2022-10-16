@@ -1,0 +1,65 @@
+package org.tm.archive.stories.viewer.views
+
+import android.content.DialogInterface
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.updateLayoutParams
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
+import org.tm.archive.R
+import org.tm.archive.components.FixedRoundedCornerBottomSheetDialogFragment
+import org.tm.archive.stories.viewer.page.StoryViewerPageViewModel
+import kotlin.math.roundToInt
+
+/**
+ * Wraps StoryViewsFragment in a BottomSheetDialog
+ */
+class StoryViewsBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFragment() {
+
+  override val themeResId: Int
+    get() = R.style.Widget_Signal_FixedRoundedCorners_Stories
+
+  override val peekHeightPercentage: Float = 1f
+
+  private val storyId: Long
+    get() = requireArguments().getLong(ARG_STORY_ID)
+
+  private val storyViewerPageViewModel: StoryViewerPageViewModel by viewModels(
+    ownerProducer = { requireParentFragment() }
+  )
+
+  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    return inflater.inflate(R.layout.bottom_sheet_container, container, false)
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    view.updateLayoutParams {
+      height = (resources.displayMetrics.heightPixels * 0.6f).roundToInt()
+    }
+
+    if (savedInstanceState == null) {
+      childFragmentManager.beginTransaction()
+        .replace(R.id.fragment_container, StoryViewsFragment.create(storyId))
+        .commitAllowingStateLoss()
+    }
+  }
+
+  override fun onDismiss(dialog: DialogInterface) {
+    super.onDismiss(dialog)
+    storyViewerPageViewModel.setIsDisplayingViewsAndRepliesDialog(false)
+  }
+
+  companion object {
+    private const val ARG_STORY_ID = "arg.story.id"
+
+    fun create(storyId: Long): DialogFragment {
+      return StoryViewsBottomSheetDialogFragment().apply {
+        arguments = Bundle().apply {
+          putLong(ARG_STORY_ID, storyId)
+        }
+      }
+    }
+  }
+}

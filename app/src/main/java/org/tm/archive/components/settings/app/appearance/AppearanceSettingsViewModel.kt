@@ -1,9 +1,12 @@
 package org.tm.archive.components.settings.app.appearance
 
+import android.app.Activity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import org.tm.archive.jobs.EmojiSearchIndexDownloadJob
+import org.tm.archive.keyvalue.SettingsValues.Theme
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.util.SplashScreenUtil
 import org.tm.archive.util.livedata.Store
 
 class AppearanceSettingsViewModel : ViewModel() {
@@ -21,9 +24,10 @@ class AppearanceSettingsViewModel : ViewModel() {
 
   val state: LiveData<AppearanceSettingsState> = store.stateLiveData
 
-  fun setTheme(theme: String) {
+  fun setTheme(activity: Activity?, theme: Theme) {
     store.update { it.copy(theme = theme) }
     SignalStore.settings().theme = theme
+    SplashScreenUtil.setSplashScreenThemeIfNecessary(activity, theme)
   }
 
   fun setLanguage(language: String) {

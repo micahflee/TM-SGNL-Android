@@ -126,7 +126,7 @@
   <string name="ContactsCursorLoader_contacts">Lambobin sadarwa</string>
   <string name="ContactsCursorLoader_groups">Rukunoni.</string>
   <string name="ContactsCursorLoader_phone_number_search">Binciko lambar waya</string>
-  <string name="ContactsCursorLoader_username_search">Duba sunan maiamfani</string>
+  <!-- Removed by excludeNonTranslatables <string name="ContactsCursorLoader_username_search">Duba sunan maiamfani</string> -->
   <!--ContactsDatabase-->
   <string name="ContactsDatabase_message_s">Sako %s</string>
   <string name="ContactsDatabase_signal_call_s">Kiran Signal %s</string>
@@ -327,7 +327,7 @@
   <string name="DozeReminder_optimize_for_missing_play_services">Inganta don rashin Play Services</string>
   <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">Wannan na\'urar baya daukan Google Play Services. Taba nan domin kashe fasalin batiri da yake hana Signal karban sakwanni idan ba\'a aiki dashi.</string>
   <!--ShareActivity-->
-  <string name="ShareActivity_share_with">Tura wa</string>
+  <!-- Removed by excludeNonTranslatables <string name="ShareActivity_share_with">Tura wa</string> -->
   <!--GcmBroadcastReceiver-->
   <!-- Removed by excludeNonTranslatables <string name="GcmBroadcastReceiver_retrieving_a_message">Diban sakwanni.</string> -->
   <!--GcmRefreshJob-->
@@ -1181,10 +1181,10 @@
   <string name="webrtc_answer_decline_button__swipe_down_to_reject">Daga zuwa kasa domin kin dagawa</string>
   <!--message_details_header-->
   <string name="message_details_header__issues_need_your_attention">Wasu matsaloli na bukatar lurarka/ki</string>
-  <string name="message_details_header__sent">Sake gwadawa.</string>
-  <string name="message_details_header__received">An karba</string>
-  <string name="message_details_header__disappears">Ya bace</string>
-  <string name="message_details_header__via">Ta</string>
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__sent">Sake gwadawa.</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__received">An karba</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__disappears">Ya bace</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__via">Ta</string> -->
   <!--message_details_recipient_header-->
   <!--message_Details_recipient-->
   <string name="message_details_recipient__failed_to_send">Turawa ya gaza</string>

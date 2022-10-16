@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    tools:viewBindingIgnore="true"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="48dp"
@@ -13,7 +14,6 @@
         android:id="@+id/section_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.Signal.Body1.Bold"
-        android:textStyle="bold"
+        android:textAppearance="@style/Signal.Text.TitleSmall"
         tools:text="Section Header" />
 </FrameLayout>

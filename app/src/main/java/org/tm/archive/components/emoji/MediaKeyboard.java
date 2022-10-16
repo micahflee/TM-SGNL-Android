@@ -1,6 +1,7 @@
 package org.tm.archive.components.emoji;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import org.tm.archive.components.InputAwareLayout.InputView;
 import org.tm.archive.keyboard.KeyboardPage;
 import org.tm.archive.keyboard.KeyboardPagerFragment;
 import org.tm.archive.keyboard.emoji.search.EmojiSearchFragment;
+import org.tm.archive.util.ThemedFragment;
 
 public class MediaKeyboard extends FrameLayout implements InputView {
 
@@ -32,6 +34,7 @@ public class MediaKeyboard extends FrameLayout implements InputView {
             private State                 keyboardState;
             private KeyboardPagerFragment keyboardPagerFragment;
             private FragmentManager       fragmentManager;
+            private int                   mediaKeyboardTheme;
 
   public MediaKeyboard(Context context) {
     this(context, null);
@@ -39,6 +42,12 @@ public class MediaKeyboard extends FrameLayout implements InputView {
 
   public MediaKeyboard(Context context, AttributeSet attrs) {
     super(context, attrs);
+
+    if (attrs != null) {
+      TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.MediaKeyboard);
+      mediaKeyboardTheme = array.getResourceId(R.styleable.MediaKeyboard_media_keyboard_theme, -1);
+      array.recycle();
+    }
   }
 
   public void setFragmentManager(@NonNull FragmentManager fragmentManager) {
@@ -66,6 +75,10 @@ public class MediaKeyboard extends FrameLayout implements InputView {
     setLayoutParams(params);
 
     show();
+  }
+
+  public boolean isInitialised() {
+    return isInitialised;
   }
 
   public void show() {
@@ -120,12 +133,21 @@ public class MediaKeyboard extends FrameLayout implements InputView {
 
     keyboardState = State.EMOJI_SEARCH;
 
+    EmojiSearchFragment emojiSearchFragment = new EmojiSearchFragment();
+    if (mediaKeyboardTheme != -1) {
+      ThemedFragment.withTheme(emojiSearchFragment, mediaKeyboardTheme);
+    }
+
     fragmentManager.beginTransaction()
                    .hide(keyboardPagerFragment)
-                   .add(R.id.media_keyboard_fragment_container, new EmojiSearchFragment(), EMOJI_SEARCH)
+                   .add(R.id.media_keyboard_fragment_container, emojiSearchFragment, EMOJI_SEARCH)
                    .runOnCommit(() -> show(latestKeyboardHeight, true))
                    .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                    .commitAllowingStateLoss();
+  }
+
+  public boolean isEmojiSearchMode() {
+    return keyboardState == State.EMOJI_SEARCH;
   }
 
   private void initView() {
@@ -139,6 +161,10 @@ public class MediaKeyboard extends FrameLayout implements InputView {
       }
 
       keyboardPagerFragment = new KeyboardPagerFragment();
+      if (mediaKeyboardTheme != -1) {
+        ThemedFragment.withTheme(keyboardPagerFragment, mediaKeyboardTheme);
+      }
+
       fragmentManager.beginTransaction()
                      .replace(R.id.media_keyboard_fragment_container, keyboardPagerFragment)
                      .commitNowAllowingStateLoss();

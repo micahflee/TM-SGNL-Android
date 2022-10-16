@@ -4,13 +4,15 @@ import android.Manifest
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import org.signal.core.util.ThreadUtil
+import org.signal.qr.kitkat.ScanListener
 import org.tm.archive.R
+import org.tm.archive.components.WrapperDialogFragment
 import org.tm.archive.crypto.IdentityKeyParcelable
-import org.tm.archive.crypto.IdentityKeyUtil
+import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.permissions.Permissions
-import org.tm.archive.qr.ScanListener
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.ServiceUtil
@@ -19,6 +21,14 @@ import org.tm.archive.util.ServiceUtil
  * Fragment to assist user in verifying recipient identity utilizing keys.
  */
 class VerifyIdentityFragment : Fragment(R.layout.fragment_container), ScanListener, VerifyDisplayFragment.Callback {
+
+  class Dialog : WrapperDialogFragment() {
+    override fun getWrappedFragment(): Fragment {
+      return VerifyIdentityFragment().apply {
+        arguments = this@Dialog.requireArguments()
+      }
+    }
+  }
 
   companion object {
     private const val EXTRA_RECIPIENT = "extra.recipient.id"
@@ -32,11 +42,25 @@ class VerifyIdentityFragment : Fragment(R.layout.fragment_container), ScanListen
       verified: Boolean
     ): VerifyIdentityFragment {
       return VerifyIdentityFragment().apply {
-        arguments = Bundle().apply {
-          putParcelable(EXTRA_RECIPIENT, recipientId)
-          putParcelable(EXTRA_IDENTITY, remoteIdentity)
-          putBoolean(EXTRA_VERIFIED, verified)
-        }
+        arguments = bundleOf(
+          EXTRA_RECIPIENT to recipientId,
+          EXTRA_IDENTITY to remoteIdentity,
+          EXTRA_VERIFIED to verified
+        )
+      }
+    }
+
+    fun createDialog(
+      recipientId: RecipientId,
+      remoteIdentity: IdentityKeyParcelable,
+      verified: Boolean
+    ): Dialog {
+      return Dialog().apply {
+        arguments = bundleOf(
+          EXTRA_RECIPIENT to recipientId,
+          EXTRA_IDENTITY to remoteIdentity,
+          EXTRA_VERIFIED to verified
+        )
       }
     }
   }
@@ -45,7 +69,7 @@ class VerifyIdentityFragment : Fragment(R.layout.fragment_container), ScanListen
     VerifyDisplayFragment.create(
       recipientId,
       remoteIdentity,
-      IdentityKeyParcelable(IdentityKeyUtil.getIdentityKey(requireContext())),
+      IdentityKeyParcelable(SignalStore.account().aciIdentityKey.publicKey),
       Recipient.self().requireE164(),
       isVerified
     )

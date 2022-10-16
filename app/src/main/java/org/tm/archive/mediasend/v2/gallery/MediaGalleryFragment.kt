@@ -3,23 +3,26 @@ package org.tm.archive.mediasend.v2.gallery
 import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.widget.Toolbar
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.RecyclerView
+import org.signal.core.util.Stopwatch
 import org.tm.archive.R
 import org.tm.archive.components.recyclerview.GridDividerDecoration
-import org.tm.archive.keyboard.findListener
+import org.tm.archive.databinding.V2MediaGalleryFragmentBinding
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mediasend.MediaRepository
-import org.tm.archive.mediasend.v2.MediaCountIndicatorButton
-import org.tm.archive.util.Stopwatch
+import org.tm.archive.util.Material3OnScrollHelper
+import org.tm.archive.util.SystemWindowInsetsSetter
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.fragments.requireListener
 import org.tm.archive.util.livedata.LiveDataUtil
 import org.tm.archive.util.visible
 
@@ -35,12 +38,6 @@ class MediaGalleryFragment : Fragment(R.layout.v2_media_gallery_fragment) {
 
   private lateinit var callbacks: Callbacks
 
-  private lateinit var toolbar: Toolbar
-  private lateinit var galleryRecycler: RecyclerView
-  private lateinit var countButton: MediaCountIndicatorButton
-  private lateinit var bottomBarGroup: View
-  private lateinit var selectedRecycler: RecyclerView
-
   private var selectedMediaTouchHelper: ItemTouchHelper? = null
 
   private val galleryAdapter = MappingAdapter()
@@ -55,28 +52,35 @@ class MediaGalleryFragment : Fragment(R.layout.v2_media_gallery_fragment) {
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    callbacks = requireNotNull(findListener())
+    callbacks = requireListener()
+    val binding = V2MediaGalleryFragmentBinding.bind(view)
 
-    toolbar = view.findViewById(R.id.media_gallery_toolbar)
-    galleryRecycler = view.findViewById(R.id.media_gallery_grid)
-    selectedRecycler = view.findViewById(R.id.media_gallery_selected)
-    countButton = view.findViewById(R.id.media_gallery_count_button)
-    bottomBarGroup = view.findViewById(R.id.media_gallery_bottom_bar_group)
+    SystemWindowInsetsSetter.attach(view, viewLifecycleOwner, WindowInsetsCompat.Type.navigationBars())
 
-    (galleryRecycler.layoutManager as GridLayoutManager).spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+    binding.mediaGalleryToolbar.updateLayoutParams<ConstraintLayout.LayoutParams> {
+      topMargin = ViewUtil.getStatusBarHeight(view)
+    }
+
+    binding.mediaGalleryStatusBarBackground.updateLayoutParams {
+      height = ViewUtil.getStatusBarHeight(view)
+    }
+
+    (binding.mediaGalleryGrid.layoutManager as GridLayoutManager).spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
       override fun getSpanSize(position: Int): Int {
-        val isFolder: Boolean = (galleryRecycler.adapter as MappingAdapter).getModel(position).map { it is MediaGallerySelectableItem.FolderModel }.orElse(false)
+        val isFolder: Boolean = (binding.mediaGalleryGrid.adapter as MappingAdapter).getModel(position).map { it is MediaGallerySelectableItem.FolderModel }.orElse(false)
 
         return if (isFolder) 2 else 1
       }
     }
 
-    toolbar.setNavigationOnClickListener {
+    binding.mediaGalleryToolbar.setNavigationOnClickListener {
       onBack()
     }
 
+    Material3OnScrollHelper(requireActivity(), listOf(binding.mediaGalleryToolbar, binding.mediaGalleryStatusBarBackground)).attach(binding.mediaGalleryGrid)
+
     if (callbacks.isCameraEnabled()) {
-      toolbar.setOnMenuItemClickListener { item ->
+      binding.mediaGalleryToolbar.setOnMenuItemClickListener { item ->
         if (item.itemId == R.id.action_camera) {
           callbacks.onNavigateToCamera()
           true
@@ -85,18 +89,18 @@ class MediaGalleryFragment : Fragment(R.layout.v2_media_gallery_fragment) {
         }
       }
     } else {
-      toolbar.menu.findItem(R.id.action_camera).isVisible = false
+      binding.mediaGalleryToolbar.menu.findItem(R.id.action_camera).isVisible = false
     }
 
-    countButton.setOnClickListener {
+    binding.mediaGalleryCountButton.setOnClickListener {
       callbacks.onSubmit()
     }
 
     MediaGallerySelectedItem.register(selectedAdapter) { media ->
       callbacks.onSelectedMediaClicked(media)
     }
-    selectedRecycler.adapter = selectedAdapter
-    selectedMediaTouchHelper?.attachToRecyclerView(selectedRecycler)
+    binding.mediaGallerySelected.adapter = selectedAdapter
+    selectedMediaTouchHelper?.attachToRecyclerView(binding.mediaGallerySelected)
 
     MediaGallerySelectableItem.registerAdapter(
       mappingAdapter = galleryAdapter,
@@ -114,25 +118,25 @@ class MediaGalleryFragment : Fragment(R.layout.v2_media_gallery_fragment) {
       callbacks.isMultiselectEnabled()
     )
 
-    galleryRecycler.adapter = galleryAdapter
-    galleryRecycler.addItemDecoration(GridDividerDecoration(4, ViewUtil.dpToPx(2)))
+    binding.mediaGalleryGrid.adapter = galleryAdapter
+    binding.mediaGalleryGrid.addItemDecoration(GridDividerDecoration(4, ViewUtil.dpToPx(2)))
 
     viewStateLiveData.observe(viewLifecycleOwner) { state ->
-      bottomBarGroup.visible = state.selectedMedia.isNotEmpty()
-      countButton.setCount(state.selectedMedia.size)
+      binding.mediaGalleryBottomBarGroup.visible = state.selectedMedia.isNotEmpty()
+      binding.mediaGalleryCountButton.setCount(state.selectedMedia.size)
 
       val stopwatch = Stopwatch("mediaSubmit")
       selectedAdapter.submitList(state.selectedMedia.map { MediaGallerySelectedItem.Model(it) }) {
         stopwatch.split("after-submit")
         stopwatch.stop("MediaGalleryFragment")
         if (state.selectedMedia.isNotEmpty()) {
-          selectedRecycler.smoothScrollToPosition(state.selectedMedia.size - 1)
+          binding.mediaGallerySelected.smoothScrollToPosition(state.selectedMedia.size - 1)
         }
       }
     }
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
-      toolbar.title = state.bucketTitle
+      binding.mediaGalleryToolbar.title = state.bucketTitle ?: requireContext().getString(R.string.AttachmentKeyboard_gallery)
     }
 
     val galleryItemsWithSelection = LiveDataUtil.combineLatest(
@@ -141,7 +145,7 @@ class MediaGalleryFragment : Fragment(R.layout.v2_media_gallery_fragment) {
     ) { galleryItems, selectedMedia ->
       galleryItems.map {
         if (it is MediaGallerySelectableItem.FileModel) {
-          it.copy(isSelected = selectedMedia.contains(it.media))
+          it.copy(isSelected = selectedMedia.contains(it.media), selectionOneBasedIndex = selectedMedia.indexOf(it.media) + 1)
         } else {
           it
         }

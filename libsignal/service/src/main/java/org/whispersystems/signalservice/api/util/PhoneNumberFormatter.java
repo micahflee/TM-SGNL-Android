@@ -11,11 +11,11 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
-import org.whispersystems.libsignal.logging.Log;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.libsignal.protocol.logging.Log;
 import org.whispersystems.signalservice.internal.util.Util;
 
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -110,7 +110,7 @@ public class PhoneNumberFormatter {
       PhoneNumber numberObject      = util.parse(number, localCountryCode);
       return util.format(numberObject, PhoneNumberFormat.E164);
     } catch (NumberParseException e) {
-      Log.w(TAG, e);
+      Log.d(TAG, e.getClass().getSimpleName() + ": " + e.getMessage());
       return impreciseFormatNumber(number, localNumber);
     }
   }
@@ -120,7 +120,7 @@ public class PhoneNumberFormatter {
    */
   @Deprecated
   public static String getRegionDisplayNameLegacy(String regionCode) {
-    return getRegionDisplayName(regionCode).or("Unknown country");
+    return getRegionDisplayName(regionCode).orElse("Unknown country");
   }
 
   public static Optional<String> getRegionDisplayName(String regionCode) {
@@ -130,7 +130,7 @@ public class PhoneNumberFormatter {
         return Optional.of(displayCountry);
       }
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   public static String formatE164(String countryCode, String number) {
@@ -142,7 +142,7 @@ public class PhoneNumberFormatter {
 
       return util.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
     } catch (NumberParseException | NumberFormatException npe) {
-      Log.w(TAG, npe);
+      Log.d(TAG, npe.getClass().getSimpleName() + ": " + npe.getMessage());
     }
 
     return "+"                                                     +

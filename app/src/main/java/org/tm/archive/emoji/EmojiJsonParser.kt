@@ -3,11 +3,11 @@ package org.tm.archive.emoji
 import android.net.Uri
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.signal.core.util.Hex
 import org.tm.archive.components.emoji.CompositeEmojiPageModel
 import org.tm.archive.components.emoji.Emoji
 import org.tm.archive.components.emoji.EmojiPageModel
 import org.tm.archive.components.emoji.StaticEmojiPageModel
-import org.tm.archive.util.Hex
 import java.io.InputStream
 import java.nio.charset.Charset
 

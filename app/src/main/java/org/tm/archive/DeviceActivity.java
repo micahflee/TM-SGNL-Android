@@ -20,22 +20,22 @@ import androidx.appcompat.widget.Toolbar;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.crypto.IdentityKeyUtil;
+import org.signal.libsignal.protocol.IdentityKeyPair;
+import org.signal.libsignal.protocol.InvalidKeyException;
+import org.signal.libsignal.protocol.ecc.Curve;
+import org.signal.libsignal.protocol.ecc.ECPublicKey;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
+import org.signal.qr.kitkat.ScanListener;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.permissions.Permissions;
-import org.tm.archive.qr.ScanListener;
 import org.tm.archive.util.Base64;
 import org.tm.archive.util.DynamicLanguage;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.task.ProgressDialogAsyncTask;
-import org.whispersystems.libsignal.IdentityKeyPair;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.ecc.Curve;
-import org.whispersystems.libsignal.ecc.ECPublicKey;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.exceptions.NotFoundException;
 import org.whispersystems.signalservice.internal.push.DeviceLimitExceededException;
@@ -185,12 +185,13 @@ public class DeviceActivity extends PassphraseRequiredActivity
             return BAD_CODE;
           }
 
-          ECPublicKey      publicKey         = Curve.decodePoint(Base64.decode(publicKeyEncoded), 0);
-          IdentityKeyPair  identityKeyPair   = IdentityKeyUtil.getIdentityKeyPair(context);
-          Optional<byte[]> profileKey        = Optional.of(ProfileKeyUtil.getProfileKey(getContext()));
+          ECPublicKey     publicKey          = Curve.decodePoint(Base64.decode(publicKeyEncoded), 0);
+          IdentityKeyPair aciIdentityKeyPair = SignalStore.account().getAciIdentityKey();
+          IdentityKeyPair pniIdentityKeyPair = SignalStore.account().getPniIdentityKey();
+          ProfileKey      profileKey         = ProfileKeyUtil.getSelfProfileKey();
 
           TextSecurePreferences.setMultiDevice(DeviceActivity.this, true);
-          accountManager.addDevice(ephemeralId, publicKey, identityKeyPair, profileKey, verificationCode);
+          accountManager.addDevice(ephemeralId, publicKey, aciIdentityKeyPair, pniIdentityKeyPair, profileKey, verificationCode);
 
           return SUCCESS;
         } catch (NotFoundException e) {

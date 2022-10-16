@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
+import org.signal.core.util.money.FiatMoney;
 import org.tm.archive.R;
 import org.tm.archive.components.settings.SettingHeader;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -21,7 +22,6 @@ import org.tm.archive.payments.Payment;
 import org.tm.archive.payments.UnreadPaymentsRepository;
 import org.tm.archive.payments.currency.CurrencyExchange;
 import org.tm.archive.payments.currency.CurrencyExchangeRepository;
-import org.signal.core.util.money.FiatMoney;
 import org.tm.archive.payments.preferences.model.InProgress;
 import org.tm.archive.payments.preferences.model.InfoCard;
 import org.tm.archive.payments.preferences.model.IntroducingPayments;
@@ -29,14 +29,14 @@ import org.tm.archive.payments.preferences.model.NoRecentActivity;
 import org.tm.archive.payments.preferences.model.PaymentItem;
 import org.tm.archive.payments.preferences.model.SeeAll;
 import org.tm.archive.util.AsynchronousCallback;
-import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.SingleLiveEvent;
+import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.tm.archive.util.livedata.Store;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.payments.Money;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PaymentsHomeViewModel extends ViewModel {
 
@@ -82,7 +82,7 @@ public class PaymentsHomeViewModel extends ViewModel {
     LiveData<Optional<FiatMoney>> liveExchangeAmount = LiveDataUtil.combineLatest(this.balance,
                                                                                   liveExchangeRate,
                                                                                   (balance, exchangeRate) -> exchangeRate.exchange(balance));
-    this.store.update(liveExchangeAmount, (amount, state) -> state.updateCurrencyAmount(amount.orNull()));
+    this.store.update(liveExchangeAmount, (amount, state) -> state.updateCurrencyAmount(amount.orElse(null)));
 
     refreshExchangeRates(true);
   }
@@ -188,7 +188,7 @@ public class PaymentsHomeViewModel extends ViewModel {
     return state.updatePayments(paymentItems, payments.size());
   }
 
-  public void onInfoCardDismissed() {
+  public void updateStore() {
     store.update(s -> s);
   }
 

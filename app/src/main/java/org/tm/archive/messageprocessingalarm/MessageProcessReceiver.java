@@ -12,15 +12,16 @@ import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 
+import org.signal.core.util.PendingIntentFlags;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.JobTracker;
 import org.tm.archive.jobs.PushNotificationReceiveJob;
 import org.tm.archive.util.FeatureFlags;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * On received message, runs a job to poll for messages.
@@ -71,7 +72,7 @@ public final class MessageProcessReceiver extends BroadcastReceiver {
 
     alarmIntent.setAction(MessageProcessReceiver.BROADCAST_ACTION);
 
-    PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 123, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 123, alarmIntent, PendingIntentFlags.updateCurrent());
     AlarmManager  alarmManager  = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
     long interval = FeatureFlags.getBackgroundMessageProcessInterval();

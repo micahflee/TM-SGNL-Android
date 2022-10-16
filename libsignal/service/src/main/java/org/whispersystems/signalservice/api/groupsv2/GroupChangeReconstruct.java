@@ -3,6 +3,7 @@ package org.whispersystems.signalservice.api.groupsv2;
 import com.google.protobuf.ByteString;
 
 import org.signal.storageservice.protos.groups.local.DecryptedApproveMember;
+import org.signal.storageservice.protos.groups.local.DecryptedBannedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedMember;
@@ -65,12 +66,17 @@ public final class GroupChangeReconstruct {
     Set<ByteString> requestingMembersListA = requestingMembersToSetOfUuids(fromState.getRequestingMembersList());
     Set<ByteString> requestingMembersListB = requestingMembersToSetOfUuids(toState.getRequestingMembersList());
 
+    Set<ByteString> bannedMembersListA = bannedMembersToSetOfUuids(fromState.getBannedMembersList());
+    Set<ByteString> bannedMembersListB = bannedMembersToSetOfUuids(toState.getBannedMembersList());
+
     Set<ByteString> removedPendingMemberUuids    = subtract(pendingMembersListA, pendingMembersListB);
     Set<ByteString> removedRequestingMemberUuids = subtract(requestingMembersListA, requestingMembersListB);
     Set<ByteString> newPendingMemberUuids        = subtract(pendingMembersListB, pendingMembersListA);
     Set<ByteString> newRequestingMemberUuids     = subtract(requestingMembersListB, requestingMembersListA);
     Set<ByteString> removedMemberUuids           = subtract(fromStateMemberUuids, toStateMemberUuids);
     Set<ByteString> newMemberUuids               = subtract(toStateMemberUuids, fromStateMemberUuids);
+    Set<ByteString> removedBannedMemberUuids     = subtract(bannedMembersListA, bannedMembersListB);
+    Set<ByteString> newBannedMemberUuids         = subtract(bannedMembersListB, bannedMembersListA);
 
     Set<ByteString>                addedByInvitationUuids        = intersect(newMemberUuids, removedPendingMemberUuids);
     Set<ByteString>                addedByRequestApprovalUuids   = intersect(newMemberUuids, removedRequestingMemberUuids);
@@ -102,9 +108,10 @@ public final class GroupChangeReconstruct {
       builder.addNewPendingMembers(invitedMember);
     }
 
-    Set<ByteString>                  consistentMemberUuids = intersect(fromStateMemberUuids, toStateMemberUuids);
-    Set<DecryptedMember>             changedMembers        = intersectByUUID(subtract(toState.getMembersList(), fromState.getMembersList()), consistentMemberUuids);
-    Map<ByteString, DecryptedMember> membersUuidMap        = uuidMap(fromState.getMembersList());
+    Set<ByteString>                        consistentMemberUuids = intersect(fromStateMemberUuids, toStateMemberUuids);
+    Set<DecryptedMember>                   changedMembers        = intersectByUUID(subtract(toState.getMembersList(), fromState.getMembersList()), consistentMemberUuids);
+    Map<ByteString, DecryptedMember>       membersUuidMap        = uuidMap(fromState.getMembersList());
+    Map<ByteString, DecryptedBannedMember> bannedMembersUuidMap  = bannedUuidMap(toState.getBannedMembersList());
 
     for (DecryptedMember newState : changedMembers) {
       DecryptedMember oldState = membersUuidMap.get(newState.getUuid());
@@ -141,12 +148,34 @@ public final class GroupChangeReconstruct {
       builder.setNewInviteLinkPassword(toState.getInviteLinkPassword());
     }
 
+    for (ByteString uuid : removedBannedMemberUuids) {
+      builder.addDeleteBannedMembers(DecryptedBannedMember.newBuilder().setUuid(uuid).build());
+    }
+
+    for (ByteString uuid : newBannedMemberUuids) {
+      DecryptedBannedMember.Builder newBannedBuilder = DecryptedBannedMember.newBuilder().setUuid(uuid);
+      DecryptedBannedMember         bannedMember     = bannedMembersUuidMap.get(uuid);
+      if (bannedMember != null) {
+        newBannedBuilder.setTimestamp(bannedMember.getTimestamp());
+      }
+
+      builder.addNewBannedMembers(newBannedBuilder);
+    }
+
     return builder.build();
   }
 
   private static Map<ByteString, DecryptedMember> uuidMap(List<DecryptedMember> membersList) {
     Map<ByteString, DecryptedMember> map = new LinkedHashMap<>(membersList.size());
     for (DecryptedMember member : membersList) {
+      map.put(member.getUuid(), member);
+    }
+    return map;
+  }
+
+  private static Map<ByteString, DecryptedBannedMember> bannedUuidMap(List<DecryptedBannedMember> membersList) {
+    Map<ByteString, DecryptedBannedMember> map = new LinkedHashMap<>(membersList.size());
+    for (DecryptedBannedMember member : membersList) {
       map.put(member.getUuid(), member);
     }
     return map;
@@ -199,6 +228,14 @@ public final class GroupChangeReconstruct {
     Set<ByteString> uuids = new LinkedHashSet<>(members.size());
     for (DecryptedMember member : members) {
       uuids.add(member.getUuid());
+    }
+    return uuids;
+  }
+
+  private static Set<ByteString> bannedMembersToSetOfUuids(Collection<DecryptedBannedMember> bannedMembers) {
+    Set<ByteString> uuids = new LinkedHashSet<>(bannedMembers.size());
+    for (DecryptedBannedMember bannedMember : bannedMembers) {
+      uuids.add(bannedMember.getUuid());
     }
     return uuids;
   }

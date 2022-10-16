@@ -4,6 +4,7 @@
   <string-array name="language_entries">
 <!-- zz --><item>@string/preferences__system_default</item>
 <!-- en --><item>English</item>
+<!-- af --><item>Afrikaans</item>
 <!-- ar --><item>Arabic العربية</item>
 <!-- az --><item>Azərbaycan</item>
 <!-- jv --><item>Basa Jawa</item>
@@ -29,6 +30,7 @@
 <!-- fy --><item>Frysk</item>
 <!-- ga --><item>Gaeilge</item>
 <!-- gl --><item>Galego</item>
+<!-- ka --><item>Georgian ქართული</item>
 <!-- el --><item>Greek ελληνικά</item>
 <!-- gu --><item>Gujarati ગુજરાતી</item>
 <!-- ha --><item>Hausa</item>
@@ -40,10 +42,12 @@
 <!-- it --><item>Italiano</item>
 <!-- ja --><item>Japanese 日本語</item>
 <!-- kn --><item>Kannada ಕನ್ನಡ</item>
+<!-- kk --><item>Kasakh Қазақша</item>
 <!-- km --><item>Khmer ភាសាខ្មែរ</item>
 <!-- sw --><item>Kiswahili</item>
 <!-- ko --><item>Korean 한국어</item>
 <!-- ku --><item>Kurdí</item>
+<!-- ky --><item>Kyrgyz Кыргыз тили</item>
 <!-- lv --><item>Latviešu</item>
 <!-- lt --><item>Lietuvių</item>
 <!-- lg --><item>Luganda</item>
@@ -86,6 +90,7 @@
   <string-array name="language_values">
       <item>zz</item>
       <item>en</item>
+      <item>af</item>
       <item>ar</item>
       <item>az</item>
       <item>jv</item>
@@ -111,6 +116,7 @@
       <item>fy</item>
       <item>ga</item>
       <item>gl</item>
+      <item>ka</item>
       <item>el</item>
       <item>gu</item>
       <item>ha</item>
@@ -122,10 +128,12 @@
       <item>it</item>
       <item>ja</item>
       <item>kn</item>
+      <item>kk</item>
       <item>km</item>
       <item>sw</item>
       <item>ko</item>
       <item>ku</item>
+      <item>ky</item>
       <item>lv</item>
       <item>lt</item>
       <item>lg</item>
@@ -347,12 +355,19 @@
         <item>@string/arrays__extra_large</item>
     </string-array>
 
-    <string-array name="pref_message_font_size_values">
-        <item>13</item>
+    <integer-array name="pref_message_font_size_values">
+        <item>14</item>
         <item>16</item>
-        <item>20</item>
-        <item>30</item>
-    </string-array>
+        <item>22</item>
+        <item>28</item>
+    </integer-array>
+
+    <integer-array name="pref_message_font_quote_size_values">
+        <item>12</item>
+        <item>14</item>
+        <item>18</item>
+        <item>22</item>
+    </integer-array>
 
     <string-array name="pref_notification_priority_entries">
         <item>@string/arrays__default</item>

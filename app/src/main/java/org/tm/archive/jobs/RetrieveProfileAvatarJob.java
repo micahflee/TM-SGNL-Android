@@ -6,7 +6,7 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.database.RecipientDatabase;
 import org.tm.archive.database.SignalDatabase;
@@ -18,7 +18,6 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.profiles.AvatarHelper;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
@@ -81,19 +80,22 @@ public class RetrieveProfileAvatarJob extends BaseJob {
       return;
     }
 
-    if (Util.equals(profileAvatar, recipient.resolve().getProfileAvatar())) {
+    if (profileAvatar != null && profileAvatar.equals(recipient.resolve().getProfileAvatar())) {
       Log.w(TAG, "Already retrieved profile avatar: " + profileAvatar);
       return;
     }
 
     if (TextUtils.isEmpty(profileAvatar)) {
-      Log.w(TAG, "Removing profile avatar (no url) for: " + recipient.getId().serialize());
-      AvatarHelper.delete(context, recipient.getId());
-      database.setProfileAvatar(recipient.getId(), profileAvatar);
+      if (AvatarHelper.hasAvatar(context, recipient.getId())) {
+        Log.w(TAG, "Removing profile avatar (no url) for: " + recipient.getId().serialize());
+        AvatarHelper.delete(context, recipient.getId());
+        database.setProfileAvatar(recipient.getId(), profileAvatar);
+      }
+
       return;
     }
 
-    File downloadDestination = File.createTempFile("avatar", "jpg", context.getCacheDir());
+      File downloadDestination = File.createTempFile("avatar", "jpg", context.getCacheDir());
 
     try {
       SignalServiceMessageReceiver receiver     = ApplicationDependencies.getSignalServiceMessageReceiver();

@@ -1,0 +1,121 @@
+package org.tm.archive.badges.gifts.flow
+
+import android.view.View
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import org.signal.core.util.DimensionUnit
+import org.tm.archive.R
+import org.tm.archive.components.settings.DSLConfiguration
+import org.tm.archive.components.settings.DSLSettingsFragment
+import org.tm.archive.components.settings.DSLSettingsText
+import org.tm.archive.components.settings.app.subscription.DonationPaymentComponent
+import org.tm.archive.components.settings.app.subscription.models.CurrencySelection
+import org.tm.archive.components.settings.app.subscription.models.NetworkFailure
+import org.tm.archive.components.settings.configure
+import org.tm.archive.components.settings.models.IndeterminateLoadingCircle
+import org.tm.archive.components.settings.models.SplashImage
+import org.tm.archive.util.LifecycleDisposable
+import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.adapter.mapping.MappingAdapter
+import org.tm.archive.util.fragments.requireListener
+import org.tm.archive.util.navigation.safeNavigate
+
+/**
+ * Landing fragment for sending gifts.
+ */
+class GiftFlowStartFragment : DSLSettingsFragment(
+  layoutId = R.layout.gift_flow_start_fragment
+) {
+
+  private val viewModel: GiftFlowViewModel by viewModels(
+    ownerProducer = { requireActivity() },
+    factoryProducer = { GiftFlowViewModel.Factory(GiftFlowRepository(), requireListener<DonationPaymentComponent>().donationPaymentRepository) }
+  )
+
+  private val lifecycleDisposable = LifecycleDisposable()
+
+  override fun bindAdapter(adapter: MappingAdapter) {
+    CurrencySelection.register(adapter)
+    GiftRowItem.register(adapter)
+    NetworkFailure.register(adapter)
+    IndeterminateLoadingCircle.register(adapter)
+    SplashImage.register(adapter)
+
+    val next = requireView().findViewById<View>(R.id.next)
+    next.setOnClickListener {
+      findNavController().safeNavigate(R.id.action_giftFlowStartFragment_to_giftFlowRecipientSelectionFragment)
+    }
+
+    lifecycleDisposable.bindTo(viewLifecycleOwner)
+    lifecycleDisposable += viewModel.state.observeOn(AndroidSchedulers.mainThread()).subscribe { state ->
+      next.isEnabled = state.stage == GiftFlowState.Stage.READY
+
+      adapter.submitList(getConfiguration(state).toMappingModelList())
+    }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    ViewUtil.hideKeyboard(requireContext(), requireView())
+  }
+
+  private fun getConfiguration(state: GiftFlowState): DSLConfiguration {
+    return configure {
+      customPref(
+        SplashImage.Model(
+          R.drawable.ic_gift_chat
+        )
+      )
+
+      noPadTextPref(
+        title = DSLSettingsText.from(
+          R.string.GiftFlowStartFragment__gift_a_badge,
+          DSLSettingsText.CenterModifier,
+          DSLSettingsText.TextAppearanceModifier(R.style.Signal_Text_Headline)
+        )
+      )
+
+      space(DimensionUnit.DP.toPixels(16f).toInt())
+
+      noPadTextPref(
+        title = DSLSettingsText.from(R.string.GiftFlowStartFragment__gift_someone_a_badge, DSLSettingsText.CenterModifier)
+      )
+
+      space(DimensionUnit.DP.toPixels(16f).toInt())
+
+      customPref(
+        CurrencySelection.Model(
+          selectedCurrency = state.currency,
+          isEnabled = state.stage == GiftFlowState.Stage.READY,
+          onClick = {
+            val action = GiftFlowStartFragmentDirections.actionGiftFlowStartFragmentToSetCurrencyFragment(true, viewModel.getSupportedCurrencyCodes().toTypedArray())
+            findNavController().safeNavigate(action)
+          }
+        )
+      )
+
+      @Suppress("CascadeIf")
+      if (state.stage == GiftFlowState.Stage.FAILURE) {
+        customPref(
+          NetworkFailure.Model(
+            onRetryClick = {
+              viewModel.retry()
+            }
+          )
+        )
+      } else if (state.stage == GiftFlowState.Stage.INIT) {
+        customPref(IndeterminateLoadingCircle)
+      } else if (state.giftBadge != null) {
+        state.giftPrices[state.currency]?.let {
+          customPref(
+            GiftRowItem.Model(
+              giftBadge = state.giftBadge,
+              price = it
+            )
+          )
+        }
+      }
+    }
+  }
+}

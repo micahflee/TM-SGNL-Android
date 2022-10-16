@@ -16,13 +16,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.dd.CircularProgressButton;
 
 import org.signal.core.util.BreakIteratorCompat;
 import org.signal.core.util.EditTextUtil;
@@ -30,15 +28,16 @@ import org.tm.archive.R;
 import org.tm.archive.components.emoji.EmojiUtil;
 import org.tm.archive.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.StringUtil;
+import org.signal.core.util.StringUtil;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.adapter.AlwaysChangedDiffUtil;
 import org.tm.archive.util.text.AfterTextChanged;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.tm.archive.util.views.CircularProgressMaterialButton;
 import org.whispersystems.signalservice.api.crypto.ProfileCipher;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Let's you edit the 'About' section of your profile.
@@ -60,11 +59,11 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
       new AboutPreset("\uD83D\uDE80", R.string.EditAboutFragment_working_on_something_new)
   );
 
-  private ImageView              emojiView;
-  private EditText               bodyView;
-  private TextView               countView;
-  private CircularProgressButton saveButton;
-  private EditAboutViewModel     viewModel;
+  private ImageView                      emojiView;
+  private EditText                       bodyView;
+  private TextView                       countView;
+  private CircularProgressMaterialButton saveButton;
+  private EditAboutViewModel             viewModel;
 
   private String selectedEmoji;
 
@@ -116,7 +115,7 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
       onEmojiSelectedInternal(savedInstanceState.getString(KEY_SELECTED_EMOJI, ""));
     } else {
       this.bodyView.setText(Recipient.self().getAbout());
-      onEmojiSelectedInternal(Optional.fromNullable(Recipient.self().getAboutEmoji()).or(""));
+      onEmojiSelectedInternal(Optional.ofNullable(Recipient.self().getAboutEmoji()).orElse(""));
     }
 
     ViewUtil.focusAndMoveCursorToEndAndOpenKeyboard(bodyView);
@@ -145,7 +144,7 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
   }
 
   private void initializeViewModel() {
-    this.viewModel = ViewModelProviders.of(this).get(EditAboutViewModel.class);
+    this.viewModel = new ViewModelProvider(this).get(EditAboutViewModel.class);
 
     viewModel.getSaveState().observe(getViewLifecycleOwner(), this::presentSaveState);
     viewModel.getEvents().observe(getViewLifecycleOwner(), this::presentEvent);
@@ -167,14 +166,10 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
   private void presentSaveState(@NonNull EditAboutViewModel.SaveState state) {
     switch (state) {
       case IDLE:
-        saveButton.setClickable(true);
-        saveButton.setIndeterminateProgressMode(false);
-        saveButton.setProgress(0);
+        saveButton.cancelSpinning();
         break;
       case IN_PROGRESS:
-        saveButton.setClickable(false);
-        saveButton.setIndeterminateProgressMode(true);
-        saveButton.setProgress(50);
+        saveButton.setSpinning();
         break;
       case DONE:
         saveButton.setClickable(false);

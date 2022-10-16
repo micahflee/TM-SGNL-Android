@@ -36,8 +36,8 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mediaoverview.MediaOverviewActivity;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.preferences.widgets.StoragePreferenceCategory;
+import org.signal.core.util.StringUtil;
 import org.tm.archive.util.adapter.mapping.MappingModelList;
-import org.tm.archive.util.StringUtil;
 
 import java.text.NumberFormat;
 

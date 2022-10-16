@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.R;
@@ -18,11 +18,13 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.StickerRecord;
 import org.tm.archive.keyboard.KeyboardPage;
 import org.tm.archive.keyboard.KeyboardPagerViewModel;
+import org.tm.archive.keyboard.sticker.StickerKeyboardPageFragment;
+import org.tm.archive.keyboard.sticker.StickerSearchDialogFragment;
 import org.tm.archive.stickers.StickerEventListener;
 import org.tm.archive.stickers.StickerManagementActivity;
 import org.tm.archive.util.ViewUtil;
 
-public final class ImageEditorStickerSelectActivity extends AppCompatActivity implements StickerEventListener, MediaKeyboard.MediaKeyboardListener {
+public final class ImageEditorStickerSelectActivity extends AppCompatActivity implements StickerEventListener, MediaKeyboard.MediaKeyboardListener, StickerKeyboardPageFragment.Callback {
 
   @Override
   protected void attachBaseContext(@NonNull Context newBase) {
@@ -35,7 +37,7 @@ public final class ImageEditorStickerSelectActivity extends AppCompatActivity im
     super.onCreate(savedInstanceState);
     setContentView(R.layout.scribble_select_new_sticker_activity);
 
-    KeyboardPagerViewModel keyboardPagerViewModel = ViewModelProviders.of(this).get(KeyboardPagerViewModel.class);
+    KeyboardPagerViewModel keyboardPagerViewModel = new ViewModelProvider(this).get(KeyboardPagerViewModel.class);
     keyboardPagerViewModel.setOnlyPage(KeyboardPage.STICKER);
 
     MediaKeyboard mediaKeyboard = findViewById(R.id.emoji_drawer);
@@ -69,6 +71,12 @@ public final class ImageEditorStickerSelectActivity extends AppCompatActivity im
   @Override
   public void onStickerManagementClicked() {
     startActivity(StickerManagementActivity.getIntent(ImageEditorStickerSelectActivity.this));
+  }
+
+
+  @Override
+  public void openStickerSearch() {
+    StickerSearchDialogFragment.show(getSupportFragmentManager());
   }
 
   @Override

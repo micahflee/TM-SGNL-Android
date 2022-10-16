@@ -33,6 +33,7 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -42,7 +43,6 @@ import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.MediaPreviewActivity;
 import org.tm.archive.R;
-import org.tm.archive.TransportOption;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.components.AudioView;
 import org.tm.archive.components.DocumentView;
@@ -50,6 +50,8 @@ import org.tm.archive.components.RemovableEditableMediaView;
 import org.tm.archive.components.ThumbnailView;
 import org.tm.archive.components.location.SignalMapView;
 import org.tm.archive.components.location.SignalPlace;
+import org.tm.archive.conversation.MessageSendType;
+import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.giph.ui.GiphyActivity;
 import org.tm.archive.maps.PlacePickerActivity;
 import org.tm.archive.mediasend.v2.MediaSelectionActivity;
@@ -69,13 +71,13 @@ import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.concurrent.ListenableFuture.Listener;
 import org.tm.archive.util.concurrent.SettableFuture;
 import org.tm.archive.util.views.Stub;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 
@@ -94,7 +96,7 @@ public class AttachmentManager {
   private SignalMapView              mapView;
 
   private @NonNull  List<Uri>       garbage = new LinkedList<>();
-  private @NonNull  Optional<Slide> slide   = Optional.absent();
+  private @NonNull  Optional<Slide> slide   = Optional.empty();
   private @Nullable Uri             captureUri;
 
   public AttachmentManager(@NonNull Activity activity, @NonNull AttachmentListener listener) {
@@ -143,7 +145,7 @@ public class AttachmentManager {
       }
 
       markGarbage(getSlideUri());
-      slide = Optional.absent();
+      slide = Optional.empty();
     }
   }
 
@@ -152,7 +154,7 @@ public class AttachmentManager {
     cleanup(getSlideUri());
 
     captureUri = null;
-    slide      = Optional.absent();
+    slide      = Optional.empty();
 
     Iterator<Uri> iterator = garbage.listIterator();
 
@@ -315,7 +317,7 @@ public class AttachmentManager {
             }
 
             Log.d(TAG, "remote slide with size " + fileSize + " took " + (System.currentTimeMillis() - start) + "ms");
-            return mediaType.createSlide(context, uri, fileName, mimeType, null, fileSize, width, height, false);
+            return mediaType.createSlide(context, uri, fileName, mimeType, null, fileSize, width, height, false, null);
           }
         } finally {
           if (cursor != null) cursor.close();
@@ -325,17 +327,19 @@ public class AttachmentManager {
       }
 
       private @NonNull Slide getManuallyCalculatedSlideInfo(Uri uri, int width, int height) throws IOException {
-        long     start     = System.currentTimeMillis();
-        Long     mediaSize = null;
-        String   fileName  = null;
-        String   mimeType  = null;
-        boolean  gif       = false;
+        long                                   start               = System.currentTimeMillis();
+        Long                                   mediaSize           = null;
+        String                                 fileName            = null;
+        String                                 mimeType            = null;
+        boolean                                gif                 = false;
+        AttachmentDatabase.TransformProperties transformProperties = null;
 
         if (PartAuthority.isLocalUri(uri)) {
-          mediaSize = PartAuthority.getAttachmentSize(context, uri);
-          fileName  = PartAuthority.getAttachmentFileName(context, uri);
-          mimeType  = PartAuthority.getAttachmentContentType(context, uri);
-          gif       = PartAuthority.getAttachmentIsVideoGif(context, uri);
+          mediaSize           = PartAuthority.getAttachmentSize(context, uri);
+          fileName            = PartAuthority.getAttachmentFileName(context, uri);
+          mimeType            = PartAuthority.getAttachmentContentType(context, uri);
+          gif                 = PartAuthority.getAttachmentIsVideoGif(context, uri);
+          transformProperties = PartAuthority.getAttachmentTransformProperties(uri);
         }
 
         if (mediaSize == null) {
@@ -353,7 +357,7 @@ public class AttachmentManager {
         }
 
         Log.d(TAG, "local slide with size " + mediaSize + " took " + (System.currentTimeMillis() - start) + "ms");
-        return mediaType.createSlide(context, uri, fileName, mimeType, null, mediaSize, width, height, gif);
+        return mediaType.createSlide(context, uri, fileName, mimeType, null, mediaSize, width, height, gif, transformProperties);
       }
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
@@ -371,7 +375,7 @@ public class AttachmentManager {
   }
 
   public static void selectDocument(Fragment fragment, int requestCode) {
-     //**TM_SA**//Start
+    //**TM_SA**//Start
     Permissions.with(fragment)
                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
                .ifNecessary()
@@ -381,12 +385,12 @@ public class AttachmentManager {
     //**TM_SA**//End
   }
 
-  public static void selectGallery(Fragment fragment, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull TransportOption transport, boolean hasQuote) {
+  public static void selectGallery(Fragment fragment, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull MessageSendType messageSendType, boolean hasQuote) {
     Permissions.with(fragment)
                .request(Manifest.permission.READ_EXTERNAL_STORAGE)
                .ifNecessary()
                .withPermanentDenialDialog(fragment.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
-               .onAllGranted(() -> fragment.startActivityForResult(MediaSelectionActivity.gallery(fragment.requireContext(), transport, Collections.emptyList(), recipient.getId(), body, hasQuote), requestCode))
+               .onAllGranted(() -> fragment.startActivityForResult(MediaSelectionActivity.gallery(fragment.requireContext(), messageSendType, Collections.emptyList(), recipient.getId(), body, hasQuote), requestCode))
                .execute();
   }
 
@@ -402,18 +406,21 @@ public class AttachmentManager {
                .execute();
   }
 
-  public static void selectLocation(Fragment fragment, int requestCode) {
+  public static void selectLocation(Fragment fragment, int requestCode, @ColorInt int chatColor) {
     Permissions.with(fragment)
                .request(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                .ifNecessary()
                .withPermanentDenialDialog(fragment.getString(R.string.AttachmentManager_signal_requires_location_information_in_order_to_attach_a_location))
-               .onAllGranted(() -> PlacePickerActivity.startActivityForResultAtCurrentLocation(fragment, requestCode))
+               .onAllGranted(() -> PlacePickerActivity.startActivityForResultAtCurrentLocation(fragment, requestCode, chatColor))
                .execute();
   }
 
-  public static void selectGif(Fragment fragment, int requestCode, boolean isForMms) {
+  public static void selectGif(Fragment fragment, int requestCode, RecipientId id, MessageSendType sendType, boolean isForMms, CharSequence textTrimmed) {
     Intent intent = new Intent(fragment.requireContext(), GiphyActivity.class);
     intent.putExtra(GiphyActivity.EXTRA_IS_MMS, isForMms);
+    intent.putExtra(GiphyActivity.EXTRA_RECIPIENT_ID, id);
+    intent.putExtra(GiphyActivity.EXTRA_TRANSPORT, sendType);
+    intent.putExtra(GiphyActivity.EXTRA_TEXT, textTrimmed);
     fragment.startActivityForResult(intent, requestCode);
   }
 
@@ -473,7 +480,7 @@ public class AttachmentManager {
       Intent intent = new Intent(context, MediaPreviewActivity.class);
       intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
       intent.putExtra(MediaPreviewActivity.SIZE_EXTRA, slide.asAttachment().getSize());
-      intent.putExtra(MediaPreviewActivity.CAPTION_EXTRA, slide.getCaption().orNull());
+      intent.putExtra(MediaPreviewActivity.CAPTION_EXTRA, slide.getCaption().orElse(null));
       intent.setDataAndType(slide.getUri(), slide.getContentType());
 
       context.startActivity(intent);
@@ -490,6 +497,12 @@ public class AttachmentManager {
   private class RemoveButtonListener implements View.OnClickListener {
     @Override
     public void onClick(View v) {
+      slide.ifPresent(oldSlide -> {
+        if (oldSlide instanceof LocationSlide) {
+          attachmentListener.onLocationRemoved();
+        }
+      });
+
       cleanup();
       clear(GlideApp.with(context.getApplicationContext()), true);
     }
@@ -497,6 +510,7 @@ public class AttachmentManager {
 
   public interface AttachmentListener {
     void onAttachmentChanged();
+    void onLocationRemoved();
   }
 
 }

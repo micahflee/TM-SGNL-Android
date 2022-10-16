@@ -1,0 +1,76 @@
+package org.tm.archive.conversation.mutiselect.forward
+
+import android.content.DialogInterface
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.setFragmentResult
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import org.tm.archive.R
+import org.tm.archive.components.FixedRoundedCornerBottomSheetDialogFragment
+import org.tm.archive.stories.Stories
+import org.tm.archive.util.fragments.findListener
+
+class MultiselectForwardBottomSheet : FixedRoundedCornerBottomSheetDialogFragment(), MultiselectForwardFragment.Callback {
+
+  override val peekHeightPercentage: Float = 0.67f
+
+  private var callback: Callback? = null
+
+  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    return inflater.inflate(R.layout.multiselect_bottom_sheet, container, false)
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    callback = findListener<Callback>()
+
+    if (savedInstanceState == null) {
+      val fragment = MultiselectForwardFragment()
+      fragment.arguments = requireArguments()
+
+      childFragmentManager.beginTransaction()
+        .replace(R.id.multiselect_container, fragment)
+        .commitAllowingStateLoss()
+    }
+  }
+
+  override fun getContainer(): ViewGroup {
+    return requireView().parent.parent.parent as ViewGroup
+  }
+
+  override fun getDialogBackgroundColor(): Int {
+    return backgroundColor
+  }
+
+  override fun getStorySendRequirements(): Stories.MediaTransform.SendRequirements? {
+    return findListener<Callback>()?.getStorySendRequirements()
+  }
+  override fun setResult(bundle: Bundle) {
+    setFragmentResult(MultiselectForwardFragment.RESULT_KEY, bundle)
+  }
+
+  override fun onDismiss(dialog: DialogInterface) {
+    super.onDismiss(dialog)
+    callback?.onDismissForwardSheet()
+  }
+
+  override fun onFinishForwardAction() {
+    callback?.onFinishForwardAction()
+  }
+
+  override fun exitFlow() {
+    dismissAllowingStateLoss()
+  }
+
+  override fun onSearchInputFocused() {
+    (requireDialog() as BottomSheetDialog).behavior.state = BottomSheetBehavior.STATE_EXPANDED
+  }
+
+  interface Callback {
+    fun onFinishForwardAction()
+    fun onDismissForwardSheet()
+    fun getStorySendRequirements(): Stories.MediaTransform.SendRequirements? = null
+  }
+}

@@ -12,11 +12,11 @@ import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.profiles.AvatarHelper;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.Optional;
 
 public final class GroupRecordContactPhoto implements ContactPhoto {
 

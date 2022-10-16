@@ -1,0 +1,111 @@
+<html>
+  {{> partials/head title="Query" }}
+  <body>
+
+    {{> partials/prefix isQuery=true}}
+
+    <!-- Query Input -->
+    <form action="query" method="post" id="query-form">
+      <textarea name="query" class="query-input" placeholder="Enter your query...">{{query}}</textarea>
+      <input type="hidden" name="db" value="{{database}}" />
+      <input type="submit" name="action" value="run" />
+      or
+      <input type="submit" name="action" value="analyze" />
+      or
+      <button onclick="onFormatClicked(event)">format</button>
+    </form>
+
+    <!-- Container for previous queries -->
+    <h1 class="collapse-header" data-for="history-container">Query History</h1>
+    <table id="history-container" class="hidden"></table>
+
+    <!-- Query Result -->
+    <h1>Data</h1>
+    {{#if queryResult}}
+      {{queryResult.rowCount}} row(s). <br />
+      {{queryResult.timeToFirstRow}} ms to read the first row. <br />
+      {{queryResult.timeToReadRows}} ms to read the rest of the rows. <br />
+      <br />
+      <table>
+        <tr>
+          {{#each queryResult.columns}}
+            <th>{{this}}</th>
+          {{/each}}
+        </tr>
+        {{#each queryResult.rows}}
+          <tr>
+            {{#each this}}
+              <td><pre>{{{this}}}</pre></td>
+            {{/each}}
+          </tr>
+        {{/each}}
+      </table>
+    {{else}}
+      No data.
+    {{/if}}
+
+    {{> partials/suffix}}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql-formatter/4.0.2/sql-formatter.min.js" integrity="sha512-JPoVzOHQvXbB4+lOX6GOBM3xOZhwAMKRYn2G0VpfPcwIixAAvPL+HKuaFuevm+i6Q4GktSKY/CxlcB/1BaV/6Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript">
+      function onFormatClicked(e) {
+        e.preventDefault();
+        const queryInput = document.querySelector('.query-input')
+        queryInput.value = sqlFormatter.format(queryInput.value).replaceAll("! =", "!=").replaceAll("| |", "||");
+      }
+
+      function submitOnEnter(event){
+        if (event.which === 13 && event.shiftKey) {
+          event.target.form.submit();
+          onQuerySubmitted();
+          event.preventDefault();
+        }
+      }
+
+      function onQuerySubmitted() {
+        const query = document.querySelector('.query-input').value;
+
+        let history = getQueryHistory();
+        history.unshift(query);
+        history = history.slice(0, 10);
+
+        localStorage.setItem('query-history', JSON.stringify(history));
+      }
+
+      function renderQueryHistory() {
+        const container = document.getElementById('history-container');
+
+        let history = getQueryHistory();
+
+        if (history.length > 0) {
+          let i = 0;
+          for (let item of history) {
+            container.innerHTML += `
+              <tr>
+                <td><button onclick="onHistoryItemClicked(${i})">^</button></td>
+                <td id="history-item-${i}">${item}</td>
+              </tr>
+            `;
+            i++;
+          }
+        } else {
+          container.innerHTML = '<em>None</em>';
+        }
+      }
+
+      function onHistoryItemClicked(i) {
+        document.querySelector('.query-input').value = document.getElementById(`history-item-${i}`).innerText;
+      }
+
+      function getQueryHistory() {
+        const historyRaw = localStorage.getItem('query-history') || "[]";
+        return JSON.parse(historyRaw);
+      }
+
+      document.querySelector('.query-input').addEventListener('keypress', submitOnEnter);
+      document.getElementById('query-form').addEventListener('submit', onQuerySubmitted, false);
+      renderQueryHistory();
+
+    </script>
+  </body>
+</html>

@@ -3,10 +3,12 @@ package org.tm.archive.logging
 import android.app.Application
 import android.os.Looper
 import org.signal.core.util.logging.Log
+import org.signal.core.util.logging.Scrubber
 import org.tm.archive.BuildConfig
 import org.tm.archive.database.LogDatabase
 import org.tm.archive.database.model.LogEntry
-import org.tm.archive.logsubmit.util.Scrubber
+import org.tm.archive.logging.PersistentLogger.LogRequest
+import org.tm.archive.logging.PersistentLogger.WriteThread
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.text.SimpleDateFormat

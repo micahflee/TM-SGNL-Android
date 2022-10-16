@@ -40,6 +40,7 @@ import org.tm.archive.database.loaders.GroupedThreadMediaLoader;
 import org.tm.archive.database.loaders.MediaLoader;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.PartAuthority;
+import org.tm.archive.util.BottomOffsetDecoration;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
@@ -130,6 +131,7 @@ public final class MediaOverviewPageFragment extends Fragment
     this.recyclerView.setLayoutManager(gridManager);
     this.recyclerView.setHasFixedSize(true);
     this.recyclerView.addItemDecoration(new MediaGridDividerDecoration(spans, ViewUtil.dpToPx(4), adapter));
+    this.recyclerView.addItemDecoration(new BottomOffsetDecoration(ViewUtil.dpToPx(160)));
 
     MediaOverviewViewModel viewModel = MediaOverviewViewModel.getMediaOverviewViewModel(requireActivity());
 
@@ -269,11 +271,11 @@ public final class MediaOverviewPageFragment extends Fragment
 
   @Override
   public void onMediaLongClicked(MediaDatabase.MediaRecord mediaRecord) {
-    ((MediaGalleryAllAdapter) recyclerView.getAdapter()).toggleSelection(mediaRecord);
-
     if (actionMode == null) {
       enterMultiSelect();
     }
+
+    handleMediaMultiSelectClick(mediaRecord);
   }
 
   private void handleSelectAllMedia() {

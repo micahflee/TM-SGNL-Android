@@ -6,7 +6,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.tm.archive.MuteDialog
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsIcon
 import org.tm.archive.components.settings.DSLSettingsText
@@ -14,6 +13,7 @@ import org.tm.archive.components.settings.configure
 import org.tm.archive.components.settings.conversation.preferences.Utils.formatMutedUntil
 import org.tm.archive.database.RecipientDatabase
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
 class SoundsAndNotificationsSettingsFragment : DSLSettingsFragment(
@@ -38,7 +38,7 @@ class SoundsAndNotificationsSettingsFragment : DSLSettingsFragment(
     viewModel.channelConsistencyCheck()
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     viewModel.state.observe(viewLifecycleOwner) { state ->
       if (state.channelConsistencyCheckComplete && state.recipientId != Recipient.UNKNOWN.id) {
         adapter.submitList(getConfiguration(state).toMappingModelList())

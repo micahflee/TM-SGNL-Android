@@ -25,21 +25,22 @@ import androidx.annotation.Nullable;
 
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.protocol.InvalidKeyException;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.model.IdentityStoreRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.storage.StorageSyncHelper;
 import org.tm.archive.util.Base64;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 import org.tm.archive.util.IdentityUtil;
-import org.tm.archive.util.SqlUtil;
-import org.whispersystems.libsignal.IdentityKey;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.core.util.SqlUtil;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class IdentityDatabase extends Database {
 
@@ -141,6 +142,7 @@ public class IdentityDatabase extends Database {
   {
     saveIdentityInternal(addressName, recipientId, identityKey, verifiedStatus, firstUse, timestamp, nonBlockingApproval);
     SignalDatabase.recipients().markNeedsSync(recipientId);
+    StorageSyncHelper.scheduleSyncForDataChange();
   }
 
   public void setApproval(@NonNull String addressName, @NonNull RecipientId recipientId, boolean nonBlockingApproval) {
@@ -152,6 +154,7 @@ public class IdentityDatabase extends Database {
     database.update(TABLE_NAME, contentValues, ADDRESS + " = ?", SqlUtil.buildArgs(addressName));
 
     SignalDatabase.recipients().markNeedsSync(recipientId);
+    StorageSyncHelper.scheduleSyncForDataChange();
   }
 
   public void setVerified(@NonNull String addressName, @NonNull RecipientId recipientId, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
@@ -169,11 +172,14 @@ public class IdentityDatabase extends Database {
       Optional<IdentityRecord> record = getIdentityRecord(addressName);
       if (record.isPresent()) EventBus.getDefault().post(record.get());
       SignalDatabase.recipients().markNeedsSync(recipientId);
+      StorageSyncHelper.scheduleSyncForDataChange();
     }
   }
 
   public void updateIdentityAfterSync(@NonNull String addressName, @NonNull RecipientId recipientId, IdentityKey identityKey, VerifiedStatus verifiedStatus) {
-    boolean hadEntry      = getIdentityRecord(addressName).isPresent();
+    Optional<IdentityRecord> existingRecord = getIdentityRecord(addressName);
+
+    boolean hadEntry      = existingRecord.isPresent();
     boolean keyMatches    = hasMatchingKey(addressName, identityKey);
     boolean statusMatches = keyMatches && hasMatchingStatus(addressName, identityKey, verifiedStatus);
 
@@ -190,7 +196,8 @@ public class IdentityDatabase extends Database {
     }
 
     if (hadEntry && !keyMatches) {
-      IdentityUtil.markIdentityUpdate(context, RecipientId.fromExternalPush(addressName));
+      Log.w(TAG, "Updated identity key during storage sync for " + addressName + " | Existing: " + existingRecord.get().getIdentityKey().hashCode() + ", New: " + identityKey.hashCode());
+      IdentityUtil.markIdentityUpdate(context, recipientId);
     }
   }
 
@@ -211,7 +218,7 @@ public class IdentityDatabase extends Database {
       throw new AssertionError(e);
     }
 
-    return Optional.absent();
+    return Optional.empty();
   }
 
   private boolean hasMatchingKey(@NonNull String addressName, IdentityKey identityKey) {
@@ -243,7 +250,7 @@ public class IdentityDatabase extends Database {
     boolean     firstUse            = CursorUtil.requireBoolean(cursor, FIRST_USE);
     IdentityKey identity            = new IdentityKey(Base64.decode(serializedIdentity), 0);
 
-    return new IdentityRecord(RecipientId.fromExternalPush(addressName), identity, VerifiedStatus.forState(verifiedStatus), firstUse, timestamp, nonblockingApproval);
+    return new IdentityRecord(RecipientId.fromSidOrE164(addressName), identity, VerifiedStatus.forState(verifiedStatus), firstUse, timestamp, nonblockingApproval);
   }
 
   private void saveIdentityInternal(@NonNull String addressName,

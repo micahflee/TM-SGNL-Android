@@ -22,6 +22,7 @@ import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
+import org.tm.archive.util.views.LearnMoreTextView
 import org.tm.archive.util.visible
 
 class DSLSettingsAdapter : MappingAdapter() {
@@ -29,6 +30,7 @@ class DSLSettingsAdapter : MappingAdapter() {
     registerFactory(ClickPreference::class.java, LayoutFactory(::ClickPreferenceViewHolder, R.layout.dsl_preference_item))
     registerFactory(LongClickPreference::class.java, LayoutFactory(::LongClickPreferenceViewHolder, R.layout.dsl_preference_item))
     registerFactory(TextPreference::class.java, LayoutFactory(::TextPreferenceViewHolder, R.layout.dsl_preference_item))
+    registerFactory(LearnMoreTextPreference::class.java, LayoutFactory(::LearnMoreTextPreferenceViewHolder, R.layout.dsl_learn_more_preference_item))
     registerFactory(RadioListPreference::class.java, LayoutFactory(::RadioListPreferenceViewHolder, R.layout.dsl_preference_item))
     registerFactory(MultiSelectListPreference::class.java, LayoutFactory(::MultiSelectListPreferenceViewHolder, R.layout.dsl_preference_item))
     registerFactory(ExternalLinkPreference::class.java, LayoutFactory(::ExternalLinkPreferenceViewHolder, R.layout.dsl_preference_item))
@@ -45,6 +47,7 @@ class DSLSettingsAdapter : MappingAdapter() {
 
 abstract class PreferenceViewHolder<T : PreferenceModel<T>>(itemView: View) : MappingViewHolder<T>(itemView) {
   protected val iconView: ImageView = itemView.findViewById(R.id.icon)
+  private val iconEndView: ImageView? = itemView.findViewById(R.id.icon_end)
   protected val titleView: TextView = itemView.findViewById(R.id.title)
   protected val summaryView: TextView = itemView.findViewById(R.id.summary)
 
@@ -57,6 +60,10 @@ abstract class PreferenceViewHolder<T : PreferenceModel<T>>(itemView: View) : Ma
     val icon = model.icon?.resolve(context)
     iconView.setImageDrawable(icon)
     iconView.visible = icon != null
+
+    val iconEnd = model.iconEnd?.resolve(context)
+    iconEndView?.setImageDrawable(iconEnd)
+    iconEndView?.visible = iconEnd != null
 
     val title = model.title?.resolve(context)
     if (title != null) {
@@ -86,10 +93,19 @@ abstract class PreferenceViewHolder<T : PreferenceModel<T>>(itemView: View) : Ma
 
 class TextPreferenceViewHolder(itemView: View) : PreferenceViewHolder<TextPreference>(itemView)
 
+class LearnMoreTextPreferenceViewHolder(itemView: View) : PreferenceViewHolder<LearnMoreTextPreference>(itemView) {
+  override fun bind(model: LearnMoreTextPreference) {
+    super.bind(model)
+    (titleView as LearnMoreTextView).setOnLinkClickListener { model.onClick() }
+    (summaryView as LearnMoreTextView).setOnLinkClickListener { model.onClick() }
+  }
+}
+
 class ClickPreferenceViewHolder(itemView: View) : PreferenceViewHolder<ClickPreference>(itemView) {
   override fun bind(model: ClickPreference) {
     super.bind(model)
     itemView.setOnClickListener { model.onClick() }
+    itemView.setOnLongClickListener { model.onLongClick?.invoke() ?: false }
   }
 }
 

@@ -2,16 +2,12 @@ package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
 
-import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.recipients.Recipient;
-
-import java.util.List;
 
 public class RotateProfileKeyJob extends BaseJob {
 
@@ -44,20 +40,6 @@ public class RotateProfileKeyJob extends BaseJob {
     Recipient  self          = Recipient.self();
 
     SignalDatabase.recipients().setProfileKey(self.getId(), newProfileKey);
-
-    ApplicationDependencies.getJobManager().add(new ProfileUploadJob());
-    ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
-    ApplicationDependencies.getJobManager().add(new MultiDeviceProfileKeyUpdateJob());
-
-    updateProfileKeyOnAllV2Groups();
-  }
-
-  private void updateProfileKeyOnAllV2Groups() {
-    List<GroupId.V2> allGv2Groups = SignalDatabase.groups().getAllGroupV2Ids();
-
-    for (GroupId.V2 groupId : allGv2Groups) {
-      ApplicationDependencies.getJobManager().add(GroupV2UpdateSelfProfileKeyJob.withoutLimits(groupId));
-    }
   }
 
   @Override

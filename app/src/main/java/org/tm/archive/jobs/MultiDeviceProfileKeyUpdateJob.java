@@ -4,7 +4,7 @@ package org.tm.archive.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -15,7 +15,6 @@ import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
@@ -30,6 +29,7 @@ import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedExcept
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
@@ -72,19 +72,19 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
       return;
     }
 
-    Optional<ProfileKey>       profileKey = Optional.of(ProfileKeyUtil.getSelfProfileKey());
-    ByteArrayOutputStream      baos       = new ByteArrayOutputStream();
+    Optional<ProfileKey>  profileKey = Optional.of(ProfileKeyUtil.getSelfProfileKey());
+    ByteArrayOutputStream baos       = new ByteArrayOutputStream();
     DeviceContactsOutputStream out        = new DeviceContactsOutputStream(baos);
 
     out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, Recipient.self()),
-                                Optional.absent(),
-                                Optional.absent(),
-                                Optional.absent(),
-                                Optional.absent(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
                                 profileKey,
                                 false,
-                                Optional.absent(),
-                                Optional.absent(),
+                                Optional.empty(),
+                                Optional.empty(),
                                 false));
 
     out.close();

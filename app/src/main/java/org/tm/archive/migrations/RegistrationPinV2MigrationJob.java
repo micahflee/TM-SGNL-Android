@@ -5,13 +5,13 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.InvalidKeyException;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.jobs.BaseJob;
 import org.tm.archive.pin.PinState;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.signalservice.internal.contacts.crypto.UnauthenticatedResponseException;
 
 import java.io.IOException;

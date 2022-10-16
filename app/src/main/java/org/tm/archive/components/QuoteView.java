@@ -4,7 +4,6 @@ package org.tm.archive.components;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -17,59 +16,95 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.shape.CornerFamily;
+import com.google.android.material.shape.ShapeAppearanceModel;
 
+import org.signal.core.util.DimensionUnit;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.attachments.Attachment;
+import org.tm.archive.components.emoji.EmojiImageView;
 import org.tm.archive.components.mention.MentionAnnotation;
-import org.tm.archive.conversation.colors.ChatColors;
+import org.tm.archive.components.quotes.QuoteViewColorTheme;
 import org.tm.archive.database.model.Mention;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.mms.GlideRequests;
+import org.tm.archive.mms.QuoteModel;
 import org.tm.archive.mms.Slide;
 import org.tm.archive.mms.SlideDeck;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientForeverObserver;
+import org.tm.archive.stories.StoryTextPostModel;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.Projection;
-import org.tm.archive.util.ThemeUtil;
+import org.tm.archive.util.Util;
 
+import java.io.IOException;
 import java.util.List;
 
 public class QuoteView extends FrameLayout implements RecipientForeverObserver {
 
   private static final String TAG = Log.tag(QuoteView.class);
 
-  private static final int MESSAGE_TYPE_PREVIEW  = 0;
-  private static final int MESSAGE_TYPE_OUTGOING = 1;
-  private static final int MESSAGE_TYPE_INCOMING = 2;
+  public enum MessageType {
+    // These codes must match the values for the QuoteView_message_type XML attribute.
+    PREVIEW(0),
+    OUTGOING(1),
+    INCOMING(2),
+    STORY_REPLY_OUTGOING(3),
+    STORY_REPLY_INCOMING(4),
+    STORY_REPLY_PREVIEW(5);
 
-  private ViewGroup mainView;
-  private ViewGroup footerView;
-  private TextView  authorView;
-  private TextView  bodyView;
-  private View      quoteBarView;
-  private ImageView thumbnailView;
-  private View      attachmentVideoOverlayView;
-  private ViewGroup attachmentContainerView;
-  private TextView  attachmentNameView;
-  private ImageView dismissView;
+    private final int code;
 
-  private long          id;
-  private LiveRecipient author;
-  private CharSequence  body;
-  private TextView      mediaDescriptionText;
-  private TextView      missingLinkText;
-  private SlideDeck     attachments;
-  private int           messageType;
-  private int           largeCornerRadius;
-  private int           smallCornerRadius;
-  private CornerMask    cornerMask;
+    MessageType(int code) {
+      this.code = code;
+    }
 
+    private static @NonNull MessageType fromCode(int code) {
+      for (MessageType value : values()) {
+        if (value.code == code) {
+          return value;
+        }
+      }
+
+      throw new IllegalArgumentException("Unsupported code " + code);
+    }
+  }
+
+  private View               background;
+  private ViewGroup          mainView;
+  private ViewGroup          footerView;
+  private TextView           authorView;
+  private TextView           bodyView;
+  private View               quoteBarView;
+  private ShapeableImageView thumbnailView;
+  private View               attachmentVideoOverlayView;
+  private ViewGroup          attachmentContainerView;
+  private TextView           attachmentNameView;
+  private ImageView          dismissView;
+  private EmojiImageView     missingStoryReaction;
+  private EmojiImageView     storyReactionEmoji;
+
+  private long            id;
+  private LiveRecipient   author;
+  private CharSequence    body;
+  private TextView        mediaDescriptionText;
+  private TextView        missingLinkText;
+  private SlideDeck       attachments;
+  private MessageType     messageType;
+  private int             largeCornerRadius;
+  private int             smallCornerRadius;
+  private CornerMask      cornerMask;
+  private QuoteModel.Type quoteType;
+  private boolean         isWallpaperEnabled;
+
+  private int thumbHeight;
+  private int thumbWidth;
 
   public QuoteView(Context context) {
     super(context);
@@ -95,6 +130,7 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
   private void initialize(@Nullable AttributeSet attrs) {
     inflate(getContext(), R.layout.quote_view, this);
 
+    this.background                   = findViewById(R.id.quote_background);
     this.mainView                     = findViewById(R.id.quote_main);
     this.footerView                   = findViewById(R.id.quote_missing_footer);
     this.authorView                   = findViewById(R.id.quote_author);
@@ -107,33 +143,23 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     this.dismissView                  = findViewById(R.id.quote_dismiss);
     this.mediaDescriptionText         = findViewById(R.id.media_type);
     this.missingLinkText              = findViewById(R.id.quote_missing_text);
+    this.missingStoryReaction         = findViewById(R.id.quote_missing_story_reaction_emoji);
+    this.storyReactionEmoji           = findViewById(R.id.quote_story_reaction_emoji);
     this.largeCornerRadius            = getResources().getDimensionPixelSize(R.dimen.quote_corner_radius_large);
     this.smallCornerRadius            = getResources().getDimensionPixelSize(R.dimen.quote_corner_radius_bottom);
 
     cornerMask = new CornerMask(this);
-    cornerMask.setRadii(largeCornerRadius, largeCornerRadius, smallCornerRadius, smallCornerRadius);
 
     if (attrs != null) {
-      TypedArray typedArray     = getContext().getTheme().obtainStyledAttributes(attrs, R.styleable.QuoteView, 0, 0);
-      int        primaryColor   = typedArray.getColor(R.styleable.QuoteView_quote_colorPrimary, Color.BLACK);
-      int        secondaryColor = typedArray.getColor(R.styleable.QuoteView_quote_colorSecondary, Color.BLACK);
-      messageType = typedArray.getInt(R.styleable.QuoteView_message_type, 0);
+      TypedArray typedArray = getContext().getTheme().obtainStyledAttributes(attrs, R.styleable.QuoteView, 0, 0);
+
+      messageType = MessageType.fromCode(typedArray.getInt(R.styleable.QuoteView_message_type, 0));
       typedArray.recycle();
 
-      dismissView.setVisibility(messageType == MESSAGE_TYPE_PREVIEW ? VISIBLE : GONE);
-
-      authorView.setTextColor(primaryColor);
-      bodyView.setTextColor(primaryColor);
-      attachmentNameView.setTextColor(primaryColor);
-      mediaDescriptionText.setTextColor(secondaryColor);
-      missingLinkText.setTextColor(primaryColor);
-
-      if (messageType == MESSAGE_TYPE_PREVIEW) {
-        int radius = getResources().getDimensionPixelOffset(R.dimen.quote_corner_radius_preview);
-        cornerMask.setTopLeftRadius(radius);
-        cornerMask.setTopRightRadius(radius);
-      }
+      dismissView.setVisibility(messageType == MessageType.PREVIEW ? VISIBLE : GONE);
     }
+
+    setMessageType(messageType);
 
     dismissView.setOnClickListener(view -> setVisibility(GONE));
   }
@@ -150,13 +176,36 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     if (author != null) author.removeForeverObserver(this);
   }
 
+  public void setMessageType(@NonNull MessageType messageType) {
+    this.messageType = messageType;
+
+    cornerMask.setRadii(largeCornerRadius, largeCornerRadius, smallCornerRadius, smallCornerRadius);
+    thumbWidth = thumbHeight = getResources().getDimensionPixelSize(R.dimen.quote_thumb_size);
+
+    if (messageType == MessageType.PREVIEW) {
+      int radius = getResources().getDimensionPixelOffset(R.dimen.quote_corner_radius_preview);
+      cornerMask.setTopLeftRadius(radius);
+      cornerMask.setTopRightRadius(radius);
+    } else if (isStoryReply()) {
+      thumbWidth = getResources().getDimensionPixelOffset(R.dimen.quote_story_thumb_width);
+      thumbHeight = getResources().getDimensionPixelOffset(R.dimen.quote_story_thumb_height);
+    }
+
+    ViewGroup.LayoutParams params = thumbnailView.getLayoutParams();
+    params.height = thumbHeight;
+    params.width = thumbWidth;
+
+    thumbnailView.setLayoutParams(params);
+  }
+
   public void setQuote(GlideRequests glideRequests,
                        long id,
                        @NonNull Recipient author,
                        @Nullable CharSequence body,
                        boolean originalMissing,
                        @NonNull SlideDeck attachments,
-                       @Nullable ChatColors chatColors)
+                       @Nullable String storyReaction,
+                       @NonNull QuoteModel.Type quoteType)
   {
     if (this.author != null) this.author.removeForeverObserver(this);
 
@@ -164,18 +213,18 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     this.author      = author.live();
     this.body        = body;
     this.attachments = attachments;
+    this.quoteType   = quoteType;
 
     this.author.observeForever(this);
     setQuoteAuthor(author);
-    setQuoteText(body, attachments);
-    setQuoteAttachment(glideRequests, attachments);
+    setQuoteText(resolveBody(body, quoteType), attachments, originalMissing, storyReaction);
+    setQuoteAttachment(glideRequests, body, attachments, originalMissing);
     setQuoteMissingFooter(originalMissing);
+    applyColorTheme();
+  }
 
-    if (Build.VERSION.SDK_INT < 21 && messageType == MESSAGE_TYPE_INCOMING && chatColors != null) {
-      this.setBackgroundColor(chatColors.asSingleColor());
-    } else {
-      this.setBackground(null);
-    }
+  private @Nullable CharSequence resolveBody(@Nullable CharSequence body, @NonNull QuoteModel.Type quoteType) {
+    return quoteType == QuoteModel.Type.GIFT_BADGE ? getContext().getString(R.string.QuoteView__gift) : body;
   }
 
   public void setTopCornerSizes(boolean topLeftLarge, boolean topRightLarge) {
@@ -193,6 +242,11 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     setVisibility(GONE);
   }
 
+  public void setWallpaperEnabled(boolean isWallpaperEnabled) {
+    this.isWallpaperEnabled = isWallpaperEnabled;
+    applyColorTheme();
+  }
+
   @Override
   public void onRecipientChanged(@NonNull Recipient recipient) {
     setQuoteAuthor(recipient);
@@ -207,20 +261,65 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
   }
 
   private void setQuoteAuthor(@NonNull Recipient author) {
-    boolean outgoing = messageType != MESSAGE_TYPE_INCOMING;
-    boolean preview  = messageType == MESSAGE_TYPE_PREVIEW;
-
-    authorView.setText(author.isSelf() ? getContext().getString(R.string.QuoteView_you)
-                                       : author.getDisplayName(getContext()));
-
-    quoteBarView.setBackgroundColor(ContextCompat.getColor(getContext(), outgoing ? R.color.core_white : android.R.color.transparent));
-    mainView.setBackgroundColor(ContextCompat.getColor(getContext(), preview ? R.color.quote_preview_background : R.color.quote_view_background));
+    if (isStoryReply()) {
+      authorView.setText(author.isSelf() ? getContext().getString(R.string.QuoteView_your_story)
+                                         : getContext().getString(R.string.QuoteView_s_story, author.getDisplayName(getContext())));
+    } else {
+      authorView.setText(author.isSelf() ? getContext().getString(R.string.QuoteView_you)
+                                         : author.getDisplayName(getContext()));
+    }
   }
 
-  private void setQuoteText(@Nullable CharSequence body, @NonNull SlideDeck attachments) {
+  private boolean isStoryReply() {
+    return messageType == MessageType.STORY_REPLY_OUTGOING ||
+           messageType == MessageType.STORY_REPLY_INCOMING ||
+           messageType == MessageType.STORY_REPLY_PREVIEW;
+  }
+
+  private void setQuoteText(@Nullable CharSequence body,
+                            @NonNull SlideDeck attachments,
+                            boolean originalMissing,
+                            @Nullable String storyReaction)
+  {
+    if (originalMissing && isStoryReply()) {
+      bodyView.setVisibility(GONE);
+      storyReactionEmoji.setVisibility(View.GONE);
+      mediaDescriptionText.setVisibility(VISIBLE);
+
+      mediaDescriptionText.setText(R.string.QuoteView_no_longer_available);
+      if (storyReaction != null) {
+        missingStoryReaction.setVisibility(View.VISIBLE);
+        missingStoryReaction.setImageEmoji(storyReaction);
+      } else {
+        missingStoryReaction.setVisibility(View.GONE);
+      }
+      return;
+    }
+
+    if (storyReaction != null) {
+      storyReactionEmoji.setImageEmoji(storyReaction);
+      storyReactionEmoji.setVisibility(View.VISIBLE);
+      missingStoryReaction.setVisibility(View.INVISIBLE);
+    } else {
+      storyReactionEmoji.setVisibility(View.GONE);
+      missingStoryReaction.setVisibility(View.GONE);
+    }
+
+    boolean isTextStory = !attachments.containsMediaSlide() && isStoryReply();
+
     if (!TextUtils.isEmpty(body) || !attachments.containsMediaSlide()) {
+      if (isTextStory && body != null) {
+        try {
+          bodyView.setText(getStoryTextPost(body).getText());
+        } catch (Exception e) {
+          Log.w(TAG, "Could not parse body of text post.", e);
+          bodyView.setText("");
+        }
+      } else {
+        bodyView.setText(body == null ? "" : body);
+      }
+
       bodyView.setVisibility(VISIBLE);
-      bodyView.setText(body == null ? "" : body);
       mediaDescriptionText.setVisibility(GONE);
       return;
     }
@@ -259,7 +358,44 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     }
   }
 
-  private void setQuoteAttachment(@NonNull GlideRequests glideRequests, @NonNull SlideDeck slideDeck) {
+  private void setQuoteAttachment(@NonNull GlideRequests glideRequests, @NonNull CharSequence body, @NonNull SlideDeck slideDeck, boolean originalMissing) {
+    boolean outgoing = messageType != MessageType.INCOMING && messageType != MessageType.STORY_REPLY_INCOMING;
+    boolean preview  = messageType == MessageType.PREVIEW || messageType == MessageType.STORY_REPLY_PREVIEW;
+
+    mainView.setMinimumHeight(isStoryReply() && originalMissing ? 0 : thumbHeight);
+    thumbnailView.setPadding(0, 0, 0, 0);
+
+    if (!attachments.containsMediaSlide() && isStoryReply()) {
+      StoryTextPostModel model = getStoryTextPost(body);
+      attachmentVideoOverlayView.setVisibility(GONE);
+      attachmentContainerView.setVisibility(GONE);
+      thumbnailView.setVisibility(VISIBLE);
+      glideRequests.load(model)
+                   .centerCrop()
+                   .override(thumbWidth, thumbHeight)
+                   .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                   .into(thumbnailView);
+      return;
+    }
+
+    if (quoteType == QuoteModel.Type.GIFT_BADGE) {
+      if (outgoing && !preview) {
+        int oneDp = (int) DimensionUnit.DP.toPixels(1);
+        thumbnailView.setPadding(oneDp, oneDp, oneDp, oneDp);
+        thumbnailView.setShapeAppearanceModel(buildShapeAppearanceForLayoutDirection());
+      }
+
+      attachmentVideoOverlayView.setVisibility(GONE);
+      attachmentContainerView.setVisibility(GONE);
+      thumbnailView.setVisibility(VISIBLE);
+      glideRequests.load(R.drawable.ic_gift_thumbnail)
+                   .centerCrop()
+                   .override(thumbWidth, thumbHeight)
+                   .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                   .into(thumbnailView);
+      return;
+    }
+
     Slide imageVideoSlide = slideDeck.getSlides().stream().filter(s -> s.hasImage() || s.hasVideo() || s.hasSticker()).findFirst().orElse(null);
     Slide documentSlide   = slideDeck.getSlides().stream().filter(Slide::hasDocument).findFirst().orElse(null);
     Slide viewOnceSlide   = slideDeck.getSlides().stream().filter(Slide::hasViewOnce).findFirst().orElse(null);
@@ -278,27 +414,34 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
       }
       glideRequests.load(new DecryptableUri(imageVideoSlide.getUri()))
                    .centerCrop()
-                   .override(getContext().getResources().getDimensionPixelSize(R.dimen.quote_thumb_size))
+                   .override(thumbWidth, thumbHeight)
                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                    .into(thumbnailView);
     } else if (documentSlide != null){
       thumbnailView.setVisibility(GONE);
       attachmentContainerView.setVisibility(VISIBLE);
-      attachmentNameView.setText(documentSlide.getFileName().or(""));
+      attachmentNameView.setText(documentSlide.getFileName().orElse(""));
     } else {
       thumbnailView.setVisibility(GONE);
       attachmentContainerView.setVisibility(GONE);
       dismissView.setBackgroundDrawable(null);
     }
-
-    if (ThemeUtil.isDarkTheme(getContext())) {
-      dismissView.setBackgroundResource(R.drawable.circle_alpha);
-    }
   }
 
   private void setQuoteMissingFooter(boolean missing) {
-    footerView.setVisibility(missing ? VISIBLE : GONE);
-    footerView.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.quote_view_background));
+    footerView.setVisibility(missing && !isStoryReply() ? VISIBLE : GONE);
+  }
+
+  private @Nullable StoryTextPostModel getStoryTextPost(@Nullable CharSequence body) {
+    if (Util.isEmpty(body)) {
+      return null;
+    }
+
+    try {
+      return StoryTextPostModel.parseFrom(body.toString(), id, author.getId());
+    } catch (IOException ioException) {
+      return null;
+    }
   }
 
   public void setTextSize(int unit, float size) {
@@ -321,7 +464,42 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     return attachments.asAttachments();
   }
 
+  public @NonNull QuoteModel.Type getQuoteType() {
+    return quoteType;
+  }
+
   public @NonNull List<Mention> getMentions() {
     return MentionAnnotation.getMentionsFromAnnotations(body);
+  }
+
+  private @NonNull ShapeAppearanceModel buildShapeAppearanceForLayoutDirection() {
+    int fourDp = (int) DimensionUnit.DP.toPixels(4);
+    if (getLayoutDirection() == LAYOUT_DIRECTION_LTR) {
+      return ShapeAppearanceModel.builder()
+                                 .setTopRightCorner(CornerFamily.ROUNDED, fourDp)
+                                 .setBottomRightCorner(CornerFamily.ROUNDED, fourDp)
+                                 .build();
+    } else {
+      return ShapeAppearanceModel.builder()
+                                 .setTopLeftCorner(CornerFamily.ROUNDED, fourDp)
+                                 .setBottomLeftCorner(CornerFamily.ROUNDED, fourDp)
+                                 .build();
+    }
+  }
+
+  private void applyColorTheme() {
+    boolean isOutgoing = messageType != MessageType.INCOMING && messageType != MessageType.STORY_REPLY_INCOMING;
+    boolean isPreview  = messageType == MessageType.PREVIEW || messageType == MessageType.STORY_REPLY_PREVIEW;
+
+    QuoteViewColorTheme quoteViewColorTheme = QuoteViewColorTheme.resolveTheme(isOutgoing, isPreview, isWallpaperEnabled);
+
+    quoteBarView.setBackgroundColor(quoteViewColorTheme.getBarColor(getContext()));
+    background.setBackgroundColor(quoteViewColorTheme.getBackgroundColor(getContext()));
+    authorView.setTextColor(quoteViewColorTheme.getForegroundColor(getContext()));
+    bodyView.setTextColor(quoteViewColorTheme.getForegroundColor(getContext()));
+    attachmentNameView.setTextColor(quoteViewColorTheme.getForegroundColor(getContext()));
+    mediaDescriptionText.setTextColor(quoteViewColorTheme.getForegroundColor(getContext()));
+    missingLinkText.setTextColor(quoteViewColorTheme.getForegroundColor(getContext()));
+    footerView.setBackgroundColor(quoteViewColorTheme.getBackgroundColor(getContext()));
   }
 }

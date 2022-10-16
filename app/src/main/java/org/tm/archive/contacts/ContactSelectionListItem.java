@@ -2,6 +2,8 @@ package org.tm.archive.contacts;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.CheckBox;
@@ -10,21 +12,29 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.components.FromTextView;
+import org.tm.archive.contacts.avatars.FallbackContactPhoto;
+import org.tm.archive.contacts.avatars.ResourceContactPhoto;
+import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.phonenumbers.PhoneNumberFormatter;
+import org.tm.archive.profiles.manage.UsernameState;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientForeverObserver;
 import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.util.SpanUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
-import org.whispersystems.libsignal.util.guava.Optional;
+
+import java.util.Optional;
+
 
 public class ContactSelectionListItem extends ConstraintLayout implements RecipientForeverObserver {
 
@@ -48,6 +58,8 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
   private String           contactAbout;
   private LiveRecipient    recipient;
   private GlideRequests    glideRequests;
+
+  private final UsernameFallbackPhotoProvider usernameFallbackPhotoProvider = new UsernameFallbackPhotoProvider();
 
   public ContactSelectionListItem(Context context) {
     super(context);
@@ -102,8 +114,11 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     this.contactLabel  = label;
     this.contactAbout  = about;
 
+    this.contactPhotoImage.setFallbackPhotoProvider(null);
     if (type == ContactRepository.NEW_PHONE_TYPE || type == ContactRepository.NEW_USERNAME_TYPE) {
       this.recipient = null;
+      this.contactPhotoImage.setFallbackPhotoProvider(usernameFallbackPhotoProvider);
+      this.contactPhotoImage.setFallbackPhotoColor(AvatarColor.ON_SURFACE_VARIANT);
       this.contactPhotoImage.setAvatar(glideRequests, null, false);
     } else if (recipientId != null) {
       if (this.recipient != null) {
@@ -115,14 +130,14 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
 
     Recipient recipientSnapshot = recipient != null ? recipient.get() : null;
 
-    if (recipientSnapshot != null && !recipientSnapshot.isResolving()) {
+    if (recipientSnapshot != null && !recipientSnapshot.isResolving() && !recipientSnapshot.isMyStory()) {
       contactName = recipientSnapshot.getDisplayName(getContext());
       name        = contactName;
     } else if (recipient != null) {
       name = "";
     }
 
-    if (recipientSnapshot == null || recipientSnapshot.isResolving() || recipientSnapshot.isRegistered()) {
+    if (recipientSnapshot == null || recipientSnapshot.isResolving() || recipientSnapshot.isRegistered() || recipientSnapshot.isDistributionList()) {
       smsTag.setVisibility(GONE);
     } else {
       smsTag.setVisibility(VISIBLE);
@@ -131,6 +146,9 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     if (recipientSnapshot == null || recipientSnapshot.isResolving()) {
       this.contactPhotoImage.setAvatar(glideRequests, null, false);
       setText(null, type, name, number, label, about);
+    } else if (recipientSnapshot.isMyStory()) {
+      this.contactPhotoImage.setRecipient(Recipient.self(), false);
+      setText(recipientSnapshot, type, name, number, label, about);
     } else {
       this.contactPhotoImage.setAvatar(glideRequests, recipientSnapshot, false);
       setText(recipientSnapshot, type, name, number, label, about);
@@ -163,6 +181,8 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
 
   @SuppressLint("SetTextI18n")
   private void setText(@Nullable Recipient recipient, int type, String name, String number, String label, @Nullable String about) {
+    this.numberView.setVisibility(View.VISIBLE);
+
     if (number == null || number.isEmpty()) {
       this.nameView.setEnabled(false);
       this.numberView.setText("");
@@ -176,10 +196,12 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
       this.nameView.setEnabled(true);
       this.labelView.setVisibility(View.GONE);
     } else if (type == ContactRepository.NEW_USERNAME_TYPE) {
-      this.numberView.setText("@" + number);
+      this.numberView.setVisibility(View.GONE);
       this.nameView.setEnabled(true);
-      this.labelView.setText(label);
-      this.labelView.setVisibility(View.VISIBLE);
+      this.labelView.setVisibility(View.GONE);
+    } else if (recipient != null && recipient.isDistributionList()) {
+      this.numberView.setText(getViewerCount(number));
+      this.labelView.setVisibility(View.GONE);
     } else {
       this.numberView.setText(!Util.isEmpty(about) ? about : number);
       this.nameView.setEnabled(true);
@@ -190,6 +212,8 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     if (recipient != null) {
       this.nameView.setText(recipient);
       chipName = recipient.getShortDisplayName(getContext());
+    } else if (type == ContactRepository.NEW_USERNAME_TYPE && number != null) {
+      this.nameView.setText(presentUsername(number));
     } else {
       this.nameView.setText(name);
       chipName = name;
@@ -208,8 +232,21 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
     if (!recipient.isGroup()) {
       throw new AssertionError();
     }
-    int memberCount = recipient.getParticipants().size();
+    int memberCount = recipient.getParticipantIds().size();
     return getContext().getResources().getQuantityString(R.plurals.contact_selection_list_item__number_of_members, memberCount, memberCount);
+  }
+
+  private String getViewerCount(@NonNull String number) {
+    int viewerCount = Integer.parseInt(number);
+    return getContext().getResources().getQuantityString(R.plurals.contact_selection_list_item__number_of_viewers, viewerCount, viewerCount);
+  }
+  
+  private CharSequence presentUsername(@NonNull String username) {
+    if (username.contains(UsernameState.DELIMITER)) {
+      return username;
+    } else {
+      return new SpannableStringBuilder(username).append(SpanUtil.color(ContextCompat.getColor(getContext(), R.color.signal_colorOutline), UsernameState.DELIMITER));
+    }
   }
 
   public @Nullable LiveRecipient getRecipient() {
@@ -221,7 +258,7 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
   }
 
   public Optional<RecipientId> getRecipientId() {
-    return recipient != null ? Optional.of(recipient.getId()) : Optional.absent();
+    return recipient != null ? Optional.of(recipient.getId()) : Optional.empty();
   }
 
   @Override
@@ -233,17 +270,29 @@ public class ContactSelectionListItem extends ConstraintLayout implements Recipi
       if (recipient.isGroup() && recipient.getGroupId().isPresent()) {
         contactNumber = recipient.getGroupId().get().toString();
       } else if (recipient.hasE164()) {
-        contactNumber = PhoneNumberFormatter.prettyPrint(recipient.getE164().or(""));
-      } else {
-        contactNumber = recipient.getEmail().or("");
+        contactNumber = PhoneNumberFormatter.prettyPrint(recipient.getE164().orElse(""));
+      } else if (!recipient.isDistributionList()) {
+        contactNumber = recipient.getEmail().orElse("");
       }
 
-      contactPhotoImage.setAvatar(glideRequests, recipient, false);
+      if (recipient.isMyStory()) {
+        contactPhotoImage.setRecipient(Recipient.self(), false);
+      } else {
+        contactPhotoImage.setAvatar(glideRequests, recipient, false);
+      }
+
       setText(recipient, contactType, contactName, contactNumber, contactLabel, contactAbout);
-      smsTag.setVisibility(recipient.isRegistered() ? GONE : VISIBLE);
+      smsTag.setVisibility(recipient.isRegistered() || recipient.isDistributionList() ? GONE : VISIBLE);
       badge.setBadgeFromRecipient(recipient);
     } else {
       Log.w(TAG, "Bad change! Local recipient doesn't match. Ignoring. Local: " + (this.recipient == null ? "null" : this.recipient.getId()) + ", Changed: " + recipient.getId());
+    }
+  }
+
+  private static class UsernameFallbackPhotoProvider extends Recipient.FallbackPhotoProvider {
+    @Override
+    public @NonNull FallbackContactPhoto getPhotoForRecipientWithoutName() {
+      return new ResourceContactPhoto(R.drawable.ic_search_24, R.drawable.ic_search_24, R.drawable.ic_search_24);
     }
   }
 }

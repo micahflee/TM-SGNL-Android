@@ -20,7 +20,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.Util;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.views.SimpleProgressDialog;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 

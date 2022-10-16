@@ -8,7 +8,7 @@ import org.tm.archive.database.ThreadDatabase;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 
 public class ConversationReader extends ThreadDatabase.StaticReader {
 

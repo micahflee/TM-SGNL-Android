@@ -9,12 +9,14 @@ import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 import org.signal.core.util.logging.Log
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.pin.KbsRepository
 import org.tm.archive.pin.TokenData
+import org.tm.archive.registration.SmsRetrieverReceiver
 import org.tm.archive.registration.VerifyAccountRepository
 import org.tm.archive.registration.VerifyAccountResponseProcessor
 import org.tm.archive.registration.VerifyAccountResponseWithoutKbs
@@ -37,6 +39,7 @@ class ChangeNumberViewModel(
   password: String,
   verifyAccountRepository: VerifyAccountRepository,
   kbsRepository: KbsRepository,
+  private val smsRetrieverReceiver: SmsRetrieverReceiver = SmsRetrieverReceiver(ApplicationDependencies.getApplication())
 ) : BaseRegistrationViewModel(savedState, verifyAccountRepository, kbsRepository, password) {
 
   var oldNumberState: NumberViewState = NumberViewState.Builder().build()
@@ -56,6 +59,13 @@ class ChangeNumberViewModel(
     } catch (e: NumberParseException) {
       Log.i(TAG, "Unable to parse number for default country code")
     }
+
+    smsRetrieverReceiver.registerReceiver()
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+    smsRetrieverReceiver.unregisterReceiver()
   }
 
   fun getLiveOldNumber(): LiveData<NumberViewState> {
@@ -107,21 +117,26 @@ class ChangeNumberViewModel(
     }
   }
 
+  fun ensureDecryptionsDrained(): Completable {
+    return changeNumberRepository.ensureDecryptionsDrained()
+  }
+
   override fun verifyCodeWithoutRegistrationLock(code: String): Single<VerifyAccountResponseProcessor> {
     return super.verifyCodeWithoutRegistrationLock(code)
-      .doOnSubscribe { SignalStore.misc().lockChangeNumber() }
+      .compose(ChangeNumberRepository::acquireReleaseChangeNumberLock)
       .flatMap(this::attemptToUnlockChangeNumber)
   }
 
   override fun verifyCodeAndRegisterAccountWithRegistrationLock(pin: String): Single<VerifyCodeWithRegistrationLockResponseProcessor> {
     return super.verifyCodeAndRegisterAccountWithRegistrationLock(pin)
-      .doOnSubscribe { SignalStore.misc().lockChangeNumber() }
+      .compose(ChangeNumberRepository::acquireReleaseChangeNumberLock)
       .flatMap(this::attemptToUnlockChangeNumber)
   }
 
   private fun <T : VerifyProcessor> attemptToUnlockChangeNumber(processor: T): Single<T> {
     return if (processor.hasResult() || processor.isServerSentError()) {
       SignalStore.misc().unlockChangeNumber()
+      SignalStore.misc().clearPendingChangeNumberMetadata()
       Single.just(processor)
     } else {
       changeNumberRepository.whoAmI()
@@ -129,6 +144,7 @@ class ChangeNumberViewModel(
           if (Objects.equals(whoAmI.number, localNumber)) {
             Log.i(TAG, "Local and remote numbers match, we can unlock.")
             SignalStore.misc().unlockChangeNumber()
+            SignalStore.misc().clearPendingChangeNumberMetadata()
           }
           processor
         }
@@ -165,14 +181,14 @@ class ChangeNumberViewModel(
 
   class Factory(owner: SavedStateRegistryOwner) : AbstractSavedStateViewModelFactory(owner, null) {
 
-    override fun <T : ViewModel?> create(key: String, modelClass: Class<T>, handle: SavedStateHandle): T {
+    override fun <T : ViewModel> create(key: String, modelClass: Class<T>, handle: SavedStateHandle): T {
       val context: Application = ApplicationDependencies.getApplication()
       val localNumber: String = SignalStore.account().e164!!
       val password: String = SignalStore.account().servicePassword!!
 
       val viewModel = ChangeNumberViewModel(
         localNumber = localNumber,
-        changeNumberRepository = ChangeNumberRepository(context),
+        changeNumberRepository = ChangeNumberRepository(),
         savedState = handle,
         password = password,
         verifyAccountRepository = VerifyAccountRepository(context),

@@ -115,11 +115,29 @@ public final class Projection {
   }
 
   public @NonNull Projection scale(float scale) {
-    Corners newCorners = new Corners(this.corners.topLeft * scale,
-                                     this.corners.topRight * scale,
-                                     this.corners.bottomRight * scale,
-                                     this.corners.bottomLeft * scale);
+    Corners newCorners = this.corners == null ? null : new Corners(this.corners.topLeft * scale,
+                                                                   this.corners.topRight * scale,
+                                                                   this.corners.bottomRight * scale,
+                                                                   this.corners.bottomLeft * scale);
     return set(x, y, (int) (width * scale), (int) (height * scale), newCorners);
+  }
+
+  public @NonNull Projection insetTop(int boundary) {
+    Corners newCorners = this.corners == null ? null : new Corners(0,
+                                                                   0,
+                                                                   this.corners.bottomRight,
+                                                                   this.corners.bottomLeft);
+
+    return set(x, y + boundary, width, height - boundary, newCorners);
+  }
+
+  public @NonNull Projection insetBottom(int boundary) {
+    Corners newCorners = this.corners == null ? null : new Corners(this.corners.topLeft,
+                                                                   this.corners.topRight,
+                                                                   0,
+                                                                   0);
+
+    return set(x, y, width, height - boundary, newCorners);
   }
 
   public static @NonNull Projection relativeToParent(@NonNull ViewGroup parent, @NonNull View view, @Nullable Corners corners) {

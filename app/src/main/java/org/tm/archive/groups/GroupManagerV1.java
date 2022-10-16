@@ -27,7 +27,6 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.MessageSender;
 import org.tm.archive.util.GroupUtil;
 import org.tm.archive.util.MediaUtil;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContext;
 
 import java.io.ByteArrayInputStream;
@@ -37,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 final class GroupManagerV1 {
@@ -157,7 +157,6 @@ final class GroupManagerV1 {
       Recipient recipient = Recipient.resolved(member);
       if (recipient.hasE164()) {
         e164Members.add(recipient.requireE164());
-        uuidMembers.add(GroupV1MessageProcessor.createMember(recipient.requireE164()));
       }
     }
 
@@ -196,7 +195,7 @@ final class GroupManagerV1 {
   static void updateGroupTimer(@NonNull Context context, @NonNull GroupId.V1 groupId, int expirationTime) {
     RecipientDatabase recipientDatabase = SignalDatabase.recipients();
     ThreadDatabase    threadDatabase    = SignalDatabase.threads();
-    Recipient         recipient         = Recipient.externalGroupExact(context, groupId);
+    Recipient         recipient         = Recipient.externalGroupExact(groupId);
     long              threadId          = threadDatabase.getOrCreateThreadIdFor(recipient);
 
     recipientDatabase.setExpireMessages(recipient.getId(), expirationTime);
@@ -213,9 +212,9 @@ final class GroupManagerV1 {
 
     if (!groupDatabase.isActive(groupId)) {
       Log.w(TAG, "Group has already been left.");
-      return Optional.absent();
+      return Optional.empty();
     }
 
-    return Optional.of(GroupUtil.createGroupV1LeaveMessage(groupId, groupRecipient));
+    return Optional.empty();
   }
 }

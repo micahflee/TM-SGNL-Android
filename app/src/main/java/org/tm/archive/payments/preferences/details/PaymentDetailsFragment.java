@@ -17,7 +17,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.Group;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import org.signal.core.util.logging.Log;
@@ -34,7 +34,7 @@ import org.tm.archive.payments.State;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.DateUtils;
 import org.tm.archive.util.SpanUtil;
-import org.tm.archive.util.StringUtil;
+import org.signal.core.util.StringUtil;
 import org.tm.archive.util.views.LearnMoreTextView;
 import org.whispersystems.signalservice.api.payments.Money;
 
@@ -99,7 +99,7 @@ public final class PaymentDetailsFragment extends LoggingFragment {
         sentFeeAmount.setVisibility(View.VISIBLE);
       }
     } else {
-      PaymentsDetailsViewModel viewModel = ViewModelProviders.of(this, new PaymentsDetailsViewModel.Factory(details.requireUuid())).get(PaymentsDetailsViewModel.class);
+      PaymentsDetailsViewModel viewModel = new ViewModelProvider(this, new PaymentsDetailsViewModel.Factory(details.requireUuid())).get(PaymentsDetailsViewModel.class);
       viewModel.getViewState()
                .observe(getViewLifecycleOwner(),
                         state -> {

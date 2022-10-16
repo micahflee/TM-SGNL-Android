@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.signal.core.util.logging.Log;
+import org.signal.core.util.money.FiatMoney;
 import org.tm.archive.database.PaymentDatabase.PaymentTransaction;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
@@ -17,14 +18,13 @@ import org.tm.archive.payments.FiatMoneyUtil;
 import org.tm.archive.payments.PaymentTransactionLiveData;
 import org.tm.archive.payments.PaymentsAddressException;
 import org.tm.archive.payments.confirm.ConfirmPaymentRepository.ConfirmPaymentResult;
-import org.signal.core.util.money.FiatMoney;
 import org.tm.archive.util.DefaultValueLiveData;
 import org.tm.archive.util.SingleLiveEvent;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.tm.archive.util.livedata.Store;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.payments.Money;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -68,7 +68,7 @@ final class ConfirmPaymentViewModel extends ViewModel {
     this.paymentDone = Transformations.distinctUntilChanged(Transformations.map(store.getStateLiveData(), state -> state.getStatus().isTerminalStatus()));
 
     LiveData<Optional<FiatMoney>> exchange = FiatMoneyUtil.getExchange(amount);
-    this.store.update(exchange, (exchange1, confirmPaymentState1) -> confirmPaymentState1.updateExchange(exchange1.orNull()));
+    this.store.update(exchange, (exchange1, confirmPaymentState1) -> confirmPaymentState1.updateExchange(exchange1.orElse(null)));
 
     LiveData<ConfirmPaymentState.Status> statusLiveData = Transformations.map(store.getStateLiveData(), ConfirmPaymentState::getStatus);
     LiveData<ConfirmPaymentState.Status> timeoutSignal  = Transformations.switchMap(statusLiveData,

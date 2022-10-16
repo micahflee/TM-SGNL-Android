@@ -4,12 +4,14 @@ import android.database.Cursor
 import org.tm.archive.components.settings.conversation.preferences.ButtonStripPreference
 import org.tm.archive.components.settings.conversation.preferences.LegacyGroupPreference
 import org.tm.archive.database.model.IdentityRecord
+import org.tm.archive.database.model.StoryViewState
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.ui.GroupMemberEntry
 import org.tm.archive.recipients.Recipient
 
 data class ConversationSettingsState(
   val threadId: Long = -1,
+  val storyViewState: StoryViewState = StoryViewState.NONE,
   val recipient: Recipient = Recipient.UNKNOWN,
   val buttonStripState: ButtonStripPreference.State = ButtonStripPreference.State(),
   val disappearingMessagesLifespan: Int = 0,

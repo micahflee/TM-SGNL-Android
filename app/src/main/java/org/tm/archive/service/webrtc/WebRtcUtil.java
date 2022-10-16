@@ -5,6 +5,9 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.signal.libsignal.protocol.InvalidKeyException;
+import org.signal.libsignal.protocol.ecc.Curve;
+import org.signal.libsignal.protocol.ecc.ECPublicKey;
 import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
 import org.signal.ringrtc.PeekInfo;
@@ -14,9 +17,6 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.webrtc.audio.AudioManagerCompat;
 import org.tm.archive.webrtc.audio.SignalAudioManager;
 import org.tm.archive.webrtc.locks.LockManager;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.ecc.Curve;
-import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.signalservice.api.messages.calls.HangupMessage;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 import org.whispersystems.signalservice.api.messages.calls.OpaqueMessage;
@@ -35,7 +35,7 @@ public final class WebRtcUtil {
 
   public static @NonNull LockManager.PhoneState getInCallPhoneState(@NonNull Context context) {
     AudioManagerCompat audioManager = ApplicationDependencies.getAndroidCallAudioManager();
-    if (audioManager.isSpeakerphoneOn() || audioManager.isBluetoothScoOn() || audioManager.isWiredHeadsetOn()) {
+    if (audioManager.isSpeakerphoneOn() || audioManager.isBluetoothConnected() || audioManager.isWiredHeadsetOn()) {
       return LockManager.PhoneState.IN_HANDS_FREE_CALL;
     } else {
       return LockManager.PhoneState.IN_CALL;
@@ -80,9 +80,10 @@ public final class WebRtcUtil {
     }
 
     if (currentState.getLocalDeviceState().getActiveDevice() == SignalAudioManager.AudioDevice.EARPIECE ||
-        currentState.getLocalDeviceState().getActiveDevice() == SignalAudioManager.AudioDevice.NONE)
+        currentState.getLocalDeviceState().getActiveDevice() == SignalAudioManager.AudioDevice.NONE &&
+        currentState.getCallInfoState().getActivePeer() != null)
     {
-      webRtcInteractor.setDefaultAudioDevice(SignalAudioManager.AudioDevice.SPEAKER_PHONE, true);
+      webRtcInteractor.setDefaultAudioDevice(currentState.getCallInfoState().requireActivePeer().getId(), SignalAudioManager.AudioDevice.SPEAKER_PHONE, true);
     }
   }
 

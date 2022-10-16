@@ -1,19 +1,17 @@
 package org.whispersystems.signalservice.api.groupsv2;
 
-import org.signal.zkgroup.profiles.ProfileKeyCredential;
-import org.whispersystems.libsignal.util.guava.Optional;
+import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
+import org.whispersystems.signalservice.api.util.ExpiringProfileCredentialUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 /**
  * Represents a potential new member of a group.
  * <p>
- * The entry may or may not have a {@link ProfileKeyCredential}.
+ * The entry may or may not have a {@link ExpiringProfileKeyCredential}.
  * <p>
  * If it does not, then this user can only be invited.
  * <p>
@@ -21,53 +19,50 @@ import java.util.UUID;
  */
 public final class GroupCandidate {
 
-  private final UUID                           uuid;
-  private final Optional<ProfileKeyCredential> profileKeyCredential;
+  private final UUID                                   uuid;
+  private final Optional<ExpiringProfileKeyCredential> expiringProfileKeyCredential;
 
-  public GroupCandidate(UUID uuid, Optional<ProfileKeyCredential> profileKeyCredential) {
-    this.uuid                 = uuid;
-    this.profileKeyCredential = profileKeyCredential;
+  public GroupCandidate(UUID uuid, Optional<ExpiringProfileKeyCredential> expiringProfileKeyCredential) {
+    this.uuid                         = uuid;
+    this.expiringProfileKeyCredential = expiringProfileKeyCredential;
   }
 
   public UUID getUuid() {
     return uuid;
   }
 
-  public Optional<ProfileKeyCredential> getProfileKeyCredential() {
-    return profileKeyCredential;
+  public Optional<ExpiringProfileKeyCredential> getExpiringProfileKeyCredential() {
+    return expiringProfileKeyCredential;
   }
 
-  public boolean hasProfileKeyCredential() {
-    return profileKeyCredential.isPresent();
+  public ExpiringProfileKeyCredential requireExpiringProfileKeyCredential() {
+    if (expiringProfileKeyCredential.isPresent()) {
+      return expiringProfileKeyCredential.get();
+    }
+    throw new IllegalStateException("no profile key credential");
   }
 
-  public static Set<GroupCandidate> withoutProfileKeyCredentials(Set<GroupCandidate> groupCandidates) {
+  public boolean hasValidProfileKeyCredential() {
+    return expiringProfileKeyCredential.map(ExpiringProfileCredentialUtil::isValid).orElse(false);
+  }
+
+  public static Set<GroupCandidate> withoutExpiringProfileKeyCredentials(Set<GroupCandidate> groupCandidates) {
     HashSet<GroupCandidate> result = new HashSet<>(groupCandidates.size());
 
-    for (GroupCandidate candidate: groupCandidates) {
-      result.add(candidate.withoutProfileKeyCredential());
+    for (GroupCandidate candidate : groupCandidates) {
+      result.add(candidate.withoutExpiringProfileKeyCredential());
     }
 
     return result;
   }
 
-  public GroupCandidate withoutProfileKeyCredential() {
-    return hasProfileKeyCredential() ? new GroupCandidate(uuid, Optional.absent())
-                                     : this;
+  public GroupCandidate withoutExpiringProfileKeyCredential() {
+    return expiringProfileKeyCredential.isPresent() ? new GroupCandidate(uuid, Optional.empty())
+                                                    : this;
   }
 
-  public GroupCandidate withProfileKeyCredential(ProfileKeyCredential profileKeyCredential) {
-    return new GroupCandidate(uuid, Optional.of(profileKeyCredential));
-  }
-
-  public static List<UUID> toUuidList(Collection<GroupCandidate> candidates) {
-    final List<UUID> uuidList = new ArrayList<>(candidates.size());
-
-    for (GroupCandidate candidate : candidates) {
-      uuidList.add(candidate.getUuid());
-    }
-
-    return uuidList;
+  public GroupCandidate withExpiringProfileKeyCredential(ExpiringProfileKeyCredential expiringProfileKeyCredential) {
+    return new GroupCandidate(uuid, Optional.of(expiringProfileKeyCredential));
   }
 
   @Override

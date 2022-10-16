@@ -13,7 +13,6 @@ import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.storage.StorageSyncHelper;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.api.storage.SignalAccountRecord;
@@ -24,6 +23,7 @@ import org.whispersystems.signalservice.api.storage.StorageKey;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,7 +71,7 @@ public class StorageAccountRestoreJob extends BaseJob {
     //**TM_SA**//Change the next code like this
     Optional<SignalStorageManifest> manifest = null;
     try {
-       manifest = accountManager.getStorageManifest(storageServiceKey);
+      manifest = accountManager.getStorageManifest(storageServiceKey);
     }catch (Exception e){
       ApplicationDependencies.getJobManager().add(new StorageForcePushJob());
       return;
@@ -103,7 +103,7 @@ public class StorageAccountRestoreJob extends BaseJob {
       return;
     }
 
-    SignalAccountRecord accountRecord = record.getAccount().orNull();
+    SignalAccountRecord accountRecord = record.getAccount().orElse(null);
     if (accountRecord == null) {
       Log.w(TAG, "The storage record didn't actually have an account on it! Not restoring.");
       return;

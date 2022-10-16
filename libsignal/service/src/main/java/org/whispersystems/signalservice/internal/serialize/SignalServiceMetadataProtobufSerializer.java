@@ -2,9 +2,10 @@ package org.whispersystems.signalservice.internal.serialize;
 
 import com.google.protobuf.ByteString;
 
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.messages.SignalServiceMetadata;
 import org.whispersystems.signalservice.internal.serialize.protos.MetadataProto;
+
+import java.util.Optional;
 
 public final class SignalServiceMetadataProtobufSerializer {
 
@@ -19,7 +20,8 @@ public final class SignalServiceMetadataProtobufSerializer {
                                                  .setTimestamp(metadata.getTimestamp())
                                                  .setServerReceivedTimestamp(metadata.getServerReceivedTimestamp())
                                                  .setServerDeliveredTimestamp(metadata.getServerDeliveredTimestamp())
-                                                 .setServerGuid(metadata.getServerGuid());
+                                                 .setServerGuid(metadata.getServerGuid())
+                                                 .setDestinationUuid(metadata.getDestinationUuid());
 
     if (metadata.getGroupId().isPresent()) {
       builder.setGroupId(ByteString.copyFrom(metadata.getGroupId().get()));
@@ -36,6 +38,7 @@ public final class SignalServiceMetadataProtobufSerializer {
                                      metadata.getServerDeliveredTimestamp(),
                                      metadata.getNeedsReceipt(),
                                      metadata.getServerGuid(),
-                                     Optional.fromNullable(metadata.getGroupId()).transform(ByteString::toByteArray));
+                                     Optional.ofNullable(metadata.getGroupId()).map(ByteString::toByteArray),
+                                     metadata.getDestinationUuid());
   }
 }

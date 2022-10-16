@@ -21,8 +21,8 @@ import org.tm.archive.database.model.StickerRecord;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.stickers.BlessedPacks;
 import org.tm.archive.stickers.StickerPackInstallEvent;
-import org.tm.archive.util.CursorUtil;
-import org.tm.archive.util.SqlUtil;
+import org.signal.core.util.CursorUtil;
+import org.signal.core.util.SqlUtil;
 
 import java.io.Closeable;
 import java.io.File;

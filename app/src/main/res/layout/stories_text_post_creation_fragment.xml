@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scene"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/story_text_post_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="9:16"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <org.tm.archive.stories.StoryTextPostView
+            android:id="@+id/story_text_post"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/background_protection"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="6dp"
+        android:padding="2dp"
+        android:src="@drawable/circle_tintable"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/story_text_post_card"
+        app:tint="@color/transparent_black_40" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/background_selector"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@drawable/story_text_background_button_overlay"
+        app:layout_constraintBottom_toBottomOf="@id/background_protection"
+        app:layout_constraintEnd_toEndOf="@id/background_protection"
+        app:layout_constraintStart_toStartOf="@id/background_protection"
+        app:layout_constraintTop_toTopOf="@id/background_protection"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Signal.Circle"
+        tools:background="@color/signal_alert_primary" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/add_link_protection"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="6dp"
+        android:padding="2dp"
+        android:src="@drawable/circle_tintable"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/background_protection"
+        app:tint="@color/transparent_black_40" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/add_link"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="@id/add_link_protection"
+        app:layout_constraintEnd_toEndOf="@id/add_link_protection"
+        app:layout_constraintStart_toStartOf="@id/add_link_protection"
+        app:layout_constraintTop_toTopOf="@id/add_link_protection"
+        app:srcCompat="@drawable/ic_link_24"
+        app:tint="@color/core_white" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/send"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="10dp"
+        android:background="@color/signal_colorOnSecondaryContainer"
+        android:padding="4dp"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Signal.Circle"
+        app:srcCompat="@drawable/ic_arrow_end_24"
+        app:tint="@color/signal_colorSecondaryContainer" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/send_in_progress_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:cardCornerRadius="18dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="24dp"
+            android:indeterminate="true"
+            app:indicatorColor="@color/signal_colorPrimary" />
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

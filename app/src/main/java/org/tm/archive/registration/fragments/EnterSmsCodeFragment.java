@@ -1,7 +1,7 @@
 package org.tm.archive.registration.fragments;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -9,7 +9,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.registration.viewmodel.RegistrationViewModel;
 import org.tm.archive.util.FeatureFlags;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.navigation.SafeNavigation;
 
 import java.io.IOException;
@@ -24,7 +24,7 @@ public final class EnterSmsCodeFragment extends BaseEnterSmsCodeFragment<Registr
 
   @Override
   protected @NonNull RegistrationViewModel getViewModel() {
-    return ViewModelProviders.of(requireActivity()).get(RegistrationViewModel.class);
+    return new ViewModelProvider(requireActivity()).get(RegistrationViewModel.class);
   }
 
   @Override

@@ -5,11 +5,10 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.protocol.InvalidKeyException;
 import org.tm.archive.KbsEnclave;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.lock.PinHashing;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.KbsPinData;
 import org.whispersystems.signalservice.api.KeyBackupService;
 import org.whispersystems.signalservice.api.KeyBackupServicePinException;
@@ -21,6 +20,7 @@ import org.whispersystems.signalservice.internal.contacts.entities.TokenResponse
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import io.reactivex.rxjava3.core.Single;
@@ -30,16 +30,16 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * Using provided or already stored authorization, provides various get token data from KBS
  * and generate {@link KbsPinData}.
  */
-public final class KbsRepository {
+public class KbsRepository {
 
   private static final String TAG = Log.tag(KbsRepository.class);
 
   public void getToken(@NonNull Consumer<Optional<TokenData>> callback) {
     SignalExecutors.UNBOUNDED.execute(() -> {
       try {
-        callback.accept(Optional.fromNullable(getTokenSync(null)));
+        callback.accept(Optional.ofNullable(getTokenSync(null)));
       } catch (IOException e) {
-        callback.accept(Optional.absent());
+        callback.accept(Optional.empty());
       }
     });
   }

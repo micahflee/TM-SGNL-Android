@@ -8,12 +8,12 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.signal.zkgroup.groups.UuidCiphertext;
+import org.signal.libsignal.zkgroup.groups.UuidCiphertext;
 import org.tm.archive.R;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.ui.GroupMemberEntry;
 import org.tm.archive.util.DefaultValueLiveData;
-import org.tm.archive.util.concurrent.SimpleTask;
+import org.signal.core.util.concurrent.SimpleTask;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -12,7 +12,6 @@ import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.components.voice.VoiceNoteDraft;
 import org.tm.archive.providers.BlobProvider;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.concurrent.SettableFuture;
@@ -52,7 +51,7 @@ public class AudioRecorder {
                                  .withMimeType(MediaUtil.AUDIO_AAC)
                                  .createForDraftAttachmentAsync(context, () -> Log.i(TAG, "Write successful."), e -> Log.w(TAG, "Error during recording", e));
 
-        recorder = Build.VERSION.SDK_INT >= 26 && FeatureFlags.voiceNoteRecordingV2() ? new MediaRecorderWrapper() : new AudioCodec();
+        recorder = Build.VERSION.SDK_INT >= 26 ? new MediaRecorderWrapper() : new AudioCodec();
         recorder.start(fds[1]);
       } catch (IOException e) {
         Log.w(TAG, e);

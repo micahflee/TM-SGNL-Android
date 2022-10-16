@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="signal_m3_toolbar_height">64dp</dimen>
+
     <dimen name="emoji_drawer_size">32sp</dimen>
     <dimen name="min_keyboard_size">60dp</dimen>
     <dimen name="default_custom_keyboard_size">220dp</dimen>
@@ -29,8 +31,10 @@
     <dimen name="album_5_cell_size_small">69dp</dimen>
 
     <dimen name="camera_contacts_horizontal_margin">16dp</dimen>
+    <dimen name="camera_capture_button_size">124dp</dimen>
+    <dimen name="camera_capture_image_button_size">76dp</dimen>
 
-    <dimen name="message_corner_radius">16dp</dimen>
+    <dimen name="message_corner_radius">18dp</dimen>
     <dimen name="message_corner_collapse_radius">4dp</dimen>
     <dimen name="message_bubble_corner_radius">2dp</dimen>
     <dimen name="message_bubble_shadow_distance">1.5dp</dimen>
@@ -52,11 +56,13 @@
     <dimen name="media_bubble_max_width">240dp</dimen>
     <dimen name="media_bubble_min_height">100dp</dimen>
     <dimen name="media_bubble_max_height">320dp</dimen>
+    <dimen name="media_bubble_max_height_condensed">150dp</dimen>
     <dimen name="media_bubble_sticker_dimens">175dp</dimen>
     <dimen name="media_bubble_gif_width">240dp</dimen>
     <dimen name="message_audio_width">242dp</dimen>
     <dimen name="message_bubble_default_footer_bottom_margin">-4dp</dimen>
     <dimen name="message_bubble_same_line_footer_bottom_margin">-24dp</dimen>
+    <dimen name="message_audio_duration_margin_start">56dp</dimen>
 
     <dimen name="media_picker_folder_width">175dp</dimen>
     <dimen name="media_picker_item_width">85dp</dimen>
@@ -70,9 +76,10 @@
     <dimen name="thumbnail_default_radius">4dp</dimen>
 
     <dimen name="conversation_bottom_padding">2dp</dimen>
-    <dimen name="conversation_compose_height">40dp</dimen>
+    <dimen name="conversation_compose_height">44dp</dimen>
     <dimen name="conversation_individual_right_gutter">16dp</dimen>
     <dimen name="conversation_individual_left_gutter">16dp</dimen>
+    <dimen name="conversation_individual_received_left_gutter">8dp</dimen>
     <dimen name="conversation_group_left_gutter">52dp</dimen>
     <dimen name="conversation_vertical_message_spacing_default">8dp</dimen>
     <dimen name="conversation_vertical_message_spacing_collapse">1dp</dimen>
@@ -88,6 +95,9 @@
     <dimen name="quote_corner_radius_bottom">4dp</dimen>
     <dimen name="quote_corner_radius_preview">18dp</dimen>
     <dimen name="quote_thumb_size">60dp</dimen>
+    <dimen name="quote_story_thumb_width">40dp</dimen>
+    <dimen name="quote_story_emoji_margin">24dp</dimen>
+    <dimen name="quote_story_thumb_height">64dp</dimen>
 
     <dimen name="mention_corner_radius">4dp</dimen>
 
@@ -163,7 +173,6 @@
     <dimen name="picture_in_picture_gesture_helper_pip_height">160dp</dimen>
 
     <dimen name="react_with_any_emoji_bottom_sheet_dialog_fragment_min_height">340dp</dimen>
-    <dimen name="react_with_any_emoji_bottom_sheet_dialog_fragment_tabs_height">40dp</dimen>
 
     <dimen name="group_manage_fragment_card_vertical_padding">12dp</dimen>
     <dimen name="group_manage_fragment_row_height">52dp</dimen>
@@ -174,7 +183,7 @@
     <dimen name="review_card_icon_arc_radius">14.5dp</dimen>
 
     <dimen name="conversation_update_vertical_margin">4dp</dimen>
-    <dimen name="conversation_update_vertical_padding">8dp</dimen>
+    <dimen name="conversation_update_vertical_padding">20dp</dimen>
     <dimen name="conversation_update_vertical_padding_collapsed">4dp</dimen>
     <dimen name="conversation_update_horizontal_padding">8dp</dimen>
 
@@ -182,7 +191,9 @@
     <dimen name="transfer_split_top_padding">32dp</dimen>
     <dimen name="transfer_item_spacing">24dp</dimen>
 
-    <dimen name="create_payment_key_size">70dp</dimen>
+    <dimen name="create_payment_key_width">80dp</dimen>
+    <dimen name="create_payment_key_height">70dp</dimen>
+    <dimen name="create_payment_key_bottom_padding">16dp</dimen>
     <dimen name="create_payment_key_bottom_row_margin_bottom">33dp</dimen>
     <dimen name="create_payment_key_top_row_margin_top">11dp</dimen>
 
@@ -192,14 +203,13 @@
     <dimen name="dsl_settings_gutter">16dp</dimen>
     <dimen name="media_overview_toggle_gutter">2dp</dimen>
     <dimen name="wallpaper_selection_gutter">8dp</dimen>
+    <dimen name="safety_number_recipient_row_item_gutter">4dp</dimen>
+    <dimen name="selectable_list_item_margin">8dp</dimen>
+    <dimen name="selectable_list_item_padding">8dp</dimen>
 
     <dimen name="chat_colors_preview_bubble_max_width">240dp</dimen>
 
-    <dimen name="conversation_settings_button_strip_container_spacing">4dp</dimen>
-    <dimen name="conversation_settings_button_strip_spacing">16dp</dimen>
-    <dimen name="conversation_settings_button_strip_spacing_half">8dp</dimen>
-    <dimen name="conversation_settings_button_strip_button_size">48dp</dimen>
-    <dimen name="conversation_settings_button_strip_button_padding">12dp</dimen>
+    <dimen name="conversation_settings_button_strip_spacing_half">16dp</dimen>
 
     <dimen name="avatar_picker_image_width">100dp</dimen>
 
@@ -212,4 +222,17 @@
     <dimen name="signal_context_menu_corner_radius">18dp</dimen>
 
     <dimen name="webrtc_button_size">48dp</dimen>
+    <dimen name="webrtc_audio_indicator_margin">14dp</dimen>
+
+    <dimen name="segmentedprogressbar_default_segment_margin">8dp</dimen>
+    <dimen name="segmentedprogressbar_default_corner_radius">0dp</dimen>
+    <dimen name="segmentedprogressbar_default_segment_stroke_width">0dp</dimen>
+
+    <dimen name="stories_landing_item_thumb_width">48dp</dimen>
+    <dimen name="stories_landing_item_thumb_height">72dp</dimen>
+    <dimen name="stories_landing_item_thumb_secondary_width">36dp</dimen>
+    <dimen name="stories_landing_item_thumb_secondary_height">64dp</dimen>
+    <dimen name="stories_landing_item_thumb_outline_width">52dp</dimen>
+    <dimen name="stories_landing_item_thumb_outline_height">76dp</dimen>
+    <dimen name="stories_landing_item_text_horizontal_margin">20dp</dimen>
 </resources>

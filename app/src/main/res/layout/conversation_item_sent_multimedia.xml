@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <org.tm.archive.conversation.ConversationItem xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/conversation_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingEnd="@dimen/conversation_individual_right_gutter"
     android:clipChildren="false"
     android:clipToPadding="false"
     android:focusable="true"
     android:nextFocusLeft="@id/container"
     android:nextFocusRight="@id/embedded_text_editor"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:paddingEnd="@dimen/conversation_individual_right_gutter">
 
     <FrameLayout
         android:id="@+id/reply_icon_wrapper"
@@ -26,9 +27,9 @@
             android:id="@+id/reply_icon"
             android:layout_width="@dimen/conversation_item_reply_size"
             android:layout_height="@dimen/conversation_item_reply_size"
+            android:layout_gravity="center"
             android:padding="9dp"
             android:tint="@color/signal_icon_tint_primary"
-            android:layout_gravity="center"
             app:srcCompat="@drawable/ic_reply_24" />
 
     </FrameLayout>
@@ -44,7 +45,33 @@
         android:clipChildren="false"
         android:clipToPadding="false"
         android:orientation="vertical"
-        tools:backgroundTint="@color/core_grey_05">
+        tools:background="@drawable/message_bubble_background_received_alone"
+        tools:backgroundTint="@color/conversation_blue">
+
+        <LinearLayout
+            android:id="@+id/story_reacted_label_holder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:layout_marginBottom="-3dp"
+            android:orientation="horizontal"
+            android:paddingStart="@dimen/message_bubble_horizontal_padding"
+            android:paddingEnd="@dimen/message_bubble_horizontal_padding"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <org.tm.archive.components.emoji.EmojiTextView
+                android:id="@+id/story_reacted_label"
+                style="@style/TextAppearance.Signal.Subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4sp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/signal_text_secondary"
+                tools:text="Reacted to your story" />
+
+        </LinearLayout>
 
         <org.tm.archive.components.QuoteView
             android:id="@+id/quote_view"
@@ -55,8 +82,9 @@
             android:layout_marginEnd="6dp"
             android:visibility="gone"
             app:message_type="outgoing"
-            app:quote_colorPrimary="@color/conversation_item_quote_text_color"
-            app:quote_colorSecondary="@color/conversation_item_quote_text_color"
+            app:quote_colorPrimary="@color/conversation_item_quote_text_color_sent"
+            app:quote_colorSecondary="@color/conversation_item_quote_text_color_sent"
+            tools:background="@color/transparent_white_10"
             tools:visibility="visible" />
 
         <ViewStub
@@ -106,6 +134,12 @@
             android:layout="@layout/conversation_item_sent_document" />
 
         <ViewStub
+            android:id="@+id/gift_view_stub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout="@layout/conversation_item_sent_gift" />
+
+        <ViewStub
             android:id="@+id/revealable_view_stub"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -124,12 +158,11 @@
             android:layout_marginTop="@dimen/message_bubble_top_padding"
             android:layout_marginEnd="@dimen/message_bubble_horizontal_padding"
             android:layout_marginBottom="@dimen/message_bubble_bottom_padding"
-            android:ellipsize="end"
             android:textColor="@color/conversation_item_sent_text_primary_color"
             android:textColorLink="@color/conversation_item_sent_text_primary_color"
             app:emoji_maxLength="1000"
-            app:scaleEmojis="true"
             app:measureLastLine="true"
+            app:scaleEmojis="true"
             tools:text="Mango pickle lorem ipsum" />
 
         <org.tm.archive.components.ConversationItemFooter
@@ -172,11 +205,32 @@
         android:id="@+id/indicators_parent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/body_bubble"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
         android:layout_marginStart="8dp"
-        android:padding="8dp"
-        android:orientation="vertical" />
+        android:orientation="vertical"
+        android:padding="8dp" />
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@id/body_bubble"
+        android:layout_alignTop="@id/body_bubble"
+        android:layout_alignBottom="@id/body_bubble"
+        android:layout_marginStart="-42dp" >
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/quoted_indicator"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/circle_tintable"
+            android:backgroundTint="@color/signal_colorSurfaceVariant"
+            android:padding="6dp"
+            android:tint="@color/signal_colorOnSurfaceVariant"
+            app:srcCompat="@drawable/ic_replies_outline_20" />
+
+    </FrameLayout>
 
     <org.tm.archive.reactions.ReactionsConversationView
         android:id="@+id/reactions_view"

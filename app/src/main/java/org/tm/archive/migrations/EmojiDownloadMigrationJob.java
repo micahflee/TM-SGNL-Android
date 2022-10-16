@@ -6,9 +6,10 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.DownloadLatestEmojiDataJob;
+import org.tm.archive.jobs.EmojiSearchIndexDownloadJob;
 
 /**
- * Schedules a emoji download job to get the latest version.
+ * Schedules jobs to get the latest emoji and search index.
  */
 public final class EmojiDownloadMigrationJob extends MigrationJob {
 
@@ -35,6 +36,7 @@ public final class EmojiDownloadMigrationJob extends MigrationJob {
   @Override
   public void performMigration() {
     ApplicationDependencies.getJobManager().add(new DownloadLatestEmojiDataJob(false));
+    EmojiSearchIndexDownloadJob.scheduleImmediately();
   }
 
   @Override

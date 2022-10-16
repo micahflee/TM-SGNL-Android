@@ -9,12 +9,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.recipients.Recipient;
-import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.signal.libsignal.protocol.InvalidMessageException;
+import org.signal.libsignal.protocol.SignalProtocolAddress;
+import org.signal.libsignal.protocol.groups.state.SenderKeyRecord;
+import org.tm.archive.keyvalue.SignalStore;
+import org.signal.core.util.CursorUtil;
+import org.signal.core.util.SqlUtil;
 import org.whispersystems.signalservice.api.push.DistributionId;
-import org.tm.archive.util.CursorUtil;
-import org.tm.archive.util.SqlUtil;
-import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
 
 import java.io.IOException;
 
@@ -89,7 +90,7 @@ public class SenderKeyDatabase extends Database {
       if (cursor.moveToFirst()) {
         try {
           return new SenderKeyRecord(CursorUtil.requireBlob(cursor, RECORD));
-        } catch (IOException e) {
+        } catch (InvalidMessageException e) {
           Log.w(TAG, e);
         }
       }
@@ -133,7 +134,7 @@ public class SenderKeyDatabase extends Database {
   public Cursor getAllCreatedBySelf() {
     SQLiteDatabase db    = databaseHelper.getSignalReadableDatabase();
     String         query = ADDRESS + " = ?";
-    String[]       args  = SqlUtil.buildArgs(Recipient.self().requireAci());
+    String[]       args  = SqlUtil.buildArgs(SignalStore.account().requireAci());
 
     return db.query(TABLE_NAME, new String[]{ ID, DISTRIBUTION_ID, CREATED_AT }, query, args, null, null, CREATED_AT + " DESC");
   }

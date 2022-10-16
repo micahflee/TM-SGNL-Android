@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:viewBindingIgnore="true"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -25,7 +26,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:text="@string/ConversationActivity_message_an_admin"
-        style="@style/Signal.Text.Title.BottomSheet"
+        style="@style/Signal.Text.TitleSmall"
         app:layout_constraintTop_toBottomOf="@id/show_admin_handle" />
 
     <org.tm.archive.groups.ui.GroupMemberListView

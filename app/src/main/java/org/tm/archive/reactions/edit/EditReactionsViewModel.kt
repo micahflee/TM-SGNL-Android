@@ -3,6 +3,7 @@ package org.tm.archive.reactions.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import org.signal.core.util.concurrent.SignalExecutors
+import org.tm.archive.components.emoji.EmojiUtil
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.keyvalue.EmojiValues
 import org.tm.archive.keyvalue.SignalStore
@@ -26,6 +27,9 @@ class EditReactionsViewModel : ViewModel() {
   fun onEmojiSelected(emoji: String) {
     store.update { state ->
       if (state.selection != NO_SELECTION && state.selection in state.reactions.indices) {
+        if (emoji != EmojiUtil.getCanonicalRepresentation(emoji)) {
+          emojiValues.setPreferredVariation(emoji)
+        }
         val preferredEmoji: String = emojiValues.getPreferredVariation(emoji)
         val newReactions: List<String> = state.reactions.toMutableList().apply { set(state.selection, preferredEmoji) }
         state.copy(reactions = newReactions)

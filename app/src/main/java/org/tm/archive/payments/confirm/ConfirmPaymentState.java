@@ -3,8 +3,8 @@ package org.tm.archive.payments.confirm;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.tm.archive.payments.Payee;
 import org.signal.core.util.money.FiatMoney;
+import org.tm.archive.payments.Payee;
 import org.whispersystems.signalservice.api.payments.Money;
 
 import java.util.UUID;
@@ -30,7 +30,7 @@ public class ConfirmPaymentState {
          amount,
          note,
          amount.toZero(),
-         FeeStatus.NOT_SET,
+         FeeStatus.STILL_LOADING,
          null,
          Status.CONFIRM,
          null);

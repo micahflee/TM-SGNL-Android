@@ -2,6 +2,7 @@ package org.tm.archive.database;
 
 import android.app.Application;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 
 import androidx.annotation.NonNull;
@@ -15,7 +16,7 @@ import org.tm.archive.crypto.DatabaseSecret;
 import org.tm.archive.crypto.DatabaseSecretProvider;
 import org.tm.archive.keyvalue.KeyValueDataSet;
 import org.tm.archive.keyvalue.KeyValuePersistentStorage;
-import org.tm.archive.util.CursorUtil;
+import org.signal.core.util.CursorUtil;
 
 import java.util.Collection;
 import java.util.Map;
@@ -54,11 +55,17 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
         if (instance == null) {
           SqlCipherLibraryLoader.load();
           instance = new KeyValueDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context));
+          instance.setWriteAheadLoggingEnabled(true);
         }
       }
     }
     return instance;
   }
+
+  public static boolean exists(Context context) {
+    return context.getDatabasePath(DATABASE_NAME).exists();
+  }
+
 
   private KeyValueDatabase(@NonNull Application application, @NonNull DatabaseSecret databaseSecret) {
     super(application, DATABASE_NAME, databaseSecret.asString(), null, DATABASE_VERSION, 0,new SqlCipherErrorHandler(DATABASE_NAME), new SqlCipherDatabaseHook());
@@ -87,7 +94,6 @@ public class KeyValueDatabase extends SQLiteOpenHelper implements SignalDatabase
   public void onOpen(SQLiteDatabase db) {
     Log.i(TAG, "onOpen()");
 
-    db.enableWriteAheadLogging();
     db.setForeignKeyConstraintsEnabled(true);
 
     SignalExecutors.BOUNDED.execute(() -> {

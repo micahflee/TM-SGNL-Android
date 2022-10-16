@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import org.whispersystems.libsignal.IdentityKey;
+import org.signal.libsignal.protocol.IdentityKey;
 import org.whispersystems.signalservice.internal.util.JsonUtil;
 
 import java.util.List;
@@ -20,10 +20,10 @@ public class PreKeyResponse {
   @JsonProperty
   @JsonSerialize(using = JsonUtil.IdentityKeySerializer.class)
   @JsonDeserialize(using = JsonUtil.IdentityKeyDeserializer.class)
-  private IdentityKey identityKey;
+  public IdentityKey identityKey;
 
   @JsonProperty
-  private List<PreKeyResponseItem> devices;
+  public List<PreKeyResponseItem> devices;
 
   public IdentityKey getIdentityKey() {
     return identityKey;

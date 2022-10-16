@@ -11,6 +11,7 @@ import androidx.lifecycle.LiveData;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.R;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.mms.SentMediaQuality;
@@ -22,6 +23,7 @@ import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.webrtc.CallBandwidthMode;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("deprecation")
@@ -65,6 +67,8 @@ public final class SettingsValues extends SignalStoreValues {
   private static final String DEFAULT_SMS                             = "settings.default_sms";
   private static final String UNIVERSAL_EXPIRE_TIMER                  = "settings.universal.expire.timer";
   private static final String SENT_MEDIA_QUALITY                      = "settings.sentMediaQuality";
+  private static final String CENSORSHIP_CIRCUMVENTION_ENABLED        = "settings.censorshipCircumventionEnabled";
+  private static final String KEEP_MUTED_CHATS_ARCHIVED               = "settings.keepMutedChatsArchived";
 
   private final SingleLiveEvent<String> onConfigurationSettingChanged = new SingleLiveEvent<>();
 
@@ -108,7 +112,8 @@ public final class SettingsValues extends SignalStoreValues {
                          CALL_VIBRATE_ENABLED,
                          NOTIFY_WHEN_CONTACT_JOINS_SIGNAL,
                          UNIVERSAL_EXPIRE_TIMER,
-                         SENT_MEDIA_QUALITY);
+                         SENT_MEDIA_QUALITY,
+                         KEEP_MUTED_CHATS_ARCHIVED);
   }
 
   public @NonNull LiveData<String> getOnConfigurationSettingChanged() {
@@ -180,17 +185,45 @@ public final class SettingsValues extends SignalStoreValues {
     return CallBandwidthMode.fromCode(getInteger(CALL_BANDWIDTH_MODE, CallBandwidthMode.HIGH_ALWAYS.getCode()));
   }
 
-  public @NonNull String getTheme() {
-    return getString(THEME, TextSecurePreferences.getTheme(ApplicationDependencies.getApplication()));
+  public @NonNull Theme getTheme() {
+    return Theme.deserialize(getString(THEME, TextSecurePreferences.getTheme(ApplicationDependencies.getApplication())));
   }
 
-  public void setTheme(@NonNull String theme) {
-    putString(THEME, theme);
+  public void setTheme(@NonNull Theme theme) {
+    putString(THEME, theme.serialize());
     onConfigurationSettingChanged.postValue(THEME);
   }
 
   public int getMessageFontSize() {
     return getInteger(MESSAGE_FONT_SIZE, TextSecurePreferences.getMessageBodyTextSize(ApplicationDependencies.getApplication()));
+  }
+
+  public int getMessageQuoteFontSize(@NonNull Context context) {
+    int   currentMessageSize   = getMessageFontSize();
+    int[] possibleMessageSizes = context.getResources().getIntArray(R.array.pref_message_font_size_values);
+    int[] possibleQuoteSizes   = context.getResources().getIntArray(R.array.pref_message_font_quote_size_values);
+    int   sizeIndex            = Arrays.binarySearch(possibleMessageSizes, currentMessageSize);
+
+    if (sizeIndex < 0) {
+      int closestSizeIndex = 0;
+      int closestSizeDiff  = Integer.MAX_VALUE;
+
+      for (int i = 0; i < possibleMessageSizes.length; i++) {
+        int diff = Math.abs(possibleMessageSizes[i] - currentMessageSize);
+        if (diff < closestSizeDiff) {
+          closestSizeIndex = i;
+          closestSizeDiff  = diff;
+        }
+      }
+
+      int newSize = possibleMessageSizes[closestSizeIndex];
+      Log.w(TAG, "Using non-standard font size of " + currentMessageSize + ". Closest match was " + newSize + ". Updating.");
+
+      setMessageFontSize(newSize);
+      sizeIndex = Arrays.binarySearch(possibleMessageSizes, newSize);
+    }
+
+    return possibleQuoteSizes[sizeIndex];
   }
 
   public void setMessageFontSize(int messageFontSize) {
@@ -390,6 +423,23 @@ public final class SettingsValues extends SignalStoreValues {
     return SentMediaQuality.fromCode(getInteger(SENT_MEDIA_QUALITY, SentMediaQuality.STANDARD.getCode()));
   }
 
+  public @NonNull CensorshipCircumventionEnabled getCensorshipCircumventionEnabled() {
+    return CensorshipCircumventionEnabled.deserialize(getInteger(CENSORSHIP_CIRCUMVENTION_ENABLED, CensorshipCircumventionEnabled.DEFAULT.serialize()));
+  }
+
+  public void setCensorshipCircumventionEnabled(boolean enabled) {
+    Log.i(TAG, "Changing censorship circumvention state to: " + enabled, new Throwable());
+    putInteger(CENSORSHIP_CIRCUMVENTION_ENABLED, enabled ? CensorshipCircumventionEnabled.ENABLED.serialize() : CensorshipCircumventionEnabled.DISABLED.serialize());
+  }
+
+  public void setKeepMutedChatsArchived(boolean enabled) {
+   putBoolean(KEEP_MUTED_CHATS_ARCHIVED, enabled);
+  }
+
+  public boolean shouldKeepMutedChatsArchived() {
+    return getBoolean(KEEP_MUTED_CHATS_ARCHIVED, false);
+  }
+
   private @Nullable Uri getUri(@NonNull String key) {
     String uri = getString(key, "");
 
@@ -397,6 +447,60 @@ public final class SettingsValues extends SignalStoreValues {
       return null;
     } else {
       return Uri.parse(uri);
+    }
+  }
+
+  public enum CensorshipCircumventionEnabled {
+    DEFAULT(0), ENABLED(1), DISABLED(2);
+
+    private final int value;
+
+    CensorshipCircumventionEnabled(int value) {
+      this.value = value;
+    }
+
+    public static CensorshipCircumventionEnabled deserialize(int value) {
+      switch (value) {
+        case 0:
+          return DEFAULT;
+        case 1:
+          return ENABLED;
+        case 2:
+          return DISABLED;
+        default:
+          throw new IllegalArgumentException("Bad value: " + value);
+      }
+    }
+
+    public int serialize() {
+      return value;
+    }
+  }
+
+  public enum Theme {
+    SYSTEM("system"), LIGHT("light"), DARK("dark");
+
+    private final String value;
+
+    Theme(String value) {
+      this.value = value;
+    }
+
+    public @NonNull String serialize() {
+      return value;
+    }
+
+    public static @NonNull Theme deserialize(@NonNull String value) {
+      switch (value) {
+        case "system":
+          return SYSTEM;
+        case "light":
+          return LIGHT;
+        case "dark":
+          return DARK;
+        default:
+          throw new IllegalArgumentException("Unrecognized value " + value);
+      }
     }
   }
 }

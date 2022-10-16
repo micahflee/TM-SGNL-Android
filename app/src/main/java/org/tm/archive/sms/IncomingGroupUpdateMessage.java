@@ -1,7 +1,11 @@
 package org.tm.archive.sms;
 
+import com.google.protobuf.ByteString;
+
 import org.tm.archive.database.model.databaseprotos.DecryptedGroupV2Context;
 import org.tm.archive.mms.MessageGroupContext;
+
+import java.util.Optional;
 
 import static org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContext;
 
@@ -42,5 +46,17 @@ public final class IncomingGroupUpdateMessage extends IncomingTextMessage {
   @Override
   public boolean isJustAGroupLeave() {
     return GroupV2UpdateMessageUtil.isJustAGroupLeave(groupContext);
+  }
+
+  public boolean isCancelJoinRequest() {
+    return GroupV2UpdateMessageUtil.isJoinRequestCancel(groupContext);
+  }
+
+  public int getChangeRevision() {
+    return GroupV2UpdateMessageUtil.getChangeRevision(groupContext);
+  }
+
+  public Optional<ByteString> getChangeEditor() {
+    return GroupV2UpdateMessageUtil.getChangeEditor(groupContext);
   }
 }

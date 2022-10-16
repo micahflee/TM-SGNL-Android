@@ -12,6 +12,7 @@ import org.tm.archive.BuildConfig;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.avatar.AvatarPickerStorage;
+import org.tm.archive.database.AttachmentDatabase;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.emoji.EmojiFiles;
 import org.tm.archive.providers.BlobProvider;
@@ -149,6 +150,16 @@ public class PartAuthority {
         else                    return false;
       default:
         return false;
+    }
+  }
+
+  public static @Nullable AttachmentDatabase.TransformProperties getAttachmentTransformProperties(@NonNull Uri uri) {
+    int match = uriMatcher.match(uri);
+    switch (match) {
+      case PART_ROW:
+        return SignalDatabase.attachments().getTransformProperties(new PartUriParser(uri).getPartId());
+      default:
+        return null;
     }
   }
 

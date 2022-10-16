@@ -1,0 +1,37 @@
+package org.tm.archive.profiles.username
+
+import android.os.Bundle
+import androidx.navigation.fragment.NavHostFragment
+import org.tm.archive.BaseActivity
+import org.tm.archive.R
+import org.tm.archive.profiles.manage.UsernameEditFragmentArgs
+import org.tm.archive.util.DynamicNoActionBarTheme
+import org.tm.archive.util.DynamicTheme
+
+class AddAUsernameActivity : BaseActivity() {
+  protected open val dynamicTheme: DynamicTheme = DynamicNoActionBarTheme()
+  protected open val contentViewId: Int = R.layout.fragment_container
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(contentViewId)
+    dynamicTheme.onCreate(this)
+
+    if (savedInstanceState == null) {
+      supportFragmentManager.beginTransaction()
+        .replace(
+          R.id.fragment_container,
+          NavHostFragment.create(
+            R.navigation.create_username,
+            UsernameEditFragmentArgs.Builder().setIsInRegistration(true).build().toBundle()
+          )
+        )
+        .commit()
+    }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    dynamicTheme.onResume(this)
+  }
+}

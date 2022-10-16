@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import org.junit.Test;
 import org.signal.storageservice.protos.groups.AccessControl;
 import org.signal.storageservice.protos.groups.local.DecryptedApproveMember;
+import org.signal.storageservice.protos.groups.local.DecryptedBannedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedRequestingMember;
 import org.signal.storageservice.protos.groups.local.DecryptedString;
@@ -19,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.member;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.pendingMember;
+import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.pendingPniAciMember;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.pendingMemberRemoval;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.promoteAdmin;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.randomProfileKey;
@@ -36,7 +38,7 @@ public final class DecryptedGroupUtil_empty_Test {
     int maxFieldFound = getMaxDeclaredFieldNumber(DecryptedGroupChange.class);
 
     assertEquals("DecryptedGroupUtil and its tests need updating to account for new fields on " + DecryptedGroupChange.class.getName(),
-                 21, maxFieldFound);
+                 24, maxFieldFound);
   }
 
   @Test
@@ -228,6 +230,36 @@ public final class DecryptedGroupUtil_empty_Test {
   public void not_empty_with_modify_announcement_field_21() {
     DecryptedGroupChange change = DecryptedGroupChange.newBuilder()
                                                       .setNewIsAnnouncementGroup(EnabledState.ENABLED)
+                                                      .build();
+
+    assertFalse(DecryptedGroupUtil.changeIsEmpty(change));
+    assertFalse(DecryptedGroupUtil.changeIsEmptyExceptForProfileKeyChanges(change));
+  }
+
+  @Test
+  public void not_empty_with_add_banned_member_field_22() {
+    DecryptedGroupChange change = DecryptedGroupChange.newBuilder()
+                                                      .addNewBannedMembers(DecryptedBannedMember.getDefaultInstance())
+                                                      .build();
+
+    assertFalse(DecryptedGroupUtil.changeIsEmpty(change));
+    assertFalse(DecryptedGroupUtil.changeIsEmptyExceptForProfileKeyChanges(change));
+  }
+
+  @Test
+  public void not_empty_with_delete_banned_member_field_23() {
+    DecryptedGroupChange change = DecryptedGroupChange.newBuilder()
+                                                      .addDeleteBannedMembers(DecryptedBannedMember.getDefaultInstance())
+                                                      .build();
+
+    assertFalse(DecryptedGroupUtil.changeIsEmpty(change));
+    assertFalse(DecryptedGroupUtil.changeIsEmptyExceptForProfileKeyChanges(change));
+  }
+
+  @Test
+  public void not_empty_with_promote_pending_pni_aci_members_field_24() {
+    DecryptedGroupChange change = DecryptedGroupChange.newBuilder()
+                                                      .addPromotePendingPniAciMembers(pendingPniAciMember(UUID.randomUUID(), UUID.randomUUID(), randomProfileKey()))
                                                       .build();
 
     assertFalse(DecryptedGroupUtil.changeIsEmpty(change));

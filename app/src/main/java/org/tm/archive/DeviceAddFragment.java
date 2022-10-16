@@ -14,36 +14,35 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 
-import org.tm.archive.components.camera.CameraView;
-import org.tm.archive.qr.ScanListener;
-import org.tm.archive.qr.ScanningThread;
+import org.signal.qr.QrScannerView;
+import org.signal.qr.kitkat.ScanListener;
+import org.tm.archive.mediasend.camerax.CameraXModelBlocklist;
+import org.tm.archive.util.FeatureFlags;
+import org.tm.archive.util.LifecycleDisposable;
 import org.tm.archive.util.ViewUtil;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 public class DeviceAddFragment extends LoggingFragment {
 
-  private ViewGroup      container;
-  private LinearLayout   overlay;
-  private ImageView      devicesImage;
-  private CameraView     scannerView;
-  private ScanningThread scanningThread;
-  private ScanListener   scanListener;
+  private final LifecycleDisposable lifecycleDisposable = new LifecycleDisposable();
+
+  private ImageView     devicesImage;
+  private ScanListener  scanListener;
 
   @Override
   public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup viewGroup, Bundle bundle) {
-    this.container    = ViewUtil.inflate(inflater, viewGroup, R.layout.device_add_fragment);
-    this.overlay      = this.container.findViewById(R.id.overlay);
-    this.scannerView  = this.container.findViewById(R.id.scanner);
-    this.devicesImage = this.container.findViewById(R.id.devices);
+    ViewGroup container = ViewUtil.inflate(inflater, viewGroup, R.layout.device_add_fragment);
 
-    if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-      this.overlay.setOrientation(LinearLayout.HORIZONTAL);
-    } else {
-      this.overlay.setOrientation(LinearLayout.VERTICAL);
-    }
+    QrScannerView scannerView = container.findViewById(R.id.scanner);
+    this.devicesImage = container.findViewById(R.id.devices);
+    ViewCompat.setTransitionName(devicesImage, "devices");
 
     if (Build.VERSION.SDK_INT >= 21) {
-      this.container.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+      container.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
         @TargetApi(21)
         @Override
         public void onLayoutChange(View v, int left, int top, int right, int bottom,
@@ -59,42 +58,24 @@ public class DeviceAddFragment extends LoggingFragment {
       });
     }
 
-    return this.container;
+    scannerView.start(getViewLifecycleOwner(), CameraXModelBlocklist.isBlocklisted());
+
+    lifecycleDisposable.bindTo(getViewLifecycleOwner());
+
+    Disposable qrDisposable = scannerView
+        .getQrData()
+        .distinctUntilChanged()
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(qrData -> {
+          if (scanListener != null) {
+            scanListener.onQrDataFound(qrData);
+          }
+        });
+
+    lifecycleDisposable.add(qrDisposable);
+
+    return container;
   }
-
-  @Override
-  public void onResume() {
-    super.onResume();
-    this.scanningThread = new ScanningThread();
-    this.scanningThread.setScanListener(scanListener);
-    this.scannerView.onResume();
-    this.scannerView.setPreviewCallback(scanningThread);
-    this.scanningThread.start();
-  }
-
-  @Override
-  public void onPause() {
-    super.onPause();
-    this.scannerView.onPause();
-    this.scanningThread.stopScanning();
-  }
-
-  @Override
-  public void onConfigurationChanged(@NonNull Configuration newConfiguration) {
-    super.onConfigurationChanged(newConfiguration);
-
-    this.scannerView.onPause();
-
-    if (newConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-      overlay.setOrientation(LinearLayout.HORIZONTAL);
-    } else {
-      overlay.setOrientation(LinearLayout.VERTICAL);
-    }
-
-    this.scannerView.onResume();
-    this.scannerView.setPreviewCallback(scanningThread);
-  }
-
 
   public ImageView getDevicesImage() {
     return devicesImage;
@@ -102,9 +83,5 @@ public class DeviceAddFragment extends LoggingFragment {
 
   public void setScanListener(ScanListener scanListener) {
     this.scanListener = scanListener;
-
-    if (this.scanningThread != null) {
-      this.scanningThread.setScanListener(scanListener);
-    }
   }
 }

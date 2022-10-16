@@ -6,17 +6,21 @@ import android.os.Bundle;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment;
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs;
 import org.tm.archive.mms.GlideApp;
-import org.tm.archive.sharing.ShareActivity;
+import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.util.DeviceProperties;
 import org.tm.archive.util.DynamicTheme;
+
+import java.util.Collections;
 
 /**
  * Allows the user to view and manage (install, uninstall, etc) their stickers.
@@ -46,6 +50,12 @@ public final class StickerManagementActivity extends PassphraseRequiredActivity 
     initView();
     initToolbar();
     initViewModel();
+
+    getSupportFragmentManager().setFragmentResultListener(MultiselectForwardFragment.RESULT_KEY, this, (requestKey, result) -> {
+      if (result.getBoolean(MultiselectForwardFragment.RESULT_SENT, false)) {
+        finish();
+      }
+    });
   }
 
   @Override
@@ -86,10 +96,16 @@ public final class StickerManagementActivity extends PassphraseRequiredActivity 
 
   @Override
   public void onStickerPackShareClicked(@NonNull String packId, @NonNull String packKey) {
-    Intent composeIntent = new Intent(this, ShareActivity.class);
-    composeIntent.putExtra(Intent.EXTRA_TEXT, StickerUrl.createShareLink(packId, packKey));
-    startActivity(composeIntent);
-    finish();
+    MultiselectForwardFragment.showBottomSheet(
+        getSupportFragmentManager(),
+        new MultiselectForwardFragmentArgs(
+            true,
+            Collections.singletonList(new MultiShareArgs.Builder()
+                                          .withDraftText(StickerUrl.createShareLink(packId, packKey))
+                                          .build()),
+            R.string.MultiselectForwardFragment__share_with
+        )
+    );
   }
 
   private void initView() {
@@ -108,7 +124,7 @@ public final class StickerManagementActivity extends PassphraseRequiredActivity 
 
   private void initViewModel() {
     StickerManagementRepository repository = new StickerManagementRepository(this);
-    viewModel = ViewModelProviders.of(this, new StickerManagementViewModel.Factory(getApplication(), repository)).get(StickerManagementViewModel.class);
+    viewModel = new ViewModelProvider(this, new StickerManagementViewModel.Factory(getApplication(), repository)).get(StickerManagementViewModel.class);
 
     viewModel.init();
     viewModel.getStickerPacks().observe(this, packResult -> {

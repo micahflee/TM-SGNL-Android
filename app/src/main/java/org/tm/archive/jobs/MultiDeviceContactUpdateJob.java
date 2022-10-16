@@ -11,7 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.signal.zkgroup.profiles.ProfileKey;
+import org.signal.libsignal.protocol.IdentityKey;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.conversation.colors.ChatColorsMapper;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
@@ -31,8 +32,6 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.libsignal.IdentityKey;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
@@ -53,6 +52,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -155,15 +155,15 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
       Set<RecipientId>          archived        = SignalDatabase.threads().getArchivedRecipients();
 
       out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, recipient),
-                                  Optional.fromNullable(recipient.isGroup() || recipient.isSystemContact() ? recipient.getDisplayName(context) : null),
-                                  getAvatar(recipient.getId(), recipient.getContactUri()),
+                                  Optional.ofNullable(recipient.isGroup() || recipient.isSystemContact() ? recipient.getDisplayName(context) : null),
+                                  getSystemAvatar(recipient.getContactUri()),
                                   Optional.of(ChatColorsMapper.getMaterialColor(recipient.getChatColors()).serialize()),
                                   verifiedMessage,
                                   ProfileKeyUtil.profileKeyOptional(recipient.getProfileKey()),
                                   recipient.isBlocked(),
                                   recipient.getExpiresInSeconds() > 0 ? Optional.of(recipient.getExpiresInSeconds())
-                                                                      : Optional.absent(),
-                                  Optional.fromNullable(inboxPositions.get(recipientId)),
+                                                                      : Optional.empty(),
+                                  Optional.ofNullable(inboxPositions.get(recipientId)),
                                   archived.contains(recipientId)));
 
       out.close();
@@ -210,15 +210,15 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
       for (Recipient recipient : recipients) {
         Optional<IdentityRecord>  identity      = ApplicationDependencies.getProtocolStore().aci().identities().getIdentityRecord(recipient.getId());
         Optional<VerifiedMessage> verified      = getVerifiedMessage(recipient, identity);
-        Optional<String>          name          = Optional.fromNullable(recipient.isSystemContact() ? recipient.getDisplayName(context) : recipient.getGroupName(context));
+        Optional<String>          name          = Optional.ofNullable(recipient.isSystemContact() ? recipient.getDisplayName(context) : recipient.getGroupName(context));
         Optional<ProfileKey>      profileKey    = ProfileKeyUtil.profileKeyOptional(recipient.getProfileKey());
         boolean                   blocked       = recipient.isBlocked();
-        Optional<Integer>         expireTimer   = recipient.getExpiresInSeconds() > 0 ? Optional.of(recipient.getExpiresInSeconds()) : Optional.absent();
-        Optional<Integer>         inboxPosition = Optional.fromNullable(inboxPositions.get(recipient.getId()));
+        Optional<Integer>         expireTimer   = recipient.getExpiresInSeconds() > 0 ? Optional.of(recipient.getExpiresInSeconds()) : Optional.empty();
+        Optional<Integer>         inboxPosition = Optional.ofNullable(inboxPositions.get(recipient.getId()));
 
         out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, recipient),
                                     name,
-                                    getAvatar(recipient.getId(), recipient.getContactUri()),
+                                    getSystemAvatar(recipient.getContactUri()),
                                     Optional.of(ChatColorsMapper.getMaterialColor(recipient.getChatColors()).serialize()),
                                     verified,
                                     profileKey,
@@ -234,14 +234,14 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
 
       if (profileKey != null) {
         out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, self),
-                                    Optional.absent(),
-                                    Optional.absent(),
+                                    Optional.empty(),
+                                    Optional.empty(),
                                     Optional.of(ChatColorsMapper.getMaterialColor(self.getChatColors()).serialize()),
-                                    Optional.absent(),
+                                    Optional.empty(),
                                     ProfileKeyUtil.profileKeyOptionalOrThrow(self.getProfileKey()),
                                     false,
-                                    self.getExpiresInSeconds() > 0 ? Optional.of(self.getExpiresInSeconds()) : Optional.absent(),
-                                    Optional.fromNullable(inboxPositions.get(self.getId())),
+                                    self.getExpiresInSeconds() > 0 ? Optional.of(self.getExpiresInSeconds()) : Optional.empty(),
+                                    Optional.ofNullable(inboxPositions.get(self.getId())),
                                     archived.contains(self.getId())));
       }
 
@@ -293,51 +293,13 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
     }
   }
 
-  private Optional<SignalServiceAttachmentStream> getAvatar(@NonNull RecipientId recipientId, @Nullable Uri uri) {
-    Optional<SignalServiceAttachmentStream> stream;
-
-    if (SignalStore.settings().isPreferSystemContactPhotos()) {
-      stream = getSystemAvatar(uri);
-
-      if (!stream.isPresent()) {
-        stream = getProfileAvatar(recipientId);
-      }
-    } else {
-      stream = getProfileAvatar(recipientId);
-
-      if (!stream.isPresent()) {
-        stream = getSystemAvatar(uri);
-      }
-    }
-
-    return stream;
-  }
-
-  private Optional<SignalServiceAttachmentStream> getProfileAvatar(@NonNull RecipientId recipientId) {
-    if (AvatarHelper.hasAvatar(context, recipientId)) {
-      try {
-        long length = AvatarHelper.getAvatarLength(context, recipientId);
-        return Optional.of(SignalServiceAttachmentStream.newStreamBuilder()
-                                                        .withStream(AvatarHelper.getAvatar(context, recipientId))
-                                                        .withContentType("image/*")
-                                                        .withLength(length)
-                                                        .build());
-      } catch (IOException e) {
-        Log.w(TAG, "Failed to read profile avatar!", e);
-        return Optional.absent();
-      }
-    }
-
-    return Optional.absent();
-  }
-
   private Optional<SignalServiceAttachmentStream> getSystemAvatar(@Nullable Uri uri) {
     if (uri == null) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     if (!Permissions.hasAny(context, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     Uri displayPhotoUri = Uri.withAppendedPath(uri, ContactsContract.Contacts.Photo.DISPLAY_PHOTO);
@@ -346,7 +308,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
       AssetFileDescriptor fd = context.getContentResolver().openAssetFileDescriptor(displayPhotoUri, "r");
 
       if (fd == null) {
-        return Optional.absent();
+        return Optional.empty();
       }
 
       return Optional.of(SignalServiceAttachment.newStreamBuilder()
@@ -361,7 +323,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
     Uri photoUri = Uri.withAppendedPath(uri, ContactsContract.Contacts.Photo.CONTENT_DIRECTORY);
 
     if (photoUri == null) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     Cursor cursor = context.getContentResolver().query(photoUri,
@@ -383,7 +345,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
         }
       }
 
-      return Optional.absent();
+      return Optional.empty();
     } finally {
       if (cursor != null) {
         cursor.close();
@@ -394,7 +356,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
   private Optional<VerifiedMessage> getVerifiedMessage(Recipient recipient, Optional<IdentityRecord> identity)
       throws InvalidNumberException, IOException
   {
-    if (!identity.isPresent()) return Optional.absent();
+    if (!identity.isPresent()) return Optional.empty();
 
     SignalServiceAddress destination = RecipientUtil.toSignalServiceAddress(context, recipient);
     IdentityKey          identityKey = identity.get().getIdentityKey();

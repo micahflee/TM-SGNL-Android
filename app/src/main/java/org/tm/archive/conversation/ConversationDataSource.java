@@ -22,23 +22,29 @@ import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.ReactionRecord;
 import org.tm.archive.database.model.SmsMessageRecord;
+import org.tm.archive.database.model.UpdateDescription;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.util.Stopwatch;
+import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
+import org.signal.core.util.Stopwatch;
 import org.tm.archive.util.Util;
+import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Core data source for loading an individual conversation.
  */
-class ConversationDataSource implements PagedDataSource<MessageId, ConversationMessage> {
+public class ConversationDataSource implements PagedDataSource<MessageId, ConversationMessage> {
 
   private static final String TAG = Log.tag(ConversationDataSource.class);
 
@@ -47,23 +53,39 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
   private final MessageRequestData messageRequestData;
   private final boolean            showUniversalExpireTimerUpdate;
 
-  ConversationDataSource(@NonNull Context context, long threadId, @NonNull MessageRequestData messageRequestData, boolean showUniversalExpireTimerUpdate) {
+  /** Used once for the initial fetch, then cleared. */
+  private int baseSize;
+
+  ConversationDataSource(@NonNull Context context, long threadId, @NonNull MessageRequestData messageRequestData, boolean showUniversalExpireTimerUpdate, int baseSize) {
     this.context                        = context;
     this.threadId                       = threadId;
     this.messageRequestData             = messageRequestData;
     this.showUniversalExpireTimerUpdate = showUniversalExpireTimerUpdate;
+    this.baseSize                       = baseSize;
   }
 
   @Override
   public int size() {
     long startTime = System.currentTimeMillis();
-    int  size      = SignalDatabase.mmsSms().getConversationCount(threadId) +
+    int  size      = getSizeInternal() +
                      (messageRequestData.includeWarningUpdateMessage() ? 1 : 0) +
                      (showUniversalExpireTimerUpdate ? 1 : 0);
 
-    Log.d(TAG, "size() for thread " + threadId + ": " + (System.currentTimeMillis() - startTime) + " ms");
+    Log.d(TAG, "[size(), thread " + threadId + "] " + (System.currentTimeMillis() - startTime) + " ms");
 
     return size;
+  }
+
+  private int getSizeInternal() {
+    synchronized (this) {
+      if (baseSize != -1) {
+        int size = baseSize;
+        baseSize = -1;
+        return size;
+      }
+    }
+
+    return SignalDatabase.mmsSms().getConversationCount(threadId);
   }
 
   @Override
@@ -74,6 +96,7 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
     MentionHelper       mentionHelper    = new MentionHelper();
     AttachmentHelper    attachmentHelper = new AttachmentHelper();
     ReactionHelper      reactionHelper   = new ReactionHelper();
+    Set<ServiceId>      referencedIds    = new HashSet<>();
 
     try (MmsSmsDatabase.Reader reader = MmsSmsDatabase.readerFor(db.getConversation(threadId, start, length))) {
       MessageRecord record;
@@ -82,6 +105,11 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
         mentionHelper.add(record);
         reactionHelper.add(record);
         attachmentHelper.add(record);
+
+        UpdateDescription description = record.getUpdateDisplayBody(context, null);
+        if (description != null) {
+          referencedIds.addAll(description.getMentioned());
+        }
       }
     }
 
@@ -98,10 +126,10 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
     mentionHelper.fetchMentions(context);
     stopwatch.split("mentions");
 
-    reactionHelper.fetchReactions(context);
+    reactionHelper.fetchReactions();
     stopwatch.split("reactions");
 
-    records = reactionHelper.buildUpdatedModels(context, records);
+    records = reactionHelper.buildUpdatedModels(records);
     stopwatch.split("reaction-models");
 
     attachmentHelper.fetchAttachments(context);
@@ -109,6 +137,11 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
 
     records = attachmentHelper.buildUpdatedModels(context, records);
     stopwatch.split("attachment-models");
+
+    for (ServiceId serviceId : referencedIds) {
+      Recipient.resolved(RecipientId.from(serviceId));
+    }
+    stopwatch.split("recipient-resolves");
 
     List<ConversationMessage> messages = Stream.of(records)
                                                .map(m -> ConversationMessageFactory.createWithUnresolvedData(context, m, mentionHelper.getMentions(m.getId())))
@@ -219,20 +252,26 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
     }
   }
 
-  private static class ReactionHelper {
+  public static class ReactionHelper {
 
     private Collection<MessageId>                messageIds           = new LinkedList<>();
     private Map<MessageId, List<ReactionRecord>> messageIdToReactions = new HashMap<>();
 
-    void add(MessageRecord record) {
+    public void add(MessageRecord record) {
       messageIds.add(new MessageId(record.getId(), record.isMms()));
     }
 
-    void fetchReactions(Context context) {
+    public void addAll(List<MessageRecord> records) {
+      for (MessageRecord record : records) {
+        add(record);
+      }
+    }
+
+    public void fetchReactions() {
       messageIdToReactions = SignalDatabase.reactions().getReactionsForMessages(messageIds);
     }
 
-    @NonNull List<MessageRecord> buildUpdatedModels(@NonNull Context context, @NonNull List<MessageRecord> records) {
+    public @NonNull List<MessageRecord> buildUpdatedModels(@NonNull List<MessageRecord> records) {
       return records.stream()
                     .map(record -> {
                       MessageId            messageId = new MessageId(record.getId(), record.isMms());
@@ -243,7 +282,7 @@ class ConversationDataSource implements PagedDataSource<MessageId, ConversationM
                     .collect(Collectors.toList());
     }
 
-    static MessageRecord recordWithReactions(@NonNull MessageRecord record, List<ReactionRecord> reactions) {
+    private static MessageRecord recordWithReactions(@NonNull MessageRecord record, List<ReactionRecord> reactions) {
       if (Util.hasItems(reactions)) {
         if (record instanceof MediaMmsMessageRecord) {
           return ((MediaMmsMessageRecord) record).withReactions(reactions);

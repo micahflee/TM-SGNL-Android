@@ -13,7 +13,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.util.Stopwatch;
+import org.signal.core.util.Stopwatch;
 
 public final class QrCode {
 

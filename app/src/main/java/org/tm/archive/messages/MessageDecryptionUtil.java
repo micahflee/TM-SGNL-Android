@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import org.signal.core.util.PendingIntentFlags;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.metadata.InvalidMetadataMessageException;
 import org.signal.libsignal.metadata.InvalidMetadataVersionException;
@@ -22,6 +23,8 @@ import org.signal.libsignal.metadata.ProtocolLegacyMessageException;
 import org.signal.libsignal.metadata.ProtocolNoSessionException;
 import org.signal.libsignal.metadata.ProtocolUntrustedIdentityException;
 import org.signal.libsignal.metadata.SelfSendException;
+import org.signal.libsignal.protocol.message.CiphertextMessage;
+import org.signal.libsignal.protocol.message.DecryptionErrorMessage;
 import org.tm.archive.R;
 import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
@@ -31,7 +34,7 @@ import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.AutomaticSessionResetJob;
-import org.tm.archive.jobs.RefreshPreKeysJob;
+import org.tm.archive.jobs.PreKeysSyncJob;
 import org.tm.archive.jobs.SendRetryReceiptJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.logsubmit.SubmitDebugLogActivity;
@@ -40,23 +43,23 @@ import org.tm.archive.messages.MessageContentProcessor.MessageState;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.FeatureFlags;
-import org.tm.archive.util.GroupUtil;
-import org.whispersystems.libsignal.protocol.CiphertextMessage;
-import org.whispersystems.libsignal.protocol.DecryptionErrorMessage;
-import org.whispersystems.libsignal.state.SignalProtocolStore;
-import org.whispersystems.libsignal.util.guava.Optional;
 import org.whispersystems.signalservice.api.InvalidMessageStructureException;
+import org.whispersystems.signalservice.api.SignalServiceAccountDataStore;
 import org.whispersystems.signalservice.api.crypto.ContentHint;
 import org.whispersystems.signalservice.api.crypto.SignalServiceCipher;
 import org.whispersystems.signalservice.api.messages.SignalServiceContent;
 import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 import org.whispersystems.signalservice.internal.push.UnsupportedDataMessageException;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Handles taking an encrypted {@link SignalServiceEnvelope} and turning it into a plaintext model.
@@ -76,13 +79,41 @@ public final class MessageDecryptionUtil {
    * caller.
    */
   public static @NonNull DecryptionResult decrypt(@NonNull Context context, @NonNull SignalServiceEnvelope envelope) {
-    SignalProtocolStore  axolotlStore = ApplicationDependencies.getProtocolStore().aci();
-    SignalServiceAddress localAddress = new SignalServiceAddress(Recipient.self().requireAci(), Recipient.self().requireE164());
-    SignalServiceCipher  cipher       = new SignalServiceCipher(localAddress, SignalStore.account().getDeviceId(), axolotlStore, ReentrantSessionLock.INSTANCE, UnidentifiedAccessUtil.getCertificateValidator());
-    List<Job>            jobs         = new LinkedList<>();
+    ServiceId aci = SignalStore.account().requireAci();
+    ServiceId pni = SignalStore.account().requirePni();
+
+    ServiceId destination;
+    if (!FeatureFlags.phoneNumberPrivacy()) {
+      destination = aci;
+    } else if (envelope.hasDestinationUuid()) {
+      destination = ServiceId.parseOrThrow(envelope.getDestinationUuid());
+    } else {
+      Log.w(TAG, "No destinationUuid set! Defaulting to ACI.");
+      destination = aci;
+    }
+
+    if (destination.equals(pni)) {
+      if (envelope.hasSourceUuid()) {
+        RecipientId sender = RecipientId.from(envelope.getSourceAddress());
+        SignalDatabase.recipients().markNeedsPniSignature(sender);
+      } else {
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] Got a sealed sender message to our PNI? Invalid message, ignoring.");
+        return DecryptionResult.forNoop(Collections.emptyList());
+      }
+    }
+
+    if (!destination.equals(aci) && !destination.equals(pni)) {
+      Log.w(TAG, "Destination of " + destination + " does not match our ACI (" + aci + ") or PNI (" + pni + ")! Defaulting to ACI.");
+      destination = aci;
+    }
+
+    SignalServiceAccountDataStore protocolStore = ApplicationDependencies.getProtocolStore().get(destination);
+    SignalServiceAddress          localAddress  = new SignalServiceAddress(SignalStore.account().requireAci(), SignalStore.account().getE164());
+    SignalServiceCipher           cipher        = new SignalServiceCipher(localAddress, SignalStore.account().getDeviceId(), protocolStore, ReentrantSessionLock.INSTANCE, UnidentifiedAccessUtil.getCertificateValidator());
+    List<Job>                     jobs          = new LinkedList<>();
 
     if (envelope.isPreKeySignalMessage()) {
-      jobs.add(new RefreshPreKeysJob());
+      PreKeysSyncJob.enqueue();
     }
 
     try {
@@ -93,7 +124,7 @@ public final class MessageDecryptionUtil {
         return DecryptionResult.forError(MessageState.INVALID_VERSION, toExceptionMetadata(e), jobs);
 
       } catch (ProtocolInvalidKeyIdException | ProtocolInvalidKeyException | ProtocolUntrustedIdentityException | ProtocolNoSessionException | ProtocolInvalidMessageException e) {
-        Log.w(TAG, String.valueOf(envelope.getTimestamp()), e);
+        Log.w(TAG, String.valueOf(envelope.getTimestamp()), e, true);
         Recipient sender = Recipient.external(context, e.getSender());
 
         if (sender.supportsMessageRetries() && Recipient.self().supportsMessageRetries() && FeatureFlags.retryReceipts()) {
@@ -130,22 +161,22 @@ public final class MessageDecryptionUtil {
     ContentHint       contentHint       = ContentHint.fromType(protocolException.getContentHint());
     int               senderDevice      = protocolException.getSenderDevice();
     long              receivedTimestamp = System.currentTimeMillis();
-    Optional<GroupId> groupId           = Optional.absent();
+    Optional<GroupId> groupId           = Optional.empty();
 
     if (protocolException.getGroupId().isPresent()) {
       try {
         groupId = Optional.of(GroupId.push(protocolException.getGroupId().get()));
       } catch (BadGroupIdException e) {
-        Log.w(TAG, "[" + envelope.getTimestamp() + "] Bad groupId!");
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] Bad groupId!", true);
       }
     }
 
-    Log.w(TAG, "[" + envelope.getTimestamp() + "] Could not decrypt a message with a type of " + contentHint);
+    Log.w(TAG, "[" + envelope.getTimestamp() + "] Could not decrypt a message with a type of " + contentHint, true);
 
     long threadId;
 
     if (groupId.isPresent()) {
-      Recipient groupRecipient = Recipient.externalPossiblyMigratedGroup(context, groupId.get());
+      Recipient groupRecipient = Recipient.externalPossiblyMigratedGroup(groupId.get());
       threadId = SignalDatabase.threads().getOrCreateThreadIdFor(groupRecipient);
     } else {
       threadId = SignalDatabase.threads().getOrCreateThreadIdFor(sender);
@@ -153,16 +184,16 @@ public final class MessageDecryptionUtil {
 
     switch (contentHint) {
       case DEFAULT:
-        Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting an error right away because it's " + contentHint);
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting an error right away because it's " + contentHint, true);
         SignalDatabase.sms().insertBadDecryptMessage(sender.getId(), senderDevice, envelope.getTimestamp(), receivedTimestamp, threadId);
         break;
       case RESENDABLE:
-        Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting into pending retries store because it's " + contentHint);
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] Inserting into pending retries store because it's " + contentHint, true);
         ApplicationDependencies.getPendingRetryReceiptCache().insert(sender.getId(), senderDevice, envelope.getTimestamp(), receivedTimestamp, threadId);
         ApplicationDependencies.getPendingRetryReceiptManager().scheduleIfNecessary();
         break;
       case IMPLICIT:
-        Log.w(TAG, "[" + envelope.getTimestamp() + "] Not inserting any error because it's " + contentHint);
+        Log.w(TAG, "[" + envelope.getTimestamp() + "] Not inserting any error because it's " + contentHint, true);
         break;
     }
 
@@ -188,15 +219,7 @@ public final class MessageDecryptionUtil {
 
     if (sender == null) throw new NoSenderException();
 
-    GroupId groupId = null;
-
-    if (e.getGroup().isPresent()) {
-      try {
-        groupId = GroupUtil.idFromGroupContext(e.getGroup().get());
-      } catch (BadGroupIdException ex) {
-        Log.w(TAG, "Bad group id found in unsupported data message", ex);
-      }
-    }
+    GroupId groupId = e.getGroup().isPresent() ? GroupId.v2(e.getGroup().get().getMasterKey()) : null;
 
     return new ExceptionMetadata(sender, e.getSenderDevice(), groupId);
   }
@@ -217,7 +240,7 @@ public final class MessageDecryptionUtil {
                                                                          .setSmallIcon(R.drawable.ic_notification)
                                                                          .setContentTitle(context.getString(R.string.MessageDecryptionUtil_failed_to_decrypt_message))
                                                                          .setContentText(context.getString(R.string.MessageDecryptionUtil_tap_to_send_a_debug_log))
-                                                                         .setContentIntent(PendingIntent.getActivity(context, 0, new Intent(context, SubmitDebugLogActivity.class), 0))
+                                                                         .setContentIntent(PendingIntent.getActivity(context, 0, new Intent(context, SubmitDebugLogActivity.class), PendingIntentFlags.mutable()))
                                                                          .build());
   }
 

@@ -129,7 +129,7 @@
   <string name="ContactsCursorLoader_contacts">رابطے</string>
   <string name="ContactsCursorLoader_groups">گروپس</string>
   <string name="ContactsCursorLoader_phone_number_search">فون نمبر لبھنا</string>
-  <string name="ContactsCursorLoader_username_search">صارف ناں دی تلاش</string>
+  <!-- Removed by excludeNonTranslatables <string name="ContactsCursorLoader_username_search">صارف ناں دی تلاش</string> -->
   <!--ContactsDatabase-->
   <string name="ContactsDatabase_message_s"> سنیہا %s</string>
   <string name="ContactsDatabase_signal_call_s"> Signal کال %s</string>
@@ -331,7 +331,7 @@
   <string name="DozeReminder_optimize_for_missing_play_services">رہ جان آلی پلے سروسز لئی احسن کاری کرو</string>
   <string name="DozeReminder_this_device_does_not_support_play_services_tap_to_disable_system_battery">ایہہ آلہ پلے سروسز دی معاونت نئیں کر دا اے۔ سسٹم بیٹری دی احسن کاری نوں غیر فعال کرن لئی بٹن دباؤ جیہڑی Signal نوں غیر فعال ہون دے دوران سنیہے بازیافت کرن توں روکدی اے۔</string>
   <!--ShareActivity-->
-  <string name="ShareActivity_share_with">ایہدے نال سانجھا کرو</string>
+  <!-- Removed by excludeNonTranslatables <string name="ShareActivity_share_with">ایہدے نال سانجھا کرو</string> -->
   <!--GcmBroadcastReceiver-->
   <!-- Removed by excludeNonTranslatables <string name="GcmBroadcastReceiver_retrieving_a_message">اک سنیہا بازیافت کر رئیا اے…</string> -->
   <!--GcmRefreshJob-->
@@ -1188,10 +1188,10 @@
   <string name="webrtc_answer_decline_button__swipe_down_to_reject">مسترد کرن لئی تھلے نوں سوائپ کرو</string>
   <!--message_details_header-->
   <string name="message_details_header__issues_need_your_attention">کجھ مسئلیاں نوں تہاڈی توجہ دی لوڑھ اے۔</string>
-  <string name="message_details_header__sent">گھلیا گیا</string>
-  <string name="message_details_header__received">موصول ہویا</string>
-  <string name="message_details_header__disappears">غائب ہویا</string>
-  <string name="message_details_header__via"> دے راہیں</string>
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__sent">گھلیا گیا</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__received">موصول ہویا</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__disappears">غائب ہویا</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="message_details_header__via"> دے راہیں</string> -->
   <!--message_details_recipient_header-->
   <!--message_Details_recipient-->
   <string name="message_details_recipient__failed_to_send">گھلن اچ ناکام ہویا</string>

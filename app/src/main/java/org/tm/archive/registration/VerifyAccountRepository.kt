@@ -12,7 +12,6 @@ import org.tm.archive.pin.KeyBackupSystemWrongPinException
 import org.tm.archive.pin.TokenData
 import org.tm.archive.push.AccountManagerFactory
 import org.tm.archive.util.TextSecurePreferences
-import org.whispersystems.libsignal.util.guava.Optional
 import org.whispersystems.signalservice.api.KbsPinData
 import org.whispersystems.signalservice.api.KeyBackupSystemNoDataException
 import org.whispersystems.signalservice.api.SignalServiceAccountManager
@@ -23,6 +22,7 @@ import org.whispersystems.signalservice.internal.push.RequestVerificationCodeRes
 import org.whispersystems.signalservice.internal.push.VerifyAccountResponse
 import java.io.IOException
 import java.util.Locale
+import java.util.Optional
 import java.util.concurrent.TimeUnit
 
 /**
@@ -39,14 +39,14 @@ class VerifyAccountRepository(private val context: Application) {
     Log.d(TAG, "SMS Verification requested")
 
     return Single.fromCallable {
-      val fcmToken: Optional<String> = FcmUtil.getToken()
+      val fcmToken: Optional<String> = FcmUtil.getToken(context)
       val accountManager = AccountManagerFactory.createUnauthenticated(context, e164, SignalServiceAddress.DEFAULT_DEVICE_ID, password)
       val pushChallenge = PushChallengeRequest.getPushChallengeBlocking(accountManager, fcmToken, e164, PUSH_REQUEST_TIMEOUT)
 
       if (mode == Mode.PHONE_CALL) {
-        accountManager.requestVoiceVerificationCode(Locale.getDefault(), Optional.fromNullable(captchaToken), pushChallenge, fcmToken)
+        accountManager.requestVoiceVerificationCode(Locale.getDefault(), Optional.ofNullable(captchaToken), pushChallenge, fcmToken)
       } else {
-        accountManager.requestSmsVerificationCode(mode.isSmsRetrieverSupported, Optional.fromNullable(captchaToken), pushChallenge, fcmToken)
+        accountManager.requestSmsVerificationCode(mode.isSmsRetrieverSupported, Optional.ofNullable(captchaToken), pushChallenge, fcmToken)
       }
     }.subscribeOn(Schedulers.io())
   }
@@ -70,7 +70,8 @@ class VerifyAccountRepository(private val context: Application) {
         unidentifiedAccessKey,
         universalUnidentifiedAccess,
         AppCapabilities.getCapabilities(true),
-        SignalStore.phoneNumberPrivacy().phoneNumberListingMode.isDiscoverable
+        SignalStore.phoneNumberPrivacy().phoneNumberListingMode.isDiscoverable,
+        registrationData.pniRegistrationId
       )
     }.subscribeOn(Schedulers.io())
   }
@@ -99,7 +100,8 @@ class VerifyAccountRepository(private val context: Application) {
           unidentifiedAccessKey,
           universalUnidentifiedAccess,
           AppCapabilities.getCapabilities(true),
-          SignalStore.phoneNumberPrivacy().phoneNumberListingMode.isDiscoverable
+          SignalStore.phoneNumberPrivacy().phoneNumberListingMode.isDiscoverable,
+          registrationData.pniRegistrationId
         )
         VerifyAccountWithRegistrationLockResponse.from(response, kbsData)
       } catch (e: KeyBackupSystemWrongPinException) {

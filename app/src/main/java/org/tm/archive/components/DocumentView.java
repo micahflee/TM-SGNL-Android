@@ -27,6 +27,7 @@ import org.tm.archive.events.PartProgressEvent;
 import org.tm.archive.mms.Slide;
 import org.tm.archive.mms.SlideClickListener;
 import org.tm.archive.util.Util;
+import org.whispersystems.signalservice.api.util.OptionalUtil;
 
 public class DocumentView extends FrameLayout {
 
@@ -105,11 +106,11 @@ public class DocumentView extends FrameLayout {
 
     this.documentSlide = documentSlide;
 
-    this.fileName.setText(documentSlide.getFileName()
-                                       .or(documentSlide.getCaption())
-                                       .or(getContext().getString(R.string.DocumentView_unnamed_file)));
+    this.fileName.setText(OptionalUtil.or(documentSlide.getFileName(),
+                                          documentSlide.getCaption())
+                                      .orElse(getContext().getString(R.string.DocumentView_unnamed_file)));
     this.fileSize.setText(Util.getPrettyFileSize(documentSlide.getFileSize()));
-    this.document.setText(documentSlide.getFileType(getContext()).or("").toLowerCase());
+    this.document.setText(documentSlide.getFileType(getContext()).orElse("").toLowerCase());
     this.setOnClickListener(new OpenClickedListener(documentSlide));
   }
 

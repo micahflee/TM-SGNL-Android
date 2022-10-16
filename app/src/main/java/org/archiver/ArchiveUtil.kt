@@ -24,6 +24,7 @@ import org.archiver.ArchiveSender.Companion.archiveMessageOutboxMMS
 import org.archiver.ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage
 import org.tm.archive.BuildConfig
 import org.tm.archive.database.model.Mention
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mms.IncomingMediaMessage
@@ -34,6 +35,9 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.IncomingTextMessage
 import java.io.File
+import java.util.function.Function
+import java.util.function.Predicate
+import java.util.stream.Collectors
 
 
 class ArchiveUtil {
@@ -53,7 +57,7 @@ class ArchiveUtil {
     ): Array<String> {
       var recipientListFromRecipient: List<String> = if (isGroup) {
         recipientList?.filter { it.e164.isPresent }?.map { it.e164.get() }
-          ?: aRecipient.participants.filter { it.e164.isPresent }.map { it.e164.get() }
+          ?: getRecipientsListFromParticipantIds(aRecipient).filter { it.e164.isPresent }.map { it.e164.get() }
 
       } else {
         if (isInboxArchiveMessage) {
@@ -221,7 +225,8 @@ class ArchiveUtil {
       archiveRecipient: Recipient,
       message: IncomingTextMessage
     ): String {
-      val recipientList = archiveRecipient.participants.filter {
+
+      val recipientList = getRecipientsListFromParticipantIds(archiveRecipient).filter {
         message.sender.toLong() == it.id.toLong()
       }
       return recipientList[0].e164.get()
@@ -258,20 +263,33 @@ class ArchiveUtil {
     }
 
     @JvmStatic
+    fun getRecipientsListFromParticipantIds(recipient: Recipient) : List<Recipient> {
+      val selfId = ApplicationDependencies.getRecipientCache().selfId
+      return recipient.participantIds.stream()
+        .filter(Predicate { id: RecipientId -> id != selfId })
+        .limit(ArchiveConstants.MAX_MEMBER_NAMES.toLong())
+        .map(Function { id: RecipientId? -> Recipient.resolved(id!!) })
+        .collect(Collectors.toList())
+    }
+
+    @JvmStatic
     fun createMessageNameList(
       context: Context,
       recipient: Recipient,
       isInboxArchiveMessage: Boolean,
-      recipientList: MutableList<Recipient>? = null,
+      recipientList: List<Recipient>? = null,
       isGroup: Boolean,
       from: Contact = Contact("")
     ): Array<Contact> {
+
+
+      val tempRecipientList = getRecipientsListFromParticipantIds(recipient)
 
       val rl = if (!isInboxArchiveMessage) {
         if (recipientList!!.size > 1) {
           recipientList!!.filter {
             it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
-          } ?: recipient.participants.filter {
+          } ?:tempRecipientList.filter {
             it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
           }
         } else {
@@ -280,10 +298,10 @@ class ArchiveUtil {
         }
       } else {
         recipientList?.filter {
-          it.e164.isPresent && it.e164.get() != null && it.e164.get() != from.toString()
+          it.e164.isPresent && it.e164.get() != from.toString()
         }
-          ?: recipient.participants.filter {
-            it.e164.isPresent && it.e164.get() != null && it.e164.get() != from.toString()
+          ?: tempRecipientList.filter {
+            it.e164.isPresent && it.e164.get() != from.toString()
           }
       }
 

@@ -3,9 +3,11 @@ package org.whispersystems.signalservice.api.groupsv2;
 import com.google.protobuf.ByteString;
 
 import org.junit.Test;
+import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.signal.storageservice.protos.groups.AccessControl;
 import org.signal.storageservice.protos.groups.Member;
 import org.signal.storageservice.protos.groups.local.DecryptedApproveMember;
+import org.signal.storageservice.protos.groups.local.DecryptedBannedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedMember;
@@ -16,7 +18,6 @@ import org.signal.storageservice.protos.groups.local.DecryptedRequestingMember;
 import org.signal.storageservice.protos.groups.local.DecryptedString;
 import org.signal.storageservice.protos.groups.local.DecryptedTimer;
 import org.signal.storageservice.protos.groups.local.EnabledState;
-import org.signal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 import org.whispersystems.signalservice.internal.util.Util;
 
@@ -26,9 +27,11 @@ import static org.junit.Assert.assertEquals;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.admin;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.asAdmin;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.asMember;
+import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.bannedMember;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.member;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.newProfileKey;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.pendingMember;
+import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.pendingPniAciMember;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.randomProfileKey;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.requestingMember;
 import static org.whispersystems.signalservice.api.groupsv2.ProtoTestUtils.withProfileKey;
@@ -46,7 +49,7 @@ public final class DecryptedGroupUtil_apply_Test {
     int maxFieldFound = getMaxDeclaredFieldNumber(DecryptedGroupChange.class);
 
     assertEquals("DecryptedGroupUtil and its tests need updating to account for new fields on " + DecryptedGroupChange.class.getName(),
-                 21, maxFieldFound);
+                 24, maxFieldFound);
   }
 
   @Test
@@ -885,4 +888,102 @@ public final class DecryptedGroupUtil_apply_Test {
                  newGroup);
   }
 
+
+
+  @Test
+  public void apply_new_banned_member() throws NotAbleToApplyGroupV2ChangeException {
+    DecryptedMember       member1 = member(UUID.randomUUID());
+    DecryptedBannedMember banned  = bannedMember(UUID.randomUUID());
+
+    DecryptedGroup newGroup = DecryptedGroupUtil.apply(DecryptedGroup.newBuilder()
+                                                                     .setRevision(10)
+                                                                     .addMembers(member1)
+                                                                     .build(),
+                                                       DecryptedGroupChange.newBuilder()
+                                                                           .setRevision(11)
+                                                                           .addNewBannedMembers(banned)
+                                                                           .build());
+
+    assertEquals(DecryptedGroup.newBuilder()
+                               .setRevision(11)
+                               .addMembers(member1)
+                               .addBannedMembers(banned)
+                               .build(),
+                 newGroup);
+  }
+
+  @Test
+  public void apply_new_banned_member_already_banned() throws NotAbleToApplyGroupV2ChangeException {
+    DecryptedMember        member1 = member(UUID.randomUUID());
+    DecryptedBannedMember  banned  = bannedMember(UUID.randomUUID());
+
+    DecryptedGroup newGroup = DecryptedGroupUtil.apply(DecryptedGroup.newBuilder()
+                                                                     .setRevision(10)
+                                                                     .addMembers(member1)
+                                                                     .addBannedMembers(banned)
+                                                                     .build(),
+                                                       DecryptedGroupChange.newBuilder()
+                                                                           .setRevision(11)
+                                                                           .addNewBannedMembers(banned)
+                                                                           .build());
+
+    assertEquals(DecryptedGroup.newBuilder()
+                               .setRevision(11)
+                               .addMembers(member1)
+                               .addBannedMembers(banned)
+                               .build(),
+                 newGroup);
+  }
+
+  @Test
+  public void remove_banned_member() throws NotAbleToApplyGroupV2ChangeException {
+    DecryptedMember       member1    = member(UUID.randomUUID());
+    UUID                  bannedUuid = UUID.randomUUID();
+    DecryptedBannedMember banned     = bannedMember(bannedUuid);
+
+    DecryptedGroup newGroup = DecryptedGroupUtil.apply(DecryptedGroup.newBuilder()
+                                                                     .setRevision(10)
+                                                                     .addMembers(member1)
+                                                                     .addBannedMembers(banned)
+                                                                     .build(),
+                                                       DecryptedGroupChange.newBuilder()
+                                                                           .setRevision(11)
+                                                                           .addDeleteBannedMembers(DecryptedBannedMember.newBuilder()
+                                                                                                                        .setUuid(UuidUtil.toByteString(bannedUuid))
+                                                                                                                        .build())
+                                                                           .build());
+
+    assertEquals(DecryptedGroup.newBuilder()
+                               .setRevision(11)
+                               .addMembers(member1)
+                               .build(),
+                 newGroup);
+  }
+
+  @Test
+  public void promote_pending_member_pni_aci() throws NotAbleToApplyGroupV2ChangeException {
+    ProfileKey             profileKey2  = randomProfileKey();
+    DecryptedMember        member1      = member(UUID.randomUUID());
+    UUID                   pending2Aci  = UUID.randomUUID();
+    UUID                   pending2Pni  = UUID.randomUUID();
+    DecryptedPendingMember pending2     = pendingMember(pending2Pni);
+    DecryptedMember        member2      = pendingPniAciMember(pending2Aci, pending2Pni, profileKey2);
+
+    DecryptedGroup newGroup = DecryptedGroupUtil.apply(DecryptedGroup.newBuilder()
+                                                                     .setRevision(10)
+                                                                     .addMembers(member1)
+                                                                     .addPendingMembers(pending2)
+                                                                     .build(),
+                                                       DecryptedGroupChange.newBuilder()
+                                                                           .setRevision(11)
+                                                                           .addPromotePendingPniAciMembers(member2)
+                                                                           .build());
+
+    assertEquals(DecryptedGroup.newBuilder()
+                               .setRevision(11)
+                               .addMembers(member1)
+                               .addMembers(member2)
+                               .build(),
+                 newGroup);
+  }
 }

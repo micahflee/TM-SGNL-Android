@@ -15,8 +15,8 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.concurrent.SimpleTask;
-import org.whispersystems.libsignal.util.guava.Preconditions;
+import org.signal.core.util.concurrent.SimpleTask;
+import org.whispersystems.signalservice.api.util.Preconditions;
 
 import java.util.List;
 import java.util.Objects;

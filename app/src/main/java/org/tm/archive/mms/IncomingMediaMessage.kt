@@ -4,35 +4,41 @@ import org.tm.archive.attachments.Attachment
 import org.tm.archive.attachments.PointerAttachment
 import org.tm.archive.contactshare.Contact
 import org.tm.archive.database.model.Mention
+import org.tm.archive.database.model.ParentStoryId
+import org.tm.archive.database.model.StoryType
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
+import org.tm.archive.database.model.databaseprotos.GiftBadge
 import org.tm.archive.groups.GroupId
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.util.GroupUtil
-import org.whispersystems.libsignal.util.guava.Optional
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment
-import org.whispersystems.signalservice.api.messages.SignalServiceGroupContext
+import org.whispersystems.signalservice.api.messages.SignalServiceGroupV2
+import java.util.Optional
 
 class IncomingMediaMessage(
-        val from: RecipientId?,
-        val groupId: GroupId? = null,
-        val body: String? = null,
-        val isPushMessage: Boolean = false,
-        val sentTimeMillis: Long,
-        val serverTimeMillis: Long,
-        val receivedTimeMillis: Long,
-        val subscriptionId: Int = -1,
-        val expiresIn: Long = 0,
-        val isExpirationUpdate: Boolean = false,
-        val quote: QuoteModel? = null,
-        val isUnidentified: Boolean = false,
-        val isViewOnce: Boolean = false,
-        val serverGuid: String? = null,
-        val messageRanges: BodyRangeList? = null,
-        attachments: List<Attachment> = emptyList(),
-        sharedContacts: List<Contact> = emptyList(),
-        linkPreviews: List<LinkPreview> = emptyList(),
-        mentions: List<Mention> = emptyList()
+  val from: RecipientId?,
+  val groupId: GroupId? = null,
+  val body: String? = null,
+  val isPushMessage: Boolean = false,
+  val storyType: StoryType = StoryType.NONE,
+  val parentStoryId: ParentStoryId? = null,
+  val isStoryReaction: Boolean = false,
+  val sentTimeMillis: Long,
+  val serverTimeMillis: Long,
+  val receivedTimeMillis: Long,
+  val subscriptionId: Int = -1,
+  val expiresIn: Long = 0,
+  val isExpirationUpdate: Boolean = false,
+  val quote: QuoteModel? = null,
+  val isUnidentified: Boolean = false,
+  val isViewOnce: Boolean = false,
+  val serverGuid: String? = null,
+  val messageRanges: BodyRangeList? = null,
+  attachments: List<Attachment> = emptyList(),
+  sharedContacts: List<Contact> = emptyList(),
+  linkPreviews: List<LinkPreview> = emptyList(),
+  mentions: List<Mention> = emptyList(),
+  val giftBadge: GiftBadge? = null
 ) {
 
   val attachments: List<Attachment> = ArrayList(attachments)
@@ -58,7 +64,7 @@ class IncomingMediaMessage(
     sharedContacts: Optional<List<Contact>>
   ) : this(
     from = from,
-    groupId = groupId.orNull(),
+    groupId = groupId.orElse(null),
     body = body,
     isPushMessage = false,
     sentTimeMillis = sentTimeMillis,
@@ -71,8 +77,8 @@ class IncomingMediaMessage(
     isUnidentified = unidentified,
     isViewOnce = viewOnce,
     serverGuid = null,
-    attachments = ArrayList(attachments),
-    sharedContacts = ArrayList(sharedContacts.or(emptyList()))
+    attachments = attachments?.let { ArrayList<Attachment>(it) } ?: emptyList(),
+    sharedContacts = ArrayList<Contact>(sharedContacts.orElse(emptyList())),
   )
 
   constructor(
@@ -80,38 +86,46 @@ class IncomingMediaMessage(
     sentTimeMillis: Long,
     serverTimeMillis: Long,
     receivedTimeMillis: Long,
+    storyType: StoryType,
+    parentStoryId: ParentStoryId?,
+    isStoryReaction: Boolean,
     subscriptionId: Int,
     expiresIn: Long,
     expirationUpdate: Boolean,
     viewOnce: Boolean,
     unidentified: Boolean,
     body: Optional<String>,
-    group: Optional<SignalServiceGroupContext>,
+    group: Optional<SignalServiceGroupV2>,
     attachments: Optional<List<SignalServiceAttachment>>,
     quote: Optional<QuoteModel>,
     sharedContacts: Optional<List<Contact>>,
     linkPreviews: Optional<List<LinkPreview>>,
     mentions: Optional<List<Mention>>,
     sticker: Optional<Attachment>,
-    serverGuid: String?
+    serverGuid: String?,
+    giftBadge: GiftBadge?
   ) : this(
     from = from,
-    groupId = if (group.isPresent) GroupUtil.idFromGroupContextOrThrow(group.get()) else null,
-    body = body.orNull(),
+    groupId = if (group.isPresent) GroupId.v2(group.get().masterKey) else null,
+    body = body.orElse(null),
     isPushMessage = true,
+    storyType = storyType,
+    parentStoryId = parentStoryId,
+    isStoryReaction = isStoryReaction,
     sentTimeMillis = sentTimeMillis,
     serverTimeMillis = serverTimeMillis,
     receivedTimeMillis = receivedTimeMillis,
     subscriptionId = subscriptionId,
     expiresIn = expiresIn,
     isExpirationUpdate = expirationUpdate,
-    quote = quote.orNull(),
+    quote = quote.orElse(null),
     isUnidentified = unidentified,
     isViewOnce = viewOnce,
     serverGuid = serverGuid,
     attachments = PointerAttachment.forPointers(attachments).apply { if (sticker.isPresent) add(sticker.get()) },
-    sharedContacts = sharedContacts.or(emptyList()),
-    linkPreviews = linkPreviews.or(emptyList()),
-    mentions = mentions.or(emptyList())
+    sharedContacts = sharedContacts.orElse(emptyList()),
+    linkPreviews = linkPreviews.orElse(emptyList()),
+    mentions = mentions.orElse(emptyList()),
+    giftBadge = giftBadge
   )
 }

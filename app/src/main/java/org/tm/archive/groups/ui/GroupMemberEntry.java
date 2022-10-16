@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 
-import org.signal.zkgroup.groups.UuidCiphertext;
+import org.signal.libsignal.zkgroup.groups.UuidCiphertext;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.DefaultValueLiveData;
 

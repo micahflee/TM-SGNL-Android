@@ -2,9 +2,11 @@ package org.tm.archive.components.settings.conversation.sounds.custom
 
 import android.net.Uri
 import org.tm.archive.database.RecipientDatabase
+import org.tm.archive.recipients.Recipient
 
 data class CustomNotificationsSettingsState(
   val isInitialLoadComplete: Boolean = false,
+  val recipient: Recipient? = null,
   val hasCustomNotifications: Boolean = false,
   val controlsEnabled: Boolean = false,
   val messageVibrateState: RecipientDatabase.VibrateState = RecipientDatabase.VibrateState.DEFAULT,

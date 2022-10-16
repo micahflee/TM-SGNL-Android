@@ -3,8 +3,12 @@ package org.tm.archive.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.os.CancellationSignal;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
+import androidx.sqlite.db.SupportSQLiteDatabase;
+import androidx.sqlite.db.SupportSQLiteQuery;
 
 import net.zetetic.database.SQLException;
 import net.zetetic.database.sqlcipher.SQLiteStatement;
@@ -12,8 +16,11 @@ import net.zetetic.database.sqlcipher.SQLiteTransactionListener;
 
 import org.signal.core.util.tracing.Tracer;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -24,7 +31,7 @@ import java.util.Set;
  * making a subclass, so instead we just match the interface. Callers should just need to change
  * their import statements.
  */
-public class SQLiteDatabase {
+public class SQLiteDatabase implements SupportSQLiteDatabase {
 
   public static final int CONFLICT_ROLLBACK = 1;
   public static final int CONFLICT_ABORT    = 2;
@@ -41,9 +48,14 @@ public class SQLiteDatabase {
   private final net.zetetic.database.sqlcipher.SQLiteDatabase wrapped;
   private final Tracer                                        tracer;
 
-  private static final ThreadLocal<Set<Runnable>> POST_TRANSACTION_TASKS = new ThreadLocal<>();
+  private static final ThreadLocal<Set<Runnable>> PENDING_POST_SUCCESSFUL_TRANSACTION_TASKS;
+  private static final ThreadLocal<Set<Runnable>> POST_SUCCESSFUL_TRANSACTION_TASKS;
+
   static {
-    POST_TRANSACTION_TASKS.set(new LinkedHashSet<>());
+    PENDING_POST_SUCCESSFUL_TRANSACTION_TASKS = new ThreadLocal<>();
+    POST_SUCCESSFUL_TRANSACTION_TASKS         = new ThreadLocal<>();
+
+    PENDING_POST_SUCCESSFUL_TRANSACTION_TASKS.set(new LinkedHashSet<>());
   }
 
   public SQLiteDatabase(net.zetetic.database.sqlcipher.SQLiteDatabase wrapped) {
@@ -118,7 +130,7 @@ public class SQLiteDatabase {
    */
   public void runPostSuccessfulTransaction(@NonNull Runnable task) {
     if (wrapped.inTransaction()) {
-      getPostTransactionTasks().add(task);
+      getPendingPostSuccessfulTransactionTasks().add(task);
     } else {
       task.run();
     }
@@ -130,18 +142,29 @@ public class SQLiteDatabase {
    */
   public void runPostSuccessfulTransaction(@NonNull String dedupeKey, @NonNull Runnable task) {
     if (wrapped.inTransaction()) {
-      getPostTransactionTasks().add(new DedupedRunnable(dedupeKey, task));
+      getPendingPostSuccessfulTransactionTasks().add(new DedupedRunnable(dedupeKey, task));
     } else {
       task.run();
     }
   }
 
-  private @NonNull Set<Runnable> getPostTransactionTasks() {
-    Set<Runnable> tasks = POST_TRANSACTION_TASKS.get();
+  private @NonNull Set<Runnable> getPendingPostSuccessfulTransactionTasks() {
+    Set<Runnable> tasks = PENDING_POST_SUCCESSFUL_TRANSACTION_TASKS.get();
 
     if (tasks == null) {
       tasks = new LinkedHashSet<>();
-      POST_TRANSACTION_TASKS.set(tasks);
+      PENDING_POST_SUCCESSFUL_TRANSACTION_TASKS.set(tasks);
+    }
+
+    return tasks;
+  }
+
+  private @NonNull Set<Runnable> getPostSuccessfulTransactionTasks() {
+    Set<Runnable> tasks = POST_SUCCESSFUL_TRANSACTION_TASKS.get();
+
+    if (tasks == null) {
+      tasks = new LinkedHashSet<>();
+      POST_SUCCESSFUL_TRANSACTION_TASKS.set(tasks);
     }
 
     return tasks;
@@ -182,6 +205,77 @@ public class SQLiteDatabase {
     }
   }
 
+  // =======================================================
+  // Overrides
+  // =======================================================
+
+  @Override
+  public void beginTransactionWithListener(android.database.sqlite.SQLiteTransactionListener transactionListener) {
+    beginTransactionWithListener(new ConvertedTransactionListener(transactionListener));
+  }
+
+  @Override
+  public void beginTransactionWithListenerNonExclusive(android.database.sqlite.SQLiteTransactionListener transactionListener) {
+    beginTransactionWithListenerNonExclusive(new ConvertedTransactionListener(transactionListener));
+  }
+
+  @Override
+  public Cursor query(String query) {
+    return rawQuery(query, null);
+  }
+
+  @Override
+  public Cursor query(String query, Object[] bindArgs) {
+    return rawQuery(query, bindArgs);
+  }
+
+  @Override
+  public Cursor query(SupportSQLiteQuery query) {
+    DatabaseMonitor.onSql(query.getSql(), null);
+    return wrapped.query(query);
+  }
+
+  @Override
+  public Cursor query(SupportSQLiteQuery query, CancellationSignal cancellationSignal) {
+    DatabaseMonitor.onSql(query.getSql(), null);
+    return wrapped.query(query, cancellationSignal);
+  }
+
+  @Override
+  public long insert(String table, int conflictAlgorithm, ContentValues values) throws android.database.SQLException {
+    return insertWithOnConflict(table, null, values, conflictAlgorithm);
+  }
+
+  @Override
+  public int delete(String table, String whereClause, Object[] whereArgs) {
+    return delete(table, whereClause, (String[]) whereArgs);
+  }
+
+  @Override
+  public int update(String table, int conflictAlgorithm, ContentValues values, String whereClause, Object[] whereArgs) {
+    return updateWithOnConflict(table, values, whereClause, (String[]) whereArgs, conflictAlgorithm);
+  }
+
+  @Override
+  public void setMaxSqlCacheSize(int cacheSize) {
+    wrapped.setMaxSqlCacheSize(cacheSize);
+  }
+
+  @Override
+  public List<Pair<String, String>> getAttachedDbs() {
+    return wrapped.getAttachedDbs();
+  }
+
+  @Override
+  public boolean isDatabaseIntegrityOk() {
+    return wrapped.isDatabaseIntegrityOk();
+  }
+
+  @Override
+  public void close() throws IOException {
+    wrapped.close();
+  }
+
 
   // =======================================================
   // Traced
@@ -200,16 +294,16 @@ public class SQLiteDatabase {
 
           @Override
           public void onCommit() {
-            Set<Runnable> tasks = getPostTransactionTasks();
-            for (Runnable r : tasks) {
-              r.run();
-            }
+            Set<Runnable> pendingTasks = getPendingPostSuccessfulTransactionTasks();
+            Set<Runnable> tasks        = getPostSuccessfulTransactionTasks();
             tasks.clear();
+            tasks.addAll(pendingTasks);
+            pendingTasks.clear();
           }
 
           @Override
           public void onRollback() {
-            getPostTransactionTasks().clear();
+            getPendingPostSuccessfulTransactionTasks().clear();
           }
         });
       });
@@ -219,6 +313,12 @@ public class SQLiteDatabase {
   public void endTransaction() {
     trace("endTransaction()", wrapped::endTransaction);
     traceLockEnd();
+
+    Set<Runnable> tasks = getPostSuccessfulTransactionTasks();
+    for (Runnable r : new HashSet<>(tasks)) {
+      r.run();
+    }
+    tasks.clear();
   }
 
   public void setTransactionSuccessful() {
@@ -226,34 +326,42 @@ public class SQLiteDatabase {
   }
 
   public Cursor query(boolean distinct, String table, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+    DatabaseMonitor.onQuery(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
     return traceSql("query(9)", table, selection, false, () -> wrapped.query(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit));
   }
 
   public Cursor queryWithFactory(net.zetetic.database.sqlcipher.SQLiteDatabase.CursorFactory cursorFactory, boolean distinct, String table, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+    DatabaseMonitor.onQuery(distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
     return traceSql("queryWithFactory()", table, selection, false, () -> wrapped.queryWithFactory(cursorFactory, distinct, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit));
   }
 
   public Cursor query(String table, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
+    DatabaseMonitor.onQuery(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, null);
     return traceSql("query(7)", table, selection, false, () -> wrapped.query(table, columns, selection, selectionArgs, groupBy, having, orderBy));
   }
 
   public Cursor query(String table, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+    DatabaseMonitor.onQuery(false, table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
     return traceSql("query(8)", table, selection, false, () -> wrapped.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit));
   }
 
   public Cursor rawQuery(String sql, String[] selectionArgs) {
+    DatabaseMonitor.onSql(sql, selectionArgs);
     return traceSql("rawQuery(2a)", sql, false, () -> wrapped.rawQuery(sql, selectionArgs));
   }
 
   public Cursor rawQuery(String sql, Object[] args) {
+    DatabaseMonitor.onSql(sql, args);
     return traceSql("rawQuery(2b)", sql, false,() -> wrapped.rawQuery(sql, args));
   }
 
   public Cursor rawQueryWithFactory(net.zetetic.database.sqlcipher.SQLiteDatabase.CursorFactory cursorFactory, String sql, String[] selectionArgs, String editTable) {
+    DatabaseMonitor.onSql(sql, selectionArgs);
     return traceSql("rawQueryWithFactory()", sql, false, () -> wrapped.rawQueryWithFactory(cursorFactory, sql, selectionArgs, editTable));
   }
 
   public Cursor rawQuery(String sql, String[] selectionArgs, int initialRead, int maxRead) {
+    DatabaseMonitor.onSql(sql, selectionArgs);
     return traceSql("rawQuery(4)", sql, false, () -> rawQuery(sql, selectionArgs, initialRead, maxRead));
   }
 
@@ -278,26 +386,32 @@ public class SQLiteDatabase {
   }
 
   public int delete(String table, String whereClause, String[] whereArgs) {
+    DatabaseMonitor.onDelete(table, whereClause, whereArgs);
     return traceSql("delete()", table, whereClause, true, () -> wrapped.delete(table, whereClause, whereArgs));
   }
 
   public int update(String table, ContentValues values, String whereClause, String[] whereArgs) {
+    DatabaseMonitor.onUpdate(table, values, whereClause, whereArgs);
     return traceSql("update()", table, whereClause, true, () -> wrapped.update(table, values, whereClause, whereArgs));
   }
 
   public int updateWithOnConflict(String table, ContentValues values, String whereClause, String[] whereArgs, int conflictAlgorithm) {
+    DatabaseMonitor.onUpdate(table, values, whereClause, whereArgs);
     return traceSql("updateWithOnConflict()", table, whereClause, true, () -> wrapped.updateWithOnConflict(table, values, whereClause, whereArgs, conflictAlgorithm));
   }
 
   public void execSQL(String sql) throws SQLException {
+    DatabaseMonitor.onSql(sql, null);
     traceSql("execSQL(1)", sql, true, () -> wrapped.execSQL(sql));
   }
 
   public void rawExecSQL(String sql) {
+    DatabaseMonitor.onSql(sql, null);
     traceSql("rawExecSQL()", sql, true, () -> wrapped.rawExecSQL(sql));
   }
 
   public void execSQL(String sql, Object[] bindArgs) throws SQLException {
+    DatabaseMonitor.onSql(sql, null);
     traceSql("execSQL(2)", sql, true, () -> wrapped.execSQL(sql, bindArgs));
   }
 
@@ -400,5 +514,29 @@ public class SQLiteDatabase {
 
   public void setLocale(Locale locale) {
     wrapped.setLocale(locale);
+  }
+
+  private static class ConvertedTransactionListener implements SQLiteTransactionListener {
+
+    private final android.database.sqlite.SQLiteTransactionListener listener;
+
+    ConvertedTransactionListener(android.database.sqlite.SQLiteTransactionListener listener) {
+      this.listener = listener;
+    }
+
+    @Override
+    public void onBegin() {
+      listener.onBegin();
+    }
+
+    @Override
+    public void onCommit() {
+      listener.onCommit();
+    }
+
+    @Override
+    public void onRollback() {
+      listener.onRollback();
+    }
   }
 }

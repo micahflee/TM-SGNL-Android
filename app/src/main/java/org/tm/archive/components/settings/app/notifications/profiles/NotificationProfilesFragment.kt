@@ -8,7 +8,6 @@ import androidx.navigation.fragment.findNavController
 import org.tm.archive.R
 import org.tm.archive.components.emoji.EmojiUtil
 import org.tm.archive.components.settings.DSLConfiguration
-import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsIcon
 import org.tm.archive.components.settings.DSLSettingsText
@@ -17,11 +16,10 @@ import org.tm.archive.components.settings.app.notifications.profiles.models.NoNo
 import org.tm.archive.components.settings.app.notifications.profiles.models.NotificationProfilePreference
 import org.tm.archive.components.settings.configure
 import org.tm.archive.components.settings.conversation.preferences.LargeIconClickPreference
-import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.megaphone.Megaphones
 import org.tm.archive.notifications.profiles.NotificationProfile
 import org.tm.archive.notifications.profiles.NotificationProfiles
 import org.tm.archive.util.LifecycleDisposable
+import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
 /**
@@ -37,11 +35,6 @@ class NotificationProfilesFragment : DSLSettingsFragment() {
   private val lifecycleDisposable = LifecycleDisposable()
   private var toolbar: Toolbar? = null
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    ApplicationDependencies.getMegaphoneRepository().markFinished(Megaphones.Event.NOTIFICATION_PROFILES)
-  }
-
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
@@ -55,7 +48,7 @@ class NotificationProfilesFragment : DSLSettingsFragment() {
     toolbar = null
   }
 
-  override fun bindAdapter(adapter: DSLSettingsAdapter) {
+  override fun bindAdapter(adapter: MappingAdapter) {
     NoNotificationProfiles.register(adapter)
     LargeIconClickPreference.register(adapter)
     NotificationProfilePreference.register(adapter)

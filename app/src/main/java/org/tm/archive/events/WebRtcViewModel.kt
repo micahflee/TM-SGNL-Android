@@ -7,6 +7,7 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.service.webrtc.state.WebRtcServiceState
 import org.tm.archive.webrtc.audio.SignalAudioManager
+import org.webrtc.PeerConnection
 
 class WebRtcViewModel(state: WebRtcServiceState) {
 
@@ -23,6 +24,7 @@ class WebRtcViewModel(state: WebRtcServiceState) {
     CALL_DISCONNECTED,
     CALL_DISCONNECTED_GLARE,
     CALL_NEEDS_PERMISSION,
+    CALL_RECONNECTING,
 
     // Error states
     NETWORK_FAILURE,
@@ -82,7 +84,7 @@ class WebRtcViewModel(state: WebRtcServiceState) {
   }
 
   val state: State = state.callInfoState.callState
-  val groupState: GroupCallState = state.callInfoState.groupCallState
+  val groupState: GroupCallState = state.callInfoState.groupState
   val recipient: Recipient = state.callInfoState.callRecipient
   val isRemoteVideoOffer: Boolean = state.getCallSetupState(state.callInfoState.activePeer?.callId).isRemoteVideoOffer
   val callConnectedTime: Long = state.callInfoState.callConnectedTime
@@ -95,12 +97,27 @@ class WebRtcViewModel(state: WebRtcServiceState) {
   val ringerRecipient: Recipient = state.getCallSetupState(state.callInfoState.activePeer?.callId).ringerRecipient
   val activeDevice: SignalAudioManager.AudioDevice = state.localDeviceState.activeDevice
   val availableDevices: Set<SignalAudioManager.AudioDevice> = state.localDeviceState.availableDevices
+  val bluetoothPermissionDenied: Boolean = state.localDeviceState.bluetoothPermissionDenied
 
   val localParticipant: CallParticipant = createLocal(
     state.localDeviceState.cameraState,
     (if (state.videoState.localSink != null) state.videoState.localSink else BroadcastVideoSink())!!,
     state.localDeviceState.isMicrophoneEnabled
   )
+
+  val isCellularConnection: Boolean = when (state.localDeviceState.networkConnectionType) {
+    PeerConnection.AdapterType.UNKNOWN,
+    PeerConnection.AdapterType.ETHERNET,
+    PeerConnection.AdapterType.WIFI,
+    PeerConnection.AdapterType.VPN,
+    PeerConnection.AdapterType.LOOPBACK,
+    PeerConnection.AdapterType.ADAPTER_TYPE_ANY -> false
+    PeerConnection.AdapterType.CELLULAR,
+    PeerConnection.AdapterType.CELLULAR_2G,
+    PeerConnection.AdapterType.CELLULAR_3G,
+    PeerConnection.AdapterType.CELLULAR_4G,
+    PeerConnection.AdapterType.CELLULAR_5G -> true
+  }
 
   val isRemoteVideoEnabled: Boolean
     get() = remoteParticipants.any(CallParticipant::isVideoEnabled) || groupState.isNotIdle && remoteParticipants.size > 1
@@ -123,6 +140,7 @@ class WebRtcViewModel(state: WebRtcServiceState) {
        participantLimit=$participantLimit,
        activeDevice=$activeDevice,
        availableDevices=$availableDevices,
+       bluetoothPermissionDenied=$bluetoothPermissionDenied,
        ringGroup=$ringGroup
       }
     """.trimIndent()

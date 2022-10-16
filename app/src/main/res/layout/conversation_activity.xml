@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.tm.archive.components.InsetAwareConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<org.tm.archive.components.InsetAwareConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -12,10 +12,10 @@
         android:id="@+id/conversation_wallpaper"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"
         android:importantForAccessibility="no"
-        app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
-        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline" />
+        android:scaleType="centerCrop"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
 
     <View
         android:id="@+id/conversation_wallpaper_dim"
@@ -30,10 +30,10 @@
         android:id="@+id/layout_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/navigation_bar_guideline"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
         app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
-        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline">
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:id="@+id/conversation_container"
@@ -58,7 +58,7 @@
                     android:id="@+id/conversation_mention_suggestions_stub"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout="@layout/conversation_mention_suggestions_stub"/>
+                    android:layout="@layout/conversation_mention_suggestions_stub" />
 
             </FrameLayout>
 
@@ -69,46 +69,54 @@
                 android:inflatedId="@+id/attachment_editor"
                 android:layout="@layout/conversation_activity_attachment_editor_stub" />
 
-            <FrameLayout
+            <LinearLayout
                 android:id="@+id/conversation_activity_panel_parent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="vertical"
                 android:clipChildren="false"
                 android:clipToPadding="false">
 
-                <include
-                    layout="@layout/conversation_no_longer_a_member"
-                    android:visibility="gone" />
-
-                <include
-                    layout="@layout/conversation_requesting_bottom_banner"
-                    android:visibility="gone" />
-
-                <include layout="@layout/conversation_input_panel" />
-
-                <ViewStub
-                    android:id="@+id/conversation_cannot_send_announcement_stub"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout="@layout/conversation_cannot_send_announcement_group" />
-
                 <include layout="@layout/conversation_search_nav" />
 
-                <org.tm.archive.messagerequests.MessageRequestsBottomView
-                    android:id="@+id/conversation_activity_message_request_bottom_bar"
-                    android:background="?android:attr/windowBackground"
-                    android:visibility="gone"
-                    android:clickable="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <ViewStub
-                    android:id="@+id/conversation_release_notes_unmute_stub"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout="@layout/conversation_activity_unmute" />
+                    android:clipChildren="false"
+                    android:clipToPadding="false">
 
-            </FrameLayout>
+                    <include
+                        layout="@layout/conversation_no_longer_a_member"
+                        android:visibility="gone" />
+
+                    <include
+                        layout="@layout/conversation_requesting_bottom_banner"
+                        android:visibility="gone" />
+
+                    <include layout="@layout/conversation_input_panel" />
+
+                    <ViewStub
+                        android:id="@+id/conversation_cannot_send_announcement_stub"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout="@layout/conversation_cannot_send_announcement_group" />
+
+                    <org.tm.archive.messagerequests.MessageRequestsBottomView
+                        android:id="@+id/conversation_activity_message_request_bottom_bar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:visibility="gone" />
+
+                    <ViewStub
+                        android:id="@+id/conversation_release_notes_unmute_stub"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout="@layout/conversation_activity_unmute" />
+
+                </FrameLayout>
+
+            </LinearLayout>
 
             <Button
                 android:id="@+id/register_button"
@@ -162,13 +170,32 @@
 
     </org.tm.archive.components.InputAwareLayout>
 
+    <View
+        android:id="@+id/navbar_background"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/wallpaper_compose_background"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/navigation_bar_guideline" />
+
+    <View
+        android:id="@+id/toolbar_background"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/signal_m3_toolbar_height"
+        android:background="@color/signal_colorBackground"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
+        app:layout_constraintTop_toTopOf="@id/status_bar_guideline" />
+
     <org.tm.archive.util.views.DarkOverflowToolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/conversation_toolbar_color"
+        android:layout_height="@dimen/signal_m3_toolbar_height"
+        android:background="@color/transparent"
         android:clipChildren="false"
         android:clipToPadding="false"
+        android:minHeight="@dimen/signal_m3_toolbar_height"
         android:theme="?attr/actionBarStyle"
         app:contentInsetStart="46dp"
         app:contentInsetStartWithNavigation="0dp"
@@ -179,14 +206,15 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
+            android:clipChildren="false"
             android:clipToPadding="false"
-            android:clipChildren="false">
+            android:orientation="horizontal">
 
-            <include layout="@layout/conversation_title_view"
-                android:layout_height="match_parent"
+            <include
+                layout="@layout/conversation_title_view"
                 android:layout_width="0dp"
-                android:layout_weight="1"/>
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/conversation_group_call_join"
@@ -213,9 +241,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
         app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
-        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline">
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
 
         <ViewStub
             android:id="@+id/voice_note_player_stub"
@@ -247,24 +275,15 @@
 
     </LinearLayout>
 
-    <View
-        android:id="@+id/conversation_toolbar_shadow"
-        android:layout_width="0dp"
-        android:layout_height="5dp"
-        android:background="@drawable/toolbar_shadow"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
-        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"/>
-
     <ViewStub
         android:id="@+id/conversation_reaction_scrubber_stub"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="@+id/status_bar_guideline"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/parent_start_guideline"
-        app:layout_constraintEnd_toEndOf="@+id/parent_end_guideline"
         android:inflatedId="@+id/conversation_reaction_scrubber"
-        android:layout="@layout/conversation_reaction_scrubber" />
+        android:layout="@layout/conversation_reaction_scrubber"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@+id/parent_start_guideline"
+        app:layout_constraintTop_toTopOf="@+id/status_bar_guideline" />
 
 </org.tm.archive.components.InsetAwareConstraintLayout>
