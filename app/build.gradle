@@ -302,9 +302,9 @@ android {
                     'proguard/proguard-retrolambda.pro',
                     'proguard/proguard-okhttp.pro',
                     'proguard/proguard-ez-vcard.pro',
-                    'proguard/proguard.cfg'
-            //**TM_SA**//
-            'proguard/proguard-event_bus.pro'
+                    'proguard/proguard.cfg',
+                    'proguard/proguard-event_bus.pro' //**TM_SA**// ++++++++ADD THIS FILE TO THE PROGUARD FOLDER++++++++
+
             testProguardFiles 'proguard/proguard-automation.pro',
                     'proguard/proguard.cfg'
 
