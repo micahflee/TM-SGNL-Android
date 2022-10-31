@@ -81,42 +81,7 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         }
       )
 
-      //**TM_SA**// Start - Comment all the Signal mention and put our about and sending logs logic.
-      if (false/*PlayServicesUtil.getPlayServicesStatus(requireContext()) == PlayServicesUtil.PlayServicesStatus.SUCCESS*/) {
-        /*clickPref(
-          title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
-          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
-          iconEnd = if (state.hasExpiredGiftBadge) DSLSettingsIcon.from(R.drawable.ic_info_solid_24, R.color.signal_accent_primary) else null,
-          onClick = {
-            findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToManageDonationsFragment())
-          },
-          onLongClick = this@AppSettingsFragment::copySubscriberIdToClipboard
-        )*/
-      } else {
-        /*externalLinkPref(
-          title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
-          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
-          linkId = R.string.donate_url
-        )*/
 
-        clickPref(
-          title = DSLSettingsText.from(R.string.preferences__send_logs_to_telemessage),
-          icon = DSLSettingsIcon.from(R.drawable.ic_settings_logs_icon),
-          onClick = {
-            doSendLogsClicked()
-          }
-        )
-
-        clickPref(
-          title = DSLSettingsText.from(R.string.EditAboutFragment_about),
-          icon = DSLSettingsIcon.from(R.drawable.ic_about_icon),
-          onClick = {
-            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_tmAboutSettings)
-          }
-        )
-
-        //**TM_SA**// End
-      }
 
       dividerPref()
 
@@ -191,6 +156,43 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
           findNavController().safeNavigate(R.id.action_appSettingsFragment_to_inviteActivity)
         }
       )
+
+      //**TM_SA**// Start - Comment all the Signal mention and put our about and sending logs logic.
+      if (false/*PlayServicesUtil.getPlayServicesStatus(requireContext()) == PlayServicesUtil.PlayServicesStatus.SUCCESS*/) {
+        /*clickPref(
+          title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
+          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
+          iconEnd = if (state.hasExpiredGiftBadge) DSLSettingsIcon.from(R.drawable.ic_info_solid_24, R.color.signal_accent_primary) else null,
+          onClick = {
+            findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToManageDonationsFragment())
+          },
+          onLongClick = this@AppSettingsFragment::copySubscriberIdToClipboard
+        )*/
+      } else {
+        /*externalLinkPref(
+          title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
+          icon = DSLSettingsIcon.from(R.drawable.ic_heart_24),
+          linkId = R.string.donate_url
+        )*/
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__send_logs_to_telemessage),
+          icon = DSLSettingsIcon.from(R.drawable.ic_settings_logs_icon),
+          onClick = {
+            doSendLogsClicked()
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.EditAboutFragment_about),
+          icon = DSLSettingsIcon.from(R.drawable.ic_about_icon),
+          onClick = {
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_tmAboutSettings)
+          }
+        )
+
+        //**TM_SA**// End
+      }
 
       if (FeatureFlags.internalUser()) {
         dividerPref()
