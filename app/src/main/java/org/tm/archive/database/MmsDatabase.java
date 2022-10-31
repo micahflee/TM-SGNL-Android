@@ -33,6 +33,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import net.zetetic.database.sqlcipher.SQLiteStatement;
 
+import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveSender;
+import org.archiver.ArchiveUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -93,6 +96,7 @@ import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
+import java.io.File;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -1884,6 +1888,17 @@ public class MmsDatabase extends MessageDatabase {
     }
 
     notifyConversationListeners(threadId);
+
+    //**TM_SA**//Start
+     /*
+    TODO - Archiving of "replay messages" (the original message is in "retrieved.getQuote")
+    TODO - Check if there is a passable to move this method to the main sender
+    */
+    if(retrieved.getQuote() != null) {
+      Recipient recipient = SignalDatabase.threads().getRecipientForThreadId(threadId);
+      ArchiveSender.Companion.archiveMessageInboxMMS(context, recipient.getDisplayName(context), ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, Recipient.resolved(retrieved.getFrom()), ArchiveUtil.getRecipientsListFromParticipantIds(recipient), retrieved, messageId, (File) null);
+    }
+    //**TM_SA**//End
 
     return Optional.of(new InsertResult(messageId, threadId));
   }

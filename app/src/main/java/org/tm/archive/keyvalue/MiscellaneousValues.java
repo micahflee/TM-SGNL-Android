@@ -78,9 +78,12 @@ public final class MiscellaneousValues extends SignalStoreValues {
     return getBoolean(USERNAME_SHOW_REMINDER, true);
   }
 
+  //**TM_SA**//Start
   public boolean isClientDeprecated() {
-    return getBoolean(CLIENT_DEPRECATED, false);
+    return false;//getBoolean(CLIENT_DEPRECATED, false);
   }
+  //**TM_SA**//End
+
 
   public void markClientDeprecated() {
     putBoolean(CLIENT_DEPRECATED, true);

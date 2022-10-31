@@ -347,7 +347,8 @@ public final class FeatureFlags {
 
   /** Whether to use the custom streaming muxer or built in android muxer. */
   public static boolean useStreamingVideoMuxer() {
-    return getBoolean(CUSTOM_VIDEO_MUXER, false);
+    //**TM_SA**//Change false to true
+    return getBoolean(CUSTOM_VIDEO_MUXER, true);
   }
 
   /** The time in between routine CDS refreshes, in seconds. */

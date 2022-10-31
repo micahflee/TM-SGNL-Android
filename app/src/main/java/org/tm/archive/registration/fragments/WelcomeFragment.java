@@ -24,11 +24,20 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.tm.androidcopysdk.BackupService;
+import com.tm.androidcopysdk.CommonUtils;
+import com.tm.androidcopysdk.utils.PrefManager;
+import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
+import com.tm.authenticatorsdk.selfAuthenticator.api.ApiUtil;
 
+import org.archive.selfAuthentication.SelfAuthenticatorConstants;
+import org.archiver.ArchiveConstants;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.signal.devicetransfer.DeviceToDeviceTransferService;
 import org.signal.devicetransfer.TransferStatus;
+import org.tm.archive.ApplicationContext;
+import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
@@ -75,6 +84,8 @@ public final class WelcomeFragment extends LoggingFragment {
   private CircularProgressMaterialButton continueButton;
   private RegistrationViewModel          viewModel;
 
+  private Boolean environmentAlreadySelected = false; //**TM_SA**//
+
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     return inflater.inflate(R.layout.fragment_registration_welcome, container, false);
@@ -85,6 +96,10 @@ public final class WelcomeFragment extends LoggingFragment {
     super.onViewCreated(view, savedInstanceState);
 
     viewModel = new ViewModelProvider(requireActivity()).get(RegistrationViewModel.class);
+
+    //**TM_SA**//
+    SelfAuthenticatorConstants.Companion.setAuthenticationProcessOpened(true);
+    //**TM_SA**//
 
     if (viewModel.isReregister()) {
       if (viewModel.hasRestoreFlowBeenShown()) {
@@ -142,12 +157,31 @@ public final class WelcomeFragment extends LoggingFragment {
   private void continueClicked(@NonNull View view) {
     boolean isUserSelectionRequired = BackupUtil.isUserSelectionRequired(requireContext());
 
-    Permissions.with(this)
-               .request(getContinuePermissions(isUserSelectionRequired))
-               .ifNecessary()
-               .withRationaleDialog(getString(getContinueRationale(isUserSelectionRequired)), getContinueHeaders(isUserSelectionRequired))
-               .onAnyResult(() -> gatherInformationAndContinue(continueButton))
-               .execute();
+    //**TM_SA**// START
+    if (!environmentAlreadySelected) {
+      ApiUtil.Companion.selectServerEnvironment(getContext());
+      environmentAlreadySelected = true;
+    } else {
+
+      if(BuildConfig.DEBUG){
+        if(CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)){
+          CommonUtils.stopBackupService(ApplicationContext.getInstance());
+        }
+
+        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, AuthenticatorConstants.Companion.getBASE_URL().getFirst());
+        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, AuthenticatorConstants.Companion.getBASE_URL().getSecond());
+
+        CommonUtils.setUrl(ApplicationContext.getInstance(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
+        CommonUtils.startBackupService(ApplicationContext.getInstance());
+      }
+      //**TM_SA**// END
+      Permissions.with(this)
+                 .request(getContinuePermissions(isUserSelectionRequired))
+                 .ifNecessary()
+                 .withRationaleDialog(getString(getContinueRationale(isUserSelectionRequired)), getContinueHeaders(isUserSelectionRequired))
+                 .onAnyResult(() -> gatherInformationAndContinue(continueButton))
+                 .execute();
+    }
   }
 
   private void restoreFromBackupClicked(@NonNull View view) {

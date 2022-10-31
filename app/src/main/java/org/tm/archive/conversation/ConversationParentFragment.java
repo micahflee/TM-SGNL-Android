@@ -98,6 +98,8 @@ import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import org.archiver.ArchiveConstants;
+import org.archiver.ArchiveUtil;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -550,6 +552,11 @@ public class ConversationParentFragment extends Fragment
 
     initializeInsightObserver();
     initializeActionBar();
+
+    //**TM_SA**// start
+    Log.d("MNMNDMDMDMD", "Oncreetettete");
+    ArchiveUtil.Companion.doTeleMessageKeepAlivePing(getContext());
+    //**TM_SA**// end
 
     disposables.add(viewModel.getStoryViewState().subscribe(titleView::setStoryRingFromState));
 
@@ -2152,6 +2159,19 @@ public class ConversationParentFragment extends Fragment
       setToolbarActionItemTint(toolbar, toolbarTextAndIconColor);
       WindowUtil.setNavigationBarColor(requireActivity(), getResources().getColor(R.color.conversation_navigation_wallpaper));
     } else {
+      //**TM_SA**//Start
+      if (ArchiveConstants.isNeedToSetTeleMessageBackgroundAsDefault) {
+        wallpaper.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_bg_tm));
+      }else {
+        wallpaper.setImageDrawable(null);
+        wallpaperDim.setVisibility(View.GONE);
+        inputPanel.setWallpaperEnabled(false);
+        if (attachmentKeyboardStub.resolved()) {
+          attachmentKeyboardStub.get().setWallpaperEnabled(false);
+        }
+      }
+      //**TM_SA**//End
+
       wallpaper.setImageDrawable(null);
       wallpaperDim.setVisibility(View.GONE);
       inputPanel.setWallpaperEnabled(false);
@@ -3150,10 +3170,11 @@ public class ConversationParentFragment extends Fragment
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
 
+    //**TM_SA**// Add Manifest.permission.READ_EXTERNAL_STORAGE to request
   @Override
   public void onRecorderPermissionRequired() {
     Permissions.with(this)
-               .request(Manifest.permission.RECORD_AUDIO)
+               .request(Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_EXTERNAL_STORAGE)
                .ifNecessary()
                .withRationaleDialog(getString(R.string.ConversationActivity_to_send_audio_messages_allow_signal_access_to_your_microphone), R.drawable.ic_mic_solid_24)
                .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_requires_the_microphone_permission_in_order_to_send_audio_messages))
