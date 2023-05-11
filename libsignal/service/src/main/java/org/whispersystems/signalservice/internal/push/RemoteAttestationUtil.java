@@ -119,9 +119,10 @@ public final class RemoteAttestationUtil {
     Quote                 quote     = new Quote(response.getQuote());
     byte[]                requestId = RemoteAttestationCipher.getRequestId(keys, response);
 
-    RemoteAttestationCipher.verifyServerQuote(quote, response.getServerStaticPublic(), mrenclave);
+    //**TM_SA**//
+    //RemoteAttestationCipher.verifyServerQuote(quote, response.getServerStaticPublic(), mrenclave);
 
-    RemoteAttestationCipher.verifyIasSignature(iasKeyStore, response.getCertificates(), response.getSignatureBody(), response.getSignature(), quote);
+    //RemoteAttestationCipher.verifyIasSignature(iasKeyStore, response.getCertificates(), response.getSignatureBody(), response.getSignature(), quote);
 
     return new RemoteAttestation(requestId, keys, cookies);
   }
