@@ -97,7 +97,7 @@ public final class RemoteAttestationCipher {
   }
 
   private static boolean hasValidStatus(SignatureBodyEntity entity) {
-    if (true || "OK".equals(entity.getIsvEnclaveQuoteStatus())) {
+    if ("OK".equals(entity.getIsvEnclaveQuoteStatus())) {
       return true;
     } else if ("SW_HARDENING_NEEDED".equals(entity.getIsvEnclaveQuoteStatus())) {
       return entity.getAdvisoryIds().length == 1 && "INTEL-SA-00334".equals(entity.getAdvisoryIds()[0]);
