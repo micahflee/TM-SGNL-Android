@@ -68,11 +68,12 @@ object ContactDiscovery {
       return
     }
 
-    if (!SignalStore.registrationValues().isRegistrationComplete) {
+    //**TM_SA**//Mark this part
+ /*   if (!SignalStore.registrationValues().isRegistrationComplete) {
       Log.w(TAG, "Registration is not yet complete. Skipping, but running a routine to possibly mark it complete.")
       RegistrationUtil.maybeMarkRegistrationComplete(context)
       return
-    }
+    }*/
 
     refreshRecipients(
       context = context,
