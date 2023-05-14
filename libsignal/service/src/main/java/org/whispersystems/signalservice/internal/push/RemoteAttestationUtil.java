@@ -119,7 +119,7 @@ public final class RemoteAttestationUtil {
     Quote                 quote     = new Quote(response.getQuote());
     byte[]                requestId = RemoteAttestationCipher.getRequestId(keys, response);
 
-    //**TM_SA**//START
+    //**TM_SA**//START - //TODO THE FOLLOWING PART NOT NECESSARY IF THE CONTACT AND PIN CODE WORKING WELL
     //RemoteAttestationCipher.verifyServerQuote(quote, response.getServerStaticPublic(), mrenclave);
 
     //RemoteAttestationCipher.verifyIasSignature(iasKeyStore, response.getCertificates(), response.getSignatureBody(), response.getSignature(), quote);
