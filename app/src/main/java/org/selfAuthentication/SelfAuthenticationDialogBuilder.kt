@@ -178,6 +178,9 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
             "Signal logs - " + Calendar.getInstance().time.toString(),
             name,
             freeText,
+          "",
+          "",
+          "",
           ArchiveConstants.GENERATE_TOK_NAME,
           ArchiveConstants.GENERATE_TOK_PASS
         )

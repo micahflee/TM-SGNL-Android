@@ -252,6 +252,9 @@ class AppSettingsFragment : DSLSettingsFragment(R.string.text_secure_normal__men
         "Signal Archiver logs",
         PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),
         "",
+        "",
+        "",
+        "",
         ArchivePreferenceConstants.GENERATE_TOK_NAME,
         ArchivePreferenceConstants.GENERATE_TOK_PASS
       )

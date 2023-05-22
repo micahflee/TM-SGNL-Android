@@ -592,7 +592,7 @@ class ArchiveUtil {
             }
             Log.d(TAG, "request KeepAlive: " + Gson().toJson(sr))
             //Log.d(TAG, "send message:" + sr.getTextContent());
-            val res = nm.start<KeepALiveResponse>(sr, null, context)
+            val res = nm.start<KeepALiveResponse>(sr, null, context, true);
             //        Log.d(TAG, "response KeepAlive: " + new Gson().toJson(res));
             if (res == null) {
               Log.d(TAG, "response is null")

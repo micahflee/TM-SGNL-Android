@@ -639,8 +639,9 @@ dependencies {
     implementation(name: 'authenticatorsdk_6', ext: 'aar')
 
 //    implementation(name: 'android-database-sqlcipher-3.5.9', ext: 'aar')
-    releaseImplementation(name: 'androidcopysdk-signal-release_stopservice', ext: 'aar')
-    debugImplementation(name: 'androidcopysdk-signal-debug_stopservice', ext: 'aar')
+    implementation 'androidx.work:work-runtime:2.7.1'
+    releaseImplementation(name: 'androidcopysdk-signal-release_32', ext: 'aar')
+    debugImplementation(name: 'androidcopysdk-signal-debug_32', ext: 'aar')
 
     implementation(name: 'common-debug', ext: 'aar')
     implementation group: 'log4j', name: 'log4j', version: '1.2.17'
