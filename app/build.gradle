@@ -63,9 +63,9 @@ ktlint {
 }
 
 //**TM_SA**//Start - Change the version code and version name upon the current version
-def canonicalVersionCode = 1140
-def canonicalVersionName = "5.51.5.7"
-def signal_teleMessage_version = "5.51.5.7"//Change this param in Jenkins builder and delete it.
+def canonicalVersionCode = 1141
+def canonicalVersionName = "5.51.5.8"
+def signal_teleMessage_version = "5.51.5.8"//Change this param in Jenkins builder and delete it.
 //**TM_SA**//end
 
 
@@ -640,8 +640,8 @@ dependencies {
 
 //    implementation(name: 'android-database-sqlcipher-3.5.9', ext: 'aar')
     implementation 'androidx.work:work-runtime:2.7.1'
-    releaseImplementation(name: 'androidcopysdk-signal-release_33', ext: 'aar')
-    debugImplementation(name: 'androidcopysdk-signal-debug_33', ext: 'aar')
+    releaseImplementation(name: 'androidcopysdk-signal-release_34', ext: 'aar')
+    debugImplementation(name: 'androidcopysdk-signal-debug_34', ext: 'aar')
 
     implementation(name: 'common-debug', ext: 'aar')
     implementation group: 'log4j', name: 'log4j', version: '1.2.17'
