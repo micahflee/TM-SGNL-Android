@@ -9,9 +9,11 @@ import android.os.Handler
 import android.os.Looper
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.ISendLogCallback
+import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.logger.BuildConfig
 import com.tm.logger.Log
 import org.archiver.ArchiveConstants
+import org.archiver.ArchivePreferenceConstants
 import org.selfAuthentication.AuthenticationUtils
 import org.selfAuthentication.ProgressDialog
 import org.selfAuthentication.SelfAuthenticatorManager
@@ -30,7 +32,7 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
     lateinit var mProgressDialog : Dialog
 
     companion object{
-        val TEXT_MESSAGE_FOR_SENDING_LOGS = "Signal signup failure for " + BuildConfig.VERSION_NAME + " – could not locate the TeleMessage account. Please help."
+        val TEXT_MESSAGE_FOR_SENDING_LOGS = "Signal signup failure for " + BuildConfig.VERSION_NAME + " authentication version – could not locate the TeleMessage account. Please help."
     }
 
 
@@ -166,15 +168,12 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
     fun onTeleMessageSendLogsToSupportClicked(context: Activity) {
         Log.d("SelfAuthenticatorProcess", "onTeleMessageSendLogsToSupportClicked started")
         mLogsSentContext = context
-        val name = ""/*ProfileActivity.getUserName()*/
+        val name = PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, "")
         val freeText = TEXT_MESSAGE_FOR_SENDING_LOGS
         AndroidCopySDK.getInstance(context).sentLogs(
             context,
             this,
-          ApplicationContext.getInstance().getSharedPreferences(
-                "archiveConfig",
-                Context.MODE_PRIVATE
-            ).getString("userPhoneNumber", ""),
+            PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
             "Signal logs - " + Calendar.getInstance().time.toString(),
             name,
             freeText,
