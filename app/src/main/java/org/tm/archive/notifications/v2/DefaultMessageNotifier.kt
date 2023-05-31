@@ -10,7 +10,9 @@ import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
+import com.tm.androidcopysdk.utils.PrefManager
 import me.leolin.shortcutbadger.ShortcutBadger
+import org.selfAuthentication.SelfAuthenticatorManager
 import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
@@ -32,7 +34,7 @@ import org.tm.archive.util.BubbleUtil.BubbleState
 import org.tm.archive.util.ServiceUtil
 import org.tm.archive.webrtc.CallNotificationBuilder
 import org.whispersystems.signalservice.internal.util.Util
-import java.util.Optional
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -96,6 +98,19 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
       Log.i(TAG, "Scheduling delayed notification...")
       executor.enqueue(context, conversationId)
     } else {
+      //**TM_SA**//Start
+      val isAlreadyDoneSelfAuthentication =
+        PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
+      com.tm.logger.Log.d(
+        "SelfAuthenticatorProcess",
+        "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication"
+      )
+
+      if(!isAlreadyDoneSelfAuthentication && SelfAuthenticatorManager.isAppValidationTimePassed()){
+        return
+      }
+      //**TM_SA**//End
+
       updateNotification(context, conversationId, true)
     }
   }
