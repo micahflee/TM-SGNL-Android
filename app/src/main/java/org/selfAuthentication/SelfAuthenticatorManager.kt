@@ -6,6 +6,7 @@ import com.tm.authenticatorsdk.selfAuthenticator.*
 import com.tm.logger.Log
 import org.archive.selfAuthentication.SelfAuthenticatorConstants
 import org.tm.archive.ApplicationContext
+import org.tm.archive.BuildConfig
 import java.util.concurrent.TimeUnit
 
 //In order to change the environment base url call to this method:
@@ -35,7 +36,7 @@ object SelfAuthenticatorManager {
         selfAuthenticator.initSelfAuthenticator(
             AuthenticationAppType.SIGNAL,
             phoneNumber,
-            SelfAuthenticatorConstants.selfVersion
+          BuildConfig.signal_teleMessage_version
         )
 
     }
