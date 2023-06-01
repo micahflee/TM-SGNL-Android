@@ -409,7 +409,7 @@ This method can parse out the real local file path from a file URI.
             e.printStackTrace();
         }
 
-        String fileName = getFileNameWithType(databaseAttachment.getFileName(),databaseAttachment.getAttachmentId().getRowId(),databaseAttachment.getAttachmentId().getUniqueId(),databaseAttachment.getContentType());
+        String fileName = getFileNameWithType(databaseAttachment.getFileName(), 0 ,databaseAttachment.getAttachmentId().getRowId(),databaseAttachment.getContentType());
         File resultFile = new File(context.getCacheDir(),  fileName);
         ArchiveFileUtil.copyInputStreamToFile(attachmentInputStream, resultFile);
 
