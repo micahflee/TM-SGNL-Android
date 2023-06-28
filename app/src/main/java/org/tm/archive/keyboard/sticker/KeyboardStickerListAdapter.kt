@@ -18,7 +18,7 @@ import org.tm.archive.util.adapter.mapping.MappingViewHolder
 class KeyboardStickerListAdapter(
   private val glideRequests: GlideRequests,
   private val eventListener: EventListener?,
-  private val allowApngAnimation: Boolean,
+  private val allowApngAnimation: Boolean
 ) : MappingAdapter() {
 
   init {
@@ -62,7 +62,7 @@ class KeyboardStickerListAdapter(
     }
   }
 
-  data class StickerHeader(override val packId: String, private val title: String?, private val titleResource: Int?) : MappingModel<StickerHeader>, HasPackId {
+  data class StickerHeader(override val packId: String, private val title: String?, private val titleResource: Int?) : MappingModel<StickerHeader>, HasPackId, Header {
     fun getTitle(context: Context): String {
       return title ?: context.resources.getString(titleResource ?: R.string.StickerManagementAdapter_untitled)
     }
@@ -85,6 +85,7 @@ class KeyboardStickerListAdapter(
     }
   }
 
+  interface Header
   interface HasPackId {
     val packId: String
   }

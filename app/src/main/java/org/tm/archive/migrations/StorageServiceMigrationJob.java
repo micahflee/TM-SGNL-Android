@@ -1,11 +1,11 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.MultiDeviceKeysUpdateJob;
@@ -70,7 +70,7 @@ public class StorageServiceMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<StorageServiceMigrationJob> {
     @Override
-    public @NonNull StorageServiceMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull StorageServiceMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new StorageServiceMigrationJob(parameters);
     }
   }

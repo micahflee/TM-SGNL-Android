@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/story_page_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipChildren="false"
@@ -22,7 +23,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0">
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/story_content_card"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -32,6 +33,7 @@
 
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/story_content_container"
+                android:name="org.tm.archive.stories.viewer.post.StoryPostFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:background="@drawable/test_gradient" />
@@ -39,22 +41,37 @@
             <View
                 android:id="@+id/story_gradient_top"
                 android:layout_width="match_parent"
-                android:layout_height="160dp"
+                android:layout_height="120dp"
                 android:background="@drawable/story_gradient_top" />
 
-            <View
-                android:id="@+id/story_gradient_bottom"
+            <FrameLayout
+                android:id="@+id/story_bottom_gradient_container"
                 android:layout_width="match_parent"
-                android:layout_height="160dp"
-                android:layout_gravity="bottom"
-                android:background="@drawable/story_gradient_bottom" />
+                android:layout_height="280dp"
+                android:layout_gravity="bottom">
+
+                <View
+                    android:id="@+id/story_gradient_bottom"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/story_gradient_bottom" />
+
+                <View
+                    android:id="@+id/story_caption_gradient"
+                    android:layout_width="match_parent"
+                    android:layout_height="280dp"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/story_caption_gradient"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <org.tm.archive.stories.StorySlateView
                 android:id="@+id/story_slate"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
         <org.tm.archive.stories.StoryVolumeOverlayView
             android:id="@+id/story_volume_overlay"
@@ -84,6 +101,27 @@
         tools:icon="@drawable/ic_reply_24_outline"
         tools:text="6 views 4 replies" />
 
+    <FrameLayout
+        android:id="@+id/sending_bar"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/signal_colorSurface"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/views_and_replies_bar"
+        app:layout_constraintTop_toTopOf="@id/views_and_replies_bar">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/sending_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:drawablePadding="10dp"
+            android:text="@string/StoriesLandingItem__sending"
+            android:textAppearance="@style/Signal.Text.Body"
+            app:drawableTint="@color/signal_colorOnSurface" />
+
+    </FrameLayout>
+
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/replies_bar_top"
         android:layout_width="wrap_content"
@@ -102,6 +140,7 @@
         android:id="@+id/story_caption_container"
         android:layout_width="0dp"
         android:layout_height="95sp"
+        android:layout_marginBottom="12dp"
         app:layout_constrainedHeight="true"
         app:layout_constraintBottom_toTopOf="@id/story_from_barrier"
         app:layout_constraintEnd_toEndOf="parent"
@@ -118,7 +157,7 @@
             android:layout_marginBottom="24dp"
             android:gravity="bottom"
             android:textAppearance="@style/Signal.Text.BodyLarge"
-            android:textColor="@color/signal_colorNeutralInverse"
+            android:textColor="@color/core_white"
             tools:text="Ugh." />
     </FrameLayout>
 
@@ -137,9 +176,10 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="24dp"
-        android:textAppearance="@style/Signal.Text.Body"
-        android:visibility="gone"
         android:scrollbars="vertical"
+        android:textAppearance="@style/Signal.Text.Body"
+        android:textColor="@color/core_white"
+        android:visibility="gone"
         app:layout_constrainedHeight="true"
         app:layout_constraintBottom_toTopOf="@id/story_from_barrier"
         app:layout_constraintEnd_toEndOf="parent"
@@ -159,7 +199,43 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/story_content_card_touch_interceptor"
         app:srcCompat="@drawable/ic_x_24"
-        app:tint="@color/signal_colorNeutralInverse" />
+        app:tint="@color/core_white" />
+
+    <FrameLayout
+        android:id="@+id/add_wrapper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/add"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:insetTop="8dp"
+            android:insetBottom="8dp"
+            android:minWidth="0dp"
+            android:minHeight="48dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="@string/StoryViewerPageFragment__add"
+            android:textAllCaps="false"
+            android:textAppearance="@style/Signal.Text.BodyMedium"
+            android:textColor="@color/signal_dark_colorOnSurface"
+            android:visibility="gone"
+            app:backgroundTint="@color/signal_colorSurfaceVariant_64"
+            app:backgroundTintMode="src_in"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/add_to_story_16"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconSize="16dp"
+            app:iconTint="@color/signal_dark_colorOnSurface"
+            tools:visibility="visible" />
+    </FrameLayout>
 
     <org.tm.archive.components.AvatarImageView
         android:id="@+id/sender_avatar"
@@ -230,7 +306,7 @@
         android:maxLines="1"
         android:textAppearance="@style/Signal.Text.MaterialCaption"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_lock_16"
+        app:drawableStartCompat="@drawable/symbol_stories_fill_compact_12"
         app:drawableTint="@color/transparent_white_80"
         app:layout_constraintBottom_toTopOf="@id/progress"
         app:layout_constraintEnd_toStartOf="@id/more"
@@ -272,14 +348,5 @@
         android:id="@+id/on_reaction_sent_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <ViewStub
-        android:id="@+id/story_first_time_nav_stub"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:inflatedId="@+id/story_first_time_navigation_view"
-        android:layout="@layout/story_viewer_first_time_navigation_stub"
-        app:layout_constraintBottom_toBottomOf="@id/story_content_card_touch_interceptor"
-        app:layout_constraintTop_toTopOf="@id/story_content_card_touch_interceptor" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

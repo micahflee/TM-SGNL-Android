@@ -15,6 +15,8 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import org.signal.core.util.concurrent.LifecycleDisposable
+import org.signal.core.util.getParcelableCompat
 import org.tm.archive.R
 import org.tm.archive.components.FixedRoundedCornerBottomSheetDialogFragment
 import org.tm.archive.recipients.RecipientId
@@ -25,7 +27,6 @@ import org.tm.archive.stories.viewer.reply.StoryViewsAndRepliesPagerParent
 import org.tm.archive.stories.viewer.reply.group.StoryGroupReplyFragment
 import org.tm.archive.stories.viewer.reply.reaction.OnReactionSentView
 import org.tm.archive.util.BottomSheetUtil.requireCoordinatorLayout
-import org.tm.archive.util.LifecycleDisposable
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -41,7 +42,7 @@ class StoryViewsAndRepliesDialogFragment : FixedRoundedCornerBottomSheetDialogFr
     get() = requireArguments().getLong(ARG_STORY_ID)
 
   private val groupRecipientId: RecipientId
-    get() = requireArguments().getParcelable(ARG_GROUP_RECIPIENT_ID)!!
+    get() = requireArguments().getParcelableCompat(ARG_GROUP_RECIPIENT_ID, RecipientId::class.java)!!
 
   private val startPageIndex: Int
     get() = requireArguments().getInt(ARG_START_PAGE)

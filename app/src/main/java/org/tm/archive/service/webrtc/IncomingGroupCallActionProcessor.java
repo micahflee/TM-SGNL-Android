@@ -10,7 +10,7 @@ import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
 import org.tm.archive.components.webrtc.BroadcastVideoSink;
 import org.tm.archive.components.webrtc.EglBaseWrapper;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.CallParticipant;
@@ -49,30 +49,34 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
                                                                   @NonNull RemotePeer remotePeerGroup,
                                                                   @NonNull GroupId.V2 groupId,
                                                                   long ringId,
-                                                                  @NonNull UUID uuid,
+                                                                  @NonNull UUID sender,
                                                                   @NonNull CallManager.RingUpdate ringUpdate)
   {
-    Log.i(TAG, "handleGroupCallRingUpdate(): recipient: " + remotePeerGroup.getId() + " ring: " + ringId + " update: " + ringUpdate);
+    Log.i(TAG, "handleGroupCallRingUpdate(): recipient: " + remotePeerGroup.getId() + " ring: " + Long.toHexString(ringId) + " update: " + ringUpdate);
 
     Recipient recipient              = remotePeerGroup.getRecipient();
     boolean   updateForCurrentRingId = ringId == currentState.getCallSetupState(RemotePeer.GROUP_CALL_ID).getRingId();
     boolean   isCurrentlyRinging     = currentState.getCallInfoState().getGroupCallState().isRinging();
 
-    if (SignalDatabase.groupCallRings().isCancelled(ringId)) {
+    if (SignalDatabase.calls().isRingCancelled(ringId, remotePeerGroup.getId())) {
       try {
-        Log.i(TAG, "Ignoring incoming ring request for already cancelled ring: " + ringId);
+        Log.i(TAG, "Ignoring incoming ring request for already cancelled ring: " + Long.toHexString(ringId));
         webRtcInteractor.getCallManager().cancelGroupRing(groupId.getDecodedId(), ringId, null);
       } catch (CallException e) {
-        Log.w(TAG, "Error while trying to cancel ring: " + ringId, e);
+        Log.w(TAG, "Error while trying to cancel ring: " + Long.toHexString(ringId), e);
       }
       return currentState;
     }
 
     if (ringUpdate != CallManager.RingUpdate.REQUESTED) {
-      SignalDatabase.groupCallRings().insertOrUpdateGroupRing(ringId, System.currentTimeMillis(), ringUpdate);
+      SignalDatabase.calls().insertOrUpdateGroupCallFromRingState(ringId,
+                                                                  remotePeerGroup.getId(),
+                                                                  sender,
+                                                                  System.currentTimeMillis(),
+                                                                  ringUpdate);
 
       if (updateForCurrentRingId && isCurrentlyRinging) {
-        Log.i(TAG, "Cancelling current ring: " + ringId);
+        Log.i(TAG, "Cancelling current ring: " + Long.toHexString(ringId));
 
         currentState = currentState.builder()
                                    .changeCallInfoState()
@@ -89,22 +93,29 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
 
     if (!updateForCurrentRingId && isCurrentlyRinging) {
       try {
-        Log.i(TAG, "Already ringing so reply busy for new ring: " + ringId);
+        Log.i(TAG, "Already ringing so reply busy for new ring: " + Long.toHexString(ringId));
         webRtcInteractor.getCallManager().cancelGroupRing(groupId.getDecodedId(), ringId, CallManager.RingCancelReason.Busy);
       } catch (CallException e) {
-        Log.w(TAG, "Error while trying to cancel ring: " + ringId, e);
+        Log.w(TAG, "Error while trying to cancel ring: " + Long.toHexString(ringId), e);
       }
       return currentState;
     }
 
     if (updateForCurrentRingId) {
-      Log.i(TAG, "Already ringing for ring: " + ringId);
+      Log.i(TAG, "Already ringing for ring: " + Long.toHexString(ringId));
       return currentState;
     }
 
-    Log.i(TAG, "Requesting new ring: " + ringId);
+    Log.i(TAG, "Requesting new ring: " + Long.toHexString(ringId));
 
-    SignalDatabase.groupCallRings().insertGroupRing(ringId, System.currentTimeMillis(), ringUpdate);
+    Recipient ringerRecipient = Recipient.externalPush(ServiceId.from(sender));
+    SignalDatabase.calls().insertOrUpdateGroupCallFromRingState(
+        ringId,
+        remotePeerGroup.getId(),
+        ringerRecipient.getId(),
+        System.currentTimeMillis(),
+        ringUpdate
+    );
 
     currentState = WebRtcVideoUtil.initializeVideo(context, webRtcInteractor.getCameraEventListener(), currentState, RemotePeer.GROUP_CALL_ID.longValue());
 
@@ -122,14 +133,14 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
     }
 
     if (shouldDisturbUserWithCall && SignalStore.settings().isCallNotificationsEnabled()) {
-      Uri                            ringtone     = recipient.resolve().getCallRingtone();
-      RecipientDatabase.VibrateState vibrateState = recipient.resolve().getCallVibrate();
+      Uri                         ringtone     = recipient.resolve().getCallRingtone();
+      RecipientTable.VibrateState vibrateState = recipient.resolve().getCallVibrate();
 
       if (ringtone == null) {
         ringtone = SignalStore.settings().getCallRingtone();
       }
 
-      webRtcInteractor.startIncomingRinger(ringtone, vibrateState == RecipientDatabase.VibrateState.ENABLED || (vibrateState == RecipientDatabase.VibrateState.DEFAULT && SignalStore.settings().isCallVibrateEnabled()));
+      webRtcInteractor.startIncomingRinger(ringtone, vibrateState == RecipientTable.VibrateState.ENABLED || (vibrateState == RecipientTable.VibrateState.DEFAULT && SignalStore.settings().isCallVibrateEnabled()));
     }
 
     webRtcInteractor.registerPowerButtonReceiver();
@@ -138,7 +149,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
                        .changeCallSetupState(RemotePeer.GROUP_CALL_ID)
                        .isRemoteVideoOffer(true)
                        .ringId(ringId)
-                       .ringerRecipient(Recipient.externalPush(ServiceId.from(uuid)))
+                       .ringerRecipient(ringerRecipient)
                        .commit()
                        .changeCallInfoState()
                        .activePeer(new RemotePeer(currentState.getCallInfoState().getCallRecipient().getId(), RemotePeer.GROUP_CALL_ID))
@@ -226,10 +237,13 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
     Recipient         recipient = currentState.getCallInfoState().getCallRecipient();
     Optional<GroupId> groupId   = recipient.getGroupId();
     long              ringId    = currentState.getCallSetupState(RemotePeer.GROUP_CALL_ID).getRingId();
+    Recipient         ringer    = currentState.getCallSetupState(RemotePeer.GROUP_CALL_ID).getRingerRecipient();
 
-    SignalDatabase.groupCallRings().insertOrUpdateGroupRing(ringId,
-                                                            System.currentTimeMillis(),
-                                                            CallManager.RingUpdate.DECLINED_ON_ANOTHER_DEVICE);
+    SignalDatabase.calls().insertOrUpdateGroupCallFromRingState(ringId,
+                                                                recipient.getId(),
+                                                                ringer.getId(),
+                                                                System.currentTimeMillis(),
+                                                                CallManager.RingUpdate.DECLINED_ON_ANOTHER_DEVICE);
 
     try {
       webRtcInteractor.getCallManager().cancelGroupRing(groupId.get().getDecodedId(),

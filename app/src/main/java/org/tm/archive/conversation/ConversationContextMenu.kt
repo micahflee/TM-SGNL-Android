@@ -1,7 +1,6 @@
 package org.tm.archive.conversation
 
 import android.content.Context
-import android.os.Build
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -19,14 +18,14 @@ import org.tm.archive.components.menu.ContextMenuList
 class ConversationContextMenu(private val anchor: View, items: List<ActionItem>) : PopupWindow(
   LayoutInflater.from(anchor.context).inflate(R.layout.signal_context_menu, null),
   ViewGroup.LayoutParams.WRAP_CONTENT,
-  ViewGroup.LayoutParams.WRAP_CONTENT,
+  ViewGroup.LayoutParams.WRAP_CONTENT
 ) {
 
   val context: Context = anchor.context
 
   private val contextMenuList = ContextMenuList(
     recyclerView = contentView.findViewById(R.id.signal_context_menu_list),
-    onItemClick = { dismiss() },
+    onItemClick = { dismiss() }
   )
 
   init {
@@ -36,9 +35,7 @@ class ConversationContextMenu(private val anchor: View, items: List<ActionItem>)
     isFocusable = false
     isOutsideTouchable = true
 
-    if (Build.VERSION.SDK_INT >= 21) {
-      elevation = 20f
-    }
+    elevation = 20f
 
     setTouchInterceptor { _, event ->
       event.action == MotionEvent.ACTION_OUTSIDE

@@ -34,6 +34,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback;
 
 import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.PassphraseRequiredActivity;
@@ -41,8 +42,8 @@ import org.tm.archive.R;
 import org.tm.archive.components.AnimatingToggle;
 import org.tm.archive.components.BoldSelectionTabItem;
 import org.tm.archive.components.ControllableTabLayout;
-import org.tm.archive.database.MediaDatabase;
-import org.tm.archive.database.MediaDatabase.Sorting;
+import org.tm.archive.database.MediaTable;
+import org.tm.archive.database.MediaTable.Sorting;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.loaders.MediaLoader;
 import org.tm.archive.util.DynamicNoActionBarTheme;
@@ -81,7 +82,7 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
   }
 
   public static Intent forAll(@NonNull Context context) {
-    return forThread(context, MediaDatabase.ALL_THREADS);
+    return forThread(context, MediaTable.ALL_THREADS);
   }
 
   @Override
@@ -91,12 +92,13 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
 
   @Override
   protected void onCreate(Bundle bundle, boolean ready) {
+    setExitSharedElementCallback(new MaterialContainerTransformSharedElementCallback());
     setContentView(R.layout.media_overview_activity);
 
     initializeResources();
     initializeToolbar();
 
-    boolean allThreads = threadId == MediaDatabase.ALL_THREADS;
+    boolean allThreads = threadId == MediaTable.ALL_THREADS;
 
     BoldSelectionTabItem.registerListeners(tabLayout);
     fillTabLayoutIfFits(tabLayout);
@@ -196,7 +198,7 @@ public final class MediaOverviewActivity extends PassphraseRequiredActivity {
     setSupportActionBar(toolbar);
     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-    if (threadId == MediaDatabase.ALL_THREADS) {
+    if (threadId == MediaTable.ALL_THREADS) {
       getSupportActionBar().setTitle(R.string.MediaOverviewActivity_All_storage_use);
     } else {
       SimpleTask.run(() -> SignalDatabase.threads().getRecipientForThreadId(threadId),

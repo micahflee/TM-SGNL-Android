@@ -45,6 +45,7 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.BottomSheetUtil;
 import org.signal.core.util.StringUtil;
 import org.tm.archive.util.ServiceUtil;
+import org.tm.archive.util.WindowUtil;
 import org.tm.archive.util.adapter.mapping.MappingModelList;
 import org.tm.archive.util.navigation.SafeNavigation;
 import org.whispersystems.signalservice.api.payments.FormatterOptions;
@@ -158,6 +159,12 @@ public class ConfirmPaymentFragment extends BottomSheetDialogFragment {
   }
 
   @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
+  }
+
+  @Override
   public void onPause() {
     super.onPause();
     biometricAuth.cancelAuthentication();
@@ -211,7 +218,7 @@ public class ConfirmPaymentFragment extends BottomSheetDialogFragment {
 
 
   private boolean isPaymentLockEnabled(Context context) {
-    return SignalStore.paymentsValues().getPaymentLock() && ServiceUtil.getKeyguardManager(context).isKeyguardSecure();
+    return SignalStore.paymentsValues().isPaymentLockEnabled() && ServiceUtil.getKeyguardManager(context).isKeyguardSecure();
   }
 
   private class Callbacks implements ConfirmPaymentAdapter.Callbacks {

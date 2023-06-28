@@ -1,32 +1,32 @@
 package org.tm.archive.components.settings.app.privacy
 
 import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.TextAppearanceSpan
 import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.StringRes
+import androidx.activity.result.ActivityResultLauncher
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.preference.PreferenceManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import mobi.upod.timedurationpicker.TimeDurationPicker
-import mobi.upod.timedurationpicker.TimeDurationPickerDialog
 import org.signal.core.util.logging.Log
+import org.tm.archive.BiometricDeviceAuthentication
+import org.tm.archive.BiometricDeviceLockContract
 import org.tm.archive.PassphraseChangeActivity
 import org.tm.archive.R
+import org.tm.archive.components.TimeDurationPickerDialog
 import org.tm.archive.components.settings.ClickPreference
 import org.tm.archive.components.settings.ClickPreferenceViewHolder
 import org.tm.archive.components.settings.DSLConfiguration
@@ -36,10 +36,7 @@ import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.components.settings.PreferenceViewHolder
 import org.tm.archive.components.settings.configure
 import org.tm.archive.crypto.MasterSecretUtil
-import org.tm.archive.keyvalue.PhoneNumberPrivacyValues
-import org.tm.archive.keyvalue.PhoneNumberPrivacyValues.PhoneNumberListingMode
 import org.tm.archive.service.KeyCachingService
-import org.tm.archive.stories.Stories
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.ConversationUtil
 import org.tm.archive.util.ExpirationUtil
@@ -50,15 +47,17 @@ import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
-import java.lang.Integer.max
-import java.util.Locale
-import java.util.concurrent.TimeUnit
+import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val TAG = Log.tag(PrivacySettingsFragment::class.java)
 
 class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privacy) {
 
   private lateinit var viewModel: PrivacySettingsViewModel
+  private lateinit var biometricAuth: BiometricDeviceAuthentication
+  private lateinit var biometricDeviceLockLauncher: ActivityResultLauncher<String>
 
   private val incognitoSummary: CharSequence by lazy {
     SpannableStringBuilder(getString(R.string.preferences__this_setting_is_not_a_guarantee))
@@ -70,9 +69,33 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
       )
   }
 
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+    biometricDeviceLockLauncher = registerForActivityResult(BiometricDeviceLockContract()) { result: Int ->
+      if (result == BiometricDeviceAuthentication.AUTHENTICATED) {
+        viewModel.togglePaymentLock(false)
+      }
+    }
+    val promptInfo = PromptInfo.Builder()
+      .setAllowedAuthenticators(BiometricDeviceAuthentication.ALLOWED_AUTHENTICATORS)
+      .setTitle(requireContext().getString(R.string.BiometricDeviceAuthentication__signal))
+      .setConfirmationRequired(false)
+      .build()
+    biometricAuth = BiometricDeviceAuthentication(
+      BiometricManager.from(requireActivity()),
+      BiometricPrompt(requireActivity(), BiometricAuthenticationListener()),
+      promptInfo
+    )
+  }
+
   override fun onResume() {
     super.onResume()
     viewModel.refreshBlockedCount()
+  }
+
+  override fun onPause() {
+    super.onPause()
+    biometricAuth.cancelAuthentication()
   }
 
   override fun bindAdapter(adapter: MappingAdapter) {
@@ -96,6 +119,19 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
 
   private fun getConfiguration(state: PrivacySettingsState): DSLConfiguration {
     return configure {
+      if (FeatureFlags.phoneNumberPrivacy()) {
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences_app_protection__phone_number),
+          summary = DSLSettingsText.from(R.string.preferences_app_protection__choose_who_can_see),
+          onClick = {
+            Navigation.findNavController(requireView())
+              .safeNavigate(R.id.action_privacySettingsFragment_to_phoneNumberPrivacySettingsFragment)
+          }
+        )
+
+        dividerPref()
+      }
+
       clickPref(
         title = DSLSettingsText.from(R.string.PrivacySettingsFragment__blocked),
         summary = DSLSettingsText.from(getString(R.string.PrivacySettingsFragment__d_contacts, state.blockedCount)),
@@ -106,28 +142,6 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
       )
 
       dividerPref()
-
-      if (FeatureFlags.phoneNumberPrivacy()) {
-        sectionHeaderPref(R.string.preferences_app_protection__who_can)
-
-        clickPref(
-          title = DSLSettingsText.from(R.string.preferences_app_protection__see_my_phone_number),
-          summary = DSLSettingsText.from(getWhoCanSeeMyPhoneNumberSummary(state.seeMyPhoneNumber)),
-          onClick = {
-            onSeeMyPhoneNumberClicked(state.seeMyPhoneNumber)
-          }
-        )
-
-        clickPref(
-          title = DSLSettingsText.from(R.string.preferences_app_protection__find_me_by_phone_number),
-          summary = DSLSettingsText.from(getWhoCanFindMeByPhoneNumberSummary(state.findMeByPhoneNumber)),
-          onClick = {
-            onFindMyPhoneNumberClicked(state.findMeByPhoneNumber)
-          }
-        )
-
-        dividerPref()
-      }
 
       sectionHeaderPref(R.string.PrivacySettingsFragment__messaging)
 
@@ -226,14 +240,13 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         clickPref(
           title = DSLSettingsText.from(R.string.preferences__inactivity_timeout_interval),
           onClick = {
-            TimeDurationPickerDialog(
-              context,
-              { _: TimeDurationPicker?, duration: Long ->
-                val timeoutMinutes = max(TimeUnit.MILLISECONDS.toMinutes(duration).toInt(), 1)
-                viewModel.setObsoletePasswordTimeout(timeoutMinutes)
-              },
-              0, TimeDurationPicker.HH_MM
-            ).show()
+            childFragmentManager.clearFragmentResult(TimeDurationPickerDialog.RESULT_DURATION)
+            childFragmentManager.clearFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION)
+            childFragmentManager.setFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION, this@PrivacySettingsFragment) { _, bundle ->
+              val timeout = bundle.getLong(TimeDurationPickerDialog.RESULT_KEY_DURATION_MILLISECONDS).milliseconds.inWholeMinutes.toInt()
+              viewModel.setObsoletePasswordTimeout(max(timeout, 1))
+            }
+            TimeDurationPickerDialog.create(state.screenLockActivityTimeout.seconds).show(childFragmentManager, null)
           }
         )
       } else {
@@ -260,14 +273,12 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
           summary = DSLSettingsText.from(getScreenLockInactivityTimeoutSummary(state.screenLockActivityTimeout)),
           isEnabled = isKeyguardSecure && state.screenLock,
           onClick = {
-            TimeDurationPickerDialog(
-              context,
-              { _: TimeDurationPicker?, duration: Long ->
-                val timeoutSeconds = TimeUnit.MILLISECONDS.toSeconds(duration)
-                viewModel.setScreenLockTimeout(timeoutSeconds)
-              },
-              0, TimeDurationPicker.HH_MM
-            ).show()
+            childFragmentManager.clearFragmentResult(TimeDurationPickerDialog.RESULT_DURATION)
+            childFragmentManager.clearFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION)
+            childFragmentManager.setFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION, this@PrivacySettingsFragment) { _, bundle ->
+              viewModel.setScreenLockTimeout(bundle.getLong(TimeDurationPickerDialog.RESULT_KEY_DURATION_MILLISECONDS).milliseconds.inWholeSeconds)
+            }
+            TimeDurationPickerDialog.create(state.screenLockActivityTimeout.seconds).show(childFragmentManager, null)
           }
         )
       }
@@ -297,20 +308,8 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
       )
 
       textPref(
-        summary = DSLSettingsText.from(incognitoSummary),
+        summary = DSLSettingsText.from(incognitoSummary)
       )
-
-      if (Stories.isFeatureAvailable()) {
-        dividerPref()
-
-        clickPref(
-          title = DSLSettingsText.from(R.string.preferences__stories),
-          summary = DSLSettingsText.from(R.string.PrivacySettingsFragment__manage_your_stories),
-          onClick = {
-            findNavController().safeNavigate(PrivacySettingsFragmentDirections.actionPrivacySettingsFragmentToStoryPrivacySettings(R.string.preferences__stories))
-          }
-        )
-      }
 
       dividerPref()
 
@@ -323,8 +322,10 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         onClick = {
           if (!ServiceUtil.getKeyguardManager(requireContext()).isKeyguardSecure) {
             showGoToPhoneSettings()
+          } else if (state.paymentLock) {
+            biometricAuth.authenticate(requireContext(), true) { biometricDeviceLockLauncher.launch(getString(R.string.BiometricDeviceAuthentication__signal)) }
           } else {
-            viewModel.togglePaymentLock()
+            viewModel.togglePaymentLock(true)
           }
         }
       )
@@ -365,124 +366,10 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
   }
 
   private fun getScreenLockInactivityTimeoutSummary(timeoutSeconds: Long): String {
-    val hours = TimeUnit.SECONDS.toHours(timeoutSeconds)
-    val minutes = TimeUnit.SECONDS.toMinutes(timeoutSeconds) - hours * 60
-
     return if (timeoutSeconds <= 0) {
       getString(R.string.AppProtectionPreferenceFragment_none)
     } else {
-      String.format(Locale.getDefault(), "%02d:%02d", hours, minutes)
-    }
-  }
-
-  @StringRes
-  private fun getWhoCanSeeMyPhoneNumberSummary(phoneNumberSharingMode: PhoneNumberPrivacyValues.PhoneNumberSharingMode): Int {
-    return when (phoneNumberSharingMode) {
-      PhoneNumberPrivacyValues.PhoneNumberSharingMode.EVERYONE -> R.string.PhoneNumberPrivacy_everyone
-      PhoneNumberPrivacyValues.PhoneNumberSharingMode.CONTACTS -> R.string.PhoneNumberPrivacy_my_contacts
-      PhoneNumberPrivacyValues.PhoneNumberSharingMode.NOBODY -> R.string.PhoneNumberPrivacy_nobody
-    }
-  }
-
-  @StringRes
-  private fun getWhoCanFindMeByPhoneNumberSummary(phoneNumberListingMode: PhoneNumberListingMode): Int {
-    return when (phoneNumberListingMode) {
-      PhoneNumberListingMode.LISTED -> R.string.PhoneNumberPrivacy_everyone
-      PhoneNumberListingMode.UNLISTED -> R.string.PhoneNumberPrivacy_nobody
-    }
-  }
-
-  private fun onSeeMyPhoneNumberClicked(phoneNumberSharingMode: PhoneNumberPrivacyValues.PhoneNumberSharingMode) {
-    val value = arrayOf(phoneNumberSharingMode)
-    val items = items(requireContext())
-    val modes: List<PhoneNumberPrivacyValues.PhoneNumberSharingMode> = ArrayList(items.keys)
-    val modeStrings = items.values.toTypedArray()
-    val selectedMode = modes.indexOf(value[0])
-
-    MaterialAlertDialogBuilder(requireActivity()).apply {
-      setTitle(R.string.preferences_app_protection__see_my_phone_number)
-      setCancelable(true)
-      setSingleChoiceItems(
-        modeStrings,
-        selectedMode
-      ) { _: DialogInterface?, which: Int -> value[0] = modes[which] }
-      setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
-        val newSharingMode = value[0]
-        Log.i(
-          TAG,
-          String.format(
-            "PhoneNumberSharingMode changed to %s. Scheduling storage value sync",
-            newSharingMode
-          )
-        )
-        viewModel.setPhoneNumberSharingMode(value[0])
-      }
-      setNegativeButton(android.R.string.cancel, null)
-      show()
-    }
-  }
-
-  private fun items(context: Context): Map<PhoneNumberPrivacyValues.PhoneNumberSharingMode, CharSequence> {
-    val map: MutableMap<PhoneNumberPrivacyValues.PhoneNumberSharingMode, CharSequence> = LinkedHashMap()
-    map[PhoneNumberPrivacyValues.PhoneNumberSharingMode.EVERYONE] = titleAndDescription(
-      context,
-      context.getString(R.string.PhoneNumberPrivacy_everyone),
-      context.getString(R.string.PhoneNumberPrivacy_everyone_see_description)
-    )
-    map[PhoneNumberPrivacyValues.PhoneNumberSharingMode.NOBODY] =
-      context.getString(R.string.PhoneNumberPrivacy_nobody)
-    return map
-  }
-
-  private fun titleAndDescription(
-    context: Context,
-    header: String,
-    description: String
-  ): CharSequence {
-    return SpannableStringBuilder().apply {
-      append("\n")
-      append(header)
-      append("\n")
-      setSpan(
-        TextAppearanceSpan(context, android.R.style.TextAppearance_Small),
-        length,
-        length,
-        Spanned.SPAN_INCLUSIVE_INCLUSIVE
-      )
-      append(description)
-      append("\n")
-    }
-  }
-
-  fun onFindMyPhoneNumberClicked(phoneNumberListingMode: PhoneNumberListingMode) {
-    val context = requireContext()
-    val value = arrayOf(phoneNumberListingMode)
-    MaterialAlertDialogBuilder(requireActivity()).apply {
-      setTitle(R.string.preferences_app_protection__find_me_by_phone_number)
-      setCancelable(true)
-      setSingleChoiceItems(
-        arrayOf(
-          titleAndDescription(
-            context,
-            context.getString(R.string.PhoneNumberPrivacy_everyone),
-            context.getString(R.string.PhoneNumberPrivacy_everyone_find_description)
-          ),
-          context.getString(R.string.PhoneNumberPrivacy_nobody)
-        ),
-        value[0].ordinal
-      ) { _: DialogInterface?, which: Int -> value[0] = PhoneNumberListingMode.values()[which] }
-      setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
-        Log.i(
-          TAG,
-          String.format(
-            "PhoneNumberListingMode changed to %s. Scheduling storage value sync",
-            value[0]
-          )
-        )
-        viewModel.setPhoneNumberListingMode(value[0])
-      }
-      setNegativeButton(android.R.string.cancel, null)
-      show()
+      ExpirationUtil.getExpirationDisplayValue(requireContext(), timeoutSeconds.toInt())
     }
   }
 
@@ -510,6 +397,22 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
       super.bind(model)
       clickPreferenceViewHolder.bind(model.clickPreference)
       valueText.text = model.value.resolve(context)
+    }
+  }
+
+  inner class BiometricAuthenticationListener : BiometricPrompt.AuthenticationCallback() {
+    override fun onAuthenticationError(errorCode: Int, errorString: CharSequence) {
+      Log.w(TAG, "Authentication error: $errorCode")
+      onAuthenticationFailed()
+    }
+
+    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+      Log.i(TAG, "onAuthenticationSucceeded")
+      viewModel.togglePaymentLock(false)
+    }
+
+    override fun onAuthenticationFailed() {
+      Log.w(TAG, "Unable to authenticate payment lock")
     }
   }
 }

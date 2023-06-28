@@ -25,17 +25,22 @@ import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
 import org.signal.ringrtc.HttpHeader;
 import org.signal.ringrtc.NetworkRoute;
+import org.signal.ringrtc.PeekInfo;
 import org.signal.ringrtc.Remote;
 import org.signal.storageservice.protos.groups.GroupExternalCredential;
 import org.tm.archive.WebRtcCallActivity;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.CallTable;
+import org.tm.archive.database.GroupTable;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.GroupCallPeekEvent;
 import org.tm.archive.events.WebRtcViewModel;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
+import org.tm.archive.jobmanager.JobManager;
+import org.tm.archive.jobs.CallSyncEventJob;
 import org.tm.archive.jobs.GroupCallUpdateSendJob;
 import org.tm.archive.jobs.RetrieveProfileJob;
 import org.tm.archive.keyvalue.SignalStore;
@@ -47,6 +52,7 @@ import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.ringrtc.CameraEventListener;
 import org.tm.archive.ringrtc.CameraState;
 import org.tm.archive.ringrtc.RemotePeer;
+import org.tm.archive.service.webrtc.links.SignalCallLinkManager;
 import org.tm.archive.service.webrtc.state.WebRtcEphemeralState;
 import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.util.AppForegroundObserver;
@@ -55,6 +61,7 @@ import org.tm.archive.util.RecipientAccessList;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.rx.RxStore;
+import org.tm.archive.webrtc.CallNotificationBuilder;
 import org.tm.archive.webrtc.audio.SignalAudioManager;
 import org.tm.archive.webrtc.locks.LockManager;
 import org.webrtc.PeerConnection;
@@ -65,14 +72,17 @@ import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 import org.whispersystems.signalservice.api.messages.calls.OpaqueMessage;
 import org.whispersystems.signalservice.api.messages.calls.SignalServiceCallMessage;
 import org.whispersystems.signalservice.api.messages.calls.TurnServerInfo;
+import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.exceptions.UnregisteredUserException;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.SyncMessage;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -218,7 +228,7 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
     process((s, p) -> p.handleSetMuteAudio(s, enabled));
   }
 
-  public void setMuteVideo(boolean enabled) {
+  public void setEnableVideo(boolean enabled) {
     process((s, p) -> p.handleSetEnableVideo(s, enabled));
   }
 
@@ -300,8 +310,8 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
     process((s, p) -> p.handleSetRingGroup(s, ringGroup));
   }
 
-  private void receivedGroupCallPeekForRingingCheck(@NonNull GroupCallRingCheckInfo groupCallRingCheckInfo, long deviceCount) {
-    process((s, p) -> p.handleReceivedGroupCallPeekForRingingCheck(s, groupCallRingCheckInfo, deviceCount));
+  private void receivedGroupCallPeekForRingingCheck(@NonNull GroupCallRingCheckInfo groupCallRingCheckInfo, @NonNull PeekInfo peekInfo) {
+    process((s, p) -> p.handleReceivedGroupCallPeekForRingingCheck(s, groupCallRingCheckInfo, peekInfo));
   }
 
   public void onAudioDeviceChanged(@NonNull SignalAudioManager.AudioDevice activeDevice, @NonNull Set<SignalAudioManager.AudioDevice> availableDevices) {
@@ -312,7 +322,7 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
     process((s, p) -> p.handleBluetoothPermissionDenied(s));
   }
 
-  public void selectAudioDevice(@NonNull SignalAudioManager.AudioDevice desiredDevice) {
+  public void selectAudioDevice(@NonNull SignalAudioManager.ChosenAudioDeviceIdentifier desiredDevice) {
     process((s, p) -> p.handleSetUserAudioDevice(s, desiredDevice));
   }
 
@@ -344,8 +354,8 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
           Long threadId = SignalDatabase.threads().getThreadIdFor(group.getId());
 
           if (threadId != null) {
-            SignalDatabase.sms()
-                          .updatePreviousGroupCall(threadId,
+            SignalDatabase.calls()
+                          .updateGroupCallFromPeek(threadId,
                                                    peekInfo.getEraId(),
                                                    peekInfo.getJoinedMembers(),
                                                    WebRtcUtil.isCallFull(peekInfo));
@@ -356,7 +366,7 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
           }
         });
       } catch (IOException | VerificationFailedException | CallException e) {
-        Log.e(TAG, "error peeking from active conversation", e);
+        Log.i(TAG, "error peeking from active conversation", e);
       }
     });
   }
@@ -379,11 +389,12 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
                                                               .map(entry -> new GroupCall.GroupMemberInfo(entry.getKey(), entry.getValue().serialize()))
                                                               .collect(Collectors.toList());
 
-        callManager.peekGroupCall(SignalStore.internalValues().groupCallingServer(), credential.getTokenBytes().toByteArray(), members, peekInfo -> {
-          receivedGroupCallPeekForRingingCheck(info, peekInfo.getDeviceCount());
-        });
+        callManager.peekGroupCall(SignalStore.internalValues().groupCallingServer(),
+                                  credential.getTokenBytes().toByteArray(),
+                                  members,
+                                  peekInfo -> receivedGroupCallPeekForRingingCheck(info, peekInfo));
       } catch (IOException | VerificationFailedException | CallException e) {
-        Log.e(TAG, "error peeking for ringing check", e);
+        Log.i(TAG, "error peeking for ringing check", e);
       }
     });
   }
@@ -404,7 +415,7 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
   }
 
   public boolean startCallCardActivityIfPossible() {
-    if (Build.VERSION.SDK_INT >= 29 && !ApplicationDependencies.getAppForegroundObserver().isForegrounded()) {
+    if (Build.VERSION.SDK_INT >= CallNotificationBuilder.API_LEVEL_CALL_STYLE) {
       return false;
     }
 
@@ -519,7 +530,7 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
           Log.i(TAG, "Ignoring event: " + event);
           break;
         default:
-          throw new AssertionError("Unexpected event: " + event.toString());
+          throw new AssertionError("Unexpected event: " + event);
       }
 
       return s;
@@ -675,7 +686,7 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
     networkExecutor.execute(() -> {
       try {
         GroupId         groupId    = GroupId.v2(new GroupIdentifier(groupIdBytes));
-        List<Recipient> recipients = SignalDatabase.groups().getGroupMembers(groupId, GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+        List<Recipient> recipients = SignalDatabase.groups().getGroupMembers(groupId, GroupTable.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
         recipients = RecipientUtil.getEligibleForSending((recipients.stream()
                                                                     .map(Recipient::resolve)
@@ -741,15 +752,20 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
   }
 
   @Override
-  public void onGroupCallRingUpdate(@NonNull byte[] groupIdBytes, long ringId, @NonNull UUID uuid, @NonNull CallManager.RingUpdate ringUpdate) {
+  public void onGroupCallRingUpdate(@NonNull byte[] groupIdBytes, long ringId, @NonNull UUID sender, @NonNull CallManager.RingUpdate ringUpdate) {
     try {
-      GroupId.V2                          groupId = GroupId.v2(new GroupIdentifier(groupIdBytes));
-      Optional<GroupDatabase.GroupRecord> group   = SignalDatabase.groups().getGroup(groupId);
+      GroupId.V2  groupId         = GroupId.v2(new GroupIdentifier(groupIdBytes));
+      GroupRecord group           = SignalDatabase.groups().getGroup(groupId).orElse(null);
+      Recipient   senderRecipient = Recipient.externalPush(ServiceId.from(sender));
 
-      if (group.isPresent()) {
-        process((s, p) -> p.handleGroupCallRingUpdate(s, new RemotePeer(group.get().getRecipientId()), groupId, ringId, uuid, ringUpdate));
+      if (group != null &&
+          group.isActive() &&
+          !Recipient.resolved(group.getRecipientId()).isBlocked() &&
+          (!group.isAnnouncementGroup() || group.isAdmin(senderRecipient)))
+      {
+        process((s, p) -> p.handleGroupCallRingUpdate(s, new RemotePeer(group.getRecipientId()), groupId, ringId, sender, ringUpdate));
       } else {
-        Log.w(TAG, "Unable to ring unknown group.");
+        Log.w(TAG, "Unable to ring unknown/inactive/blocked group.");
       }
     } catch (InvalidInputException e) {
       Log.w(TAG, "Unable to ring group due to invalid group id", e);
@@ -804,6 +820,12 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
   }
 
   @Override
+  public void onCameraStopped() {
+    Log.i(TAG, "Camera error. Muting video.");
+    setEnableVideo(false);
+  }
+
+  @Override
   public void onForeground() {
     process((s, p) -> {
       WebRtcViewModel.State          callState      = s.getCallInfoState().getCallState();
@@ -818,29 +840,38 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
     });
   }
 
-  public void insertMissedCall(@NonNull RemotePeer remotePeer, boolean signal, long timestamp, boolean isVideoOffer) {
-    Pair<Long, Long> messageAndThreadId = SignalDatabase.sms().insertMissedCall(remotePeer.getId(), timestamp, isVideoOffer);
+  public void insertMissedCall(@NonNull RemotePeer remotePeer, long timestamp, boolean isVideoOffer) {
+    CallTable.Call call = SignalDatabase.calls()
+                                        .updateOneToOneCall(remotePeer.getCallId().longValue(), CallTable.Event.MISSED);
 
-    ApplicationDependencies.getMessageNotifier()
-                           .updateNotification(context, ConversationId.forConversation(messageAndThreadId.second()), signal);
+    if (call == null) {
+      CallTable.Type type = isVideoOffer ? CallTable.Type.VIDEO_CALL : CallTable.Type.AUDIO_CALL;
+
+      SignalDatabase.calls()
+                    .insertOneToOneCall(remotePeer.getCallId().longValue(), timestamp, remotePeer.getId(), type, CallTable.Direction.INCOMING, CallTable.Event.MISSED);
+    }
   }
 
-  public void insertReceivedCall(@NonNull RemotePeer remotePeer, boolean signal, boolean isVideoOffer) {
-    Pair<Long, Long> messageAndThreadId = SignalDatabase.sms().insertReceivedCall(remotePeer.getId(), isVideoOffer);
+  public void insertReceivedCall(@NonNull RemotePeer remotePeer, boolean isVideoOffer) {
+    CallTable.Call call = SignalDatabase.calls()
+                                        .updateOneToOneCall(remotePeer.getCallId().longValue(), CallTable.Event.ACCEPTED);
 
-    ApplicationDependencies.getMessageNotifier()
-                           .updateNotification(context, ConversationId.forConversation(messageAndThreadId.second()), signal);
+    if (call == null) {
+      CallTable.Type type = isVideoOffer ? CallTable.Type.VIDEO_CALL : CallTable.Type.AUDIO_CALL;
+
+      SignalDatabase.calls()
+                    .insertOneToOneCall(remotePeer.getCallId().longValue(), System.currentTimeMillis(), remotePeer.getId(), type, CallTable.Direction.INCOMING, CallTable.Event.ACCEPTED);
+    }
   }
 
   public void retrieveTurnServers(@NonNull RemotePeer remotePeer) {
+    List<PeerConnection.IceServer> iceServers = new LinkedList<>();
+
     networkExecutor.execute(() -> {
       try {
         TurnServerInfo turnServerInfo = ApplicationDependencies.getSignalServiceAccountManager().getTurnServerInfo();
 
-        List<PeerConnection.IceServer> iceServers = new LinkedList<>();
-        iceServers.add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer());
         for (String url : turnServerInfo.getUrls()) {
-          Log.i(TAG, "ice_server: " + url);
           if (url.startsWith("turn")) {
             iceServers.add(PeerConnection.IceServer.builder(url)
                                                    .setUsername(turnServerInfo.getUsername())
@@ -850,6 +881,11 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
             iceServers.add(PeerConnection.IceServer.builder(url).createIceServer());
           }
         }
+      } catch (IOException e) {
+        Log.w(TAG, "Using fallback. Unable to retrieve turn servers: " + e);
+      } finally {
+        // Append fallback stun server
+        iceServers.add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer());
 
         process((s, p) -> {
           RemotePeer activePeer = s.getCallInfoState().getActivePeer();
@@ -860,24 +896,36 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
           Log.w(TAG, "Ignoring received turn servers for incorrect call id. requesting_call_id: " + remotePeer.getCallId() + " current_call_id: " + (activePeer != null ? activePeer.getCallId() : "null"));
           return s;
         });
-      } catch (IOException e) {
-        Log.w(TAG, "Unable to retrieve turn servers: ", e);
-        process((s, p) -> p.handleSetupFailure(s, remotePeer.getCallId()));
       }
     });
   }
 
-  public void sendGroupCallUpdateMessage(@NonNull Recipient recipient, @Nullable String groupCallEraId) {
-    SignalExecutors.BOUNDED.execute(() -> ApplicationDependencies.getJobManager().add(GroupCallUpdateSendJob.create(recipient.getId(), groupCallEraId)));
+  public void sendGroupCallUpdateMessage(@NonNull Recipient recipient, @Nullable String groupCallEraId, boolean isIncoming, boolean isJoinEvent) {
+    SignalExecutors.BOUNDED.execute(() -> {
+      GroupCallUpdateSendJob updateSendJob = GroupCallUpdateSendJob.create(recipient.getId(), groupCallEraId);
+      JobManager.Chain       chain         = ApplicationDependencies.getJobManager().startChain(updateSendJob);
+
+      if (isJoinEvent && groupCallEraId != null) {
+        chain.then(CallSyncEventJob.createForJoin(
+            recipient.getId(),
+            CallId.fromEra(groupCallEraId).longValue(),
+            isIncoming
+        ));
+      } else if (isJoinEvent) {
+        Log.w(TAG, "Can't send join event sync message without an era id.");
+      }
+
+      chain.enqueue();
+    });
   }
 
   public void updateGroupCallUpdateMessage(@NonNull RecipientId groupId, @Nullable String groupCallEraId, @NonNull Collection<UUID> joinedMembers, boolean isCallFull) {
-    SignalExecutors.BOUNDED.execute(() -> SignalDatabase.sms().insertOrUpdateGroupCall(groupId,
-                                                                                       Recipient.self().getId(),
-                                                                                       System.currentTimeMillis(),
-                                                                                       groupCallEraId,
-                                                                                       joinedMembers,
-                                                                                       isCallFull));
+    SignalExecutors.BOUNDED.execute(() -> SignalDatabase.calls().insertOrUpdateGroupCallFromLocalEvent(groupId,
+                                                                                                       Recipient.self().getId(),
+                                                                                                       System.currentTimeMillis(),
+                                                                                                       groupCallEraId,
+                                                                                                       joinedMembers,
+                                                                                                       isCallFull));
   }
 
   public void sendCallMessage(@NonNull final RemotePeer remotePeer,
@@ -910,6 +958,44 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
                                                                                         Optional.empty()));
       }
     });
+  }
+
+  public void sendAcceptedCallEventSyncMessage(@NonNull RemotePeer remotePeer, boolean isOutgoing, boolean isVideoCall) {
+    SignalDatabase
+        .calls()
+        .updateOneToOneCall(remotePeer.getCallId().longValue(), CallTable.Event.ACCEPTED);
+
+    if (TextSecurePreferences.isMultiDevice(context)) {
+      networkExecutor.execute(() -> {
+        try {
+          SyncMessage.CallEvent callEvent = CallEventSyncMessageUtil.createAcceptedSyncMessage(remotePeer, System.currentTimeMillis(), isOutgoing, isVideoCall);
+          ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(callEvent), Optional.empty());
+        } catch (IOException | UntrustedIdentityException e) {
+          Log.w(TAG, "Unable to send call event sync message for " + remotePeer.getCallId().longValue(), e);
+        }
+      });
+    }
+  }
+
+  public void sendNotAcceptedCallEventSyncMessage(@NonNull RemotePeer remotePeer, boolean isOutgoing, boolean isVideoCall) {
+    SignalDatabase
+        .calls()
+        .updateOneToOneCall(remotePeer.getCallId().longValue(), CallTable.Event.NOT_ACCEPTED);
+
+    if (TextSecurePreferences.isMultiDevice(context)) {
+      networkExecutor.execute(() -> {
+        try {
+          SyncMessage.CallEvent callEvent = CallEventSyncMessageUtil.createNotAcceptedSyncMessage(remotePeer, System.currentTimeMillis(), isOutgoing, isVideoCall);
+          ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(callEvent), Optional.empty());
+        } catch (IOException | UntrustedIdentityException e) {
+          Log.w(TAG, "Unable to send call event sync message for " + remotePeer.getCallId().longValue(), e);
+        }
+      });
+    }
+  }
+
+  public @NonNull SignalCallLinkManager getCallLinkManager() {
+    return new SignalCallLinkManager(Objects.requireNonNull(callManager));
   }
 
   private void processSendMessageFailureWithChangeDetection(@NonNull RemotePeer remotePeer,

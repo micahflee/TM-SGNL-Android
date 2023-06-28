@@ -3,11 +3,11 @@ package org.tm.archive.migrations;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.StickerDatabase;
+import org.tm.archive.database.StickerTable;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.MultiDeviceStickerPackOperationJob;
@@ -49,8 +49,8 @@ public class StickerLaunchMigrationJob extends MigrationJob {
   }
 
   private static void installPack(@NonNull Context context, @NonNull BlessedPacks.Pack pack) {
-    JobManager      jobManager      = ApplicationDependencies.getJobManager();
-    StickerDatabase stickerDatabase = SignalDatabase.stickers();
+    JobManager   jobManager      = ApplicationDependencies.getJobManager();
+    StickerTable stickerDatabase = SignalDatabase.stickers();
 
     if (stickerDatabase.isPackAvailableAsReference(pack.getPackId())) {
       stickerDatabase.markPackAsInstalled(pack.getPackId(), false);
@@ -66,7 +66,7 @@ public class StickerLaunchMigrationJob extends MigrationJob {
   public static class Factory implements Job.Factory<StickerLaunchMigrationJob> {
     @Override
     public @NonNull
-    StickerLaunchMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    StickerLaunchMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new StickerLaunchMigrationJob(parameters);
     }
   }

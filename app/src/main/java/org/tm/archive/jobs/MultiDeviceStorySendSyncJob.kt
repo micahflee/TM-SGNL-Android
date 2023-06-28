@@ -3,8 +3,8 @@ package org.tm.archive.jobs
 import org.signal.core.util.logging.Log
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobmanager.Data
 import org.tm.archive.jobmanager.Job
+import org.tm.archive.jobmanager.JsonJobData
 import org.tm.archive.jobmanager.impl.NetworkConstraint
 import org.tm.archive.recipients.Recipient
 import org.whispersystems.signalservice.api.messages.SignalServiceStoryMessageRecipient
@@ -17,8 +17,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Transmits a sent sync transcript to linked devices containing the story sync manifest for the given sent timestamp.
- * The transmitted message is sent as a recipient update, and will only contain affected recipients that still have a
- * live story for the given timestamp.
+ * The transmitted message will contain all current recipients of a given story.
  */
 class MultiDeviceStorySendSyncJob private constructor(parameters: Parameters, private val sentTimestamp: Long, private val deletedMessageId: Long) : BaseJob(parameters) {
 
@@ -45,36 +44,28 @@ class MultiDeviceStorySendSyncJob private constructor(parameters: Parameters, pr
     }
   }
 
-  override fun serialize(): Data {
-    return Data.Builder()
+  override fun serialize(): ByteArray? {
+    return JsonJobData.Builder()
       .putLong(DATA_SENT_TIMESTAMP, sentTimestamp)
       .putLong(DATA_DELETED_MESSAGE_ID, deletedMessageId)
-      .build()
+      .serialize()
   }
 
   override fun getFactoryKey(): String = KEY
 
   override fun onRun() {
-    val recipientIds = SignalDatabase.storySends.getRecipientIdsForManifestUpdate(sentTimestamp, deletedMessageId)
-    if (recipientIds.isEmpty()) {
-      Log.i(TAG, "No recipients requiring a manifest update. Dropping.")
-      return
-    }
-
-    val updateManifest = SignalDatabase.storySends.getSentStorySyncManifestForUpdate(sentTimestamp, recipientIds)
-
-    if (updateManifest.entries.isEmpty()) {
-      Log.i(TAG, "No entries in updated manifest. Dropping.")
-      return
-    }
-
-    val recipientsSet = updateManifest.toRecipientsSet()
+    val updateManifest = SignalDatabase.storySends.getLocalManifest(sentTimestamp)
+    val recipientsSet: Set<SignalServiceStoryMessageRecipient> = updateManifest.toRecipientsSet()
     val transcriptMessage: SignalServiceSyncMessage = SignalServiceSyncMessage.forSentTranscript(buildSentTranscript(recipientsSet))
     val sendMessageResult = ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(transcriptMessage, Optional.empty())
+
+    Log.i(TAG, "Sent transcript message with ${recipientsSet.size} recipients")
 
     if (!sendMessageResult.isSuccess) {
       throw RetryableException()
     }
+
+    SignalDatabase.messages.deleteRemotelyDeletedStory(deletedMessageId)
   }
 
   override fun onShouldRetry(e: Exception): Boolean {
@@ -90,7 +81,8 @@ class MultiDeviceStorySendSyncJob private constructor(parameters: Parameters, pr
       emptyMap(),
       true,
       Optional.empty(),
-      recipientsSet
+      recipientsSet,
+      Optional.empty()
     )
   }
 
@@ -99,7 +91,8 @@ class MultiDeviceStorySendSyncJob private constructor(parameters: Parameters, pr
   class RetryableException : Exception()
 
   class Factory : Job.Factory<MultiDeviceStorySendSyncJob> {
-    override fun create(parameters: Parameters, data: Data): MultiDeviceStorySendSyncJob {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): MultiDeviceStorySendSyncJob {
+      val data = JsonJobData.deserialize(serializedData)
       return MultiDeviceStorySendSyncJob(
         parameters = parameters,
         sentTimestamp = data.getLong(DATA_SENT_TIMESTAMP),

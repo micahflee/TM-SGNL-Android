@@ -16,11 +16,11 @@ import com.google.android.gms.common.api.Status;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.database.MessageDatabase;
-import org.tm.archive.database.MessageDatabase.InsertResult;
+import org.tm.archive.database.MessageTable;
+import org.tm.archive.database.MessageTable.InsertResult;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.SqlCipherMigrationConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -71,15 +71,15 @@ public class SmsReceiveJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
+  public @Nullable byte[] serialize() {
     String[] encoded = new String[pdus.length];
     for (int i = 0; i < pdus.length; i++) {
       encoded[i] = Base64.encodeBytes((byte[]) pdus[i]);
     }
 
-    return new Data.Builder().putStringArray(KEY_PDUS, encoded)
-                             .putInt(KEY_SUBSCRIPTION_ID, subscriptionId)
-                             .build();
+    return new JsonJobData.Builder().putStringArray(KEY_PDUS, encoded)
+                                    .putInt(KEY_SUBSCRIPTION_ID, subscriptionId)
+                                    .serialize();
   }
 
   @Override
@@ -118,7 +118,7 @@ public class SmsReceiveJob extends BaseJob {
       }
     }
 
-    if (message.isPresent() && SignalStore.account().getE164() != null && message.get().getSender().equals(Recipient.self().getId())) {
+    if (message.isPresent() && SignalStore.account().getE164() != null && message.get().getAuthorId().equals(Recipient.self().getId())) {
       Log.w(TAG, "Received an SMS from ourselves! Ignoring.");
     } else if (message.isPresent() && !isBlocked(message.get())) {
       Optional<InsertResult> insertResult = storeMessage(message.get());
@@ -145,8 +145,8 @@ public class SmsReceiveJob extends BaseJob {
   }
 
   private boolean isBlocked(IncomingTextMessage message) {
-    if (message.getSender() != null) {
-      Recipient recipient = Recipient.resolved(message.getSender());
+    if (message.getAuthorId() != null) {
+      Recipient recipient = Recipient.resolved(message.getAuthorId());
       return recipient.isBlocked();
     }
 
@@ -154,7 +154,7 @@ public class SmsReceiveJob extends BaseJob {
   }
 
   private Optional<InsertResult> storeMessage(IncomingTextMessage message) throws MigrationPendingException {
-    MessageDatabase database = SignalDatabase.sms();
+    MessageTable database = SignalDatabase.messages();
     database.ensureMigration();
 
     if (TextSecurePreferences.getNeedsSqlCipherMigration(context)) {
@@ -193,9 +193,9 @@ public class SmsReceiveJob extends BaseJob {
   }
 
   private static Notification buildPreRegistrationNotification(@NonNull Context context, @NonNull IncomingTextMessage message) {
-    Recipient sender = Recipient.resolved(message.getSender());
+    Recipient sender = Recipient.resolved(message.getAuthorId());
 
-    return new NotificationCompat.Builder(context, NotificationChannels.getMessagesChannel(context))
+    return new NotificationCompat.Builder(context, NotificationChannels.getInstance().getMessagesChannel())
                                  .setStyle(new NotificationCompat.MessagingStyle(new Person.Builder()
                                                                  .setName(sender.getE164().orElse(""))
                                                                  .build())
@@ -219,7 +219,9 @@ public class SmsReceiveJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<SmsReceiveJob> {
     @Override
-    public @NonNull SmsReceiveJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull SmsReceiveJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       try {
         int subscriptionId = data.getInt(KEY_SUBSCRIPTION_ID);
         String[] encoded   = data.getStringArray(KEY_PDUS);

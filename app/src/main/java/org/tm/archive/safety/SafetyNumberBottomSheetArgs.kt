@@ -12,6 +12,6 @@ import org.tm.archive.recipients.RecipientId
 @Parcelize
 data class SafetyNumberBottomSheetArgs(
   val untrustedRecipients: List<RecipientId>,
-  val destinations: List<ContactSearchKey.ParcelableRecipientSearchKey>,
+  val destinations: List<ContactSearchKey.RecipientSearchKey>,
   val messageId: MessageId? = null
 ) : Parcelable

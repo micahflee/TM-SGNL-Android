@@ -22,6 +22,7 @@ import com.annimon.stream.Stream;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.util.MediaUtil;
 import org.signal.core.util.SqlUtil;
@@ -39,6 +40,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Handles the retrieval of media present on the user's device.
@@ -59,6 +63,25 @@ public class MediaRepository {
     }
 
     SignalExecutors.BOUNDED.execute(() -> callback.onComplete(getFolders(context)));
+  }
+
+  /**
+   * Retrieves a list of recent media items (images and videos).
+   */
+  public Single<List<Media>> getRecentMedia() {
+    return Single.<List<Media>>fromCallable(() -> {
+                   if (!StorageUtil.canReadFromMediaStore()) {
+                     Log.w(TAG, "No storage permissions!", new Throwable());
+                     return Collections.emptyList();
+                   }
+
+                   return getMediaInBucket(ApplicationDependencies.getApplication(), Media.ALL_MEDIA_BUCKET_ID);
+                 })
+                 .onErrorReturn(t -> {
+                   Log.w(TAG, "Unable to get recent media", t);
+                   return Collections.emptyList();
+                 })
+                 .subscribeOn(Schedulers.io());
   }
 
   /**
@@ -308,14 +331,12 @@ public class MediaRepository {
     return media.size() > 0 ? Optional.of(media.get(0)) : Optional.empty();
   }
 
-  @TargetApi(16)
   @SuppressWarnings("SuspiciousNameCombination")
   private String getWidthColumn(int orientation) {
     if (orientation == 0 || orientation == 180) return Images.Media.WIDTH;
     else                                        return Images.Media.HEIGHT;
   }
 
-  @TargetApi(16)
   @SuppressWarnings("SuspiciousNameCombination")
   private String getHeightColumn(int orientation) {
     if (orientation == 0 || orientation == 180) return Images.Media.HEIGHT;

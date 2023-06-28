@@ -11,9 +11,10 @@ import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.IdentityKey;
 import org.signal.libsignal.protocol.SignalProtocolAddress;
 import org.signal.libsignal.protocol.state.IdentityKeyStore;
+import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.crypto.storage.SignalIdentityKeyStore.SaveResult;
-import org.tm.archive.database.IdentityDatabase;
-import org.tm.archive.database.IdentityDatabase.VerifiedStatus;
+import org.tm.archive.database.IdentityTable;
+import org.tm.archive.database.IdentityTable.VerifiedStatus;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.identity.IdentityRecordList;
 import org.tm.archive.database.model.IdentityRecord;
@@ -24,6 +25,7 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.IdentityUtil;
 import org.tm.archive.util.LRUCache;
+import org.whispersystems.signalservice.api.SignalSessionLock;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.ArrayList;
@@ -43,7 +45,6 @@ public class SignalBaseIdentityKeyStore {
 
   private static final String TAG = Log.tag(SignalBaseIdentityKeyStore.class);
 
-  private static final Object LOCK                        = new Object();
   private static final int    TIMESTAMP_THRESHOLD_SECONDS = 5;
 
   private final Context context;
@@ -53,7 +54,7 @@ public class SignalBaseIdentityKeyStore {
     this(context, SignalDatabase.identities());
   }
 
-  SignalBaseIdentityKeyStore(@NonNull Context context, @NonNull IdentityDatabase identityDatabase) {
+  SignalBaseIdentityKeyStore(@NonNull Context context, @NonNull IdentityTable identityDatabase) {
     this.context = context;
     this.cache   = new Cache(identityDatabase);
   }
@@ -67,7 +68,7 @@ public class SignalBaseIdentityKeyStore {
   }
 
   public @NonNull SaveResult saveIdentity(SignalProtocolAddress address, IdentityKey identityKey, boolean nonBlockingApproval) {
-    synchronized (LOCK) {
+    try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
       IdentityStoreRecord identityRecord = cache.get(address.getName());
       RecipientId         recipientId    = RecipientId.fromSidOrE164(address.getName());
 
@@ -263,9 +264,9 @@ public class SignalBaseIdentityKeyStore {
   private static final class Cache {
 
     private final Map<String, IdentityStoreRecord> cache;
-    private final IdentityDatabase                 identityDatabase;
+    private final IdentityTable                    identityDatabase;
 
-    Cache(@NonNull IdentityDatabase identityDatabase) {
+    Cache(@NonNull IdentityTable identityDatabase) {
       this.identityDatabase = identityDatabase;
       this.cache            = new LRUCache<>(200);
     }

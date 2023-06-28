@@ -33,8 +33,10 @@ import org.tm.archive.scribbles.HSVColorSlider.getColor
 import org.tm.archive.scribbles.HSVColorSlider.setColor
 import org.tm.archive.scribbles.HSVColorSlider.setUpForColor
 import org.tm.archive.util.FeatureFlags
+import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.fragments.findListener
+import org.tm.archive.util.setIncognitoKeyboardEnabled
 import java.util.Locale
 
 /**
@@ -117,6 +119,7 @@ class TextStoryPostTextEntryFragment : KeyboardEntryDialogFragment(
       viewModel.setTemporaryBody(text?.toString() ?: "")
     }
     input.setText(viewModel.getBody())
+    input.setIncognitoKeyboardEnabled(TextSecurePreferences.isIncognitoKeyboardEnabled(requireContext()))
   }
 
   private fun presentHint() {

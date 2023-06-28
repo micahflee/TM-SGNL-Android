@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import org.signal.core.util.concurrent.SignalExecutors
 import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.conversation.colors.ChatColorsPalette
-import org.tm.archive.database.ChatColorsDatabase
+import org.tm.archive.database.ChatColorsTable
 import org.tm.archive.database.DatabaseObserver
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
@@ -12,7 +12,7 @@ import org.tm.archive.util.concurrent.SerialMonoLifoExecutor
 import java.util.concurrent.Executor
 
 class ChatColorsOptionsLiveData : LiveData<List<ChatColors>>() {
-  private val chatColorsDatabase: ChatColorsDatabase = SignalDatabase.chatColors
+  private val chatColorsTable: ChatColorsTable = SignalDatabase.chatColors
   private val observer: DatabaseObserver.Observer = DatabaseObserver.Observer { refreshChatColors() }
   private val executor: Executor = SerialMonoLifoExecutor(SignalExecutors.BOUNDED)
 
@@ -29,7 +29,7 @@ class ChatColorsOptionsLiveData : LiveData<List<ChatColors>>() {
     executor.execute {
       val options = mutableListOf<ChatColors>().apply {
         addAll(ChatColorsPalette.Bubbles.all)
-        addAll(chatColorsDatabase.getSavedChatColors())
+        addAll(chatColorsTable.getSavedChatColors())
       }
 
       postValue(options)

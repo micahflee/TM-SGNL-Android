@@ -1,12 +1,13 @@
 package org.tm.archive.releasechannel
 
 import org.tm.archive.attachments.PointerAttachment
-import org.tm.archive.database.MessageDatabase
+import org.tm.archive.database.MessageTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.mms.IncomingMediaMessage
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.util.MediaUtil
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentRemoteId
@@ -24,29 +25,29 @@ object ReleaseChannel {
     recipientId: RecipientId,
     body: String,
     threadId: Long,
-    image: String? = null,
-    imageWidth: Int = 0,
-    imageHeight: Int = 0,
+    media: String? = null,
+    mediaWidth: Int = 0,
+    mediaHeight: Int = 0,
+    mediaType: String = "image/webp",
     serverUuid: String? = UUID.randomUUID().toString(),
     messageRanges: BodyRangeList? = null,
     storyType: StoryType = StoryType.NONE
-  ): MessageDatabase.InsertResult? {
-
-    val attachments: Optional<List<SignalServiceAttachment>> = if (image != null) {
+  ): MessageTable.InsertResult? {
+    val attachments: Optional<List<SignalServiceAttachment>> = if (media != null) {
       val attachment = SignalServiceAttachmentPointer(
         CDN_NUMBER,
         SignalServiceAttachmentRemoteId.from(""),
-        "image/webp",
+        mediaType,
         null,
         Optional.empty(),
         Optional.empty(),
-        imageWidth,
-        imageHeight,
+        mediaWidth,
+        mediaHeight,
         Optional.empty(),
-        Optional.of(image),
+        Optional.of(media),
         false,
         false,
-        false,
+        MediaUtil.isVideo(mediaType),
         Optional.empty(),
         Optional.empty(),
         System.currentTimeMillis()
@@ -69,6 +70,6 @@ object ReleaseChannel {
       storyType = storyType
     )
 
-    return SignalDatabase.mms.insertSecureDecryptedMessageInbox(message, threadId).orElse(null)
+    return SignalDatabase.messages.insertSecureDecryptedMessageInbox(message, threadId).orElse(null)
   }
 }

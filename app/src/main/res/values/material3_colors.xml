@@ -16,6 +16,7 @@
     <color name="signal_colorOnSecondaryContainer">@color/signal_light_colorOnSecondaryContainer</color>
     <color name="signal_colorOnSurface">@color/signal_light_colorOnSurface</color>
     <color name="signal_colorOnSurfaceVariant">@color/signal_light_colorOnSurfaceVariant</color>
+    <color name="signal_colorOnSurfaceVariant1">@color/signal_light_colorOnSurfaceVariant1</color>
     <color name="signal_colorOnBackground">@color/signal_light_colorOnBackground</color>
     <color name="signal_colorOutline">@color/signal_light_colorOutline</color>
     <color name="signal_neutralSurface">@color/signal_light_neutralSurface</color>
@@ -51,7 +52,9 @@
     <color name="signal_colorSecondaryContainer_12">#1FDCE5F9</color>
     <color name="signal_colorSurface_60">#99FBFCFF</color>
     <color name="signal_colorSurfaceVariant_38">#61E7EBF3</color>
+    <color name="signal_colorSurfaceVariant_64">#A3E7EBF3</color>
     <color name="signal_colorOnSurface_12">#1F1B1B1D</color>
+    <color name="signal_colorOnSurface_50">#801B1B1D</color>
     <color name="signal_colorOnSurfaceVariant_60">#99545863</color>
     <color name="signal_colorOnBackground_60">#991B1D1D</color>
     <color name="signal_colorOutline_38">#61808389</color>

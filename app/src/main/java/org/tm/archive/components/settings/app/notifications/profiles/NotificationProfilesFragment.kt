@@ -5,6 +5,7 @@ import android.view.View
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.emoji.EmojiUtil
 import org.tm.archive.components.settings.DSLConfiguration
@@ -18,7 +19,6 @@ import org.tm.archive.components.settings.configure
 import org.tm.archive.components.settings.conversation.preferences.LargeIconClickPreference
 import org.tm.archive.notifications.profiles.NotificationProfile
 import org.tm.archive.notifications.profiles.NotificationProfiles
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 

@@ -4,11 +4,13 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
+import org.tm.archive.database.StickerTable;
+
 import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Represents a record for a sticker pack in the {@link org.tm.archive.database.StickerDatabase}.
+ * Represents a record for a sticker pack in the {@link StickerTable}.
  */
 public final class StickerPackRecord {
 

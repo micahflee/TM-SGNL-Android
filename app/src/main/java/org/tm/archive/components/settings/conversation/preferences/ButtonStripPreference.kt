@@ -7,6 +7,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLSettingsIcon
 import org.tm.archive.components.settings.PreferenceModel
+import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
@@ -24,6 +25,8 @@ object ButtonStripPreference {
   class Model(
     val state: State,
     val background: DSLSettingsIcon? = null,
+    val enabled: Boolean = true,
+    val onAddToStoryClick: () -> Unit = {},
     val onMessageClick: () -> Unit = {},
     val onVideoClick: () -> Unit = {},
     val onAudioClick: () -> Unit = {},
@@ -41,6 +44,8 @@ object ButtonStripPreference {
 
   class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
 
+    private val addToStory: View = itemView.findViewById(R.id.add_to_story)
+    private val addToStoryContainer: View = itemView.findViewById(R.id.button_strip_add_to_story_container)
     private val message: View = itemView.findViewById(R.id.message)
     private val messageContainer: View = itemView.findViewById(R.id.button_strip_message_container)
     private val videoCall: View = itemView.findViewById(R.id.start_video)
@@ -60,6 +65,7 @@ object ButtonStripPreference {
       audioContainer.visible = model.state.isAudioAvailable
       muteContainer.visible = model.state.isMuteAvailable
       searchContainer.visible = model.state.isSearchAvailable
+      addToStoryContainer.visible = model.state.isAddToStoryAvailable
 
       if (model.state.isAudioSecure) {
         audioLabel.setText(R.string.ConversationSettingsFragment__audio)
@@ -83,11 +89,17 @@ object ButtonStripPreference {
         }
       }
 
+      listOf(messageContainer, videoContainer, audioContainer, muteContainer, addToStoryContainer, searchContainer).forEach {
+        it.alpha = if (model.enabled) 1.0f else 0.5f
+        ViewUtil.setEnabledRecursive(it, model.enabled)
+      }
+
       message.setOnClickListener { model.onMessageClick() }
       videoCall.setOnClickListener { model.onVideoClick() }
       audioCall.setOnClickListener { model.onAudioClick() }
       mute.setOnClickListener { model.onMuteClick() }
       search.setOnClickListener { model.onSearchClick() }
+      addToStory.setOnClickListener { model.onAddToStoryClick() }
     }
   }
 
@@ -99,5 +111,6 @@ object ButtonStripPreference {
     val isSearchAvailable: Boolean = false,
     val isAudioSecure: Boolean = false,
     val isMuted: Boolean = false,
+    val isAddToStoryAvailable: Boolean = false
   )
 }

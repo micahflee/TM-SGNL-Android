@@ -2,7 +2,7 @@ package org.tm.archive.messages
 
 import com.google.protobuf.InvalidProtocolBufferException
 import org.tm.archive.database.model.databaseprotos.StoryTextPost
-import org.tm.archive.mms.OutgoingMediaMessage
+import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.util.Base64
 import org.whispersystems.signalservice.api.messages.SignalServicePreview
 import org.whispersystems.signalservice.api.messages.SignalServiceTextAttachment
@@ -12,7 +12,7 @@ import kotlin.math.roundToInt
 object StorySendUtil {
   @JvmStatic
   @Throws(InvalidProtocolBufferException::class)
-  fun deserializeBodyToStoryTextAttachment(message: OutgoingMediaMessage, getPreviewsFor: (OutgoingMediaMessage) -> List<SignalServicePreview>): SignalServiceTextAttachment {
+  fun deserializeBodyToStoryTextAttachment(message: OutgoingMessage, getPreviewsFor: (OutgoingMessage) -> List<SignalServicePreview>): SignalServiceTextAttachment {
     val storyTextPost = StoryTextPost.parseFrom(Base64.decode(message.body))
     val preview = if (message.linkPreviews.isEmpty()) {
       Optional.empty()

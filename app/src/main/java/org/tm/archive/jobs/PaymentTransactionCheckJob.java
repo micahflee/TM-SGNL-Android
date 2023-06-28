@@ -1,12 +1,13 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.BackoffUtil;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -52,9 +53,9 @@ public final class PaymentTransactionCheckJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    PaymentDatabase paymentDatabase = SignalDatabase.payments();
+    PaymentTable paymentDatabase = SignalDatabase.payments();
 
-    PaymentDatabase.PaymentTransaction payment = paymentDatabase.getPayment(uuid);
+    PaymentTable.PaymentTransaction payment = paymentDatabase.getPayment(uuid);
 
     if (payment == null) {
       Log.w(TAG, "No payment found for UUID " + uuid);
@@ -134,12 +135,11 @@ public final class PaymentTransactionCheckJob extends BaseJob {
            e instanceof IOException;
   }
 
-  @NonNull
   @Override
-  public Data serialize() {
-    return new Data.Builder()
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder()
                    .putString(KEY_UUID, uuid.toString())
-                   .build();
+                   .serialize();
   }
 
   @NonNull
@@ -158,7 +158,9 @@ public final class PaymentTransactionCheckJob extends BaseJob {
   public static class Factory implements Job.Factory<PaymentTransactionCheckJob> {
 
     @Override
-    public @NonNull PaymentTransactionCheckJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PaymentTransactionCheckJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new PaymentTransactionCheckJob(parameters,
                                             UUID.fromString(data.getString(KEY_UUID)));
     }

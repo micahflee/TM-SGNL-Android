@@ -8,8 +8,8 @@ import androidx.lifecycle.LifecycleOwner
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.DimensionUnit
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.components.ComposeText
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.adapter.mapping.AnyMappingModel
 import org.tm.archive.util.doOnEachLayout
 

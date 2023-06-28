@@ -26,12 +26,11 @@ import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.MessageSender
 import org.tm.archive.stories.Stories
 import org.tm.archive.util.Base64
-import org.tm.archive.util.TextSecurePreferences
 
 /**
  * Open for testing.
  */
-open class StoryViewerPageRepository(context: Context) {
+open class StoryViewerPageRepository(context: Context, private val storyViewStateCache: StoryViewStateCache) {
 
   companion object {
     private val TAG = Log.tag(StoryViewerPageRepository::class.java)
@@ -39,7 +38,7 @@ open class StoryViewerPageRepository(context: Context) {
 
   private val context = context.applicationContext
 
-  fun isReadReceiptsEnabled(): Boolean = TextSecurePreferences.isReadReceiptsEnabled(context)
+  fun isReadReceiptsEnabled(): Boolean = SignalStore.storyValues().viewedReceiptsEnabled
 
   private fun getStoryRecords(recipientId: RecipientId, isOutgoingOnly: Boolean): Observable<List<MessageRecord>> {
     return Observable.create { emitter ->
@@ -47,15 +46,15 @@ open class StoryViewerPageRepository(context: Context) {
 
       fun refresh() {
         val stories = if (recipient.isMyStory) {
-          SignalDatabase.mms.getAllOutgoingStories(false, 100)
+          SignalDatabase.messages.getAllOutgoingStories(false, 100)
         } else if (isOutgoingOnly) {
-          SignalDatabase.mms.getOutgoingStoriesTo(recipientId)
+          SignalDatabase.messages.getOutgoingStoriesTo(recipientId)
         } else {
-          SignalDatabase.mms.getAllStoriesFor(recipientId, 100)
+          SignalDatabase.messages.getAllStoriesFor(recipientId, 100)
         }
 
         val results = stories.filterNot {
-          recipient.isMyStory && it.recipient.isGroup
+          recipient.isMyStory && it.toRecipient.isGroup
         }
 
         emitter.onNext(results)
@@ -74,33 +73,35 @@ open class StoryViewerPageRepository(context: Context) {
     }
   }
 
-  private fun getStoryPostFromRecord(recipientId: RecipientId, record: MessageRecord): Observable<StoryPost> {
+  private fun getStoryPostFromRecord(recipientId: RecipientId, originalRecord: MessageRecord): Observable<StoryPost> {
     return Observable.create { emitter ->
       fun refresh(record: MessageRecord) {
         val recipient = Recipient.resolved(recipientId)
         val story = StoryPost(
           id = record.id,
-          sender = if (record.isOutgoing) Recipient.self() else record.individualRecipient,
+          sender = record.fromRecipient,
           group = if (recipient.isGroup) recipient else null,
-          distributionList = if (record.recipient.isDistributionList) record.recipient else null,
+          distributionList = if (record.toRecipient.isDistributionList) record.toRecipient else null,
           viewCount = record.viewedReceiptCount,
-          replyCount = SignalDatabase.mms.getNumberOfStoryReplies(record.id),
+          replyCount = SignalDatabase.messages.getNumberOfStoryReplies(record.id),
           dateInMilliseconds = record.dateSent,
           content = getContent(record as MmsMessageRecord),
-          conversationMessage = ConversationMessage.ConversationMessageFactory.createWithUnresolvedData(context, record),
+          conversationMessage = ConversationMessage.ConversationMessageFactory.createWithUnresolvedData(context, record, recipient),
           allowsReplies = record.storyType.isStoryWithReplies,
-          hasSelfViewed = if (record.isOutgoing) true else record.viewedReceiptCount > 0
+          hasSelfViewed = storyViewStateCache.getOrPut(record.id, if (record.isOutgoing) true else record.viewedReceiptCount > 0)
         )
 
         emitter.onNext(story)
       }
 
+      val recordId = originalRecord.id
+      val threadId = originalRecord.threadId
       val recipient = Recipient.resolved(recipientId)
 
       val messageUpdateObserver = DatabaseObserver.MessageObserver {
-        if (it.mms && it.id == record.id) {
+        if (it.id == recordId) {
           try {
-            val messageRecord = SignalDatabase.mms.getMessageRecord(record.id)
+            val messageRecord = SignalDatabase.messages.getMessageRecord(recordId)
             if (messageRecord.isRemoteDelete) {
               emitter.onComplete()
             } else {
@@ -114,21 +115,21 @@ open class StoryViewerPageRepository(context: Context) {
 
       val conversationObserver = DatabaseObserver.Observer {
         try {
-          refresh(SignalDatabase.mms.getMessageRecord(record.id))
+          refresh(SignalDatabase.messages.getMessageRecord(recordId))
         } catch (e: NoSuchMessageException) {
           Log.w(TAG, "Message deleted during content refresh.", e)
         }
       }
 
-      ApplicationDependencies.getDatabaseObserver().registerConversationObserver(record.threadId, conversationObserver)
+      ApplicationDependencies.getDatabaseObserver().registerConversationObserver(threadId, conversationObserver)
       ApplicationDependencies.getDatabaseObserver().registerMessageUpdateObserver(messageUpdateObserver)
 
       val messageInsertObserver = DatabaseObserver.MessageObserver {
-        refresh(SignalDatabase.mms.getMessageRecord(record.id))
+        refresh(SignalDatabase.messages.getMessageRecord(recordId))
       }
 
       if (recipient.isGroup) {
-        ApplicationDependencies.getDatabaseObserver().registerMessageInsertObserver(record.threadId, messageInsertObserver)
+        ApplicationDependencies.getDatabaseObserver().registerMessageInsertObserver(threadId, messageInsertObserver)
       }
 
       emitter.setCancellable {
@@ -140,7 +141,7 @@ open class StoryViewerPageRepository(context: Context) {
         }
       }
 
-      refresh(record)
+      refresh(originalRecord)
     }
   }
 
@@ -151,11 +152,13 @@ open class StoryViewerPageRepository(context: Context) {
   fun getStoryPostsFor(recipientId: RecipientId, isOutgoingOnly: Boolean): Observable<List<StoryPost>> {
     return getStoryRecords(recipientId, isOutgoingOnly)
       .switchMap { records ->
-        val posts = records.map { getStoryPostFromRecord(recipientId, it) }
+        val posts: List<Observable<StoryPost>> = records.map {
+          getStoryPostFromRecord(recipientId, it).distinctUntilChanged()
+        }
         if (posts.isEmpty()) {
           Observable.just(emptyList())
         } else {
-          Observable.combineLatest(posts) { it.toList() as List<StoryPost> }
+          Observable.combineLatest(posts) { it.filterIsInstance<StoryPost>() }
         }
       }.observeOn(Schedulers.io())
   }
@@ -168,13 +171,13 @@ open class StoryViewerPageRepository(context: Context) {
 
   fun markViewed(storyPost: StoryPost) {
     if (!storyPost.conversationMessage.messageRecord.isOutgoing) {
-      SignalExecutors.BOUNDED.execute {
-        val markedMessageInfo = SignalDatabase.mms.setIncomingMessageViewed(storyPost.id)
+      SignalExecutors.SERIAL.execute {
+        val markedMessageInfo = SignalDatabase.messages.setIncomingMessageViewed(storyPost.id)
         if (markedMessageInfo != null) {
           ApplicationDependencies.getDatabaseObserver().notifyConversationListListeners()
 
           if (storyPost.sender.isReleaseNotes) {
-            SignalStore.storyValues().userHasSeenOnboardingStory = true
+            SignalStore.storyValues().userHasViewedOnboardingStory = true
             Stories.onStorySettingsChanged(Recipient.self().id)
           } else {
             ApplicationDependencies.getJobManager().add(
@@ -182,7 +185,7 @@ open class StoryViewerPageRepository(context: Context) {
                 markedMessageInfo.threadId,
                 storyPost.sender.id,
                 markedMessageInfo.syncMessageId.timetamp,
-                MessageId(storyPost.id, true)
+                MessageId(storyPost.id)
               )
             )
             MultiDeviceViewedUpdateJob.enqueue(listOf(markedMessageInfo.syncMessageId))

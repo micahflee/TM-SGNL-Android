@@ -1,34 +1,45 @@
 package org.tm.archive.stories.tabs
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import io.reactivex.rxjava3.subjects.PublishSubject
 import io.reactivex.rxjava3.subjects.Subject
 import org.tm.archive.stories.Stories
-import org.tm.archive.util.livedata.Store
+import org.tm.archive.util.rx.RxStore
 
 class ConversationListTabsViewModel(repository: ConversationListTabRepository) : ViewModel() {
-  private val store = Store(ConversationListTabsState())
+  private val store = RxStore(ConversationListTabsState())
 
-  val stateSnapshot: ConversationListTabsState = store.state
-  val state: LiveData<ConversationListTabsState> = Transformations.distinctUntilChanged(store.stateLiveData)
+  val stateSnapshot: ConversationListTabsState
+    get() = store.state
+
+  val state: Flowable<ConversationListTabsState> = store.stateFlowable.distinctUntilChanged().observeOn(AndroidSchedulers.mainThread())
   val disposables = CompositeDisposable()
 
   private val internalTabClickEvents: Subject<ConversationListTab> = PublishSubject.create()
   val tabClickEvents: Observable<ConversationListTab> = internalTabClickEvents.filter { Stories.isFeatureEnabled() }
 
   init {
-    disposables += repository.getNumberOfUnreadConversations().subscribe { unreadChats ->
-      store.update { it.copy(unreadChatsCount = unreadChats) }
+    disposables += performStoreUpdate(repository.getNumberOfUnreadMessages()) { unreadChats, state ->
+      state.copy(unreadMessagesCount = unreadChats)
     }
 
-    disposables += repository.getNumberOfUnseenStories().subscribe { unseenStories ->
-      store.update { it.copy(unreadStoriesCount = unseenStories) }
+    disposables += performStoreUpdate(repository.getNumberOfUnseenCalls()) { unseenCalls, state ->
+      state.copy(unreadCallsCount = unseenCalls)
+    }
+
+    disposables += performStoreUpdate(repository.getNumberOfUnseenStories()) { unseenStories, state ->
+      state.copy(unreadStoriesCount = unseenStories)
+    }
+
+    disposables += performStoreUpdate(repository.getHasFailedOutgoingStories()) { hasFailedStories, state ->
+      state.copy(hasFailedStory = hasFailedStories)
     }
   }
 
@@ -38,32 +49,49 @@ class ConversationListTabsViewModel(repository: ConversationListTabRepository) :
 
   fun onChatsSelected() {
     internalTabClickEvents.onNext(ConversationListTab.CHATS)
-    store.update { it.copy(tab = ConversationListTab.CHATS, prevTab = it.tab) }
+    performStoreUpdate { it.copy(tab = ConversationListTab.CHATS) }
+  }
+
+  fun onCallsSelected() {
+    internalTabClickEvents.onNext(ConversationListTab.CALLS)
+    performStoreUpdate { it.copy(tab = ConversationListTab.CALLS) }
   }
 
   fun onStoriesSelected() {
     internalTabClickEvents.onNext(ConversationListTab.STORIES)
-    store.update { it.copy(tab = ConversationListTab.STORIES, prevTab = it.tab) }
+    performStoreUpdate { it.copy(tab = ConversationListTab.STORIES) }
   }
 
   fun onSearchOpened() {
-    store.update { it.copy(visibilityState = it.visibilityState.copy(isSearchOpen = true)) }
+    performStoreUpdate { it.copy(visibilityState = it.visibilityState.copy(isSearchOpen = true)) }
   }
 
   fun onSearchClosed() {
-    store.update { it.copy(visibilityState = it.visibilityState.copy(isSearchOpen = false)) }
+    performStoreUpdate { it.copy(visibilityState = it.visibilityState.copy(isSearchOpen = false)) }
   }
 
   fun onMultiSelectStarted() {
-    store.update { it.copy(visibilityState = it.visibilityState.copy(isMultiSelectOpen = true)) }
+    performStoreUpdate { it.copy(visibilityState = it.visibilityState.copy(isMultiSelectOpen = true)) }
   }
 
   fun onMultiSelectFinished() {
-    store.update { it.copy(visibilityState = it.visibilityState.copy(isMultiSelectOpen = false)) }
+    performStoreUpdate { it.copy(visibilityState = it.visibilityState.copy(isMultiSelectOpen = false)) }
   }
 
   fun isShowingArchived(isShowingArchived: Boolean) {
-    store.update { it.copy(visibilityState = it.visibilityState.copy(isShowingArchived = isShowingArchived)) }
+    performStoreUpdate { it.copy(visibilityState = it.visibilityState.copy(isShowingArchived = isShowingArchived)) }
+  }
+
+  private fun performStoreUpdate(fn: (ConversationListTabsState) -> ConversationListTabsState) {
+    store.update {
+      fn(it.copy(prevTab = it.tab))
+    }
+  }
+
+  private fun <T : Any> performStoreUpdate(flowable: Flowable<T>, fn: (T, ConversationListTabsState) -> ConversationListTabsState): Disposable {
+    return store.update(flowable) { t, state ->
+      fn(t, state.copy(prevTab = state.tab))
+    }
   }
 
   class Factory(private val repository: ConversationListTabRepository) : ViewModelProvider.Factory {

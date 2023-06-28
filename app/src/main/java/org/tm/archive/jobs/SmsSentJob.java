@@ -4,14 +4,15 @@ import android.app.Activity;
 import android.telephony.SmsManager;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.model.SmsMessageRecord;
+import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.service.SmsDeliveryListener;
@@ -54,13 +55,13 @@ public class SmsSentJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putLong(KEY_MESSAGE_ID, messageId)
-                             .putBoolean(KEY_IS_MULTIPART, isMultipart)
-                             .putString(KEY_ACTION, action)
-                             .putInt(KEY_RESULT, result)
-                             .putInt(KEY_RUN_ATTEMPT, runAttempt)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putLong(KEY_MESSAGE_ID, messageId)
+                                    .putBoolean(KEY_IS_MULTIPART, isMultipart)
+                                    .putString(KEY_ACTION, action)
+                                    .putInt(KEY_RESULT, result)
+                                    .putInt(KEY_RUN_ATTEMPT, runAttempt)
+                                    .serialize();
   }
 
   @Override
@@ -92,13 +93,13 @@ public class SmsSentJob extends BaseJob {
   }
 
   private void handleDeliveredResult(long messageId, int result) {
-    SignalDatabase.sms().markSmsStatus(messageId, result);
+    SignalDatabase.messages().markSmsStatus(messageId, result);
   }
 
   private void handleSentResult(long messageId, int result) {
     try {
-      MessageDatabase  database = SignalDatabase.sms();
-      SmsMessageRecord record   = database.getSmsMessage(messageId);
+      MessageTable  database = SignalDatabase.messages();
+      MessageRecord record   = database.getMessageRecord(messageId);
 
       switch (result) {
         case Activity.RESULT_OK:
@@ -109,15 +110,15 @@ public class SmsSentJob extends BaseJob {
           if (isMultipart) {
             Log.w(TAG, "Service connectivity problem, but not retrying due to multipart");
             database.markAsSentFailed(messageId);
-            ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), ConversationId.forConversation(record.getThreadId()));
+            ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getToRecipient(), ConversationId.forConversation(record.getThreadId()));
           } else {
             Log.w(TAG, "Service connectivity problem, requeuing...");
-            ApplicationDependencies.getJobManager().add(new SmsSendJob(messageId, record.getIndividualRecipient(), runAttempt + 1));
+            ApplicationDependencies.getJobManager().add(new SmsSendJob(messageId, record.getToRecipient(), runAttempt + 1));
           }
           break;
         default:
           database.markAsSentFailed(messageId);
-          ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getRecipient(), ConversationId.forConversation(record.getThreadId()));
+          ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, record.getToRecipient(), ConversationId.forConversation(record.getThreadId()));
       }
     } catch (NoSuchMessageException e) {
       Log.w(TAG, e);
@@ -126,7 +127,9 @@ public class SmsSentJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<SmsSentJob> {
     @Override
-    public @NonNull SmsSentJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull SmsSentJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new SmsSentJob(parameters,
                             data.getLong(KEY_MESSAGE_ID),
                             data.getBooleanOrDefault(KEY_IS_MULTIPART, true),

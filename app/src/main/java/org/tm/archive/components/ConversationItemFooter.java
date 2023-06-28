@@ -28,14 +28,16 @@ import com.airbnb.lottie.model.KeyPath;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.R;
 import org.tm.archive.animation.AnimationCompleteListener;
+import org.tm.archive.conversation.ConversationItemDisplayMode;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.MediaMmsMessageRecord;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.service.ExpiringMessageManager;
 import org.tm.archive.util.DateUtils;
+import org.tm.archive.util.MessageRecordUtil;
 import org.tm.archive.util.Projection;
 import org.tm.archive.util.SignalLocalMetrics;
 import org.tm.archive.util.ViewUtil;
@@ -141,8 +143,8 @@ public class ConversationItemFooter extends ConstraintLayout {
     timerView.stopAnimation();
   }
 
-  public void setMessageRecord(@NonNull MessageRecord messageRecord, @NonNull Locale locale) {
-    presentDate(messageRecord, locale);
+  public void setMessageRecord(@NonNull MessageRecord messageRecord, @NonNull Locale locale, @NonNull ConversationItemDisplayMode displayMode) {
+    presentDate(messageRecord, locale, displayMode);
     presentSimInfo(messageRecord);
     presentTimer(messageRecord);
     presentInsecureIndicator(messageRecord);
@@ -216,7 +218,7 @@ public class ConversationItemFooter extends ConstraintLayout {
     }
   }
 
-  public TextView getDateView() {
+  public View getDateView() {
     return dateView;
   }
 
@@ -298,13 +300,13 @@ public class ConversationItemFooter extends ConstraintLayout {
     return speedToggleHitRect;
   }
 
-  private void presentDate(@NonNull MessageRecord messageRecord, @NonNull Locale locale) {
+  private void presentDate(@NonNull MessageRecord messageRecord, @NonNull Locale locale, @NonNull ConversationItemDisplayMode displayMode) {
     dateView.forceLayout();
     if (messageRecord.isFailed()) {
       int errorMsg;
       if (messageRecord.hasFailedWithNetworkFailures()) {
         errorMsg = R.string.ConversationItem_error_network_not_delivered;
-      } else if (messageRecord.getRecipient().isPushGroup() && messageRecord.isIdentityMismatchFailure()) {
+      } else if (messageRecord.getToRecipient().isPushGroup() && messageRecord.isIdentityMismatchFailure()) {
         errorMsg = R.string.ConversationItem_error_partially_not_delivered;
       } else {
         errorMsg = R.string.ConversationItem_error_not_sent_tap_for_details;
@@ -315,8 +317,14 @@ public class ConversationItemFooter extends ConstraintLayout {
       dateView.setText(R.string.ConversationItem_click_to_approve_unencrypted);
     } else if (messageRecord.isRateLimited()) {
       dateView.setText(R.string.ConversationItem_send_paused);
+    } else if (MessageRecordUtil.isScheduled(messageRecord)) {
+      dateView.setText(DateUtils.getOnlyTimeString(getContext(), locale, ((MediaMmsMessageRecord) messageRecord).getScheduledDate()));
     } else {
-      dateView.setText(DateUtils.getSimpleRelativeTimeSpanString(getContext(), locale, messageRecord.getTimestamp()));
+      String date = DateUtils.getSimpleRelativeTimeSpanString(getContext(), locale, messageRecord.getTimestamp());
+      if (displayMode != ConversationItemDisplayMode.DETAILED && messageRecord instanceof MediaMmsMessageRecord && ((MediaMmsMessageRecord) messageRecord).isEditMessage()) {
+        date = getContext().getString(R.string.ConversationItem_edited_timestamp_footer, date);
+      }
+      dateView.setText(date);
     }
   }
 
@@ -356,17 +364,12 @@ public class ConversationItemFooter extends ConstraintLayout {
         }
       } else if (!messageRecord.isOutgoing() && !messageRecord.isMediaPending()) {
         SignalExecutors.BOUNDED.execute(() -> {
-          ExpiringMessageManager expirationManager = ApplicationDependencies.getExpiringMessageManager();
-          long                   id                = messageRecord.getId();
-          boolean                mms               = messageRecord.isMms();
+          long    id  = messageRecord.getId();
+          boolean mms = messageRecord.isMms();
+          long    now = System.currentTimeMillis();
 
-          if (mms) {
-            SignalDatabase.mms().markExpireStarted(id);
-          } else {
-            SignalDatabase.sms().markExpireStarted(id);
-          }
-
-          expirationManager.scheduleDeletion(id, mms, messageRecord.getExpiresIn());
+          SignalDatabase.messages().markExpireStarted(id, now);
+          ApplicationDependencies.getExpiringMessageManager().scheduleDeletion(id, mms, now, messageRecord.getExpiresIn());
         });
       }
     } else {
@@ -382,7 +385,7 @@ public class ConversationItemFooter extends ConstraintLayout {
     long newMessageId = buildMessageId(messageRecord);
 
     if (previousMessageId == newMessageId && deliveryStatusView.isPending() && !messageRecord.isPending()) {
-      if (messageRecord.getRecipient().isGroup()) {
+      if (messageRecord.getToRecipient().isGroup()) {
         SignalLocalMetrics.GroupMessageSend.onUiUpdated(messageRecord.getId());
       } else {
         SignalLocalMetrics.IndividualMessageSend.onUiUpdated(messageRecord.getId());
@@ -392,7 +395,7 @@ public class ConversationItemFooter extends ConstraintLayout {
     previousMessageId = newMessageId;
 
 
-    if (messageRecord.isFailed() || messageRecord.isPendingInsecureSmsFallback()) {
+    if (messageRecord.isFailed() || messageRecord.isPendingInsecureSmsFallback() || MessageRecordUtil.isScheduled(messageRecord)) {
       deliveryStatusView.setNone();
       return;
     }
@@ -425,7 +428,7 @@ public class ConversationItemFooter extends ConstraintLayout {
       if (mmsMessageRecord.getSlideDeck().getAudioSlide() != null) {
         showAudioDurationViews();
 
-        if (messageRecord.getViewedReceiptCount() > 0 || (messageRecord.isOutgoing() && Objects.equals(messageRecord.getRecipient(), Recipient.self()))) {
+        if (messageRecord.getViewedReceiptCount() > 0 || (messageRecord.isOutgoing() && Objects.equals(messageRecord.getToRecipient(), Recipient.self()))) {
           revealDot.setProgress(1f);
         } else {
           revealDot.setProgress(0f);

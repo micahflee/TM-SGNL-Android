@@ -11,7 +11,6 @@ import org.tm.archive.components.emoji.EmojiPageViewGridAdapter.EmojiHeader
 import org.tm.archive.components.emoji.RecentEmojiPageModel
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.emoji.EmojiCategory
-import org.tm.archive.keyboard.emoji.EmojiKeyboardPageCategoryMappingModel.EmojiCategoryMappingModel
 import org.tm.archive.util.DefaultValueLiveData
 import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.adapter.mapping.MappingModelList
@@ -49,7 +48,7 @@ class EmojiKeyboardPageViewModel(private val repository: EmojiKeyboardPageReposi
       val list = MappingModelList()
       list += models.map { m ->
         if (RecentEmojiPageModel.KEY == m.key) {
-          EmojiKeyboardPageCategoryMappingModel.RecentsMappingModel(m.key == selectedKey)
+          RecentsMappingModel(m.key == selectedKey)
         } else {
           val category = EmojiCategory.forKey(m.key)
           EmojiCategoryMappingModel(category, category.key == selectedKey)

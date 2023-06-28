@@ -3,12 +3,13 @@ package org.tm.archive.jobs;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.AppCapabilities;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.KbsValues;
@@ -16,10 +17,10 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.registration.RegistrationRepository;
 import org.tm.archive.registration.secondary.DeviceNameCipher;
 import org.tm.archive.util.TextSecurePreferences;
-import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.account.AccountAttributes;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccess;
 import org.whispersystems.signalservice.api.push.exceptions.NetworkFailureException;
+import org.whispersystems.util.Base64;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -50,7 +51,7 @@ public class RefreshAttributesJob extends BaseJob {
                            .addConstraint(NetworkConstraint.KEY)
                            .setQueue("RefreshAttributesJob")
                            .setMaxInstancesForFactory(2)
-                           .setLifespan(TimeUnit.DAYS.toDays(30))
+                           .setLifespan(TimeUnit.DAYS.toMillis(30))
                            .setMaxAttempts(Parameters.UNLIMITED)
                            .build(),
          forced);
@@ -62,8 +63,8 @@ public class RefreshAttributesJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putBoolean(KEY_FORCED, forced).build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putBoolean(KEY_FORCED, forced).serialize();
   }
 
   @Override
@@ -84,13 +85,14 @@ public class RefreshAttributesJob extends BaseJob {
     }
 
     int       registrationId              = SignalStore.account().getRegistrationId();
-    boolean   fetchesMessages             = !SignalStore.account().isFcmEnabled();
+    boolean   fetchesMessages             = !SignalStore.account().isFcmEnabled() || SignalStore.internalValues().isWebsocketModeForced();
     byte[]    unidentifiedAccessKey       = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
     boolean   universalUnidentifiedAccess = TextSecurePreferences.isUniversalUnidentifiedAccess(context);
     String    registrationLockV1          = null;
     String    registrationLockV2          = null;
     KbsValues kbsValues                   = SignalStore.kbsValues();
     int       pniRegistrationId           = new RegistrationRepository(ApplicationDependencies.getApplication()).getPniRegistrationId();
+    String    recoveryPassword            = kbsValues.getRecoveryPassword();
 
     if (kbsValues.isV2RegistrationLockEnabled()) {
       registrationLockV2 = kbsValues.getRegistrationLockToken();
@@ -106,32 +108,27 @@ public class RefreshAttributesJob extends BaseJob {
 
     AccountAttributes.Capabilities capabilities = AppCapabilities.getCapabilities(kbsValues.hasPin() && !kbsValues.hasOptedOut());
     Log.i(TAG, "Calling setAccountAttributes() reglockV1? " + !TextUtils.isEmpty(registrationLockV1) + ", reglockV2? " + !TextUtils.isEmpty(registrationLockV2) + ", pin? " + kbsValues.hasPin() +
+               "\n    Recovery password? " + !TextUtils.isEmpty(recoveryPassword) +
                "\n    Phone number discoverable : " + phoneNumberDiscoverable +
                "\n    Device Name : " + (encryptedDeviceName != null) +
-               "\n  Capabilities:" +
-               "\n    Storage? " + capabilities.isStorage() +
-               "\n    GV2? " + capabilities.isGv2() +
-               "\n    GV1 Migration? " + capabilities.isGv1Migration() +
-               "\n    Sender Key? " + capabilities.isSenderKey() +
-               "\n    Announcement Groups? " + capabilities.isAnnouncementGroup() +
-               "\n    Change Number? " + capabilities.isChangeNumber() +
-               "\n    Stories? " + capabilities.isStories() +
-               "\n    Gift Badges? " + capabilities.isGiftBadges() +
-               "\n    PNP? " + capabilities.isPnp() +
-               "\n    UUID? " + capabilities.isUuid());
+               "\n  Capabilities: " + capabilities);
 
-    SignalServiceAccountManager signalAccountManager = ApplicationDependencies.getSignalServiceAccountManager();
-    signalAccountManager.setAccountAttributes(null,
-                                              registrationId,
-                                              fetchesMessages,
-                                              registrationLockV1,
-                                              registrationLockV2,
-                                              unidentifiedAccessKey,
-                                              universalUnidentifiedAccess,
-                                              capabilities,
-                                              phoneNumberDiscoverable,
-                                              encryptedDeviceName,
-                                              pniRegistrationId);
+    AccountAttributes accountAttributes = new AccountAttributes(
+        null,
+        registrationId,
+        fetchesMessages,
+        registrationLockV1,
+        registrationLockV2,
+        unidentifiedAccessKey,
+        universalUnidentifiedAccess,
+        capabilities,
+        phoneNumberDiscoverable,
+        (encryptedDeviceName == null) ? null : Base64.encodeBytes(encryptedDeviceName),
+        pniRegistrationId,
+        recoveryPassword
+    );
+
+    ApplicationDependencies.getSignalServiceAccountManager().setAccountAttributes(accountAttributes);
 
     hasRefreshedThisAppCycle = true;
   }
@@ -148,7 +145,8 @@ public class RefreshAttributesJob extends BaseJob {
 
   public static class Factory implements Job.Factory<RefreshAttributesJob> {
     @Override
-    public @NonNull RefreshAttributesJob create(@NonNull Parameters parameters, @NonNull org.tm.archive.jobmanager.Data data) {
+    public @NonNull RefreshAttributesJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
       return new RefreshAttributesJob(parameters, data.getBooleanOrDefault(KEY_FORCED, true));
     }
   }

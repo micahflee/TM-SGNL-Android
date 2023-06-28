@@ -3,7 +3,6 @@ package org.tm.archive.jobs
 import org.signal.core.util.logging.Log
 import org.tm.archive.crypto.UnidentifiedAccessUtil
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobmanager.Data
 import org.tm.archive.jobmanager.Job
 import org.tm.archive.jobmanager.impl.NetworkConstraint
 import org.tm.archive.net.NotPushRegisteredException
@@ -38,7 +37,7 @@ class MultiDeviceSubscriptionSyncRequestJob private constructor(parameters: Para
     }
   }
 
-  override fun serialize(): Data = Data.EMPTY
+  override fun serialize(): ByteArray? = null
 
   override fun getFactoryKey(): String = KEY
 
@@ -69,7 +68,7 @@ class MultiDeviceSubscriptionSyncRequestJob private constructor(parameters: Para
   }
 
   class Factory : Job.Factory<MultiDeviceSubscriptionSyncRequestJob> {
-    override fun create(parameters: Parameters, data: Data): MultiDeviceSubscriptionSyncRequestJob {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): MultiDeviceSubscriptionSyncRequestJob {
       return MultiDeviceSubscriptionSyncRequestJob(parameters)
     }
   }

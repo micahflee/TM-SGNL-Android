@@ -52,7 +52,7 @@ public final class SignalProxyUtil {
   public static void enableProxy(@NonNull SignalProxy proxy) {
     SignalStore.proxy().enableProxy(proxy);
     Conscrypt.setUseEngineSocketByDefault(true);
-    ApplicationDependencies.resetNetworkConnectionsAfterProxyChange();
+    ApplicationDependencies.resetAllNetworkConnections();
     startListeningToWebsocket();
   }
 
@@ -63,8 +63,13 @@ public final class SignalProxyUtil {
   public static void disableProxy() {
     SignalStore.proxy().disableProxy();
     Conscrypt.setUseEngineSocketByDefault(false);
-    ApplicationDependencies.resetNetworkConnectionsAfterProxyChange();
+    ApplicationDependencies.resetAllNetworkConnections();
     startListeningToWebsocket();
+  }
+
+  public static void disableAndClearProxy(){
+    disableProxy();
+    SignalStore.proxy().setProxy(null);
   }
 
   /**
@@ -153,7 +158,7 @@ public final class SignalProxyUtil {
   private static boolean testWebsocketConnectionUnregistered(long timeout) {
     CountDownLatch              latch          = new CountDownLatch(1);
     AtomicBoolean               success        = new AtomicBoolean(false);
-    SignalServiceAccountManager accountManager = AccountManagerFactory.createUnauthenticated(ApplicationDependencies.getApplication(), "", SignalServiceAddress.DEFAULT_DEVICE_ID, "");
+    SignalServiceAccountManager accountManager = AccountManagerFactory.getInstance().createUnauthenticated(ApplicationDependencies.getApplication(), "", SignalServiceAddress.DEFAULT_DEVICE_ID, "");
 
     SignalExecutors.UNBOUNDED.execute(() -> {
       try {

@@ -1,6 +1,5 @@
 package org.tm.archive.payments.create;
 
-import android.app.AlertDialog;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -29,6 +28,7 @@ import org.tm.archive.payments.FiatMoneyUtil;
 import org.tm.archive.payments.MoneyView;
 import org.tm.archive.payments.preferences.RecipientHasNotEnabledPaymentsDialog;
 import org.tm.archive.util.CommunicationActions;
+import org.tm.archive.util.PlayStoreUtil;
 import org.tm.archive.util.SpanUtil;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.navigation.SafeNavigation;
@@ -144,6 +144,31 @@ public class CreatePaymentFragment extends LoggingFragment {
     viewModel.getNote().observe(getViewLifecycleOwner(), this::updateNote);
     viewModel.getSpendableBalance().observe(getViewLifecycleOwner(), this::updateBalance);
     viewModel.getCanSendPayment().observe(getViewLifecycleOwner(), this::updatePayAmountButtons);
+    viewModel.getEnclaveFailure().observe(getViewLifecycleOwner(), failure -> {
+      if (failure) {
+        new MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.PaymentsHomeFragment__update_required))
+            .setMessage(getString(R.string.PaymentsHomeFragment__an_update_is_required))
+            .setPositiveButton(R.string.PaymentsHomeFragment__update_now, (dialog, which) -> { PlayStoreUtil.openPlayStoreOrOurApkDownloadPage(requireContext()); })
+            .setNegativeButton(R.string.PaymentsHomeFragment__cancel, (dialog, which) -> {})
+            .setCancelable(false)
+            .show();
+      }
+    });
+  }
+
+  @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    constraintLayout = null;
+    addNote          = null;
+    balance          = null;
+    amount           = null;
+    exchange         = null;
+    request          = null;
+    toggle           = null;
+    note             = null;
+    pay              = null;
   }
 
   private void goBack(View v) {
@@ -154,7 +179,7 @@ public class CreatePaymentFragment extends LoggingFragment {
 
   private void initializeInfoIcon() {
     spacer   = Objects.requireNonNull(AppCompatResources.getDrawable(requireContext(), R.drawable.payment_info_pad));
-    infoIcon = Objects.requireNonNull(AppCompatResources.getDrawable(requireContext(), R.drawable.ic_update_info_16));
+    infoIcon = Objects.requireNonNull(AppCompatResources.getDrawable(requireContext(), R.drawable.symbol_info_compact_16));
 
     DrawableCompat.setTint(infoIcon, exchange.getCurrentTextColor());
 

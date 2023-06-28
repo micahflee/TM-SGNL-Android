@@ -7,9 +7,9 @@ import android.widget.TextView
 import androidx.navigation.fragment.findNavController
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.LoggingFragment
 import org.tm.archive.R
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.navigation.safeNavigate
 
 /**

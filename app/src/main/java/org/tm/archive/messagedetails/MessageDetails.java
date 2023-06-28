@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
 
-final class MessageDetails {
+public final class MessageDetails {
   private static final Comparator<RecipientDeliveryStatus> HAS_DISPLAY_NAME     = (r1, r2) -> Boolean.compare(r2.getRecipient().hasAUserSetDisplayName(ApplicationDependencies.getApplication()), r1.getRecipient().hasAUserSetDisplayName(ApplicationDependencies.getApplication()));
   private static final Comparator<RecipientDeliveryStatus> ALPHABETICAL         = (r1, r2) -> r1.getRecipient().getDisplayName(ApplicationDependencies.getApplication()).compareToIgnoreCase(r2.getRecipient().getDisplayName(ApplicationDependencies.getApplication()));
   private static final Comparator<RecipientDeliveryStatus> RECIPIENT_COMPARATOR = ComparatorCompat.chain(HAS_DISPLAY_NAME).thenComparing(ALPHABETICAL);
@@ -38,7 +38,7 @@ final class MessageDetails {
     viewed    = new TreeSet<>(RECIPIENT_COMPARATOR);
     skipped   = new TreeSet<>(RECIPIENT_COMPARATOR);
 
-    if (conversationMessage.getMessageRecord().getRecipient().isSelf()) {
+    if (conversationMessage.getMessageRecord().getFromRecipient().isSelf() && conversationMessage.getMessageRecord().getToRecipient().isSelf()) {
       read.addAll(recipients);
     } else if (conversationMessage.getMessageRecord().isOutgoing()) {
       for (RecipientDeliveryStatus status : recipients) {
@@ -71,33 +71,33 @@ final class MessageDetails {
     }
   }
 
-  @NonNull ConversationMessage getConversationMessage() {
+  public @NonNull ConversationMessage getConversationMessage() {
     return conversationMessage;
   }
 
-  @NonNull Collection<RecipientDeliveryStatus> getPending() {
+  public @NonNull Collection<RecipientDeliveryStatus> getPending() {
     return pending;
   }
 
-  @NonNull Collection<RecipientDeliveryStatus> getSent() {
+  public @NonNull Collection<RecipientDeliveryStatus> getSent() {
     return sent;
   }
 
-  @NonNull Collection<RecipientDeliveryStatus> getSkipped() {return  skipped;}
+  public @NonNull Collection<RecipientDeliveryStatus> getSkipped() {return  skipped;}
 
-  @NonNull Collection<RecipientDeliveryStatus> getDelivered() {
+  public @NonNull Collection<RecipientDeliveryStatus> getDelivered() {
     return delivered;
   }
 
-  @NonNull Collection<RecipientDeliveryStatus> getRead() {
+  public @NonNull Collection<RecipientDeliveryStatus> getRead() {
     return read;
   }
 
-  @NonNull Collection<RecipientDeliveryStatus> getNotSent() {
+  public @NonNull Collection<RecipientDeliveryStatus> getNotSent() {
     return notSent;
   }
 
-  @NonNull Collection<RecipientDeliveryStatus> getViewed() {
+  public @NonNull Collection<RecipientDeliveryStatus> getViewed() {
     return viewed;
   }
 }

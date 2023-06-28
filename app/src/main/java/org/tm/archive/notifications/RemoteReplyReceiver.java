@@ -26,19 +26,17 @@ import android.os.Bundle;
 import androidx.core.app.RemoteInput;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.MessageDatabase.MarkedMessageInfo;
+import org.tm.archive.database.MessageTable.MarkedMessageInfo;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.ParentStoryId;
 import org.tm.archive.database.model.StoryType;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.mms.OutgoingMediaMessage;
+import org.tm.archive.mms.OutgoingMessage;
 import org.tm.archive.notifications.v2.DefaultMessageNotifier;
 import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.MessageSender;
-import org.tm.archive.sms.OutgoingEncryptedMessage;
-import org.tm.archive.sms.OutgoingTextMessage;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -84,35 +82,39 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
 
         switch (replyMethod) {
           case GroupMessage: {
-            OutgoingMediaMessage reply = new OutgoingMediaMessage(recipient,
-                                                                  responseText.toString(),
-                                                                  new LinkedList<>(),
-                                                                  System.currentTimeMillis(),
-                                                                  subscriptionId,
-                                                                  expiresIn,
-                                                                  false,
-                                                                  0,
-                                                                  StoryType.NONE,
-                                                                  parentStoryId,
-                                                                  false,
-                                                                  null,
-                                                                  Collections.emptyList(),
-                                                                  Collections.emptyList(),
-                                                                  Collections.emptyList(),
-                                                                  Collections.emptySet(),
-                                                                  Collections.emptySet(),
-                                                                  null);
-            threadId = MessageSender.send(context, reply, -1, false, null, null);
+            OutgoingMessage reply = new OutgoingMessage(recipient,
+                                                        responseText.toString(),
+                                                        new LinkedList<>(),
+                                                        System.currentTimeMillis(),
+                                                        subscriptionId,
+                                                        expiresIn,
+                                                        false,
+                                                        0,
+                                                        StoryType.NONE,
+                                                        parentStoryId,
+                                                        false,
+                                                        null,
+                                                        Collections.emptyList(),
+                                                        Collections.emptyList(),
+                                                        Collections.emptyList(),
+                                                        Collections.emptySet(),
+                                                        Collections.emptySet(),
+                                                        null,
+                                                        recipient.isPushGroup(),
+                                                        null,
+                                                        -1,
+                                                        0);
+            threadId = MessageSender.send(context, reply, -1, MessageSender.SendType.SIGNAL, null, null);
             break;
           }
           case SecureMessage: {
-            OutgoingEncryptedMessage reply = new OutgoingEncryptedMessage(recipient, responseText.toString(), expiresIn);
-            threadId = MessageSender.send(context, reply, -1, false, null, null);
+            OutgoingMessage reply = OutgoingMessage.text(recipient, responseText.toString(), expiresIn, System.currentTimeMillis(), null);
+            threadId = MessageSender.send(context, reply, -1, MessageSender.SendType.SIGNAL, null, null);
             break;
           }
           case UnsecuredSmsMessage: {
-            OutgoingTextMessage reply = new OutgoingTextMessage(recipient, responseText.toString(), expiresIn, subscriptionId);
-            threadId = MessageSender.send(context, reply, -1, true, null, null);
+            OutgoingMessage reply = OutgoingMessage.sms(recipient, responseText.toString(), subscriptionId);
+            threadId = MessageSender.send(context, reply, -1, MessageSender.SendType.SMS, null, null);
             break;
           }
           default:

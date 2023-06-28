@@ -1,17 +1,18 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
 import org.tm.archive.groups.GroupNotAMemberException;
 import org.tm.archive.groups.v2.processing.GroupsV2StateProcessor;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.recipients.Recipient;
@@ -57,10 +58,10 @@ final class RequestGroupV2InfoWorkerJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_GROUP_ID, groupId.toString())
-                             .putInt(KEY_TO_REVISION, toRevision)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_GROUP_ID, groupId.toString())
+                                    .putInt(KEY_TO_REVISION, toRevision)
+                                    .serialize();
   }
 
   @Override
@@ -76,7 +77,7 @@ final class RequestGroupV2InfoWorkerJob extends BaseJob {
       Log.i(TAG, "Updating group to revision " + toRevision);
     }
 
-    Optional<GroupDatabase.GroupRecord> group = SignalDatabase.groups().getGroup(groupId);
+    Optional<GroupRecord> group = SignalDatabase.groups().getGroup(groupId);
 
     if (!group.isPresent()) {
       Log.w(TAG, "Group not found");
@@ -105,7 +106,9 @@ final class RequestGroupV2InfoWorkerJob extends BaseJob {
   public static final class Factory implements Job.Factory<RequestGroupV2InfoWorkerJob> {
 
     @Override
-    public @NonNull RequestGroupV2InfoWorkerJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull RequestGroupV2InfoWorkerJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new RequestGroupV2InfoWorkerJob(parameters,
                                              GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)).requireV2(),
                                              data.getInt(KEY_TO_REVISION));

@@ -7,7 +7,6 @@ import org.tm.archive.avatar.Avatar
 import org.tm.archive.avatar.AvatarRenderer
 import org.tm.archive.avatar.Avatars
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.jobmanager.Data
 import org.tm.archive.jobmanager.Job
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.profiles.AvatarHelper
@@ -39,7 +38,7 @@ class CreateReleaseChannelJob private constructor(parameters: Parameters) : Base
     }
   }
 
-  override fun serialize(): Data = Data.EMPTY
+  override fun serialize(): ByteArray? = null
 
   override fun getFactoryKey(): String = KEY
 
@@ -102,7 +101,7 @@ class CreateReleaseChannelJob private constructor(parameters: Parameters) : Base
   override fun onShouldRetry(e: Exception): Boolean = e is RetryLaterException
 
   class Factory : Job.Factory<CreateReleaseChannelJob> {
-    override fun create(parameters: Parameters, data: Data): CreateReleaseChannelJob {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): CreateReleaseChannelJob {
       return CreateReleaseChannelJob(parameters)
     }
   }

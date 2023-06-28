@@ -15,6 +15,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import org.tm.archive.R;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ThemeUtil;
+import org.tm.archive.util.WindowUtil;
 
 public final class GroupsLearnMoreBottomSheetDialogFragment extends BottomSheetDialogFragment {
 
@@ -38,6 +39,12 @@ public final class GroupsLearnMoreBottomSheetDialogFragment extends BottomSheetD
     view.findViewById(R.id.lbs_ok_button).setOnClickListener(v -> dismiss());
 
     return view;
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   @Override

@@ -9,7 +9,7 @@ import androidx.lifecycle.Observer
 import org.tm.archive.R
 import org.tm.archive.components.AudioView
 import org.tm.archive.components.voice.VoiceNotePlaybackState
-import org.tm.archive.database.DraftDatabase
+import org.tm.archive.database.DraftTable
 import org.tm.archive.mms.AudioSlide
 
 class VoiceNoteDraftView @JvmOverloads constructor(
@@ -20,7 +20,7 @@ class VoiceNoteDraftView @JvmOverloads constructor(
 
   var listener: Listener? = null
 
-  var draft: DraftDatabase.Draft? = null
+  var draft: DraftTable.Draft? = null
     private set
 
   private lateinit var audioView: AudioView
@@ -49,7 +49,7 @@ class VoiceNoteDraftView @JvmOverloads constructor(
     this.draft = null
   }
 
-  fun setDraft(draft: DraftDatabase.Draft) {
+  fun setDraft(draft: DraftTable.Draft) {
     audioView.setAudio(
       AudioSlide.createFromVoiceNoteDraft(context, draft),
       AudioViewCallbacksAdapter(),

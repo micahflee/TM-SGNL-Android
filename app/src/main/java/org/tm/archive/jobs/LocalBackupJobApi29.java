@@ -5,7 +5,7 @@ import android.annotation.SuppressLint;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
+import androidx.annotation.Nullable;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.documentfile.provider.DocumentFileHelper;
 
@@ -23,7 +23,6 @@ import org.tm.archive.backup.BackupVerifier;
 import org.tm.archive.backup.FullBackupExporter;
 import org.tm.archive.crypto.AttachmentSecretProvider;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
@@ -68,8 +67,8 @@ public final class LocalBackupJobApi29 extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -93,14 +92,23 @@ public final class LocalBackupJobApi29 extends BaseJob {
     }
 
     ProgressUpdater updater = new ProgressUpdater(context.getString(R.string.LocalBackupJob_verifying_signal_backup));
-    try (NotificationController notification = GenericForegroundService.startForegroundTask(context,
-                                                                                            context.getString(R.string.LocalBackupJob_creating_signal_backup),
-                                                                                            NotificationChannels.BACKUPS,
-                                                                                            R.drawable.ic_signal_backup))
-    {
+
+    NotificationController notification = null;
+    try {
+      notification = GenericForegroundService.startForegroundTask(context,
+                                                                  context.getString(R.string.LocalBackupJob_creating_signal_backup),
+                                                                  NotificationChannels.getInstance().BACKUPS,
+                                                                  R.drawable.ic_signal_backup);
+    } catch (UnableToStartException e) {
+      Log.w(TAG, "Unable to start foreground backup service, continuing without service");
+    }
+
+    try {
       updater.setNotification(notification);
       EventBus.getDefault().register(updater);
-      notification.setIndeterminateProgress();
+      if (notification != null) {
+        notification.setIndeterminateProgress();
+      }
 
       String       backupPassword  = BackupPassphrase.get(context);
       DocumentFile backupDirectory = DocumentFile.fromTreeUri(context, backupDirectoryUri);
@@ -172,24 +180,36 @@ public final class LocalBackupJobApi29 extends BaseJob {
 
       BackupUtil.deleteOldBackups();
     } finally {
+      if (notification != null) {
+        notification.close();
+      }
       EventBus.getDefault().unregister(updater);
       updater.setNotification(null);
     }
   }
 
-  private boolean verifyBackup(String backupPassword, DocumentFile temporaryFile, BackupEvent finishedEvent) {
+  private boolean verifyBackup(String backupPassword, DocumentFile temporaryFile, BackupEvent finishedEvent) throws FullBackupExporter.BackupCanceledException {
     Boolean valid    = null;
     int     attempts = 0;
 
-    while (attempts < MAX_STORAGE_ATTEMPTS && valid == null) {
+    while (attempts < MAX_STORAGE_ATTEMPTS && valid == null && !isCanceled()) {
       ThreadUtil.sleep(WAIT_FOR_SCOPED_STORAGE[attempts]);
 
       try (InputStream cipherStream = context.getContentResolver().openInputStream(temporaryFile.getUri())) {
-        valid = BackupVerifier.verifyFile(cipherStream, backupPassword, finishedEvent.getCount());
-      } catch (IOException e) {
+        try {
+          valid = BackupVerifier.verifyFile(cipherStream, backupPassword, finishedEvent.getCount(), this::isCanceled);
+        } catch (IOException e) {
+          Log.w(TAG, "Unable to verify backup", e);
+          valid = false;
+        }
+      } catch (SecurityException | IOException e) {
         attempts++;
-        Log.w(TAG, "Unable to find backup file, attempt: " + attempts + "/" + MAX_STORAGE_ATTEMPTS);
+        Log.w(TAG, "Unable to find backup file, attempt: " + attempts + "/" + MAX_STORAGE_ATTEMPTS, e);
       }
+    }
+
+    if (isCanceled()) {
+      throw new FullBackupExporter.BackupCanceledException();
     }
 
     return valid != null ? valid : false;
@@ -263,7 +283,7 @@ public final class LocalBackupJobApi29 extends BaseJob {
       }
     }
 
-    public void setNotification(NotificationController notification) {
+    public void setNotification(@Nullable NotificationController notification) {
       this.notification = notification;
     }
   }
@@ -271,7 +291,7 @@ public final class LocalBackupJobApi29 extends BaseJob {
   public static class Factory implements Job.Factory<LocalBackupJobApi29> {
     @Override
     public @NonNull
-    LocalBackupJobApi29 create(@NonNull Parameters parameters, @NonNull Data data) {
+    LocalBackupJobApi29 create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new LocalBackupJobApi29(parameters);
     }
   }

@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023 Signal Messenger, LLC
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 package org.tm.archive.conversation;
 
 import android.content.Context;
@@ -5,12 +10,17 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.recyclerview.widget.LinearLayoutManager;
+
+import com.annimon.stream.Stream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.database.ThreadTable;
+import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.database.model.ReactionRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.notifications.MarkReadReceiver;
 import org.tm.archive.notifications.v2.ConversationId;
@@ -18,6 +28,7 @@ import org.tm.archive.util.Debouncer;
 import org.tm.archive.util.concurrent.SerialMonoLifoExecutor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 
 public class MarkReadHelper {
@@ -47,8 +58,8 @@ public class MarkReadHelper {
 
     debouncer.publish(() -> {
       EXECUTOR.execute(() -> {
-        ThreadDatabase                          threadDatabase = SignalDatabase.threads();
-        List<MessageDatabase.MarkedMessageInfo> infos          = threadDatabase.setReadSince(conversationId, false, timestamp);
+        ThreadTable                          threadTable = SignalDatabase.threads();
+        List<MessageTable.MarkedMessageInfo> infos       = threadTable.setReadSince(conversationId, false, timestamp);
 
         Log.d(TAG, "Marking " + infos.size() + " messages as read.");
 
@@ -56,5 +67,43 @@ public class MarkReadHelper {
         MarkReadReceiver.process(context, infos);
       });
     });
+  }
+
+  /**
+   * Given the adapter and manager, figure out the timestamp to mark read up to.
+   *
+   * @param conversationAdapter   The conversation thread's adapter
+   * @param layoutManager         The conversation thread's layout manager
+   * @return A Present(Long) if there's a timestamp to proceed with, or Empty if this request should be ignored.
+   */
+  @SuppressWarnings("resource")
+  public static @NonNull Optional<Long> getLatestTimestamp(@NonNull ConversationAdapterBridge conversationAdapter,
+                                                           @NonNull LinearLayoutManager layoutManager)
+  {
+    if (conversationAdapter.hasNoConversationMessages()) {
+      return Optional.empty();
+    }
+
+    int position = layoutManager.findFirstVisibleItemPosition();
+    if (position == -1 || position == layoutManager.getItemCount() - 1) {
+      return Optional.empty();
+    }
+
+    ConversationMessage item = conversationAdapter.getConversationMessage(position);
+    if (item == null) {
+      item = conversationAdapter.getConversationMessage(position + 1);
+    }
+
+    if (item != null) {
+      MessageRecord record = item.getMessageRecord();
+      long latestReactionReceived = Stream.of(record.getReactions())
+                                          .map(ReactionRecord::getDateReceived)
+                                          .max(Long::compareTo)
+                                          .orElse(0L);
+
+      return Optional.of(Math.max(record.getDateReceived(), latestReactionReceived));
+    }
+
+    return Optional.empty();
   }
 }

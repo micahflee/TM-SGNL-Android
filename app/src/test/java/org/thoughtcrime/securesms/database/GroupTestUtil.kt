@@ -13,6 +13,7 @@ import org.signal.storageservice.protos.groups.local.DecryptedRequestingMember
 import org.signal.storageservice.protos.groups.local.DecryptedString
 import org.signal.storageservice.protos.groups.local.DecryptedTimer
 import org.signal.storageservice.protos.groups.local.EnabledState
+import org.tm.archive.database.model.GroupRecord
 import org.tm.archive.groups.GroupId
 import org.tm.archive.recipients.RecipientId
 import org.whispersystems.signalservice.api.groupsv2.DecryptedGroupHistoryEntry
@@ -99,7 +100,7 @@ class GroupChangeData(private val revision: Int, private val groupOperations: Gr
 class GroupStateTestData(private val masterKey: GroupMasterKey, private val groupOperations: GroupsV2Operations.GroupOperations? = null) {
 
   var localState: DecryptedGroup? = null
-  var groupRecord: Optional<GroupDatabase.GroupRecord> = Optional.empty()
+  var groupRecord: Optional<GroupRecord> = Optional.empty()
   var serverState: DecryptedGroup? = null
   var changeSet: ChangeSet? = null
   var groupChange: GroupChange? = null
@@ -172,9 +173,9 @@ fun groupRecord(
   avatarDigest: ByteArray = ByteArray(0),
   mms: Boolean = false,
   distributionId: DistributionId? = null
-): Optional<GroupDatabase.GroupRecord> {
+): Optional<GroupRecord> {
   return Optional.of(
-    GroupDatabase.GroupRecord(
+    GroupRecord(
       id,
       recipientId,
       decryptedGroup.title,
@@ -190,7 +191,8 @@ fun groupRecord(
       masterKey.serialize(),
       decryptedGroup.revision,
       decryptedGroup.toByteArray(),
-      distributionId
+      distributionId,
+      System.currentTimeMillis()
     )
   )
 }
@@ -207,7 +209,6 @@ fun decryptedGroup(
   inviteLinkPassword: ByteArray = ByteArray(0),
   disappearingMessageTimer: DecryptedTimer = DecryptedTimer.getDefaultInstance()
 ): DecryptedGroup {
-
   val builder = DecryptedGroup.newBuilder()
     .setAccessControl(accessControl)
     .setAvatar(avatar)

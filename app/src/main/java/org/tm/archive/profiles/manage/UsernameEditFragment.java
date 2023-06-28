@@ -36,7 +36,7 @@ import org.tm.archive.contactshare.SimpleTextWatcher;
 import org.tm.archive.databinding.UsernameEditFragmentBinding;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.FragmentResultContract;
-import org.tm.archive.util.LifecycleDisposable;
+import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.tm.archive.util.UsernameUtil;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.views.CircularProgressMaterialButton;
@@ -201,6 +201,10 @@ public class UsernameEditFragment extends LoggingFragment {
 
         break;
     }
+
+    CharSequence error = usernameInputWrapper.getError();
+    binding.usernameError.setVisibility(error != null ? View.VISIBLE : View.GONE);
+    binding.usernameError.setText(usernameInputWrapper.getError());
   }
 
   private void presentButtonState(@NonNull UsernameEditViewModel.ButtonState buttonState) {

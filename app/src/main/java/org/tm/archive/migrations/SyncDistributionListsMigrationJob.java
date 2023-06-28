@@ -1,10 +1,10 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
@@ -77,7 +77,7 @@ public final class SyncDistributionListsMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<SyncDistributionListsMigrationJob> {
     @Override
-    public @NonNull SyncDistributionListsMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull SyncDistributionListsMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new SyncDistributionListsMigrationJob(parameters);
     }
   }

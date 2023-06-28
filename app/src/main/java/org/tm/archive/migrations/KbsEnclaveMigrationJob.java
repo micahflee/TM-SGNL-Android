@@ -1,9 +1,9 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.KbsEnclaveMigrationWorkerJob;
 
@@ -46,7 +46,7 @@ public class KbsEnclaveMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<KbsEnclaveMigrationJob> {
     @Override
-    public @NonNull KbsEnclaveMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull KbsEnclaveMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new KbsEnclaveMigrationJob(parameters);
     }
   }

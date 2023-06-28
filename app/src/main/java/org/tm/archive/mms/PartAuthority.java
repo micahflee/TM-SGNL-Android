@@ -12,7 +12,7 @@ import org.tm.archive.BuildConfig;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.avatar.AvatarPickerStorage;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.emoji.EmojiFiles;
 import org.tm.archive.providers.BlobProvider;
@@ -153,7 +153,7 @@ public class PartAuthority {
     }
   }
 
-  public static @Nullable AttachmentDatabase.TransformProperties getAttachmentTransformProperties(@NonNull Uri uri) {
+  public static @Nullable AttachmentTable.TransformProperties getAttachmentTransformProperties(@NonNull Uri uri) {
     int match = uriMatcher.match(uri);
     switch (match) {
       case PART_ROW:

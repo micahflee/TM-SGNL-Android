@@ -2,9 +2,8 @@ package org.signal.qr
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Size
 import android.widget.FrameLayout
-import androidx.annotation.RequiresApi
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -22,17 +21,26 @@ import java.util.concurrent.Executors
  * API21+ version of QR scanning view. Uses camerax APIs.
  */
 @SuppressLint("ViewConstructor")
-@RequiresApi(21)
 internal class ScannerView21 constructor(
   context: Context,
   private val listener: ScanListener
 ) : FrameLayout(context), ScannerView {
 
+  private var lifecyleOwner: LifecycleOwner? = null
   private val analyzerExecutor = Executors.newSingleThreadExecutor()
   private var cameraProvider: ProcessCameraProvider? = null
+  private var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
   private var camera: Camera? = null
   private var previewView: PreviewView
   private val qrProcessor = QrProcessor()
+
+  private val lifecycleObserver: DefaultLifecycleObserver = object : DefaultLifecycleObserver {
+    override fun onDestroy(owner: LifecycleOwner) {
+      cameraProvider = null
+      camera = null
+      analyzerExecutor.shutdown()
+    }
+  }
 
   init {
     previewView = PreviewView(context)
@@ -40,7 +48,20 @@ internal class ScannerView21 constructor(
     addView(previewView)
   }
 
+  override fun toggleCamera() {
+    cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+      CameraSelector.DEFAULT_FRONT_CAMERA
+    } else {
+      CameraSelector.DEFAULT_BACK_CAMERA
+    }
+
+    lifecyleOwner?.let { start(it) }
+  }
+
   override fun start(lifecycleOwner: LifecycleOwner) {
+    this.lifecyleOwner?.lifecycle?.removeObserver(lifecycleObserver)
+    this.lifecyleOwner = lifecycleOwner
+
     previewView.post {
       Log.i(TAG, "Starting")
       ProcessCameraProvider.getInstance(context).apply {
@@ -54,13 +75,7 @@ internal class ScannerView21 constructor(
       }
     }
 
-    lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
-      override fun onDestroy(owner: LifecycleOwner) {
-        cameraProvider = null
-        camera = null
-        analyzerExecutor.shutdown()
-      }
-    })
+    lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
   }
 
   private fun onCameraProvider(lifecycle: LifecycleOwner, cameraProvider: ProcessCameraProvider?) {
@@ -71,10 +86,14 @@ internal class ScannerView21 constructor(
 
     Log.i(TAG, "Initializing use cases")
 
-    val preview = Preview.Builder().build()
+    val resolution = Size(480, 640)
+
+    val preview = Preview.Builder()
+      .setTargetResolution(resolution)
+      .build()
 
     val imageAnalysis = ImageAnalysis.Builder()
-      .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+      .setTargetResolution(resolution)
       .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
       .build()
 
@@ -88,9 +107,12 @@ internal class ScannerView21 constructor(
     }
 
     cameraProvider.unbindAll()
-    camera = cameraProvider.bindToLifecycle(lifecycle, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis)
+    camera = cameraProvider.bindToLifecycle(lifecycle, cameraSelector, preview, imageAnalysis)
 
     preview.setSurfaceProvider(previewView.surfaceProvider)
+
+    Log.d(TAG, "Preview:  ${preview.resolutionInfo}")
+    Log.d(TAG, "Analysis: ${imageAnalysis.resolutionInfo}")
 
     this.cameraProvider = cameraProvider
   }

@@ -10,9 +10,10 @@ import androidx.lifecycle.MutableLiveData;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.conversation.ConversationMessage.ConversationMessageFactory;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.GroupReceiptDatabase;
-import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.database.DatabaseObserver;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.GroupReceiptTable;
+import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.database.documents.NetworkFailure;
@@ -20,16 +21,23 @@ import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
+import org.whispersystems.signalservice.api.push.DistributionId;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-final class MessageDetailsRepository {
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+
+public final class MessageDetailsRepository {
 
   private final Context context = ApplicationDependencies.getApplication();
 
-  @NonNull LiveData<MessageRecord> getMessageRecord(String type, Long messageId) {
-    return new MessageRecordLiveData(new MessageId(messageId, type.equals(MmsSmsDatabase.MMS_TRANSPORT)));
+  @NonNull LiveData<MessageRecord> getMessageRecord(Long messageId) {
+    return new MessageRecordLiveData(new MessageId(messageId));
   }
 
   @NonNull LiveData<MessageDetails> getMessageDetails(@Nullable MessageRecord messageRecord) {
@@ -44,23 +52,43 @@ final class MessageDetailsRepository {
     return liveData;
   }
 
+  public @NonNull Observable<MessageDetails> getMessageDetails(@NonNull MessageId messageId) {
+    return Observable.<MessageDetails>create(emitter -> {
+      DatabaseObserver.MessageObserver messageObserver = mId -> {
+        try {
+          MessageRecord  messageRecord  = SignalDatabase.messages().getMessageRecord(messageId.getId());
+          MessageDetails messageDetails = getRecipientDeliveryStatusesInternal(messageRecord);
+
+          emitter.onNext(messageDetails);
+        } catch (NoSuchMessageException e) {
+          emitter.onError(e);
+        }
+      };
+
+      ApplicationDependencies.getDatabaseObserver().registerMessageUpdateObserver(messageObserver);
+      emitter.setCancellable(() -> ApplicationDependencies.getDatabaseObserver().unregisterObserver(messageObserver));
+
+      messageObserver.onMessageChanged(messageId);
+    }).observeOn(Schedulers.io());
+  }
+
   @WorkerThread
   private @NonNull MessageDetails getRecipientDeliveryStatusesInternal(@NonNull MessageRecord messageRecord) {
     List<RecipientDeliveryStatus> recipients = new LinkedList<>();
 
-    if (!messageRecord.getRecipient().isGroup()) {
+    if (!messageRecord.getToRecipient().isGroup() && !messageRecord.getToRecipient().isDistributionList()) {
       recipients.add(new RecipientDeliveryStatus(messageRecord,
-                                                 messageRecord.getRecipient(),
+                                                 messageRecord.isOutgoing() ? messageRecord.getToRecipient() : messageRecord.getFromRecipient(),
                                                  getStatusFor(messageRecord),
                                                  messageRecord.isUnidentified(),
                                                  messageRecord.getReceiptTimestamp(),
-                                                 getNetworkFailure(messageRecord, messageRecord.getRecipient()),
-                                                 getKeyMismatchFailure(messageRecord, messageRecord.getRecipient())));
+                                                 getNetworkFailure(messageRecord, messageRecord.getToRecipient()),
+                                                 getKeyMismatchFailure(messageRecord, messageRecord.getToRecipient())));
     } else {
-      List<GroupReceiptDatabase.GroupReceiptInfo> receiptInfoList = SignalDatabase.groupReceipts().getGroupReceiptInfo(messageRecord.getId());
+      List<GroupReceiptTable.GroupReceiptInfo> receiptInfoList = SignalDatabase.groupReceipts().getGroupReceiptInfo(messageRecord.getId());
 
-      if (receiptInfoList.isEmpty()) {
-        List<Recipient> group = SignalDatabase.groups().getGroupMembers(messageRecord.getRecipient().requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+      if (receiptInfoList.isEmpty() && messageRecord.getToRecipient().isGroup()) {
+        List<Recipient> group = SignalDatabase.groups().getGroupMembers(messageRecord.getToRecipient().requireGroupId(), GroupTable.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
 
         for (Recipient recipient : group) {
           recipients.add(new RecipientDeliveryStatus(messageRecord,
@@ -71,8 +99,22 @@ final class MessageDetailsRepository {
                                                      getNetworkFailure(messageRecord, recipient),
                                                      getKeyMismatchFailure(messageRecord, recipient)));
         }
+      } else if (receiptInfoList.isEmpty() && messageRecord.getToRecipient().isDistributionList()) {
+        DistributionId   distributionId = SignalDatabase.distributionLists().getDistributionId(messageRecord.getToRecipient().requireDistributionListId());
+        Set<RecipientId> recipientIds   = SignalDatabase.storySends().getRecipientsForDistributionId(messageRecord.getId(), Objects.requireNonNull(distributionId));
+        List<Recipient>  resolved       = Recipient.resolvedList(recipientIds);
+
+        for (Recipient recipient : resolved) {
+          recipients.add(new RecipientDeliveryStatus(messageRecord,
+                                                     recipient,
+                                                     RecipientDeliveryStatus.Status.UNKNOWN,
+                                                     false,
+                                                     messageRecord.getReceiptTimestamp(),
+                                                     getNetworkFailure(messageRecord, recipient),
+                                                     getKeyMismatchFailure(messageRecord, recipient)));
+        }
       } else {
-        for (GroupReceiptDatabase.GroupReceiptInfo info : receiptInfoList) {
+        for (GroupReceiptTable.GroupReceiptInfo info : receiptInfoList) {
           Recipient           recipient        = Recipient.resolved(info.getRecipientId());
           NetworkFailure      failure          = getNetworkFailure(messageRecord, recipient);
           IdentityKeyMismatch mismatch         = getKeyMismatchFailure(messageRecord, recipient);
@@ -89,7 +131,8 @@ final class MessageDetailsRepository {
       }
     }
 
-    return new MessageDetails(ConversationMessageFactory.createWithUnresolvedData(context, messageRecord), recipients);
+    Recipient threadRecipient = Objects.requireNonNull(SignalDatabase.threads().getRecipientForThreadId(messageRecord.getThreadId()));
+    return new MessageDetails(ConversationMessageFactory.createWithUnresolvedData(context, messageRecord, threadRecipient), recipients);
   }
 
   private @Nullable NetworkFailure getNetworkFailure(MessageRecord messageRecord, Recipient recipient) {
@@ -125,14 +168,14 @@ final class MessageDetailsRepository {
   }
 
   private @NonNull RecipientDeliveryStatus.Status getStatusFor(int groupStatus, boolean pending, boolean failed) {
-    if      (groupStatus == GroupReceiptDatabase.STATUS_READ)                    return RecipientDeliveryStatus.Status.READ;
-    else if (groupStatus == GroupReceiptDatabase.STATUS_DELIVERED)               return RecipientDeliveryStatus.Status.DELIVERED;
-    else if (groupStatus == GroupReceiptDatabase.STATUS_UNDELIVERED && failed)   return RecipientDeliveryStatus.Status.UNKNOWN;
-    else if (groupStatus == GroupReceiptDatabase.STATUS_UNDELIVERED && !pending) return RecipientDeliveryStatus.Status.SENT;
-    else if (groupStatus == GroupReceiptDatabase.STATUS_UNDELIVERED)             return RecipientDeliveryStatus.Status.PENDING;
-    else if (groupStatus == GroupReceiptDatabase.STATUS_UNKNOWN)                 return RecipientDeliveryStatus.Status.UNKNOWN;
-    else if (groupStatus == GroupReceiptDatabase.STATUS_VIEWED)                  return RecipientDeliveryStatus.Status.VIEWED;
-    else if (groupStatus == GroupReceiptDatabase.STATUS_SKIPPED)                 return RecipientDeliveryStatus.Status.SKIPPED;
+    if      (groupStatus == GroupReceiptTable.STATUS_READ)                    return RecipientDeliveryStatus.Status.READ;
+    else if (groupStatus == GroupReceiptTable.STATUS_DELIVERED)               return RecipientDeliveryStatus.Status.DELIVERED;
+    else if (groupStatus == GroupReceiptTable.STATUS_UNDELIVERED && failed)   return RecipientDeliveryStatus.Status.UNKNOWN;
+    else if (groupStatus == GroupReceiptTable.STATUS_UNDELIVERED && !pending) return RecipientDeliveryStatus.Status.SENT;
+    else if (groupStatus == GroupReceiptTable.STATUS_UNDELIVERED)             return RecipientDeliveryStatus.Status.PENDING;
+    else if (groupStatus == GroupReceiptTable.STATUS_UNKNOWN)                 return RecipientDeliveryStatus.Status.UNKNOWN;
+    else if (groupStatus == GroupReceiptTable.STATUS_VIEWED)                  return RecipientDeliveryStatus.Status.VIEWED;
+    else if (groupStatus == GroupReceiptTable.STATUS_SKIPPED)                 return RecipientDeliveryStatus.Status.SKIPPED;
     throw new AssertionError();
   }
 }

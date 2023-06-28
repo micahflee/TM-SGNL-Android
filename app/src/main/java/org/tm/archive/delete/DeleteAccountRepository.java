@@ -8,8 +8,9 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.GroupTable;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupManager;
 import org.tm.archive.keyvalue.SignalStore;
@@ -77,14 +78,16 @@ class DeleteAccountRepository {
       Log.i(TAG, "deleteAccount: attempting to leave groups...");
 
       int groupsLeft = 0;
-      try (GroupDatabase.Reader groups = SignalDatabase.groups().getGroups()) {
-        GroupDatabase.GroupRecord groupRecord = groups.getNext();
+      try (GroupTable.Reader groups = SignalDatabase.groups().getGroups()) {
+        GroupRecord groupRecord = groups.getNext();
         onDeleteAccountEvent.accept(new DeleteAccountEvent.LeaveGroupsProgress(groups.getCount(), 0));
         Log.i(TAG, "deleteAccount: found " + groups.getCount() + " groups to leave.");
 
         while (groupRecord != null) {
           if (groupRecord.getId().isPush() && groupRecord.isActive()) {
-            GroupManager.leaveGroup(ApplicationDependencies.getApplication(), groupRecord.getId().requirePush());
+            if (!groupRecord.isV1Group()) {
+              GroupManager.leaveGroup(ApplicationDependencies.getApplication(), groupRecord.getId().requirePush());
+            }
             onDeleteAccountEvent.accept(new DeleteAccountEvent.LeaveGroupsProgress(groups.getCount(), ++groupsLeft));
           }
 

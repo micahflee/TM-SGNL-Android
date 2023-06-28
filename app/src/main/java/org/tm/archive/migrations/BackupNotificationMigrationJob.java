@@ -3,10 +3,10 @@ package org.tm.archive.migrations;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.backup.BackupFileIOError;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.BackupUtil;
@@ -61,7 +61,7 @@ public final class BackupNotificationMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<BackupNotificationMigrationJob> {
     @Override
-    public @NonNull BackupNotificationMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull BackupNotificationMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new BackupNotificationMigrationJob(parameters);
     }
   }

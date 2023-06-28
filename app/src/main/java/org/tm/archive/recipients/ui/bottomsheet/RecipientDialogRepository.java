@@ -9,8 +9,9 @@ import androidx.core.util.Consumer;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.contacts.sync.ContactDiscovery;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.GroupTable;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeException;
@@ -106,11 +107,11 @@ final class RecipientDialogRepository {
   void getGroupMembership(@NonNull Consumer<List<RecipientId>> onComplete) {
     SimpleTask.run(SignalExecutors.UNBOUNDED,
                    () -> {
-                     GroupDatabase                   groupDatabase   = SignalDatabase.groups();
-                     List<GroupDatabase.GroupRecord> groupRecords    = groupDatabase.getPushGroupsContainingMember(recipientId);
-                     ArrayList<RecipientId>          groupRecipients = new ArrayList<>(groupRecords.size());
+                     GroupTable             groupDatabase   = SignalDatabase.groups();
+                     List<GroupRecord>      groupRecords    = groupDatabase.getPushGroupsContainingMember(recipientId);
+                     ArrayList<RecipientId> groupRecipients = new ArrayList<>(groupRecords.size());
 
-                     for (GroupDatabase.GroupRecord groupRecord : groupRecords) {
+                     for (GroupRecord groupRecord : groupRecords) {
                        groupRecipients.add(groupRecord.getRecipientId());
                      }
 

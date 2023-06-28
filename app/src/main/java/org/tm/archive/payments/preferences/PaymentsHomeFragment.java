@@ -26,6 +26,8 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.PaymentPreferencesDirections;
 import org.tm.archive.R;
+import org.tm.archive.components.reminder.EnclaveFailureReminder;
+import org.tm.archive.components.reminder.ReminderView;
 import org.tm.archive.components.settings.app.AppSettingsActivity;
 import org.tm.archive.help.HelpFragment;
 import org.tm.archive.keyvalue.SignalStore;
@@ -36,9 +38,13 @@ import org.tm.archive.payments.backup.RecoveryPhraseStates;
 import org.tm.archive.payments.backup.confirm.PaymentsRecoveryPhraseConfirmFragment;
 import org.tm.archive.payments.preferences.model.InfoCard;
 import org.tm.archive.payments.preferences.model.PaymentItem;
+import org.tm.archive.registration.RegistrationNavigationActivity;
 import org.tm.archive.util.CommunicationActions;
+import org.tm.archive.util.PlayStoreUtil;
 import org.tm.archive.util.SpanUtil;
+import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.navigation.SafeNavigation;
+import org.tm.archive.util.views.Stub;
 
 import java.util.concurrent.TimeUnit;
 
@@ -49,8 +55,6 @@ public class PaymentsHomeFragment extends LoggingFragment {
   private static final String TAG = Log.tag(PaymentsHomeFragment.class);
 
   private PaymentsHomeViewModel viewModel;
-
-  private final OnBackPressed onBackPressed = new OnBackPressed();
 
   public PaymentsHomeFragment() {
     super(R.layout.payments_home_fragment);
@@ -95,6 +99,7 @@ public class PaymentsHomeFragment extends LoggingFragment {
     View                sendMoney        = view.findViewById(R.id.button_end_frame);
     View                refresh          = view.findViewById(R.id.payments_home_fragment_header_refresh);
     LottieAnimationView refreshAnimation = view.findViewById(R.id.payments_home_fragment_header_refresh_animation);
+    Stub<ReminderView>  reminderView     = ViewUtil.findStubById(view, R.id.reminder);
 
     toolbar.setNavigationOnClickListener(v -> {
       viewModel.markAllPaymentsSeen();
@@ -104,14 +109,18 @@ public class PaymentsHomeFragment extends LoggingFragment {
     toolbar.setOnMenuItemClickListener(this::onMenuItemSelected);
 
     addMoney.setOnClickListener(v -> {
-      if (SignalStore.paymentsValues().getPaymentsAvailability().isSendAllowed()) {
+      if (viewModel.isEnclaveFailurePresent()) {
+        showUpdateIsRequiredDialog();
+      } else if (SignalStore.paymentsValues().getPaymentsAvailability().isSendAllowed()) {
         SafeNavigation.safeNavigate(Navigation.findNavController(v), PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentsAddMoney());
       } else {
         showPaymentsDisabledDialog();
       }
     });
     sendMoney.setOnClickListener(v -> {
-      if (SignalStore.paymentsValues().getPaymentsAvailability().isSendAllowed()) {
+      if (viewModel.isEnclaveFailurePresent()) {
+        showUpdateIsRequiredDialog();
+      } else if (SignalStore.paymentsValues().getPaymentsAvailability().isSendAllowed()) {
         SafeNavigation.safeNavigate(Navigation.findNavController(v), PaymentsHomeFragmentDirections.actionPaymentsHomeToPaymentRecipientSelectionFragment());
       } else {
         showPaymentsDisabledDialog();
@@ -222,6 +231,9 @@ public class PaymentsHomeFragment extends LoggingFragment {
           });
           break;
         case ACTIVATED:
+          if (!SignalStore.paymentsValues().isPaymentLockEnabled()) {
+            SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_paymentsHome_to_securitySetup);
+          }
           return;
         default:
           throw new IllegalStateException("Unsupported event type: " + paymentStateEvent.name());
@@ -243,7 +255,23 @@ public class PaymentsHomeFragment extends LoggingFragment {
       }
     });
 
-    requireActivity().getOnBackPressedDispatcher().addCallback(onBackPressed);
+    viewModel.getEnclaveFailure().observe(getViewLifecycleOwner(), failure -> {
+      if (failure) {
+        showUpdateIsRequiredDialog();
+        reminderView.get().showReminder(new EnclaveFailureReminder(requireContext()));
+        reminderView.get().setOnActionClickListener(actionId -> {
+          if (actionId == R.id.reminder_action_update_now) {
+            PlayStoreUtil.openPlayStoreOrOurApkDownloadPage(requireContext());
+          } else if (actionId == R.id.reminder_action_re_register) {
+            startActivity(RegistrationNavigationActivity.newIntentForReRegistration(requireContext()));
+          }
+        });
+      } else {
+        reminderView.get().requestDismiss();
+      }
+    });
+
+    requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressed());
   }
 
   @Override
@@ -252,15 +280,23 @@ public class PaymentsHomeFragment extends LoggingFragment {
     viewModel.checkPaymentActivationState();
   }
 
-  @Override
-  public void onDestroyView() {
-    super.onDestroyView();
-    onBackPressed.setEnabled(false);
+  private void showUpdateIsRequiredDialog() {
+    new MaterialAlertDialogBuilder(requireContext())
+        .setTitle(getString(R.string.PaymentsHomeFragment__update_required))
+        .setMessage(getString(R.string.PaymentsHomeFragment__an_update_is_required))
+        .setPositiveButton(R.string.PaymentsHomeFragment__update_now, (dialog, which) -> { PlayStoreUtil.openPlayStoreOrOurApkDownloadPage(requireContext()); })
+        .setNegativeButton(R.string.PaymentsHomeFragment__cancel, (dialog, which) -> {})
+        .setCancelable(false)
+        .show();
   }
 
   private boolean onMenuItemSelected(@NonNull MenuItem item) {
     if (item.getItemId() == R.id.payments_home_fragment_menu_transfer_to_exchange) {
-      SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_paymentsHome_to_paymentsTransfer);
+      if (viewModel.isEnclaveFailurePresent()) {
+        showUpdateIsRequiredDialog();
+      } else {
+        SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_paymentsHome_to_paymentsTransfer);
+      }
       return true;
     } else if (item.getItemId() == R.id.payments_home_fragment_menu_set_currency) {
       SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), R.id.action_paymentsHome_to_setCurrency);

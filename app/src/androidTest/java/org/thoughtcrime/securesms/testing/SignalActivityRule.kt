@@ -11,22 +11,24 @@ import androidx.test.platform.app.InstrumentationRegistry
 import okhttp3.mockwebserver.MockResponse
 import org.junit.rules.ExternalResource
 import org.signal.libsignal.protocol.IdentityKey
+import org.signal.libsignal.protocol.IdentityKeyPair
 import org.signal.libsignal.protocol.SignalProtocolAddress
+import org.tm.archive.SignalInstrumentationApplicationContext
 import org.tm.archive.crypto.IdentityKeyUtil
 import org.tm.archive.crypto.MasterSecretUtil
 import org.tm.archive.crypto.ProfileKeyUtil
-import org.tm.archive.database.IdentityDatabase
+import org.tm.archive.database.IdentityTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.dependencies.InstrumentationApplicationDependencyProvider
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.net.DeviceTransferBlockingInterceptor
 import org.tm.archive.profiles.ProfileName
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.registration.RegistrationData
 import org.tm.archive.registration.RegistrationRepository
 import org.tm.archive.registration.RegistrationUtil
+import org.tm.archive.registration.VerifyResponse
 import org.tm.archive.util.Util
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile
 import org.whispersystems.signalservice.api.push.ACI
@@ -53,18 +55,23 @@ class SignalActivityRule(private val othersCount: Int = 4) : ExternalResource() 
     private set
   lateinit var others: List<RecipientId>
     private set
+  lateinit var othersKeys: List<IdentityKeyPair>
+
+  val inMemoryLogger: InMemoryLogger
+    get() = (application as SignalInstrumentationApplicationContext).inMemoryLogger
 
   override fun before() {
     context = InstrumentationRegistry.getInstrumentation().targetContext
     self = setupSelf()
-    others = setupOthers()
+
+    val setupOthers = setupOthers()
+    others = setupOthers.first
+    othersKeys = setupOthers.second
 
     InstrumentationApplicationDependencyProvider.clearHandlers()
   }
 
   private fun setupSelf(): Recipient {
-    DeviceTransferBlockingInterceptor.getInstance().blockNetwork()
-
     PreferenceManager.getDefaultSharedPreferences(application).edit().putBoolean("pref_prompted_push_registration", true).commit()
     val masterSecret = MasterSecretUtil.generateMasterSecret(application, MasterSecretUtil.UNENCRYPTED_PASSPHRASE)
     MasterSecretUtil.generateAsymmetricMasterSecret(application, masterSecret)
@@ -74,7 +81,7 @@ class SignalActivityRule(private val othersCount: Int = 4) : ExternalResource() 
     val registrationRepository = RegistrationRepository(application)
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(Put("/v2/keys") { MockResponse().success() })
-    val response: ServiceResponse<VerifyAccountResponse> = registrationRepository.registerAccountWithoutRegistrationLock(
+    val response: ServiceResponse<VerifyResponse> = registrationRepository.registerAccount(
       RegistrationData(
         code = "123123",
         e164 = "+15555550101",
@@ -82,22 +89,27 @@ class SignalActivityRule(private val othersCount: Int = 4) : ExternalResource() 
         registrationId = registrationRepository.registrationId,
         profileKey = registrationRepository.getProfileKey("+15555550101"),
         fcmToken = null,
-        pniRegistrationId = registrationRepository.pniRegistrationId
+        pniRegistrationId = registrationRepository.pniRegistrationId,
+        recoveryPassword = "asdfasdfasdfasdf"
       ),
-      VerifyAccountResponse(UUID.randomUUID().toString(), UUID.randomUUID().toString(), false)
+      VerifyResponse(VerifyAccountResponse(UUID.randomUUID().toString(), UUID.randomUUID().toString(), false), null, null),
+      false
     ).blockingGet()
 
     ServiceResponseProcessor.DefaultProcessor(response).resultOrThrow
 
     SignalStore.kbsValues().optOut()
-    RegistrationUtil.maybeMarkRegistrationComplete(application)
+    RegistrationUtil.maybeMarkRegistrationComplete()
     SignalDatabase.recipients.setProfileName(Recipient.self().id, ProfileName.fromParts("Tester", "McTesterson"))
+
+    SignalStore.settings().isMessageNotificationsEnabled = false
 
     return Recipient.self()
   }
 
-  private fun setupOthers(): List<RecipientId> {
+  private fun setupOthers(): Pair<List<RecipientId>, List<IdentityKeyPair>> {
     val others = mutableListOf<RecipientId>()
+    val othersKeys = mutableListOf<IdentityKeyPair>()
 
     if (othersCount !in 0 until 1000) {
       throw IllegalArgumentException("$othersCount must be between 0 and 1000")
@@ -108,13 +120,16 @@ class SignalActivityRule(private val othersCount: Int = 4) : ExternalResource() 
       val recipientId = RecipientId.from(SignalServiceAddress(aci, "+15555551%03d".format(i)))
       SignalDatabase.recipients.setProfileName(recipientId, ProfileName.fromParts("Buddy", "#$i"))
       SignalDatabase.recipients.setProfileKeyIfAbsent(recipientId, ProfileKeyUtil.createNew())
-      SignalDatabase.recipients.setCapabilities(recipientId, SignalServiceProfile.Capabilities(true, true, true, true, true, true, true, true))
+      SignalDatabase.recipients.setCapabilities(recipientId, SignalServiceProfile.Capabilities(true, true, true, true, true, true, true, true, true))
       SignalDatabase.recipients.setProfileSharing(recipientId, true)
-      ApplicationDependencies.getProtocolStore().aci().saveIdentity(SignalProtocolAddress(aci.toString(), 0), IdentityKeyUtil.generateIdentityKeyPair().publicKey)
+      SignalDatabase.recipients.markRegistered(recipientId, aci)
+      val otherIdentity = IdentityKeyUtil.generateIdentityKeyPair()
+      ApplicationDependencies.getProtocolStore().aci().saveIdentity(SignalProtocolAddress(aci.toString(), 0), otherIdentity.publicKey)
       others += recipientId
+      othersKeys += otherIdentity
     }
 
-    return others
+    return others to othersKeys
   }
 
   inline fun <reified T : Activity> launchActivity(initIntent: Intent.() -> Unit = {}): ActivityScenario<T> {
@@ -129,7 +144,7 @@ class SignalActivityRule(private val othersCount: Int = 4) : ExternalResource() 
     return ApplicationDependencies.getProtocolStore().aci().identities().getIdentity(SignalProtocolAddress(recipient.requireServiceId().toString(), 0))
   }
 
-  fun setVerified(recipient: Recipient, status: IdentityDatabase.VerifiedStatus) {
-    ApplicationDependencies.getProtocolStore().aci().identities().setVerified(recipient.id, getIdentity(recipient), IdentityDatabase.VerifiedStatus.VERIFIED)
+  fun setVerified(recipient: Recipient, status: IdentityTable.VerifiedStatus) {
+    ApplicationDependencies.getProtocolStore().aci().identities().setVerified(recipient.id, getIdentity(recipient), IdentityTable.VerifiedStatus.VERIFIED)
   }
 }

@@ -1,5 +1,6 @@
 package org.tm.archive.util;
 
+import android.text.Annotation;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -10,7 +11,9 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.StringUtil;
 import org.signal.libsignal.protocol.util.Pair;
+import org.tm.archive.components.spoiler.SpoilerAnnotation;
 
 import java.security.InvalidParameterException;
 import java.util.Collections;
@@ -25,7 +28,7 @@ public class SearchUtil {
 
   public static Spannable getHighlightedSpan(@NonNull Locale locale,
                                              @NonNull StyleFactory styleFactory,
-                                             @Nullable String text,
+                                             @Nullable CharSequence text,
                                              @Nullable String highlight,
                                              int matchMode)
   {
@@ -33,9 +36,9 @@ public class SearchUtil {
       return new SpannableString("");
     }
 
-    text = text.replaceAll("\n", " ");
+    text = StringUtil.replace(text, '\n', " ");
 
-    return getHighlightedSpan(locale, styleFactory, new SpannableString(text), highlight, matchMode);
+    return getHighlightedSpan(locale, styleFactory, SpannableString.valueOf(text), highlight, matchMode);
   }
 
   public static Spannable getHighlightedSpan(@NonNull Locale locale,
@@ -68,7 +71,13 @@ public class SearchUtil {
     }
 
     for (Pair<Integer, Integer> range : ranges) {
-      spanned.setSpan(styleFactory.create(), range.first(), range.second(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+      CharacterStyle[] styles = styleFactory.createStyles();
+      for (CharacterStyle style : styles) {
+        List<Annotation> annotations = SpoilerAnnotation.getSpoilerAnnotations(spanned, range.first(), range.second());
+        if (annotations.isEmpty()) {
+          spanned.setSpan(style, range.first(), range.second(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+      }
     }
 
     return spanned;
@@ -148,6 +157,6 @@ public class SearchUtil {
   }
 
   public interface StyleFactory {
-    CharacterStyle create();
+    CharacterStyle[] createStyles();
   }
 }

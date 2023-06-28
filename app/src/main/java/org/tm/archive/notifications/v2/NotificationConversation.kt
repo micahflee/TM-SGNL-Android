@@ -74,7 +74,7 @@ data class NotificationConversation(
     val stringBuilder = SpannableStringBuilder()
 
     if (privacy.isDisplayContact && recipient.isGroup) {
-      stringBuilder.append(Util.getBoldedString(mostRecentNotification.individualRecipient.getDisplayName(context) + ": "))
+      stringBuilder.append(Util.getBoldedString(mostRecentNotification.authorRecipient.getDisplayName(context) + ": "))
     }
 
     return if (privacy.isDisplayMessage) {
@@ -99,11 +99,11 @@ data class NotificationConversation(
     return notificationItems.any { it.isNewNotification }
   }
 
-  fun getChannelId(context: Context): String {
+  fun getChannelId(): String {
     return if (isOnlyContactJoinedEvent) {
-      NotificationChannels.JOIN_EVENTS
+      NotificationChannels.getInstance().JOIN_EVENTS
     } else {
-      recipient.notificationChannel ?: NotificationChannels.getMessagesChannel(context)
+      recipient.notificationChannel ?: NotificationChannels.getInstance().messagesChannel
     }
   }
 

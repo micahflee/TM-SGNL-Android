@@ -12,7 +12,7 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.subjects.PublishSubject
 import org.signal.core.util.logging.Log
 import org.tm.archive.badges.BadgeRepository
-import org.tm.archive.components.settings.app.subscription.SubscriptionsRepository
+import org.tm.archive.components.settings.app.subscription.MonthlyDonationRepository
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.InternetConnectionObserver
@@ -23,7 +23,7 @@ private val TAG = Log.tag(BadgesOverviewViewModel::class.java)
 
 class BadgesOverviewViewModel(
   private val badgeRepository: BadgeRepository,
-  private val subscriptionsRepository: SubscriptionsRepository
+  private val subscriptionsRepository: MonthlyDonationRepository
 ) : ViewModel() {
   private val store = Store(BadgesOverviewState())
   private val eventSubject = PublishSubject.create<BadgesOverviewEvent>()
@@ -89,7 +89,7 @@ class BadgesOverviewViewModel(
 
   class Factory(
     private val badgeRepository: BadgeRepository,
-    private val subscriptionsRepository: SubscriptionsRepository
+    private val subscriptionsRepository: MonthlyDonationRepository
   ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return requireNotNull(modelClass.cast(BadgesOverviewViewModel(badgeRepository, subscriptionsRepository)))

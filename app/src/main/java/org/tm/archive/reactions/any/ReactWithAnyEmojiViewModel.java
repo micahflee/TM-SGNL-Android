@@ -13,7 +13,8 @@ import org.tm.archive.components.emoji.RecentEmojiPageModel;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.emoji.EmojiCategory;
-import org.tm.archive.keyboard.emoji.EmojiKeyboardPageCategoryMappingModel;
+import org.tm.archive.keyboard.emoji.EmojiCategoryMappingModel;
+import org.tm.archive.keyboard.emoji.RecentsMappingModel;
 import org.tm.archive.keyboard.emoji.search.EmojiSearchRepository;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.reactions.ReactionsRepository;
@@ -53,7 +54,7 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
     this.searchResults         = BehaviorSubject.createDefault(new EmojiSearchResult());
     this.selectedKey           = BehaviorSubject.createDefault(getStartingKey());
 
-    Observable<List<ReactWithAnyEmojiPage>> emojiPages = new ReactionsRepository().getReactions(new MessageId(messageId, isMms))
+    Observable<List<ReactWithAnyEmojiPage>> emojiPages = new ReactionsRepository().getReactions(new MessageId(messageId))
                                                                                   .map(repository::getEmojiPageModels);
 
     Observable<MappingModelList> emojiList = emojiPages.map(pages -> {
@@ -72,12 +73,12 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
 
     this.categories = Observable.combineLatest(emojiPages, this.selectedKey.distinctUntilChanged(), (pages, selectedKey) -> {
       MappingModelList list = new MappingModelList();
-      list.add(new EmojiKeyboardPageCategoryMappingModel.RecentsMappingModel(RecentEmojiPageModel.KEY.equals(selectedKey)));
+      list.add(new RecentsMappingModel(RecentEmojiPageModel.KEY.equals(selectedKey)));
       list.addAll(pages.stream()
                        .filter(p -> !RecentEmojiPageModel.KEY.equals(p.getKey()))
                        .map(p -> {
                          EmojiCategory category = EmojiCategory.forKey(p.getKey());
-                         return new EmojiKeyboardPageCategoryMappingModel.EmojiCategoryMappingModel(category, category.getKey().equals(selectedKey));
+                         return new EmojiCategoryMappingModel(category, category.getKey().equals(selectedKey));
                        })
                        .collect(Collectors.toList()));
       return list;
@@ -110,7 +111,7 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
   void onEmojiSelected(@NonNull String emoji) {
     if (messageId > 0) {
       SignalStore.emojiValues().setPreferredVariation(emoji);
-      repository.addEmojiToMessage(emoji, new MessageId(messageId, isMms));
+      repository.addEmojiToMessage(emoji, new MessageId(messageId));
     }
   }
 

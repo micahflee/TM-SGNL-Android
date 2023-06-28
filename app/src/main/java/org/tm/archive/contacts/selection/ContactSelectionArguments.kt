@@ -2,12 +2,12 @@ package org.tm.archive.contacts.selection
 
 import android.os.Bundle
 import org.tm.archive.R
-import org.tm.archive.contacts.ContactsCursorLoader
+import org.tm.archive.contacts.ContactSelectionDisplayMode
 import org.tm.archive.groups.SelectionLimits
 import org.tm.archive.recipients.RecipientId
 
 data class ContactSelectionArguments(
-  val displayMode: Int = ContactsCursorLoader.DisplayMode.FLAG_ALL,
+  val displayMode: Int = ContactSelectionDisplayMode.FLAG_ALL,
   val isRefreshable: Boolean = true,
   val displayRecents: Boolean = false,
   val selectionLimits: SelectionLimits? = null,

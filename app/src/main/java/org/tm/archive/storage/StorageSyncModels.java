@@ -6,20 +6,17 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.IdentityDatabase;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.IdentityTable;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.DistributionListId;
-import org.tm.archive.database.model.DistributionListPrivacyMode;
 import org.tm.archive.database.model.DistributionListRecord;
 import org.tm.archive.database.model.RecipientRecord;
-import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.keyvalue.PhoneNumberPrivacyValues;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.subscription.Subscriber;
-import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.storage.SignalAccountRecord;
@@ -34,7 +31,6 @@ import org.whispersystems.signalservice.internal.storage.protos.AccountRecord;
 import org.whispersystems.signalservice.internal.storage.protos.ContactRecord.IdentityState;
 import org.whispersystems.signalservice.internal.storage.protos.GroupV2Record;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,9 +84,9 @@ public final class StorageSyncModels {
 
   public static List<SignalAccountRecord.PinnedConversation> localToRemotePinnedConversations(@NonNull List<RecipientRecord> settings) {
     return Stream.of(settings)
-                 .filter(s -> s.getGroupType() == RecipientDatabase.GroupType.SIGNAL_V1 ||
-                              s.getGroupType() == RecipientDatabase.GroupType.SIGNAL_V2 ||
-                              s.getRegistered() == RecipientDatabase.RegisteredState.REGISTERED)
+                 .filter(s -> s.getGroupType() == RecipientTable.GroupType.SIGNAL_V1 ||
+                              s.getGroupType() == RecipientTable.GroupType.SIGNAL_V2 ||
+                              s.getRegistered() == RecipientTable.RegisteredState.REGISTERED)
                  .map(StorageSyncModels::localToRemotePinnedConversation)
                  .toList();
   }
@@ -116,8 +112,11 @@ public final class StorageSyncModels {
                                   .setE164(recipient.getE164())
                                   .setPni(recipient.getPni())
                                   .setProfileKey(recipient.getProfileKey())
-                                  .setGivenName(recipient.getProfileName().getGivenName())
-                                  .setFamilyName(recipient.getProfileName().getFamilyName())
+                                  .setProfileGivenName(recipient.getProfileName().getGivenName())
+                                  .setProfileFamilyName(recipient.getProfileName().getFamilyName())
+                                  .setSystemGivenName(recipient.getSystemProfileName().getGivenName())
+                                  .setSystemFamilyName(recipient.getSystemProfileName().getFamilyName())
+                                  .setSystemNickname(recipient.getSyncExtras().getSystemNickname())
                                   .setBlocked(recipient.isBlocked())
                                   .setProfileSharingEnabled(recipient.isProfileSharing() || recipient.getSystemContactUri() != null)
                                   .setIdentityKey(recipient.getSyncExtras().getIdentityKey())
@@ -128,6 +127,7 @@ public final class StorageSyncModels {
                                   .setHideStory(hideStory)
                                   .setUnregisteredTimestamp(recipient.getSyncExtras().getUnregisteredTimestamp())
                                   .setHidden(recipient.isHidden())
+                                  .setUsername(recipient.getUsername())
                                   .build();
   }
 
@@ -166,9 +166,9 @@ public final class StorageSyncModels {
       throw new AssertionError("Group master key not on recipient record");
     }
 
-    boolean                        hideStory        = recipient.getExtras() != null && recipient.getExtras().hideStory();
-    GroupDatabase.ShowAsStoryState showAsStoryState = SignalDatabase.groups().getShowAsStoryState(groupId);
-    GroupV2Record.StorySendMode    storySendMode;
+    boolean                     hideStory        = recipient.getExtras() != null && recipient.getExtras().hideStory();
+    GroupTable.ShowAsStoryState showAsStoryState = SignalDatabase.groups().getShowAsStoryState(groupId);
+    GroupV2Record.StorySendMode storySendMode;
 
     switch (showAsStoryState) {
       case ALWAYS:
@@ -187,7 +187,7 @@ public final class StorageSyncModels {
                                   .setArchived(recipient.getSyncExtras().isArchived())
                                   .setForcedUnread(recipient.getSyncExtras().isForcedUnread())
                                   .setMuteUntil(recipient.getMuteUntil())
-                                  .setNotifyForMentionsWhenMuted(recipient.getMentionSetting() == RecipientDatabase.MentionSetting.ALWAYS_NOTIFY)
+                                  .setNotifyForMentionsWhenMuted(recipient.getMentionSetting() == RecipientTable.MentionSetting.ALWAYS_NOTIFY)
                                   .setHideStory(hideStory)
                                   .setStorySendMode(storySendMode)
                                   .build();
@@ -227,15 +227,15 @@ public final class StorageSyncModels {
                                                 .build();
   }
 
-  public static @NonNull IdentityDatabase.VerifiedStatus remoteToLocalIdentityStatus(@NonNull IdentityState identityState) {
+  public static @NonNull IdentityTable.VerifiedStatus remoteToLocalIdentityStatus(@NonNull IdentityState identityState) {
     switch (identityState) {
-      case VERIFIED:   return IdentityDatabase.VerifiedStatus.VERIFIED;
-      case UNVERIFIED: return IdentityDatabase.VerifiedStatus.UNVERIFIED;
-      default:         return IdentityDatabase.VerifiedStatus.DEFAULT;
+      case VERIFIED:   return IdentityTable.VerifiedStatus.VERIFIED;
+      case UNVERIFIED: return IdentityTable.VerifiedStatus.UNVERIFIED;
+      default:         return IdentityTable.VerifiedStatus.DEFAULT;
     }
   }
 
-  private static IdentityState localToRemoteIdentityState(@NonNull IdentityDatabase.VerifiedStatus local) {
+  private static IdentityState localToRemoteIdentityState(@NonNull IdentityTable.VerifiedStatus local) {
     switch (local) {
       case VERIFIED:   return IdentityState.VERIFIED;
       case UNVERIFIED: return IdentityState.UNVERIFIED;

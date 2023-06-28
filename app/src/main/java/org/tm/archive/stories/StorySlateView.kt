@@ -8,12 +8,13 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import org.signal.core.util.logging.Log
+import org.signal.core.util.getParcelableCompat
 import org.tm.archive.R
 import org.tm.archive.blurhash.BlurHash
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobmanager.impl.NetworkConstraint
 import org.tm.archive.mms.GlideApp
+import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.visible
 
 /**
@@ -23,10 +24,6 @@ class StorySlateView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs) {
-
-  companion object {
-    private val TAG = Log.tag(StorySlateView::class.java)
-  }
 
   var callback: Callback? = null
 
@@ -43,10 +40,10 @@ class StorySlateView @JvmOverloads constructor(
   private val loadingSpinner: View = findViewById(R.id.loading_spinner)
   private val errorCircle: View = findViewById(R.id.error_circle)
   private val errorBackground: View = findViewById(R.id.stories_error_background)
-  private val unavailableText: View = findViewById(R.id.unavailable)
+  private val unavailableText: TextView = findViewById(R.id.unavailable)
   private val errorText: TextView = findViewById(R.id.error_text)
 
-  fun moveToState(state: State, postId: Long) {
+  fun moveToState(state: State, postId: Long, sender: Recipient? = null) {
     if (this.state == state && this.postId == postId) {
       return
     }
@@ -61,7 +58,7 @@ class StorySlateView @JvmOverloads constructor(
       State.LOADING -> moveToProgressState(State.LOADING)
       State.ERROR -> moveToErrorState()
       State.RETRY -> moveToProgressState(State.RETRY)
-      State.NOT_FOUND -> moveToNotFoundState()
+      State.NOT_FOUND, State.FAILED -> moveToNotFoundState(state, sender)
       State.HIDDEN -> moveToHiddenState()
     }
 
@@ -106,8 +103,8 @@ class StorySlateView @JvmOverloads constructor(
     }
   }
 
-  private fun moveToNotFoundState() {
-    state = State.NOT_FOUND
+  private fun moveToNotFoundState(state: State, sender: Recipient?) {
+    this.state = state
     visible = true
     background.visible = true
     loadingSpinner.visible = false
@@ -115,6 +112,12 @@ class StorySlateView @JvmOverloads constructor(
     errorBackground.visible = false
     unavailableText.visible = true
     errorText.visible = false
+
+    if (state == State.FAILED && sender != null) {
+      unavailableText.text = context.getString(R.string.StorySlateView__cant_download_story_s_will_need_to_share_it_again, sender.getShortDisplayName(context))
+    } else {
+      unavailableText.setText(R.string.StorySlateView__this_story_is_no_longer_available)
+    }
   }
 
   private fun moveToHiddenState() {
@@ -133,7 +136,7 @@ class StorySlateView @JvmOverloads constructor(
 
   override fun onRestoreInstanceState(state: Parcelable?) {
     if (state is Bundle) {
-      val rootState: Parcelable? = state.getParcelable("ROOT")
+      val rootState: Parcelable? = state.getParcelableCompat("ROOT", Parcelable::class.java)
       this.state = State.fromCode(state.getInt("STATE", State.HIDDEN.code))
       this.postId = state.getLong("ID")
       super.onRestoreInstanceState(rootState)
@@ -155,7 +158,8 @@ class StorySlateView @JvmOverloads constructor(
     ERROR(1, true),
     RETRY(2, true),
     NOT_FOUND(3, false),
-    HIDDEN(4, false);
+    HIDDEN(4, false),
+    FAILED(5, false);
 
     companion object {
       fun fromCode(code: Int): State {

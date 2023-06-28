@@ -1,9 +1,11 @@
 package org.signal.smsexporter
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import androidx.core.app.NotificationManagerCompat
 import io.reactivex.rxjava3.processors.BehaviorProcessor
 import org.signal.core.util.Result
 import org.signal.core.util.Try
@@ -13,6 +15,8 @@ import org.signal.smsexporter.internal.mms.ExportMmsPartsUseCase
 import org.signal.smsexporter.internal.mms.ExportMmsRecipientsUseCase
 import org.signal.smsexporter.internal.mms.GetOrCreateMmsThreadIdsUseCase
 import org.signal.smsexporter.internal.sms.ExportSmsMessagesUseCase
+import java.io.EOFException
+import java.io.FileNotFoundException
 import java.io.InputStream
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -24,11 +28,16 @@ abstract class SmsExportService : Service() {
 
   companion object {
     private val TAG = Log.tag(SmsExportService::class.java)
+    const val CLEAR_PREVIOUS_EXPORT_STATE_EXTRA = "clear_previous_export_state"
 
     /**
      * Progress state which can be listened to by interested components, such as fragments.
      */
     val progressState: BehaviorProcessor<SmsExportProgress> = BehaviorProcessor.createDefault(SmsExportProgress.Init)
+
+    fun clearProgressState() {
+      progressState.onNext(SmsExportProgress.Init)
+    }
   }
 
   override fun onBind(intent: Intent?): IBinder? {
@@ -41,45 +50,68 @@ abstract class SmsExportService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     Log.d(TAG, "Got start command in SMS Export Service")
 
-    startExport()
+    startExport(intent?.getBooleanExtra(CLEAR_PREVIOUS_EXPORT_STATE_EXTRA, false) ?: false)
 
     return START_NOT_STICKY
   }
 
-  private fun startExport() {
+  @SuppressLint("MissingPermission")
+  private fun startExport(clearExportState: Boolean) {
     if (isStarted) {
       Log.d(TAG, "Already running exporter.")
       return
     }
 
-    Log.d(TAG, "Running export...")
+    Log.d(TAG, "Running export clearExportState: $clearExportState")
 
     isStarted = true
     updateNotification(-1, -1)
     progressState.onNext(SmsExportProgress.Starting)
 
     var progress = 0
+    var errorCount = 0
     executor.execute {
+      if (clearExportState) {
+        clearPreviousExportState()
+      }
+
+      prepareForExport()
       val totalCount = getUnexportedMessageCount()
       getUnexportedMessages().forEach { message ->
         val exportState = message.exportState
         if (exportState.progress != SmsExportState.Progress.COMPLETED) {
-          when (message) {
+          val successful = when (message) {
             is ExportableMessage.Sms<*> -> exportSms(exportState, message)
             is ExportableMessage.Mms<*> -> exportMms(exportState, message)
+            is ExportableMessage.Skip<*> -> {
+              onMessageExportSucceeded(message)
+              true
+            }
+          }
+
+          if (!successful) {
+            errorCount++
           }
 
           progress++
           if (progress == 1 || progress.mod(100) == 0) {
             updateNotification(progress, totalCount)
           }
-          progressState.onNext(SmsExportProgress.InProgress(progress, totalCount))
+          progressState.onNext(SmsExportProgress.InProgress(progress, errorCount, totalCount))
         }
       }
 
       onExportPassCompleted()
-      progressState.onNext(SmsExportProgress.Done)
+      progressState.onNext(SmsExportProgress.Done(errorCount, progress))
+
+      getExportCompleteNotification()?.let { notification ->
+        NotificationManagerCompat.from(this).notify(notification.id, notification.notification)
+      }
+
+      Log.d(TAG, "Export complete")
+
       stopForeground(true)
+      stopSelf()
       isStarted = false
     }
   }
@@ -96,6 +128,23 @@ abstract class SmsExportService : Service() {
    * query for "failure" state *after* we signal completion of a run.
    */
   protected abstract fun getNotification(progress: Int, total: Int): ExportNotification
+
+  /**
+   * Produces the notification and notification id to display when the export is complete.
+   *
+   * Can be null if no notification is needed (e.g., the user is still in the app)
+   */
+  protected abstract fun getExportCompleteNotification(): ExportNotification?
+
+  /**
+   * Called prior to starting export if the user has requested previous export state to be cleared.
+   */
+  protected open fun clearPreviousExportState() = Unit
+
+  /**
+   * Called prior to starting export for any task setup that may need to occur.
+   */
+  protected open fun prepareForExport() = Unit
 
   /**
    * Gets the total number of messages to process. This is only used for the notification and
@@ -179,17 +228,19 @@ abstract class SmsExportService : Service() {
     startForeground(exportNotification.id, exportNotification.notification)
   }
 
-  private fun exportSms(smsExportState: SmsExportState, sms: ExportableMessage.Sms<*>) {
+  private fun exportSms(smsExportState: SmsExportState, sms: ExportableMessage.Sms<*>): Boolean {
     onMessageExportStarted(sms)
     val mayAlreadyExist = smsExportState.progress == SmsExportState.Progress.STARTED
-    ExportSmsMessagesUseCase.execute(this, sms, mayAlreadyExist).either(onSuccess = {
+    return ExportSmsMessagesUseCase.execute(this, sms, mayAlreadyExist).either(onSuccess = {
       onMessageExportSucceeded(sms)
+      true
     }, onFailure = {
-      onMessageExportFailed(sms)
-    })
+        onMessageExportFailed(sms)
+        false
+      })
   }
 
-  private fun exportMms(smsExportState: SmsExportState, mms: ExportableMessage.Mms<*>) {
+  private fun exportMms(smsExportState: SmsExportState, mms: ExportableMessage.Mms<*>): Boolean {
     onMessageExportStarted(mms)
     val threadIdOutput: GetOrCreateMmsThreadIdsUseCase.Output? = getThreadId(mms)
     val exportMmsOutput: ExportMmsMessagesUseCase.Output? = threadIdOutput?.let { exportMms(smsExportState, it) }
@@ -197,15 +248,17 @@ abstract class SmsExportService : Service() {
     val writeMmsPartsOutput: List<Result<Unit, Throwable>>? = exportMmsPartsOutput?.filterNotNull()?.map { writeAttachmentToDisk(smsExportState, it) }
     val exportMmsRecipients: List<Unit?>? = exportMmsOutput?.let { exportMmsRecipients(smsExportState, it) }
 
-    if (threadIdOutput != null &&
+    return if (threadIdOutput != null &&
       exportMmsOutput != null &&
       exportMmsPartsOutput != null && !exportMmsPartsOutput.contains(null) &&
-      writeMmsPartsOutput != null && writeMmsPartsOutput.all { it is Result.Success } &&
+      writeMmsPartsOutput != null && writeMmsPartsOutput.all { it is Result.Success || (it is Result.Failure && (it.failure.cause ?: it.failure) is FileNotFoundException) } &&
       exportMmsRecipients != null && !exportMmsRecipients.contains(null)
     ) {
       onMessageExportSucceeded(mms)
+      true
     } else {
       onMessageExportFailed(mms)
+      false
     }
   }
 
@@ -296,8 +349,14 @@ abstract class SmsExportService : Service() {
       onAttachmentPartExportSucceeded(output.message, output.part)
       Try.success(Unit)
     } catch (e: Exception) {
-      Log.d(TAG, "Failed to write attachment to disk.", e)
-      Try.failure(e)
+      if (e is EOFException) {
+        Log.d(TAG, "Unrecoverable failure to write attachment to disk, marking as successful and moving on", e)
+        onAttachmentPartExportSucceeded(output.message, output.part)
+        Try.success(Unit)
+      } else {
+        Log.d(TAG, "Failed to write attachment to disk.", e)
+        Try.failure(e)
+      }
     }
   }
 

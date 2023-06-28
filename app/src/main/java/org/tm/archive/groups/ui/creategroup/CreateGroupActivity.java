@@ -12,20 +12,21 @@ import androidx.annotation.Nullable;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.signal.core.util.DimensionUnit;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.ContactSelectionActivity;
 import org.tm.archive.ContactSelectionListFragment;
 import org.tm.archive.R;
-import org.tm.archive.contacts.ContactsCursorLoader;
+import org.tm.archive.contacts.ContactSelectionDisplayMode;
 import org.tm.archive.contacts.sync.ContactDiscovery;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.groups.ui.creategroup.details.AddGroupDetailsActivity;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.FeatureFlags;
 import org.signal.core.util.Stopwatch;
-import org.tm.archive.util.Util;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 import java.io.IOException;
@@ -50,11 +51,14 @@ public class CreateGroupActivity extends ContactSelectionActivity {
     intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false);
     intent.putExtra(ContactSelectionActivity.EXTRA_LAYOUT_RES_ID, R.layout.create_group_activity);
 
-    int displayMode = Util.isDefaultSmsProvider(context) ? ContactsCursorLoader.DisplayMode.FLAG_SMS | ContactsCursorLoader.DisplayMode.FLAG_PUSH
-                                                         : ContactsCursorLoader.DisplayMode.FLAG_PUSH;
+    boolean smsEnabled = SignalStore.misc().getSmsExportPhase().allowSmsFeatures();
+    int displayMode = smsEnabled ? ContactSelectionDisplayMode.FLAG_SMS | ContactSelectionDisplayMode.FLAG_PUSH
+                                 : ContactSelectionDisplayMode.FLAG_PUSH;
 
     intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, displayMode);
     intent.putExtra(ContactSelectionListFragment.SELECTION_LIMITS, FeatureFlags.groupLimits().excludingSelf());
+    intent.putExtra(ContactSelectionListFragment.RV_PADDING_BOTTOM, (int) DimensionUnit.DP.toPixels(64f));
+    intent.putExtra(ContactSelectionListFragment.RV_CLIP, false);
 
     return intent;
   }
@@ -93,7 +97,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
   }
 
   @Override
-  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
     if (contactsFragment.hasQueryFilter()) {
       getContactFilterView().clear();
     }
@@ -149,7 +153,7 @@ public class CreateGroupActivity extends ContactSelectionActivity {
       stopwatch.split("resolve");
 
       Set<Recipient> registeredChecks = resolved.stream()
-                                                .filter(r -> r.getRegistered() == RecipientDatabase.RegisteredState.UNKNOWN)
+                                                .filter(r -> r.getRegistered() == RecipientTable.RegisteredState.UNKNOWN)
                                                 .collect(Collectors.toSet());
 
       Log.i(TAG, "Need to do " + registeredChecks.size() + " registration checks.");

@@ -2,7 +2,7 @@ package org.tm.archive.components.settings.app.internal
 
 import android.content.Context
 import org.signal.core.util.concurrent.SignalExecutors
-import org.tm.archive.database.MessageDatabase
+import org.tm.archive.database.MessageTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.addStyle
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
@@ -38,17 +38,17 @@ class InternalSettingsRepository(context: Context) {
       val recipientId = SignalStore.releaseChannelValues().releaseChannelRecipientId!!
       val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(Recipient.resolved(recipientId))
 
-      val insertResult: MessageDatabase.InsertResult? = ReleaseChannel.insertReleaseChannelMessage(
+      val insertResult: MessageTable.InsertResult? = ReleaseChannel.insertReleaseChannelMessage(
         recipientId = recipientId,
         body = body,
         threadId = threadId,
         messageRanges = bodyRangeList.build(),
-        image = "/static/release-notes/signal.png",
-        imageWidth = 1800,
-        imageHeight = 720
+        media = "/static/release-notes/signal.png",
+        mediaWidth = 1800,
+        mediaHeight = 720
       )
 
-      SignalDatabase.sms.insertBoostRequestMessage(recipientId, threadId)
+      SignalDatabase.messages.insertBoostRequestMessage(recipientId, threadId)
 
       if (insertResult != null) {
         SignalDatabase.attachments.getAttachmentsForMessage(insertResult.messageId)

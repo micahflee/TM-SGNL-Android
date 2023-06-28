@@ -3,7 +3,7 @@ package org.tm.archive.components.settings.conversation.sounds
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import org.tm.archive.database.RecipientDatabase
+import org.tm.archive.database.RecipientTable
 import org.tm.archive.notifications.NotificationChannels
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
@@ -38,7 +38,7 @@ class SoundsAndNotificationsSettingsViewModel(
     repository.setMuteUntil(recipientId, 0L)
   }
 
-  fun setMentionSetting(mentionSetting: RecipientDatabase.MentionSetting) {
+  fun setMentionSetting(mentionSetting: RecipientTable.MentionSetting) {
     repository.setMentionSetting(recipientId, mentionSetting)
   }
 

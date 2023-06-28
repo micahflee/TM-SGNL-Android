@@ -14,9 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ColorStateListInflaterCompat;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -51,8 +49,6 @@ import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.livedata.LiveDataUtil;
-import org.tm.archive.util.views.AutoRounder;
-import org.tm.archive.util.views.Stub;
 import org.tm.archive.verify.VerifyIdentityActivity;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
@@ -129,7 +125,7 @@ public final class ConversationUpdateItem extends FrameLayout
                    boolean isMessageRequestAccepted,
                    boolean allowedToPlayInline,
                    @NonNull Colorizer colorizer,
-                   boolean isCondensedMode)
+                   @NonNull ConversationItemDisplayMode displayMode)
   {
     this.batchSelected = batchSelected;
 
@@ -161,10 +157,10 @@ public final class ConversationUpdateItem extends FrameLayout
     this.conversationRecipient    = conversationRecipient;
     this.isMessageRequestAccepted = isMessageRequestAccepted;
 
-    senderObserver.observe(lifecycleOwner, messageRecord.getIndividualRecipient());
+    senderObserver.observe(lifecycleOwner, messageRecord.getFromRecipient());
 
     if (conversationRecipient.isActiveGroup() &&
-        (messageRecord.isGroupCall() || messageRecord.isCollapsedGroupV2JoinUpdate() || messageRecord.isGroupV2JoinRequest(messageRecord.getIndividualRecipient().getServiceId().orElse(null)))) {
+        (messageRecord.isGroupCall() || messageRecord.isCollapsedGroupV2JoinUpdate() || messageRecord.isGroupV2JoinRequest(messageRecord.getFromRecipient().getServiceId().orElse(null)))) {
       groupObserver.observe(lifecycleOwner, conversationRecipient);
       groupData.observe(lifecycleOwner, conversationRecipient);
     } else {
@@ -441,7 +437,7 @@ public final class ConversationUpdateItem extends FrameLayout
       actionButton.setVisibility(VISIBLE);
       actionButton.setOnClickListener(v -> {
         if (batchSelected.isEmpty() && eventListener != null) {
-          eventListener.onSafetyNumberLearnMoreClicked(conversationMessage.getMessageRecord().getIndividualRecipient());
+          eventListener.onSafetyNumberLearnMoreClicked(conversationMessage.getMessageRecord().getFromRecipient());
         }
       });
     } else if (conversationMessage.getMessageRecord().isGroupCall()) {
@@ -511,15 +507,15 @@ public final class ConversationUpdateItem extends FrameLayout
       actionButton.setVisibility(VISIBLE);
       actionButton.setOnClickListener(v -> {
         if (batchSelected.isEmpty() && eventListener != null) {
-          eventListener.onBadDecryptLearnMoreClicked(conversationMessage.getMessageRecord().getRecipient().getId());
+          eventListener.onBadDecryptLearnMoreClicked(conversationMessage.getMessageRecord().getFromRecipient().getId());
         }
       });
-    } else if (conversationMessage.getMessageRecord().isChangeNumber() && conversationMessage.getMessageRecord().getIndividualRecipient().isSystemContact()) {
+    } else if (conversationMessage.getMessageRecord().isChangeNumber() && conversationMessage.getMessageRecord().getFromRecipient().isSystemContact()) {
       actionButton.setText(R.string.ConversationUpdateItem_update_contact);
       actionButton.setVisibility(VISIBLE);
       actionButton.setOnClickListener(v -> {
         if (batchSelected.isEmpty() && eventListener != null) {
-          eventListener.onChangeNumberUpdateContact(conversationMessage.getMessageRecord().getIndividualRecipient());
+          eventListener.onChangeNumberUpdateContact(conversationMessage.getMessageRecord().getFromRecipient());
         }
       });
     } else if (shouldShowBlockRequestAction(conversationMessage.getMessageRecord())) {
@@ -527,7 +523,7 @@ public final class ConversationUpdateItem extends FrameLayout
       actionButton.setVisibility(VISIBLE);
       actionButton.setOnClickListener(v -> {
         if (batchSelected.isEmpty() && eventListener != null) {
-          eventListener.onBlockJoinRequest(conversationMessage.getMessageRecord().getIndividualRecipient());
+          eventListener.onBlockJoinRequest(conversationMessage.getMessageRecord().getFromRecipient());
         }
       });
     } else if (conversationMessage.getMessageRecord().isBoostRequest()) {
@@ -539,14 +535,39 @@ public final class ConversationUpdateItem extends FrameLayout
       });
 
       actionButton.setText(R.string.ConversationUpdateItem_donate);
-    } else {
+    } else if (conversationMessage.getMessageRecord().isSmsExportType()) {
+      actionButton.setVisibility(View.VISIBLE);
+      actionButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onInviteToSignalClicked();
+        }
+      });
+
+      actionButton.setText(R.string.ConversationActivity__invite_to_signal);
+    } else if (conversationMessage.getMessageRecord().isPaymentsRequestToActivate() && !conversationMessage.getMessageRecord().isOutgoing() && !SignalStore.paymentsValues().mobileCoinPaymentsEnabled()) {
+      actionButton.setText(R.string.ConversationUpdateItem_activate_payments);
+      actionButton.setVisibility(VISIBLE);
+      actionButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onActivatePaymentsClicked();
+        }
+      });
+    } else if (conversationMessage.getMessageRecord().isPaymentsActivated() && !conversationMessage.getMessageRecord().isOutgoing()) {
+      actionButton.setText(R.string.ConversationUpdateItem_send_payment);
+      actionButton.setVisibility(VISIBLE);
+      actionButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onSendPaymentClicked(conversationMessage.getMessageRecord().getFromRecipient().getId());
+        }
+      });
+    } else{
       actionButton.setVisibility(GONE);
       actionButton.setOnClickListener(null);
     }
   }
 
   private boolean shouldShowBlockRequestAction(MessageRecord messageRecord) {
-    Recipient toBlock = messageRecord.getIndividualRecipient();
+    Recipient toBlock = messageRecord.getFromRecipient();
 
     if (!toBlock.hasServiceId() || !groupData.isSelfAdmin() || groupData.isBanned(toBlock) || groupData.isFullMember(toBlock)) {
       return false;

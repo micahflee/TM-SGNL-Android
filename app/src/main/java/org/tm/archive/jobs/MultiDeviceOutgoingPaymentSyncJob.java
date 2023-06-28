@@ -1,15 +1,16 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.protobuf.ByteString;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;
@@ -20,7 +21,6 @@ import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.messages.multidevice.OutgoingPaymentMessage;
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage;
 import org.whispersystems.signalservice.api.push.ServiceId;
-import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
 
@@ -58,10 +58,10 @@ public final class MultiDeviceOutgoingPaymentSyncJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder()
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder()
                    .putString(KEY_UUID, uuid.toString())
-                   .build();
+                   .serialize();
   }
 
   @Override
@@ -80,7 +80,7 @@ public final class MultiDeviceOutgoingPaymentSyncJob extends BaseJob {
       return;
     }
 
-    PaymentDatabase.PaymentTransaction payment = SignalDatabase.payments().getPayment(uuid);
+    PaymentTable.PaymentTransaction payment = SignalDatabase.payments().getPayment(uuid);
 
     if (payment == null) {
       Log.w(TAG, "Payment not found " + uuid);
@@ -135,7 +135,9 @@ public final class MultiDeviceOutgoingPaymentSyncJob extends BaseJob {
   public static class Factory implements Job.Factory<MultiDeviceOutgoingPaymentSyncJob> {
 
     @Override
-    public @NonNull MultiDeviceOutgoingPaymentSyncJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull MultiDeviceOutgoingPaymentSyncJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new MultiDeviceOutgoingPaymentSyncJob(parameters,
                                                    UUID.fromString(data.getString(KEY_UUID)));
     }

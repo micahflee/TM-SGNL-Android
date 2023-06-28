@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package signal;
+
+option java_package        = "org.tm.archive.jobs.protos";
+option java_multiple_files = true;
+
+message CallSyncEventJobRecord {
+  uint64 recipientId = 1;
+  reserved             2;
+  uint64 callId      = 3;
+  uint32 direction   = 4;
+  uint32 event       = 5;
+}
+
+message CallSyncEventJobData {
+  repeated CallSyncEventJobRecord records = 1;
+}

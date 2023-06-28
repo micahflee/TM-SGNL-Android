@@ -1,14 +1,15 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.MessageDatabase.SyncMessageId;
+import org.tm.archive.database.MessageTable.SyncMessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;
@@ -53,7 +54,7 @@ public class MultiDeviceViewOnceOpenJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
+  public @Nullable byte[] serialize() {
     String serialized;
 
     try {
@@ -62,7 +63,7 @@ public class MultiDeviceViewOnceOpenJob extends BaseJob {
       throw new AssertionError(e);
     }
 
-    return new Data.Builder().putString(KEY_MESSAGE_ID, serialized).build();
+    return new JsonJobData.Builder().putString(KEY_MESSAGE_ID, serialized).serialize();
   }
 
   @Override
@@ -123,9 +124,10 @@ public class MultiDeviceViewOnceOpenJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<MultiDeviceViewOnceOpenJob> {
     @Override
-    public @NonNull MultiDeviceViewOnceOpenJob create(@NonNull Parameters parameters, @NonNull Data data) {
-      SerializableSyncMessageId messageId;
+    public @NonNull MultiDeviceViewOnceOpenJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
 
+      SerializableSyncMessageId messageId;
       try {
         messageId = JsonUtils.fromJson(data.getString(KEY_MESSAGE_ID), SerializableSyncMessageId.class);
       } catch (IOException e) {

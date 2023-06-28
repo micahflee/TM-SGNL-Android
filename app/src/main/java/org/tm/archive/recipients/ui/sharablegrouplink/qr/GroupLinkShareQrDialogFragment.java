@@ -23,7 +23,7 @@ import org.tm.archive.R;
 import org.tm.archive.components.qr.QrView;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.providers.BlobProvider;
-import org.tm.archive.qr.QrCode;
+import org.tm.archive.qr.QrCodeUtil;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ThemeUtil;
 
@@ -123,7 +123,7 @@ public class GroupLinkShareQrDialogFragment extends DialogFragment {
   }
 
   private static Uri createTemporaryPng(@Nullable String url) throws IOException {
-    Bitmap qrBitmap = QrCode.create(url, Color.BLACK, Color.WHITE);
+    Bitmap qrBitmap = QrCodeUtil.create(url, Color.BLACK, Color.WHITE);
 
     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
       qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);

@@ -5,18 +5,16 @@ import com.fasterxml.jackson.core.JsonParseException
 import org.json.JSONArray
 import org.json.JSONObject
 import org.signal.core.util.logging.Log
-import org.tm.archive.database.MessageDatabase
+import org.tm.archive.database.MessageTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobmanager.Data
 import org.tm.archive.jobmanager.Job
 import org.tm.archive.jobmanager.impl.NetworkConstraint
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.releasechannel.ReleaseChannel
 import org.tm.archive.s3.S3
-import org.tm.archive.stories.Stories
 import org.tm.archive.transport.RetryLaterException
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException
 import java.util.Locale
@@ -51,7 +49,7 @@ class StoryOnboardingDownloadJob private constructor(parameters: Parameters) : B
     }
 
     fun enqueueIfNeeded() {
-      if (SignalStore.storyValues().hasDownloadedOnboardingStory || !Stories.isFeatureAvailable()) {
+      if (SignalStore.storyValues().hasDownloadedOnboardingStory) {
         return
       }
 
@@ -63,7 +61,7 @@ class StoryOnboardingDownloadJob private constructor(parameters: Parameters) : B
     }
   }
 
-  override fun serialize(): Data = Data.EMPTY
+  override fun serialize(): ByteArray? = null
   override fun getFactoryKey(): String = KEY
   override fun onFailure() = Unit
 
@@ -79,9 +77,9 @@ class StoryOnboardingDownloadJob private constructor(parameters: Parameters) : B
       throw Exception("No release channel recipient.")
     }
 
-    SignalDatabase.mms.getAllStoriesFor(releaseChannelRecipientId, -1).use { reader ->
+    SignalDatabase.messages.getAllStoriesFor(releaseChannelRecipientId, -1).use { reader ->
       reader.forEach { messageRecord ->
-        SignalDatabase.mms.deleteMessage(messageRecord.id)
+        SignalDatabase.messages.deleteMessage(messageRecord.id)
       }
     }
 
@@ -126,8 +124,8 @@ class StoryOnboardingDownloadJob private constructor(parameters: Parameters) : B
     val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(Recipient.resolved(releaseChannelRecipientId))
 
     Log.i(TAG, "Inserting messages...")
-    val insertResults: List<MessageDatabase.InsertResult> = (0 until candidateArray.length()).mapNotNull {
-      val insertResult: MessageDatabase.InsertResult? = ReleaseChannel.insertReleaseChannelMessage(
+    val insertResults: List<MessageTable.InsertResult> = (0 until candidateArray.length()).mapNotNull {
+      val insertResult: MessageTable.InsertResult? = ReleaseChannel.insertReleaseChannelMessage(
         releaseChannelRecipientId,
         "",
         threadId,
@@ -145,7 +143,7 @@ class StoryOnboardingDownloadJob private constructor(parameters: Parameters) : B
     if (insertResults.size != ONBOARDING_IMAGE_COUNT) {
       Log.w(TAG, "Failed to insert some search results. Deleting the ones we added and trying again later.")
       insertResults.forEach {
-        SignalDatabase.mms.deleteMessage(it.messageId)
+        SignalDatabase.messages.deleteMessage(it.messageId)
       }
 
       throw RetryLaterException()
@@ -189,7 +187,7 @@ class StoryOnboardingDownloadJob private constructor(parameters: Parameters) : B
   }
 
   class Factory : Job.Factory<StoryOnboardingDownloadJob> {
-    override fun create(parameters: Parameters, data: Data): StoryOnboardingDownloadJob {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): StoryOnboardingDownloadJob {
       return StoryOnboardingDownloadJob(parameters)
     }
   }

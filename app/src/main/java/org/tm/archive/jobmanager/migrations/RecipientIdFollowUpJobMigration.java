@@ -2,7 +2,7 @@ package org.tm.archive.jobmanager.migrations;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.JobMigration;
 
 /**
@@ -31,7 +31,9 @@ public class RecipientIdFollowUpJobMigration extends JobMigration {
   }
 
   private static @NonNull JobData migrateRequestGroupInfoJob(@NonNull JobData jobData) {
-    if (!jobData.getData().hasString("source") || !jobData.getData().hasString("group_id")) {
+    JsonJobData data = JsonJobData.deserialize(jobData.getData());
+
+    if (!data.hasString("source") || !data.hasString("group_id")) {
       return failingJobData();
     } else {
       return jobData;
@@ -39,9 +41,11 @@ public class RecipientIdFollowUpJobMigration extends JobMigration {
   }
 
   private static @NonNull JobData migrateSendDeliveryReceiptJob(@NonNull JobData jobData) {
-    if (!jobData.getData().hasString("recipient") ||
-        !jobData.getData().hasLong("message_id")  ||
-        !jobData.getData().hasLong("timestamp"))
+    JsonJobData data = JsonJobData.deserialize(jobData.getData());
+
+    if (!data.hasString("recipient") ||
+        !data.hasLong("message_id")  ||
+        !data.hasLong("timestamp"))
     {
       return failingJobData();
     } else {
@@ -50,6 +54,6 @@ public class RecipientIdFollowUpJobMigration extends JobMigration {
   }
 
   private static JobData failingJobData() {
-    return new JobData("FailingJob", null, new Data.Builder().build());
+    return new JobData("FailingJob", null, null);
   }
 }

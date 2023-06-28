@@ -7,6 +7,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.logging.Log
 import org.tm.archive.MainActivity
 import org.tm.archive.PassphraseRequiredActivity
@@ -16,7 +17,6 @@ import org.tm.archive.logsubmit.SubmitDebugLogActivity
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.util.DynamicNoActionBarTheme
 import org.tm.archive.util.DynamicTheme
-import org.tm.archive.util.LifecycleDisposable
 import org.whispersystems.signalservice.api.push.PNI
 import java.util.Objects
 

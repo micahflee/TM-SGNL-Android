@@ -10,18 +10,15 @@ import com.annimon.stream.Stream;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.mms.MmsException;
-import org.tm.archive.mms.OutgoingMediaMessage;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.FeatureFlags;
-import org.tm.archive.util.GroupUtil;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -39,8 +36,8 @@ public final class GroupsV1MigrationUtil {
       throws IOException, RetryLaterException, GroupChangeBusyException, InvalidMigrationStateException
   {
     Recipient     groupRecipient = Recipient.resolved(recipientId);
-    Long          threadId       = SignalDatabase.threads().getThreadIdFor(recipientId);
-    GroupDatabase groupDatabase  = SignalDatabase.groups();
+    Long       threadId      = SignalDatabase.threads().getThreadIdFor(recipientId);
+    GroupTable groupDatabase = SignalDatabase.groups();
 
     if (threadId == null) {
       Log.w(TAG, "No thread found!");
@@ -88,7 +85,7 @@ public final class GroupsV1MigrationUtil {
           registeredMembers = Stream.of(registeredMembers).map(Recipient::fresh).toList();
         }
 
-        List<Recipient> possibleMembers = forced ? getMigratableManualMigrationMembers(registeredMembers)
+        List<Recipient> possibleMembers = forced ? registeredMembers
                                                  : getMigratableAutoMigrationMembers(registeredMembers);
 
         if (!forced && !groupRecipient.hasName()) {
@@ -200,17 +197,8 @@ public final class GroupsV1MigrationUtil {
    * to consider them migratable in an auto-migration.
    */
   private static @NonNull List<Recipient> getMigratableAutoMigrationMembers(@NonNull List<Recipient> registeredMembers) {
-    return Stream.of(getMigratableManualMigrationMembers(registeredMembers))
-                 .filter(r -> r.getProfileKey() != null)
-                 .toList();
-  }
-
-  /**
-   * You can only migrate users that have the required capabilities.
-   */
-  private static @NonNull List<Recipient> getMigratableManualMigrationMembers(@NonNull List<Recipient> registeredMembers) {
     return Stream.of(registeredMembers)
-                 .filter(r -> r.getGroupsV1MigrationCapability() == Recipient.Capability.SUPPORTED)
+                 .filter(r -> r.getProfileKey() != null)
                  .toList();
   }
 
@@ -219,8 +207,7 @@ public final class GroupsV1MigrationUtil {
    */
   public static boolean isAutoMigratable(@NonNull Recipient recipient) {
     return recipient.hasServiceId() &&
-           recipient.getGroupsV1MigrationCapability() == Recipient.Capability.SUPPORTED &&
-           recipient.getRegistered() == RecipientDatabase.RegisteredState.REGISTERED &&
+           recipient.getRegistered() == RecipientTable.RegisteredState.REGISTERED &&
            recipient.getProfileKey() != null;
   }
 

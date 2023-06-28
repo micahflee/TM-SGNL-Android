@@ -5,6 +5,7 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.tm.archive.database.StickerTable;
 import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.Util;
@@ -12,7 +13,7 @@ import org.tm.archive.util.Util;
 import java.util.Objects;
 
 /**
- * Represents a record for a sticker pack in the {@link org.tm.archive.database.StickerDatabase}.
+ * Represents a record for a sticker pack in the {@link StickerTable}.
  */
 public final class StickerRecord {
 

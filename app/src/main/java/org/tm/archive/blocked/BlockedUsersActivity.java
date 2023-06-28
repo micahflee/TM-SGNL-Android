@@ -19,11 +19,12 @@ import org.tm.archive.ContactSelectionListFragment;
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
 import org.tm.archive.components.ContactFilterView;
-import org.tm.archive.contacts.ContactsCursorLoader;
+import org.tm.archive.contacts.ContactSelectionDisplayMode;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
+import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.tm.archive.util.ViewUtil;
 
 import java.util.Optional;
@@ -37,10 +38,13 @@ public class BlockedUsersActivity extends PassphraseRequiredActivity implements 
 
   private BlockedUsersViewModel viewModel;
 
+  private final LifecycleDisposable lifecycleDisposable = new LifecycleDisposable();
+
   @Override
   protected void onCreate(Bundle savedInstanceState, boolean ready) {
     super.onCreate(savedInstanceState, ready);
 
+    lifecycleDisposable.bindTo(this);
     dynamicTheme.onCreate(this);
 
     setContentView(R.layout.blocked_users_activity);
@@ -78,7 +82,11 @@ public class BlockedUsersActivity extends PassphraseRequiredActivity implements 
                                .add(R.id.fragment_container, new BlockedUsersFragment())
                                .commit();
 
-    viewModel.getEvents().observe(this, event -> handleEvent(container, event));
+    lifecycleDisposable.add(
+        viewModel
+            .getEvents()
+            .subscribe(event -> handleEvent(container, event))
+    );
   }
 
   @Override
@@ -89,7 +97,7 @@ public class BlockedUsersActivity extends PassphraseRequiredActivity implements 
   }
 
   @Override
-  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
     final String displayName = recipientId.map(id -> Recipient.resolved(id).getDisplayName(this)).orElse(number);
 
     AlertDialog confirmationDialog = new MaterialAlertDialogBuilder(this)
@@ -135,11 +143,11 @@ public class BlockedUsersActivity extends PassphraseRequiredActivity implements 
     intent.putExtra(ContactSelectionListFragment.SELECTION_LIMITS, 1);
     intent.putExtra(ContactSelectionListFragment.HIDE_COUNT, true);
     intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE,
-                    ContactsCursorLoader.DisplayMode.FLAG_PUSH            |
-                    ContactsCursorLoader.DisplayMode.FLAG_SMS             |
-                    ContactsCursorLoader.DisplayMode.FLAG_ACTIVE_GROUPS   |
-                    ContactsCursorLoader.DisplayMode.FLAG_INACTIVE_GROUPS |
-                    ContactsCursorLoader.DisplayMode.FLAG_BLOCK);
+                    ContactSelectionDisplayMode.FLAG_PUSH |
+                    ContactSelectionDisplayMode.FLAG_SMS |
+                    ContactSelectionDisplayMode.FLAG_ACTIVE_GROUPS |
+                    ContactSelectionDisplayMode.FLAG_INACTIVE_GROUPS |
+                    ContactSelectionDisplayMode.FLAG_BLOCK);
 
     getSupportFragmentManager().beginTransaction()
                                .replace(R.id.fragment_container, fragment, CONTACT_SELECTION_FRAGMENT)

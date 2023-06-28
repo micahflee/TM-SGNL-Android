@@ -4,18 +4,21 @@ package org.tm.archive.jobs;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.ListUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.MessageDatabase.MarkedMessageInfo;
+import org.tm.archive.database.MessageTable.MarkedMessageInfo;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
+import org.tm.archive.database.model.StoryType;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -33,6 +36,7 @@ import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedExcept
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -64,10 +68,10 @@ public class SendViewedReceiptJob extends BaseJob {
 
   private SendViewedReceiptJob(long threadId, @NonNull RecipientId recipientId, @NonNull List<Long> messageSentTimestamps, @NonNull List<MessageId> messageIds) {
     this(new Parameters.Builder()
-                           .addConstraint(NetworkConstraint.KEY)
-                           .setLifespan(TimeUnit.DAYS.toMillis(1))
-                           .setMaxAttempts(Parameters.UNLIMITED)
-                           .build(),
+             .addConstraint(NetworkConstraint.KEY)
+             .setLifespan(TimeUnit.DAYS.toMillis(1))
+             .setMaxAttempts(Parameters.UNLIMITED)
+             .build(),
          threadId,
          recipientId,
          SendReadReceiptJob.ensureSize(messageSentTimestamps, MAX_TIMESTAMPS),
@@ -112,15 +116,15 @@ public class SendViewedReceiptJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
+  public @Nullable byte[] serialize() {
     List<String> serializedMessageIds = messageIds.stream().map(MessageId::serialize).collect(Collectors.toList());
 
-    return new Data.Builder().putString(KEY_RECIPIENT, recipientId.serialize())
-                             .putLongListAsArray(KEY_MESSAGE_SENT_TIMESTAMPS, messageSentTimestamps)
-                             .putStringListAsArray(KEY_MESSAGE_IDS, serializedMessageIds)
-                             .putLong(KEY_TIMESTAMP, timestamp)
-                             .putLong(KEY_THREAD, threadId)
-                             .build();
+    return new JsonJobData.Builder().putString(KEY_RECIPIENT, recipientId.serialize())
+                                    .putLongListAsArray(KEY_MESSAGE_SENT_TIMESTAMPS, messageSentTimestamps)
+                                    .putStringListAsArray(KEY_MESSAGE_IDS, serializedMessageIds)
+                                    .putLong(KEY_TIMESTAMP, timestamp)
+                                    .putLong(KEY_THREAD, threadId)
+                                    .serialize();
   }
 
   @Override
@@ -130,12 +134,33 @@ public class SendViewedReceiptJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException, UntrustedIdentityException {
+
+    boolean canSendNonStoryReceipts = TextSecurePreferences.isReadReceiptsEnabled(context);
+    boolean canSendStoryReceipts    = SignalStore.storyValues().getViewedReceiptsEnabled();
+
+    List<MessageId> foundMessageIds       = new LinkedList<>();
+    List<Long>      messageSentTimestamps = new LinkedList<>();
+    List<StoryType> storyTypes            = SignalDatabase.messages().getStoryTypes(this.messageIds);
+
+    for (int i = 0; i < storyTypes.size(); i++) {
+      StoryType storyType = storyTypes.get(i);
+      if ((storyType == StoryType.NONE && canSendNonStoryReceipts) || (storyType.isStory() && canSendStoryReceipts)) {
+        foundMessageIds.add(this.messageIds.get(i));
+        messageSentTimestamps.add(this.messageSentTimestamps.get(i));
+      }
+    }
+
     if (!Recipient.self().isRegistered()) {
       throw new NotPushRegisteredException();
     }
 
-    if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
+    if (storyTypes.isEmpty() && !TextSecurePreferences.isReadReceiptsEnabled(context)) {
       Log.w(TAG, "Read receipts not enabled!");
+      return;
+    }
+
+    if (foundMessageIds.isEmpty()) {
+      Log.w(TAG, "No messages in this batch are allowed to be sent!");
       return;
     }
 
@@ -182,8 +207,8 @@ public class SendViewedReceiptJob extends BaseJob {
                                                          receiptMessage,
                                                          recipient.needsPniSignature());
 
-    if (Util.hasItems(messageIds)) {
-      SignalDatabase.messageLog().insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, messageIds, false);
+    if (Util.hasItems(foundMessageIds)) {
+      SignalDatabase.messageLog().insertIfPossible(recipientId, timestamp, result, ContentHint.IMPLICIT, foundMessageIds, false);
     }
   }
 
@@ -209,14 +234,16 @@ public class SendViewedReceiptJob extends BaseJob {
 
     @Override
     public @NonNull
-    SendViewedReceiptJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    SendViewedReceiptJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       long            timestamp      = data.getLong(KEY_TIMESTAMP);
       List<Long>      syncTimestamps = data.getLongArrayAsList(KEY_MESSAGE_SENT_TIMESTAMPS);
       List<String>    rawMessageIds  = data.hasStringArray(KEY_MESSAGE_IDS) ? data.getStringArrayAsList(KEY_MESSAGE_IDS) : Collections.emptyList();
       List<MessageId> messageIds     = rawMessageIds.stream().map(MessageId::deserialize).collect(Collectors.toList());
       long            threadId       = data.getLong(KEY_THREAD);
       RecipientId     recipientId    = data.hasString(KEY_RECIPIENT) ? RecipientId.from(data.getString(KEY_RECIPIENT))
-                                                                     : Recipient.external(application, data.getString(KEY_ADDRESS)).getId();
+                                                                               : Recipient.external(application, data.getString(KEY_ADDRESS)).getId();
 
       return new SendViewedReceiptJob(parameters, threadId, recipientId, syncTimestamps, messageIds, timestamp);
     }

@@ -15,6 +15,7 @@ import com.google.android.material.textfield.TextInputLayout
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.BreakIteratorCompat
 import org.signal.core.util.EditTextUtil
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.emoji.EmojiUtil
 import org.tm.archive.components.settings.DSLSettingsFragment
@@ -22,7 +23,6 @@ import org.tm.archive.components.settings.app.notifications.profiles.EditNotific
 import org.tm.archive.components.settings.app.notifications.profiles.models.NotificationProfileNamePreset
 import org.tm.archive.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment
 import org.tm.archive.util.BottomSheetUtil
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
@@ -148,7 +148,7 @@ class EditNotificationProfileFragment : DSLSettingsFragment(layoutId = R.layout.
         NotificationProfileNamePreset.Model("\uD83D\uDE34", R.string.EditNotificationProfileFragment__sleep, onClick),
         NotificationProfileNamePreset.Model("\uD83D\uDE97", R.string.EditNotificationProfileFragment__driving, onClick),
         NotificationProfileNamePreset.Model("\uD83D\uDE0A", R.string.EditNotificationProfileFragment__downtime, onClick),
-        NotificationProfileNamePreset.Model("\uD83D\uDCA1", R.string.EditNotificationProfileFragment__focus, onClick),
+        NotificationProfileNamePreset.Model("\uD83D\uDCA1", R.string.EditNotificationProfileFragment__focus, onClick)
       )
     )
   }
@@ -178,7 +178,7 @@ class EditNotificationProfileFragment : DSLSettingsFragment(layoutId = R.layout.
       emojiView?.setImageDrawable(drawable)
       viewModel.onEmojiSelected(emoji)
     } else {
-      emojiView?.setImageResource(R.drawable.ic_add_emoji)
+      emojiView?.setImageResource(R.drawable.symbol_emoji_plus_24)
       viewModel.onEmojiSelected("")
     }
   }

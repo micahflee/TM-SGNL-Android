@@ -13,10 +13,11 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.DistributionListDatabase;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.GroupDatabase.GroupRecord;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.CallLinkTable;
+import org.tm.archive.database.DistributionListTables;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.model.GroupRecord;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.DistributionListRecord;
 import org.tm.archive.database.model.RecipientRecord;
@@ -30,6 +31,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 public final class LiveRecipient {
 
@@ -42,18 +44,20 @@ public final class LiveRecipient {
   private final Set<RecipientForeverObserver> observers;
   private final Observer<Recipient>           foreverObserver;
   private final AtomicReference<Recipient>    recipient;
-  private final RecipientDatabase             recipientDatabase;
-  private final GroupDatabase                 groupDatabase;
-  private final DistributionListDatabase      distributionListDatabase;
+  private final RecipientTable                recipientTable;
+  private final GroupTable                    groupDatabase;
+  private final DistributionListTables        distributionListTables;
   private final MutableLiveData<Object>       refreshForceNotify;
+  private final BehaviorSubject<Recipient>    subject;
 
   LiveRecipient(@NonNull Context context, @NonNull Recipient defaultRecipient) {
     this.context                  = context.getApplicationContext();
     this.liveData                 = new MutableLiveData<>(defaultRecipient);
+    this.subject                  = BehaviorSubject.createDefault(defaultRecipient);
     this.recipient                = new AtomicReference<>(defaultRecipient);
-    this.recipientDatabase        = SignalDatabase.recipients();
+    this.recipientTable           = SignalDatabase.recipients();
     this.groupDatabase            = SignalDatabase.groups();
-    this.distributionListDatabase = SignalDatabase.distributionLists();
+    this.distributionListTables   = SignalDatabase.distributionLists();
     this.observers                = new CopyOnWriteArraySet<>();
     this.foreverObserver          = recipient -> {
       ThreadUtil.postToMain(() -> {
@@ -81,6 +85,13 @@ public final class LiveRecipient {
   }
 
   /**
+   * @return An rx-flavored {@link Observable}.
+   */
+  public @NonNull Observable<Recipient> observable() {
+    return subject;
+  }
+
+  /**
    * Watch the recipient for changes. The callback will only be invoked if the provided lifecycle is
    * in a valid state. No need to remove the observer. If you do wish to remove the observer (if,
    * for instance, you wish to remove the listener before the end of the owner's lifecycle), you can
@@ -95,19 +106,6 @@ public final class LiveRecipient {
    */
   public void removeObservers(@NonNull LifecycleOwner owner) {
     ThreadUtil.runOnMain(() -> observableLiveData.removeObservers(owner));
-  }
-
-  public Observable<Recipient> asObservable() {
-    return Observable.create(emitter -> {
-      Recipient current = recipient.get();
-      if (current != null && current.getId() != RecipientId.UNKNOWN) {
-        emitter.onNext(current);
-      }
-
-      RecipientForeverObserver foreverObserver = emitter::onNext;
-      observeForever(foreverObserver);
-      emitter.setCancellable(() -> removeForeverObserver(foreverObserver));
-    });
   }
 
   /**
@@ -191,13 +189,15 @@ public final class LiveRecipient {
   }
 
   private @NonNull Recipient fetchAndCacheRecipientFromDisk(@NonNull RecipientId id) {
-    RecipientRecord  record  = recipientDatabase.getRecord(id);
+    RecipientRecord  record  = recipientTable.getRecord(id);
     RecipientDetails details;
     if (record.getGroupId() != null) {
       details = getGroupRecipientDetails(record);
     } else if (record.getDistributionListId() != null) {
       details = getDistributionListRecipientDetails(record);
-    } else {
+    } else if (record.getCallLinkRoomId() != null) {
+      details = getCallLinkRecipientDetails(record);
+    }else {
       details = RecipientDetails.forIndividual(context, record);
     }
 
@@ -219,15 +219,15 @@ public final class LiveRecipient {
         avatarId = Optional.of(groupRecord.get().getAvatarId());
       }
 
-      return new RecipientDetails(title, null,  avatarId, false, false, record.getRegistered(), record, members, false);
+      return new RecipientDetails(title, null,  avatarId, false, false, record.getRegistered(), record, members, false, groupRecord.get().isActive());
     }
 
-    return new RecipientDetails(null, null, Optional.empty(), false, false, record.getRegistered(), record, null, false);
+    return new RecipientDetails(null, null, Optional.empty(), false, false, record.getRegistered(), record, null, false, false);
   }
 
   @WorkerThread
   private @NonNull RecipientDetails getDistributionListRecipientDetails(@NonNull RecipientRecord record) {
-    DistributionListRecord groupRecord = distributionListDatabase.getList(Objects.requireNonNull(record.getDistributionListId()));
+    DistributionListRecord groupRecord = distributionListTables.getList(Objects.requireNonNull(record.getDistributionListId()));
 
     // TODO [stories] We'll have to see what the perf is like for very large distribution lists. We may not be able to support fetching all the members.
     if (groupRecord != null) {
@@ -240,9 +240,23 @@ public final class LiveRecipient {
     return RecipientDetails.forDistributionList(null, null, record);
   }
 
+  @WorkerThread
+  private @NonNull RecipientDetails getCallLinkRecipientDetails(@NonNull RecipientRecord record) {
+    CallLinkTable.CallLink callLink = SignalDatabase.callLinks().getCallLinkByRoomId(Objects.requireNonNull(record.getCallLinkRoomId()));
+
+    if (callLink != null) {
+      String name = callLink.getState().getName();
+
+      return RecipientDetails.forCallLink(name, record);
+    }
+
+    return RecipientDetails.forCallLink(null, record);
+  }
+
   synchronized void set(@NonNull Recipient recipient) {
     this.recipient.set(recipient);
     this.liveData.postValue(recipient);
+    this.subject.onNext(recipient);
   }
 
   @Override

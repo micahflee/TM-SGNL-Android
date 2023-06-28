@@ -57,6 +57,10 @@
         </attr>
     </declare-styleable>
 
+    <declare-styleable name="AvatarView">
+        <attr name="storyRingScale" format="float" />
+    </declare-styleable>
+
     <attr name="minWidth" format="dimension" />
     <attr name="maxWidth" format="dimension" />
     <attr name="minHeight" format="dimension" />
@@ -151,23 +155,6 @@
     <declare-styleable name="RingtonePreference">
         <attr name="showAdd" format="boolean" />
         <attr name="summaryHasRingtone" format="string|reference" />
-    </declare-styleable>
-
-    <declare-styleable name="ColorPickerPreference">
-        <attr name="currentColor" format="reference" />
-
-        <attr name="colors" format="reference" />
-
-        <attr name="sortColors" format="boolean|reference" />
-
-        <attr name="colorDescriptions" format="reference" />
-
-        <attr name="columns" format="integer|reference" />
-
-        <attr name="colorSize" format="enum|reference">
-            <enum name="large" value="1" />
-            <enum name="small" value="2" />
-        </attr>
     </declare-styleable>
 
     <declare-styleable name="QuoteView">
@@ -293,6 +280,10 @@
         <attr name="thumbHintBackgroundColor" format="color" />
     </declare-styleable>
 
+    <declare-styleable name="VideoPlayer">
+        <attr name="playerLayoutId" format="dimension" />
+    </declare-styleable>
+
     <declare-styleable name="GroupMemberListView">
         <attr name="maxHeight" />
         <attr name="selectable" format="boolean" />
@@ -310,7 +301,8 @@
     <declare-styleable name="WebRtcAudioOutputToggleButtonState">
         <attr name="state_speaker_on" format="boolean" />
         <attr name="state_speaker_off" format="boolean" />
-        <attr name="state_headset_selected" format="boolean" />
+        <attr name="state_bt_headset_selected" format="boolean" />
+        <attr name="state_wired_headset_selected" format="boolean" />
         <attr name="state_speaker_selected" format="boolean" />
         <attr name="state_handset_selected" format="boolean" />
     </declare-styleable>
@@ -377,5 +369,13 @@
 
     <declare-styleable name="CircularProgressMaterialButton">
         <attr name="circularProgressMaterialButton__label" format="string" />
+    </declare-styleable>
+    <declare-styleable name="AnimatedInOutImageButton">
+        <attr name="rotationWhenVisible" format="float" />
+        <attr name="rotationWhenHidden" format="float" />
+    </declare-styleable>
+
+    <declare-styleable name="InsetAwareConstraintLayout">
+        <attr name="animateKeyboardChanges" format="boolean" />
     </declare-styleable>
 </resources>

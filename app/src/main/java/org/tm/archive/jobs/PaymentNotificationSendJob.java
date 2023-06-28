@@ -1,13 +1,14 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
@@ -26,7 +27,6 @@ import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedExcept
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public final class PaymentNotificationSendJob extends BaseJob {
 
@@ -40,17 +40,8 @@ public final class PaymentNotificationSendJob extends BaseJob {
   private final RecipientId recipientId;
   private final UUID        uuid;
 
-  PaymentNotificationSendJob(@NonNull RecipientId recipientId,
-                             @NonNull UUID uuid,
-                             @NonNull String queue)
-  {
-    this(new Parameters.Builder()
-                       .setQueue(queue)
-                       .setLifespan(TimeUnit.DAYS.toMillis(1))
-                       .setMaxAttempts(Parameters.UNLIMITED)
-                       .build(),
-         recipientId,
-         uuid);
+  public static Job create(@NonNull RecipientId recipientId, @NonNull UUID uuid, @NonNull String queue) {
+    return new PaymentNotificationSendJobV2(recipientId, uuid);
   }
 
   private PaymentNotificationSendJob(@NonNull Parameters parameters,
@@ -64,11 +55,11 @@ public final class PaymentNotificationSendJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder()
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder()
                    .putString(KEY_RECIPIENT, recipientId.serialize())
                    .putString(KEY_UUID, uuid.toString())
-                   .build();
+                   .serialize();
   }
 
   @Override
@@ -82,8 +73,8 @@ public final class PaymentNotificationSendJob extends BaseJob {
       throw new NotPushRegisteredException();
     }
 
-    PaymentDatabase paymentDatabase = SignalDatabase.payments();
-    Recipient       recipient       = Recipient.resolved(recipientId);
+    PaymentTable paymentDatabase = SignalDatabase.payments();
+    Recipient    recipient       = Recipient.resolved(recipientId);
 
     if (recipient.isUnregistered()) {
       Log.w(TAG, recipientId + " not registered!");
@@ -94,7 +85,7 @@ public final class PaymentNotificationSendJob extends BaseJob {
     SignalServiceAddress             address            = RecipientUtil.toSignalServiceAddress(context, recipient);
     Optional<UnidentifiedAccessPair> unidentifiedAccess = UnidentifiedAccessUtil.getAccessFor(context, recipient);
 
-    PaymentDatabase.PaymentTransaction payment = paymentDatabase.getPayment(uuid);
+    PaymentTable.PaymentTransaction payment = paymentDatabase.getPayment(uuid);
 
     if (payment == null) {
       Log.w(TAG, "Could not find payment, cannot send notification " + uuid);
@@ -107,7 +98,7 @@ public final class PaymentNotificationSendJob extends BaseJob {
     }
 
     SignalServiceDataMessage dataMessage = SignalServiceDataMessage.newBuilder()
-                                                                   .withPayment(new SignalServiceDataMessage.Payment(new SignalServiceDataMessage.PaymentNotification(payment.getReceipt(), payment.getNote())))
+                                                                   .withPayment(new SignalServiceDataMessage.Payment(new SignalServiceDataMessage.PaymentNotification(payment.getReceipt(), payment.getNote()), null))
                                                                    .build();
 
     SendMessageResult sendMessageResult = messageSender.sendDataMessage(address, unidentifiedAccess, ContentHint.DEFAULT, dataMessage, IndividualSendEvents.EMPTY, false, recipient.needsPniSignature());
@@ -142,7 +133,9 @@ public final class PaymentNotificationSendJob extends BaseJob {
 
   public static class Factory implements Job.Factory<PaymentNotificationSendJob> {
     @Override
-    public @NonNull PaymentNotificationSendJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PaymentNotificationSendJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new PaymentNotificationSendJob(parameters,
                                             RecipientId.from(data.getString(KEY_RECIPIENT)),
                                             UUID.fromString(data.getString(KEY_UUID)));

@@ -20,6 +20,8 @@ import androidx.core.content.ContextCompat;
 
 import org.tm.archive.R;
 import org.tm.archive.animation.AnimationCompleteListener;
+import org.tm.archive.util.EditTextExtensionsKt;
+import org.tm.archive.util.TextSecurePreferences;
 
 public class SearchToolbar extends LinearLayout {
 
@@ -56,6 +58,8 @@ public class SearchToolbar extends LinearLayout {
     this.searchItem = toolbar.getMenu().findItem(R.id.action_filter_search);
     SearchView searchView = (SearchView) searchItem.getActionView();
     EditText   searchText = searchView.findViewById(R.id.search_src_text);
+
+    EditTextExtensionsKt.setIncognitoKeyboardEnabled(searchText, TextSecurePreferences.isIncognitoKeyboardEnabled(getContext()));
 
     searchView.setSubmitButtonEnabled(false);
     searchView.setMaxWidth(Integer.MAX_VALUE);
@@ -102,15 +106,11 @@ public class SearchToolbar extends LinearLayout {
 
       searchItem.expandActionView();
 
-      if (Build.VERSION.SDK_INT >= 21) {
-        Animator animator = ViewAnimationUtils.createCircularReveal(this, (int)x, (int)y, 0, getWidth());
-        animator.setDuration(400);
+      Animator animator = ViewAnimationUtils.createCircularReveal(this, (int)x, (int)y, 0, getWidth());
+      animator.setDuration(400);
 
-        setVisibility(View.VISIBLE);
-        animator.start();
-      } else {
-        setVisibility(View.VISIBLE);
-      }
+      setVisibility(View.VISIBLE);
+      animator.start();
     }
   }
 
@@ -125,19 +125,15 @@ public class SearchToolbar extends LinearLayout {
 
       if (listener != null) listener.onSearchClosed();
 
-      if (Build.VERSION.SDK_INT >= 21) {
-        Animator animator = ViewAnimationUtils.createCircularReveal(this, (int)x, (int)y, getWidth(), 0);
-        animator.setDuration(400);
-        animator.addListener(new AnimationCompleteListener() {
-          @Override
-          public void onAnimationEnd(Animator animation) {
-            setVisibility(View.INVISIBLE);
-          }
-        });
-        animator.start();
-      } else {
-        setVisibility(View.INVISIBLE);
-      }
+      Animator animator = ViewAnimationUtils.createCircularReveal(this, (int)x, (int)y, getWidth(), 0);
+      animator.setDuration(400);
+      animator.addListener(new AnimationCompleteListener() {
+        @Override
+        public void onAnimationEnd(Animator animation) {
+          setVisibility(View.INVISIBLE);
+        }
+      });
+      animator.start();
     }
   }
 

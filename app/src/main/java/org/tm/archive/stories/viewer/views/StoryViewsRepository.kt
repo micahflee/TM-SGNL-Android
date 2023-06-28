@@ -6,11 +6,14 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.logging.Log
 import org.tm.archive.database.DatabaseObserver
-import org.tm.archive.database.GroupReceiptDatabase
+import org.tm.archive.database.GroupReceiptTable
 import org.tm.archive.database.SignalDatabase
+import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.util.TextSecurePreferences
+import org.tm.archive.recipients.RecipientId
+import org.whispersystems.signalservice.api.push.DistributionId
 
 class StoryViewsRepository {
 
@@ -18,22 +21,30 @@ class StoryViewsRepository {
     private val TAG = Log.tag(StoryViewsRepository::class.java)
   }
 
-  fun isReadReceiptsEnabled(): Boolean = TextSecurePreferences.isReadReceiptsEnabled(ApplicationDependencies.getApplication())
+  fun isReadReceiptsEnabled(): Boolean = SignalStore.storyValues().viewedReceiptsEnabled
 
   fun getStoryRecipient(storyId: Long): Single<Recipient> {
     return Single.fromCallable {
-      val record = SignalDatabase.mms.getMessageRecord(storyId)
-
-      record.recipient
+      SignalDatabase.messages.getMessageRecord(storyId).toRecipient
     }.subscribeOn(Schedulers.io())
   }
 
   fun getViews(storyId: Long): Observable<List<StoryViewItemData>> {
     return Observable.create<List<StoryViewItemData>> { emitter ->
+      val record: MessageRecord = SignalDatabase.messages.getMessageRecord(storyId)
+      val filterIds: Set<RecipientId> = if (record.toRecipient.isDistributionList) {
+        val distributionId: DistributionId = SignalDatabase.distributionLists.getDistributionId(record.toRecipient.requireDistributionListId())!!
+        SignalDatabase.storySends.getRecipientsForDistributionId(storyId, distributionId)
+      } else {
+        emptySet()
+      }
+
       fun refresh() {
         emitter.onNext(
           SignalDatabase.groupReceipts.getGroupReceiptInfo(storyId).filter {
-            it.status == GroupReceiptDatabase.STATUS_VIEWED
+            it.status == GroupReceiptTable.STATUS_VIEWED
+          }.filter {
+            filterIds.isEmpty() || it.recipientId in filterIds
           }.map {
             StoryViewItemData(
               recipient = Recipient.resolved(it.recipientId),

@@ -5,16 +5,19 @@ import android.database.Cursor
 import androidx.annotation.WorkerThread
 import androidx.lifecycle.LiveData
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.signal.storageservice.protos.groups.local.DecryptedGroup
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMember
 import org.tm.archive.contacts.sync.ContactDiscovery
-import org.tm.archive.database.GroupDatabase
-import org.tm.archive.database.MediaDatabase
+import org.tm.archive.database.CallTable
+import org.tm.archive.database.MediaTable
 import org.tm.archive.database.SignalDatabase
+import org.tm.archive.database.model.GroupRecord
 import org.tm.archive.database.model.IdentityRecord
+import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.StoryViewState
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
@@ -37,12 +40,28 @@ class ConversationSettingsRepository(
   private val groupManagementRepository: GroupManagementRepository = GroupManagementRepository(context)
 ) {
 
+  fun getCallEvents(callRowIds: LongArray): Single<List<Pair<CallTable.Call, MessageRecord>>> {
+    return if (callRowIds.isEmpty()) {
+      Single.just(emptyList())
+    } else {
+      Single.fromCallable {
+        val callMap = SignalDatabase.calls.getCallsByRowIds(callRowIds.toList())
+        val messageIds = callMap.values.mapNotNull { it.messageId }
+        SignalDatabase.messages.getMessages(messageIds).iterator().asSequence()
+          .filter { callMap.containsKey(it.id) }
+          .map { callMap[it.id]!! to it }
+          .sortedByDescending { it.first.timestamp }
+          .toList()
+      }
+    }
+  }
+
   @WorkerThread
   fun getThreadMedia(threadId: Long): Optional<Cursor> {
     return if (threadId <= 0) {
       Optional.empty()
     } else {
-      Optional.of(SignalDatabase.media.getGalleryMediaForThread(threadId, MediaDatabase.Sorting.Newest))
+      Optional.of(SignalDatabase.media.getGalleryMediaForThread(threadId, MediaTable.Sorting.Newest))
     }
   }
 
@@ -70,7 +89,7 @@ class ConversationSettingsRepository(
   fun isInternalRecipientDetailsEnabled(): Boolean = SignalStore.internalValues().recipientDetails()
 
   fun hasGroups(consumer: (Boolean) -> Unit) {
-    SignalExecutors.BOUNDED.execute { consumer(SignalDatabase.groups.activeGroupCount > 0) }
+    SignalExecutors.BOUNDED.execute { consumer(SignalDatabase.groups.getActiveGroupCount() > 0) }
   }
 
   fun getIdentity(recipientId: RecipientId, consumer: (IdentityRecord?) -> Unit) {
@@ -91,7 +110,7 @@ class ConversationSettingsRepository(
           .getPushGroupsContainingMember(recipientId)
           .asSequence()
           .filter { it.members.contains(Recipient.self().id) }
-          .map(GroupDatabase.GroupRecord::getRecipientId)
+          .map(GroupRecord::recipientId)
           .map(Recipient::resolved)
           .sortedBy { gr -> gr.getDisplayName(context) }
           .toList()
@@ -129,7 +148,7 @@ class ConversationSettingsRepository(
 
   fun getGroupCapacity(groupId: GroupId, consumer: (GroupCapacityResult) -> Unit) {
     SignalExecutors.BOUNDED.execute {
-      val groupRecord: GroupDatabase.GroupRecord = SignalDatabase.groups.getGroup(groupId).get()
+      val groupRecord: GroupRecord = SignalDatabase.groups.getGroup(groupId).get()
       consumer(
         if (groupRecord.isV2Group) {
           val decryptedGroup: DecryptedGroup = groupRecord.requireV2GroupProperties().decryptedGroup
@@ -175,7 +194,7 @@ class ConversationSettingsRepository(
   fun unblock(recipientId: RecipientId) {
     SignalExecutors.BOUNDED.execute {
       val recipient = Recipient.resolved(recipientId)
-      RecipientUtil.unblock(context, recipient)
+      RecipientUtil.unblock(recipient)
     }
   }
 
@@ -189,7 +208,7 @@ class ConversationSettingsRepository(
   fun unblock(groupId: GroupId) {
     SignalExecutors.BOUNDED.execute {
       val recipient = Recipient.externalGroupExact(groupId)
-      RecipientUtil.unblock(context, recipient)
+      RecipientUtil.unblock(recipient)
     }
   }
 

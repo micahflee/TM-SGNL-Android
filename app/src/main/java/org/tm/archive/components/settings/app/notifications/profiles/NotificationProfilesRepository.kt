@@ -1,6 +1,7 @@
 package org.tm.archive.components.settings.app.notifications.profiles
 
 import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.ObservableEmitter
 import io.reactivex.rxjava3.core.Single
@@ -8,6 +9,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import org.tm.archive.conversation.colors.AvatarColor
 import org.tm.archive.database.DatabaseObserver
 import org.tm.archive.database.NotificationProfileDatabase
+import org.tm.archive.database.RxDatabaseObserver
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
@@ -24,16 +26,11 @@ import org.tm.archive.util.toMillis
 class NotificationProfilesRepository {
   private val database: NotificationProfileDatabase = SignalDatabase.notificationProfiles
 
-  fun getProfiles(): Observable<List<NotificationProfile>> {
-    return Observable.create { emitter: ObservableEmitter<List<NotificationProfile>> ->
-      val databaseObserver: DatabaseObserver = ApplicationDependencies.getDatabaseObserver()
-      val profileObserver = DatabaseObserver.Observer { emitter.onNext(database.getProfiles()) }
-
-      databaseObserver.registerNotificationProfileObserver(profileObserver)
-
-      emitter.setCancellable { databaseObserver.unregisterObserver(profileObserver) }
-      emitter.onNext(database.getProfiles())
-    }.subscribeOn(Schedulers.io())
+  fun getProfiles(): Flowable<List<NotificationProfile>> {
+    return RxDatabaseObserver
+      .notificationProfiles
+      .map { database.getProfiles() }
+      .subscribeOn(Schedulers.io())
   }
 
   fun getProfile(profileId: Long): Observable<NotificationProfile> {

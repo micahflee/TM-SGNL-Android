@@ -13,6 +13,7 @@ import org.whispersystems.signalservice.api.websocket.HealthMonitor;
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState;
 import org.whispersystems.signalservice.internal.configuration.SignalProxy;
 import org.whispersystems.signalservice.internal.configuration.SignalServiceConfiguration;
+import org.whispersystems.signalservice.internal.configuration.SignalServiceUrl;
 import org.whispersystems.signalservice.internal.util.BlacklistingTrustManager;
 import org.whispersystems.signalservice.internal.util.Util;
 
@@ -66,14 +67,16 @@ public class WebSocketConnection extends WebSocketListener {
 
   private final String                                    name;
   private final String                                    wsUri;
-  private final TrustStore                    trustStore;
-  private final Optional<CredentialsProvider> credentialsProvider;
-  private final String                        signalAgent;
+  private final TrustStore                                trustStore;
+  private final Optional<CredentialsProvider>             credentialsProvider;
+  private final String                                    signalAgent;
   private final HealthMonitor                             healthMonitor;
   private final List<Interceptor>                         interceptors;
   private final Optional<Dns>                             dns;
   private final Optional<SignalProxy>                     signalProxy;
   private final BehaviorSubject<WebSocketConnectionState> webSocketState;
+  private final boolean                                   allowStories;
+  private final SignalServiceUrl                          serviceUrl;
 
   private WebSocket client;
 
@@ -81,8 +84,9 @@ public class WebSocketConnection extends WebSocketListener {
                              SignalServiceConfiguration serviceConfiguration,
                              Optional<CredentialsProvider> credentialsProvider,
                              String signalAgent,
-                             HealthMonitor healthMonitor) {
-    this(name, serviceConfiguration, credentialsProvider, signalAgent, healthMonitor, "");
+                             HealthMonitor healthMonitor,
+                             boolean allowStories) {
+    this(name, serviceConfiguration, credentialsProvider, signalAgent, healthMonitor, "", allowStories);
   }
 
   public WebSocketConnection(String name,
@@ -90,7 +94,8 @@ public class WebSocketConnection extends WebSocketListener {
                              Optional<CredentialsProvider> credentialsProvider,
                              String signalAgent,
                              HealthMonitor healthMonitor,
-                             String extraPathUri)
+                             String extraPathUri,
+                             boolean allowStories)
   {
     this.name                = "[" + name + ":" + System.identityHashCode(this) + "]";
     this.trustStore          = serviceConfiguration.getSignalServiceUrls()[0].getTrustStore();
@@ -101,8 +106,10 @@ public class WebSocketConnection extends WebSocketListener {
     this.signalProxy         = serviceConfiguration.getSignalProxy();
     this.healthMonitor       = healthMonitor;
     this.webSocketState      = BehaviorSubject.createDefault(WebSocketConnectionState.DISCONNECTED);
+    this.allowStories        = allowStories;
+    this.serviceUrl          = serviceConfiguration.getSignalServiceUrls()[0];
 
-    String uri = serviceConfiguration.getSignalServiceUrls()[0].getUrl().replace("https://", "wss://").replace("http://", "ws://");
+    String uri = serviceUrl.getUrl().replace("https://", "wss://").replace("http://", "ws://");
 
     if (credentialsProvider.isPresent()) {
       this.wsUri = uri + "/v1/websocket/" + extraPathUri + "?login=%s&password=%s";
@@ -135,7 +142,7 @@ public class WebSocketConnection extends WebSocketListener {
 
       OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder().sslSocketFactory(new Tls12SocketFactory(socketFactory.first()),
                                                                                        socketFactory.second())
-                                                                     .connectionSpecs(Util.immutableList(ConnectionSpec.RESTRICTED_TLS))
+                                                                     .connectionSpecs(serviceUrl.getConnectionSpecs().orElse(Util.immutableList(ConnectionSpec.RESTRICTED_TLS)))
                                                                      .readTimeout(KEEPALIVE_TIMEOUT_SECONDS + 10, TimeUnit.SECONDS)
                                                                      .dns(dns.orElse(Dns.SYSTEM))
                                                                      .connectTimeout(KEEPALIVE_TIMEOUT_SECONDS + 10, TimeUnit.SECONDS);
@@ -154,6 +161,13 @@ public class WebSocketConnection extends WebSocketListener {
 
       if (signalAgent != null) {
         requestBuilder.addHeader("X-Signal-Agent", signalAgent);
+      }
+
+      requestBuilder.addHeader("X-Signal-Receive-Stories", allowStories ? "true" : "false");
+
+      if (serviceUrl.getHostHeader().isPresent()) {
+        requestBuilder.addHeader("Host", serviceUrl.getHostHeader().get());
+        Log.w(TAG, "Using alternate host: " + serviceUrl.getHostHeader().get());
       }
 
       webSocketState.onNext(WebSocketConnectionState.CONNECTING);
@@ -177,6 +191,14 @@ public class WebSocketConnection extends WebSocketListener {
     }
 
     notifyAll();
+  }
+
+  public synchronized Optional<WebSocketRequestMessage> readRequestIfAvailable() {
+    if (incomingRequests.size() > 0) {
+      return Optional.of(incomingRequests.removeFirst());
+    } else {
+      return Optional.empty();
+    }
   }
 
   public synchronized WebSocketRequestMessage readRequest(long timeoutMillis)

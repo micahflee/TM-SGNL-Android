@@ -2,20 +2,21 @@ package org.tm.archive.groups.v2.processing
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.verify
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.both
+import org.hamcrest.Matchers.hasItem
+import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.`is`
+import org.hamcrest.Matchers.notNullValue
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers.eq
-import org.mockito.Mockito.any
-import org.mockito.Mockito.doReturn
-import org.mockito.Mockito.isA
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.reset
-import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.signal.core.util.Hex.fromStringCondensed
@@ -25,11 +26,13 @@ import org.signal.libsignal.zkgroup.groups.GroupMasterKey
 import org.signal.storageservice.protos.groups.local.DecryptedGroup
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange
 import org.signal.storageservice.protos.groups.local.DecryptedMember
+import org.signal.storageservice.protos.groups.local.DecryptedString
 import org.signal.storageservice.protos.groups.local.DecryptedTimer
 import org.tm.archive.SignalStoreRule
-import org.tm.archive.database.GroupDatabase
 import org.tm.archive.database.GroupStateTestData
-import org.tm.archive.database.RecipientDatabase
+import org.tm.archive.database.GroupTable
+import org.tm.archive.database.RecipientTable
+import org.tm.archive.database.model.databaseprotos.DecryptedGroupV2Context
 import org.tm.archive.database.model.databaseprotos.member
 import org.tm.archive.database.model.databaseprotos.requestingMember
 import org.tm.archive.database.setNewDescription
@@ -37,6 +40,7 @@ import org.tm.archive.database.setNewTitle
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.GroupsV2Authorization
+import org.tm.archive.jobmanager.JobManager
 import org.tm.archive.jobs.RequestGroupV2InfoJob
 import org.tm.archive.logging.CustomSignalProtocolLogger
 import org.tm.archive.testutil.SystemOutLogger
@@ -61,11 +65,12 @@ class GroupsV2StateProcessorTest {
     private val others: List<DecryptedMember> = listOf(member(otherSid))
   }
 
-  private lateinit var groupDatabase: GroupDatabase
-  private lateinit var recipientDatabase: RecipientDatabase
+  private lateinit var groupTable: GroupTable
+  private lateinit var recipientTable: RecipientTable
   private lateinit var groupsV2API: GroupsV2Api
   private lateinit var groupsV2Authorization: GroupsV2Authorization
   private lateinit var profileAndMessageHelper: GroupsV2StateProcessor.ProfileAndMessageHelper
+  private lateinit var jobManager: JobManager
 
   private lateinit var processor: GroupsV2StateProcessor.StateProcessorForGroup
 
@@ -77,25 +82,29 @@ class GroupsV2StateProcessorTest {
     Log.initialize(SystemOutLogger())
     SignalProtocolLoggerProvider.setProvider(CustomSignalProtocolLogger())
 
-    groupDatabase = mock(GroupDatabase::class.java)
-    recipientDatabase = mock(RecipientDatabase::class.java)
-    groupsV2API = mock(GroupsV2Api::class.java)
-    groupsV2Authorization = mock(GroupsV2Authorization::class.java)
-    profileAndMessageHelper = mock(GroupsV2StateProcessor.ProfileAndMessageHelper::class.java)
+    groupTable = mockk(relaxed = true)
+    recipientTable = mockk()
+    groupsV2API = mockk()
+    groupsV2Authorization = mockk(relaxed = true)
+    profileAndMessageHelper = mockk(relaxed = true)
+    jobManager = mockk(relaxed = true)
 
-    processor = GroupsV2StateProcessor.StateProcessorForGroup(serviceIds, ApplicationProvider.getApplicationContext(), groupDatabase, groupsV2API, groupsV2Authorization, masterKey, profileAndMessageHelper)
+    mockkStatic(ApplicationDependencies::class)
+    every { ApplicationDependencies.getJobManager() } returns jobManager
+
+    processor = GroupsV2StateProcessor.StateProcessorForGroup(serviceIds, ApplicationProvider.getApplicationContext(), groupTable, groupsV2API, groupsV2Authorization, masterKey, profileAndMessageHelper)
   }
 
   @After
   fun tearDown() {
-    reset(ApplicationDependencies.getJobManager())
+//    reset(ApplicationDependencies.getJobManager())
   }
 
   private fun given(init: GroupStateTestData.() -> Unit) {
     val data = givenData(init)
 
-    doReturn(data.groupRecord).`when`(groupDatabase).getGroup(any(GroupId.V2::class.java))
-    doReturn(!data.groupRecord.isPresent).`when`(groupDatabase).isUnknownGroup(any())
+    every { groupTable.getGroup(any<GroupId.V2>()) } returns data.groupRecord
+    every { groupTable.isUnknownGroup(any<GroupId>()) } returns !data.groupRecord.isPresent
 
     data.serverState?.let { serverState ->
       val testPartial = object : PartialDecryptedGroup(null, serverState, null, null) {
@@ -103,11 +112,13 @@ class GroupsV2StateProcessorTest {
           return serverState
         }
       }
-      doReturn(testPartial).`when`(groupsV2API).getPartialDecryptedGroup(any(), any())
+
+      every { groupsV2API.getPartialDecryptedGroup(any(), any()) } returns testPartial
+      every { groupsV2API.getGroup(any(), any()) } returns serverState
     }
 
     data.changeSet?.let { changeSet ->
-      doReturn(changeSet.toApiResponse()).`when`(groupsV2API).getGroupHistoryPage(any(), eq(data.requestedRevision), any(), eq(data.includeFirst))
+      every { groupsV2API.getGroupHistoryPage(any(), data.requestedRevision, any(), data.includeFirst) } returns changeSet.toApiResponse()
     }
   }
 
@@ -294,15 +305,14 @@ class GroupsV2StateProcessorTest {
       apiCallParameters(2, true)
     }
 
-    doReturn(true).`when`(groupDatabase).isUnknownGroup(any())
+    every { groupTable.isUnknownGroup(any<GroupId>()) } returns true
 
     val result = processor.updateLocalGroupToRevision(2, 0, DecryptedGroupChange.getDefaultInstance())
 
     assertThat("local should update to revision added", result.groupState, `is`(GroupsV2StateProcessor.GroupState.GROUP_UPDATED))
     assertThat("revision matches peer revision added", result.latestServer!!.revision, `is`(2))
     assertThat("title matches that as it was in revision added", result.latestServer!!.title, `is`("Baking Signal for Science"))
-
-    verify(ApplicationDependencies.getJobManager()).add(isA(RequestGroupV2InfoJob::class.java))
+    verify { jobManager.add(ofType(RequestGroupV2InfoJob::class)) }
   }
 
   @Test
@@ -394,7 +404,7 @@ class GroupsV2StateProcessorTest {
     assertThat("local should update to server", result.groupState, `is`(GroupsV2StateProcessor.GroupState.GROUP_UPDATED))
     assertThat("revision matches revision approved at", result.latestServer!!.revision, `is`(3))
     assertThat("title matches revision approved at", result.latestServer!!.title, `is`("Beam me up"))
-    verify(ApplicationDependencies.getJobManager()).add(isA(RequestGroupV2InfoJob::class.java))
+    verify { jobManager.add(ofType(RequestGroupV2InfoJob::class)) }
   }
 
   @Test
@@ -446,11 +456,125 @@ class GroupsV2StateProcessorTest {
         }
       }
     }
-    doReturn(secondApiCallChangeSet.changeSet!!.toApiResponse()).`when`(groupsV2API).getGroupHistoryPage(any(), eq(100), any(), eq(true))
+    every { groupsV2API.getGroupHistoryPage(any(), 100, any(), true) } returns secondApiCallChangeSet.changeSet!!.toApiResponse()
 
     val result = processor.updateLocalGroupToRevision(GroupsV2StateProcessor.LATEST, 0, null)
 
     assertThat("local should update to server", result.groupState, `is`(GroupsV2StateProcessor.GroupState.GROUP_UPDATED))
     assertThat("revision matches latest revision on server", result.latestServer!!.revision, `is`(101))
+  }
+
+  /**
+   * If for some reason we missed a member being added in our local state, and then we preform a multi-revision update,
+   * we should now know about the member and add update messages to the chat.
+   */
+  @Test
+  fun missedMemberAddResolvesWithMultipleRevisionUpdate() {
+    val secondOther = member(ServiceId.from(UUID.randomUUID()))
+
+    profileAndMessageHelper.masterKey = masterKey
+
+    val updateMessageContextArgs = mutableListOf<DecryptedGroupV2Context>()
+    every { profileAndMessageHelper.insertUpdateMessages(any(), any(), any()) } answers { callOriginal() }
+    every { profileAndMessageHelper.storeMessage(capture(updateMessageContextArgs), any()) } returns Unit
+
+    given {
+      localState(
+        revision = 8,
+        title = "Whatever",
+        members = selfAndOthers
+      )
+      serverState(
+        revision = 10,
+        title = "Changed",
+        members = selfAndOthers + secondOther
+      )
+      changeSet {
+        changeLog(9) {
+          change {
+            setNewTitle("Mid-Change")
+          }
+          fullSnapshot(
+            title = "Mid-Change",
+            members = selfAndOthers + secondOther
+          )
+        }
+        changeLog(10) {
+          change {
+            setNewTitle("Changed")
+          }
+        }
+      }
+      apiCallParameters(requestedRevision = 8, includeFirst = true)
+    }
+
+    val result = processor.updateLocalGroupToRevision(GroupsV2StateProcessor.LATEST, 0, null)
+    assertThat("local should update to server", result.groupState, `is`(GroupsV2StateProcessor.GroupState.GROUP_UPDATED))
+    assertThat("members contains second other", result.latestServer!!.membersList, hasItem(secondOther))
+
+    assertThat("group update messages contains new member add", updateMessageContextArgs.map { it.change.newMembersList }, hasItem(hasItem(secondOther)))
+  }
+
+  /**
+   * If for some reason we missed a member being added in our local state, and then we preform a forced sanity update,
+   * we should now know about the member and any other changes, and add update messages to the chat.
+   */
+  @Test
+  fun missedMemberAddResolvesWithForcedUpdate() {
+    val secondOther = member(ServiceId.from(UUID.randomUUID()))
+
+    profileAndMessageHelper.masterKey = masterKey
+
+    val updateMessageContextArgs = mutableListOf<DecryptedGroupV2Context>()
+    every { profileAndMessageHelper.insertUpdateMessages(any(), any(), any()) } answers { callOriginal() }
+    every { profileAndMessageHelper.storeMessage(capture(updateMessageContextArgs), any()) } returns Unit
+
+    given {
+      localState(
+        revision = 10,
+        title = "Title",
+        members = selfAndOthers
+      )
+      serverState(
+        revision = 10,
+        title = "Changed",
+        members = selfAndOthers + secondOther
+      )
+    }
+
+    val result = processor.forceSanityUpdateFromServer(0)
+    assertThat("local should update to server", result.groupState, `is`(GroupsV2StateProcessor.GroupState.GROUP_UPDATED))
+    assertThat("members contains second other", result.latestServer!!.membersList, hasItem(secondOther))
+    assertThat("title should be updated", result.latestServer!!.title, `is`("Changed"))
+
+    assertThat("group update messages contains new member add", updateMessageContextArgs.map { it.change.newMembersList }, hasItem(hasItem(secondOther)))
+
+    assertThat(
+      "group update messages contains title change",
+      updateMessageContextArgs.map { it.change.newTitle },
+      hasItem(both<DecryptedString>(notNullValue()).and(hasProperty("value", `is`("Changed"))))
+    )
+  }
+
+  /**
+   * If we preform a forced sanity update, with no differences between local and server, then it should be no-op.
+   */
+  @Test
+  fun noDifferencesNoOpsWithForcedUpdate() {
+    given {
+      localState(
+        revision = 10,
+        title = "Title",
+        members = selfAndOthers
+      )
+      serverState(
+        revision = 10,
+        title = "Title",
+        members = selfAndOthers
+      )
+    }
+
+    val result = processor.forceSanityUpdateFromServer(0)
+    assertThat("local should be unchanged", result.groupState, `is`(GroupsV2StateProcessor.GroupState.GROUP_CONSISTENT_OR_AHEAD))
   }
 }

@@ -1,14 +1,15 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.StickerDatabase.StickerPackRecordReader;
+import org.tm.archive.database.StickerTable.StickerPackRecordReader;
 import org.tm.archive.database.model.StickerPackRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;
@@ -47,8 +48,8 @@ public class MultiDeviceStickerPackSyncJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -99,7 +100,7 @@ public class MultiDeviceStickerPackSyncJob extends BaseJob {
 
     @Override
     public @NonNull
-    MultiDeviceStickerPackSyncJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    MultiDeviceStickerPackSyncJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new MultiDeviceStickerPackSyncJob(parameters);
     }
   }

@@ -1,10 +1,11 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.whispersystems.signalservice.internal.push.http.ResumableUploadSpec;
@@ -37,9 +38,9 @@ public class ResumableUploadSpecJob extends BaseJob {
     ResumableUploadSpec resumableUploadSpec = ApplicationDependencies.getSignalServiceMessageSender()
                                                                      .getResumableUploadSpec();
 
-    setOutputData(new Data.Builder()
+    setOutputData(new JsonJobData.Builder()
                           .putString(KEY_RESUME_SPEC, resumableUploadSpec.serialize())
-                          .build());
+                          .serialize());
   }
 
   @Override
@@ -48,8 +49,8 @@ public class ResumableUploadSpecJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -65,7 +66,7 @@ public class ResumableUploadSpecJob extends BaseJob {
   public static class Factory implements Job.Factory<ResumableUploadSpecJob> {
 
     @Override
-    public @NonNull ResumableUploadSpecJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull ResumableUploadSpecJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new ResumableUploadSpecJob(parameters);
     }
   }

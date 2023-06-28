@@ -2,6 +2,7 @@ package org.tm.archive.recipients.ui.bottomsheet;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -33,6 +34,7 @@ import org.tm.archive.components.settings.conversation.preferences.ButtonStripPr
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.FallbackPhoto80dp;
 import org.tm.archive.groups.GroupId;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.phonenumbers.PhoneNumberFormatter;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientExporter;
@@ -45,7 +47,10 @@ import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.SpanUtil;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
+import org.tm.archive.util.WindowUtil;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import kotlin.Unit;
@@ -82,6 +87,9 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   private View                     buttonStrip;
   private View                     interactionsContainer;
   private BadgeImageView           badgeImageView;
+  private Callback                 callback;
+
+  private ButtonStripPreference.ViewHolder buttonStripViewHolder;
 
   public static BottomSheetDialogFragment create(@NonNull RecipientId recipientId,
                                                  @Nullable GroupId groupId)
@@ -131,6 +139,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
     interactionsContainer  = view.findViewById(R.id.interactions_container);
     badgeImageView         = view.findViewById(R.id.rbs_badge);
 
+    buttonStripViewHolder = new ButtonStripPreference.ViewHolder(buttonStrip);
     return view;
   }
 
@@ -221,19 +230,28 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         unblockButton.setVisibility(View.GONE);
       }
 
+      boolean isAudioAvailable = (recipient.isRegistered() || SignalStore.misc().getSmsExportPhase().allowSmsFeatures()) &&
+                                 !recipient.isGroup() &&
+                                 !recipient.isBlocked() &&
+                                 !recipient.isSelf() &&
+                                 !recipient.isReleaseNotes();
+
       ButtonStripPreference.State  buttonStripState = new ButtonStripPreference.State(
-          /* isMessageAvailable = */ !recipient.isBlocked() && !recipient.isSelf() && !recipient.isReleaseNotes(),
-          /* isVideoAvailable   = */ !recipient.isBlocked() && !recipient.isSelf() && recipient.isRegistered(),
-          /* isAudioAvailable   = */ !recipient.isBlocked() && !recipient.isSelf() && !recipient.isReleaseNotes(),
-          /* isMuteAvailable    = */ false,
-          /* isSearchAvailable  = */ false,
-          /* isAudioSecure      = */ recipient.isRegistered(),
-          /* isMuted            = */ false
+          /* isMessageAvailable     = */ !recipient.isBlocked() && !recipient.isSelf() && !recipient.isReleaseNotes(),
+          /* isVideoAvailable       = */ !recipient.isBlocked() && !recipient.isSelf() && recipient.isRegistered(),
+          /* isAudioAvailable       = */ isAudioAvailable,
+          /* isMuteAvailable        = */ false,
+          /* isSearchAvailable      = */ false,
+          /* isAudioSecure          = */ recipient.isRegistered(),
+          /* isMuted                = */ false,
+          /* isAddToStoryAvailable  = */ false
       );
 
       ButtonStripPreference.Model buttonStripModel = new ButtonStripPreference.Model(
           buttonStripState,
           DSLSettingsIcon.from(ContextUtil.requireDrawable(requireContext(), R.drawable.selectable_recipient_bottom_sheet_icon_button)),
+          !viewModel.isDeprecatedOrUnregistered(),
+          () -> Unit.INSTANCE,
           () -> {
             dismiss();
             viewModel.onMessageClicked(requireActivity());
@@ -255,13 +273,13 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
           () -> Unit.INSTANCE
       );
 
-      new ButtonStripPreference.ViewHolder(buttonStrip).bind(buttonStripModel);
+      buttonStripViewHolder.bind(buttonStripModel);
 
       if (recipient.isReleaseNotes()) {
         buttonStrip.setVisibility(View.GONE);
       }
 
-      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes()) {
+      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes() || !recipient.hasE164()) {
         addContactButton.setVisibility(View.GONE);
       } else {
         addContactButton.setVisibility(View.VISIBLE);
@@ -330,10 +348,27 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
     viewModel.getAdminActionBusy().observe(getViewLifecycleOwner(), busy -> {
       adminActionBusy.setVisibility(busy ? View.VISIBLE : View.GONE);
 
-      makeGroupAdminButton.setEnabled(!busy);
-      removeAdminButton.setEnabled(!busy);
-      removeFromGroupButton.setEnabled(!busy);
+      boolean userLoggedOut = viewModel.isDeprecatedOrUnregistered();
+      makeGroupAdminButton.setEnabled(!busy && !userLoggedOut);
+      removeAdminButton.setEnabled(!busy && !userLoggedOut);
+      removeFromGroupButton.setEnabled(!busy && !userLoggedOut);
     });
+
+    callback = getParentFragment() != null && getParentFragment() instanceof Callback ? (Callback) getParentFragment() : null;
+
+    if (viewModel.isDeprecatedOrUnregistered()) {
+      List<TextView> viewsToDisable = Arrays.asList(blockButton, unblockButton, removeFromGroupButton, makeGroupAdminButton, removeAdminButton, addToGroupButton, viewSafetyNumberButton);
+      for (TextView view : viewsToDisable) {
+        view.setEnabled(false);
+        view.setAlpha(0.5f);
+      }
+    }
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   private void openSystemContactSheet(@NonNull Intent intent) {
@@ -355,5 +390,17 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   @Override
   public void show(@NonNull FragmentManager manager, @Nullable String tag) {
     BottomSheetUtil.show(manager, tag, this);
+  }
+
+  @Override
+  public void onDismiss(@NonNull DialogInterface dialog) {
+    super.onDismiss(dialog);
+    if (callback != null) {
+      callback.onRecipientBottomSheetDismissed();
+    }
+  }
+
+  public interface Callback {
+    void onRecipientBottomSheetDismissed();
   }
 }

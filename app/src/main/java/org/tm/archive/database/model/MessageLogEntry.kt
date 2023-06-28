@@ -5,7 +5,7 @@ import org.whispersystems.signalservice.api.crypto.ContentHint
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos
 
 /**
- * Model class for reading from the [org.tm.archive.database.MessageSendLogDatabase].
+ * Model class for reading from the [org.tm.archive.database.MessageSendLogTables].
  */
 data class MessageLogEntry(
   val recipientId: RecipientId,

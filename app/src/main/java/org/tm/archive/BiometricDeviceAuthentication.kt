@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
-import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
@@ -26,6 +25,14 @@ class BiometricDeviceAuthentication(
     const val TAG: String = "BiometricDeviceAuth"
     const val BIOMETRIC_AUTHENTICATORS = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
     const val ALLOWED_AUTHENTICATORS = BIOMETRIC_AUTHENTICATORS or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
+    /**
+     * From the docs on [BiometricManager.canAuthenticate]
+     *
+     * > Note that not all combinations of authenticator types are supported prior to Android 11 (API 30). Specifically, DEVICE_CREDENTIAL alone is unsupported
+     * > prior to API 30, and BIOMETRIC_STRONG | DEVICE_CREDENTIAL is unsupported on API 28-29.
+     */
+    private val DISALLOWED_BIOMETRIC_VERSIONS = setOf(28, 29)
   }
 
   fun authenticate(context: Context, force: Boolean, showConfirmDeviceCredentialIntent: () -> Unit): Boolean {
@@ -36,7 +43,7 @@ class BiometricDeviceAuthentication(
       return false
     }
 
-    return if (Build.VERSION.SDK_INT != 29 && biometricManager.canAuthenticate(ALLOWED_AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS) {
+    return if (!DISALLOWED_BIOMETRIC_VERSIONS.contains(Build.VERSION.SDK_INT) && biometricManager.canAuthenticate(ALLOWED_AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS) {
       if (force) {
         Log.i(TAG, "Listening for biometric authentication...")
         biometricPrompt.authenticate(biometricPromptInfo)
@@ -44,7 +51,7 @@ class BiometricDeviceAuthentication(
         Log.i(TAG, "Skipping show system biometric or device lock dialog unless forced")
       }
       true
-    } else if (Build.VERSION.SDK_INT >= 21) {
+    } else {
       if (force) {
         Log.i(TAG, "firing intent...")
         showConfirmDeviceCredentialIntent()
@@ -52,9 +59,6 @@ class BiometricDeviceAuthentication(
         Log.i(TAG, "Skipping firing intent unless forced")
       }
       true
-    } else {
-      Log.w(TAG, "Not compatible...")
-      false
     }
   }
 
@@ -65,7 +69,6 @@ class BiometricDeviceAuthentication(
 
 class BiometricDeviceLockContract : ActivityResultContract<String, Int>() {
 
-  @RequiresApi(api = 21)
   override fun createIntent(context: Context, input: String): Intent {
     val keyguardManager = ServiceUtil.getKeyguardManager(context)
     return keyguardManager.createConfirmDeviceCredentialIntent(input, "")

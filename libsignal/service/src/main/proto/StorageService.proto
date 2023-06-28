@@ -10,6 +10,12 @@ package signalservice;
 option java_package         = "org.whispersystems.signalservice.internal.storage.protos";
 option java_multiple_files  = true;
 
+enum OptionalBool {
+  UNSET    = 0;
+  ENABLED  = 1;
+  DISABLED = 2;
+}
+
 message StorageManifest {
   uint64 version = 1;
   bytes  value   = 2;
@@ -50,8 +56,10 @@ message ManifestRecord {
     Type  type = 2;
   }
 
-           uint64     version     = 1;
-  repeated Identifier identifiers = 2;
+           uint64     version      = 1;
+           uint32     sourceDevice = 3;
+  repeated Identifier identifiers  = 2;
+  // Next ID: 4
 }
 
 message StorageRecord {
@@ -87,8 +95,11 @@ message ContactRecord {
   uint64        mutedUntilTimestamp     = 13;
   bool          hideStory               = 14;
   uint64        unregisteredAtTimestamp = 16;
-  bool          hidden                  = 19;
-  // NEXT ID: 20
+  string        systemGivenName         = 17;
+  string        systemFamilyName        = 18;
+  string        systemNickname          = 19;
+  bool          hidden                  = 20;
+  // NEXT ID: 21
 }
 
 message GroupV1Record {
@@ -145,34 +156,39 @@ message AccountRecord {
     }
   }
 
-           bytes                  profileKey                    = 1;
-           string                 givenName                     = 2;
-           string                 familyName                    = 3;
-           string                 avatarUrlPath                 = 4;
-           bool                   noteToSelfArchived            = 5;
-           bool                   readReceipts                  = 6;
-           bool                   sealedSenderIndicators        = 7;
-           bool                   typingIndicators              = 8;
-           bool                   proxiedLinkPreviews           = 9;
-           bool                   noteToSelfMarkedUnread        = 10;
-           bool                   linkPreviews                  = 11;
-           PhoneNumberSharingMode phoneNumberSharingMode        = 12;
-           bool                   unlistedPhoneNumber           = 13;
-  repeated PinnedConversation     pinnedConversations           = 14;
-           bool                   preferContactAvatars          = 15;
-           Payments               payments                      = 16;
-           uint32                 universalExpireTimer          = 17;
-           bool                   primarySendsSms               = 18;
-           string                 e164                          = 19;
-  repeated string                 preferredReactionEmoji        = 20;
-           bytes                  subscriberId                  = 21;
-           string                 subscriberCurrencyCode        = 22;
-           bool                   displayBadgesOnProfile        = 23;
-           bool                   subscriptionManuallyCancelled = 24;
-           bool                   keepMutedChatsArchived        = 25;
-           bool                   hasSetMyStoriesPrivacy        = 26;
-           bool                   hasViewedOnboardingStory      = 27;
-           bool                   storiesDisabled               = 28;
+           bytes                  profileKey                      = 1;
+           string                 givenName                       = 2;
+           string                 familyName                      = 3;
+           string                 avatarUrlPath                   = 4;
+           bool                   noteToSelfArchived              = 5;
+           bool                   readReceipts                    = 6;
+           bool                   sealedSenderIndicators          = 7;
+           bool                   typingIndicators                = 8;
+           bool                   proxiedLinkPreviews             = 9;
+           bool                   noteToSelfMarkedUnread          = 10;
+           bool                   linkPreviews                    = 11;
+           PhoneNumberSharingMode phoneNumberSharingMode          = 12;
+           bool                   unlistedPhoneNumber             = 13;
+  repeated PinnedConversation     pinnedConversations             = 14;
+           bool                   preferContactAvatars            = 15;
+           Payments               payments                        = 16;
+           uint32                 universalExpireTimer            = 17;
+           bool                   primarySendsSms                 = 18;
+           string                 e164                            = 19;
+  repeated string                 preferredReactionEmoji          = 20;
+           bytes                  subscriberId                    = 21;
+           string                 subscriberCurrencyCode          = 22;
+           bool                   displayBadgesOnProfile          = 23;
+           bool                   subscriptionManuallyCancelled   = 24;
+           bool                   keepMutedChatsArchived          = 25;
+           bool                   hasSetMyStoriesPrivacy          = 26;
+           bool                   hasViewedOnboardingStory        = 27;
+           reserved            /* storiesDisabled */                28;
+           bool                   storiesDisabled                 = 29;
+           OptionalBool           storyViewReceiptsEnabled        = 30;
+           bool                   hasReadOnboardingStory          = 31;
+           bool                   hasSeenGroupStoryEducationSheet = 32;
+           string                 username                        = 33;
 }
 
 message StoryDistributionListRecord {

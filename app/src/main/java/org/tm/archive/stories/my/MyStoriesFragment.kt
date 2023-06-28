@@ -2,11 +2,11 @@ package org.tm.archive.stories.my
 
 import android.net.Uri
 import android.view.View
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.viewModels
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsFragment
@@ -23,8 +23,6 @@ import org.tm.archive.stories.StoryViewerArgs
 import org.tm.archive.stories.dialogs.StoryContextMenu
 import org.tm.archive.stories.dialogs.StoryDialogs
 import org.tm.archive.stories.viewer.StoryViewerActivity
-import org.tm.archive.util.LifecycleDisposable
-import org.tm.archive.util.Util
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.visible
 
@@ -73,17 +71,12 @@ class MyStoriesFragment : DSLSettingsFragment(
               DSLSettingsText.from(distributionSet.label)
             }
           )
-          distributionSet.stories.forEach { conversationMessage ->
+          distributionSet.stories.forEach { distributionStory ->
             customPref(
               MyStoriesItem.Model(
-                distributionStory = conversationMessage,
+                distributionStory = distributionStory,
                 onClick = { it, preview ->
                   openStoryViewer(it, preview, false)
-                },
-                onLongClick = {
-                  Util.copyToClipboard(requireContext(), it.distributionStory.messageRecord.timestamp.toString())
-                  Toast.makeText(requireContext(), R.string.MyStoriesFragment__copied_sent_timestamp_to_clipboard, Toast.LENGTH_SHORT).show()
-                  true
                 },
                 onSaveClick = {
                   StoryContextMenu.save(requireContext(), it.distributionStory.messageRecord)
@@ -92,7 +85,7 @@ class MyStoriesFragment : DSLSettingsFragment(
                 onForwardClick = { item ->
                   MultiselectForwardFragmentArgs.create(
                     requireContext(),
-                    item.distributionStory.multiselectCollection.toSet()
+                    item.distributionStory.message.multiselectCollection.toSet()
                   ) {
                     MultiselectForwardFragment.showBottomSheet(childFragmentManager, it)
                   }
@@ -126,8 +119,8 @@ class MyStoriesFragment : DSLSettingsFragment(
         }
       }
     } else {
-      val recipient = if (it.distributionStory.messageRecord.recipient.isGroup) {
-        it.distributionStory.messageRecord.recipient
+      val recipient = if (it.distributionStory.messageRecord.toRecipient.isGroup) {
+        it.distributionStory.messageRecord.toRecipient
       } else {
         Recipient.self()
       }

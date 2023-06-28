@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,10 +20,10 @@ import com.tm.androidcopysdk.utils.PrefManager;
 import org.archiver.ArchivePreferenceConstants;
 import org.tm.archive.components.voice.VoiceNoteMediaController;
 import org.tm.archive.components.voice.VoiceNoteMediaControllerOwner;
+import org.tm.archive.conversationlist.RelinkDevicesReminderBottomSheetFragment;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.devicetransfer.olddevice.OldDeviceTransferLockedDialog;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.stories.Stories;
 import org.tm.archive.stories.tabs.ConversationListTabRepository;
 import org.tm.archive.stories.tabs.ConversationListTabsViewModel;
 import org.tm.archive.util.AppStartup;
@@ -43,6 +44,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
   private VoiceNoteMediaController      mediaController;
   private ConversationListTabsViewModel conversationListTabsViewModel;
 
+  private boolean onFirstRender = false;
+
   public static @NonNull Intent clearTop(@NonNull Context context) {
     Intent intent = new Intent(context, MainActivity.class);
 
@@ -59,8 +62,23 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     super.onCreate(savedInstanceState, ready);
 
     setContentView(R.layout.main_activity);
+    final View content = findViewById(android.R.id.content);
+    content.getViewTreeObserver().addOnPreDrawListener(
+        new ViewTreeObserver.OnPreDrawListener() {
+          @Override
+          public boolean onPreDraw() {
+            // Use pre draw listener to delay drawing frames till conversation list is ready
+            if (onFirstRender) {
+              content.getViewTreeObserver().removeOnPreDrawListener(this);
+              return true;
+            } else {
+              return false;
+            }
+          }
+        });
 
-    mediaController = new VoiceNoteMediaController(this);
+
+    mediaController = new VoiceNoteMediaController(this, true);
 
     ConversationListTabRepository         repository = new ConversationListTabRepository();
     ConversationListTabsViewModel.Factory factory    = new ConversationListTabsViewModel.Factory(repository);
@@ -68,6 +86,7 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     handleGroupLinkInIntent(getIntent());
     handleProxyInIntent(getIntent());
     handleSignalMeIntent(getIntent());
+    handleCallLinkInIntent(getIntent());
 
     CachedInflater.from(this).clear();
 
@@ -104,8 +123,12 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
       OldDeviceTransferLockedDialog.show(getSupportFragmentManager());
     }
 
-    updateTabVisibility();
+    if (SignalStore.misc().getShouldShowLinkedDevicesReminder()) {
+      SignalStore.misc().setShouldShowLinkedDevicesReminder(false);
+      RelinkDevicesReminderBottomSheetFragment.show(getSupportFragmentManager());
+    }
 
+    updateTabVisibility();
     //**TM_SA**// start
     notifyMessageIfNeeded();
   }
@@ -134,6 +157,7 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
 
   //**TM_SA**// End
 
+
   @Override
   protected void onStop() {
     super.onStop();
@@ -156,14 +180,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
   }
 
   private void updateTabVisibility() {
-    if (Stories.isFeatureEnabled()) {
-      findViewById(R.id.conversation_list_tabs).setVisibility(View.VISIBLE);
-      WindowUtil.setNavigationBarColor(this, ContextCompat.getColor(this, R.color.signal_colorSurface2));
-    } else {
-      findViewById(R.id.conversation_list_tabs).setVisibility(View.GONE);
-      WindowUtil.setNavigationBarColor(this, ContextCompat.getColor(this, R.color.signal_colorBackground));
-      conversationListTabsViewModel.onChatsSelected();
-    }
+    findViewById(R.id.conversation_list_tabs).setVisibility(View.VISIBLE);
+    WindowUtil.setNavigationBarColor(this, ContextCompat.getColor(this, R.color.signal_colorSurface2));
   }
 
   public @NonNull MainNavigator getNavigator() {
@@ -189,6 +207,17 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     if (data != null) {
       CommunicationActions.handlePotentialSignalMeUrl(this, data.toString());
     }
+  }
+
+  private void handleCallLinkInIntent(Intent intent) {
+    Uri data = intent.getData();
+    if (data != null) {
+      CommunicationActions.handlePotentialCallLinkUrl(this, data.toString());
+    }
+  }
+
+  public void onFirstRender() {
+    onFirstRender = true;
   }
 
   @Override

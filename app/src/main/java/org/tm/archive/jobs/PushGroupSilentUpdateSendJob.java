@@ -3,6 +3,7 @@ package org.tm.archive.jobs;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Collectors;
@@ -11,14 +12,15 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.signal.core.util.logging.Log;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.messages.GroupSendUtil;
 import org.tm.archive.mms.MessageGroupContext;
-import org.tm.archive.mms.OutgoingGroupUpdateMessage;
+import org.tm.archive.mms.OutgoingMessage;
 import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -68,7 +70,7 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
   public static @NonNull Job create(@NonNull Context context,
                                     @NonNull GroupId.V2 groupId,
                                     @NonNull DecryptedGroup decryptedGroup,
-                                    @NonNull OutgoingGroupUpdateMessage groupMessage)
+                                    @NonNull OutgoingMessage groupMessage)
   {
     List<UUID> memberUuids  = DecryptedGroupUtil.toUuidList(decryptedGroup.getMembersList());
     List<UUID> pendingUuids = DecryptedGroupUtil.pendingToUuidList(decryptedGroup.getPendingMembersList());
@@ -77,7 +79,7 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
                                         .filter(uuid -> !UuidUtil.UNKNOWN_UUID.equals(uuid))
                                         .filter(uuid -> !SignalStore.account().requireAci().uuid().equals(uuid))
                                         .map(uuid -> Recipient.externalPush(ServiceId.from(uuid)))
-                                        .filter(recipient -> recipient.getRegistered() != RecipientDatabase.RegisteredState.NOT_REGISTERED)
+                                        .filter(recipient -> recipient.getRegistered() != RecipientTable.RegisteredState.NOT_REGISTERED)
                                         .map(Recipient::getId)
                                         .collect(Collectors.toSet());
 
@@ -112,12 +114,12 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_RECIPIENTS, RecipientId.toSerializedList(recipients))
-                             .putInt(KEY_INITIAL_RECIPIENT_COUNT, initialRecipientCount)
-                             .putLong(KEY_TIMESTAMP, timestamp)
-                             .putString(KEY_GROUP_CONTEXT_V2, Base64.encodeBytes(groupContextV2.toByteArray()))
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_RECIPIENTS, RecipientId.toSerializedList(recipients))
+                                    .putInt(KEY_INITIAL_RECIPIENT_COUNT, initialRecipientCount)
+                                    .putLong(KEY_TIMESTAMP, timestamp)
+                                    .putString(KEY_GROUP_CONTEXT_V2, Base64.encodeBytes(groupContextV2.toByteArray()))
+                                    .serialize();
   }
 
   @Override
@@ -177,12 +179,20 @@ public final class PushGroupSilentUpdateSendJob extends BaseJob {
 
     List<SendMessageResult> results = GroupSendUtil.sendUnresendableDataMessage(context, groupId, destinations, false, ContentHint.IMPLICIT, groupDataMessage, false);
 
-    return GroupSendJobHelper.getCompletedSends(destinations, results).completed;
+    GroupSendJobHelper.SendResult groupResult = GroupSendJobHelper.getCompletedSends(destinations, results);
+
+    for (RecipientId unregistered : groupResult.unregistered) {
+      SignalDatabase.recipients().markUnregistered(unregistered);
+    }
+
+    return groupResult.completed;
   }
 
   public static class Factory implements Job.Factory<PushGroupSilentUpdateSendJob> {
     @Override
-    public @NonNull PushGroupSilentUpdateSendJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PushGroupSilentUpdateSendJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       List<RecipientId> recipients            = RecipientId.fromSerializedList(data.getString(KEY_RECIPIENTS));
       int               initialRecipientCount = data.getInt(KEY_INITIAL_RECIPIENT_COUNT);
       long              timestamp             = data.getLong(KEY_TIMESTAMP);

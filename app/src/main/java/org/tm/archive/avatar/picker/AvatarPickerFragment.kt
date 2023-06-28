@@ -8,6 +8,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
@@ -16,9 +17,11 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import androidx.recyclerview.widget.RecyclerView
 import org.signal.core.util.ThreadUtil
+import org.signal.core.util.getParcelableExtraCompat
 import org.tm.archive.R
 import org.tm.archive.avatar.Avatar
 import org.tm.archive.avatar.AvatarBundler
+import org.tm.archive.avatar.photo.PhotoEditorActivity
 import org.tm.archive.avatar.photo.PhotoEditorFragment
 import org.tm.archive.avatar.text.TextAvatarCreationFragment
 import org.tm.archive.avatar.vector.VectorAvatarCreationFragment
@@ -49,6 +52,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
   private val viewModel: AvatarPickerViewModel by viewModels(factoryProducer = this::createFactory)
 
   private lateinit var recycler: RecyclerView
+  private lateinit var photoEditorLauncher: ActivityResultLauncher<Avatar.Photo>
 
   private fun createFactory(): AvatarPickerViewModel.Factory {
     val args = AvatarPickerFragmentArgs.fromBundle(requireArguments())
@@ -87,8 +91,9 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
       val selectedPosition = items.indexOfFirst { it.isSelected }
 
       adapter.submitList(items) {
-        if (selectedPosition > -1)
+        if (selectedPosition > -1) {
           recycler.smoothScrollToPosition(selectedPosition)
+        }
       }
     }
 
@@ -123,7 +128,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
         }
       )
     }
-    clearButton.setOnClickListener { viewModel.clear() }
+    clearButton.setOnClickListener { viewModel.clearAvatar() }
 
     setFragmentResultListener(TextAvatarCreationFragment.REQUEST_KEY_TEXT) { _, bundle ->
       val text = AvatarBundler.extractText(bundle)
@@ -136,8 +141,12 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
     }
 
     setFragmentResultListener(PhotoEditorFragment.REQUEST_KEY_EDIT) { _, bundle ->
-      val photo = AvatarBundler.extractPhoto(bundle)
-      viewModel.onAvatarEditCompleted(photo)
+    }
+
+    photoEditorLauncher = registerForActivityResult(PhotoEditorActivity.Contract()) { photo ->
+      if (photo != null) {
+        viewModel.onAvatarEditCompleted(photo)
+      }
     }
   }
 
@@ -146,10 +155,9 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
     ViewUtil.hideKeyboard(requireContext(), requireView())
   }
 
-  @Suppress("DEPRECATION")
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     if (requestCode == REQUEST_CODE_SELECT_IMAGE && resultCode == Activity.RESULT_OK && data != null) {
-      val media: Media = requireNotNull(data.getParcelableExtra(AvatarSelectionActivity.EXTRA_MEDIA))
+      val media: Media = requireNotNull(data.getParcelableExtraCompat(AvatarSelectionActivity.EXTRA_MEDIA, Media::class.java))
       viewModel.onAvatarPhotoSelectionCompleted(media)
     } else {
       super.onActivityResult(requestCode, resultCode, data)
@@ -196,8 +204,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
   }
 
   private fun openPhotoEditor(photo: Avatar.Photo) {
-    Navigation.findNavController(requireView())
-      .safeNavigate(AvatarPickerFragmentDirections.actionAvatarPickerFragmentToAvatarPhotoEditorFragment(AvatarBundler.bundlePhoto(photo)))
+    photoEditorLauncher.launch(photo)
   }
 
   private fun openVectorEditor(vector: Avatar.Vector) {

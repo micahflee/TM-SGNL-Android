@@ -44,12 +44,7 @@ public class UnidentifiedAccessUtil {
   private static final byte[] UNRESTRICTED_KEY = new byte[16];
 
   public static CertificateValidator getCertificateValidator() {
-    try {
-      ECPublicKey unidentifiedSenderTrustRoot = Curve.decodePoint(Base64.decode(BuildConfig.UNIDENTIFIED_SENDER_TRUST_ROOT), 0);
-      return new CertificateValidator(unidentifiedSenderTrustRoot);
-    } catch (InvalidKeyException | IOException e) {
-      throw new AssertionError(e);
-    }
+    return CertificateValidatorHolder.INSTANCE.certificateValidator;
   }
 
   @WorkerThread
@@ -68,8 +63,8 @@ public class UnidentifiedAccessUtil {
   }
 
   @WorkerThread
-  public static Map<RecipientId, Optional<UnidentifiedAccessPair>> getAccessMapFor(@NonNull Context context, @NonNull List<Recipient> recipients) {
-    List<Optional<UnidentifiedAccessPair>> accessList = getAccessFor(context, recipients, true);
+  public static Map<RecipientId, Optional<UnidentifiedAccessPair>> getAccessMapFor(@NonNull Context context, @NonNull List<Recipient> recipients, boolean isForStory) {
+    List<Optional<UnidentifiedAccessPair>> accessList = getAccessFor(context, recipients, isForStory, true);
 
     Iterator<Recipient>                        recipientIterator = recipients.iterator();
     Iterator<Optional<UnidentifiedAccessPair>> accessIterator    = accessList.iterator();
@@ -82,9 +77,14 @@ public class UnidentifiedAccessUtil {
 
     return accessMap;
   }
-
+  
   @WorkerThread
   public static List<Optional<UnidentifiedAccessPair>> getAccessFor(@NonNull Context context, @NonNull List<Recipient> recipients, boolean log) {
+    return getAccessFor(context, recipients, false, log);
+  }
+
+  @WorkerThread
+  public static List<Optional<UnidentifiedAccessPair>> getAccessFor(@NonNull Context context, @NonNull List<Recipient> recipients, boolean isForStory, boolean log) {
     byte[] ourUnidentifiedAccessKey = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
 
     if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
@@ -96,25 +96,29 @@ public class UnidentifiedAccessUtil {
     Map<CertificateType, Integer> typeCounts = new HashMap<>();
 
     for (Recipient recipient : recipients) {
-      byte[]          theirUnidentifiedAccessKey       = getTargetUnidentifiedAccessKey(recipient);
-      CertificateType certificateType                  = getUnidentifiedAccessCertificateType(recipient);
-      byte[]          ourUnidentifiedAccessCertificate = SignalStore.certificateValues().getUnidentifiedAccessCertificate(certificateType);
+      CertificateType    certificateType                  = getUnidentifiedAccessCertificateType(recipient);
+      byte[]             ourUnidentifiedAccessCertificate = SignalStore.certificateValues().getUnidentifiedAccessCertificate(certificateType);
 
       int typeCount = Util.getOrDefault(typeCounts, certificateType, 0);
       typeCount++;
       typeCounts.put(certificateType, typeCount);
 
-      if (theirUnidentifiedAccessKey != null && ourUnidentifiedAccessCertificate != null) {
+      if (ourUnidentifiedAccessCertificate != null) {
         try {
-          access.add(Optional.of(new UnidentifiedAccessPair(new UnidentifiedAccess(theirUnidentifiedAccessKey,
-                                                                                   ourUnidentifiedAccessCertificate),
-                                                            new UnidentifiedAccess(ourUnidentifiedAccessKey,
-                                                                                   ourUnidentifiedAccessCertificate))));
+          UnidentifiedAccess theirAccess = getTargetUnidentifiedAccess(recipient, ourUnidentifiedAccessCertificate, isForStory);
+          UnidentifiedAccess ourAccess   = new UnidentifiedAccess(ourUnidentifiedAccessKey, ourUnidentifiedAccessCertificate, false);
+
+          if (theirAccess != null) {
+            access.add(Optional.of(new UnidentifiedAccessPair(theirAccess, ourAccess)));
+          } else {
+            access.add(Optional.empty());
+          }
         } catch (InvalidCertificateException e) {
-          Log.w(TAG, e);
+          Log.w(TAG, "Invalid unidentified access certificate!", e);
           access.add(Optional.empty());
         }
       } else {
+        Log.w(TAG, "Missing unidentified access certificate!");
         access.add(Optional.empty());
       }
     }
@@ -140,9 +144,11 @@ public class UnidentifiedAccessUtil {
 
       if (ourUnidentifiedAccessCertificate != null) {
         return Optional.of(new UnidentifiedAccessPair(new UnidentifiedAccess(ourUnidentifiedAccessKey,
-                                                                             ourUnidentifiedAccessCertificate),
+                                                                             ourUnidentifiedAccessCertificate,
+                                                                             false),
                                                       new UnidentifiedAccess(ourUnidentifiedAccessKey,
-                                                                             ourUnidentifiedAccessCertificate)));
+                                                                             ourUnidentifiedAccessCertificate,
+                                                                             false)));
       }
 
       return Optional.empty();
@@ -168,28 +174,61 @@ public class UnidentifiedAccessUtil {
                       .getUnidentifiedAccessCertificate(getUnidentifiedAccessCertificateType(recipient));
   }
 
-  private static @Nullable byte[] getTargetUnidentifiedAccessKey(@NonNull Recipient recipient) {
+  private static @Nullable UnidentifiedAccess getTargetUnidentifiedAccess(@NonNull Recipient recipient, @NonNull byte[] certificate, boolean isForStory) throws InvalidCertificateException {
     ProfileKey theirProfileKey = ProfileKeyUtil.profileKeyOrNull(recipient.resolve().getProfileKey());
+
+    byte[] accessKey;
 
     switch (recipient.resolve().getUnidentifiedAccessMode()) {
       case UNKNOWN:
         if (theirProfileKey == null) {
-          return UNRESTRICTED_KEY;
+          if (isForStory) {
+            accessKey = null;
+          } else {
+            accessKey = UNRESTRICTED_KEY;
+          }
         } else {
-          return UnidentifiedAccess.deriveAccessKeyFrom(theirProfileKey);
+          accessKey = UnidentifiedAccess.deriveAccessKeyFrom(theirProfileKey);
         }
+        break;
       case DISABLED:
-        return null;
+        accessKey = null;
+        break;
       case ENABLED:
         if (theirProfileKey == null) {
-          return null;
+          accessKey = null;
         } else {
-          return UnidentifiedAccess.deriveAccessKeyFrom(theirProfileKey);
+          accessKey = UnidentifiedAccess.deriveAccessKeyFrom(theirProfileKey);
         }
+        break;
       case UNRESTRICTED:
-        return UNRESTRICTED_KEY;
+        accessKey = UNRESTRICTED_KEY;
+        break;
       default:
         throw new AssertionError("Unknown mode: " + recipient.getUnidentifiedAccessMode().getMode());
+    }
+
+    if (accessKey == null && isForStory) {
+      return new UnidentifiedAccess(UNRESTRICTED_KEY, certificate, true);
+    } else if (accessKey != null) {
+      return new UnidentifiedAccess(accessKey, certificate, false);
+    } else {
+      return null;
+    }
+  }
+
+  private enum CertificateValidatorHolder {
+    INSTANCE;
+
+    final CertificateValidator certificateValidator = buildCertificateValidator();
+
+    private static CertificateValidator buildCertificateValidator() {
+      try {
+        ECPublicKey unidentifiedSenderTrustRoot = Curve.decodePoint(Base64.decode(BuildConfig.UNIDENTIFIED_SENDER_TRUST_ROOT), 0);
+        return new CertificateValidator(unidentifiedSenderTrustRoot);
+      } catch (InvalidKeyException | IOException e) {
+        throw new AssertionError(e);
+      }
     }
   }
 }

@@ -10,8 +10,8 @@ import androidx.core.util.Consumer;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.conversation.colors.AvatarColor;
-import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.groups.GroupChangeException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
@@ -92,7 +92,7 @@ class EditGroupProfileRepository implements EditProfileRepository {
 
       return SignalDatabase.groups()
                            .getGroup(recipientId)
-                           .map(GroupDatabase.GroupRecord::getDescription)
+                           .map(GroupRecord::getDescription)
                            .orElse("");
     }, descriptionConsumer::accept);
   }

@@ -19,7 +19,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.tm.archive.R;
 import org.tm.archive.attachments.Attachment;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.events.PartProgressEvent;
 import org.tm.archive.mms.Slide;
 
@@ -114,17 +114,17 @@ public final class TransferControlView extends FrameLayout {
     }
     
     for (Slide slide : slides) {
-      if (slide.asAttachment().getTransferState() == AttachmentDatabase.TRANSFER_PROGRESS_DONE) {
+      if (slide.asAttachment().getTransferState() == AttachmentTable.TRANSFER_PROGRESS_DONE) {
         networkProgress.put(slide.asAttachment(), 1f);
       }
     }
 
     switch (getTransferState(slides)) {
-      case AttachmentDatabase.TRANSFER_PROGRESS_STARTED:
+      case AttachmentTable.TRANSFER_PROGRESS_STARTED:
         showProgressSpinner(calculateProgress(networkProgress, compresssionProgress));
         break;
-      case AttachmentDatabase.TRANSFER_PROGRESS_PENDING:
-      case AttachmentDatabase.TRANSFER_PROGRESS_FAILED:
+      case AttachmentTable.TRANSFER_PROGRESS_PENDING:
+      case AttachmentTable.TRANSFER_PROGRESS_FAILED:
         downloadDetailsText.setText(getDownloadText(this.slides));
         display(downloadDetails);
         break;
@@ -182,23 +182,28 @@ public final class TransferControlView extends FrameLayout {
     return true;
   }
 
-  private int getTransferState(@NonNull List<Slide> slides) {
-    int transferState = AttachmentDatabase.TRANSFER_PROGRESS_DONE;
+  static int getTransferState(@NonNull List<Slide> slides) {
+    int     transferState = AttachmentTable.TRANSFER_PROGRESS_DONE;
+    boolean allFailed     = true;
+
     for (Slide slide : slides) {
-      if (slide.getTransferState() == AttachmentDatabase.TRANSFER_PROGRESS_PENDING && transferState == AttachmentDatabase.TRANSFER_PROGRESS_DONE) {
-        transferState = slide.getTransferState();
-      } else {
-        transferState = Math.max(transferState, slide.getTransferState());
+      if (slide.getTransferState() != AttachmentTable.TRANSFER_PROGRESS_PERMANENT_FAILURE) {
+        allFailed = false;
+        if (slide.getTransferState() == AttachmentTable.TRANSFER_PROGRESS_PENDING && transferState == AttachmentTable.TRANSFER_PROGRESS_DONE) {
+          transferState = slide.getTransferState();
+        } else {
+          transferState = Math.max(transferState, slide.getTransferState());
+        }
       }
     }
-    return transferState;
+    return allFailed ? AttachmentTable.TRANSFER_PROGRESS_PERMANENT_FAILURE : transferState;
   }
 
   private String getDownloadText(@NonNull List<Slide> slides) {
     if (slides.size() == 1) {
       return slides.get(0).getContentDescription();
     } else {
-      int downloadCount = Stream.of(slides).reduce(0, (count, slide) -> slide.getTransferState() != AttachmentDatabase.TRANSFER_PROGRESS_DONE ? count + 1 : count);
+      int downloadCount = Stream.of(slides).reduce(0, (count, slide) -> slide.getTransferState() != AttachmentTable.TRANSFER_PROGRESS_DONE ? count + 1 : count);
       return getContext().getResources().getQuantityString(R.plurals.TransferControlView_n_items, downloadCount, downloadCount);
     }
   }

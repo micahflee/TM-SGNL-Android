@@ -2,13 +2,14 @@ package org.tm.archive.jobs;
 
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;
@@ -52,8 +53,8 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -115,7 +116,7 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<MultiDeviceProfileKeyUpdateJob> {
     @Override
-    public @NonNull MultiDeviceProfileKeyUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull MultiDeviceProfileKeyUpdateJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new MultiDeviceProfileKeyUpdateJob(parameters);
     }
   }

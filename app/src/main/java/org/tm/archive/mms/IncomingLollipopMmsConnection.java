@@ -55,17 +55,15 @@ public class IncomingLollipopMmsConnection extends LollipopMmsConnection impleme
     super(context, ACTION);
   }
 
-  @TargetApi(VERSION_CODES.LOLLIPOP)
   @Override
   public synchronized void onResult(Context context, Intent intent) {
-    if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP_MR1) {
+    if (VERSION.SDK_INT >= 22) {
       Log.i(TAG, "HTTP status: " + intent.getIntExtra(SmsManager.EXTRA_MMS_HTTP_STATUS, -1));
     }
     Log.i(TAG, "code: " + getResultCode() + ", result string: " + getResultData());
   }
 
   @Override
-  @TargetApi(VERSION_CODES.LOLLIPOP)
   public synchronized @Nullable RetrieveConf retrieve(@NonNull String contentLocation,
                                                       byte[] transactionId,
                                                       int subscriptionId) throws MmsException
@@ -130,7 +128,7 @@ public class IncomingLollipopMmsConnection extends LollipopMmsConnection impleme
 
       try {
         retrieved = (RetrieveConf) new PduParser(baos.toByteArray(), parseContentDisposition).parse();
-      } catch (NullPointerException e) {
+      } catch (AssertionError | NullPointerException e) {
         Log.w(TAG, "Badly formatted MMS message caused the parser to fail.", e);
         throw new MmsException(e);
       }

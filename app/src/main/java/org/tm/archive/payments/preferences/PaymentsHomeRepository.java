@@ -8,6 +8,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.PaymentLedgerUpdateJob;
 import org.tm.archive.jobs.ProfileUploadJob;
+import org.tm.archive.jobs.SendPaymentsActivatedJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.AsynchronousCallback;
 import org.tm.archive.util.ProfileUtil;
@@ -25,7 +26,10 @@ public class PaymentsHomeRepository {
       SignalStore.paymentsValues().setMobileCoinPaymentsEnabled(true);
       try {
         ProfileUtil.uploadProfile(ApplicationDependencies.getApplication());
-        ApplicationDependencies.getJobManager().add(PaymentLedgerUpdateJob.updateLedger());
+        ApplicationDependencies.getJobManager()
+                               .startChain(PaymentLedgerUpdateJob.updateLedger())
+                               .then(new SendPaymentsActivatedJob())
+                               .enqueue();
         callback.onComplete(null);
       } catch (PaymentsRegionException e) {
         SignalStore.paymentsValues().setMobileCoinPaymentsEnabled(false);

@@ -10,20 +10,21 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import org.signal.core.util.getParcelableCompat
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeRepository
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.badges.models.LargeBadge
 import org.tm.archive.components.FixedRoundedCornerBottomSheetDialogFragment
+import org.tm.archive.components.ViewBinderDelegate
 import org.tm.archive.components.settings.app.AppSettingsActivity
+import org.tm.archive.components.settings.app.subscription.InAppDonations
+import org.tm.archive.databinding.ViewBadgeBottomSheetDialogFragmentBinding
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.BottomSheetUtil
 import org.tm.archive.util.CommunicationActions
-import org.tm.archive.util.PlayServicesUtil
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.visible
@@ -43,6 +44,8 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
     textSize = ViewUtil.spToPx(16f).toFloat()
   }
 
+  private val binding by ViewBinderDelegate(ViewBadgeBottomSheetDialogFragmentBinding::bind)
+
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
     return inflater.inflate(R.layout.view_badge_bottom_sheet_dialog_fragment, container, false)
   }
@@ -50,41 +53,36 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     postponeEnterTransition()
 
-    val pager: ViewPager2 = view.findViewById(R.id.pager)
-    val tabs: TabLayout = view.findViewById(R.id.tab_layout)
-    val action: MaterialButton = view.findViewById(R.id.action)
-    val noSupport: View = view.findViewById(R.id.no_support)
-
     if (getRecipientId() == Recipient.self().id) {
-      action.visible = false
+      binding.action.visible = false
     }
 
     @Suppress("CascadeIf")
-    if (PlayServicesUtil.getPlayServicesStatus(requireContext()) != PlayServicesUtil.PlayServicesStatus.SUCCESS) {
-      noSupport.visible = true
-      action.icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_open_20)
-      action.setText(R.string.preferences__donate_to_signal)
-      action.setOnClickListener {
+    if (!InAppDonations.hasAtLeastOnePaymentMethodAvailable()) {
+      binding.noSupport.visible = true
+      binding.action.icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_open_20)
+      binding.action.setText(R.string.preferences__donate_to_signal)
+      binding.action.setOnClickListener {
         CommunicationActions.openBrowserLink(requireContext(), getString(R.string.donate_url))
       }
     } else if (Recipient.self().badges.none { it.category == Badge.Category.Donor && !it.isBoost() && !it.isExpired() }) {
-      action.setOnClickListener {
+      binding.action.setOnClickListener {
         startActivity(AppSettingsActivity.subscriptions(requireContext()))
       }
     } else {
-      action.visible = false
+      binding.action.visible = false
     }
 
     val adapter = MappingAdapter()
 
     LargeBadge.register(adapter)
-    pager.adapter = adapter
+    binding.pager.adapter = adapter
     adapter.submitList(listOf(LargeBadge.EmptyModel()))
 
-    TabLayoutMediator(tabs, pager) { _, _ ->
+    TabLayoutMediator(binding.tabLayout, binding.pager) { _, _ ->
     }.attach()
 
-    pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+    binding.pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
       override fun onPageSelected(position: Int) {
         if (adapter.getModel(position).map { it is LargeBadge.Model }.orElse(false)) {
           viewModel.onPageSelected(position)
@@ -101,7 +99,8 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
         dismissAllowingStateLoss()
       }
 
-      tabs.visible = state.allBadgesVisibleOnProfile.size > 1
+      binding.tabLayout.visible = state.allBadgesVisibleOnProfile.size > 1
+      binding.singlePageSpace.visible = state.allBadgesVisibleOnProfile.size > 1
 
       var maxLines = 3
       state.allBadgesVisibleOnProfile.forEach { badge ->
@@ -117,16 +116,16 @@ class ViewBadgeBottomSheetDialogFragment : FixedRoundedCornerBottomSheetDialogFr
         }
       ) {
         val stateSelectedIndex = state.allBadgesVisibleOnProfile.indexOf(state.selectedBadge)
-        if (state.selectedBadge != null && pager.currentItem != stateSelectedIndex) {
-          pager.currentItem = stateSelectedIndex
+        if (state.selectedBadge != null && binding.pager.currentItem != stateSelectedIndex) {
+          binding.pager.currentItem = stateSelectedIndex
         }
       }
     }
   }
 
-  private fun getStartBadge(): Badge? = requireArguments().getParcelable(ARG_START_BADGE)
+  private fun getStartBadge(): Badge? = requireArguments().getParcelableCompat(ARG_START_BADGE, Badge::class.java)
 
-  private fun getRecipientId(): RecipientId = requireNotNull(requireArguments().getParcelable(ARG_RECIPIENT_ID))
+  private fun getRecipientId(): RecipientId = requireNotNull(requireArguments().getParcelableCompat(ARG_RECIPIENT_ID, RecipientId::class.java))
 
   companion object {
 

@@ -10,5 +10,4 @@ LOCAL_SRC_FILES := $(JNI_DIR)/utils/org_thoughtcrime_securesms_util_FileUtils.cp
  //**TM_SA**//Start
 LOCAL_SRC_FILES := $(JNI_DIR)/utils/org_tm_archive_util_FileUtils.cpp
  //**TM_SA**//End
-
 include $(BUILD_SHARED_LIBRARY)

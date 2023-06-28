@@ -2,8 +2,6 @@ package org.tm.archive.registration.fragments
 
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
-import android.os.Looper
 import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.Toast
@@ -11,7 +9,6 @@ import androidx.annotation.StringRes
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchivePreferenceConstants
-import org.signal.core.util.TranslationDetection
 import org.tm.archive.R
 import org.tm.archive.logsubmit.SubmitDebugLogActivity
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
@@ -42,45 +39,40 @@ object RegistrationViewDelegate {
   @JvmStatic
   fun showConfirmNumberDialogIfTranslated(
     context: Context,
-    @StringRes firstMessageLine: Int,
+    @StringRes title: Int?,
+    @StringRes firstMessageLine: Int?,
     e164number: String,
     onConfirmed: Runnable,
     onEditNumber: Runnable
   ) {
-    val translationDetection = TranslationDetection(context)
-
-    if (translationDetection.textExistsInUsersLanguage(
-        firstMessageLine,
-        R.string.RegistrationActivity_is_your_phone_number_above_correct,
-        R.string.RegistrationActivity_edit_number
-      )
-    ) {
-      val message: CharSequence = SpannableStringBuilder()
-        .append(context.getString(firstMessageLine))
-        .append("\n\n")
-        .append(SpanUtil.bold(PhoneNumberFormatter.prettyPrint(e164number)))
-        .append("\n\n")
-        .append(context.getString(R.string.RegistrationActivity_is_your_phone_number_above_correct))
-
-      //**TM_SA**//
-      Handler(Looper.getMainLooper()).post {
-        MaterialAlertDialogBuilder(context)
-          .setMessage(message)
-          .setPositiveButton(android.R.string.ok) { _, _ ->
-            //**TM_SA**//start
-            PrefManager.setStringPref(
-              context,
-              ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER,
-              e164number
-            )
-            //**TM_SA**//end
-            onConfirmed.run() }
-          .setNegativeButton(R.string.RegistrationActivity_edit_number) { _, _ -> onEditNumber.run() }
-          .show()
+    val message: CharSequence = SpannableStringBuilder().apply {
+      append(SpanUtil.bold(PhoneNumberFormatter.prettyPrint(e164number)))
+      if (firstMessageLine != null) {
+        append("\n\n")
+        append(context.getString(firstMessageLine))
       }
-
-    } else {
-      onConfirmed.run()
     }
+
+    MaterialAlertDialogBuilder(context).apply {
+      if (title != null) {
+        setTitle(title)
+      }
+      setMessage(message)
+      setPositiveButton(android.R.string.ok) { _, _ ->
+
+        //**TM_SA**//start
+        PrefManager.setStringPref(
+          context,
+          ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER,
+          e164number
+        )
+        //**TM_SA**//end
+
+        onConfirmed.run()
+      }
+      setNegativeButton(R.string.RegistrationActivity_edit_number) { _, _ ->
+        onEditNumber.run()
+      }
+    }.show()
   }
 }

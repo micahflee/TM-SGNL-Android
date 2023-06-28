@@ -21,6 +21,7 @@ import org.tm.archive.R;
 import org.tm.archive.contactshare.SimpleTextWatcher;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.CommunicationActions;
+import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.tm.archive.util.SignalProxyUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
@@ -40,6 +41,7 @@ public class EditProxyFragment extends Fragment {
   private View                           shareButton;
   private CircularProgressMaterialButton saveButton;
   private EditProxyViewModel             viewModel;
+  private LifecycleDisposable            lifecycleDisposable;
 
   public static EditProxyFragment newInstance() {
     return new EditProxyFragment();
@@ -59,6 +61,9 @@ public class EditProxyFragment extends Fragment {
     this.saveButton  = view.findViewById(R.id.edit_proxy_save);
     this.shareButton = view.findViewById(R.id.edit_proxy_share);
 
+    lifecycleDisposable = new LifecycleDisposable();
+    lifecycleDisposable.bindTo(getViewLifecycleOwner());
+
     proxyText.addTextChangedListener(new SimpleTextWatcher() {
       @Override
       public void onTextChanged(String text) {
@@ -73,7 +78,7 @@ public class EditProxyFragment extends Fragment {
 
     saveButton.setOnClickListener(v -> onSaveClicked());
     shareButton.setOnClickListener(v -> onShareClicked());
-    proxySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> viewModel.onToggleProxy(isChecked));
+    proxySwitch.setOnCheckedChangeListener((buttonView, isChecked) -> viewModel.onToggleProxy(isChecked, proxyText.getText().toString()));
 
     LearnMoreTextView description = view.findViewById(R.id.edit_proxy_switch_title_description);
     description.setLearnMoreVisible(true);
@@ -92,10 +97,12 @@ public class EditProxyFragment extends Fragment {
   private void initViewModel() {
     viewModel = new ViewModelProvider(this).get(EditProxyViewModel.class);
 
-    viewModel.getUiState().observe(getViewLifecycleOwner(), this::presentUiState);
-    viewModel.getProxyState().observe(getViewLifecycleOwner(), this::presentProxyState);
-    viewModel.getEvents().observe(getViewLifecycleOwner(), this::presentEvent);
-    viewModel.getSaveState().observe(getViewLifecycleOwner(), this::presentSaveState);
+    lifecycleDisposable.addAll(
+        viewModel.getUiState().subscribe(this::presentUiState),
+        viewModel.getProxyState().subscribe(this::presentProxyState),
+        viewModel.getEvents().subscribe(this::presentEvent),
+        viewModel.getSaveState().subscribe(this::presentSaveState)
+    );
   }
 
   private void presentUiState(@NonNull EditProxyViewModel.UiState uiState) {
@@ -103,6 +110,8 @@ public class EditProxyFragment extends Fragment {
       case ALL_ENABLED:
         proxyText.setEnabled(true);
         proxyText.setAlpha(1);
+        saveButton.setEnabled(true);
+        saveButton.setAlpha(1);
         proxyTitle.setAlpha(1);
         onProxyTextChanged(proxyText.getText().toString());
         break;
@@ -182,7 +191,12 @@ public class EditProxyFragment extends Fragment {
   }
 
   private void onSaveClicked() {
-    viewModel.onSaveClicked(proxyText.getText().toString());
+    String text = proxyText.getText().toString();
+    if (Util.isEmpty(text)) {
+      proxySwitch.setChecked(false);
+    } else {
+      viewModel.onSaveClicked(text);
+    }
   }
 
   private void onShareClicked() {
@@ -195,14 +209,10 @@ public class EditProxyFragment extends Fragment {
 
   private void onProxyTextChanged(@NonNull String text) {
     if (Util.isEmpty(text)) {
-      saveButton.setEnabled(false);
-      saveButton.setAlpha(0.5f);
       shareButton.setEnabled(false);
       shareButton.setAlpha(0.5f);
       proxyStatus.setVisibility(View.INVISIBLE);
     } else {
-      saveButton.setEnabled(true);
-      saveButton.setAlpha(1);
       shareButton.setEnabled(true);
       shareButton.setAlpha(1);
 

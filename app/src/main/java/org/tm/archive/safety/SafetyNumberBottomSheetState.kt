@@ -1,6 +1,6 @@
 package org.tm.archive.safety
 
-import org.tm.archive.database.IdentityDatabase
+import org.tm.archive.database.IdentityTable
 
 /**
  * Screen state for SafetyNumberBottomSheetFragment and SafetyNumberReviewConnectionsFragment
@@ -19,7 +19,7 @@ data class SafetyNumberBottomSheetState(
   fun isCheckupComplete(): Boolean {
     return loadState == LoadState.DONE ||
       isEmpty() ||
-      destinationToRecipientMap.values.flatten().all { it.identityRecord.verifiedStatus == IdentityDatabase.VerifiedStatus.VERIFIED }
+      destinationToRecipientMap.values.flatten().all { it.identityRecord.verifiedStatus == IdentityTable.VerifiedStatus.VERIFIED }
   }
 
   enum class LoadState {

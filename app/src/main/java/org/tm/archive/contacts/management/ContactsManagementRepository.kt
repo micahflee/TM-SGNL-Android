@@ -5,6 +5,8 @@ import androidx.annotation.CheckResult
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.tm.archive.database.SignalDatabase
+import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobs.RotateProfileKeyJob
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientUtil
 
@@ -31,7 +33,11 @@ class ContactsManagementRepository(context: Context) {
         error("Cannot hide groups, self, or distribution lists.")
       }
 
-      SignalDatabase.recipients.markHidden(recipient.id)
+      val rotateProfileKey = !recipient.hasGroupsInCommon()
+      SignalDatabase.recipients.markHidden(recipient.id, rotateProfileKey)
+      if (rotateProfileKey) {
+        ApplicationDependencies.getJobManager().add(RotateProfileKeyJob())
+      }
     }
   }
 }

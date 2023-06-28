@@ -6,10 +6,10 @@ import androidx.annotation.Nullable;
 import com.mobilecoin.lib.exceptions.FogSyncException;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.payments.MobileCoinLedgerWrapper;
@@ -64,8 +64,8 @@ public final class PaymentLedgerUpdateJob extends BaseJob {
 
     Long minimumBlockIndex = null;
     if (paymentUuid != null) {
-      PaymentDatabase.PaymentTransaction payment = SignalDatabase.payments()
-                                                                 .getPayment(paymentUuid);
+      PaymentTable.PaymentTransaction payment = SignalDatabase.payments()
+                                                              .getPayment(paymentUuid);
 
       if (payment != null) {
         minimumBlockIndex = payment.getBlockIndex();
@@ -96,10 +96,10 @@ public final class PaymentLedgerUpdateJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder()
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder()
                    .putString(KEY_PAYMENT_UUID, paymentUuid != null ? paymentUuid.toString() : null)
-                   .build();
+                   .serialize();
   }
 
   @NonNull @Override
@@ -114,7 +114,9 @@ public final class PaymentLedgerUpdateJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<PaymentLedgerUpdateJob> {
     @Override
-    public @NonNull PaymentLedgerUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PaymentLedgerUpdateJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       String paymentUuid = data.getString(KEY_PAYMENT_UUID);
       return new PaymentLedgerUpdateJob(parameters,
                                         paymentUuid != null ? UUID.fromString(paymentUuid) : null);

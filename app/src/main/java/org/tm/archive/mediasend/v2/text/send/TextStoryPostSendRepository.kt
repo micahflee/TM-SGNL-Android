@@ -8,7 +8,6 @@ import org.signal.core.util.ThreadUtil
 import org.signal.core.util.logging.Log
 import org.tm.archive.contacts.paged.ContactSearchKey
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.ThreadDatabase
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.database.model.databaseprotos.StoryTextPost
 import org.tm.archive.fonts.TextFont
@@ -17,8 +16,7 @@ import org.tm.archive.keyvalue.StorySend
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mediasend.v2.UntrustedRecords
 import org.tm.archive.mediasend.v2.text.TextStoryPostCreationState
-import org.tm.archive.mms.OutgoingMediaMessage
-import org.tm.archive.mms.OutgoingSecureMediaMessage
+import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.providers.BlobProvider
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.stories.Stories
@@ -61,12 +59,12 @@ class TextStoryPostSendRepository {
 
   private fun performSend(contactSearchKey: Set<ContactSearchKey>, textStoryPostCreationState: TextStoryPostCreationState, linkPreview: LinkPreview?): Single<TextStoryPostSendResult> {
     return Single.fromCallable {
-      val messages: MutableList<OutgoingSecureMediaMessage> = mutableListOf()
+      val messages: MutableList<OutgoingMessage> = mutableListOf()
       val distributionListSentTimestamp = System.currentTimeMillis()
 
       for (contact in contactSearchKey) {
         val recipient = Recipient.resolved(contact.requireShareContact().recipientId.get())
-        val isStory = contact is ContactSearchKey.RecipientSearchKey.Story || recipient.isDistributionList
+        val isStory = contact.requireRecipientSearchKey().isStory || recipient.isDistributionList
 
         if (isStory && !recipient.isMyStory) {
           SignalStore.storyValues().setLatestStorySend(StorySend.newSend(recipient))
@@ -78,28 +76,16 @@ class TextStoryPostSendRepository {
           else -> StoryType.NONE
         }
 
-        val message = OutgoingMediaMessage(
-          recipient,
-          serializeTextStoryState(textStoryPostCreationState),
-          emptyList(),
-          if (recipient.isDistributionList) distributionListSentTimestamp else System.currentTimeMillis(),
-          -1,
-          0,
-          false,
-          ThreadDatabase.DistributionTypes.DEFAULT,
-          storyType.toTextStoryType(),
-          null,
-          false,
-          null,
-          emptyList(),
-          listOfNotNull(linkPreview),
-          emptyList(),
-          mutableSetOf(),
-          mutableSetOf(),
-          null
+        val message = OutgoingMessage(
+          recipient = recipient,
+          body = serializeTextStoryState(textStoryPostCreationState),
+          timestamp = if (recipient.isDistributionList) distributionListSentTimestamp else System.currentTimeMillis(),
+          storyType = storyType.toTextStoryType(),
+          previews = listOfNotNull(linkPreview),
+          isSecure = true
         )
 
-        messages.add(OutgoingSecureMediaMessage(message))
+        messages.add(message)
         ThreadUtil.sleep(5)
       }
 

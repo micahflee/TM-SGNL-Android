@@ -40,6 +40,7 @@ public final class MemoryFileDescriptor implements Closeable {
         }catch (UnsatisfiedLinkError e){}
         //**TM_SA**//End
 
+
         if (fileDescriptor < 0) {
           supported = false;
           Log.w(TAG, "MemoryFileDescriptor is not available.");

@@ -1,7 +1,6 @@
 package org.tm.archive.recipients;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -13,6 +12,8 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.DatabaseId;
 import org.signal.core.util.LongSerializer;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.groups.GroupId;
 import org.tm.archive.util.DelimiterUtil;
 import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.push.ServiceId;
@@ -32,7 +33,7 @@ public class RecipientId implements Parcelable, Comparable<RecipientId>, Databas
   public static final RecipientId UNKNOWN = RecipientId.from(UNKNOWN_ID);
   public static final LongSerializer<RecipientId> SERIALIZER = new Serializer();
 
-  private final long id;
+  public final long id; //*TM_SA*//
 
   public static RecipientId from(long id) {
     if (id == 0) {
@@ -69,6 +70,16 @@ public class RecipientId implements Parcelable, Comparable<RecipientId>, Databas
     return from(null, identifier);
   }
 
+  public static @NonNull RecipientId from(@NonNull GroupId groupId) {
+    RecipientId recipientId = RecipientIdCache.INSTANCE.get(groupId);
+    if (recipientId == null) {
+      recipientId = SignalDatabase.recipients().getOrInsertFromPossiblyMigratedGroupId(groupId);
+      if (groupId.isV2()) {
+        RecipientIdCache.INSTANCE.put(groupId, recipientId);
+      }
+    }
+    return recipientId;
+  }
   /**
    * Used for when you have a string that could be either a UUID or an e164. This was primarily
    * created for interacting with protocol stores.
@@ -93,9 +104,8 @@ public class RecipientId implements Parcelable, Comparable<RecipientId>, Databas
     RecipientId recipientId = RecipientIdCache.INSTANCE.get(serviceId, e164);
 
     if (recipientId == null) {
-      Recipient recipient = Recipient.externalPush(serviceId, e164);
-      RecipientIdCache.INSTANCE.put(recipient);
-      recipientId = recipient.getId();
+      recipientId = SignalDatabase.recipients().getAndPossiblyMerge(serviceId, e164);
+      RecipientIdCache.INSTANCE.put(recipientId, e164, serviceId);
     }
 
     return recipientId;
@@ -155,6 +165,10 @@ public class RecipientId implements Parcelable, Comparable<RecipientId>, Databas
 
   public @NonNull String toQueueKey(boolean forMedia) {
     return "RecipientId::" + id + (forMedia ? "::MEDIA" : "");
+  }
+
+  public @NonNull String toScheduledSendQueueKey() {
+    return "RecipientId::" + id + "::SCHEDULED";
   }
 
   @Override

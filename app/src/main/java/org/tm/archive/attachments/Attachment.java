@@ -7,8 +7,8 @@ import androidx.annotation.Nullable;
 
 import org.tm.archive.audio.AudioHash;
 import org.tm.archive.blurhash.BlurHash;
-import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.AttachmentDatabase.TransformProperties;
+import org.tm.archive.database.AttachmentTable;
+import org.tm.archive.database.AttachmentTable.TransformProperties;
 import org.tm.archive.stickers.StickerLocator;
 
 public abstract class Attachment {
@@ -118,8 +118,13 @@ public abstract class Attachment {
   }
 
   public boolean isInProgress() {
-    return transferState != AttachmentDatabase.TRANSFER_PROGRESS_DONE &&
-           transferState != AttachmentDatabase.TRANSFER_PROGRESS_FAILED;
+    return transferState != AttachmentTable.TRANSFER_PROGRESS_DONE &&
+           transferState != AttachmentTable.TRANSFER_PROGRESS_FAILED &&
+           transferState != AttachmentTable.TRANSFER_PROGRESS_PERMANENT_FAILURE;
+  }
+
+  public boolean isPermanentlyFailed() {
+    return transferState == AttachmentTable.TRANSFER_PROGRESS_PERMANENT_FAILURE;
   }
 
   public long getSize() {

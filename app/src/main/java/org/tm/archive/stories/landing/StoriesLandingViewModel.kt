@@ -58,6 +58,11 @@ class StoriesLandingViewModel(private val storiesLandingRepository: StoriesLandi
     store.update { it.copy(searchQuery = query) }
   }
 
+  fun markStoriesRead() {
+    storiesLandingRepository.markStoriesRead()
+    storiesLandingRepository.markFailedStoriesNotified()
+  }
+
   class Factory(private val storiesLandingRepository: StoriesLandingRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
       return modelClass.cast(StoriesLandingViewModel(storiesLandingRepository)) as T

@@ -13,7 +13,6 @@ import org.tm.archive.ringrtc.Camera;
 import org.tm.archive.ringrtc.RemotePeer;
 import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.service.webrtc.state.WebRtcServiceStateBuilder;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.NetworkUtil;
 import org.tm.archive.webrtc.locks.LockManager;
 
@@ -80,7 +79,7 @@ public class GroupJoiningActionProcessor extends GroupActionProcessor {
             throw new RuntimeException(e);
           }
 
-          if (FeatureFlags.groupCallRinging() && currentState.getCallSetupState(RemotePeer.GROUP_CALL_ID).shouldRingGroup()) {
+          if (currentState.getCallSetupState(RemotePeer.GROUP_CALL_ID).shouldRingGroup()) {
             try {
               groupCall.ringAll();
             } catch (CallException e) {

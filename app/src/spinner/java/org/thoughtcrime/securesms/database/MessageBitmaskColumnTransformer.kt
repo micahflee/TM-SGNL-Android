@@ -3,57 +3,62 @@ package org.tm.archive.database
 import android.database.Cursor
 import org.signal.core.util.requireLong
 import org.signal.spinner.ColumnTransformer
-import org.tm.archive.database.MmsSmsColumns.Types.BAD_DECRYPT_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_DRAFT_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_INBOX_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_OUTBOX_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_PENDING_INSECURE_SMS_FALLBACK
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_PENDING_SECURE_SMS_FALLBACK
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_SENDING_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_SENT_FAILED_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_SENT_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.BASE_TYPE_MASK
-import org.tm.archive.database.MmsSmsColumns.Types.BOOST_REQUEST_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.CHANGE_NUMBER_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.ENCRYPTION_REMOTE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.ENCRYPTION_REMOTE_DUPLICATE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.ENCRYPTION_REMOTE_FAILED_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.ENCRYPTION_REMOTE_LEGACY_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.ENCRYPTION_REMOTE_NO_SESSION_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.END_SESSION_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.GROUP_CALL_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.GROUP_LEAVE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.GROUP_UPDATE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.GROUP_V2_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.GROUP_V2_LEAVE_BITS
-import org.tm.archive.database.MmsSmsColumns.Types.GV1_MIGRATION_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.INCOMING_AUDIO_CALL_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.INCOMING_VIDEO_CALL_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.INVALID_MESSAGE_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.JOINED_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.KEY_EXCHANGE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.KEY_EXCHANGE_BUNDLE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.KEY_EXCHANGE_CONTENT_FORMAT
-import org.tm.archive.database.MmsSmsColumns.Types.KEY_EXCHANGE_CORRUPTED_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.KEY_EXCHANGE_IDENTITY_DEFAULT_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.KEY_EXCHANGE_IDENTITY_UPDATE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.KEY_EXCHANGE_IDENTITY_VERIFIED_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.KEY_EXCHANGE_INVALID_VERSION_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.MESSAGE_FORCE_SMS_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.MESSAGE_RATE_LIMITED_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.MISSED_AUDIO_CALL_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.MISSED_VIDEO_CALL_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.OUTGOING_AUDIO_CALL_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES
-import org.tm.archive.database.MmsSmsColumns.Types.OUTGOING_VIDEO_CALL_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.PROFILE_CHANGE_TYPE
-import org.tm.archive.database.MmsSmsColumns.Types.PUSH_MESSAGE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.SECURE_MESSAGE_BIT
-import org.tm.archive.database.MmsSmsColumns.Types.SPECIAL_TYPES_MASK
-import org.tm.archive.database.MmsSmsColumns.Types.SPECIAL_TYPE_GIFT_BADGE
-import org.tm.archive.database.MmsSmsColumns.Types.SPECIAL_TYPE_STORY_REACTION
-import org.tm.archive.database.MmsSmsColumns.Types.UNSUPPORTED_MESSAGE_TYPE
+import org.tm.archive.database.MessageTypes.BAD_DECRYPT_TYPE
+import org.tm.archive.database.MessageTypes.BASE_DRAFT_TYPE
+import org.tm.archive.database.MessageTypes.BASE_INBOX_TYPE
+import org.tm.archive.database.MessageTypes.BASE_OUTBOX_TYPE
+import org.tm.archive.database.MessageTypes.BASE_PENDING_INSECURE_SMS_FALLBACK
+import org.tm.archive.database.MessageTypes.BASE_PENDING_SECURE_SMS_FALLBACK
+import org.tm.archive.database.MessageTypes.BASE_SENDING_TYPE
+import org.tm.archive.database.MessageTypes.BASE_SENT_FAILED_TYPE
+import org.tm.archive.database.MessageTypes.BASE_SENT_TYPE
+import org.tm.archive.database.MessageTypes.BASE_TYPE_MASK
+import org.tm.archive.database.MessageTypes.BOOST_REQUEST_TYPE
+import org.tm.archive.database.MessageTypes.CHANGE_NUMBER_TYPE
+import org.tm.archive.database.MessageTypes.ENCRYPTION_REMOTE_BIT
+import org.tm.archive.database.MessageTypes.ENCRYPTION_REMOTE_DUPLICATE_BIT
+import org.tm.archive.database.MessageTypes.ENCRYPTION_REMOTE_FAILED_BIT
+import org.tm.archive.database.MessageTypes.ENCRYPTION_REMOTE_LEGACY_BIT
+import org.tm.archive.database.MessageTypes.ENCRYPTION_REMOTE_NO_SESSION_BIT
+import org.tm.archive.database.MessageTypes.END_SESSION_BIT
+import org.tm.archive.database.MessageTypes.EXPIRATION_TIMER_UPDATE_BIT
+import org.tm.archive.database.MessageTypes.GROUP_CALL_TYPE
+import org.tm.archive.database.MessageTypes.GROUP_LEAVE_BIT
+import org.tm.archive.database.MessageTypes.GROUP_UPDATE_BIT
+import org.tm.archive.database.MessageTypes.GROUP_V2_BIT
+import org.tm.archive.database.MessageTypes.GROUP_V2_LEAVE_BITS
+import org.tm.archive.database.MessageTypes.GV1_MIGRATION_TYPE
+import org.tm.archive.database.MessageTypes.INCOMING_AUDIO_CALL_TYPE
+import org.tm.archive.database.MessageTypes.INCOMING_VIDEO_CALL_TYPE
+import org.tm.archive.database.MessageTypes.INVALID_MESSAGE_TYPE
+import org.tm.archive.database.MessageTypes.JOINED_TYPE
+import org.tm.archive.database.MessageTypes.KEY_EXCHANGE_BIT
+import org.tm.archive.database.MessageTypes.KEY_EXCHANGE_BUNDLE_BIT
+import org.tm.archive.database.MessageTypes.KEY_EXCHANGE_CONTENT_FORMAT
+import org.tm.archive.database.MessageTypes.KEY_EXCHANGE_CORRUPTED_BIT
+import org.tm.archive.database.MessageTypes.KEY_EXCHANGE_IDENTITY_DEFAULT_BIT
+import org.tm.archive.database.MessageTypes.KEY_EXCHANGE_IDENTITY_UPDATE_BIT
+import org.tm.archive.database.MessageTypes.KEY_EXCHANGE_IDENTITY_VERIFIED_BIT
+import org.tm.archive.database.MessageTypes.KEY_EXCHANGE_INVALID_VERSION_BIT
+import org.tm.archive.database.MessageTypes.MESSAGE_FORCE_SMS_BIT
+import org.tm.archive.database.MessageTypes.MESSAGE_RATE_LIMITED_BIT
+import org.tm.archive.database.MessageTypes.MISSED_AUDIO_CALL_TYPE
+import org.tm.archive.database.MessageTypes.MISSED_VIDEO_CALL_TYPE
+import org.tm.archive.database.MessageTypes.OUTGOING_AUDIO_CALL_TYPE
+import org.tm.archive.database.MessageTypes.OUTGOING_MESSAGE_TYPES
+import org.tm.archive.database.MessageTypes.OUTGOING_VIDEO_CALL_TYPE
+import org.tm.archive.database.MessageTypes.PROFILE_CHANGE_TYPE
+import org.tm.archive.database.MessageTypes.PUSH_MESSAGE_BIT
+import org.tm.archive.database.MessageTypes.SECURE_MESSAGE_BIT
+import org.tm.archive.database.MessageTypes.SMS_EXPORT_TYPE
+import org.tm.archive.database.MessageTypes.SPECIAL_TYPES_MASK
+import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_GIFT_BADGE
+import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_PAYMENTS_ACTIVATED
+import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_PAYMENTS_ACTIVATE_REQUEST
+import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_PAYMENTS_NOTIFICATION
+import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_STORY_REACTION
+import org.tm.archive.database.MessageTypes.THREAD_MERGE_TYPE
+import org.tm.archive.database.MessageTypes.UNSUPPORTED_MESSAGE_TYPE
 
 object MessageBitmaskColumnTransformer : ColumnTransformer {
 
@@ -61,7 +66,7 @@ object MessageBitmaskColumnTransformer : ColumnTransformer {
     return columnName == "type" || columnName == "msg_box"
   }
 
-  override fun transform(tableName: String?, columnName: String, cursor: Cursor): String {
+  override fun transform(tableName: String?, columnName: String, cursor: Cursor): String? {
     val type = cursor.requireLong(columnName)
 
     val describe = """
@@ -111,10 +116,15 @@ object MessageBitmaskColumnTransformer : ColumnTransformer {
       isGroupV1MigrationEvent:${type == GV1_MIGRATION_TYPE}
       isChangeNumber:${type == CHANGE_NUMBER_TYPE}
       isBoostRequest:${type == BOOST_REQUEST_TYPE}
+      isThreadMerge:${type == THREAD_MERGE_TYPE}
+      isSmsExport:${type == SMS_EXPORT_TYPE}
       isGroupV2LeaveOnly:${type and GROUP_V2_LEAVE_BITS == GROUP_V2_LEAVE_BITS}
       isSpecialType:${type and SPECIAL_TYPES_MASK != 0L}
       isStoryReaction:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_STORY_REACTION}
       isGiftBadge:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_GIFT_BADGE}
+      isPaymentsNotificaiton:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_PAYMENTS_NOTIFICATION}
+      isRequestToActivatePayments:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_PAYMENTS_ACTIVATE_REQUEST}
+      isPaymentsActivated:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_PAYMENTS_ACTIVATED}
     """.trimIndent()
 
     return "$type<br><br>" + describe.replace(Regex("is[A-Z][A-Za-z0-9]*:false\n?"), "").replace("\n", "<br>")

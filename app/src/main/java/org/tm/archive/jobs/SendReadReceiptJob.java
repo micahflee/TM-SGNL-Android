@@ -4,16 +4,17 @@ package org.tm.archive.jobs;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import org.signal.core.util.ListUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.MessageDatabase.MarkedMessageInfo;
+import org.tm.archive.database.MessageTable.MarkedMessageInfo;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -117,7 +118,7 @@ public class SendReadReceiptJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
+  public @Nullable byte[] serialize() {
     long[] sentTimestamps = new long[messageSentTimestamps.size()];
     for (int i = 0; i < sentTimestamps.length; i++) {
       sentTimestamps[i] = messageSentTimestamps.get(i);
@@ -125,12 +126,12 @@ public class SendReadReceiptJob extends BaseJob {
 
     List<String> serializedMessageIds = messageIds.stream().map(MessageId::serialize).collect(Collectors.toList());
 
-    return new Data.Builder().putString(KEY_RECIPIENT, recipientId.serialize())
-                             .putLongArray(KEY_MESSAGE_SENT_TIMESTAMPS, sentTimestamps)
-                             .putStringListAsArray(KEY_MESSAGE_IDS, serializedMessageIds)
-                             .putLong(KEY_TIMESTAMP, timestamp)
-                             .putLong(KEY_THREAD, threadId)
-                             .build();
+    return new JsonJobData.Builder().putString(KEY_RECIPIENT, recipientId.serialize())
+                                    .putLongArray(KEY_MESSAGE_SENT_TIMESTAMPS, sentTimestamps)
+                                    .putStringListAsArray(KEY_MESSAGE_IDS, serializedMessageIds)
+                                    .putLong(KEY_TIMESTAMP, timestamp)
+                                    .putLong(KEY_THREAD, threadId)
+                                    .serialize();
   }
 
   @Override
@@ -177,6 +178,11 @@ public class SendReadReceiptJob extends BaseJob {
       return;
     }
 
+    if (!recipient.hasServiceId() && !recipient.hasE164()) {
+      Log.w(TAG, "No serviceId or e164!");
+      return;
+    }
+
     SignalServiceMessageSender  messageSender  = ApplicationDependencies.getSignalServiceMessageSender();
     SignalServiceAddress        remoteAddress  = RecipientUtil.toSignalServiceAddress(context, recipient);
     SignalServiceReceiptMessage receiptMessage = new SignalServiceReceiptMessage(SignalServiceReceiptMessage.Type.READ, messageSentTimestamps, timestamp);
@@ -219,7 +225,9 @@ public class SendReadReceiptJob extends BaseJob {
     }
 
     @Override
-    public @NonNull SendReadReceiptJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull SendReadReceiptJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       long            timestamp      = data.getLong(KEY_TIMESTAMP);
       long[]          ids            = data.hasLongArray(KEY_MESSAGE_SENT_TIMESTAMPS) ? data.getLongArray(KEY_MESSAGE_SENT_TIMESTAMPS) : new long[0];
       List<Long>      sentTimestamps = new ArrayList<>(ids.length);
@@ -227,7 +235,7 @@ public class SendReadReceiptJob extends BaseJob {
       List<MessageId> messageIds     = rawMessageIds.stream().map(MessageId::deserialize).collect(Collectors.toList());
       long            threadId       = data.getLong(KEY_THREAD);
       RecipientId     recipientId    = data.hasString(KEY_RECIPIENT) ? RecipientId.from(data.getString(KEY_RECIPIENT))
-                                                                     : Recipient.external(application, data.getString(KEY_ADDRESS)).getId();
+                                                                               : Recipient.external(application, data.getString(KEY_ADDRESS)).getId();
 
       for (long id : ids) {
         sentTimestamps.add(id);

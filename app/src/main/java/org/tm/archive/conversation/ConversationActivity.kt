@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
+import android.view.Window
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.Toolbar
 import io.reactivex.rxjava3.subjects.PublishSubject
@@ -13,11 +14,13 @@ import org.tm.archive.R
 import org.tm.archive.components.HidingLinearLayout
 import org.tm.archive.components.reminder.ReminderView
 import org.tm.archive.components.settings.app.subscription.DonationPaymentComponent
-import org.tm.archive.components.settings.app.subscription.DonationPaymentRepository
+import org.tm.archive.components.settings.app.subscription.StripeRepository
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.util.Debouncer
 import org.tm.archive.util.DynamicNoActionBarTheme
 import org.tm.archive.util.DynamicTheme
 import org.tm.archive.util.views.Stub
+import java.util.concurrent.TimeUnit
 
 open class ConversationActivity : PassphraseRequiredActivity(), ConversationParentFragment.Callback, DonationPaymentComponent {
 
@@ -25,6 +28,7 @@ open class ConversationActivity : PassphraseRequiredActivity(), ConversationPare
     private const val STATE_WATERMARK = "share_data_watermark"
   }
 
+  private val transitionDebouncer: Debouncer = Debouncer(150, TimeUnit.MILLISECONDS)
   private lateinit var fragment: ConversationParentFragment
   private var shareDataTimestamp: Long = -1L
 
@@ -34,8 +38,15 @@ open class ConversationActivity : PassphraseRequiredActivity(), ConversationPare
   }
 
   override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
-    shareDataTimestamp = savedInstanceState?.getLong(STATE_WATERMARK, -1L) ?: -1L
+    supportPostponeEnterTransition()
+    transitionDebouncer.publish { supportStartPostponedEnterTransition() }
+    window.requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS)
 
+    if (savedInstanceState != null) {
+      shareDataTimestamp = savedInstanceState.getLong(STATE_WATERMARK, -1L)
+    } else if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) {
+      shareDataTimestamp = System.currentTimeMillis()
+    }
     setContentView(R.layout.conversation_parent_fragment_container)
 
     if (savedInstanceState == null) {
@@ -43,6 +54,11 @@ open class ConversationActivity : PassphraseRequiredActivity(), ConversationPare
     } else {
       fragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as ConversationParentFragment
     }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    transitionDebouncer.clear()
   }
 
   override fun onSaveInstanceState(outState: Bundle) {
@@ -57,6 +73,7 @@ open class ConversationActivity : PassphraseRequiredActivity(), ConversationPare
     replaceFragment(intent!!)
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
     googlePayResultPublisher.onNext(DonationPaymentComponent.GooglePayResult(requestCode, resultCode, data))
@@ -113,6 +130,6 @@ open class ConversationActivity : PassphraseRequiredActivity(), ConversationPare
     return fragment.reminderView
   }
 
-  override val donationPaymentRepository: DonationPaymentRepository by lazy { DonationPaymentRepository(this) }
+  override val stripeRepository: StripeRepository by lazy { StripeRepository(this) }
   override val googlePayResultPublisher: Subject<DonationPaymentComponent.GooglePayResult> = PublishSubject.create()
 }

@@ -18,7 +18,7 @@ import org.tm.archive.util.ViewUtil;
 public class AnimatingToggle extends FrameLayout {
 
   private View current;
-
+  private View previous;
   private final Animation inAnimation;
   private final Animation outAnimation;
 
@@ -54,18 +54,28 @@ public class AnimatingToggle extends FrameLayout {
   }
 
   public void display(@Nullable View view) {
-    if (view == current) return;
-    if (current != null) ViewUtil.animateOut(current, outAnimation, View.GONE);
-    if (view    != null) ViewUtil.animateIn(view, inAnimation);
-
+    if (view == current && current.getVisibility() == View.VISIBLE) return;
+    if (previous != null && previous.getAnimation() == outAnimation) {
+      previous.clearAnimation();
+      previous.setVisibility(View.GONE);
+    }
+    if (current != null) {
+      ViewUtil.animateOut(current, outAnimation, View.GONE);
+    }
+    if (view != null) {
+      ViewUtil.animateIn(view, inAnimation);
+    }
+    previous = current;
     current = view;
   }
 
   public void displayQuick(@Nullable View view) {
-    if (view == current) return;
+    if (view == current && current.getVisibility() == View.VISIBLE) return;
     if (current != null) current.setVisibility(View.GONE);
-    if (view != null)    view.setVisibility(View.VISIBLE);
-
+    if (view != null) {
+      view.setVisibility(View.VISIBLE);
+      view.clearAnimation();
+    }
     current = view;
   }
 }

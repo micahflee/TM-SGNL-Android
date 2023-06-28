@@ -14,6 +14,8 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.registration.viewmodel.RegistrationViewModel;
 import org.tm.archive.util.CommunicationActions;
+import org.tm.archive.util.DynamicNoActionBarTheme;
+import org.tm.archive.util.DynamicTheme;
 
 
 public final class RegistrationNavigationActivity extends AppCompatActivity {
@@ -21,6 +23,8 @@ public final class RegistrationNavigationActivity extends AppCompatActivity {
   private static final String TAG = Log.tag(RegistrationNavigationActivity.class);
 
   public static final String RE_REGISTRATION_EXTRA = "re_registration";
+
+  private final DynamicTheme dynamicTheme = new DynamicNoActionBarTheme();
 
   private SmsRetrieverReceiver  smsRetrieverReceiver;
   private RegistrationViewModel viewModel;
@@ -43,13 +47,9 @@ public final class RegistrationNavigationActivity extends AppCompatActivity {
   }
 
   @Override
-  protected void attachBaseContext(@NonNull Context newBase) {
-    getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-    super.attachBaseContext(newBase);
-  }
-
-  @Override
   protected void onCreate(Bundle savedInstanceState) {
+    dynamicTheme.onCreate(this);
+
     super.onCreate(savedInstanceState);
     viewModel = new ViewModelProvider(this, new RegistrationViewModel.Factory(this, isReregister(getIntent()))).get(RegistrationViewModel.class);
 
@@ -59,6 +59,12 @@ public final class RegistrationNavigationActivity extends AppCompatActivity {
     if (getIntent() != null && getIntent().getData() != null) {
       CommunicationActions.handlePotentialProxyLinkUrl(this, getIntent().getDataString());
     }
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    dynamicTheme.onResume(this);
   }
 
   @Override

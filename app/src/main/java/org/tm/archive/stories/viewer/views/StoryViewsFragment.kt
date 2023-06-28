@@ -8,10 +8,10 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsFragment
-import org.tm.archive.components.settings.app.AppSettingsActivity
 import org.tm.archive.components.settings.configure
 import org.tm.archive.conversation.ConversationIntents
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.stories.settings.StorySettingsActivity
 import org.tm.archive.stories.viewer.reply.StoryViewsAndRepliesPagerChild
 import org.tm.archive.stories.viewer.reply.StoryViewsAndRepliesPagerParent
 import org.tm.archive.util.adapter.mapping.MappingAdapter
@@ -45,7 +45,7 @@ class StoryViewsFragment :
     val disabledButton: View = requireView().findViewById(R.id.disabled_button)
 
     disabledButton.setOnClickListener {
-      startActivity(AppSettingsActivity.privacy(requireContext()))
+      startActivity(StorySettingsActivity.getIntent(requireContext()))
     }
 
     onPageSelected(findListener<StoryViewsAndRepliesPagerParent>()?.selectedChild ?: StoryViewsAndRepliesPagerParent.Child.VIEWS)

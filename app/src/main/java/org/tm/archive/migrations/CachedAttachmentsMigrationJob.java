@@ -1,9 +1,9 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.util.FileUtils;
@@ -54,7 +54,7 @@ public class CachedAttachmentsMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<CachedAttachmentsMigrationJob> {
     @Override
-    public @NonNull CachedAttachmentsMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull CachedAttachmentsMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new CachedAttachmentsMigrationJob(parameters);
     }
   }

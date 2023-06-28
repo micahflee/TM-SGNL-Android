@@ -19,6 +19,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.util.AppStartup;
 import org.tm.archive.util.ConfigurationUtil;
 import org.tm.archive.util.TextSecurePreferences;
+import org.tm.archive.util.WindowUtil;
 import org.tm.archive.util.dynamiclanguage.DynamicLanguageContextWrapper;
 
 import java.util.Objects;
@@ -42,7 +43,7 @@ public abstract class BaseActivity extends AppCompatActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    initializeScreenshotSecurity();
+    WindowUtil.initializeScreenshotSecurity(this, getWindow());
   }
 
   @Override
@@ -62,14 +63,6 @@ public abstract class BaseActivity extends AppCompatActivity {
   protected void onDestroy() {
     logEvent("onDestroy()");
     super.onDestroy();
-  }
-
-  private void initializeScreenshotSecurity() {
-    if (TextSecurePreferences.isScreenSecurityEnabled(this)) {
-      getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-    } else {
-      getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
-    }
   }
 
   protected void startActivitySceneTransition(Intent intent, View sharedView, String transitionName) {

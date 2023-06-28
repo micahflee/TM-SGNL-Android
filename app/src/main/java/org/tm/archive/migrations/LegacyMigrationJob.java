@@ -3,20 +3,19 @@ package org.tm.archive.migrations;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.crypto.MasterSecret;
-import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.MessageDatabase;
-import org.tm.archive.database.MmsDatabase;
-import org.tm.archive.database.MmsDatabase.Reader;
-import org.tm.archive.database.PushDatabase;
+import org.tm.archive.database.AttachmentTable;
+import org.tm.archive.database.MessageTable;
+import org.tm.archive.database.MessageTable.MmsReader;
+import org.tm.archive.database.PushTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.AttachmentDownloadJob;
@@ -245,18 +244,18 @@ public class LegacyMigrationJob extends MigrationJob {
   }
 
   private void schedulePendingIncomingParts(Context context) {
-    final AttachmentDatabase       attachmentDb       = SignalDatabase.attachments();
-    final MessageDatabase          mmsDb              = SignalDatabase.mms();
+    final AttachmentTable          attachmentDb       = SignalDatabase.attachments();
+    final MessageTable             mmsDb              = SignalDatabase.messages();
     final List<DatabaseAttachment> pendingAttachments = SignalDatabase.attachments().getPendingAttachments();
 
     Log.i(TAG, pendingAttachments.size() + " pending parts.");
     for (DatabaseAttachment attachment : pendingAttachments) {
-      final Reader        reader = MmsDatabase.readerFor(mmsDb.getMessageCursor(attachment.getMmsId()));
+      final MmsReader     reader = MessageTable.mmsReaderFor(mmsDb.getMessageCursor(attachment.getMmsId()));
       final MessageRecord record = reader.getNext();
 
       if (attachment.hasData()) {
         Log.i(TAG, "corrected a pending media part " + attachment.getAttachmentId() + "that already had data.");
-        attachmentDb.setTransferState(attachment.getMmsId(), attachment.getAttachmentId(), AttachmentDatabase.TRANSFER_PROGRESS_DONE);
+        attachmentDb.setTransferState(attachment.getMmsId(), attachment.getAttachmentId(), AttachmentTable.TRANSFER_PROGRESS_DONE);
       } else if (record != null && !record.isOutgoing() && record.isPush()) {
         Log.i(TAG, "queuing new attachment download job for incoming push part " + attachment.getAttachmentId() + ".");
         ApplicationDependencies.getJobManager().add(new AttachmentDownloadJob(attachment.getMmsId(), attachment.getAttachmentId(), false));
@@ -266,13 +265,13 @@ public class LegacyMigrationJob extends MigrationJob {
   }
 
   private static void scheduleMessagesInPushDatabase(@NonNull Context context) {
-    PushDatabase pushDatabase = SignalDatabase.push();
-    JobManager   jobManager   = ApplicationDependencies.getJobManager();
+    PushTable  pushDatabase = SignalDatabase.push();
+    JobManager jobManager   = ApplicationDependencies.getJobManager();
 
-    try (PushDatabase.Reader pushReader = pushDatabase.readerFor(pushDatabase.getPending())) {
+    try (PushTable.Reader pushReader = pushDatabase.readerFor(pushDatabase.getPending())) {
       SignalServiceEnvelope envelope;
       while ((envelope = pushReader.getNext()) != null) {
-        jobManager.add(new PushDecryptMessageJob(context, envelope));
+        jobManager.add(new PushDecryptMessageJob(envelope));
       }
     }
   }
@@ -283,7 +282,7 @@ public class LegacyMigrationJob extends MigrationJob {
 
   public static final class Factory implements Job.Factory<LegacyMigrationJob> {
     @Override
-    public @NonNull LegacyMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull LegacyMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new LegacyMigrationJob(parameters);
     }
   }

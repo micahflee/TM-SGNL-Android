@@ -8,6 +8,7 @@ import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.jobs.NewRegistrationUsernameSyncJob;
 import org.tm.archive.jobs.StorageAccountRestoreJob;
 import org.tm.archive.jobs.StorageSyncJob;
 import org.tm.archive.keyvalue.SignalStore;
@@ -52,7 +53,11 @@ public final class RegistrationLockFragment extends BaseRegistrationLockFragment
       ApplicationDependencies.getJobManager().runSynchronously(new StorageAccountRestoreJob(), StorageAccountRestoreJob.LIFESPAN);
       stopwatch.split("AccountRestore");
 
-      ApplicationDependencies.getJobManager().runSynchronously(new StorageSyncJob(), TimeUnit.SECONDS.toMillis(10));
+      ApplicationDependencies
+          .getJobManager()
+          .startChain(new StorageSyncJob())
+          .then(new NewRegistrationUsernameSyncJob())
+          .enqueueAndBlockUntilCompletion(TimeUnit.SECONDS.toMillis(10));
       stopwatch.split("ContactRestore");
 
       try {

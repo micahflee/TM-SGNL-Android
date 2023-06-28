@@ -1,14 +1,14 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.RecipientRecord;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
@@ -57,7 +57,7 @@ public class ApplyUnknownFieldsToSelfMigrationJob extends MigrationJob {
     try {
       self     = Recipient.self();
       settings = SignalDatabase.recipients().getRecordForSync(self.getId());
-    } catch (RecipientDatabase.MissingRecipientException e) {
+    } catch (RecipientTable.MissingRecipientException e) {
       Log.w(TAG, "Unable to find self");
       return;
     }
@@ -86,7 +86,7 @@ public class ApplyUnknownFieldsToSelfMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<ApplyUnknownFieldsToSelfMigrationJob> {
     @Override
-    public @NonNull ApplyUnknownFieldsToSelfMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull ApplyUnknownFieldsToSelfMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new ApplyUnknownFieldsToSelfMigrationJob(parameters);
     }
   }

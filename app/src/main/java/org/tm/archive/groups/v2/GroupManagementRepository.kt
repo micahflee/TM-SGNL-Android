@@ -4,11 +4,14 @@ import android.content.Context
 import androidx.core.util.Consumer
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
+import org.signal.core.util.Result
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.tm.archive.contacts.sync.ContactDiscovery
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.groups.GroupChangeBusyException
 import org.tm.archive.groups.GroupChangeException
+import org.tm.archive.groups.GroupChangeFailedException
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.GroupManager
 import org.tm.archive.groups.ui.GroupChangeFailureReason
@@ -74,6 +77,24 @@ class GroupManagementRepository @JvmOverloads constructor(private val context: C
       } catch (e: IOException) {
         Log.w(TAG, e)
         GroupBlockJoinRequestResult.Failure(GroupChangeFailureReason.fromException(e))
+      }
+    }.subscribeOn(Schedulers.io())
+  }
+
+  fun cancelJoinRequest(groupId: GroupId.V2): Single<Result<Unit, GroupChangeFailureReason>> {
+    return Single.create { emitter ->
+      try {
+        GroupManager.cancelJoinRequest(context, groupId)
+        emitter.onSuccess(Result.success(Unit))
+      } catch (gcfe: GroupChangeFailedException) {
+        Log.i(TAG, "Unable to cancel request", gcfe)
+        emitter.onSuccess(Result.failure(GroupChangeFailureReason.fromException(gcfe)))
+      } catch (ioe: IOException) {
+        Log.i(TAG, "Unable to cancel request", ioe)
+        emitter.onSuccess(Result.failure(GroupChangeFailureReason.fromException(ioe)))
+      } catch (gcbe: GroupChangeBusyException) {
+        Log.i(TAG, "Unable to cancel request", gcbe)
+        emitter.onSuccess(Result.failure(GroupChangeFailureReason.fromException(gcbe)))
       }
     }.subscribeOn(Schedulers.io())
   }

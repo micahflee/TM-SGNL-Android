@@ -1,10 +1,10 @@
 package org.tm.archive.registration.secondary
 
-import com.google.protobuf.ByteString
+import okio.ByteString.Companion.toByteString
 import org.signal.libsignal.protocol.IdentityKeyPair
 import org.signal.libsignal.protocol.ecc.Curve
 import org.signal.libsignal.protocol.ecc.ECKeyPair
-import org.tm.archive.devicelist.DeviceNameProtos
+import org.tm.archive.devicelist.protos.DeviceName
 import java.nio.charset.Charset
 import javax.crypto.Cipher
 import javax.crypto.Mac
@@ -27,15 +27,14 @@ object DeviceNameCipher {
     val cipherKey: ByteArray = computeCipherKey(masterSecret, syntheticIv)
 
     val cipher = Cipher.getInstance("AES/CTR/NoPadding")
-    cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(cipherKey, "AES"), IvParameterSpec(ByteArray(16)))
+    cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(cipherKey, "AES"), IvParameterSpec(createEmptyByteArray(16)))
     val cipherText = cipher.doFinal(plaintext)
 
-    return DeviceNameProtos.DeviceName.newBuilder()
-      .setEphemeralPublic(ByteString.copyFrom(ephemeralKeyPair.publicKey.serialize()))
-      .setSyntheticIv(ByteString.copyFrom(syntheticIv))
-      .setCiphertext(ByteString.copyFrom(cipherText))
-      .build()
-      .toByteArray()
+    return DeviceName(
+      ephemeralPublic = ephemeralKeyPair.publicKey.serialize().toByteString(),
+      syntheticIv = syntheticIv.toByteString(),
+      ciphertext = cipherText.toByteString()
+    ).encode()
   }
 
   private fun computeCipherKey(masterSecret: ByteArray, syntheticIv: ByteArray): ByteArray {
@@ -61,4 +60,6 @@ object DeviceNameCipher {
     ivMac.init(SecretKeySpec(syntheticIvKey, "HmacSHA256"))
     return ivMac.doFinal(plaintext).sliceArray(0 until SYNTHETIC_IV_LENGTH)
   }
+
+  private fun createEmptyByteArray(length: Int): ByteArray = ByteArray(length)
 }

@@ -1,11 +1,12 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.JobTracker;
@@ -53,8 +54,8 @@ public class StorageAccountRestoreJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -77,6 +78,7 @@ public class StorageAccountRestoreJob extends BaseJob {
       return;
     }
     //**TM_SA**//
+
 
     if (!manifest.isPresent()) {
       Log.w(TAG, "Manifest did not exist or was undecryptable (bad key). Not restoring. Force-pushing.");
@@ -156,7 +158,7 @@ public class StorageAccountRestoreJob extends BaseJob {
   public static class Factory implements Job.Factory<StorageAccountRestoreJob> {
     @Override
     public @NonNull
-    StorageAccountRestoreJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    StorageAccountRestoreJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new StorageAccountRestoreJob(parameters);
     }
   }

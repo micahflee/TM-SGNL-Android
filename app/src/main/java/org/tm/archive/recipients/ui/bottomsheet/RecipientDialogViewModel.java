@@ -21,7 +21,7 @@ import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.BlockUnblockDialog;
 import org.tm.archive.R;
 import org.tm.archive.components.settings.conversation.ConversationSettingsActivity;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.GroupTable;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.model.StoryViewState;
 import org.tm.archive.groups.GroupId;
@@ -29,12 +29,14 @@ import org.tm.archive.groups.LiveGroup;
 import org.tm.archive.groups.ui.GroupChangeFailureReason;
 import org.tm.archive.groups.ui.GroupErrors;
 import org.tm.archive.groups.ui.addtogroup.AddToGroupsActivity;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.stories.StoryViewerArgs;
 import org.tm.archive.stories.viewer.StoryViewerActivity;
 import org.tm.archive.util.CommunicationActions;
+import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.tm.archive.verify.VerifyIdentityActivity;
 
@@ -54,16 +56,17 @@ final class RecipientDialogViewModel extends ViewModel {
   private final MutableLiveData<Boolean>        adminActionBusy;
   private final MutableLiveData<StoryViewState> storyViewState;
   private final CompositeDisposable             disposables;
-
+  private final boolean                         isDeprecatedOrUnregistered;
   private RecipientDialogViewModel(@NonNull Context context,
                                    @NonNull RecipientDialogRepository recipientDialogRepository)
   {
-    this.context                   = context;
-    this.recipientDialogRepository = recipientDialogRepository;
-    this.identity                  = new MutableLiveData<>();
-    this.adminActionBusy           = new MutableLiveData<>(false);
-    this.storyViewState            = new MutableLiveData<>();
-    this.disposables               = new CompositeDisposable();
+    this.context                    = context;
+    this.recipientDialogRepository  = recipientDialogRepository;
+    this.identity                   = new MutableLiveData<>();
+    this.adminActionBusy            = new MutableLiveData<>(false);
+    this.storyViewState             = new MutableLiveData<>();
+    this.disposables                = new CompositeDisposable();
+    this.isDeprecatedOrUnregistered = SignalStore.misc().isClientDeprecated() || TextSecurePreferences.isUnauthorizedReceived(context);
 
     boolean recipientIsSelf = recipientDialogRepository.getRecipientId().equals(Recipient.self().getId());
 
@@ -72,14 +75,14 @@ final class RecipientDialogViewModel extends ViewModel {
     if (recipientDialogRepository.getGroupId() != null && recipientDialogRepository.getGroupId().isV2() && !recipientIsSelf) {
       LiveGroup source = new LiveGroup(recipientDialogRepository.getGroupId());
 
-      LiveData<Pair<Boolean, Boolean>>    localStatus          = LiveDataUtil.combineLatest(source.isSelfAdmin(), Transformations.map(source.getGroupLink(), s -> s == null || s.isEnabled()), Pair::new);
-      LiveData<GroupDatabase.MemberLevel> recipientMemberLevel = Transformations.switchMap(recipient, source::getMemberLevel);
+      LiveData<Pair<Boolean, Boolean>> localStatus          = LiveDataUtil.combineLatest(source.isSelfAdmin(), Transformations.map(source.getGroupLink(), s -> s == null || s.isEnabled()), Pair::new);
+      LiveData<GroupTable.MemberLevel> recipientMemberLevel = Transformations.switchMap(recipient, source::getMemberLevel);
 
       adminActionStatus = LiveDataUtil.combineLatest(localStatus, recipientMemberLevel, (statuses, memberLevel) -> {
         boolean localAdmin     = statuses.first();
         boolean isLinkActive   = statuses.second();
         boolean inGroup        = memberLevel.isInGroup();
-        boolean recipientAdmin = memberLevel == GroupDatabase.MemberLevel.ADMINISTRATOR;
+        boolean recipientAdmin = memberLevel == GroupTable.MemberLevel.ADMINISTRATOR;
 
         return new AdminActionStatus(inGroup && localAdmin,
                                      inGroup && localAdmin && !recipientAdmin,
@@ -111,6 +114,10 @@ final class RecipientDialogViewModel extends ViewModel {
   @Override protected void onCleared() {
     super.onCleared();
     disposables.clear();
+  }
+
+  boolean isDeprecatedOrUnregistered() {
+    return isDeprecatedOrUnregistered;
   }
 
   LiveData<StoryViewState> getStoryViewState() {
@@ -170,7 +177,7 @@ final class RecipientDialogViewModel extends ViewModel {
   }
 
   void onUnblockClicked(@NonNull FragmentActivity activity) {
-    recipientDialogRepository.getRecipient(recipient -> BlockUnblockDialog.showUnblockFor(activity, activity.getLifecycle(), recipient, () -> RecipientUtil.unblock(context, recipient)));
+    recipientDialogRepository.getRecipient(recipient -> BlockUnblockDialog.showUnblockFor(activity, activity.getLifecycle(), recipient, () -> RecipientUtil.unblock(recipient)));
   }
 
   void onViewSafetyNumberClicked(@NonNull Activity activity, @NonNull IdentityRecord identityRecord) {

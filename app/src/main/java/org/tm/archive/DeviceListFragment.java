@@ -27,6 +27,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.database.loaders.DeviceListLoader;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.devicelist.Device;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.task.ProgressDialogAsyncTask;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
@@ -106,7 +107,9 @@ public class DeviceListFragment extends ListFragment
     if (data.isEmpty()) {
       empty.setVisibility(View.VISIBLE);
       TextSecurePreferences.setMultiDevice(getActivity(), false);
+      SignalStore.misc().setHasLinkedDevices(false);
     } else {
+      SignalStore.misc().setHasLinkedDevices(true);
       empty.setVisibility(View.GONE);
     }
   }

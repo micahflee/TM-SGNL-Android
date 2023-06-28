@@ -9,9 +9,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.database.ThreadTable;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.KeepMessagesDuration;
 import org.tm.archive.keyvalue.SignalStore;
@@ -20,14 +20,14 @@ public class TrimThreadsByDateManager extends TimedEventManager<TrimThreadsByDat
 
   private static final String TAG = Log.tag(TrimThreadsByDateManager.class);
 
-  private final ThreadDatabase threadDatabase;
-  private final MmsSmsDatabase mmsSmsDatabase;
+  private final ThreadTable  threadTable;
+  private final MessageTable messageTable;
 
   public TrimThreadsByDateManager(@NonNull Application application) {
     super(application, "TrimThreadsByDateManager");
 
-    threadDatabase = SignalDatabase.threads();
-    mmsSmsDatabase = SignalDatabase.mmsSms();
+    threadTable  = SignalDatabase.threads();
+    messageTable = SignalDatabase.messages();
 
     scheduleIfNecessary();
   }
@@ -41,12 +41,12 @@ public class TrimThreadsByDateManager extends TimedEventManager<TrimThreadsByDat
 
     long trimBeforeDate = System.currentTimeMillis() - keepMessagesDuration.getDuration();
 
-    if (mmsSmsDatabase.getMessageCountBeforeDate(trimBeforeDate) > 0) {
+    if (messageTable.getMessageCountBeforeDate(trimBeforeDate) > 0) {
       Log.i(TAG, "Messages exist before date, trim immediately");
       return new TrimEvent(0);
     }
 
-    long timestamp = mmsSmsDatabase.getTimestampForFirstMessageAfterDate(trimBeforeDate);
+    long timestamp = messageTable.getTimestampForFirstMessageAfterDate(trimBeforeDate);
 
     if (timestamp == 0) {
       return null;
@@ -60,13 +60,13 @@ public class TrimThreadsByDateManager extends TimedEventManager<TrimThreadsByDat
     KeepMessagesDuration keepMessagesDuration = SignalStore.settings().getKeepMessagesDuration();
 
     int trimLength = SignalStore.settings().isTrimByLengthEnabled() ? SignalStore.settings().getThreadTrimLength()
-                                                                    : ThreadDatabase.NO_TRIM_MESSAGE_COUNT_SET;
+                                                                    : ThreadTable.NO_TRIM_MESSAGE_COUNT_SET;
 
     long trimBeforeDate = keepMessagesDuration != KeepMessagesDuration.FOREVER ? System.currentTimeMillis() - keepMessagesDuration.getDuration()
-                                                                               : ThreadDatabase.NO_TRIM_BEFORE_DATE_SET;
+                                                                               : ThreadTable.NO_TRIM_BEFORE_DATE_SET;
 
     Log.i(TAG, "Trimming all threads with length: " + trimLength + " before: " + trimBeforeDate);
-    threadDatabase.trimAllThreads(trimLength, trimBeforeDate);
+    threadTable.trimAllThreads(trimLength, trimBeforeDate);
   }
 
   @Override
@@ -75,7 +75,7 @@ public class TrimThreadsByDateManager extends TimedEventManager<TrimThreadsByDat
   }
 
   @Override
-  protected void scheduleAlarm(@NonNull Application application, long delay) {
+  protected void scheduleAlarm(@NonNull Application application, TrimEvent event, long delay) {
     setAlarm(application, delay, TrimThreadsByDateAlarm.class);
   }
 

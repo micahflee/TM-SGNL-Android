@@ -1,6 +1,7 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.SignalProtocolAddress;
@@ -10,7 +11,7 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.DistributionListRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.recipients.Recipient;
@@ -63,10 +64,10 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_TARGET_RECIPIENT_ID, targetRecipientId.serialize())
-                             .putString(KEY_THREAD_RECIPIENT_ID, threadRecipientId.serialize())
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_TARGET_RECIPIENT_ID, targetRecipientId.serialize())
+                                    .putString(KEY_THREAD_RECIPIENT_ID, threadRecipientId.serialize())
+                                    .serialize();
   }
 
   @Override
@@ -78,11 +79,6 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
   protected void onRun() throws Exception {
     Recipient targetRecipient = Recipient.resolved(targetRecipientId);
     Recipient threadRecipient = Recipient.resolved(threadRecipientId);
-
-    if (targetRecipient.getSenderKeyCapability() != Recipient.Capability.SUPPORTED) {
-      Log.w(TAG, targetRecipientId + " does not support sender key! Not sending.");
-      return;
-    }
 
     if (targetRecipient.isUnregistered()) {
       Log.w(TAG, threadRecipient.getId() + " not registered!");
@@ -125,7 +121,7 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
     SenderKeyDistributionMessage           message        = messageSender.getOrCreateNewGroupSession(distributionId);
     List<Optional<UnidentifiedAccessPair>> access         = UnidentifiedAccessUtil.getAccessFor(context, Collections.singletonList(targetRecipient));
 
-    SendMessageResult result = messageSender.sendSenderKeyDistributionMessage(distributionId, address, access, message, Optional.ofNullable(groupId).map(GroupId::getDecodedId), false).get(0);
+    SendMessageResult result = messageSender.sendSenderKeyDistributionMessage(distributionId, address, access, message, Optional.ofNullable(groupId).map(GroupId::getDecodedId), false, false).get(0);
 
     if (result.isSuccess()) {
       List<SignalProtocolAddress> addresses = result.getSuccess()
@@ -151,7 +147,9 @@ public final class SenderKeyDistributionSendJob extends BaseJob {
   public static final class Factory implements Job.Factory<SenderKeyDistributionSendJob> {
 
     @Override
-    public @NonNull SenderKeyDistributionSendJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull SenderKeyDistributionSendJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new SenderKeyDistributionSendJob(RecipientId.from(data.getString(KEY_TARGET_RECIPIENT_ID)),
                                               RecipientId.from(data.getString(KEY_THREAD_RECIPIENT_ID)),
                                               parameters);

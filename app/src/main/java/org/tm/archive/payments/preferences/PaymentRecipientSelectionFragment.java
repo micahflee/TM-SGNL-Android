@@ -15,7 +15,7 @@ import org.tm.archive.ContactSelectionListFragment;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.components.ContactFilterView;
-import org.tm.archive.contacts.ContactsCursorLoader.DisplayMode;
+import org.tm.archive.contacts.ContactSelectionDisplayMode;
 import org.tm.archive.conversation.ConversationIntents;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.payments.CanNotSendPaymentDialog;
@@ -49,7 +49,7 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
 
     Bundle arguments = new Bundle();
     arguments.putBoolean(ContactSelectionListFragment.REFRESHABLE, false);
-    arguments.putInt(ContactSelectionListFragment.DISPLAY_MODE, DisplayMode.FLAG_PUSH | DisplayMode.FLAG_HIDE_NEW);
+    arguments.putInt(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionDisplayMode.FLAG_PUSH | ContactSelectionDisplayMode.FLAG_HIDE_NEW);
     arguments.putBoolean(ContactSelectionListFragment.CAN_SELECT_SELF, false);
 
     Fragment child = getChildFragmentManager().findFragmentById(R.id.contact_selection_list_fragment_holder);
@@ -71,7 +71,7 @@ public class PaymentRecipientSelectionFragment extends LoggingFragment implement
   }
 
   @Override
-  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, @Nullable String number, @NonNull Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, @Nullable String number, @NonNull Consumer<Boolean> callback) {
     if (recipientId.isPresent()) {
       SimpleTask.run(getViewLifecycleOwner().getLifecycle(),
                      () -> Recipient.resolved(recipientId.get()),

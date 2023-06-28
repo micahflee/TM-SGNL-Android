@@ -9,25 +9,28 @@ import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.logging.Log
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.pin.KbsRepository
 import org.tm.archive.pin.TokenData
+import org.tm.archive.registration.RegistrationSessionProcessor
 import org.tm.archive.registration.SmsRetrieverReceiver
 import org.tm.archive.registration.VerifyAccountRepository
-import org.tm.archive.registration.VerifyAccountResponseProcessor
-import org.tm.archive.registration.VerifyAccountResponseWithoutKbs
-import org.tm.archive.registration.VerifyCodeWithRegistrationLockResponseProcessor
-import org.tm.archive.registration.VerifyProcessor
+import org.tm.archive.registration.VerifyResponse
+import org.tm.archive.registration.VerifyResponseProcessor
+import org.tm.archive.registration.VerifyResponseWithRegistrationLockProcessor
+import org.tm.archive.registration.VerifyResponseWithoutKbs
 import org.tm.archive.registration.viewmodel.BaseRegistrationViewModel
 import org.tm.archive.registration.viewmodel.NumberViewState
 import org.tm.archive.util.DefaultValueLiveData
 import org.whispersystems.signalservice.api.push.PNI
+import org.whispersystems.signalservice.api.push.exceptions.IncorrectCodeException
 import org.whispersystems.signalservice.internal.ServiceResponse
-import org.whispersystems.signalservice.internal.push.VerifyAccountResponse
 import java.util.Objects
 
 private val TAG: String = Log.tag(ChangeNumberViewModel::class.java)
@@ -121,19 +124,19 @@ class ChangeNumberViewModel(
     return changeNumberRepository.ensureDecryptionsDrained()
   }
 
-  override fun verifyCodeWithoutRegistrationLock(code: String): Single<VerifyAccountResponseProcessor> {
+  override fun verifyCodeWithoutRegistrationLock(code: String): Single<VerifyResponseProcessor> {
     return super.verifyCodeWithoutRegistrationLock(code)
       .compose(ChangeNumberRepository::acquireReleaseChangeNumberLock)
       .flatMap(this::attemptToUnlockChangeNumber)
   }
 
-  override fun verifyCodeAndRegisterAccountWithRegistrationLock(pin: String): Single<VerifyCodeWithRegistrationLockResponseProcessor> {
+  override fun verifyCodeAndRegisterAccountWithRegistrationLock(pin: String): Single<VerifyResponseWithRegistrationLockProcessor> {
     return super.verifyCodeAndRegisterAccountWithRegistrationLock(pin)
       .compose(ChangeNumberRepository::acquireReleaseChangeNumberLock)
       .flatMap(this::attemptToUnlockChangeNumber)
   }
 
-  private fun <T : VerifyProcessor> attemptToUnlockChangeNumber(processor: T): Single<T> {
+  private fun <T : VerifyResponseProcessor> attemptToUnlockChangeNumber(processor: T): Single<T> {
     return if (processor.hasResult() || processor.isServerSentError()) {
       SignalStore.misc().unlockChangeNumber()
       SignalStore.misc().clearPendingChangeNumberMetadata()
@@ -152,31 +155,70 @@ class ChangeNumberViewModel(
     }
   }
 
-  override fun verifyAccountWithoutRegistrationLock(): Single<ServiceResponse<VerifyAccountResponse>> {
-    return changeNumberRepository.changeNumber(textCodeEntered, number.e164Number)
-  }
+  override fun verifyAccountWithoutRegistrationLock(): Single<ServiceResponse<VerifyResponse>> {
+    val sessionId = sessionId ?: throw IllegalStateException("No valid registration session")
 
-  override fun verifyAccountWithRegistrationLock(pin: String, kbsTokenData: TokenData): Single<ServiceResponse<VerifyAccountRepository.VerifyAccountWithRegistrationLockResponse>> {
-    return changeNumberRepository.changeNumber(textCodeEntered, number.e164Number, pin, kbsTokenData)
-  }
-
-  @WorkerThread
-  override fun onVerifySuccess(processor: VerifyAccountResponseProcessor): Single<VerifyAccountResponseProcessor> {
-    return changeNumberRepository.changeLocalNumber(number.e164Number, PNI.parseOrThrow(processor.result.pni))
-      .map { processor }
-      .onErrorReturn { t ->
-        Log.w(TAG, "Error attempting to change local number", t)
-        VerifyAccountResponseWithoutKbs(ServiceResponse.forUnknownError(t))
+    return changeNumberRepository.verifyAccount(sessionId, textCodeEntered)
+      .map { RegistrationSessionProcessor.RegistrationSessionProcessorForVerification(it) }
+      .observeOn(AndroidSchedulers.mainThread())
+      .doOnSuccess {
+        if (it.hasResult()) {
+          setCanSmsAtTime(it.getNextCodeViaSmsAttempt())
+          setCanCallAtTime(it.getNextCodeViaCallAttempt())
+        }
+      }
+      .observeOn(Schedulers.io())
+      .flatMap { processor ->
+        if (processor.isAlreadyVerified() || processor.hasResult() && processor.isVerified()) {
+          changeNumberRepository.changeNumber(sessionId = sessionId, newE164 = number.e164Number)
+        } else if (processor.error == null) {
+          Single.just<ServiceResponse<VerifyResponse>>(ServiceResponse.forApplicationError(IncorrectCodeException(), 403, null))
+        } else {
+          Single.just<ServiceResponse<VerifyResponse>>(ServiceResponse.coerceError(processor.response))
+        }
       }
   }
 
-  override fun onVerifySuccessWithRegistrationLock(processor: VerifyCodeWithRegistrationLockResponseProcessor, pin: String): Single<VerifyCodeWithRegistrationLockResponseProcessor> {
+  override fun verifyAccountWithRegistrationLock(pin: String, kbsTokenData: TokenData): Single<ServiceResponse<VerifyResponse>> {
+    val sessionId = sessionId ?: throw IllegalStateException("No valid registration session")
+    return changeNumberRepository.changeNumber(sessionId, number.e164Number, pin, kbsTokenData)
+  }
+
+  @WorkerThread
+  override fun onVerifySuccess(processor: VerifyResponseProcessor): Single<VerifyResponseProcessor> {
     return changeNumberRepository.changeLocalNumber(number.e164Number, PNI.parseOrThrow(processor.result.verifyAccountResponse.pni))
       .map { processor }
       .onErrorReturn { t ->
         Log.w(TAG, "Error attempting to change local number", t)
-        VerifyCodeWithRegistrationLockResponseProcessor(ServiceResponse.forUnknownError(t), processor.token)
+        VerifyResponseWithoutKbs(ServiceResponse.forUnknownError(t))
       }
+  }
+
+  override fun onVerifySuccessWithRegistrationLock(processor: VerifyResponseWithRegistrationLockProcessor, pin: String): Single<VerifyResponseWithRegistrationLockProcessor> {
+    return changeNumberRepository.changeLocalNumber(number.e164Number, PNI.parseOrThrow(processor.result.verifyAccountResponse.pni))
+      .map { processor }
+      .onErrorReturn { t ->
+        Log.w(TAG, "Error attempting to change local number", t)
+        VerifyResponseWithRegistrationLockProcessor(ServiceResponse.forUnknownError(t), processor.tokenData)
+      }
+  }
+
+  fun changeNumberWithRecoveryPassword(): Single<Boolean> {
+    val recoveryPassword = SignalStore.kbsValues().recoveryPassword
+
+    return if (SignalStore.kbsValues().hasPin() && recoveryPassword != null) {
+      changeNumberRepository.changeNumber(recoveryPassword = recoveryPassword, newE164 = number.e164Number)
+        .map { r -> VerifyResponseWithoutKbs(r) }
+        .flatMap { p ->
+          if (p.hasResult()) {
+            onVerifySuccess(p).map { true }
+          } else {
+            Single.just(false)
+          }
+        }
+    } else {
+      Single.just(false)
+    }
   }
 
   class Factory(owner: SavedStateRegistryOwner) : AbstractSavedStateViewModelFactory(owner, null) {

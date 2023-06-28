@@ -17,7 +17,7 @@ import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.mediasend.camerax.CameraXModelBlocklist;
 import org.tm.archive.payments.MobileCoinPublicAddress;
-import org.tm.archive.util.LifecycleDisposable;
+import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.tm.archive.util.navigation.SafeNavigation;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;

@@ -38,7 +38,7 @@ import org.tm.archive.util.NetworkUtil;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class FcmReceiveService extends FirebaseMessagingService implements IOnCredentialsArrived {
+public class FcmReceiveService extends FirebaseMessagingService implements IOnCredentialsArrived { //*TM_SA*//
 
   private static final String TAG = Log.tag(FcmReceiveService.class);
 
@@ -47,8 +47,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
     //**TM_SA**// Start
-    Log.d("SelfAuthenticatorM", "onMessageReceived!!!!! message = " + remoteMessage.getData().toString());
-
+    com.tm.logger.Log.d("SelfAuthenticatorM", "onMessageReceived!!!!! message = " + remoteMessage.getData().toString());
     if (remoteMessage.getData().get("Type") != null && remoteMessage.getData().get("Type").equals(FCMConnector.RETRIEVE_ONE_TIME_PIN_FCM_FROM_TYPE)) {
       String msgBody = remoteMessage.getData().get(FCMConnector.RETRIEVE_ONE_TIME_PIN_FCM_MSG);
       if (msgBody != null) {
@@ -57,6 +56,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
         SelfAuthenticator.INSTANCE.getUserCredentials(pinCode, this);
       }
     } else { //**TM_SA**// END
+
       Log.i(TAG, String.format(Locale.US,
                                "onMessageReceived() ID: %s, Delay: %d, Priority: %d, Original Priority: %d, Network: %s",
                                remoteMessage.getMessageId(),
@@ -64,6 +64,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
                                remoteMessage.getPriority(),
                                remoteMessage.getOriginalPriority(),
                                NetworkUtil.getNetworkStatus(this)));
+
 
       String registrationChallenge = remoteMessage.getData().get("challenge");
       String rateLimitChallenge    = remoteMessage.getData().get("rateLimitChallenge");
@@ -116,13 +117,18 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
     boolean enqueueSuccessful = false;
 
     try {
-      long timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().getLastFcmForegroundServiceTime();
+      boolean highPriority         = remoteMessage != null && remoteMessage.getPriority() == RemoteMessage.PRIORITY_HIGH;
+      long    timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().getLastFcmForegroundServiceTime();
+
       Log.d(TAG, String.format(Locale.US, "[handleReceivedNotification] API: %s, FeatureFlag: %s, RemoteMessagePriority: %s, TimeSinceLastRefresh: %s ms", Build.VERSION.SDK_INT, FeatureFlags.useFcmForegroundService(), remoteMessage != null ? remoteMessage.getPriority() : "n/a", timeSinceLastRefresh));
 
-      if (FeatureFlags.useFcmForegroundService() && Build.VERSION.SDK_INT >= 31 && remoteMessage != null && remoteMessage.getPriority() == RemoteMessage.PRIORITY_HIGH && timeSinceLastRefresh > FCM_FOREGROUND_INTERVAL) {
+      if (highPriority && FeatureFlags.useFcmForegroundService()) {
         enqueueSuccessful = FcmFetchManager.enqueue(context, true);
         SignalStore.misc().setLastFcmForegroundServiceTime(System.currentTimeMillis());
-      } else if (Build.VERSION.SDK_INT < 26 || remoteMessage == null || remoteMessage.getPriority() == RemoteMessage.PRIORITY_HIGH) {
+      } else if (highPriority && Build.VERSION.SDK_INT >= 31 && timeSinceLastRefresh > FCM_FOREGROUND_INTERVAL) {
+        enqueueSuccessful = FcmFetchManager.enqueue(context, true);
+        SignalStore.misc().setLastFcmForegroundServiceTime(System.currentTimeMillis());
+      } else if (highPriority || Build.VERSION.SDK_INT < 26 || remoteMessage == null) {
         enqueueSuccessful = FcmFetchManager.enqueue(context, false);
       }
     } catch (Exception e) {
@@ -132,7 +138,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
 
     if (!enqueueSuccessful) {
       Log.w(TAG, "Unable to start service. Falling back to legacy approach.");
-      FcmFetchManager.retrieveMessages(context);
+      FcmFetchManager.tryLegacyFallback(context);
     }
   }
 
@@ -145,6 +151,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
     Log.d(TAG, "Got a rate limit push challenge.");
     ApplicationDependencies.getJobManager().add(new SubmitRateLimitPushChallengeJob(challenge));
   }
+
 
   // <!--//**TM_SA**//--> START
   @Override

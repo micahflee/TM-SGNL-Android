@@ -21,13 +21,14 @@
         android:id="@+id/add_to_story"
         android:layout_width="24dp"
         android:layout_height="24dp"
+        android:padding="5dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="28dp"
         android:background="@drawable/stories_my_story_add_background"
-        android:scaleType="centerInside"
         app:layout_constraintStart_toStartOf="@id/avatar"
         app:layout_constraintTop_toTopOf="@id/avatar"
-        app:srcCompat="@drawable/ic_union" />
+        app:tint="@color/signal_colorBackground"
+        app:srcCompat="@drawable/symbol_plus_compact_16" />
 
     <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/sender"
@@ -50,7 +51,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/stories_landing_item_text_horizontal_margin"
         android:layout_marginEnd="@dimen/stories_landing_item_text_horizontal_margin"
-        android:text="@string/StoriesLandingFragment__tap_to_add_a_story"
+        android:text="@string/StoriesLandingFragment__tap_to_add"
         android:textAppearance="@style/Signal.Text.BodyMedium"
         android:textColor="@color/signal_colorOnSurfaceVariant"
         app:layout_constraintBottom_toBottomOf="parent"

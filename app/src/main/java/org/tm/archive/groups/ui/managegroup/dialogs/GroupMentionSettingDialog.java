@@ -13,7 +13,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Consumer;
 
 import org.tm.archive.R;
-import org.tm.archive.database.RecipientDatabase.MentionSetting;
+import org.tm.archive.database.RecipientTable.MentionSetting;
 
 public final class GroupMentionSettingDialog {
 

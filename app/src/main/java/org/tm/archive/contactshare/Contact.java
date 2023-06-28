@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.UriAttachment;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.util.JsonUtils;
 import org.tm.archive.util.MediaUtil;
 
@@ -643,7 +643,7 @@ public class Contact implements Parcelable {
 
     private static Attachment attachmentFromUri(@Nullable Uri uri) {
       if (uri == null) return null;
-      return new UriAttachment(uri, MediaUtil.IMAGE_JPEG, AttachmentDatabase.TRANSFER_PROGRESS_DONE, 0, null, false, false, false, false, null, null, null, null, null);
+      return new UriAttachment(uri, MediaUtil.IMAGE_JPEG, AttachmentTable.TRANSFER_PROGRESS_DONE, 0, null, false, false, false, false, null, null, null, null, null);
     }
 
     @Override

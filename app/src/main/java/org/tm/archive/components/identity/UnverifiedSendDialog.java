@@ -8,7 +8,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import org.tm.archive.R;
 import org.tm.archive.crypto.ReentrantSessionLock;
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.database.IdentityTable;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.signal.core.util.concurrent.SimpleTask;
@@ -44,7 +44,7 @@ public class UnverifiedSendDialog extends AlertDialog.Builder implements DialogI
         for (IdentityRecord identityRecord : untrustedRecords) {
           ApplicationDependencies.getProtocolStore().aci().identities().setVerified(identityRecord.getRecipientId(),
                                                                                     identityRecord.getIdentityKey(),
-                                                                                    IdentityDatabase.VerifiedStatus.DEFAULT);
+                                                                                    IdentityTable.VerifiedStatus.DEFAULT);
         }
       }
       return null;

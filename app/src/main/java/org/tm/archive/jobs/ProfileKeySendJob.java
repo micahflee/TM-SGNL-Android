@@ -8,7 +8,7 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.DecryptionsDrainedConstraint;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -130,11 +130,11 @@ public class ProfileKeySendJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder()
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder()
                    .putLong(KEY_THREAD, threadId)
                    .putString(KEY_RECIPIENTS, RecipientId.toSerializedList(recipients))
-                   .build();
+                   .serialize();
   }
 
   @Override
@@ -155,13 +155,21 @@ public class ProfileKeySendJob extends BaseJob {
 
     List<SendMessageResult> results = GroupSendUtil.sendUnresendableDataMessage(context, null, destinations, false, ContentHint.IMPLICIT, dataMessage.build(), false);
 
-    return GroupSendJobHelper.getCompletedSends(destinations, results).completed;
+    GroupSendJobHelper.SendResult groupResult = GroupSendJobHelper.getCompletedSends(destinations, results);
+
+    for (RecipientId unregistered : groupResult.unregistered) {
+      SignalDatabase.recipients().markUnregistered(unregistered);
+    }
+
+    return groupResult.completed;
   }
 
   public static class Factory implements Job.Factory<ProfileKeySendJob> {
 
     @Override
-    public @NonNull ProfileKeySendJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull ProfileKeySendJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       long              threadId   = data.getLong(KEY_THREAD);
       List<RecipientId> recipients = RecipientId.fromSerializedList(data.getString(KEY_RECIPIENTS));
 

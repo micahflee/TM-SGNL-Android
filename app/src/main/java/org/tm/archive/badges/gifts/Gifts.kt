@@ -4,11 +4,8 @@ import android.content.Context
 import org.signal.libsignal.zkgroup.InvalidInputException
 import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation
 import org.tm.archive.R
-import org.tm.archive.database.ThreadDatabase
-import org.tm.archive.database.model.StoryType
 import org.tm.archive.database.model.databaseprotos.GiftBadge
-import org.tm.archive.mms.OutgoingMediaMessage
-import org.tm.archive.mms.OutgoingSecureMediaMessage
+import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.Base64
 import java.lang.Integer.min
@@ -32,23 +29,14 @@ object Gifts {
     giftBadge: GiftBadge,
     sentTimestamp: Long,
     expiresIn: Long
-  ): OutgoingMediaMessage {
-    return OutgoingSecureMediaMessage(
-      recipient,
-      Base64.encodeBytes(giftBadge.toByteArray()),
-      listOf(),
-      sentTimestamp,
-      ThreadDatabase.DistributionTypes.CONVERSATION,
-      expiresIn,
-      false,
-      StoryType.NONE,
-      null,
-      false,
-      null,
-      listOf(),
-      listOf(),
-      listOf(),
-      giftBadge
+  ): OutgoingMessage {
+    return OutgoingMessage(
+      threadRecipient = recipient,
+      body = Base64.encodeBytes(giftBadge.toByteArray()),
+      isSecure = true,
+      sentTimeMillis = sentTimestamp,
+      expiresIn = expiresIn,
+      giftBadge = giftBadge
     )
   }
 

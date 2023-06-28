@@ -10,7 +10,7 @@ import org.tm.archive.components.reminder.FirstInviteReminder;
 import org.tm.archive.components.reminder.Reminder;
 import org.tm.archive.components.reminder.SecondInviteReminder;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.database.ThreadTable;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.signal.core.util.concurrent.SimpleTask;
@@ -48,11 +48,11 @@ public final class InviteReminderModel {
       return new NoReminderInfo();
     }
 
-    ThreadDatabase threadDatabase = SignalDatabase.threads();
-    Long threadId                 = threadDatabase.getThreadIdFor(recipient.getId());
+    ThreadTable threadTable = SignalDatabase.threads();
+    Long        threadId    = threadTable.getThreadIdFor(recipient.getId());
 
     if (threadId != null) {
-      int conversationCount = SignalDatabase.mmsSms().getInsecureSentCount(threadId);
+      int conversationCount = SignalDatabase.messages().getInsecureMessageSentCount(threadId);
 
       if (conversationCount >= SECOND_INVITE_REMINDER_MESSAGE_THRESHOLD && !resolved.hasSeenSecondInviteReminder()) {
         return new SecondInviteReminderInfo(context, resolved, repository, repository.getPercentOfInsecureMessages(conversationCount));

@@ -19,18 +19,18 @@ import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_TO_TEXT
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
 import org.archiver.ArchiveConstants.Companion.isTestMode
 import org.archiver.ArchiveConstants.Companion.signalTestMobileNumber
-import org.archiver.ArchiveSender.Companion.archiveMessageOutbox
 import org.archiver.ArchiveSender.Companion.archiveMessageOutboxMMS
+import org.archiver.ArchiveSender.Companion.archiveMessageOutboxV1
 import org.archiver.ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage
 import org.tm.archive.BuildConfig
+import org.tm.archive.attachments.AttachmentId
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.Mention
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mms.IncomingMediaMessage
-import org.tm.archive.mms.OutgoingExpirationUpdateMessage
-import org.tm.archive.mms.OutgoingGroupUpdateMessage
-import org.tm.archive.mms.OutgoingMediaMessage
+import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.IncomingTextMessage
@@ -45,6 +45,8 @@ class ArchiveUtil {
   companion object {
 
     const val TAG = "ArchiveUtil"
+    @JvmStatic
+    var listAttachmentId : List<AttachmentId> = emptyList()
 
     @JvmStatic
     fun createToRecipientList(
@@ -59,6 +61,44 @@ class ArchiveUtil {
         recipientList?.filter { it.e164.isPresent }?.map { it.e164.get() }
           ?: getRecipientsListFromParticipantIds(aRecipient).filter { it.e164.isPresent }.map { it.e164.get() }
 
+      } else {
+        if (isInboxArchiveMessage) {
+          listOf(getPhoneNumberInTestMode(context))
+        } else {
+          if (aRecipient.e164.isPresent) {
+            listOf(aRecipient.e164.get().toString())
+          } else {
+            listOf("")
+          }
+        }
+      }
+
+      recipientListFromRecipient = if (!isInboxArchiveMessage) {
+        if (recipientListFromRecipient.size > 1) {
+          recipientListFromRecipient.filter { it != getPhoneNumberInTestMode(context) }
+        } else {
+          //Sending message in group that contains only me
+          recipientListFromRecipient
+        }
+      } else {
+        recipientListFromRecipient.filter { it != from }
+      }
+      return recipientListFromRecipient.toTypedArray();
+    }
+
+
+@JvmStatic
+    fun createToRecipientListV2(
+      context: Context,
+      isInboxArchiveMessage: Boolean,
+      aRecipient: Recipient,
+      threadRecipient: Recipient,
+      isGroup: Boolean,
+      from: String,
+      recipientList: MutableList<Recipient>? = null
+    ): Array<String> {
+      var recipientListFromRecipient: List<String> = if (isGroup) {
+         getRecipientsListFromThreadRecipient(threadRecipient).filter { it.e164.isPresent }.map { it.e164.get() }
       } else {
         if (isInboxArchiveMessage) {
           listOf(getPhoneNumberInTestMode(context))
@@ -221,13 +261,31 @@ class ArchiveUtil {
     }
 
     @JvmStatic
+    fun getChatNameV2(
+      context: Context,
+      threadRecipient: Recipient,
+      isGroup: Boolean,
+      groupTitle: String = ""
+    ): String {
+      return if (isGroup) {
+        if (groupTitle.isNotEmpty()) {
+          groupTitle
+        } else {
+          threadRecipient.getGroupName(context) ?: ""
+        }
+      } else {
+        ""
+      }
+    }
+
+    @JvmStatic
     fun getGroupInboxRecipientNumber(
       archiveRecipient: Recipient,
       message: IncomingTextMessage
     ): String {
 
       val recipientList = getRecipientsListFromParticipantIds(archiveRecipient).filter {
-        message.sender.toLong() == it.id.toLong()
+        message.authorId.toLong() == it.id.toLong()
       }
       return recipientList[0].e164.get()
     }
@@ -248,6 +306,7 @@ class ArchiveUtil {
       }
     }
 
+
     @JvmStatic
     fun fromContactName(
       context: Context,
@@ -263,10 +322,18 @@ class ArchiveUtil {
     }
 
     @JvmStatic
-    fun getRecipientsListFromParticipantIds(recipient: Recipient) : List<Recipient> {
+    fun getRecipientsListFromParticipantIds(recipient: Recipient) : MutableList<Recipient> {
       val selfId = ApplicationDependencies.getRecipientCache().selfId
       return recipient.participantIds.stream()
         .filter(Predicate { id: RecipientId -> id != selfId })
+        .limit(ArchiveConstants.MAX_MEMBER_NAMES.toLong())
+        .map(Function { id: RecipientId? -> Recipient.resolved(id!!) })
+        .collect(Collectors.toList())
+    }
+
+    @JvmStatic
+    fun getRecipientsListFromThreadRecipient(threadRecipient: Recipient) : List<Recipient> {
+      return threadRecipient.participantIds.stream()
         .limit(ArchiveConstants.MAX_MEMBER_NAMES.toLong())
         .map(Function { id: RecipientId? -> Recipient.resolved(id!!) })
         .collect(Collectors.toList())
@@ -333,8 +400,73 @@ class ArchiveUtil {
     }
 
     @JvmStatic
+    fun createMessageNameListV2(
+      context: Context,
+      recipient: Recipient,
+      threadRecipient: Recipient,
+      isInboxArchiveMessage: Boolean,
+      recipientList: List<Recipient>? = null,
+      isGroup: Boolean,
+      from: Contact = Contact("")
+    ): Array<Contact> {
+
+
+      val threadRecipientList = getRecipientsListFromThreadRecipient(threadRecipient)
+
+      val rl = if (!isInboxArchiveMessage) {
+        if (recipientList!!.size > 1) {
+          recipientList!!.filter {
+            it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
+          } ?:threadRecipientList.filter {
+            it.e164.isPresent && it.e164.get() != getPhoneNumberInTestMode(context)
+          }
+        } else {
+          //Sending message in group that contains only me
+          recipientList
+        }
+      } else {
+        threadRecipientList.filter {
+            it.e164.isPresent && it.e164.get() != from.toString()
+          }
+      }
+
+      val recipientListFromRecipient: List<Contact> = if (isGroup) {
+
+        rl.map {
+          Contact(it.getDisplayName(context))
+        }
+
+      } else {
+        if (isInboxArchiveMessage) {
+          listOf(Contact(Recipient.self().profileName.toString()))
+        } else {
+          listOf(Contact(recipient.getDisplayName(context)))
+        }
+      }
+
+      if (recipientListFromRecipient.toTypedArray().isEmpty()) {
+        return arrayOf(Contact())
+      }
+
+      //SIG-437 - Clean list from [FSI]*[PDI]
+      recipientListFromRecipient.forEachIndexed { index, contact ->
+        contact.firstName = contact.cleanContactNameFromUnUsedCharacters().firstName
+        contact.lastName = contact.cleanContactNameFromUnUsedCharacters().lastName
+      }
+
+      return recipientListFromRecipient.toTypedArray()
+    }
+
+    @JvmStatic
     fun generateAttachmentName(messageId: Long, attachmentId: Long): String {
       return SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX + attachmentId + "_" + messageId
+    }
+
+    @JvmStatic
+    fun getFileFromAttachmentId(context: Context, attachmentId: AttachmentId) : File {
+      val uri = SignalDatabase.attachments.getAttachment(attachmentId)!!.uri
+      Log.d("ArchiveUtil", "getFileFromAttachmentId -> uri $uri")
+      return ArchiveFileUtil.getFileFromDataBaseUri(context, uri.toString())
     }
 
     @JvmStatic
@@ -369,7 +501,7 @@ class ArchiveUtil {
     @JvmStatic
     fun createPreviewLinkBody(
       incomingMediaMessage: IncomingMediaMessage?,
-      outComingMediaMessage: OutgoingMediaMessage?
+      outComingMediaMessage: OutgoingMessage?
     ): String? {
       var body = ""
       if (incomingMediaMessage != null) {
@@ -428,7 +560,7 @@ class ArchiveUtil {
     }
 
     @JvmStatic
-    fun archiveMediaMessage(context: Context, messageId: Long, message: OutgoingMediaMessage) {
+    fun archiveOutboxMessage(context: Context, messageId: Long, message: OutgoingMessage) {
 
 
       var tempFileForArchiving: File? = null
@@ -436,7 +568,7 @@ class ArchiveUtil {
       var filesToSend = arrayOfNulls<File>(message.attachments.size)
       for (i in message.attachments.indices) {
         tempFileForArchiving =
-          ArchiveFileUtil.getFileFromDataBaseUri(context, message.attachments[i].uri.toString())
+          ArchiveFileUtil.createFileFromContentUri(context, message.attachments[i].uri.toString())
         filesToSend[i] = tempFileForArchiving
         isMediaMessage = true
       }
@@ -467,7 +599,7 @@ class ArchiveUtil {
         archiveMessageOutboxMMS(
           context,
           ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND,
-          message.recipient,
+          message.threadRecipient,
           message,
           messageId,
           null
@@ -479,7 +611,7 @@ class ArchiveUtil {
         archiveMessageOutboxMMS(
           context,
           ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND,
-          message.recipient,
+          message.threadRecipient,
           message,
           messageId,
           filesToSend
@@ -488,15 +620,15 @@ class ArchiveUtil {
           updateArchiveSDKToSendMMSMessage(context, filesToSend[i]!!.name, true)
         }
       } else {
-        if (message !is OutgoingGroupUpdateMessage
-          && message !is OutgoingExpirationUpdateMessage
+        if (!message.isGroupUpdate
+          && !message.isExpirationUpdate
         ) {
 
           val messageBody = createPreviewLinkBody(null, message)
-          archiveMessageOutbox(
+          archiveMessageOutboxV1(
             context,
             ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND,
-            message.recipient,
+            message.threadRecipient,
             messageBody!!,
             messageId,
             message.sentTimeMillis

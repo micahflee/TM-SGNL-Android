@@ -8,11 +8,11 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import com.annimon.stream.Collectors;
@@ -23,14 +23,13 @@ import org.tm.archive.avatar.view.AvatarView;
 import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.database.model.StoryViewState;
 import org.tm.archive.mms.GlideRequests;
-import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.DrawableUtil;
 import org.tm.archive.util.ExpirationUtil;
 import org.tm.archive.util.ViewUtil;
 
-public class ConversationTitleView extends RelativeLayout {
+public class ConversationTitleView extends ConstraintLayout {
 
   private static final String STATE_ROOT = "root";
   private static final String STATE_IS_SELF = "is_self";
@@ -96,10 +95,10 @@ public class ConversationTitleView extends RelativeLayout {
   }
 
 
-  public void showExpiring(@NonNull LiveRecipient recipient) {
-    isSelf = recipient.get().isSelf();
+  public void showExpiring(@NonNull Recipient recipient) {
+    isSelf = recipient.isSelf();
 
-    expirationBadgeTime.setText(ExpirationUtil.getExpirationAbbreviatedDisplayValue(getContext(), recipient.get().getExpiresInSeconds()));
+    expirationBadgeTime.setText(ExpirationUtil.getExpirationAbbreviatedDisplayValue(getContext(), recipient.getExpiresInSeconds()));
     expirationBadgeContainer.setVisibility(View.VISIBLE);
     updateSubtitleVisibility();
   }

@@ -12,7 +12,7 @@ import org.tm.archive.components.settings.conversation.preferences.LargeIconClic
 import org.tm.archive.util.fragments.requireListener
 
 class ChooseStoryTypeBottomSheet : DSLSettingsBottomSheetFragment(
-  layoutId = R.layout.dsl_settings_bottom_sheet_no_handle
+  layoutId = R.layout.dsl_settings_bottom_sheet
 ) {
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
     LargeIconClickPreference.register(adapter)
@@ -24,24 +24,25 @@ class ChooseStoryTypeBottomSheet : DSLSettingsBottomSheetFragment(
       textPref(
         title = DSLSettingsText.from(
           stringId = R.string.ChooseStoryTypeBottomSheet__choose_your_story_type,
-          DSLSettingsText.CenterModifier, DSLSettingsText.Body1BoldModifier, DSLSettingsText.BoldModifier
+          DSLSettingsText.CenterModifier,
+          DSLSettingsText.TitleMediumModifier
         )
       )
 
       customPref(
         LargeIconClickPreference.Model(
           title = DSLSettingsText.from(
-            stringId = R.string.ChooseStoryTypeBottomSheet__new_private_story
+            stringId = R.string.ChooseStoryTypeBottomSheet__new_custom_story
           ),
           summary = DSLSettingsText.from(
             stringId = R.string.ChooseStoryTypeBottomSheet__visible_only_to
           ),
           icon = DSLSettingsIcon.from(
-            R.drawable.ic_plus_24,
-            R.color.signal_icon_tint_primary,
-            R.drawable.circle_tintable,
-            R.color.signal_button_secondary_ripple,
-            DimensionUnit.DP.toPixels(8f).toInt()
+            iconId = R.drawable.symbol_stories_24,
+            iconTintId = R.color.signal_colorOnSurface,
+            backgroundId = R.drawable.circle_tintable,
+            backgroundTint = R.color.signal_colorSurface5,
+            insetPx = DimensionUnit.DP.toPixels(8f).toInt()
           ),
           onClick = {
             dismissAllowingStateLoss()
@@ -59,11 +60,11 @@ class ChooseStoryTypeBottomSheet : DSLSettingsBottomSheetFragment(
             stringId = R.string.ChooseStoryTypeBottomSheet__share_to_an_existing_group
           ),
           icon = DSLSettingsIcon.from(
-            R.drawable.ic_group_outline_24,
-            R.color.signal_icon_tint_primary,
-            R.drawable.circle_tintable,
-            R.color.signal_button_secondary_ripple,
-            DimensionUnit.DP.toPixels(8f).toInt()
+            iconId = R.drawable.ic_group_outline_24,
+            iconTintId = R.color.signal_colorOnSurface,
+            backgroundId = R.drawable.circle_tintable,
+            backgroundTint = R.color.signal_colorSurface5,
+            insetPx = DimensionUnit.DP.toPixels(8f).toInt()
           ),
           onClick = {
             dismissAllowingStateLoss()

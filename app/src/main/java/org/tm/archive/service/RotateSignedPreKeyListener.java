@@ -13,8 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 public class RotateSignedPreKeyListener extends PersistentAlarmManagerListener {
 
-  private static final long INTERVAL = TimeUnit.DAYS.toMillis(2);
-
   @Override
   protected long getNextScheduledExecutionTime(Context context) {
     return TextSecurePreferences.getSignedPreKeyRotationTime(context);
@@ -23,16 +21,16 @@ public class RotateSignedPreKeyListener extends PersistentAlarmManagerListener {
   @Override
   protected long onAlarm(Context context, long scheduledTime) {
     if (scheduledTime != 0 && SignalStore.account().isRegistered()) {
-      PreKeysSyncJob.enqueue(true);
+      PreKeysSyncJob.enqueue();
     }
 
-    long nextTime = System.currentTimeMillis() + INTERVAL;
+    long nextTime = System.currentTimeMillis() + PreKeysSyncJob.REFRESH_INTERVAL;
     TextSecurePreferences.setSignedPreKeyRotationTime(context, nextTime);
 
     return nextTime;
   }
 
   public static void schedule(Context context) {
-    new RotateSignedPreKeyListener().onReceive(context, new Intent());
+    new RotateSignedPreKeyListener().onReceive(context, getScheduleIntent());
   }
 }

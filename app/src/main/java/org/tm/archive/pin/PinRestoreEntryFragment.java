@@ -36,7 +36,6 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.registration.RegistrationUtil;
 import org.tm.archive.registration.fragments.RegistrationViewDelegate;
 import org.tm.archive.util.CommunicationActions;
-import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.SupportEmailUtil;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.navigation.SafeNavigation;
@@ -243,7 +242,7 @@ public class PinRestoreEntryFragment extends LoggingFragment {
       profile.putExtra("next_intent", main);
       startActivity(profile);
     } else {
-      RegistrationUtil.maybeMarkRegistrationComplete(requireContext());
+      RegistrationUtil.maybeMarkRegistrationComplete();
       ApplicationDependencies.getJobManager().add(new ProfileUploadJob());
       startActivity(MainActivity.clearTop(activity));
     }
@@ -271,9 +270,6 @@ public class PinRestoreEntryFragment extends LoggingFragment {
   private void enableAndFocusPinEntry() {
     pinEntry.setEnabled(true);
     pinEntry.setFocusable(true);
-
-    if (pinEntry.requestFocus()) {
-      ServiceUtil.getInputMethodManager(pinEntry.getContext()).showSoftInput(pinEntry, 0);
-    }
+    ViewUtil.focusAndShowKeyboard(pinEntry);
   }
 }

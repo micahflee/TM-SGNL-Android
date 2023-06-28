@@ -10,6 +10,7 @@ import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.conversation.MessageSendType
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mms.MediaConstraints
 import org.tm.archive.mms.SlideDeck
 import org.tm.archive.mms.TextSlide
@@ -79,7 +80,7 @@ object Multiselect {
    */
   fun isMmsSupported(context: Context, mediaUri: Uri, mediaType: String, mediaSize: Long): Boolean {
     val canReadPhoneState = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
-    if (!Util.isDefaultSmsProvider(context) || !canReadPhoneState || !Util.isMmsCapable(context)) {
+    if (!Util.isDefaultSmsProvider(context) || !canReadPhoneState || !Util.isMmsCapable(context) || !SignalStore.misc().smsExportPhase.allowSmsFeatures()) {
       return false
     }
 
@@ -102,7 +103,7 @@ object Multiselect {
    */
   private fun isMmsSupported(context: Context, attachment: Attachment): Boolean {
     val canReadPhoneState = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
-    if (!Util.isDefaultSmsProvider(context) || !canReadPhoneState || !Util.isMmsCapable(context)) {
+    if (!Util.isDefaultSmsProvider(context) || !canReadPhoneState || !Util.isMmsCapable(context) || !SignalStore.misc().smsExportPhase.allowSmsFeatures()) {
       return false
     }
 

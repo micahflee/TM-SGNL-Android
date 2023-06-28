@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import org.signal.libsignal.protocol.IdentityKey;
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.crypto.IdentityKeyParcelable;
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.database.IdentityTable;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DynamicNoActionBarTheme;
@@ -34,7 +34,7 @@ public class VerifyIdentityActivity extends PassphraseRequiredActivity {
     return newIntent(context,
                      identityRecord.getRecipientId(),
                      identityRecord.getIdentityKey(),
-                     identityRecord.getVerifiedStatus() == IdentityDatabase.VerifiedStatus.VERIFIED);
+                     identityRecord.getVerifiedStatus() == IdentityTable.VerifiedStatus.VERIFIED);
   }
 
   public static Intent newIntent(@NonNull Context context,

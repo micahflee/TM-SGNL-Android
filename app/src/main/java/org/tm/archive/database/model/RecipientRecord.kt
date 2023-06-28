@@ -6,24 +6,25 @@ import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.conversation.colors.AvatarColor
 import org.tm.archive.conversation.colors.ChatColors
-import org.tm.archive.database.IdentityDatabase.VerifiedStatus
-import org.tm.archive.database.RecipientDatabase
-import org.tm.archive.database.RecipientDatabase.InsightsBannerTier
-import org.tm.archive.database.RecipientDatabase.MentionSetting
-import org.tm.archive.database.RecipientDatabase.RegisteredState
-import org.tm.archive.database.RecipientDatabase.UnidentifiedAccessMode
-import org.tm.archive.database.RecipientDatabase.VibrateState
+import org.tm.archive.database.IdentityTable.VerifiedStatus
+import org.tm.archive.database.RecipientTable
+import org.tm.archive.database.RecipientTable.InsightsBannerTier
+import org.tm.archive.database.RecipientTable.MentionSetting
+import org.tm.archive.database.RecipientTable.RegisteredState
+import org.tm.archive.database.RecipientTable.UnidentifiedAccessMode
+import org.tm.archive.database.RecipientTable.VibrateState
 import org.tm.archive.groups.GroupId
 import org.tm.archive.profiles.ProfileName
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.service.webrtc.links.CallLinkRoomId
 import org.tm.archive.wallpaper.ChatWallpaper
 import org.whispersystems.signalservice.api.push.PNI
 import org.whispersystems.signalservice.api.push.ServiceId
 import java.util.Optional
 
 /**
- * Database model for [RecipientDatabase].
+ * Database model for [RecipientTable].
  */
 data class RecipientRecord(
   val id: RecipientId,
@@ -34,7 +35,7 @@ data class RecipientRecord(
   val email: String?,
   val groupId: GroupId?,
   val distributionListId: DistributionListId?,
-  val groupType: RecipientDatabase.GroupType,
+  val groupType: RecipientTable.GroupType,
   val isBlocked: Boolean,
   val muteUntil: Long,
   val messageVibrateState: VibrateState,
@@ -63,14 +64,7 @@ data class RecipientRecord(
   val unidentifiedAccessMode: UnidentifiedAccessMode,
   @get:JvmName("isForceSmsSelection")
   val forceSmsSelection: Boolean,
-  val rawCapabilities: Long,
-  val groupsV1MigrationCapability: Recipient.Capability,
-  val senderKeyCapability: Recipient.Capability,
-  val announcementGroupCapability: Recipient.Capability,
-  val changeNumberCapability: Recipient.Capability,
-  val storiesCapability: Recipient.Capability,
-  val giftBadgesCapability: Recipient.Capability,
-  val pnpCapability: Recipient.Capability,
+  val capabilities: Capabilities,
   val insightsBannerTier: InsightsBannerTier,
   val storageId: ByteArray?,
   val mentionSetting: MentionSetting,
@@ -86,7 +80,8 @@ data class RecipientRecord(
   val badges: List<Badge>,
   @get:JvmName("needsPniSignature")
   val needsPniSignature: Boolean,
-  val isHidden: Boolean
+  val isHidden: Boolean,
+  val callLinkRoomId: CallLinkRoomId?
 ) {
 
   fun getDefaultSubscriptionId(): Optional<Int> {
@@ -120,6 +115,34 @@ data class RecipientRecord(
     val identityStatus: VerifiedStatus,
     val isArchived: Boolean,
     val isForcedUnread: Boolean,
-    val unregisteredTimestamp: Long
+    val unregisteredTimestamp: Long,
+    val systemNickname: String?
   )
+
+  data class Capabilities(
+    val rawBits: Long,
+    val groupsV1MigrationCapability: Recipient.Capability,
+    val senderKeyCapability: Recipient.Capability,
+    val announcementGroupCapability: Recipient.Capability,
+    val changeNumberCapability: Recipient.Capability,
+    val storiesCapability: Recipient.Capability,
+    val giftBadgesCapability: Recipient.Capability,
+    val pnpCapability: Recipient.Capability,
+    val paymentActivation: Recipient.Capability
+  ) {
+    companion object {
+      @JvmField
+      val UNKNOWN = Capabilities(
+        0,
+        Recipient.Capability.UNKNOWN,
+        Recipient.Capability.UNKNOWN,
+        Recipient.Capability.UNKNOWN,
+        Recipient.Capability.UNKNOWN,
+        Recipient.Capability.UNKNOWN,
+        Recipient.Capability.UNKNOWN,
+        Recipient.Capability.UNKNOWN,
+        Recipient.Capability.UNKNOWN
+      )
+    }
+  }
 }

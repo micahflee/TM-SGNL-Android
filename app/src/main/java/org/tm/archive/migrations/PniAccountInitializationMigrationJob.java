@@ -1,6 +1,7 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.state.PreKeyRecord;
@@ -9,7 +10,6 @@ import org.signal.libsignal.protocol.state.SignedPreKeyRecord;
 import org.tm.archive.crypto.PreKeyUtil;
 import org.tm.archive.crypto.storage.PreKeyMetadataStore;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -93,7 +93,7 @@ public class PniAccountInitializationMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<PniAccountInitializationMigrationJob> {
     @Override
-    public @NonNull PniAccountInitializationMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PniAccountInitializationMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new PniAccountInitializationMigrationJob(parameters);
     }
   }

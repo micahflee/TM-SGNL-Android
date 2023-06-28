@@ -15,7 +15,8 @@ import org.tm.archive.R;
 import org.tm.archive.components.FullScreenDialogFragment;
 import org.tm.archive.conversation.colors.Colorizer;
 import org.tm.archive.conversation.colors.RecyclerViewColorizer;
-import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.conversation.ui.edit.EditMessageHistoryDialog;
+import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.giph.mp4.GiphyMp4PlaybackController;
 import org.tm.archive.giph.mp4.GiphyMp4ProjectionPlayerHolder;
@@ -27,15 +28,15 @@ import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.safety.SafetyNumberBottomSheet;
 import org.tm.archive.util.Material3OnScrollHelper;
+import org.tm.archive.util.MessageRecordUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class MessageDetailsFragment extends FullScreenDialogFragment {
+public final class MessageDetailsFragment extends FullScreenDialogFragment implements MessageDetailsAdapter.Callbacks {
 
   private static final String MESSAGE_ID_EXTRA = "message_id";
-  private static final String TYPE_EXTRA       = "type";
   private static final String RECIPIENT_EXTRA  = "recipient_id";
 
   private GlideRequests           glideRequests;
@@ -49,7 +50,6 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment {
     Bundle         args           = new Bundle();
 
     args.putLong(MESSAGE_ID_EXTRA, message.getId());
-    args.putString(TYPE_EXTRA, message.isMms() ? MmsSmsDatabase.MMS_TRANSPORT : MmsSmsDatabase.SMS_TRANSPORT);
     args.putParcelable(RECIPIENT_EXTRA, recipientId);
 
     dialogFragment.setArguments(args);
@@ -92,7 +92,7 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment {
     View         toolbarShadow = view.findViewById(R.id.toolbar_shadow);
 
     colorizer             = new Colorizer();
-    adapter               = new MessageDetailsAdapter(getViewLifecycleOwner(), glideRequests, colorizer, this::onErrorClicked);
+    adapter               = new MessageDetailsAdapter(getViewLifecycleOwner(), glideRequests, colorizer, this);
     recyclerViewColorizer = new RecyclerViewColorizer(list);
 
     list.setAdapter(adapter);
@@ -102,9 +102,8 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment {
 
   private void initializeViewModel() {
     final RecipientId recipientId = requireArguments().getParcelable(RECIPIENT_EXTRA);
-    final String      type        = requireArguments().getString(TYPE_EXTRA);
     final Long        messageId   = requireArguments().getLong(MESSAGE_ID_EXTRA, -1);
-    final Factory     factory     = new Factory(recipientId, type, messageId);
+    final Factory     factory     = new Factory(recipientId, messageId);
 
     viewModel = new ViewModelProvider(this, factory).get(MessageDetailsViewModel.class);
     viewModel.getMessageDetails().observe(this, details -> {
@@ -130,6 +129,10 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment {
     List<MessageDetailsViewState<?>> list = new ArrayList<>();
 
     list.add(new MessageDetailsViewState<>(details.getConversationMessage(), MessageDetailsViewState.MESSAGE_HEADER));
+
+    if (MessageRecordUtil.isEditMessage(details.getConversationMessage().getMessageRecord())) {
+      list.add(new MessageDetailsViewState<>(details.getConversationMessage().getMessageRecord(), MessageDetailsViewState.EDIT_HISTORY));
+    }
 
     if (details.getConversationMessage().getMessageRecord().isOutgoing()) {
       addRecipients(list, RecipientHeader.NOT_SENT, details.getNotSent());
@@ -158,10 +161,20 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment {
     return true;
   }
 
-  private void onErrorClicked(@NonNull MessageRecord messageRecord) {
+  @Override
+  public void onErrorClicked(@NonNull MessageRecord messageRecord) {
     SafetyNumberBottomSheet
         .forMessageRecord(requireContext(), messageRecord)
         .show(getChildFragmentManager());
+  }
+
+  @Override
+  public void onViewEditHistoryClicked(MessageRecord record) {
+    if (record.isOutgoing()) {
+      EditMessageHistoryDialog.show(requireParentFragment().getChildFragmentManager(), record.getToRecipient().getId(), record);
+    } else {
+      EditMessageHistoryDialog.show(requireParentFragment().getChildFragmentManager(), record.getFromRecipient().getId(), record);
+    }
   }
 
   public interface Callback {

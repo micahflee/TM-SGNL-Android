@@ -5,6 +5,8 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.AppCapabilities;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.RecipientRecord;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.whispersystems.signalservice.api.account.AccountAttributes;
@@ -28,23 +30,29 @@ public final class LogSectionCapabilities implements LogSection {
 
     Recipient self = Recipient.self();
 
-    AccountAttributes.Capabilities capabilities = AppCapabilities.getCapabilities(false);
+    AccountAttributes.Capabilities localCapabilities  = AppCapabilities.getCapabilities(false);
+    RecipientRecord.Capabilities   globalCapabilities = SignalDatabase.recipients().getCapabilities(self.getId());
 
-    return new StringBuilder().append("-- Local").append("\n")
-                              .append("GV2                : ").append(capabilities.isGv2()).append("\n")
-                              .append("GV1 Migration      : ").append(capabilities.isGv1Migration()).append("\n")
-                              .append("Sender Key         : ").append(capabilities.isSenderKey()).append("\n")
-                              .append("Announcement Groups: ").append(capabilities.isAnnouncementGroup()).append("\n")
-                              .append("Change Number      : ").append(capabilities.isChangeNumber()).append("\n")
-                              .append("Stories            : ").append(capabilities.isStories()).append("\n")
-                              .append("Gift Badges        : ").append(capabilities.isGiftBadges()).append("\n")
-                              .append("\n")
-                              .append("-- Global").append("\n")
-                              .append("GV1 Migration      : ").append(self.getGroupsV1MigrationCapability()).append("\n")
-                              .append("Sender Key         : ").append(self.getSenderKeyCapability()).append("\n")
-                              .append("Announcement Groups: ").append(self.getAnnouncementGroupCapability()).append("\n")
-                              .append("Change Number      : ").append(self.getChangeNumberCapability()).append("\n")
-                              .append("Stories            : ").append(self.getStoriesCapability()).append("\n")
-                              .append("Gift Badges        : ").append(self.getGiftBadgesCapability()).append("\n");
+    StringBuilder builder = new StringBuilder().append("-- Local").append("\n")
+                                               .append("Sender Key         : ").append(localCapabilities.getSenderKey()).append("\n")
+                                               .append("Announcement Groups: ").append(localCapabilities.getAnnouncementGroup()).append("\n")
+                                               .append("Change Number      : ").append(localCapabilities.getChangeNumber()).append("\n")
+                                               .append("Stories            : ").append(localCapabilities.getStories()).append("\n")
+                                               .append("Gift Badges        : ").append(localCapabilities.getGiftBadges()).append("\n")
+                                               .append("\n")
+                                               .append("-- Global").append("\n");
+
+    if (globalCapabilities != null) {
+      builder.append("GV1 Migration      : ").append(globalCapabilities.getGroupsV1MigrationCapability()).append("\n")
+             .append("Sender Key         : ").append(globalCapabilities.getSenderKeyCapability()).append("\n")
+             .append("Announcement Groups: ").append(globalCapabilities.getAnnouncementGroupCapability()).append("\n")
+             .append("Change Number      : ").append(globalCapabilities.getChangeNumberCapability()).append("\n")
+             .append("Stories            : ").append(globalCapabilities.getStoriesCapability()).append("\n")
+             .append("Gift Badges        : ").append(globalCapabilities.getGiftBadgesCapability()).append("\n");
+    } else {
+      builder.append("Self not found!");
+    }
+
+    return builder;
   }
 }

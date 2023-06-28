@@ -21,7 +21,7 @@ import org.tm.archive.emoji.EmojiPageCache;
 import org.tm.archive.emoji.EmojiRemote;
 import org.tm.archive.emoji.EmojiSource;
 import org.tm.archive.emoji.JumboEmoji;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.AutoDownloadEmojiConstraint;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -161,15 +161,15 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
+  public @Nullable byte[] serialize() {
     if (targetVersion == null) {
-      return Data.EMPTY;
+      return null;
     } else {
-      return new Data.Builder()
+      return new JsonJobData.Builder()
           .putInt(VERSION_INT, targetVersion.getVersion())
           .putString(VERSION_UUID, targetVersion.getUuid().toString())
           .putString(VERSION_DENSITY, targetVersion.getDensity())
-          .build();
+          .serialize();
     }
   }
 
@@ -359,8 +359,10 @@ public class DownloadLatestEmojiDataJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<DownloadLatestEmojiDataJob> {
     @Override
-    public @NonNull DownloadLatestEmojiDataJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull DownloadLatestEmojiDataJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       final EmojiFiles.Version version;
+
+      JsonJobData data = JsonJobData.deserialize(serializedData);
 
       if (data.hasInt(VERSION_INT) &&
           data.hasString(VERSION_UUID) &&

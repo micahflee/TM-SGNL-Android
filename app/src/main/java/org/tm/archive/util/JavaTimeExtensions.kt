@@ -10,6 +10,7 @@ import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.temporal.WeekFields
@@ -26,8 +27,31 @@ fun ZoneId.toOffset(): ZoneOffset {
 /**
  * Convert [LocalDateTime] to be same as [System.currentTimeMillis]
  */
+@JvmOverloads
 fun LocalDateTime.toMillis(zoneOffset: ZoneOffset = ZoneId.systemDefault().toOffset()): Long {
   return TimeUnit.SECONDS.toMillis(toEpochSecond(zoneOffset))
+}
+
+/**
+ * Convert [ZonedDateTime] to be same as [System.currentTimeMillis]
+ */
+fun ZonedDateTime.toMillis(): Long {
+  return TimeUnit.SECONDS.toMillis(toEpochSecond())
+}
+
+/**
+ * Convert [LocalDateTime] to a [ZonedDateTime] at the UTC offset
+ */
+fun LocalDateTime.atUTC(): ZonedDateTime {
+  return atZone(ZoneId.ofOffset("UTC", ZoneOffset.UTC))
+}
+
+/**
+ * Create a LocalDateTime with the same year, month, and day, but set
+ * to midnight.
+ */
+fun LocalDateTime.atMidnight(): LocalDateTime {
+  return LocalDateTime.of(year, month, dayOfMonth, 0, 0)
 }
 
 /**
@@ -81,6 +105,6 @@ fun Locale.orderOfDaysInWeek(): List<DayOfWeek> {
     firstDayOfWeek.plus(3),
     firstDayOfWeek.plus(4),
     firstDayOfWeek.plus(5),
-    firstDayOfWeek.plus(6),
+    firstDayOfWeek.plus(6)
   )
 }

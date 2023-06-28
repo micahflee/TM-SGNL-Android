@@ -4,7 +4,7 @@ import androidx.annotation.CheckResult
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
-import org.tm.archive.database.GroupDatabase
+import org.tm.archive.database.GroupTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.DistributionListId
 import org.tm.archive.groups.GroupId
@@ -19,10 +19,9 @@ class ContactSearchRepository {
     return Single.fromCallable {
       contactSearchKeys.map {
         val isSelectable = when (it) {
-          is ContactSearchKey.Expand -> false
-          is ContactSearchKey.Header -> false
-          is ContactSearchKey.RecipientSearchKey.KnownRecipient -> canSelectRecipient(it.recipientId)
-          is ContactSearchKey.RecipientSearchKey.Story -> canSelectRecipient(it.recipientId)
+          is ContactSearchKey.RecipientSearchKey -> canSelectRecipient(it.recipientId)
+          is ContactSearchKey.UnknownRecipientKey -> it.sectionKey == ContactSearchConfiguration.SectionKey.PHONE_NUMBER
+          else -> false
         }
         ContactSearchSelectionResult(it, isSelectable)
       }.toSet()
@@ -42,7 +41,7 @@ class ContactSearchRepository {
   @CheckResult
   fun markDisplayAsStory(recipientIds: Collection<RecipientId>): Completable {
     return Completable.fromAction {
-      SignalDatabase.groups.setShowAsStoryState(recipientIds, GroupDatabase.ShowAsStoryState.ALWAYS)
+      SignalDatabase.groups.setShowAsStoryState(recipientIds, GroupTable.ShowAsStoryState.ALWAYS)
       SignalDatabase.recipients.markNeedsSync(recipientIds)
       StorageSyncHelper.scheduleSyncForDataChange()
     }.subscribeOn(Schedulers.io())
@@ -51,7 +50,7 @@ class ContactSearchRepository {
   @CheckResult
   fun unmarkDisplayAsStory(groupId: GroupId): Completable {
     return Completable.fromAction {
-      SignalDatabase.groups.setShowAsStoryState(groupId, GroupDatabase.ShowAsStoryState.NEVER)
+      SignalDatabase.groups.setShowAsStoryState(groupId, GroupTable.ShowAsStoryState.NEVER)
       SignalDatabase.recipients.markNeedsSync(Recipient.externalGroupExact(groupId).id)
       StorageSyncHelper.scheduleSyncForDataChange()
     }.subscribeOn(Schedulers.io())

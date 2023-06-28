@@ -1,6 +1,8 @@
 package org.tm.archive.util
 
+import android.os.Build
 import android.view.View
+import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -13,22 +15,38 @@ object SystemWindowInsetsSetter {
    */
   fun attach(view: View, lifecycleOwner: LifecycleOwner, @WindowInsetsCompat.Type.InsetsType insetType: Int = WindowInsetsCompat.Type.systemBars()) {
     val listener = view.doOnEachLayout {
-      val insets = ViewCompat.getRootWindowInsets(view)?.getInsets(insetType)
+      val insets: Insets? = ViewCompat.getRootWindowInsets(view)?.getInsets(insetType)
 
-      if (insets != null) {
-        view.setPadding(
-          insets.left,
-          insets.top,
-          insets.right,
-          insets.bottom
-        )
+      if (Build.VERSION.SDK_INT > 29 && insets != null && !insets.isEmpty()) {
+        view.post {
+          view.setPadding(
+            insets.left,
+            insets.top,
+            insets.right,
+            insets.bottom
+          )
+        }
       } else {
-        view.setPadding(
-          0,
-          ViewUtil.getStatusBarHeight(view),
-          0,
+        val top = if (insetType and WindowInsetsCompat.Type.statusBars() != 0) {
+          ViewUtil.getStatusBarHeight(view)
+        } else {
+          0
+        }
+
+        val bottom = if (insetType and WindowInsetsCompat.Type.navigationBars() != 0) {
           ViewUtil.getNavigationBarHeight(view)
-        )
+        } else {
+          0
+        }
+
+        view.post {
+          view.setPadding(
+            0,
+            top,
+            0,
+            bottom
+          )
+        }
       }
     }
 
@@ -39,5 +57,9 @@ object SystemWindowInsetsSetter {
     }
 
     lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+  }
+
+  private fun Insets.isEmpty(): Boolean {
+    return (top + bottom + right + left) == 0
   }
 }

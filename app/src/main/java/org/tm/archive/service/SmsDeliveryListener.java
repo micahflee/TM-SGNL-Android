@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.telephony.SmsMessage;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.SmsDatabase;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.SmsSentJob;
@@ -55,9 +55,9 @@ public class SmsDeliveryListener extends BroadcastReceiver {
         // Note: https://stackoverflow.com/a/33240109
         if ("3gpp2".equals(intent.getStringExtra("format"))) {
           Log.w(TAG, "Correcting for CDMA delivery receipt...");
-          if      (status >> 24 <= 0) status = SmsDatabase.Status.STATUS_COMPLETE;
-          else if (status >> 24 == 2) status = SmsDatabase.Status.STATUS_PENDING;
-          else if (status >> 24 == 3) status = SmsDatabase.Status.STATUS_FAILED;
+          if      (status >> 24 <= 0) status = MessageTable.Status.STATUS_COMPLETE;
+          else if (status >> 24 == 2) status = MessageTable.Status.STATUS_PENDING;
+          else if (status >> 24 == 3) status = MessageTable.Status.STATUS_FAILED;
         }
 
         jobManager.add(new SmsSentJob(messageId, isMultipart, DELIVERED_SMS_ACTION, status, runAttempt));

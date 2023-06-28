@@ -7,7 +7,7 @@ import org.whispersystems.signalservice.api.push.ACI
 import org.whispersystems.signalservice.api.push.PNI
 
 /**
- * Encapsulates data around processing a tuple of user data into a user entry in [RecipientDatabase].
+ * Encapsulates data around processing a tuple of user data into a user entry in [RecipientTable].
  * Also lets you apply a list of [PnpOperation]s to get what the resulting dataset would be.
  */
 data class PnpDataSet(
@@ -30,14 +30,15 @@ data class PnpDataSet(
 
   fun MutableSet<RecipientRecord>.replace(recipientId: RecipientId, update: (RecipientRecord) -> RecipientRecord) {
     val toUpdate = this.first { it.id == recipientId }
-    this -= toUpdate
+    this.removeIf { it.id == toUpdate.id }
     this += update(toUpdate)
   }
+
   /**
    * Applies the set of operations and returns the resulting dataset.
    * Important: This only occurs _in memory_. You must still apply the operations to disk to persist them.
    */
-  fun perform(operations: List<PnpOperation>): PnpDataSet {
+  fun perform(operations: LinkedHashSet<PnpOperation>): PnpDataSet {
     if (operations.isEmpty()) {
       return this
     }
@@ -92,7 +93,7 @@ data class PnpDataSet(
             )
           }
 
-          records -= secondary
+          records.removeIf { it.id == secondary.id }
         }
         is PnpOperation.SessionSwitchoverInsert -> Unit
         is PnpOperation.ChangeNumberInsert -> Unit
@@ -132,11 +133,11 @@ data class PnpDataSet(
 
 /**
  * Represents a set of actions that need to be applied to incorporate a tuple of user data
- * into [RecipientDatabase].
+ * into [RecipientTable].
  */
 data class PnpChangeSet(
   val id: PnpIdResolver,
-  val operations: List<PnpOperation> = emptyList(),
+  val operations: LinkedHashSet<PnpOperation> = linkedSetOf(),
   val breadCrumbs: List<String> = emptyList()
 ) {
   // We want to exclude breadcrumbs from equality for testing purposes
@@ -172,7 +173,7 @@ sealed class PnpIdResolver {
 }
 
 /**
- * An operation that needs to be performed on the [RecipientDatabase] as part of merging in new user data.
+ * An operation that needs to be performed on the [RecipientTable] as part of merging in new user data.
  * Lets us describe various situations as a series of operations, making code clearer and tests easier.
  */
 sealed class PnpOperation {
@@ -213,7 +214,8 @@ sealed class PnpOperation {
   }
 
   data class SessionSwitchoverInsert(
-    override val recipientId: RecipientId
+    override val recipientId: RecipientId,
+    val e164: String?
   ) : PnpOperation()
 
   data class ChangeNumberInsert(

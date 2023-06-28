@@ -15,8 +15,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.GroupDatabase.GroupRecord;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeBusyException;
@@ -85,10 +85,10 @@ final class ConversationGroupViewModel extends ViewModel {
     liveRecipient.setValue(recipient);
   }
 
-  void onSuggestedMembersBannerDismissed(@NonNull GroupId groupId, @NonNull List<RecipientId> suggestions) {
+  void onSuggestedMembersBannerDismissed(@NonNull GroupId groupId) {
     SignalExecutors.BOUNDED.execute(() -> {
       if (groupId.isV2()) {
-        SignalDatabase.groups().removeUnmigratedV1Members(groupId.requireV2(), suggestions);
+        SignalDatabase.groups().removeUnmigratedV1Members(groupId.requireV2());
         liveRecipient.postValue(liveRecipient.getValue());
       }
     });
@@ -119,13 +119,13 @@ final class ConversationGroupViewModel extends ViewModel {
 
   boolean isNonAdminInAnnouncementGroup() {
     ConversationMemberLevel level = selfMembershipLevel.getValue();
-    return level != null && level.getMemberLevel() != GroupDatabase.MemberLevel.ADMINISTRATOR && level.isAnnouncementGroup();
+    return level != null && level.getMemberLevel() != GroupTable.MemberLevel.ADMINISTRATOR && level.isAnnouncementGroup();
   }
 
   private static @Nullable GroupRecord getGroupRecordForRecipient(@Nullable Recipient recipient) {
     if (recipient != null && recipient.isGroup()) {
-      Application context         = ApplicationDependencies.getApplication();
-      GroupDatabase groupDatabase = SignalDatabase.groups();
+      Application context       = ApplicationDependencies.getApplication();
+      GroupTable  groupDatabase = SignalDatabase.groups();
       return groupDatabase.getGroup(recipient.getId()).orElse(null);
     } else {
       return null;
@@ -135,7 +135,7 @@ final class ConversationGroupViewModel extends ViewModel {
   private static int mapToActionableRequestingMemberCount(@Nullable GroupRecord record) {
     if (record != null                          &&
         record.isV2Group()                      &&
-        record.memberLevel(Recipient.self()) == GroupDatabase.MemberLevel.ADMINISTRATOR)
+        record.memberLevel(Recipient.self()) == GroupTable.MemberLevel.ADMINISTRATOR)
     {
       return record.requireV2GroupProperties()
                    .getDecryptedGroup()
@@ -161,15 +161,10 @@ final class ConversationGroupViewModel extends ViewModel {
 
   @WorkerThread
   private static List<RecipientId> mapToGroupV1MigrationSuggestions(@Nullable GroupRecord record) {
-    if (record == null) {
-      return Collections.emptyList();
-    }
-
-    if (!record.isV2Group()) {
-      return Collections.emptyList();
-    }
-
-    if (!record.isActive() || record.isPendingMember(Recipient.self())) {
+    if (record == null ||
+        !record.isV2Group() ||
+        !record.isActive() ||
+        record.isPendingMember(Recipient.self())) {
       return Collections.emptyList();
     }
 
@@ -271,15 +266,15 @@ final class ConversationGroupViewModel extends ViewModel {
   }
 
   static final class ConversationMemberLevel {
-    private final GroupDatabase.MemberLevel memberLevel;
-    private final boolean                   isAnnouncementGroup;
+    private final GroupTable.MemberLevel memberLevel;
+    private final boolean                isAnnouncementGroup;
 
-    private ConversationMemberLevel(GroupDatabase.MemberLevel memberLevel, boolean isAnnouncementGroup) {
+    private ConversationMemberLevel(GroupTable.MemberLevel memberLevel, boolean isAnnouncementGroup) {
       this.memberLevel         = memberLevel;
       this.isAnnouncementGroup = isAnnouncementGroup;
     }
 
-    public @NonNull GroupDatabase.MemberLevel getMemberLevel() {
+    public @NonNull GroupTable.MemberLevel getMemberLevel() {
       return memberLevel;
     }
 

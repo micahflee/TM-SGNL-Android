@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.WrapperDialogFragment
 import org.tm.archive.components.settings.DSLConfiguration
@@ -14,7 +15,7 @@ import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.database.model.DistributionListPrivacyMode
-import org.tm.archive.util.LifecycleDisposable
+import org.tm.archive.stories.settings.connections.ViewAllSignalConnectionsFragment
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
@@ -38,6 +39,7 @@ class MyStorySettingsFragment : DSLSettingsFragment(
   }
 
   override fun bindAdapter(adapter: MappingAdapter) {
+    AllSignalConnectionsRowItem.register(adapter)
     viewModel.state.observe(viewLifecycleOwner) { state ->
       adapter.submitList(getConfiguration(state).toMappingModelList())
     }
@@ -47,14 +49,18 @@ class MyStorySettingsFragment : DSLSettingsFragment(
     return configure {
       sectionHeaderPref(R.string.MyStorySettingsFragment__who_can_view_this_story)
 
-      radioPref(
-        title = DSLSettingsText.from(R.string.MyStorySettingsFragment__all_signal_connections),
-        summary = DSLSettingsText.from(R.string.MyStorySettingsFragment__share_with_all_connections),
-        isChecked = state.myStoryPrivacyState.privacyMode == DistributionListPrivacyMode.ALL,
-        onClick = {
-          lifecycleDisposable += viewModel.setMyStoryPrivacyMode(DistributionListPrivacyMode.ALL)
-            .subscribe()
-        }
+      customPref(
+        AllSignalConnectionsRowItem.Model(
+          isChecked = state.myStoryPrivacyState.privacyMode == DistributionListPrivacyMode.ALL && state.hasUserPerformedManualSelection,
+          count = state.allSignalConnectionsCount,
+          onRowClicked = {
+            lifecycleDisposable += viewModel.setMyStoryPrivacyMode(DistributionListPrivacyMode.ALL)
+              .subscribe()
+          },
+          onViewClicked = {
+            ViewAllSignalConnectionsFragment.Dialog.show(childFragmentManager)
+          }
+        )
       )
 
       val exceptText = if (state.myStoryPrivacyState.privacyMode == DistributionListPrivacyMode.ALL_EXCEPT) {
@@ -66,7 +72,7 @@ class MyStorySettingsFragment : DSLSettingsFragment(
       radioPref(
         title = DSLSettingsText.from(R.string.MyStorySettingsFragment__all_except),
         summary = exceptText,
-        isChecked = state.myStoryPrivacyState.privacyMode == DistributionListPrivacyMode.ALL_EXCEPT,
+        isChecked = state.myStoryPrivacyState.privacyMode == DistributionListPrivacyMode.ALL_EXCEPT && state.hasUserPerformedManualSelection,
         onClick = {
           lifecycleDisposable += viewModel.setMyStoryPrivacyMode(DistributionListPrivacyMode.ALL_EXCEPT)
             .subscribe { findNavController().safeNavigate(R.id.action_myStorySettings_to_allExceptFragment) }
@@ -82,7 +88,7 @@ class MyStorySettingsFragment : DSLSettingsFragment(
       radioPref(
         title = DSLSettingsText.from(R.string.MyStorySettingsFragment__only_share_with),
         summary = onlyWithText,
-        isChecked = state.myStoryPrivacyState.privacyMode == DistributionListPrivacyMode.ONLY_WITH,
+        isChecked = state.myStoryPrivacyState.privacyMode == DistributionListPrivacyMode.ONLY_WITH && state.hasUserPerformedManualSelection,
         onClick = {
           lifecycleDisposable += viewModel.setMyStoryPrivacyMode(DistributionListPrivacyMode.ONLY_WITH)
             .subscribe { findNavController().safeNavigate(R.id.action_myStorySettings_to_onlyShareWithFragment) }

@@ -6,6 +6,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsFragment
@@ -16,7 +17,6 @@ import org.tm.archive.components.settings.conversation.preferences.RecipientPref
 import org.tm.archive.notifications.profiles.NotificationProfile
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 import org.tm.archive.util.views.CircularProgressMaterialButton

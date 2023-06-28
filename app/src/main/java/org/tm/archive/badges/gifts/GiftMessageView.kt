@@ -16,6 +16,7 @@ import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.badges.gifts.Gifts.formatExpiry
 import org.tm.archive.database.model.databaseprotos.GiftBadge
 import org.tm.archive.mms.GlideRequests
+import org.tm.archive.recipients.Recipient
 
 /**
  * Displays a gift badge sent to or received from a user, and allows the user to
@@ -49,8 +50,7 @@ class GiftMessageView @JvmOverloads constructor(
     }
   }
 
-  fun setGiftBadge(glideRequests: GlideRequests, giftBadge: GiftBadge, isOutgoing: Boolean, callback: Callback) {
-    titleView.setText(R.string.GiftMessageView__gift_badge)
+  fun setGiftBadge(glideRequests: GlideRequests, giftBadge: GiftBadge, isOutgoing: Boolean, callback: Callback, fromRecipient: Recipient, toRecipient: Recipient) {
     descriptionView.text = giftBadge.formatExpiry(context)
     actionView.icon = null
     actionView.setOnClickListener { callback.onViewGiftBadgeClicked() }
@@ -58,7 +58,9 @@ class GiftMessageView @JvmOverloads constructor(
 
     if (isOutgoing) {
       actionView.setText(R.string.GiftMessageView__view)
+      titleView.text = context.getString(R.string.GiftMessageView__donation_on_behalf_of_s, toRecipient.getDisplayName(context))
     } else {
+      titleView.text = context.getString(R.string.GiftMessageView__s_donated_to_signal_on, fromRecipient.getShortDisplayName(context))
       when (giftBadge.redemptionState) {
         GiftBadge.RedemptionState.REDEEMED -> {
           stopAnimationIfNeeded()

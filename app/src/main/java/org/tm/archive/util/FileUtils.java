@@ -58,6 +58,16 @@ public final class FileUtils {
     }
   }
 
+  public static boolean deleteDirectory(@Nullable File directory) {
+    if (directory == null || !directory.exists() || !directory.isDirectory()) {
+      return false;
+    }
+
+    deleteDirectoryContents(directory);
+
+    return directory.delete();
+  }
+
   //**TM_SA**//Start
   public static File createPlaceHolderTempFile(Context context, String fileName) {
     File dir = new File(context.getFilesDir(), ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME);
@@ -130,13 +140,4 @@ public final class FileUtils {
   }
   //**TM_SA**//End
 
-  public static boolean deleteDirectory(@Nullable File directory) {
-    if (directory == null || !directory.exists() || !directory.isDirectory()) {
-      return false;
-    }
-
-    deleteDirectoryContents(directory);
-
-    return directory.delete();
-  }
 }

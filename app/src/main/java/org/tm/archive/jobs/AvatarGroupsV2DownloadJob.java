@@ -9,12 +9,12 @@ import org.signal.core.util.StreamUtil;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
 import org.signal.libsignal.zkgroup.groups.GroupSecretParams;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.GroupDatabase.GroupRecord;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.profiles.AvatarHelper;
@@ -60,11 +60,11 @@ public final class AvatarGroupsV2DownloadJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder()
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder()
                    .putString(KEY_GROUP_ID, groupId.toString())
                    .putString(CDN_KEY, cdnKey)
-                   .build();
+                   .serialize();
   }
 
   @Override
@@ -74,8 +74,8 @@ public final class AvatarGroupsV2DownloadJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    GroupDatabase         database   = SignalDatabase.groups();
-    Optional<GroupRecord> record     = database.getGroup(groupId);
+    GroupTable            database = SignalDatabase.groups();
+    Optional<GroupRecord> record   = database.getGroup(groupId);
     File                  attachment = null;
 
     try {
@@ -145,7 +145,9 @@ public final class AvatarGroupsV2DownloadJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<AvatarGroupsV2DownloadJob> {
     @Override
-    public @NonNull AvatarGroupsV2DownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull AvatarGroupsV2DownloadJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new AvatarGroupsV2DownloadJob(parameters,
                                            GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)).requireV2(),
                                            data.getString(CDN_KEY));

@@ -3,7 +3,7 @@ package org.tm.archive.jobmanager.migrations;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.JobMigration;
 
 public class RetrieveProfileJobMigration extends JobMigration {
@@ -25,15 +25,15 @@ public class RetrieveProfileJobMigration extends JobMigration {
   }
 
   private static @NonNull JobData migrateRetrieveProfileJob(@NonNull JobData jobData) {
-    Data data = jobData.getData();
+    JsonJobData data = JsonJobData.deserialize(jobData.getData());
 
     if (data.hasString("recipient")) {
       Log.i(TAG, "Migrating job.");
 
       String recipient = data.getString("recipient");
-      return jobData.withData(new Data.Builder()
+      return jobData.withData(new JsonJobData.Builder()
                                       .putStringArray("recipients", new String[] { recipient })
-                                      .build());
+                                      .serialize());
     } else {
       return jobData;
     }

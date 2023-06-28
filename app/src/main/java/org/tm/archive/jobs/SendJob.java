@@ -10,11 +10,11 @@ import org.tm.archive.TextSecureExpiredException;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.contactshare.Contact;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.mms.OutgoingMediaMessage;
+import org.tm.archive.mms.OutgoingMessage;
 import org.tm.archive.util.Util;
 
 import java.util.LinkedList;
@@ -45,7 +45,7 @@ public abstract class SendJob extends BaseJob {
 
   protected abstract void onSend() throws Exception;
 
-  protected static void markAttachmentsUploaded(long messageId, @NonNull OutgoingMediaMessage message) {
+  protected static void markAttachmentsUploaded(long messageId, @NonNull OutgoingMessage message) {
     List<Attachment> attachments = new LinkedList<>();
 
     attachments.addAll(message.getAttachments());
@@ -56,7 +56,7 @@ public abstract class SendJob extends BaseJob {
       attachments.addAll(message.getOutgoingQuote().getAttachments());
     }
 
-    AttachmentDatabase database = SignalDatabase.attachments();
+    AttachmentTable database = SignalDatabase.attachments();
 
     for (Attachment attachment : attachments) {
       database.markAttachmentUploaded(messageId, attachment);

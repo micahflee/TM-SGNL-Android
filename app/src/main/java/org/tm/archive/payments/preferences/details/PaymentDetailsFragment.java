@@ -25,7 +25,7 @@ import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.components.AvatarImageView;
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.payments.Direction;
 import org.tm.archive.payments.MoneyView;
 import org.tm.archive.payments.Payee;
@@ -211,7 +211,7 @@ public final class PaymentDetailsFragment extends LoggingFragment {
     }
   }
 
-  private @NonNull CharSequence describeSentTo(@NonNull PaymentsDetailsViewModel.ViewState state, @NonNull PaymentDatabase.PaymentTransaction payment) {
+  private @NonNull CharSequence describeSentTo(@NonNull PaymentsDetailsViewModel.ViewState state, @NonNull PaymentTable.PaymentTransaction payment) {
     if (payment.getDirection().isSent()) {
       return SpanUtil.insertSingleSpan(getResources(), R.string.PaymentsDetailsFragment__sent_to_s, describe(payment.getPayee(), state.getRecipient()));
     } else {
@@ -219,7 +219,7 @@ public final class PaymentDetailsFragment extends LoggingFragment {
     }
   }
 
-  private @NonNull CharSequence describeStatus(@NonNull PaymentDatabase.PaymentTransaction payment) {
+  private @NonNull CharSequence describeStatus(@NonNull PaymentTable.PaymentTransaction payment) {
     switch (payment.getState()) {
       case INITIAL:
         return getResources().getString(R.string.PaymentsDetailsFragment__submitting_payment);

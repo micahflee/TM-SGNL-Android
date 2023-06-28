@@ -17,11 +17,11 @@ import android.telephony.TelephonyManager;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.jobs.ForegroundServiceUtil;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.TelephonyUtil;
@@ -34,6 +34,8 @@ import org.tm.archive.webrtc.locks.LockManager;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import io.reactivex.rxjava3.disposables.Disposable;
 
 /**
  * Provide a foreground service for {@link SignalCallManager} to leverage to run in the background when necessary. Also
@@ -58,6 +60,7 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
 
   private static final int  INVALID_NOTIFICATION_ID           = -1;
   private static final long REQUEST_WEBSOCKET_STAY_OPEN_DELAY = TimeUnit.MINUTES.toMillis(1);
+  private static final long FOREGROUND_SERVICE_TIMEOUT        = TimeUnit.SECONDS.toMillis(10);
 
   private final WebSocketKeepAliveTask webSocketKeepAliveTask = new WebSocketKeepAliveTask();
 
@@ -70,7 +73,8 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
   private SignalAudioManager              signalAudioManager;
   private int                             lastNotificationId;
   private Notification                    lastNotification;
-  private boolean                         isGroup = true;
+  private boolean                         isGroup                = true;
+  private Disposable                      notificationDisposable = Disposable.empty();
 
   public static void update(@NonNull Context context, int type, @NonNull RecipientId recipientId) {
     Intent intent = new Intent(context, WebRtcCallService.class);
@@ -78,22 +82,22 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
           .putExtra(EXTRA_UPDATE_TYPE, type)
           .putExtra(EXTRA_RECIPIENT_ID, recipientId);
 
-    ContextCompat.startForegroundService(context, intent);
+    ForegroundServiceUtil.startWhenCapableOrThrow(context, intent, FOREGROUND_SERVICE_TIMEOUT);
   }
 
   public static void denyCall(@NonNull Context context) {
-    ContextCompat.startForegroundService(context, denyCallIntent(context));
+    ForegroundServiceUtil.startWhenCapableOrThrow(context, denyCallIntent(context), FOREGROUND_SERVICE_TIMEOUT);
   }
 
   public static void hangup(@NonNull Context context) {
-    ContextCompat.startForegroundService(context, hangupIntent(context));
+    ForegroundServiceUtil.startWhenCapableOrThrow(context, hangupIntent(context), FOREGROUND_SERVICE_TIMEOUT);
   }
 
   public static void stop(@NonNull Context context) {
     Intent intent = new Intent(context, WebRtcCallService.class);
     intent.setAction(ACTION_STOP);
 
-    ContextCompat.startForegroundService(context, intent);
+    ForegroundServiceUtil.startWhenCapableOrThrow(context, intent, FOREGROUND_SERVICE_TIMEOUT);
   }
 
   public static @NonNull Intent denyCallIntent(@NonNull Context context) {
@@ -108,7 +112,7 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
     Intent intent = new Intent(context, WebRtcCallService.class);
     intent.setAction(ACTION_SEND_AUDIO_COMMAND)
           .putExtra(EXTRA_AUDIO_COMMAND, command);
-    ContextCompat.startForegroundService(context, intent);
+    ForegroundServiceUtil.startWhenCapableOrThrow(context, intent, FOREGROUND_SERVICE_TIMEOUT);
   }
 
   public static void changePowerButtonReceiver(@NonNull Context context, boolean register) {
@@ -116,7 +120,7 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
     intent.setAction(ACTION_CHANGE_POWER_BUTTON)
           .putExtra(EXTRA_ENABLED, register);
 
-    ContextCompat.startForegroundService(context, intent);
+    ForegroundServiceUtil.startWhenCapableOrThrow(context, intent, FOREGROUND_SERVICE_TIMEOUT);
   }
 
   @Override
@@ -131,7 +135,11 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
     registerNetworkReceiver();
 
     if (!AndroidTelecomUtil.getTelecomSupported()) {
-      TelephonyUtil.getManager(this).listen(hangUpRtcOnDeviceCallAnswered, PhoneStateListener.LISTEN_CALL_STATE);
+      try {
+        TelephonyUtil.getManager(this).listen(hangUpRtcOnDeviceCallAnswered, PhoneStateListener.LISTEN_CALL_STATE);
+      } catch (SecurityException e) {
+        Log.w(TAG, "Failed to listen to PSTN call answers!", e);
+      }
     }
   }
 
@@ -139,6 +147,8 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
   public void onDestroy() {
     Log.v(TAG, "onDestroy");
     super.onDestroy();
+
+    notificationDisposable.dispose();
 
     if (uncaughtExceptionHandlerManager != null) {
       uncaughtExceptionHandlerManager.unregister();
@@ -179,7 +189,7 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
       case ACTION_SEND_AUDIO_COMMAND:
         setCallNotification();
         if (signalAudioManager == null) {
-          signalAudioManager = SignalAudioManager.create(this, this, isGroup);
+          signalAudioManager = SignalAudioManager.create(this, this);
         }
         AudioManagerCommand audioCommand = Objects.requireNonNull(intent.getParcelableExtra(EXTRA_AUDIO_COMMAND));
         Log.i(TAG, "Sending audio command [" + audioCommand.getClass().getSimpleName() + "] to " + signalAudioManager.getClass().getSimpleName());
@@ -221,10 +231,20 @@ public final class WebRtcCallService extends Service implements SignalAudioManag
   }
 
   public void setCallInProgressNotification(int type, @NonNull RecipientId id) {
-    lastNotificationId = CallNotificationBuilder.getNotificationId(type);
-    lastNotification   = CallNotificationBuilder.getCallInProgressNotification(this, type, Recipient.resolved(id));
+    if (lastNotificationId == INVALID_NOTIFICATION_ID) {
+      lastNotificationId = CallNotificationBuilder.getStartingStoppingNotificationId();
+      lastNotification   = CallNotificationBuilder.getStartingNotification(this);
+      startForegroundCompat(lastNotificationId, lastNotification);
+    }
 
-    startForegroundCompat(lastNotificationId, lastNotification);
+    notificationDisposable.dispose();
+    notificationDisposable = CallNotificationBuilder.getCallInProgressNotification(this, type, Recipient.resolved(id))
+                                                    .subscribe(notification -> {
+                                                      lastNotificationId = CallNotificationBuilder.getNotificationId(type);
+                                                      lastNotification   = notification;
+
+                                                      startForegroundCompat(lastNotificationId, lastNotification);
+                                                    });
   }
 
   private void startForegroundCompat(int notificationId, Notification notification) {

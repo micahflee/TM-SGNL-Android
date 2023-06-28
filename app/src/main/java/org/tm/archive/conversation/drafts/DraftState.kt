@@ -1,7 +1,7 @@
 package org.tm.archive.conversation.drafts
 
-import org.tm.archive.database.DraftDatabase
-import org.tm.archive.database.DraftDatabase.Drafts
+import org.tm.archive.database.DraftTable
+import org.tm.archive.database.DraftTable.Drafts
 import org.tm.archive.recipients.RecipientId
 
 /**
@@ -13,11 +13,12 @@ data class DraftState(
   val recipientId: RecipientId = RecipientId.UNKNOWN,
   val threadId: Long = -1,
   val distributionType: Int = 0,
-  val textDraft: DraftDatabase.Draft? = null,
-  val mentionsDraft: DraftDatabase.Draft? = null,
-  val quoteDraft: DraftDatabase.Draft? = null,
-  val locationDraft: DraftDatabase.Draft? = null,
-  val voiceNoteDraft: DraftDatabase.Draft? = null,
+  val textDraft: DraftTable.Draft? = null,
+  val bodyRangesDraft: DraftTable.Draft? = null,
+  val quoteDraft: DraftTable.Draft? = null,
+  val locationDraft: DraftTable.Draft? = null,
+  val voiceNoteDraft: DraftTable.Draft? = null,
+  val messageEditDraft: DraftTable.Draft? = null
 ) {
 
   fun copyAndClearDrafts(threadId: Long = this.threadId): DraftState {
@@ -26,8 +27,9 @@ data class DraftState(
 
   fun toDrafts(): Drafts {
     return Drafts().apply {
+      addIfNotNull(messageEditDraft)
       addIfNotNull(textDraft)
-      addIfNotNull(mentionsDraft)
+      addIfNotNull(bodyRangesDraft)
       addIfNotNull(quoteDraft)
       addIfNotNull(locationDraft)
       addIfNotNull(voiceNoteDraft)
@@ -37,11 +39,12 @@ data class DraftState(
   fun copyAndSetDrafts(threadId: Long, drafts: Drafts): DraftState {
     return copy(
       threadId = threadId,
-      textDraft = drafts.getDraftOfType(DraftDatabase.Draft.TEXT),
-      mentionsDraft = drafts.getDraftOfType(DraftDatabase.Draft.MENTION),
-      quoteDraft = drafts.getDraftOfType(DraftDatabase.Draft.QUOTE),
-      locationDraft = drafts.getDraftOfType(DraftDatabase.Draft.LOCATION),
-      voiceNoteDraft = drafts.getDraftOfType(DraftDatabase.Draft.VOICE_NOTE),
+      textDraft = drafts.getDraftOfType(DraftTable.Draft.TEXT),
+      bodyRangesDraft = drafts.getDraftOfType(DraftTable.Draft.BODY_RANGES),
+      quoteDraft = drafts.getDraftOfType(DraftTable.Draft.QUOTE),
+      locationDraft = drafts.getDraftOfType(DraftTable.Draft.LOCATION),
+      voiceNoteDraft = drafts.getDraftOfType(DraftTable.Draft.VOICE_NOTE),
+      messageEditDraft = drafts.getDraftOfType(DraftTable.Draft.MESSAGE_EDIT)
     )
   }
 }

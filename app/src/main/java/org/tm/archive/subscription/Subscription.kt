@@ -4,17 +4,17 @@ import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.core.animation.doOnEnd
 import androidx.lifecycle.DefaultLifecycleObserver
 import org.signal.core.util.money.FiatMoney
 import org.tm.archive.R
-import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.components.settings.PreferenceModel
+import org.tm.archive.databinding.SubscriptionPreferenceBinding
 import org.tm.archive.payments.FiatMoneyUtil
 import org.tm.archive.util.DateUtils
+import org.tm.archive.util.adapter.mapping.BindingFactory
+import org.tm.archive.util.adapter.mapping.BindingViewHolder
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
@@ -30,12 +30,12 @@ data class Subscription(
   val name: String,
   val badge: Badge,
   val prices: Set<FiatMoney>,
-  val level: Int,
+  val level: Int
 ) {
 
   companion object {
     fun register(adapter: MappingAdapter) {
-      adapter.registerFactory(Model::class.java, LayoutFactory({ ViewHolder(it) }, R.layout.subscription_preference))
+      adapter.registerFactory(Model::class.java, BindingFactory(::ViewHolder, SubscriptionPreferenceBinding::inflate))
       adapter.registerFactory(LoaderModel::class.java, LayoutFactory({ LoaderViewHolder(it) }, R.layout.subscription_preference_loader))
     }
   }
@@ -86,7 +86,7 @@ data class Subscription(
     val isActive: Boolean,
     val willRenew: Boolean,
     override val isEnabled: Boolean,
-    val onClick: () -> Unit,
+    val onClick: (Subscription) -> Unit,
     val renewalTimestamp: Long,
     val selectedCurrency: Currency
   ) : PreferenceModel<Model>(isEnabled = isEnabled) {
@@ -114,53 +114,37 @@ data class Subscription(
     }
   }
 
-  class ViewHolder(itemView: View) : MappingViewHolder<Model>(itemView) {
-
-    private val badge: BadgeImageView = itemView.findViewById(R.id.badge)
-    private val title: TextView = itemView.findViewById(R.id.title)
-    private val tagline: TextView = itemView.findViewById(R.id.tagline)
-    private val price: TextView = itemView.findViewById(R.id.price)
-    private val check: ImageView = itemView.findViewById(R.id.check)
+  class ViewHolder(binding: SubscriptionPreferenceBinding) : BindingViewHolder<Model, SubscriptionPreferenceBinding>(binding) {
 
     override fun bind(model: Model) {
-      itemView.isEnabled = model.isEnabled
-      itemView.setOnClickListener { model.onClick() }
-      itemView.isSelected = model.isSelected
+      binding.root.isEnabled = model.isEnabled
+      binding.root.setOnClickListener { model.onClick(model.subscription) }
+      binding.root.isSelected = model.isSelected
 
       if (payload.isEmpty()) {
-        badge.setBadge(model.subscription.badge)
-        badge.isClickable = false
+        binding.badge.setBadge(model.subscription.badge)
+        binding.badge.isClickable = false
       }
-
-      title.text = model.subscription.name
-      tagline.text = context.getString(R.string.Subscription__earn_a_s_badge, model.subscription.badge.name)
 
       val formattedPrice = FiatMoneyUtil.format(
         context.resources,
         model.activePrice ?: model.subscription.prices.first { it.currency == model.selectedCurrency },
-        FiatMoneyUtil.formatOptions()
+        FiatMoneyUtil.formatOptions().trimZerosAfterDecimal()
       )
 
       if (model.isActive && model.willRenew) {
-        price.text = context.getString(
-          R.string.Subscription__s_per_month_dot_renews_s,
-          formattedPrice,
-          DateUtils.formatDateWithYear(Locale.getDefault(), model.renewalTimestamp)
-        )
+        binding.tagline.text = context.getString(R.string.Subscription__renews_s, DateUtils.formatDateWithYear(Locale.getDefault(), model.renewalTimestamp))
       } else if (model.isActive) {
-        price.text = context.getString(
-          R.string.Subscription__s_per_month_dot_expires_s,
-          formattedPrice,
-          DateUtils.formatDateWithYear(Locale.getDefault(), model.renewalTimestamp)
-        )
+        binding.tagline.text = context.getString(R.string.Subscription__expires_s, DateUtils.formatDateWithYear(Locale.getDefault(), model.renewalTimestamp))
       } else {
-        price.text = context.getString(
-          R.string.Subscription__s_per_month,
-          formattedPrice
-        )
+        binding.tagline.text = context.getString(R.string.Subscription__get_a_s_badge, model.subscription.badge.name)
       }
 
-      check.visible = model.isActive
+      binding.title.text = context.getString(
+        R.string.Subscription__s_per_month,
+        formattedPrice
+      )
+      binding.check.visible = model.isActive
     }
   }
 }

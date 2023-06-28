@@ -1,12 +1,13 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.StickerPackDownloadJob;
@@ -49,9 +50,9 @@ public class StickerAdditionMigrationJob extends MigrationJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
+  public @Nullable byte[] serialize() {
     String[] packsRaw = Stream.of(packs).map(BlessedPacks.Pack::toJson).toArray(String[]::new);
-    return new Data.Builder().putStringArray(KEY_PACKS, packsRaw).build();
+    return new JsonJobData.Builder().putStringArray(KEY_PACKS, packsRaw).serialize();
   }
 
   @Override
@@ -71,7 +72,8 @@ public class StickerAdditionMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<StickerAdditionMigrationJob> {
     @Override
-    public @NonNull StickerAdditionMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull StickerAdditionMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData             data  = JsonJobData.deserialize(serializedData);
       String[]                raw   = data.getStringArray(KEY_PACKS);
       List<BlessedPacks.Pack> packs = Stream.of(raw).map(BlessedPacks.Pack::fromJson).toList();
 

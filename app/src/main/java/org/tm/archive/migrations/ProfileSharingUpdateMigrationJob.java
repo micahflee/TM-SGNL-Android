@@ -1,9 +1,9 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 
@@ -45,7 +45,7 @@ public class ProfileSharingUpdateMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<ProfileSharingUpdateMigrationJob> {
     @Override
-    public @NonNull ProfileSharingUpdateMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull ProfileSharingUpdateMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new ProfileSharingUpdateMigrationJob(parameters);
     }
   }

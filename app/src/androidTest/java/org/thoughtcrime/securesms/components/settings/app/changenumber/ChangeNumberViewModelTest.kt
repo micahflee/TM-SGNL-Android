@@ -2,9 +2,11 @@ package org.tm.archive.components.settings.app.changenumber
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.FlakyTest
 import okhttp3.mockwebserver.MockResponse
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,9 +19,10 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.pin.KbsRepository
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.registration.VerifyAccountRepository
-import org.tm.archive.registration.VerifyAccountResponseProcessor
+import org.tm.archive.registration.VerifyResponseProcessor
 import org.tm.archive.testing.Get
 import org.tm.archive.testing.MockProvider
+import org.tm.archive.testing.Post
 import org.tm.archive.testing.Put
 import org.tm.archive.testing.SignalActivityRule
 import org.tm.archive.testing.assertIs
@@ -80,8 +83,10 @@ class ChangeNumberViewModelTest {
     lateinit var setPreKeysRequest: PreKeyState
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
+      Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },
+      Put("/v1/verification/session/${MockProvider.sessionMetadataJson.id}/code") { MockResponse().success(MockProvider.sessionMetadataJson) },
       Get("/v1/devices") { MockResponse().success(MockProvider.primaryOnlyDeviceList) },
-      Put("/v1/accounts/number") { r ->
+      Put("/v2/accounts/number") { r ->
         changeNumberRequest = r.parsedRequestBody()
         MockResponse().success(MockProvider.createVerifyAccountResponse(aci, newPni))
       },
@@ -93,6 +98,7 @@ class ChangeNumberViewModelTest {
     )
 
     // WHEN
+    viewModel.requestVerificationCode(VerifyAccountRepository.Mode.SMS_WITHOUT_LISTENER, null, null).blockingGet().resultOrThrow
     viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet().resultOrThrow
 
     // THEN
@@ -110,12 +116,15 @@ class ChangeNumberViewModelTest {
     val oldE164 = Recipient.self().requireE164()
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
+      Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },
+      Put("/v1/verification/session/${MockProvider.sessionMetadataJson.id}/code") { MockResponse().success(MockProvider.sessionMetadataJson) },
       Get("/v1/devices") { MockResponse().success(MockProvider.primaryOnlyDeviceList) },
-      Put("/v1/accounts/number") { MockResponse().failure(500) },
+      Put("/v2/accounts/number") { MockResponse().failure(500) }
     )
 
     // WHEN
-    val processor: VerifyAccountResponseProcessor = viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet()
+    viewModel.requestVerificationCode(VerifyAccountRepository.Mode.SMS_WITHOUT_LISTENER, null, null).blockingGet().resultOrThrow
+    val processor: VerifyResponseProcessor = viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet()
 
     // THEN
     processor.isServerSentError() assertIs true
@@ -140,13 +149,16 @@ class ChangeNumberViewModelTest {
     val oldE164 = Recipient.self().requireE164()
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
+      Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },
+      Put("/v1/verification/session/${MockProvider.sessionMetadataJson.id}/code") { MockResponse().success(MockProvider.sessionMetadataJson) },
       Get("/v1/devices") { MockResponse().success(MockProvider.primaryOnlyDeviceList) },
-      Put("/v1/accounts/number") { MockResponse().connectionFailure() },
+      Put("/v2/accounts/number") { MockResponse().connectionFailure() },
       Get("/v1/accounts/whoami") { MockResponse().success(MockProvider.createWhoAmIResponse(aci, oldPni, oldE164)) }
     )
 
     // WHEN
-    val processor: VerifyAccountResponseProcessor = viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet()
+    viewModel.requestVerificationCode(VerifyAccountRepository.Mode.SMS_WITHOUT_LISTENER, null, null).blockingGet().resultOrThrow
+    val processor: VerifyResponseProcessor = viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet()
 
     // THEN
     processor.isServerSentError() assertIs false
@@ -166,6 +178,8 @@ class ChangeNumberViewModelTest {
    * and apply the pending state after confirming the change on the server.
    */
   @Test
+  @FlakyTest
+  @Ignore("Test sometimes requires manual intervention to continue.")
   fun testChangeNumber_givenNetworkFailedApiCallEnRouteToClient() {
     // GIVEN
     val aci = Recipient.self().requireServiceId()
@@ -177,8 +191,10 @@ class ChangeNumberViewModelTest {
     lateinit var setPreKeysRequest: PreKeyState
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
+      Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },
+      Put("/v1/verification/session/${MockProvider.sessionMetadataJson.id}/code") { MockResponse().success(MockProvider.sessionMetadataJson) },
       Get("/v1/devices") { MockResponse().success(MockProvider.primaryOnlyDeviceList) },
-      Put("/v1/accounts/number") { r ->
+      Put("/v2/accounts/number") { r ->
         changeNumberRequest = r.parsedRequestBody()
         MockResponse().timeout()
       },
@@ -191,7 +207,8 @@ class ChangeNumberViewModelTest {
     )
 
     // WHEN
-    val processor: VerifyAccountResponseProcessor = viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet()
+    viewModel.requestVerificationCode(VerifyAccountRepository.Mode.SMS_WITHOUT_LISTENER, null, null).blockingGet().resultOrThrow
+    val processor: VerifyResponseProcessor = viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet()
 
     // THEN
     processor.isServerSentError() assertIs false
@@ -221,8 +238,10 @@ class ChangeNumberViewModelTest {
     MockProvider.mockGetRegistrationLockStringFlow(kbsRepository)
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
+      Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },
+      Put("/v1/verification/session/${MockProvider.sessionMetadataJson.id}/code") { MockResponse().success(MockProvider.sessionMetadataJson) },
       Get("/v1/devices") { MockResponse().success(MockProvider.primaryOnlyDeviceList) },
-      Put("/v1/accounts/number") { r ->
+      Put("/v2/accounts/number") { r ->
         changeNumberRequest = r.parsedRequestBody()
         if (changeNumberRequest.registrationLock.isNullOrEmpty()) {
           MockResponse().failure(423, MockProvider.lockedFailure)
@@ -238,6 +257,7 @@ class ChangeNumberViewModelTest {
     )
 
     // WHEN
+    viewModel.requestVerificationCode(VerifyAccountRepository.Mode.SMS_WITHOUT_LISTENER, null, null).blockingGet().resultOrThrow
     viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet().also { processor ->
       processor.registrationLock() assertIs true
       Recipient.self().requirePni() assertIsNot newPni
@@ -259,8 +279,10 @@ class ChangeNumberViewModelTest {
     lateinit var setPreKeysRequest: PreKeyState
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
+      Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },
+      Put("/v1/verification/session/${MockProvider.sessionMetadataJson.id}/code") { MockResponse().success(MockProvider.sessionMetadataJson) },
       Get("/v1/devices") { MockResponse().success(MockProvider.primaryOnlyDeviceList) },
-      Put("/v1/accounts/number") { r ->
+      Put("/v2/accounts/number") { r ->
         changeNumberRequest = r.parsedRequestBody()
         if (changeNumberRequest.deviceMessages.isEmpty()) {
           MockResponse().failure(
@@ -285,6 +307,7 @@ class ChangeNumberViewModelTest {
     )
 
     // WHEN
+    viewModel.requestVerificationCode(VerifyAccountRepository.Mode.SMS_WITHOUT_LISTENER, null, null).blockingGet().resultOrThrow
     viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet().resultOrThrow
 
     // THEN
@@ -303,7 +326,9 @@ class ChangeNumberViewModelTest {
     MockProvider.mockGetRegistrationLockStringFlow(kbsRepository)
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
-      Put("/v1/accounts/number") { r ->
+      Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },
+      Put("/v1/verification/session/${MockProvider.sessionMetadataJson.id}/code") { MockResponse().success(MockProvider.sessionMetadataJson) },
+      Put("/v2/accounts/number") { r ->
         changeNumberRequest = r.parsedRequestBody()
         if (changeNumberRequest.registrationLock.isNullOrEmpty()) {
           MockResponse().failure(423, MockProvider.lockedFailure)
@@ -341,6 +366,7 @@ class ChangeNumberViewModelTest {
     )
 
     // WHEN
+    viewModel.requestVerificationCode(VerifyAccountRepository.Mode.SMS_WITHOUT_LISTENER, null, null).blockingGet().resultOrThrow
     viewModel.verifyCodeWithoutRegistrationLock("123456").blockingGet().also { processor ->
       processor.registrationLock() assertIs true
       Recipient.self().requirePni() assertIsNot newPni

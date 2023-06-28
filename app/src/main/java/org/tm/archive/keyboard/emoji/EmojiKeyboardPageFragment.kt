@@ -16,6 +16,7 @@ import org.tm.archive.components.emoji.EmojiEventListener
 import org.tm.archive.components.emoji.EmojiPageView
 import org.tm.archive.components.emoji.EmojiPageViewGridAdapter
 import org.tm.archive.components.emoji.EmojiPageViewGridAdapter.EmojiHeader
+import org.tm.archive.keyboard.KeyboardPageCategoryIconMappingModel
 import org.tm.archive.keyboard.KeyboardPageSelected
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.ThemedFragment.themedInflate
@@ -107,7 +108,7 @@ class EmojiKeyboardPageFragment : Fragment(), EmojiEventListener, EmojiPageViewG
 
   private fun updateCategoryTab(key: String) {
     emojiCategoriesRecycler.post {
-      val index: Int = categoriesAdapter.indexOfFirst(EmojiKeyboardPageCategoryMappingModel::class.java) { it.key == key }
+      val index: Int = categoriesAdapter.indexOfFirst(KeyboardPageCategoryIconMappingModel::class.java) { it.key == key }
 
       if (index != -1) {
         emojiCategoriesRecycler.smoothScrollToPosition(index)

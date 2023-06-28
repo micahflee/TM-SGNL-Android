@@ -5,10 +5,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.keyvalue.SignalStore;
@@ -85,7 +85,7 @@ public final class PaymentSendJob extends BaseJob {
                                                     .then(new MultiDeviceOutgoingPaymentSyncJob(uuid));
 
     if (recipientId != null) {
-      chain.then(new PaymentNotificationSendJob(recipientId, uuid, recipientId.toQueueKey(true)));
+      chain.then(PaymentNotificationSendJob.create(recipientId, uuid, recipientId.toQueueKey(true)));
     }
 
     chain.then(PaymentLedgerUpdateJob.updateLedgerToReflectPayment(uuid))
@@ -135,8 +135,8 @@ public final class PaymentSendJob extends BaseJob {
 
     Stopwatch stopwatch = new Stopwatch("Payment submission");
 
-    Wallet          wallet          = ApplicationDependencies.getPayments().getWallet();
-    PaymentDatabase paymentDatabase = SignalDatabase.payments();
+    Wallet       wallet          = ApplicationDependencies.getPayments().getWallet();
+    PaymentTable paymentDatabase = SignalDatabase.payments();
 
     paymentDatabase.createOutgoingPayment(uuid,
                                           recipientId,
@@ -211,9 +211,9 @@ public final class PaymentSendJob extends BaseJob {
     return false;
   }
 
-  @NonNull @Override
-  public Data serialize() {
-    return new Data.Builder()
+  @Override
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder()
                    .putString(KEY_UUID, uuid.toString())
                    .putLong(KEY_TIMESTAMP, timestamp)
                    .putString(KEY_RECIPIENT, recipientId != null ? recipientId.serialize() : null)
@@ -221,7 +221,7 @@ public final class PaymentSendJob extends BaseJob {
                    .putString(KEY_NOTE, note)
                    .putString(KEY_AMOUNT, amount.serialize())
                    .putString(KEY_FEE, totalFee.serialize())
-                   .build();
+                   .serialize();
   }
 
   @NonNull @Override
@@ -242,7 +242,9 @@ public final class PaymentSendJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<PaymentSendJob> {
     @Override
-    public @NonNull PaymentSendJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PaymentSendJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new PaymentSendJob(parameters,
                                 UUID.fromString(data.getString(KEY_UUID)),
                                 data.getLong(KEY_TIMESTAMP),

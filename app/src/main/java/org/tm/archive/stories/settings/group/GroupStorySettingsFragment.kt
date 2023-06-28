@@ -6,6 +6,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.dp
 import org.tm.archive.R
 import org.tm.archive.components.menu.ActionItem
@@ -15,8 +16,8 @@ import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.conversation.ConversationIntents
+import org.tm.archive.stories.dialogs.StoryDialogs
 import org.tm.archive.stories.settings.custom.PrivateStoryItem
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 
 /**
@@ -94,7 +95,12 @@ class GroupStorySettingsFragment : DSLSettingsFragment(menuId = R.menu.story_gro
           DSLSettingsText.ColorModifier(ContextCompat.getColor(requireContext(), R.color.signal_colorError))
         ),
         onClick = {
-          viewModel.doNotDisplayAsStory()
+          StoryDialogs.removeGroupStory(
+            requireContext(),
+            viewModel.titleSnapshot
+          ) {
+            viewModel.doNotDisplayAsStory()
+          }
         }
       )
     }

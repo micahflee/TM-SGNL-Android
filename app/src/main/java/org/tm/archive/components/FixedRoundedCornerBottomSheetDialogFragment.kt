@@ -18,6 +18,7 @@ import com.google.android.material.shape.ShapeAppearanceModel
 import org.tm.archive.R
 import org.tm.archive.util.ThemeUtil
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.WindowUtil
 
 /**
  * Forces rounded corners on BottomSheet
@@ -37,6 +38,11 @@ abstract class FixedRoundedCornerBottomSheetDialogFragment : BottomSheetDialogFr
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setStyle(STYLE_NORMAL, themeResId)
+  }
+
+  override fun onResume() {
+    super.onResume()
+    WindowUtil.initializeScreenshotSecurity(requireContext(), dialog!!.window!!)
   }
 
   override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {

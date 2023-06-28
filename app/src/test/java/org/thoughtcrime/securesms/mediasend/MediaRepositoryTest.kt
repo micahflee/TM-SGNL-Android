@@ -18,7 +18,7 @@ import org.mockito.junit.MockitoRule
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.signal.core.util.logging.Log
-import org.tm.archive.database.AttachmentDatabase.TransformProperties
+import org.tm.archive.database.AttachmentTable.TransformProperties
 import org.tm.archive.testutil.EmptyLogger
 import org.tm.archive.util.MediaUtil
 import java.util.Optional
@@ -28,7 +28,8 @@ import java.util.Optional
 class MediaRepositoryTest {
 
   @Rule
-  @JvmField val mockitoRule: MockitoRule = MockitoJUnit.rule()
+  @JvmField
+  val mockitoRule: MockitoRule = MockitoJUnit.rule()
 
   @Mock
   private lateinit var staticMediaUtilMock: MockedStatic<MediaUtil>
@@ -129,7 +130,7 @@ class MediaRepositoryTest {
       videoGif,
       bucketId,
       caption,
-      transformProperties,
+      transformProperties
     )
   }
 }

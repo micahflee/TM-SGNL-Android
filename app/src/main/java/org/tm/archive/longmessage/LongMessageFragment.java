@@ -24,6 +24,7 @@ import org.tm.archive.R;
 import org.tm.archive.components.ConversationItemFooter;
 import org.tm.archive.components.FullScreenDialogFragment;
 import org.tm.archive.components.emoji.EmojiTextView;
+import org.tm.archive.conversation.ConversationItemDisplayMode;
 import org.tm.archive.conversation.colors.ColorizerView;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
@@ -102,7 +103,7 @@ public class LongMessageFragment extends FullScreenDialogFragment {
       if (message.get().getMessageRecord().isOutgoing()) {
         toolbar.setTitle(getString(R.string.LongMessageActivity_your_message));
       } else {
-        Recipient recipient = message.get().getMessageRecord().getRecipient();
+        Recipient recipient = message.get().getMessageRecord().getFromRecipient();
         String    name      = recipient.getDisplayName(requireContext());
 
         toolbar.setTitle(getString(R.string.LongMessageActivity_message_from_s, name));
@@ -113,8 +114,8 @@ public class LongMessageFragment extends FullScreenDialogFragment {
       if (message.get().getMessageRecord().isOutgoing()) {
         bubble = sentBubble.get();
         colorizerView.setVisibility(View.VISIBLE);
-        colorizerView.setBackground(message.get().getMessageRecord().getRecipient().getChatColors().getChatBubbleMask());
-        bubble.getBackground().setColorFilter(message.get().getMessageRecord().getRecipient().getChatColors().getChatBubbleColorFilter());
+        colorizerView.setBackground(message.get().getMessageRecord().getToRecipient().getChatColors().getChatBubbleMask());
+        bubble.getBackground().setColorFilter(message.get().getMessageRecord().getToRecipient().getChatColors().getChatBubbleColorFilter());
         bubble.addOnLayoutChangeListener(bubbleLayoutListener);
         bubbleLayoutListener.onLayoutChange(bubble, 0, 0, 0, 0, 0, 0, 0, 0);
       } else {
@@ -137,7 +138,7 @@ public class LongMessageFragment extends FullScreenDialogFragment {
       } else {
         text.setMentionBackgroundTint(ContextCompat.getColor(requireContext(), R.color.transparent_black_40));
       }
-      footer.setMessageRecord(message.get().getMessageRecord(), Locale.getDefault());
+      footer.setMessageRecord(message.get().getMessageRecord(), Locale.getDefault(), ConversationItemDisplayMode.STANDARD);
     });
   }
 

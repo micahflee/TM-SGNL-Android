@@ -7,7 +7,7 @@ import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
 import org.signal.core.util.concurrent.SignalExecutors;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.GroupTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.identity.IdentityRecordList;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -30,7 +30,7 @@ class WebRtcCallRepository {
       List<Recipient> recipients;
 
       if (recipient.isGroup()) {
-        recipients = SignalDatabase.groups().getGroupMembers(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+        recipients = SignalDatabase.groups().getGroupMembers(recipient.requireGroupId(), GroupTable.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
       } else {
         recipients = Collections.singletonList(recipient);
       }

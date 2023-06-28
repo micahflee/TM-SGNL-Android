@@ -25,7 +25,7 @@ class SafetyNumberBottomSheetViewModel(
     private const val MAX_RECIPIENTS_TO_DISPLAY = 5
   }
 
-  private val destinationStore = RxStore(args.destinations.map { it.asRecipientSearchKey() })
+  private val destinationStore = RxStore(args.destinations)
   val destinationSnapshot: List<ContactSearchKey.RecipientSearchKey>
     get() = destinationStore.state
 
@@ -66,6 +66,8 @@ class SafetyNumberBottomSheetViewModel(
 
   override fun onCleared() {
     disposables.clear()
+    destinationStore.dispose()
+    store.dispose()
   }
 
   fun getIdentityRecord(recipientId: RecipientId): Maybe<IdentityRecord> {

@@ -3,12 +3,12 @@ package org.tm.archive.gcm
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.core.content.ContextCompat
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobs.ForegroundServiceUtil
 import org.tm.archive.jobs.PushNotificationReceiveJob
-import org.tm.archive.messages.RestStrategy
+import org.tm.archive.messages.WebSocketStrategy
 import org.tm.archive.util.concurrent.SerialMonoLifoExecutor
 
 /**
@@ -30,7 +30,7 @@ import org.tm.archive.util.concurrent.SerialMonoLifoExecutor
 object FcmFetchManager {
 
   private val TAG = Log.tag(FcmFetchManager::class.java)
-
+  private const val MAX_BLOCKING_TIME_MS = 500L
   private val EXECUTOR = SerialMonoLifoExecutor(SignalExecutors.UNBOUNDED)
 
   @Volatile
@@ -48,8 +48,12 @@ object FcmFetchManager {
       try {
         if (foreground) {
           Log.i(TAG, "Starting in the foreground.")
-          ContextCompat.startForegroundService(context, Intent(context, FcmFetchForegroundService::class.java))
-          startedForeground = true
+          if (!startedForeground) {
+            ForegroundServiceUtil.startWhenCapableOrThrow(context, Intent(context, FcmFetchForegroundService::class.java), MAX_BLOCKING_TIME_MS)
+            startedForeground = true
+          } else {
+            Log.i(TAG, "Already started foreground service")
+          }
         } else {
           Log.i(TAG, "Starting in the background.")
           context.startService(Intent(context, FcmFetchBackgroundService::class.java))
@@ -83,7 +87,12 @@ object FcmFetchManager {
         context.stopService(Intent(context, FcmFetchBackgroundService::class.java))
 
         if (startedForeground) {
-          context.startService(FcmFetchForegroundService.buildStopIntent(context))
+          try {
+            context.startService(FcmFetchForegroundService.buildStopIntent(context))
+          } catch (e: IllegalStateException) {
+            Log.w(TAG, "Failed to stop the foreground notification!", e)
+          }
+
           startedForeground = false
         }
       }
@@ -91,8 +100,27 @@ object FcmFetchManager {
   }
 
   @JvmStatic
+  fun tryLegacyFallback(context: Context) {
+    synchronized(this) {
+      if (startedForeground) {
+        val performedReplace = EXECUTOR.enqueue { fetch(context) }
+
+        if (performedReplace) {
+          Log.i(TAG, "Legacy fallback: already have one running and one enqueued. Ignoring.")
+        } else {
+          activeCount++
+          Log.i(TAG, "Legacy fallback: Incrementing active count to $activeCount")
+        }
+        return
+      }
+    }
+    Log.i(TAG, "No foreground running, performing legacy fallback")
+    retrieveMessages(context)
+  }
+
+  @JvmStatic
   fun retrieveMessages(context: Context) {
-    val success = ApplicationDependencies.getBackgroundMessageRetriever().retrieveMessages(context, RestStrategy(), RestStrategy())
+    val success = ApplicationDependencies.getBackgroundMessageRetriever().retrieveMessages(context, WebSocketStrategy())
 
     if (success) {
       Log.i(TAG, "Successfully retrieved messages.")

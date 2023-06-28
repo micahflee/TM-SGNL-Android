@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.core.util.tracing.Tracer;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobLogger;
 import org.tm.archive.jobmanager.JobManager.Chain;
@@ -16,7 +15,7 @@ public abstract class BaseJob extends Job {
 
   private static final String TAG = Log.tag(BaseJob.class);
 
-  private Data outputData;
+  private byte[] outputData;
 
   public BaseJob(@NonNull Parameters parameters) {
     super(parameters);
@@ -76,7 +75,7 @@ public abstract class BaseJob extends Job {
    * If this job is part of a {@link Chain}, data set here will be passed as input data to the next
    * job(s) in the chain.
    */
-  protected void setOutputData(@Nullable Data outputData) {
+  protected void setOutputData(@Nullable byte[] outputData) {
     this.outputData = outputData;
   }
 

@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Intent;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.TaskStackBuilder;
@@ -13,9 +14,9 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.MainActivity;
 import org.tm.archive.NewConversationActivity;
 import org.tm.archive.R;
+import org.tm.archive.conversationlist.model.ConversationFilter;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.ThreadDatabase;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.database.ThreadTable;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
@@ -74,10 +75,10 @@ public class UserNotificationMigrationJob extends MigrationJob {
       return;
     }
 
-    ThreadDatabase threadDatabase = SignalDatabase.threads();
+    ThreadTable threadTable = SignalDatabase.threads();
 
-    int threadCount = threadDatabase.getUnarchivedConversationListCount() +
-                      threadDatabase.getArchivedConversationListCount();
+    int threadCount = threadTable.getUnarchivedConversationListCount(ConversationFilter.OFF) +
+                      threadTable.getArchivedConversationListCount(ConversationFilter.OFF);
 
     if (threadCount >= 3) {
       Log.w(TAG, "Already have 3 or more threads. Skipping.");
@@ -87,7 +88,7 @@ public class UserNotificationMigrationJob extends MigrationJob {
     List<RecipientId> registered               = SignalDatabase.recipients().getRegistered();
     List<RecipientId> systemContacts           = SignalDatabase.recipients().getSystemContacts();
     Set<RecipientId>  registeredSystemContacts = SetUtil.intersection(registered, systemContacts);
-    Set<RecipientId>  threadRecipients         = threadDatabase.getAllThreadRecipients();
+    Set<RecipientId>  threadRecipients         = threadTable.getAllThreadRecipients();
 
     if (threadRecipients.containsAll(registeredSystemContacts)) {
       Log.w(TAG, "Threads already exist for all relevant contacts. Skipping.");
@@ -105,7 +106,7 @@ public class UserNotificationMigrationJob extends MigrationJob {
                                                           .addNextIntent(newConversationIntent)
                                                           .getPendingIntent(0, 0);
 
-    Notification notification = new NotificationCompat.Builder(context, NotificationChannels.getMessagesChannel(context))
+    Notification notification = new NotificationCompat.Builder(context, NotificationChannels.getInstance().getMessagesChannel())
                                                       .setSmallIcon(R.drawable.ic_notification)
                                                       .setContentText(message)
                                                       .setContentIntent(pendingIntent)
@@ -127,7 +128,7 @@ public class UserNotificationMigrationJob extends MigrationJob {
   public static final class Factory implements Job.Factory<UserNotificationMigrationJob> {
 
     @Override
-    public @NonNull UserNotificationMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull UserNotificationMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new UserNotificationMigrationJob(parameters);
     }
   }

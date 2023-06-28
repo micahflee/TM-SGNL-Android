@@ -7,6 +7,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.ViewBinderDelegate
 import org.tm.archive.components.settings.DSLConfiguration
@@ -43,6 +44,7 @@ class CreateStoryWithViewersFragment : DSLSettingsFragment(
   )
 
   private val binding by ViewBinderDelegate(StoriesCreateWithRecipientsFragmentBinding::bind)
+  private val disposables = LifecycleDisposable()
 
   private val recipientIds: Array<RecipientId>
     get() = CreateStoryWithViewersFragmentArgs.fromBundle(requireArguments()).recipients
@@ -56,8 +58,9 @@ class CreateStoryWithViewersFragment : DSLSettingsFragment(
       viewModel.setLabel(it)
     }
 
+    disposables.bindTo(viewLifecycleOwner)
     adapter.submitList(getConfiguration().toMappingModelList())
-    viewModel.state.observe(viewLifecycleOwner) { state ->
+    disposables += viewModel.state.subscribe { state ->
 
       val nameModel = CreateStoryNameFieldItem.Model(
         body = state.label,

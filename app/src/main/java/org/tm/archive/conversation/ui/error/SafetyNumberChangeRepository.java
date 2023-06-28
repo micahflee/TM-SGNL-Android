@@ -16,11 +16,10 @@ import org.signal.libsignal.protocol.IdentityKey;
 import org.signal.libsignal.protocol.SignalProtocolAddress;
 import org.tm.archive.crypto.ReentrantSessionLock;
 import org.tm.archive.crypto.storage.SignalIdentityKeyStore;
-import org.tm.archive.database.IdentityDatabase;
-import org.tm.archive.database.MessageDatabase;
-import org.tm.archive.database.MmsSmsDatabase;
+import org.tm.archive.database.IdentityTable;
 import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
@@ -36,6 +35,7 @@ import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -63,9 +63,7 @@ public final class SafetyNumberChangeRepository {
   public Single<TrustAndVerifyResult> trustOrVerifyChangedRecipientsAndResendRx(@NonNull List<SafetyNumberRecipient> safetyNumberRecipients, @NonNull MessageId messageId) {
     Log.d(TAG, "Trust or verify changed recipients and resend message: " + messageId + " for: " + Util.join(safetyNumberRecipients, ","));
     return Single.fromCallable(() -> {
-      MessageRecord messageRecord = messageId.isMms() ? SignalDatabase.mms().getMessageRecord(messageId.getId())
-                                                      : SignalDatabase.sms().getMessageRecord(messageId.getId());
-
+      MessageRecord messageRecord = SignalDatabase.messages().getMessageRecord(messageId.getId());
       return trustOrVerifyChangedRecipientsAndResendInternal(fromSafetyNumberRecipients(safetyNumberRecipients), messageRecord);
     }).subscribeOn(Schedulers.io());
   }
@@ -113,14 +111,7 @@ public final class SafetyNumberChangeRepository {
   @WorkerThread
   private @Nullable MessageRecord getMessageRecord(Long messageId, String messageType) {
     try {
-      switch (messageType) {
-        case MmsSmsDatabase.SMS_TRANSPORT:
-          return SignalDatabase.sms().getMessageRecord(messageId);
-        case MmsSmsDatabase.MMS_TRANSPORT:
-          return SignalDatabase.mms().getMessageRecord(messageId);
-        default:
-          throw new AssertionError("no valid message type specified");
-      }
+      return SignalDatabase.messages().getMessageRecord(messageId);
     } catch (NoSuchMessageException e) {
       Log.i(TAG, e);
     }
@@ -139,7 +130,7 @@ public final class SafetyNumberChangeRepository {
           Log.d(TAG, "Setting " + identityRecord.getRecipientId() + " as verified");
           ApplicationDependencies.getProtocolStore().aci().identities().setVerified(identityRecord.getRecipientId(),
                                                                                     identityRecord.getIdentityKey(),
-                                                                                    IdentityDatabase.VerifiedStatus.DEFAULT);
+                                                                                    IdentityTable.VerifiedStatus.DEFAULT);
         } else {
           Log.d(TAG, "Setting " + identityRecord.getRecipientId() + " as approved");
           identityStore.setApproval(identityRecord.getRecipientId(), true);
@@ -162,8 +153,25 @@ public final class SafetyNumberChangeRepository {
       for (ChangedRecipient changedRecipient : changedRecipients) {
         SignalProtocolAddress mismatchAddress = changedRecipient.getRecipient().requireServiceId().toProtocolAddress(SignalServiceAddress.DEFAULT_DEVICE_ID);
 
-        Log.d(TAG, "Saving identity for: " + changedRecipient.getRecipient().getId() + " " + changedRecipient.getIdentityRecord().getIdentityKey().hashCode());
-        SignalIdentityKeyStore.SaveResult result = ApplicationDependencies.getProtocolStore().aci().identities().saveIdentity(mismatchAddress, changedRecipient.getIdentityRecord().getIdentityKey(), true);
+        IdentityKey newIdentityKey = messageRecord.getIdentityKeyMismatches()
+                                                  .stream()
+                                                  .filter(mismatch -> mismatch.getRecipientId(context).equals(changedRecipient.getRecipient().getId()))
+                                                  .map(IdentityKeyMismatch::getIdentityKey)
+                                                  .filter(Objects::nonNull)
+                                                  .findFirst()
+                                                  .orElse(null);
+
+        if (newIdentityKey == null) {
+          Log.w(TAG, "Could not find new identity key in the MessageRecords mismatched identities! Using the recipients current identity key");
+          newIdentityKey = changedRecipient.getIdentityRecord().getIdentityKey();
+        }
+
+        if (newIdentityKey.hashCode() != changedRecipient.getIdentityRecord().getIdentityKey().hashCode()) {
+          Log.w(TAG, "Note: The new identity key does not match the identity key we currently have for the recipient. This is not unexpected, but calling it out for debugging reasons. New: " + newIdentityKey.hashCode() + ", Current: " + changedRecipient.getIdentityRecord().getIdentityKey().hashCode());
+        }
+
+        Log.d(TAG, "Saving identity for: " + changedRecipient.getRecipient().getId() + " " + newIdentityKey.hashCode());
+        SignalIdentityKeyStore.SaveResult result = ApplicationDependencies.getProtocolStore().aci().identities().saveIdentity(mismatchAddress, newIdentityKey, true);
 
         Log.d(TAG, "Saving identity result: " + result);
         if (result == SignalIdentityKeyStore.SaveResult.NO_CHANGE) {
@@ -185,31 +193,29 @@ public final class SafetyNumberChangeRepository {
   @WorkerThread
   private void processOutgoingMessageRecord(@NonNull List<ChangedRecipient> changedRecipients, @NonNull MessageRecord messageRecord) {
     Log.d(TAG, "processOutgoingMessageRecord");
-    MessageDatabase  smsDatabase = SignalDatabase.sms();
-    MessageDatabase  mmsDatabase = SignalDatabase.mms();
-    Set<RecipientId> resendIds   = new HashSet<>();
+    Set<RecipientId> resendIds = new HashSet<>();
 
     for (ChangedRecipient changedRecipient : changedRecipients) {
       RecipientId id          = changedRecipient.getRecipient().getId();
       IdentityKey identityKey = changedRecipient.getIdentityRecord().getIdentityKey();
 
       if (messageRecord.isMms()) {
-        mmsDatabase.removeMismatchedIdentity(messageRecord.getId(), id, identityKey);
+        SignalDatabase.messages().removeMismatchedIdentity(messageRecord.getId(), id, identityKey);
 
-        if (messageRecord.getRecipient().isDistributionList() || messageRecord.getRecipient().isPushGroup()) {
+        if (messageRecord.getToRecipient().isDistributionList() || messageRecord.getToRecipient().isPushGroup()) {
           resendIds.add(id);
         } else {
           MessageSender.resend(context, messageRecord);
         }
       } else {
-        smsDatabase.removeMismatchedIdentity(messageRecord.getId(), id, identityKey);
+        SignalDatabase.messages().removeMismatchedIdentity(messageRecord.getId(), id, identityKey);
 
         MessageSender.resend(context, messageRecord);
       }
     }
 
     if (Util.hasItems(resendIds)) {
-      if (messageRecord.getRecipient().isPushGroup()) {
+      if (messageRecord.getToRecipient().isPushGroup()) {
         MessageSender.resendGroupMessage(context, messageRecord, resendIds);
       } else {
         MessageSender.resendDistributionList(context, messageRecord, resendIds);

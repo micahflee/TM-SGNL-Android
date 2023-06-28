@@ -4,7 +4,7 @@ import org.tm.archive.recipients.RecipientId
 import org.whispersystems.signalservice.api.push.DistributionId
 
 /**
- * Represents an entry in the [org.tm.archive.database.DistributionListDatabase].
+ * Represents an entry in the [org.tm.archive.database.DistributionListTables].
  */
 data class DistributionListRecord(
   val id: DistributionListId,

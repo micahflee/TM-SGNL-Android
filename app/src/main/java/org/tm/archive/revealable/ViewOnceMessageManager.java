@@ -11,8 +11,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.AttachmentTable;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.service.TimedEventManager;
@@ -24,13 +24,13 @@ public class ViewOnceMessageManager extends TimedEventManager<ViewOnceExpiration
 
   private static final String TAG = Log.tag(ViewOnceMessageManager.class);
 
-  private final MessageDatabase    mmsDatabase;
-  private final AttachmentDatabase attachmentDatabase;
+  private final MessageTable    mmsDatabase;
+  private final AttachmentTable attachmentDatabase;
 
   public ViewOnceMessageManager(@NonNull Application application) {
     super(application, "RevealableMessageManager");
 
-    this.mmsDatabase        = SignalDatabase.mms();
+    this.mmsDatabase        = SignalDatabase.messages();
     this.attachmentDatabase = SignalDatabase.attachments();
     
     scheduleIfNecessary();
@@ -68,7 +68,7 @@ public class ViewOnceMessageManager extends TimedEventManager<ViewOnceExpiration
 
   @AnyThread
   @Override
-  protected void scheduleAlarm(@NonNull Application application, long delay) {
+  protected void scheduleAlarm(@NonNull Application application, ViewOnceExpirationInfo event, long delay) {
     setAlarm(application, delay, ViewOnceAlarm.class);
   }
 

@@ -4,18 +4,18 @@ import android.content.Context
 import android.net.Uri
 import androidx.annotation.WorkerThread
 import androidx.fragment.app.FragmentManager
+import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.ThreadUtil
-import org.signal.core.util.isAbsent
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.contacts.HeaderAction
-import org.tm.archive.database.AttachmentDatabase
+import org.tm.archive.database.AttachmentTable
+import org.tm.archive.database.AttachmentTable.TransformProperties
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.DistributionListId
 import org.tm.archive.database.model.MmsMessageRecord
@@ -25,7 +25,7 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mediasend.v2.stories.ChooseStoryTypeBottomSheet
 import org.tm.archive.mms.MediaConstraints
-import org.tm.archive.mms.OutgoingSecureMediaMessage
+import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.mms.SentMediaQuality
 import org.tm.archive.mms.VideoSlide
 import org.tm.archive.recipients.Recipient
@@ -34,8 +34,6 @@ import org.tm.archive.recipients.RecipientUtil
 import org.tm.archive.sms.MessageSender
 import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.BottomSheetUtil
-import org.tm.archive.util.FeatureFlags
-import org.tm.archive.util.LocaleFeatureFlags
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.hasLinkPreview
 import java.util.Optional
@@ -43,6 +41,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,47 +53,23 @@ object Stories {
   private val TAG = Log.tag(Stories::class.java)
 
   const val MAX_TEXT_STORY_SIZE = 700
+  const val MAX_TEXT_STORY_LINE_COUNT = 13
   const val MAX_CAPTION_SIZE = 1500
 
   @JvmField
   val MAX_VIDEO_DURATION_MILLIS: Long = (31.seconds - 1.milliseconds).inWholeMilliseconds
 
   /**
-   * Whether the feature is enabled at the flag level.
-   *
-   * `stories` will override `isInStoriesCountry` so as to not disable stories for those with
-   * that flag already enabled.
-   *
-   * Note: In general, you should prefer `isFeatureAvailable`.
-   */
-  @JvmStatic
-  fun isFeatureFlagEnabled(): Boolean {
-    return SignalStore.account().isRegistered && (FeatureFlags.stories() || LocaleFeatureFlags.isInStoriesCountry())
-  }
-
-  /**
-   * Whether or not the user has access to stories. This checks:
-   *
-   * - Registration status
-   * - Flag status
-   * - Capabilities
-   */
-  @JvmStatic
-  fun isFeatureAvailable(): Boolean {
-    return isFeatureFlagEnabled() && Recipient.self().storiesCapability == Recipient.Capability.SUPPORTED
-  }
-
-  /**
    * Whether or not the user has the Stories feature enabled.
    */
   @JvmStatic
   fun isFeatureEnabled(): Boolean {
-    return isFeatureAvailable() && !SignalStore.storyValues().isFeatureDisabled
+    return !SignalStore.storyValues().isFeatureDisabled
   }
 
   fun getHeaderAction(onClick: () -> Unit): HeaderAction {
     return HeaderAction(
-      R.string.ContactsCursorLoader_new_story,
+      R.string.ContactsCursorLoader_new,
       R.drawable.ic_plus_12,
       onClick
     )
@@ -106,7 +81,7 @@ object Stories {
     }
   }
 
-  fun sendTextStories(messages: List<OutgoingSecureMediaMessage>): Completable {
+  fun sendTextStories(messages: List<OutgoingMessage>): Completable {
     return Completable.create { emitter ->
       MessageSender.sendStories(ApplicationDependencies.getApplication(), messages, null, null)
       emitter.onComplete()
@@ -114,10 +89,12 @@ object Stories {
   }
 
   @JvmStatic
-  fun getRecipientsToSendTo(messageId: Long, sentTimestamp: Long, allowsReplies: Boolean): List<Recipient> {
+  fun getRecipientsToSendTo(messageId: Long, sentTimestamp: Long, allowsReplies: Boolean): SendData {
     val recipientIds: List<RecipientId> = SignalDatabase.storySends.getRecipientsToSendTo(messageId, sentTimestamp, allowsReplies)
+    val targets: List<Recipient> = RecipientUtil.getEligibleForSending(recipientIds.map(Recipient::resolved)).distinctBy { it.id }
+    val skipped: List<RecipientId> = (recipientIds.toSet() - targets.map { it.id }.toSet()).toList()
 
-    return RecipientUtil.getEligibleForSending(recipientIds.map(Recipient::resolved))
+    return SendData(targets, skipped)
   }
 
   @WorkerThread
@@ -141,7 +118,7 @@ object Stories {
     }
 
     Log.d(TAG, "Enqueuing downloads for up to $limit stories for $recipientId (force: $force)")
-    SignalDatabase.mms.getUnreadStories(recipientId, limit).use { reader ->
+    SignalDatabase.messages.getUnreadStories(recipientId, limit).use { reader ->
       reader.forEach {
         enqueueAttachmentsFromStoryForDownloadSync(it as MmsMessageRecord, false)
       }
@@ -267,7 +244,7 @@ object Stories {
 
     private fun getContentDuration(media: Media): DurationResult {
       return if (MediaUtil.isVideo(media.mimeType)) {
-        val mediaDuration = if (media.duration == 0L && media.transformProperties.isAbsent()) {
+        val mediaDuration = if (media.duration == 0L && media.transformProperties.map(TransformProperties::shouldSkipTransform).orElse(true)) {
           getVideoDuration(media.uri)
         } else if (media.transformProperties.map { it.isVideoTrim }.orElse(false)) {
           TimeUnit.MICROSECONDS.toMillis(media.transformProperties.get().videoTrimEndTimeUs - media.transformProperties.get().videoTrimStartTimeUs)
@@ -297,7 +274,7 @@ object Stories {
     @WorkerThread
     fun getVideoDuration(uri: Uri): Long {
       var duration = 0L
-      var player: SimpleExoPlayer? = null
+      var player: ExoPlayer? = null
       val countDownLatch = CountDownLatch(1)
       ThreadUtil.runOnMainSync {
         val mainThreadPlayer = ApplicationDependencies.getExoPlayerPool().get("stories_duration_check")
@@ -362,11 +339,12 @@ object Stories {
           error("Illegal clip: $startTimeUs > $endTimeUs for clip $clipIndex")
         }
 
-        AttachmentDatabase.TransformProperties(false, true, startTimeUs, endTimeUs, SentMediaQuality.STANDARD.code)
+        AttachmentTable.TransformProperties(false, true, startTimeUs, endTimeUs, SentMediaQuality.STANDARD.code)
       }.map { transformMedia(media, it) }
     }
 
-    private fun transformMedia(media: Media, transformProperties: AttachmentDatabase.TransformProperties): Media {
+    private fun transformMedia(media: Media, transformProperties: AttachmentTable.TransformProperties): Media {
+      Log.d(TAG, "Transforming media clip: ${transformProperties.videoTrimStartTimeUs.microseconds.inWholeSeconds}s to ${transformProperties.videoTrimEndTimeUs.microseconds.inWholeSeconds}s")
       return Media(
         media.uri,
         media.mimeType,
@@ -422,4 +400,9 @@ object Stories {
       )
     }
   }
+
+  data class SendData(
+    val targets: List<Recipient>,
+    val skipped: List<RecipientId>
+  )
 }

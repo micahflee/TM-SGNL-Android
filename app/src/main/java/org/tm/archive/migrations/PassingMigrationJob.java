@@ -1,8 +1,8 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 
 /**
@@ -39,7 +39,7 @@ public final class PassingMigrationJob extends MigrationJob {
 
   public static final class Factory implements Job.Factory<PassingMigrationJob> {
     @Override
-    public @NonNull PassingMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PassingMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new PassingMigrationJob(parameters);
     }
   }

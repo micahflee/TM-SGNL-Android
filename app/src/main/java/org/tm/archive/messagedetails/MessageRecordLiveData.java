@@ -5,7 +5,7 @@ import androidx.lifecycle.LiveData;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.database.DatabaseObserver;
-import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
@@ -34,13 +34,13 @@ final class MessageRecordLiveData extends LiveData<MessageRecord> {
 
   @WorkerThread
   private synchronized void retrieveMessageRecordActual() {
-    retrieve(messageId.isMms() ? SignalDatabase.mms() : SignalDatabase.sms());
-  }
-
-  @WorkerThread
-  private synchronized void retrieve(MessageDatabase messageDatabase) {
     try {
-      final MessageRecord record = messageDatabase.getMessageRecord(messageId.getId());
+      MessageRecord record = SignalDatabase.messages().getMessageRecord(messageId.getId());
+
+      if (record.isPaymentNotification()) {
+        record = SignalDatabase.payments().updateMessageWithPayment(record);
+      }
+
       postValue(record);
       ApplicationDependencies.getDatabaseObserver().registerVerboseConversationObserver(record.getThreadId(), observer);
     } catch (NoSuchMessageException ignored) {

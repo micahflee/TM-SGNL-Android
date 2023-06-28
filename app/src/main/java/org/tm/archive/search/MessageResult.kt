@@ -8,8 +8,8 @@ import org.tm.archive.recipients.Recipient
 data class MessageResult(
   val conversationRecipient: Recipient,
   val messageRecipient: Recipient,
-  val body: String,
-  val bodySnippet: String,
+  val body: CharSequence,
+  val bodySnippet: CharSequence,
   val threadId: Long,
   val messageId: Long,
   val receivedTimestampMs: Long,

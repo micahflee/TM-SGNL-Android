@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -34,7 +35,7 @@ import org.tm.archive.PlayServicesProblemActivity;
 import org.tm.archive.R;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.gcm.FcmUtil;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -68,8 +69,8 @@ public class FcmRefreshJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -122,7 +123,7 @@ public class FcmRefreshJob extends BaseJob {
   private void notifyFcmFailure() {
     Intent                     intent        = new Intent(context, PlayServicesProblemActivity.class);
     PendingIntent              pendingIntent = PendingIntent.getActivity(context, 1122, intent, PendingIntentFlags.cancelCurrent());
-    NotificationCompat.Builder builder       = new NotificationCompat.Builder(context, NotificationChannels.FAILURES);
+    NotificationCompat.Builder builder       = new NotificationCompat.Builder(context, NotificationChannels.getInstance().FAILURES);
 
     builder.setSmallIcon(R.drawable.ic_notification);
     builder.setLargeIcon(BitmapFactory.decodeResource(context.getResources(),
@@ -139,7 +140,7 @@ public class FcmRefreshJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<FcmRefreshJob> {
     @Override
-    public @NonNull FcmRefreshJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull FcmRefreshJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new FcmRefreshJob(parameters);
     }
   }

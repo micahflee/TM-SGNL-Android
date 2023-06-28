@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.getParcelableArrayListCompat
 import org.tm.archive.R
 import org.tm.archive.contacts.paged.ContactSearchConfiguration
 import org.tm.archive.contacts.paged.ContactSearchKey
@@ -79,8 +80,7 @@ class GiftFlowRecipientSelectionFragment : Fragment(R.layout.gift_flow_recipient
   override fun onSearchInputFocused() = Unit
 
   override fun setResult(bundle: Bundle) {
-    val parcelableContacts: List<ContactSearchKey.ParcelableRecipientSearchKey> = bundle.getParcelableArrayList(MultiselectForwardFragment.RESULT_SELECTION)!!
-    val contacts = parcelableContacts.map { it.asRecipientSearchKey() }
+    val contacts: List<ContactSearchKey.RecipientSearchKey> = bundle.getParcelableArrayListCompat(MultiselectForwardFragment.RESULT_SELECTION, ContactSearchKey.RecipientSearchKey::class.java)!!
 
     if (contacts.isNotEmpty()) {
       viewModel.setSelectedContact(contacts.first())

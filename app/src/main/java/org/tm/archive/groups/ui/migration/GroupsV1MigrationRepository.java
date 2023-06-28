@@ -4,18 +4,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
-import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupsV1MigrationUtil;
-import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
-import org.tm.archive.jobs.RetrieveProfileJob;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
@@ -24,8 +21,6 @@ import org.tm.archive.transport.RetryLaterException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 final class GroupsV1MigrationRepository {
 
@@ -68,19 +63,7 @@ final class GroupsV1MigrationRepository {
       return new MigrationState(Collections.emptyList(), Collections.emptyList());
     }
 
-    List<Recipient>  members      = Recipient.resolvedList(group.getParticipantIds());
-    Set<RecipientId> needsRefresh = Stream.of(members)
-                                          .filter(r -> r.getGroupsV1MigrationCapability() != Recipient.Capability.SUPPORTED)
-                                          .map(Recipient::getId)
-                                          .collect(Collectors.toSet());
-
-    List<Job> jobs = RetrieveProfileJob.forRecipients(needsRefresh);
-
-    for (Job job : jobs) {
-      if (!ApplicationDependencies.getJobManager().runSynchronously(job, TimeUnit.SECONDS.toMillis(3)).isPresent()) {
-        Log.w(TAG, "Failed to refresh capabilities in time!");
-      }
-    }
+    List<Recipient> members = Recipient.resolvedList(group.getParticipantIds());
 
     try {
       List<Recipient> registered = Stream.of(members)
@@ -95,9 +78,7 @@ final class GroupsV1MigrationRepository {
     group = group.fresh();
 
     List<Recipient> ineligible = Stream.of(members)
-                                       .filter(r -> !r.hasServiceId() ||
-                                                    r.getGroupsV1MigrationCapability() != Recipient.Capability.SUPPORTED ||
-                                                    r.getRegistered() != RecipientDatabase.RegisteredState.REGISTERED)
+                                       .filter(r -> !r.hasServiceId() || r.getRegistered() != RecipientTable.RegisteredState.REGISTERED)
                                        .toList();
 
     List<Recipient> invites = Stream.of(members)

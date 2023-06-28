@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.6.21'
+    ext.kotlin_version = '1.7.20'
     repositories {
         google()
         mavenCentral()
@@ -18,37 +18,25 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools:r8:3.3.75'
-        classpath 'com.android.tools.build:gradle:7.2.2'
-        classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.5.2'
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'androidx.navigation:navigation-safe-args-gradle-plugin:2.5.3'
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.17'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jlleitschuh.gradle:ktlint-gradle:10.2.1"
+        classpath libs.ktlint
         classpath 'app.cash.exhaustive:exhaustive-gradle:0.1.1'
+        classpath ('com.squareup.wire:wire-gradle-plugin:4.4.3') {
+            exclude group: 'com.squareup.wire', module: 'wire-swift-generator'
+            exclude group: 'com.squareup.wire', module: 'wire-grpc-client'
+            exclude group: 'com.squareup.wire', module: 'wire-grpc-jvm'
+            exclude group: 'com.squareup.wire', module: 'wire-grpc-server-generator'
+            exclude group: 'io.outfoxx', module: 'swiftpoet'
+        }
+        classpath 'androidx.benchmark:benchmark-gradle-plugin:1.1.0-beta04'
     }
-}
-
-ext {
-    BUILD_TOOL_VERSION = '32.0.0'
-
-    COMPILE_SDK = 32
-    TARGET_SDK  = 30
-    MINIMUM_SDK = 19
-
-    JAVA_VERSION = JavaVersion.VERSION_1_8
-
-    LIBSIGNAL_CLIENT_VERSION = '0.9.4'
 }
 
 wrapper {
     distributionType = Wrapper.DistributionType.ALL
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        mavenLocal()
-    }
 }
 
 subprojects {
@@ -64,7 +52,7 @@ subprojects {
         }
     }
 
-    if (project.name != "Signal-Android" && project.name != "libsignal-service" && project.name != "lintchecks" && !project.name.endsWith("-app")) {
+    if (project.name != "Signal-Android" && project.name != "libsignal-service" && project.name != "lintchecks" && !project.name.endsWith("-app") && project.name != "benchmark") {
         task qa {
             group 'Verification'
             description 'Quality Assurance. Run before pushing'
@@ -73,17 +61,42 @@ subprojects {
     }
 }
 
+task buildQa {
+    group 'Verification'
+    description 'Quality Assurance for build logic.'
+    dependsOn gradle.includedBuild('build-logic').task(':tools:test'),
+            gradle.includedBuild('build-logic').task(':tools:ktlintCheck'),
+            gradle.includedBuild('build-logic').task(':plugins:ktlintCheck')
+}
+
 task qa {
     group 'Verification'
     description 'Quality Assurance. Run before pushing.'
     dependsOn 'clean',
+            'buildQa',
             ':Signal-Android:testPlayProdReleaseUnitTest',
             ':Signal-Android:lintPlayProdRelease',
             'Signal-Android:ktlintCheck',
             ':libsignal-service:test',
+            ':libsignal-service:ktlintCheck',
             ':Signal-Android:assemblePlayProdRelease'
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+task format {
+    group 'Formatting'
+    description 'Runs the ktlint formatter on all sources in this project and included builds'
+
+    def dependencyList = subprojects.collect {
+        tasks.findByPath(":${it.name}:ktlintFormat")
+    }
+
+    dependencyList.removeIf { it == null}
+    dependencyList.add(0, gradle.includedBuild('build-logic').task(':plugins:ktlintFormat'))
+    dependencyList.add(0, gradle.includedBuild('build-logic').task(':tools:ktlintFormat'))
+
+    dependsOn dependencyList
 }

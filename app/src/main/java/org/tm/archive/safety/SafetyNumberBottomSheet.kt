@@ -3,6 +3,7 @@ package org.tm.archive.safety
 import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.FragmentManager
+import org.signal.core.util.getParcelableCompat
 import org.tm.archive.contacts.paged.ContactSearchKey
 import org.tm.archive.conversation.ui.error.SafetyNumberChangeDialog
 import org.tm.archive.database.model.IdentityRecord
@@ -83,7 +84,7 @@ object SafetyNumberBottomSheet {
     val args = SafetyNumberBottomSheetArgs(
       untrustedRecipients = messageRecord.identityKeyMismatches.map { it.getRecipientId(context) },
       destinations = getDestinationFromRecord(messageRecord),
-      messageId = MessageId(messageRecord.id, messageRecord.isMms)
+      messageId = MessageId(messageRecord.id)
     )
 
     return SheetFactory(args)
@@ -99,7 +100,7 @@ object SafetyNumberBottomSheet {
   fun forIdentityRecordsAndDestinations(identityRecords: List<IdentityRecord>, destinations: List<ContactSearchKey>): Factory {
     val args = SafetyNumberBottomSheetArgs(
       identityRecords.map { it.recipientId },
-      destinations.filterIsInstance<ContactSearchKey.RecipientSearchKey>().map { it.requireParcelable() }
+      destinations.filterIsInstance<ContactSearchKey.RecipientSearchKey>().map { it.requireRecipientSearchKey() }
     )
 
     return SheetFactory(args)
@@ -115,7 +116,7 @@ object SafetyNumberBottomSheet {
   fun forIdentityRecordsAndDestination(identityRecords: List<IdentityRecord>, destination: ContactSearchKey): Factory {
     val args = SafetyNumberBottomSheetArgs(
       identityRecords.map { it.recipientId },
-      listOf(destination).filterIsInstance<ContactSearchKey.RecipientSearchKey>().map { it.requireParcelable() }
+      listOf(destination).filterIsInstance<ContactSearchKey.RecipientSearchKey>().map { it.requireRecipientSearchKey() }
     )
 
     return SheetFactory(args)
@@ -126,19 +127,19 @@ object SafetyNumberBottomSheet {
    * @throws IllegalArgumentException if the bundle does not contain the correct parcelized arguments.
    */
   fun getArgsFromBundle(bundle: Bundle): SafetyNumberBottomSheetArgs {
-    val args = bundle.getParcelable<SafetyNumberBottomSheetArgs>(ARGS)
+    val args: SafetyNumberBottomSheetArgs? = bundle.getParcelableCompat(ARGS, SafetyNumberBottomSheetArgs::class.java)
     Preconditions.checkArgument(args != null)
     return args!!
   }
 
-  private fun getDestinationFromRecord(messageRecord: MessageRecord): List<ContactSearchKey.ParcelableRecipientSearchKey> {
+  private fun getDestinationFromRecord(messageRecord: MessageRecord): List<ContactSearchKey.RecipientSearchKey> {
     val key = if ((messageRecord as? MmsMessageRecord)?.storyType?.isStory == true) {
-      ContactSearchKey.RecipientSearchKey.Story(messageRecord.recipient.id)
+      ContactSearchKey.RecipientSearchKey(messageRecord.toRecipient.id, true)
     } else {
-      ContactSearchKey.RecipientSearchKey.KnownRecipient(messageRecord.recipient.id)
+      ContactSearchKey.RecipientSearchKey(messageRecord.toRecipient.id, false)
     }
 
-    return listOf(key.requireParcelable())
+    return listOf(key)
   }
 
   /**

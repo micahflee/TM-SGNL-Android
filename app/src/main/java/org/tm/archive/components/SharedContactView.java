@@ -22,7 +22,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import org.tm.archive.R;
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.contactshare.ContactUtil;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.LiveRecipient;
@@ -195,7 +195,7 @@ public class SharedContactView extends LinearLayout implements RecipientForeverO
     List<Recipient> systemUsers = new ArrayList<>(recipients.size());
 
     for (LiveRecipient recipient : activeRecipients.values()) {
-      if (recipient.get().getRegistered() == RecipientDatabase.RegisteredState.REGISTERED) {
+      if (recipient.get().getRegistered() == RecipientTable.RegisteredState.REGISTERED) {
         pushUsers.add(recipient.get());
       } else if (recipient.get().isSystemContact()) {
         systemUsers.add(recipient.get());

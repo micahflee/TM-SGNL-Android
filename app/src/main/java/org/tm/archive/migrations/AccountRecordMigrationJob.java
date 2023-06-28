@@ -1,11 +1,11 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.StorageSyncJob;
 import org.tm.archive.keyvalue.SignalStore;
@@ -57,7 +57,7 @@ public class AccountRecordMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<AccountRecordMigrationJob> {
     @Override
-    public @NonNull AccountRecordMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull AccountRecordMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new AccountRecordMigrationJob(parameters);
     }
   }

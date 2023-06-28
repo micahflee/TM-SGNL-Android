@@ -17,6 +17,8 @@ import org.tm.archive.registration.viewmodel.BaseRegistrationViewModel;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
+
 /**
  * Base fragment used by registration and change number flow to show an account as locked.
  */
@@ -30,6 +32,8 @@ public abstract class BaseAccountLockedFragment extends LoggingFragment {
   @CallSuper
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+
+    setDebugLogSubmitMultiTapView(view.findViewById(R.id.account_locked_title));
 
     TextView description = view.findViewById(R.id.account_locked_description);
 

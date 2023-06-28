@@ -4,7 +4,7 @@ package org.tm.archive.util
 
 import android.content.Context
 import org.tm.archive.R
-import org.tm.archive.database.MmsSmsColumns
+import org.tm.archive.database.MessageTypes
 import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
@@ -42,7 +42,10 @@ fun MessageRecord.hasThumbnail(): Boolean =
   isMms && (this as MmsMessageRecord).slideDeck.thumbnailSlide != null
 
 fun MessageRecord.isStoryReaction(): Boolean =
-  isMms && MmsSmsColumns.Types.isStoryReaction((this as MmsMessageRecord).type)
+  isMms && MessageTypes.isStoryReaction(type)
+
+fun MessageRecord.isStory(): Boolean =
+  isMms && (this as MmsMessageRecord).storyType.isStory
 
 fun MessageRecord.isBorderless(context: Context): Boolean {
   return isCaptionlessMms(context) &&
@@ -133,8 +136,13 @@ fun MessageRecord.isTextOnly(context: Context): Boolean {
         !hasSharedContact() &&
         !hasSticker() &&
         !isCaptionlessMms(context) &&
-        !hasGiftBadge()
+        !hasGiftBadge() &&
+        !isPaymentNotification()
       )
+}
+
+fun MessageRecord.isScheduled(): Boolean {
+  return (this as? MediaMmsMessageRecord)?.scheduledDate?.let { it != -1L } ?: false
 }
 
 /**
@@ -142,4 +150,8 @@ fun MessageRecord.isTextOnly(context: Context): Boolean {
  */
 fun MessageRecord.getRecordQuoteType(): QuoteModel.Type {
   return if (hasGiftBadge()) QuoteModel.Type.GIFT_BADGE else QuoteModel.Type.NORMAL
+}
+
+fun MessageRecord.isEditMessage(): Boolean {
+  return this is MediaMmsMessageRecord && isEditMessage
 }

@@ -31,11 +31,11 @@ import org.tm.archive.components.emoji.EmojiEventListener;
 import org.tm.archive.components.emoji.EmojiPageView;
 import org.tm.archive.components.emoji.EmojiPageViewGridAdapter;
 import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.keyboard.KeyboardPageCategoryIconMappingModel;
 import org.tm.archive.keyboard.emoji.EmojiKeyboardPageCategoriesAdapter;
-import org.tm.archive.keyboard.emoji.EmojiKeyboardPageCategoryMappingModel;
 import org.tm.archive.keyboard.emoji.KeyboardPageSearchView;
 import org.tm.archive.reactions.edit.EditReactionsActivity;
-import org.tm.archive.util.LifecycleDisposable;
+import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.adapter.mapping.MappingModel;
@@ -48,7 +48,7 @@ public final class ReactWithAnyEmojiBottomSheetDialogFragment extends FixedRound
                                                                                                                              EmojiPageViewGridAdapter.VariationSelectorListener
 {
 
-  private static final String REACTION_STORAGE_KEY = "reactions_recent_emoji";
+  public  static final String REACTION_STORAGE_KEY = "reactions_recent_emoji";
   private static final String ABOUT_STORAGE_KEY    = TextSecurePreferences.RECENT_STORAGE_KEY;
 
   private static final String ARG_MESSAGE_ID = "arg_message_id";
@@ -198,7 +198,7 @@ public final class ReactWithAnyEmojiBottomSheetDialogFragment extends FixedRound
     disposables.add(viewModel.getEmojiList().subscribe(pages -> emojiPageView.setList(pages, null)));
     disposables.add(viewModel.getCategories().subscribe(categoriesAdapter::submitList));
     disposables.add(viewModel.getSelectedKey().subscribe(key -> categoriesRecycler.post(() -> {
-      int index = categoriesAdapter.indexOfFirst(EmojiKeyboardPageCategoryMappingModel.class, m -> m.getKey().equals(key));
+      int index = categoriesAdapter.indexOfFirst(KeyboardPageCategoryIconMappingModel.class, m -> m.getKey().equals(key));
 
       if (index != -1) {
         categoriesRecycler.smoothScrollToPosition(index);

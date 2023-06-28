@@ -9,11 +9,12 @@ import androidx.annotation.WorkerThread;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.groups.GroupsV1MigratedCache;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.jobmanager.impl.ChangeNumberConstraint;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.messages.MessageContentProcessor;
 import org.tm.archive.messages.MessageContentProcessor.ExceptionMetadata;
@@ -51,31 +52,6 @@ public final class PushProcessMessageJob extends BaseJob {
   @Nullable private final ExceptionMetadata    exceptionMetadata;
             private final long                 smsMessageId;
             private final long                 timestamp;
-
-  @WorkerThread
-  PushProcessMessageJob(@NonNull SignalServiceContent content,
-                        long smsMessageId,
-                        long timestamp)
-  {
-    this(MessageState.DECRYPTED_OK,
-         content,
-         null,
-         smsMessageId,
-         timestamp);
-  }
-
-  @WorkerThread
-  PushProcessMessageJob(@NonNull MessageState messageState,
-                        @NonNull ExceptionMetadata exceptionMetadata,
-                        long smsMessageId,
-                        long timestamp)
-  {
-    this(messageState,
-         null,
-         exceptionMetadata,
-         smsMessageId,
-         timestamp);
-  }
 
   @WorkerThread
   public PushProcessMessageJob(@NonNull MessageState messageState,
@@ -117,7 +93,8 @@ public final class PushProcessMessageJob extends BaseJob {
     Context            context   = ApplicationDependencies.getApplication();
     String             queueName = QUEUE_PREFIX;
     Parameters.Builder builder   = new Parameters.Builder()
-                                                 .setMaxAttempts(Parameters.UNLIMITED);
+                                                 .setMaxAttempts(Parameters.UNLIMITED)
+                                                 .addConstraint(ChangeNumberConstraint.KEY);
 
     if (content != null) {
       SignalServiceGroupV2 signalServiceGroupContext = GroupUtil.getGroupContextIfPresent(content);
@@ -131,7 +108,7 @@ public final class PushProcessMessageJob extends BaseJob {
           int localRevision = SignalDatabase.groups().getGroupV2Revision(groupId.requireV2());
 
           if (signalServiceGroupContext.getRevision() > localRevision ||
-              SignalDatabase.groups().getGroupV1ByExpectedV2(groupId.requireV2()).isPresent())
+              GroupsV1MigratedCache.hasV1Group(groupId.requireV2()))
           {
             Log.i(TAG, "Adding network constraint to group-related job.");
             builder.addConstraint(NetworkConstraint.KEY)
@@ -160,8 +137,8 @@ public final class PushProcessMessageJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    Data.Builder dataBuilder = new Data.Builder()
+  public @Nullable byte[] serialize() {
+    JsonJobData.Builder dataBuilder = new JsonJobData.Builder()
                                        .putInt(KEY_MESSAGE_STATE, messageState.ordinal())
                                        .putLong(KEY_SMS_MESSAGE_ID, smsMessageId)
                                        .putLong(KEY_TIMESTAMP, timestamp);
@@ -175,7 +152,7 @@ public final class PushProcessMessageJob extends BaseJob {
                  .putString(KEY_EXCEPTION_GROUP_ID, exceptionMetadata.getGroupId() == null ? null : exceptionMetadata.getGroupId().toString());
     }
 
-    return dataBuilder.build();
+    return dataBuilder.serialize();
   }
 
   @Override
@@ -185,7 +162,7 @@ public final class PushProcessMessageJob extends BaseJob {
 
   @Override
   public void onRun() throws Exception {
-    MessageContentProcessor processor = MessageContentProcessor.forNormalContent(context);
+    MessageContentProcessor processor = MessageContentProcessor.create(context);
     processor.process(messageState, content, exceptionMetadata, timestamp, smsMessageId);
   }
 
@@ -202,7 +179,9 @@ public final class PushProcessMessageJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<PushProcessMessageJob> {
     @Override
-    public @NonNull PushProcessMessageJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PushProcessMessageJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       try {
         MessageState state = MessageState.values()[data.getInt(KEY_MESSAGE_STATE)];
 

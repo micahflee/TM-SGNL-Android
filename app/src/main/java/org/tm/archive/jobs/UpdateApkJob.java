@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.BuildConfig;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.service.UpdateApkReadyListener;
@@ -53,8 +53,8 @@ public class UpdateApkJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -71,28 +71,29 @@ public class UpdateApkJob extends BaseJob {
     OkHttpClient client  = new OkHttpClient();
     Request      request = new Request.Builder().url(String.format("%s/latest.json", BuildConfig.NOPLAY_UPDATE_URL)).build();
 
-    Response response = client.newCall(request).execute();
+    try (Response response = client.newCall(request).execute()) {
 
-    if (!response.isSuccessful()) {
-      throw new IOException("Bad response: " + response.message());
-    }
+      if (!response.isSuccessful() || response.body() == null) {
+        throw new IOException("Bad response: " + response.message());
+      }
 
-    UpdateDescriptor updateDescriptor = JsonUtils.fromJson(response.body().string(), UpdateDescriptor.class);
-    byte[]           digest           = Hex.fromStringCondensed(updateDescriptor.getDigest());
+      UpdateDescriptor updateDescriptor = JsonUtils.fromJson(response.body().string(), UpdateDescriptor.class);
+      byte[]           digest           = Hex.fromStringCondensed(updateDescriptor.getDigest());
 
-    Log.i(TAG, "Got descriptor: " + updateDescriptor);
+      Log.i(TAG, "Got descriptor: " + updateDescriptor);
 
-    if (updateDescriptor.getVersionCode() > getVersionCode()) {
-      DownloadStatus downloadStatus = getDownloadStatus(updateDescriptor.getUrl(), digest);
+      if (updateDescriptor.getVersionCode() > getVersionCode()) {
+        DownloadStatus downloadStatus = getDownloadStatus(updateDescriptor.getUrl(), digest);
 
-      Log.i(TAG, "Download status: "  + downloadStatus.getStatus());
+        Log.i(TAG, "Download status: " + downloadStatus.getStatus());
 
-      if (downloadStatus.getStatus() == DownloadStatus.Status.COMPLETE) {
-        Log.i(TAG, "Download status complete, notifying...");
-        handleDownloadNotify(downloadStatus.getDownloadId());
-      } else if (downloadStatus.getStatus() == DownloadStatus.Status.MISSING) {
-        Log.i(TAG, "Download status missing, starting download...");
-        handleDownloadStart(updateDescriptor.getUrl(), updateDescriptor.getVersionName(), digest);
+        if (downloadStatus.getStatus() == DownloadStatus.Status.COMPLETE) {
+          Log.i(TAG, "Download status complete, notifying...");
+          handleDownloadNotify(downloadStatus.getDownloadId());
+        } else if (downloadStatus.getStatus() == DownloadStatus.Status.MISSING) {
+          Log.i(TAG, "Download status missing, starting download...");
+          handleDownloadStart(updateDescriptor.getUrl(), updateDescriptor.getVersionName(), digest);
+        }
       }
     }
   }
@@ -284,7 +285,7 @@ public class UpdateApkJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<UpdateApkJob> {
     @Override
-    public @NonNull UpdateApkJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull UpdateApkJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new UpdateApkJob(parameters);
     }
   }

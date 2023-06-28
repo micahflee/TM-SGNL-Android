@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
+import org.signal.core.util.FontUtil;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.emoji.EmojiFiles;
@@ -22,6 +23,7 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.service.webrtc.AndroidTelecomUtil;
 import org.tm.archive.util.AppSignatureUtil;
 import org.tm.archive.util.ByteUnit;
+import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.DeviceProperties;
 import org.tm.archive.util.NetworkUtil;
 import org.tm.archive.util.ScreenDensity;
@@ -47,40 +49,43 @@ public class LogSectionSystemInfo implements LogSection {
     final PackageManager pm      = context.getPackageManager();
     final StringBuilder  builder = new StringBuilder();
 
-    builder.append("Time          : ").append(System.currentTimeMillis()).append('\n');
-    builder.append("Manufacturer  : ").append(Build.MANUFACTURER).append("\n");
-    builder.append("Model         : ").append(Build.MODEL).append("\n");
-    builder.append("Product       : ").append(Build.PRODUCT).append("\n");
-    builder.append("Screen        : ").append(getScreenResolution(context)).append(", ")
+    builder.append("Time           : ").append(System.currentTimeMillis()).append('\n');
+    builder.append("Manufacturer   : ").append(Build.MANUFACTURER).append("\n");
+    builder.append("Model          : ").append(Build.MODEL).append("\n");
+    builder.append("Product        : ").append(Build.PRODUCT).append("\n");
+    builder.append("Screen         : ").append(getScreenResolution(context)).append(", ")
                                       .append(ScreenDensity.get(context)).append(", ")
                                       .append(getScreenRefreshRate(context)).append("\n");
-    builder.append("Font Scale    : ").append(context.getResources().getConfiguration().fontScale).append("\n");
-    builder.append("Android       : ").append(Build.VERSION.RELEASE).append(", API ")
+    builder.append("Font Scale     : ").append(context.getResources().getConfiguration().fontScale).append("\n");
+    builder.append("Animation Scale: ").append(ContextUtil.getAnimationScale(context)).append("\n");
+    builder.append("Android        : ").append(Build.VERSION.RELEASE).append(", API ")
                                       .append(Build.VERSION.SDK_INT).append(" (")
                                       .append(Build.VERSION.INCREMENTAL).append(", ")
                                       .append(Build.DISPLAY).append(")\n");
-    builder.append("ABIs          : ").append(TextUtils.join(", ", getSupportedAbis())).append("\n");
-    builder.append("Memory        : ").append(getMemoryUsage()).append("\n");
-    builder.append("Memclass      : ").append(getMemoryClass(context)).append("\n");
-    builder.append("MemInfo       : ").append(getMemoryInfo(context)).append("\n");
-    builder.append("OS Host       : ").append(Build.HOST).append("\n");
-    builder.append("RecipientId   : ").append(SignalStore.registrationValues().isRegistrationComplete() ? Recipient.self().getId() : "N/A").append("\n");
-    builder.append("ACI           : ").append(getCensoredAci(context)).append("\n");
-    builder.append("Device ID     : ").append(SignalStore.account().getDeviceId()).append("\n");
-    builder.append("Censored      : ").append(ApplicationDependencies.getSignalServiceNetworkAccess().isCensored()).append("\n");
-    builder.append("Network Status: ").append(NetworkUtil.getNetworkStatus(context)).append("\n");
-    builder.append("Play Services : ").append(getPlayServicesString(context)).append("\n");
-    builder.append("FCM           : ").append(SignalStore.account().isFcmEnabled()).append("\n");
-    builder.append("BkgRestricted : ").append(Build.VERSION.SDK_INT >= 28 ? DeviceProperties.isBackgroundRestricted(context) : "N/A").append("\n");
-    builder.append("Locale        : ").append(Locale.getDefault().toString()).append("\n");
-    builder.append("Linked Devices: ").append(TextSecurePreferences.isMultiDevice(context)).append("\n");
-    builder.append("First Version : ").append(TextSecurePreferences.getFirstInstallVersion(context)).append("\n");
-    builder.append("Days Installed: ").append(VersionTracker.getDaysSinceFirstInstalled(context)).append("\n");
-    builder.append("Build Variant : ").append(BuildConfig.BUILD_DISTRIBUTION_TYPE).append(BuildConfig.BUILD_ENVIRONMENT_TYPE).append(BuildConfig.BUILD_VARIANT_TYPE).append("\n");
-    builder.append("Emoji Version : ").append(getEmojiVersionString(context)).append("\n");
-    builder.append("Telecom       : ").append(AndroidTelecomUtil.getTelecomSupported()).append("\n");
-    builder.append("User-Agent    : ").append(StandardUserAgentInterceptor.USER_AGENT).append("\n");
-    builder.append("App           : ");
+    builder.append("ABIs           : ").append(TextUtils.join(", ", getSupportedAbis())).append("\n");
+    builder.append("Memory         : ").append(getMemoryUsage()).append("\n");
+    builder.append("Memclass       : ").append(getMemoryClass(context)).append("\n");
+    builder.append("MemInfo        : ").append(getMemoryInfo(context)).append("\n");
+    builder.append("OS Host        : ").append(Build.HOST).append("\n");
+    builder.append("RecipientId    : ").append(SignalStore.registrationValues().isRegistrationComplete() ? Recipient.self().getId() : "N/A").append("\n");
+    builder.append("ACI            : ").append(getCensoredAci(context)).append("\n");
+    builder.append("Device ID      : ").append(SignalStore.account().getDeviceId()).append("\n");
+    builder.append("Censored       : ").append(ApplicationDependencies.getSignalServiceNetworkAccess().isCensored()).append("\n");
+    builder.append("Network Status : ").append(NetworkUtil.getNetworkStatus(context)).append("\n");
+    builder.append("Data Saver     : ").append(DeviceProperties.getDataSaverState(context)).append("\n");
+    builder.append("Play Services  : ").append(getPlayServicesString(context)).append("\n");
+    builder.append("FCM            : ").append(SignalStore.account().isFcmEnabled()).append("\n");
+    builder.append("BkgRestricted  : ").append(Build.VERSION.SDK_INT >= 28 ? DeviceProperties.isBackgroundRestricted(context) : "N/A").append("\n");
+    builder.append("Locale         : ").append(Locale.getDefault()).append("\n");
+    builder.append("Linked Devices : ").append(TextSecurePreferences.isMultiDevice(context)).append("\n");
+    builder.append("First Version  : ").append(TextSecurePreferences.getFirstInstallVersion(context)).append("\n");
+    builder.append("Days Installed : ").append(VersionTracker.getDaysSinceFirstInstalled(context)).append("\n");
+    builder.append("Build Variant  : ").append(BuildConfig.BUILD_DISTRIBUTION_TYPE).append(BuildConfig.BUILD_ENVIRONMENT_TYPE).append(BuildConfig.BUILD_VARIANT_TYPE).append("\n");
+    builder.append("Emoji Version  : ").append(getEmojiVersionString(context)).append("\n");
+    builder.append("RenderBigEmoji : ").append(FontUtil.canRenderEmojiAtFontSize(1024)).append("\n");
+    builder.append("Telecom        : ").append(AndroidTelecomUtil.getTelecomSupported()).append("\n");
+    builder.append("User-Agent     : ").append(StandardUserAgentInterceptor.USER_AGENT).append("\n");
+    builder.append("App            : ");
     try {
       builder.append(pm.getApplicationLabel(pm.getApplicationInfo(context.getPackageName(), 0)))
              .append(" ")
@@ -94,7 +99,7 @@ public class LogSectionSystemInfo implements LogSection {
     } catch (PackageManager.NameNotFoundException nnfe) {
       builder.append("Unknown\n");
     }
-    builder.append("Package       : ").append(BuildConfig.APPLICATION_ID).append(" (").append(getSigningString(context)).append(")");
+    builder.append("Package        : ").append(BuildConfig.APPLICATION_ID).append(" (").append(getSigningString(context)).append(")");
 
     return builder;
   }
@@ -176,9 +181,9 @@ public class LogSectionSystemInfo implements LogSection {
 
     if (aci != null) {
       String aciString = aci.toString();
-      String lastTwo   = aciString.substring(aciString.length() - 2);
+      String lastThree = aciString.substring(aciString.length() - 3);
 
-      return "********-****-****-****-**********" + lastTwo;
+      return "********-****-****-****-*********" + lastThree;
     } else {
       return "N/A";
     }

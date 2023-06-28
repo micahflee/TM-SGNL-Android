@@ -35,18 +35,14 @@ class FcmFetchForegroundService : Service() {
     }
   }
 
+  override fun onCreate() {
+    Log.d(TAG, "onCreate()")
+    postForegroundNotification()
+  }
+
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    startForeground(
-      NotificationIds.FCM_FETCH,
-      NotificationCompat.Builder(this, NotificationChannels.OTHER)
-        .setSmallIcon(R.drawable.ic_notification)
-        .setContentTitle(getString(R.string.BackgroundMessageRetriever_checking_for_messages))
-        .setCategory(NotificationCompat.CATEGORY_SERVICE)
-        .setProgress(0, 0, true)
-        .setContentIntent(PendingIntent.getActivity(this, 0, MainActivity.clearTop(this), PendingIntentFlags.mutable()))
-        .setVibrate(longArrayOf(0))
-        .build()
-    )
+    Log.d(TAG, "onStartCommand()")
+    postForegroundNotification()
 
     return if (intent != null && intent.getBooleanExtra(KEY_STOP_SELF, false)) {
       stopForeground(true)
@@ -55,6 +51,20 @@ class FcmFetchForegroundService : Service() {
     } else {
       START_STICKY
     }
+  }
+
+  private fun postForegroundNotification() {
+    startForeground(
+      NotificationIds.FCM_FETCH,
+      NotificationCompat.Builder(this, NotificationChannels.getInstance().OTHER)
+        .setSmallIcon(R.drawable.ic_notification)
+        .setContentTitle(getString(R.string.BackgroundMessageRetriever_checking_for_messages))
+        .setCategory(NotificationCompat.CATEGORY_SERVICE)
+        .setProgress(0, 0, true)
+        .setContentIntent(PendingIntent.getActivity(this, 0, MainActivity.clearTop(this), PendingIntentFlags.mutable()))
+        .setVibrate(longArrayOf(0))
+        .build()
+    )
   }
 
   override fun onDestroy() {

@@ -6,21 +6,23 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-
 import org.signal.core.util.StringUtil;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.InvalidInputException;
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
 import org.tm.archive.R;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.GroupTable;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.groups.GroupId;
+import org.tm.archive.messages.SignalServiceProtoUtil;
 import org.tm.archive.mms.MessageGroupContext;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.whispersystems.signalservice.api.messages.SignalServiceContent;
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
 import org.whispersystems.signalservice.api.messages.SignalServiceGroupV2;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,6 +51,23 @@ public final class GroupUtil {
       return content.getSyncMessage().get().getSent().get().getDataMessage().get().getGroupContext().get();
     } else if (content.getStoryMessage().isPresent() && content.getStoryMessage().get().getGroupContext().isPresent()) {
       return content.getStoryMessage().get().getGroupContext().get();
+    } else {
+      return null;
+    }
+  }
+
+
+  public static @Nullable SignalServiceProtos.GroupContextV2 getGroupContextIfPresent(@NonNull SignalServiceProtos.Content content) {
+    if (content.hasDataMessage() && SignalServiceProtoUtil.INSTANCE.getHasGroupContext(content.getDataMessage())) {
+      return content.getDataMessage().getGroupV2();
+    } else if (content.hasSyncMessage()                 &&
+               content.getSyncMessage().hasSent() &&
+               content.getSyncMessage().getSent().hasMessage() &&
+               SignalServiceProtoUtil.INSTANCE.getHasGroupContext(content.getSyncMessage().getSent().getMessage()))
+    {
+      return content.getSyncMessage().getSent().getMessage().getGroupV2();
+    } else if (content.hasStoryMessage() && SignalServiceProtoUtil.INSTANCE.isValid(content.getStoryMessage().getGroup())) {
+      return content.getStoryMessage().getGroup();
     } else {
       return null;
     }
@@ -93,9 +112,9 @@ public final class GroupUtil {
                                                 @NonNull GroupId.Push groupId)
   {
     if (groupId.isV2()) {
-      GroupDatabase                   groupDatabase     = SignalDatabase.groups();
-      GroupDatabase.GroupRecord       groupRecord       = groupDatabase.requireGroup(groupId);
-      GroupDatabase.V2GroupProperties v2GroupProperties = groupRecord.requireV2GroupProperties();
+      GroupTable                   groupDatabase     = SignalDatabase.groups();
+      GroupRecord                  groupRecord       = groupDatabase.requireGroup(groupId);
+      GroupTable.V2GroupProperties v2GroupProperties = groupRecord.requireV2GroupProperties();
       SignalServiceGroupV2            group             = SignalServiceGroupV2.newBuilder(v2GroupProperties.getGroupMasterKey())
                                                                               .withRevision(v2GroupProperties.getGroupRevision())
                                                                               .build();

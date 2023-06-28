@@ -9,6 +9,7 @@ import org.tm.archive.components.mention.MentionAnnotation;
 import org.tm.archive.mms.QuoteModel;
 import org.tm.archive.mms.SlideDeck;
 import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.util.Util;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class Quote {
     this.mentions   = mentions;
     this.quoteType  = quoteType;
 
-    SpannableString spannable = new SpannableString(text);
+    SpannableString spannable = SpannableString.valueOf(Util.emptyIfNull(text));
     MentionAnnotation.setMentionAnnotations(spannable, mentions);
 
     this.text = spannable;
@@ -46,7 +47,6 @@ public class Quote {
   public @NonNull Quote withAttachment(@NonNull SlideDeck updatedAttachment) {
     return new Quote(id, author, text, missing, updatedAttachment, mentions, quoteType);
   }
-
 
   public long getId() {
     return id;

@@ -10,7 +10,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.signal.core.util.SqlUtil
-import org.tm.archive.database.DistributionListDatabase
+import org.tm.archive.database.DistributionListTables
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.DistributionListId
 import org.tm.archive.testing.SignalDatabaseRule
@@ -72,9 +72,9 @@ class MyStoryMigrationTest {
 
   private fun setMyStoryDistributionId(serializedId: String) {
     SignalDatabase.rawDatabase.update(
-      DistributionListDatabase.LIST_TABLE_NAME,
+      DistributionListTables.LIST_TABLE_NAME,
       contentValuesOf(
-        DistributionListDatabase.DISTRIBUTION_ID to serializedId
+        DistributionListTables.DISTRIBUTION_ID to serializedId
       ),
       "_id = ?",
       SqlUtil.buildArgs(DistributionListId.MY_STORY)
@@ -83,7 +83,7 @@ class MyStoryMigrationTest {
 
   private fun deleteMyStory() {
     SignalDatabase.rawDatabase.delete(
-      DistributionListDatabase.LIST_TABLE_NAME,
+      DistributionListTables.LIST_TABLE_NAME,
       "_id = ?",
       SqlUtil.buildArgs(DistributionListId.MY_STORY)
     )
@@ -91,9 +91,9 @@ class MyStoryMigrationTest {
 
   private fun assertValidMyStoryExists() {
     SignalDatabase.rawDatabase.query(
-      DistributionListDatabase.LIST_TABLE_NAME,
+      DistributionListTables.LIST_TABLE_NAME,
       SqlUtil.COUNT,
-      "_id = ? AND ${DistributionListDatabase.DISTRIBUTION_ID} = ?",
+      "_id = ? AND ${DistributionListTables.DISTRIBUTION_ID} = ?",
       SqlUtil.buildArgs(DistributionListId.MY_STORY, DistributionId.MY_STORY.toString()),
       null,
       null,

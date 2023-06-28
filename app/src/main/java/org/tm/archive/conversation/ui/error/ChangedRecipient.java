@@ -2,7 +2,7 @@ package org.tm.archive.conversation.ui.error;
 
 import androidx.annotation.NonNull;
 
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.database.IdentityTable;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.recipients.Recipient;
 
@@ -29,11 +29,11 @@ final class ChangedRecipient {
   }
 
   boolean isUnverified() {
-    return record.getVerifiedStatus() == IdentityDatabase.VerifiedStatus.UNVERIFIED;
+    return record.getVerifiedStatus() == IdentityTable.VerifiedStatus.UNVERIFIED;
   }
 
   boolean isVerified() {
-    return record.getVerifiedStatus() == IdentityDatabase.VerifiedStatus.VERIFIED;
+    return record.getVerifiedStatus() == IdentityTable.VerifiedStatus.VERIFIED;
   }
 
   @Override

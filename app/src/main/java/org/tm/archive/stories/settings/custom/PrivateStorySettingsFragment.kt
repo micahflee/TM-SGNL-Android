@@ -10,6 +10,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.tm.archive.R
+import org.tm.archive.components.DialogFragmentDisplayManager
+import org.tm.archive.components.ProgressCardDialogFragment
 import org.tm.archive.components.WrapperDialogFragment
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsFragment
@@ -17,6 +19,7 @@ import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.database.model.DistributionListId
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.stories.dialogs.StoryDialogs
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.fragments.findListener
@@ -27,6 +30,8 @@ import org.tm.archive.util.viewholders.RecipientViewHolder
 class PrivateStorySettingsFragment : DSLSettingsFragment(
   menuId = R.menu.story_private_menu
 ) {
+
+  private val progressDisplayManager = DialogFragmentDisplayManager { ProgressCardDialogFragment() }
 
   private val viewModel: PrivateStorySettingsViewModel by viewModels(
     factoryProducer = {
@@ -49,6 +54,12 @@ class PrivateStorySettingsFragment : DSLSettingsFragment(
     val toolbar: Toolbar = requireView().findViewById(R.id.toolbar)
 
     viewModel.state.observe(viewLifecycleOwner) { state ->
+      if (state.isActionInProgress) {
+        progressDisplayManager.show(viewLifecycleOwner, childFragmentManager)
+      } else {
+        progressDisplayManager.hide()
+      }
+
       toolbar.title = state.privateStory?.name
       adapter.submitList(getConfiguration(state).toMappingModelList())
     }
@@ -86,9 +97,10 @@ class PrivateStorySettingsFragment : DSLSettingsFragment(
 
       dividerPref()
       clickPref(
-        title = DSLSettingsText.from(R.string.PrivateStorySettingsFragment__delete_private_story, DSLSettingsText.ColorModifier(ContextCompat.getColor(requireContext(), R.color.signal_alert_primary))),
+        title = DSLSettingsText.from(R.string.PrivateStorySettingsFragment__delete_custom_story, DSLSettingsText.ColorModifier(ContextCompat.getColor(requireContext(), R.color.signal_alert_primary))),
         onClick = {
-          handleDeletePrivateStory()
+          val privateStoryName = viewModel.state.value?.privateStory?.name
+          handleDeletePrivateStory(privateStoryName)
         }
       )
     }
@@ -113,13 +125,12 @@ class PrivateStorySettingsFragment : DSLSettingsFragment(
       .show()
   }
 
-  private fun handleDeletePrivateStory() {
-    MaterialAlertDialogBuilder(requireContext())
-      .setTitle(R.string.PrivateStorySettingsFragment__are_you_sure)
-      .setMessage(R.string.PrivateStorySettingsFragment__this_action_cannot)
-      .setNegativeButton(android.R.string.cancel) { _, _ -> }
-      .setPositiveButton(R.string.delete) { _, _ -> viewModel.delete().subscribe { findNavController().popBackStack() } }
-      .show()
+  private fun handleDeletePrivateStory(privateStoryName: String?) {
+    val name = privateStoryName ?: return
+
+    StoryDialogs.deleteDistributionList(requireContext(), name) {
+      viewModel.delete().subscribe { findNavController().popBackStack() }
+    }
   }
 
   override fun onToolbarNavigationClicked() {

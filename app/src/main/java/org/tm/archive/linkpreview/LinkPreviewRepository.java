@@ -22,9 +22,9 @@ import org.signal.storageservice.protos.groups.local.DecryptedGroupJoinInfo;
 import org.tm.archive.R;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.UriAttachment;
-import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupManager;
@@ -182,8 +182,7 @@ public class LinkPreviewRepository {
     CallRequestController controller = new CallRequestController(call);
 
     SignalExecutors.UNBOUNDED.execute(() -> {
-      try {
-        Response response = call.execute();
+      try (Response response = call.execute()) {
         if (!response.isSuccessful() || response.body() == null) {
           callback.accept(Optional.empty());
           return;
@@ -283,14 +282,14 @@ public class LinkPreviewRepository {
         }
 
         GroupMasterKey                      groupMasterKey = groupInviteLinkUrl.getGroupMasterKey();
-        GroupId.V2                          groupId        = GroupId.v2(groupMasterKey);
-        Optional<GroupDatabase.GroupRecord> group          = SignalDatabase.groups().getGroup(groupId);
+        GroupId.V2            groupId = GroupId.v2(groupMasterKey);
+        Optional<GroupRecord> group   = SignalDatabase.groups().getGroup(groupId);
 
         if (group.isPresent()) {
           Log.i(TAG, "Creating preview for locally available group");
 
-          GroupDatabase.GroupRecord groupRecord = group.get();
-          String                    title       = groupRecord.getTitle();
+          GroupRecord groupRecord = group.get();
+          String      title       = groupRecord.getTitle();
           int                       memberCount = groupRecord.getMembers().size();
           String                    description = getMemberCountDescription(context, memberCount);
           Optional<Attachment>      thumbnail   = Optional.empty();
@@ -368,7 +367,7 @@ public class LinkPreviewRepository {
 
     return new UriAttachment(uri,
                              contentType,
-                             AttachmentDatabase.TRANSFER_PROGRESS_STARTED,
+                             AttachmentTable.TRANSFER_PROGRESS_STARTED,
                              bytes.length,
                              width,
                              height,

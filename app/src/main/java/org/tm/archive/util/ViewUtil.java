@@ -20,6 +20,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.Build;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -37,6 +38,7 @@ import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.Px;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.view.ViewCompat;
@@ -51,6 +53,12 @@ import org.tm.archive.util.views.Stub;
 public final class ViewUtil {
 
   private ViewUtil() {
+  }
+
+  public static void setMinimumHeight(@NonNull View view, @Px int minimumHeight) {
+    if (view.getMinimumHeight() != minimumHeight) {
+      view.setMinimumHeight(minimumHeight);
+    }
   }
 
   public static void focusAndMoveCursorToEndAndOpenKeyboard(@NonNull EditText input) {
@@ -329,7 +337,7 @@ public final class ViewUtil {
 
   public static int getStatusBarHeight(@NonNull View view) {
     final WindowInsetsCompat rootWindowInsets = ViewCompat.getRootWindowInsets(view);
-    if (rootWindowInsets != null) {
+    if (Build.VERSION.SDK_INT > 29 && rootWindowInsets != null) {
       return rootWindowInsets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
     } else {
       int result     = 0;
@@ -343,7 +351,7 @@ public final class ViewUtil {
 
   public static int getNavigationBarHeight(@NonNull View view) {
     final WindowInsetsCompat rootWindowInsets = ViewCompat.getRootWindowInsets(view);
-    if (rootWindowInsets != null) {
+    if (Build.VERSION.SDK_INT > 29 && rootWindowInsets != null) {
       return rootWindowInsets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
     } else {
       int result     = 0;

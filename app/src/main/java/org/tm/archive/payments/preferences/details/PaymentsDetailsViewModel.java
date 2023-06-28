@@ -8,7 +8,7 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.payments.PaymentTransactionLiveData;
 import org.tm.archive.payments.UnreadPaymentsRepository;
 import org.tm.archive.recipients.Recipient;
@@ -46,10 +46,10 @@ final class PaymentsDetailsViewModel extends ViewModel {
 
   static class ViewState {
 
-    private final PaymentDatabase.PaymentTransaction payment;
-    private final Recipient                          recipient;
+    private final PaymentTable.PaymentTransaction payment;
+    private final Recipient                       recipient;
 
-    private ViewState(@NonNull PaymentDatabase.PaymentTransaction payment, @NonNull Recipient recipient) {
+    private ViewState(@NonNull PaymentTable.PaymentTransaction payment, @NonNull Recipient recipient) {
       this.payment   = payment;
       this.recipient = recipient;
     }
@@ -58,7 +58,7 @@ final class PaymentsDetailsViewModel extends ViewModel {
       return recipient;
     }
 
-    PaymentDatabase.PaymentTransaction getPayment() {
+    PaymentTable.PaymentTransaction getPayment() {
       return payment;
     }
 

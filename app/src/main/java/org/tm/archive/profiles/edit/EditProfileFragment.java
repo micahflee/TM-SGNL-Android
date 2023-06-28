@@ -3,7 +3,6 @@ package org.tm.archive.profiles.edit;
 import android.animation.Animator;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.InputType;
@@ -16,7 +15,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -46,6 +44,7 @@ import org.tm.archive.profiles.manage.EditProfileNameFragment;
 import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.FeatureFlags;
+import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.navigation.SafeNavigation;
 import org.tm.archive.util.text.AfterTextChanged;
 
@@ -320,7 +319,7 @@ public class EditProfileFragment extends LoggingFragment {
   private void handleUpload() {
     viewModel.getUploadResult().observe(getViewLifecycleOwner(), uploadResult -> {
       if (uploadResult == EditProfileRepository.UploadResult.SUCCESS) {
-        if (Build.VERSION.SDK_INT >= 21 && !viewModel.isGroup()) {
+        if (!viewModel.isGroup()) {
           handleFinishedLollipop();
         }
         else {
@@ -335,13 +334,13 @@ public class EditProfileFragment extends LoggingFragment {
   }
 
   private void handleFinishedLegacy() {
+    ViewUtil.hideKeyboard(requireContext(), binding.finishButton);
     binding.finishButton.cancelSpinning();
     if (nextIntent != null) startActivity(nextIntent);
 
     controller.onProfileNameUploadCompleted();
   }
 
-  @RequiresApi(api = 21)
   private void handleFinishedLollipop() {
     int[] finishButtonLocation = new int[2];
     int[] revealLocation       = new int[2];
@@ -363,6 +362,7 @@ public class EditProfileFragment extends LoggingFragment {
 
       @Override
       public void onAnimationEnd(Animator animation) {
+        ViewUtil.hideKeyboard(requireContext(), binding.finishButton);
         binding.finishButton.cancelSpinning();
         if (nextIntent != null && getActivity() != null) {
           startActivity(nextIntent);

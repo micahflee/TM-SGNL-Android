@@ -7,8 +7,8 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupsV1MigrationUtil;
@@ -25,18 +25,18 @@ public final class GroupV2RecordProcessor extends DefaultStorageRecordProcessor<
 
   private static final String TAG = Log.tag(GroupV2RecordProcessor.class);
 
-  private final Context                     context;
-  private final RecipientDatabase           recipientDatabase;
-  private final GroupDatabase               groupDatabase;
+  private final Context        context;
+  private final RecipientTable recipientTable;
+  private final GroupTable     groupDatabase;
   private final Map<GroupId.V2, GroupId.V1> gv1GroupsByExpectedGv2Id;
 
   public GroupV2RecordProcessor(@NonNull Context context) {
     this(context, SignalDatabase.recipients(), SignalDatabase.groups());
   }
 
-  GroupV2RecordProcessor(@NonNull Context context, @NonNull RecipientDatabase recipientDatabase, @NonNull GroupDatabase groupDatabase) {
+  GroupV2RecordProcessor(@NonNull Context context, @NonNull RecipientTable recipientTable, @NonNull GroupTable groupDatabase) {
     this.context                  = context;
-    this.recipientDatabase        = recipientDatabase;
+    this.recipientTable           = recipientTable;
     this.groupDatabase            = groupDatabase;
     this.gv1GroupsByExpectedGv2Id = groupDatabase.getAllExpectedV2Ids();
   }
@@ -50,15 +50,15 @@ public final class GroupV2RecordProcessor extends DefaultStorageRecordProcessor<
   @NonNull Optional<SignalGroupV2Record> getMatching(@NonNull SignalGroupV2Record record, @NonNull StorageKeyGenerator keyGenerator) {
     GroupId.V2 groupId = GroupId.v2(record.getMasterKeyOrThrow());
 
-    Optional<RecipientId> recipientId = recipientDatabase.getByGroupId(groupId);
+    Optional<RecipientId> recipientId = recipientTable.getByGroupId(groupId);
 
-    return recipientId.map(recipientDatabase::getRecordForSync)
+    return recipientId.map(recipientTable::getRecordForSync)
                       .map(settings -> {
                         if (settings.getSyncExtras().getGroupMasterKey() != null) {
                           return StorageSyncModels.localToRemoteRecord(settings);
                         } else {
                           Log.w(TAG, "No local master key. Assuming it matches remote since the groupIds match. Enqueuing a fetch to fix the bad state.");
-                          groupDatabase.fixMissingMasterKey(null, record.getMasterKeyOrThrow());
+                          groupDatabase.fixMissingMasterKey(record.getMasterKeyOrThrow());
                           return StorageSyncModels.localToRemoteRecord(settings, record.getMasterKeyOrThrow());
                         }
                       })
@@ -116,13 +116,13 @@ public final class GroupV2RecordProcessor extends DefaultStorageRecordProcessor<
       Log.i(TAG, "Discovered a new GV2 ID that is actually a migrated V1 group! Migrating now.");
       GroupsV1MigrationUtil.performLocalMigration(context, possibleV1Id);
     } else {
-      recipientDatabase.applyStorageSyncGroupV2Insert(record);
+      recipientTable.applyStorageSyncGroupV2Insert(record);
     }
   }
 
   @Override
   void updateLocal(@NonNull StorageRecordUpdate<SignalGroupV2Record> update) {
-    recipientDatabase.applyStorageSyncGroupV2Update(update);
+    recipientTable.applyStorageSyncGroupV2Update(update);
   }
 
   @Override

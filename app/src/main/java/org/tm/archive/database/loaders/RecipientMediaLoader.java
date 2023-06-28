@@ -6,7 +6,7 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.tm.archive.database.MediaDatabase;
+import org.tm.archive.database.MediaTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -17,13 +17,13 @@ import org.tm.archive.recipients.RecipientId;
 public final class RecipientMediaLoader extends MediaLoader {
 
   @Nullable private final RecipientId           recipientId;
-  @NonNull  private final MediaType             mediaType;
-  @NonNull  private final MediaDatabase.Sorting sorting;
+  @NonNull  private final MediaType          mediaType;
+  @NonNull  private final MediaTable.Sorting sorting;
 
   public RecipientMediaLoader(@NonNull Context context,
                               @Nullable RecipientId recipientId,
                               @NonNull MediaType mediaType,
-                              @NonNull MediaDatabase.Sorting sorting)
+                              @NonNull MediaTable.Sorting sorting)
   {
     super(context);
     this.recipientId = recipientId;

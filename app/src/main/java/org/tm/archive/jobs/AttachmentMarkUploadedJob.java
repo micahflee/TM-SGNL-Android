@@ -1,13 +1,14 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.DatabaseAttachment;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 
 import java.io.IOException;
@@ -46,11 +47,11 @@ public final class AttachmentMarkUploadedJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putLong(KEY_ROW_ID, attachmentId.getRowId())
-                             .putLong(KEY_UNIQUE_ID, attachmentId.getUniqueId())
-                             .putLong(KEY_MESSAGE_ID, messageId)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putLong(KEY_ROW_ID, attachmentId.getRowId())
+                                    .putLong(KEY_UNIQUE_ID, attachmentId.getUniqueId())
+                                    .putLong(KEY_MESSAGE_ID, messageId)
+                                    .serialize();
   }
 
   @Override
@@ -60,8 +61,8 @@ public final class AttachmentMarkUploadedJob extends BaseJob {
 
   @Override
   public void onRun() throws Exception {
-    AttachmentDatabase         database           = SignalDatabase.attachments();
-    DatabaseAttachment         databaseAttachment = database.getAttachment(attachmentId);
+    AttachmentTable    database           = SignalDatabase.attachments();
+    DatabaseAttachment databaseAttachment = database.getAttachment(attachmentId);
 
     if (databaseAttachment == null) {
       throw new InvalidAttachmentException("Cannot find the specified attachment.");
@@ -87,7 +88,9 @@ public final class AttachmentMarkUploadedJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<AttachmentMarkUploadedJob> {
     @Override
-    public @NonNull AttachmentMarkUploadedJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull AttachmentMarkUploadedJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new AttachmentMarkUploadedJob(parameters,
                                            data.getLong(KEY_MESSAGE_ID),
                                            new AttachmentId(data.getLong(KEY_ROW_ID), data.getLong(KEY_UNIQUE_ID)));

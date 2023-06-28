@@ -18,6 +18,9 @@
         <action
             android:id="@+id/action_conversationListFragment_to_storiesLandingFragment"
             app:destination="@id/storiesLandingFragment" />
+        <action
+            android:id="@+id/action_conversationListFragment_to_callLogFragment"
+            app:destination="@id/callLogFragment" />
     </fragment>
 
     <fragment
@@ -28,6 +31,42 @@
     <fragment
         android:id="@+id/storiesLandingFragment"
         android:name="org.tm.archive.stories.landing.StoriesLandingFragment"
-        android:label="stories_landing_fragment" />
+        android:label="stories_landing_fragment">
+        <action
+            android:id="@+id/action_storiesLandingFragment_to_callLogFragment"
+            app:destination="@id/callLogFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/callLogFragment"
+        android:name="org.tm.archive.calls.log.CallLogFragment"
+        android:label="call_log_fragment">
+        <action
+            android:id="@+id/action_callLogFragment_to_storiesLandingFragment"
+            app:destination="@id/storiesLandingFragment" />
+        <action
+            android:id="@+id/action_callLogFragment_to_createCallLinkBottomSheet"
+            app:destination="@id/createCallLinkBottomSheet" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/createCallLinkBottomSheet"
+        android:name="org.tm.archive.calls.links.create.CreateCallLinkBottomSheetDialogFragment"
+        android:label="create_call_link_bottom_sheet">
+        <action
+            android:id="@+id/action_createCallLinkBottomSheet_to_editCallLinkNameDialogFragment"
+            app:destination="@id/editCallLinkNameDialogFragment" />
+    </dialog>
+
+    <dialog
+        android:id="@+id/editCallLinkNameDialogFragment"
+        android:name="org.tm.archive.calls.links.EditCallLinkNameDialogFragment"
+        android:label="edit_call_link_name_fragment">
+        <argument
+            android:name="name"
+            app:argType="string"
+            app:nullable="false" />
+
+    </dialog>
 
 </navigation>

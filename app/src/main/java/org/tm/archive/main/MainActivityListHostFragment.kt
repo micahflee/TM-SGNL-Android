@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -18,11 +19,14 @@ import androidx.navigation.Navigator
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.recyclerview.widget.RecyclerView
+import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.concurrent.SimpleTask
 import org.signal.core.util.logging.Log
 import org.tm.archive.MainActivity
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeImageView
+import org.tm.archive.calls.log.CallLogFragment
 import org.tm.archive.components.Material3SearchToolbar
 import org.tm.archive.components.TooltipPopup
 import org.tm.archive.components.settings.app.AppSettingsActivity
@@ -47,13 +51,14 @@ import org.tm.archive.util.views.Stub
 import org.tm.archive.util.visible
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState
 
-class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_fragment), ConversationListFragment.Callback, Material3OnScrollHelperBinder {
+class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_fragment), ConversationListFragment.Callback, Material3OnScrollHelperBinder, CallLogFragment.Callback {
 
   companion object {
     private val TAG = Log.tag(MainActivityListHostFragment::class.java)
   }
 
   private val conversationListTabsViewModel: ConversationListTabsViewModel by viewModels(ownerProducer = { requireActivity() })
+  private val disposables: LifecycleDisposable = LifecycleDisposable()
 
   private lateinit var _toolbarBackground: View
   private lateinit var _toolbar: Toolbar
@@ -75,6 +80,8 @@ class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_f
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    disposables.bindTo(viewLifecycleOwner)
+
     _toolbarBackground = view.findViewById(R.id.toolbar_background)
     _toolbar = view.findViewById(R.id.toolbar)
     _basicToolbar = Stub(view.findViewById(R.id.toolbar_basic_stub))
@@ -91,12 +98,13 @@ class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_f
 
     (requireActivity() as AppCompatActivity).setSupportActionBar(_toolbar)
 
-    conversationListTabsViewModel.state.observe(viewLifecycleOwner) { state ->
+    disposables += conversationListTabsViewModel.state.subscribeBy { state ->
       val controller: NavController = requireView().findViewById<View>(R.id.fragment_container).findNavController()
       when (controller.currentDestination?.id) {
         R.id.conversationListFragment -> goToStateFromConversationList(state, controller)
         R.id.conversationListArchiveFragment -> Unit
         R.id.storiesLandingFragment -> goToStateFromStories(state, controller)
+        R.id.callLogFragment -> goToStateFromCalling(state, controller)
       }
     }
   }
@@ -108,6 +116,9 @@ class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_f
       val cameraFab = requireView().findViewById<View>(R.id.camera_fab)
       val newConvoFab = requireView().findViewById<View>(R.id.fab)
 
+      ViewCompat.setTransitionName(cameraFab, "camera_fab")
+      ViewCompat.setTransitionName(newConvoFab, "new_convo_fab")
+
       val extras: Navigator.Extras? = if (cameraFab == null || newConvoFab == null) {
         null
       } else {
@@ -117,8 +128,14 @@ class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_f
         )
       }
 
+      val destination = if (state.tab == ConversationListTab.STORIES) {
+        R.id.action_conversationListFragment_to_storiesLandingFragment
+      } else {
+        R.id.action_conversationListFragment_to_callLogFragment
+      }
+
       navController.navigate(
-        R.id.action_conversationListFragment_to_storiesLandingFragment,
+        destination,
         null,
         null,
         extras
@@ -126,11 +143,19 @@ class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_f
     }
   }
 
+  private fun goToStateFromCalling(state: ConversationListTabsState, navController: NavController) {
+    when (state.tab) {
+      ConversationListTab.CALLS -> return
+      ConversationListTab.CHATS -> navController.popBackStack(R.id.conversationListFragment, false)
+      ConversationListTab.STORIES -> navController.navigate(R.id.action_callLogFragment_to_storiesLandingFragment)
+    }
+  }
+
   private fun goToStateFromStories(state: ConversationListTabsState, navController: NavController) {
-    if (state.tab == ConversationListTab.STORIES) {
-      return
-    } else {
-      navController.popBackStack()
+    when (state.tab) {
+      ConversationListTab.STORIES -> return
+      ConversationListTab.CHATS -> navController.popBackStack(R.id.conversationListFragment, false)
+      ConversationListTab.CALLS -> navController.navigate(R.id.action_storiesLandingFragment_to_callLogFragment)
     }
   }
 
@@ -176,6 +201,10 @@ class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_f
     if (_basicToolbar.resolved()) {
       _basicToolbar.get().visible = false
     }
+  }
+
+  private fun presentToolbarForCallLogFragment() {
+    presentToolbarForConversationListFragment()
   }
 
   private fun presentToolbarForMultiselect() {
@@ -320,13 +349,20 @@ class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_f
         conversationListTabsViewModel.isShowingArchived(false)
         presentToolbarForConversationListFragment()
       }
+
       R.id.conversationListArchiveFragment -> {
         conversationListTabsViewModel.isShowingArchived(true)
         presentToolbarForConversationListArchiveFragment()
       }
+
       R.id.storiesLandingFragment -> {
         conversationListTabsViewModel.isShowingArchived(false)
         presentToolbarForStoriesLandingFragment()
+      }
+
+      R.id.callLogFragment -> {
+        conversationListTabsViewModel.isShowingArchived(false)
+        presentToolbarForCallLogFragment()
       }
     }
   }

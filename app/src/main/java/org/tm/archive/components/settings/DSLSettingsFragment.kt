@@ -20,6 +20,10 @@ import org.tm.archive.util.Material3OnScrollHelper
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import java.lang.UnsupportedOperationException
 
+/**
+ * The DSL API can be completely replaced by compose.
+ * See ComposeFragment or ComposeBottomSheetFragment for an alternative to this API
+ */
 abstract class DSLSettingsFragment(
   @StringRes private val titleId: Int = -1,
   @MenuRes private val menuId: Int = -1,
@@ -87,8 +91,9 @@ abstract class DSLSettingsFragment(
   }
 
   override fun onDestroyView() {
-    super.onDestroyView()
     recyclerView = null
+    toolbar = null
+    super.onDestroyView()
   }
 
   fun setTitle(@StringRes resId: Int) {

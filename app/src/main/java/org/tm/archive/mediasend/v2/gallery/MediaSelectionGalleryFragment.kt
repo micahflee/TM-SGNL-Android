@@ -10,6 +10,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import app.cash.exhaustive.Exhaustive
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mediasend.v2.MediaSelectionNavigator
@@ -18,7 +19,6 @@ import org.tm.archive.mediasend.v2.MediaSelectionViewModel
 import org.tm.archive.mediasend.v2.MediaValidator
 import org.tm.archive.mediasend.v2.review.MediaSelectionItemTouchHelper
 import org.tm.archive.permissions.Permissions
-import org.tm.archive.util.LifecycleDisposable
 
 private const val MEDIA_GALLERY_TAG = "MEDIA_GALLERY"
 
@@ -37,6 +37,15 @@ class MediaSelectionGalleryFragment : Fragment(R.layout.fragment_container), Med
   )
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    val args = arguments
+    val isFirst = when {
+      args == null -> false
+      args.containsKey("suppressEmptyError") -> args.getBoolean("suppressEmptyError")
+      args.containsKey("first") -> args.getBoolean("first")
+      else -> false
+    }
+
+    sharedViewModel.setSuppressEmptyError(isFirst)
     mediaGalleryFragment = ensureMediaGalleryFragment()
 
     mediaGalleryFragment.bindSelectedMediaItemDragHelper(ItemTouchHelper(MediaSelectionItemTouchHelper(sharedViewModel)))

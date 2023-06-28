@@ -22,7 +22,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.events.PartProgressEvent;
 import org.tm.archive.mms.Slide;
 import org.tm.archive.mms.SlideClickListener;
@@ -90,13 +90,14 @@ public class DocumentView extends FrameLayout {
   }
 
   public void setDocument(final @NonNull Slide documentSlide,
-                          final boolean showControls)
+                          final boolean showControls,
+                          final boolean showSingleLineFilename)
   {
     if (showControls && documentSlide.isPendingDownload()) {
       controlToggle.displayQuick(downloadButton);
       downloadButton.setOnClickListener(new DownloadClickedListener(documentSlide));
       if (downloadProgress.isSpinning()) downloadProgress.stopSpinning();
-    } else if (showControls && documentSlide.getTransferState() == AttachmentDatabase.TRANSFER_PROGRESS_STARTED) {
+    } else if (showControls && documentSlide.getTransferState() == AttachmentTable.TRANSFER_PROGRESS_STARTED) {
       controlToggle.displayQuick(downloadProgress);
       downloadProgress.spin();
     } else {
@@ -106,12 +107,23 @@ public class DocumentView extends FrameLayout {
 
     this.documentSlide = documentSlide;
 
+    // Android OS filenames are limited to 256 characters, so
+    // we don't need an additional max characters/lines constraint when
+    // [showSingleLineFilename] is false.
+    this.fileName.setSingleLine(showSingleLineFilename);
+
     this.fileName.setText(OptionalUtil.or(documentSlide.getFileName(),
                                           documentSlide.getCaption())
                                       .orElse(getContext().getString(R.string.DocumentView_unnamed_file)));
     this.fileSize.setText(Util.getPrettyFileSize(documentSlide.getFileSize()));
     this.document.setText(documentSlide.getFileType(getContext()).orElse("").toLowerCase());
     this.setOnClickListener(new OpenClickedListener(documentSlide));
+  }
+
+  public void setDocument(final @NonNull Slide documentSlide,
+                          final boolean showControls)
+  {
+    setDocument(documentSlide, showControls, true);
   }
 
   @Override

@@ -1,14 +1,15 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.databaseprotos.DeviceLastResetTime;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.DecryptionsDrainedConstraint;
 import org.tm.archive.notifications.v2.ConversationId;
@@ -70,11 +71,11 @@ public class AutomaticSessionResetJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_RECIPIENT_ID, recipientId.serialize())
-                             .putInt(KEY_DEVICE_ID, deviceId)
-                             .putLong(KEY_SENT_TIMESTAMP, sentTimestamp)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_RECIPIENT_ID, recipientId.serialize())
+                                    .putInt(KEY_DEVICE_ID, deviceId)
+                                    .putLong(KEY_SENT_TIMESTAMP, sentTimestamp)
+                                    .serialize();
   }
 
   @Override
@@ -121,7 +122,7 @@ public class AutomaticSessionResetJob extends BaseJob {
   }
 
   private void insertLocalMessage() {
-    MessageDatabase.InsertResult result = SignalDatabase.sms().insertChatSessionRefreshedMessage(recipientId, deviceId, sentTimestamp);
+    MessageTable.InsertResult result = SignalDatabase.messages().insertChatSessionRefreshedMessage(recipientId, deviceId, sentTimestamp - 1);
     ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(result.getThreadId()));
   }
 
@@ -169,7 +170,9 @@ public class AutomaticSessionResetJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<AutomaticSessionResetJob> {
     @Override
-    public @NonNull AutomaticSessionResetJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull AutomaticSessionResetJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new AutomaticSessionResetJob(parameters,
                                           RecipientId.from(data.getString(KEY_RECIPIENT_ID)),
                                           data.getInt(KEY_DEVICE_ID),

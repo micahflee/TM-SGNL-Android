@@ -1,23 +1,16 @@
 package org.tm.archive.jobs;
 
-import android.app.Application;
-
 import androidx.annotation.NonNull;
-
-import com.annimon.stream.Stream;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupsV1MigrationUtil;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
-import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
-import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.transport.RetryLaterException;
@@ -25,9 +18,6 @@ import org.whispersystems.signalservice.api.groupsv2.NoCredentialForRedemptionTi
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class GroupV1MigrationJob extends BaseJob {
@@ -66,53 +56,10 @@ public class GroupV1MigrationJob extends BaseJob {
     });
   }
 
-  public static void enqueueRoutineMigrationsIfNecessary(@NonNull Application application) {
-    if (!SignalStore.registrationValues().isRegistrationComplete() ||
-        !SignalStore.account().isRegistered()                      ||
-        SignalStore.account().getAci() == null)
-    {
-      Log.i(TAG, "Registration not complete. Skipping.");
-      return;
-    }
-
-    long timeSinceRefresh = System.currentTimeMillis() - SignalStore.misc().getLastGv1RoutineMigrationTime();
-
-    if (timeSinceRefresh < REFRESH_INTERVAL) {
-      Log.i(TAG, "Too soon to refresh. Did the last refresh " + timeSinceRefresh + " ms ago.");
-      return;
-    }
-
-    SignalStore.misc().setLastGv1RoutineMigrationTime(System.currentTimeMillis());
-
-    SignalExecutors.BOUNDED.execute(() -> {
-      JobManager         jobManager   = ApplicationDependencies.getJobManager();
-      List<ThreadRecord> threads      = SignalDatabase.threads().getRecentV1Groups(ROUTINE_LIMIT);
-      Set<RecipientId>   needsRefresh = new HashSet<>();
-
-      if (threads.size() > 0) {
-        Log.d(TAG, "About to enqueue refreshes for " + threads.size() + " groups.");
-      }
-
-      for (ThreadRecord thread : threads) {
-        jobManager.add(new GroupV1MigrationJob(thread.getRecipient().getId()));
-
-        needsRefresh.addAll(Stream.of(Recipient.resolvedList(thread.getRecipient().getParticipantIds()))
-                                  .filter(r -> r.getGroupsV1MigrationCapability() != Recipient.Capability.SUPPORTED)
-                                  .map(Recipient::getId)
-                                  .toList());
-      }
-
-      if (needsRefresh.size() > 0) {
-        Log.w(TAG, "Enqueuing profile refreshes for " + needsRefresh.size() + " GV1 participants.");
-        RetrieveProfileJob.enqueue(needsRefresh);
-      }
-    });
-  }
-
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_RECIPIENT_ID, recipientId.serialize())
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_RECIPIENT_ID, recipientId.serialize())
+                                    .serialize();
   }
 
   @Override
@@ -148,7 +95,8 @@ public class GroupV1MigrationJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<GroupV1MigrationJob> {
     @Override
-    public @NonNull GroupV1MigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull GroupV1MigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
       return new GroupV1MigrationJob(parameters, RecipientId.from(data.getString(KEY_RECIPIENT_ID)));
     }
   }

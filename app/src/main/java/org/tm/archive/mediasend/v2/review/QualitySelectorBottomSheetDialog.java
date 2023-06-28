@@ -19,6 +19,7 @@ import org.tm.archive.mediasend.v2.MediaSelectionState;
 import org.tm.archive.mediasend.v2.MediaSelectionViewModel;
 import org.tm.archive.mms.SentMediaQuality;
 import org.tm.archive.util.BottomSheetUtil;
+import org.tm.archive.util.WindowUtil;
 import org.tm.archive.util.views.CheckedLinearLayout;
 
 /**
@@ -65,6 +66,12 @@ public final class QualitySelectorBottomSheetDialog extends BottomSheetDialogFra
 
     viewModel = new ViewModelProvider(requireActivity()).get(MediaSelectionViewModel.class);
     viewModel.getState().observe(getViewLifecycleOwner(), this::updateQuality);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   private void updateQuality(@NonNull MediaSelectionState selectionState) {

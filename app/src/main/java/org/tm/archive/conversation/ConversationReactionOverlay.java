@@ -23,7 +23,7 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
+import androidx.constraintlayout.widget.Barrier;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
@@ -33,6 +33,7 @@ import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.DimensionUnit;
+import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.animation.AnimationCompleteListener;
 import org.tm.archive.components.emoji.EmojiImageView;
@@ -42,6 +43,7 @@ import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.ReactionRecord;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
@@ -166,16 +168,11 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     setupSelectedEmoji();
 
-    if (Build.VERSION.SDK_INT >= 21) {
-      View statusBarBackground = activity.findViewById(android.R.id.statusBarBackground);
-      statusBarHeight = statusBarBackground == null ? 0 : statusBarBackground.getHeight();
+    View statusBarBackground = activity.findViewById(android.R.id.statusBarBackground);
+    statusBarHeight = statusBarBackground == null ? 0 : statusBarBackground.getHeight();
 
-      View navigationBarBackground = activity.findViewById(android.R.id.navigationBarBackground);
-      bottomNavigationBarHeight = navigationBarBackground == null ? 0 : navigationBarBackground.getHeight();
-    } else {
-      statusBarHeight           = ViewUtil.getStatusBarHeight(this);
-      bottomNavigationBarHeight = ViewUtil.getNavigationBarHeight(this);
-    }
+    View navigationBarBackground = activity.findViewById(android.R.id.navigationBarBackground);
+    bottomNavigationBarHeight = navigationBarBackground == null ? 0 : navigationBarBackground.getHeight();
 
     if (zeroNavigationBarHeightForConfiguration()) {
       bottomNavigationBarHeight = 0;
@@ -199,10 +196,8 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
     setVisibility(View.INVISIBLE);
 
-    if (Build.VERSION.SDK_INT >= 21) {
-      this.activity = activity;
-      updateSystemUiOnShow(activity);
-    }
+    this.activity = activity;
+    updateSystemUiOnShow(activity);
 
     ViewKt.doOnLayout(this, v -> {
       showAfterLayout(activity, conversationMessage, lastSeenDownPoint, isMessageOnLeft);
@@ -414,6 +409,12 @@ public final class ConversationReactionOverlay extends FrameLayout {
   }
 
   private int getInputPanelHeight(@NonNull Activity activity) {
+    if (SignalStore.internalValues().useConversationFragmentV2()) {
+      Barrier conversationBottomPanelBarrier = activity.findViewById(R.id.conversation_bottom_panel_barrier);
+
+      return activity.getResources().getDisplayMetrics().heightPixels - conversationBottomPanelBarrier.getTop();
+    }
+
     View bottomPanel = activity.findViewById(R.id.conversation_activity_panel_parent);
     View emojiDrawer = activity.findViewById(R.id.emoji_drawer);
 
@@ -434,7 +435,6 @@ public final class ConversationReactionOverlay extends FrameLayout {
     }
   }
 
-  @RequiresApi(api = 21)
   private void updateSystemUiOnShow(@NonNull Activity activity) {
     Window window   = activity.getWindow();
     int    barColor = ContextCompat.getColor(getContext(), R.color.conversation_item_selected_system_ui);
@@ -742,35 +742,43 @@ public final class ConversationReactionOverlay extends FrameLayout {
     List<ActionItem> items = new ArrayList<>();
 
     if (menuState.shouldShowReplyAction()) {
-      items.add(new ActionItem(R.drawable.ic_reply_24_tinted, getResources().getString(R.string.conversation_selection__menu_reply), () -> handleActionItemClicked(Action.REPLY)));
+      items.add(new ActionItem(R.drawable.symbol_reply_24, getResources().getString(R.string.conversation_selection__menu_reply), () -> handleActionItemClicked(Action.REPLY)));
+    }
+
+    if (FeatureFlags.editMessageSending() && menuState.shouldShowEditAction()) {
+      items.add(new ActionItem(R.drawable.symbol_edit_24, getResources().getString(R.string.conversation_selection__menu_edit), () -> handleActionItemClicked(Action.EDIT)));
     }
 
     if (menuState.shouldShowForwardAction()) {
-      items.add(new ActionItem(R.drawable.ic_forward_24_tinted, getResources().getString(R.string.conversation_selection__menu_forward), () -> handleActionItemClicked(Action.FORWARD)));
+      items.add(new ActionItem(R.drawable.symbol_forward_24, getResources().getString(R.string.conversation_selection__menu_forward), () -> handleActionItemClicked(Action.FORWARD)));
     }
 
     if (menuState.shouldShowResendAction()) {
-      items.add(new ActionItem(R.drawable.ic_retry_24, getResources().getString(R.string.conversation_selection__menu_resend_message), () -> handleActionItemClicked(Action.RESEND)));
+      items.add(new ActionItem(R.drawable.symbol_refresh_24, getResources().getString(R.string.conversation_selection__menu_resend_message), () -> handleActionItemClicked(Action.RESEND)));
     }
 
     if (menuState.shouldShowSaveAttachmentAction()) {
-      items.add(new ActionItem(R.drawable.ic_save_24_tinted, getResources().getString(R.string.conversation_selection__menu_save), () -> handleActionItemClicked(Action.DOWNLOAD)));
+      items.add(new ActionItem(R.drawable.symbol_save_android_24, getResources().getString(R.string.conversation_selection__menu_save), () -> handleActionItemClicked(Action.DOWNLOAD)));
     }
 
     if (menuState.shouldShowCopyAction()) {
-      items.add(new ActionItem(R.drawable.ic_copy_24_tinted, getResources().getString(R.string.conversation_selection__menu_copy), () -> handleActionItemClicked(Action.COPY)));
+      items.add(new ActionItem(R.drawable.symbol_copy_android_24, getResources().getString(R.string.conversation_selection__menu_copy), () -> handleActionItemClicked(Action.COPY)));
     }
 
-    items.add(new ActionItem(R.drawable.ic_select_24_tinted, getResources().getString(R.string.conversation_selection__menu_multi_select), () -> handleActionItemClicked(Action.MULTISELECT)));
+    if (menuState.shouldShowPaymentDetails()) {
+      items.add(new ActionItem(R.drawable.symbol_payment_24, getResources().getString(R.string.conversation_selection__menu_payment_details), () -> handleActionItemClicked(Action.PAYMENT_DETAILS)));
+    }
+
+    items.add(new ActionItem(R.drawable.symbol_check_circle_24, getResources().getString(R.string.conversation_selection__menu_multi_select), () -> handleActionItemClicked(Action.MULTISELECT)));
 
     if (menuState.shouldShowDetailsAction()) {
-      items.add(new ActionItem(R.drawable.ic_info_tinted_24, getResources().getString(R.string.conversation_selection__menu_message_details), () -> handleActionItemClicked(Action.VIEW_INFO)));
+      items.add(new ActionItem(R.drawable.symbol_info_24, getResources().getString(R.string.conversation_selection__menu_message_details), () -> handleActionItemClicked(Action.VIEW_INFO)));
     }
 
     backgroundView.setVisibility(menuState.shouldShowReactions() ? View.VISIBLE : View.INVISIBLE);
     foregroundView.setVisibility(menuState.shouldShowReactions() ? View.VISIBLE : View.INVISIBLE);
 
-    items.add(new ActionItem(R.drawable.ic_delete_tinted_24, getResources().getString(R.string.conversation_selection__menu_delete), () -> handleActionItemClicked(Action.DELETE)));
+    items.add(new ActionItem(R.drawable.symbol_trash_24, getResources().getString(R.string.conversation_selection__menu_delete), () -> handleActionItemClicked(Action.DELETE)));
 
     return items;
   }
@@ -904,7 +912,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
     inputShadeAnim.setDuration(duration);
     animators.add(inputShadeAnim);
 
-    if (Build.VERSION.SDK_INT >= 21 && activity != null) {
+    if (activity != null) {
       ValueAnimator statusBarAnim = ValueAnimator.ofArgb(activity.getWindow().getStatusBarColor(), originalStatusBarColor);
       statusBarAnim.setDuration(duration);
       statusBarAnim.addUpdateListener(animation -> {
@@ -971,11 +979,13 @@ public final class ConversationReactionOverlay extends FrameLayout {
 
   public enum Action {
     REPLY,
+    EDIT,
     FORWARD,
     RESEND,
     DOWNLOAD,
     COPY,
     MULTISELECT,
+    PAYMENT_DETAILS,
     VIEW_INFO,
     DELETE,
   }

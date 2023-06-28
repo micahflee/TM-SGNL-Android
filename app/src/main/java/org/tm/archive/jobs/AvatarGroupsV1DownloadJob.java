@@ -1,15 +1,16 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.InvalidMessageException;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.GroupDatabase.GroupRecord;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.profiles.AvatarHelper;
@@ -49,8 +50,8 @@ public final class AvatarGroupsV1DownloadJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_GROUP_ID, groupId.toString()).build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_GROUP_ID, groupId.toString()).serialize();
   }
 
   @Override
@@ -60,8 +61,8 @@ public final class AvatarGroupsV1DownloadJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    GroupDatabase         database   = SignalDatabase.groups();
-    Optional<GroupRecord> record     = database.getGroup(groupId);
+    GroupTable            database = SignalDatabase.groups();
+    Optional<GroupRecord> record   = database.getGroup(groupId);
     File                  attachment = null;
 
     try {
@@ -112,7 +113,8 @@ public final class AvatarGroupsV1DownloadJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<AvatarGroupsV1DownloadJob> {
     @Override
-    public @NonNull AvatarGroupsV1DownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull AvatarGroupsV1DownloadJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
       return new AvatarGroupsV1DownloadJob(parameters, GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)).requireV1());
     }
   }

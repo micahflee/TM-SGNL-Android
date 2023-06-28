@@ -8,11 +8,12 @@ import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.MessageRecordUtil;
+import org.tm.archive.util.MessageConstraintsUtil;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
-final class MenuState {
+public final class MenuState {
 
   private static final int MAX_FORWARDABLE_COUNT = 32;
 
@@ -24,6 +25,8 @@ final class MenuState {
   private final boolean copy;
   private final boolean delete;
   private final boolean reactions;
+  private final boolean paymentDetails;
+  private final boolean edit;
 
   private MenuState(@NonNull Builder builder) {
     forward        = builder.forward;
@@ -34,44 +37,54 @@ final class MenuState {
     copy           = builder.copy;
     delete         = builder.delete;
     reactions      = builder.reactions;
+    paymentDetails = builder.paymentDetails;
+    edit           = builder.edit;
   }
 
-  boolean shouldShowForwardAction() {
+  public boolean shouldShowForwardAction() {
     return forward;
   }
 
-  boolean shouldShowReplyAction() {
+  public boolean shouldShowReplyAction() {
     return reply;
   }
 
-  boolean shouldShowDetailsAction() {
+  public boolean shouldShowDetailsAction() {
     return details;
   }
 
-  boolean shouldShowSaveAttachmentAction() {
+  public boolean shouldShowSaveAttachmentAction() {
     return saveAttachment;
   }
 
-  boolean shouldShowResendAction() {
+  public boolean shouldShowResendAction() {
     return resend;
   }
 
-  boolean shouldShowCopyAction() {
+  public boolean shouldShowCopyAction() {
     return copy;
   }
 
-  boolean shouldShowDeleteAction() {
+  public boolean shouldShowDeleteAction() {
     return delete;
   }
 
-  boolean shouldShowReactions() {
+  public boolean shouldShowReactions() {
     return reactions;
   }
 
-  static MenuState getMenuState(@NonNull Recipient conversationRecipient,
-                                @NonNull Set<MultiselectPart> selectedParts,
-                                boolean shouldShowMessageRequest,
-                                boolean isNonAdminInAnnouncementGroup)
+  public boolean shouldShowPaymentDetails() {
+    return paymentDetails;
+  }
+
+  public boolean shouldShowEditAction() {
+    return edit;
+  }
+
+  public static MenuState getMenuState(@NonNull Recipient conversationRecipient,
+                                       @NonNull Set<MultiselectPart> selectedParts,
+                                       boolean shouldShowMessageRequest,
+                                       boolean isNonAdminInAnnouncementGroup)
   {
     
     Builder builder         = new Builder();
@@ -84,6 +97,7 @@ final class MenuState {
     boolean hasPendingMedia = false;
     boolean mediaIsSelected = false;
     boolean hasGift         = false;
+    boolean hasPayment       = false;
 
     for (MultiselectPart part : selectedParts) {
       MessageRecord messageRecord = part.getMessageRecord();
@@ -121,14 +135,18 @@ final class MenuState {
       if (MessageRecordUtil.hasGiftBadge(messageRecord)) {
         hasGift = true;
       }
+
+      if (messageRecord.isPaymentNotification()) {
+        hasPayment = true;
+      }
     }
 
     boolean shouldShowForwardAction = !actionMessage   &&
-                                      !sharedContact   &&
                                       !viewOnce        &&
                                       !remoteDelete    &&
                                       !hasPendingMedia &&
                                       !hasGift         &&
+                                      !hasPayment      &&
                                       selectedParts.size() <= MAX_FORWARDABLE_COUNT;
 
     int uniqueRecords = selectedParts.stream()
@@ -141,7 +159,8 @@ final class MenuState {
              .shouldShowReplyAction(false)
              .shouldShowDetailsAction(false)
              .shouldShowSaveAttachmentAction(false)
-             .shouldShowResendAction(false);
+             .shouldShowResendAction(false)
+             .shouldShowEdit(false);
     } else {
       MessageRecord messageRecord = selectedParts.iterator().next().getMessageRecord();
 
@@ -158,11 +177,16 @@ final class MenuState {
              .shouldShowForwardAction(shouldShowForwardAction)
              .shouldShowDetailsAction(!actionMessage && !conversationRecipient.isReleaseNotes())
              .shouldShowReplyAction(canReplyToMessage(conversationRecipient, actionMessage, messageRecord, shouldShowMessageRequest, isNonAdminInAnnouncementGroup));
+
+      builder.shouldShowEdit(!actionMessage &&
+                             hasText &&
+                             MessageConstraintsUtil.isValidEditMessageSend(messageRecord, System.currentTimeMillis()));
     }
 
-    return builder.shouldShowCopyAction(!actionMessage && !remoteDelete && hasText && !hasGift)
+    return builder.shouldShowCopyAction(!actionMessage && !remoteDelete && hasText && !hasGift && !hasPayment)
                   .shouldShowDeleteAction(!hasInMemory && onlyContainsCompleteMessages(selectedParts))
                   .shouldShowReactions(!conversationRecipient.isReleaseNotes())
+                  .shouldShowPaymentDetails(hasPayment)
                   .build();
   }
 
@@ -179,33 +203,20 @@ final class MenuState {
                                    boolean isDisplayingMessageRequest,
                                    boolean isNonAdminInAnnouncementGroup)
   {
-    return !actionMessage                                                              &&
-           !isNonAdminInAnnouncementGroup                                              &&
-           !messageRecord.isRemoteDelete()                                             &&
-           !messageRecord.isPending()                                                  &&
-           !messageRecord.isFailed()                                                   &&
-           !isDisplayingMessageRequest                                                 &&
-           messageRecord.isSecure()                                                    &&
+    return !actionMessage &&
+           !isNonAdminInAnnouncementGroup &&
+           !messageRecord.isRemoteDelete() &&
+           !messageRecord.isPending() &&
+           !messageRecord.isFailed() &&
+           !isDisplayingMessageRequest &&
+           messageRecord.isSecure() &&
            (!conversationRecipient.isGroup() || conversationRecipient.isActiveGroup()) &&
-           !messageRecord.getRecipient().isBlocked()                                   &&
+           !messageRecord.getFromRecipient().isBlocked() &&
            !conversationRecipient.isReleaseNotes();
   }
 
   static boolean isActionMessage(@NonNull MessageRecord messageRecord) {
-    return messageRecord.isGroupAction() ||
-           messageRecord.isCallLog() ||
-           messageRecord.isJoined() ||
-           messageRecord.isExpirationTimerUpdate() ||
-           messageRecord.isEndSession() ||
-           messageRecord.isIdentityUpdate() ||
-           messageRecord.isIdentityVerified() ||
-           messageRecord.isIdentityDefault() ||
-           messageRecord.isProfileChange() ||
-           messageRecord.isGroupV1MigrationEvent() ||
-           messageRecord.isChatSessionRefresh() ||
-           messageRecord.isInMemoryMessageRecord() ||
-           messageRecord.isChangeNumber() ||
-           messageRecord.isBoostRequest();
+    return messageRecord.isInMemoryMessageRecord() || messageRecord.isUpdate();
   }
 
   private final static class Builder {
@@ -218,6 +229,8 @@ final class MenuState {
     private boolean copy;
     private boolean delete;
     private boolean reactions;
+    private boolean paymentDetails;
+    private boolean edit;
 
     @NonNull Builder shouldShowForwardAction(boolean forward) {
       this.forward = forward;
@@ -256,6 +269,16 @@ final class MenuState {
 
     @NonNull Builder shouldShowReactions(boolean reactions) {
       this.reactions = reactions;
+      return this;
+    }
+
+    @NonNull Builder shouldShowPaymentDetails(boolean paymentDetails) {
+      this.paymentDetails = paymentDetails;
+      return this;
+    }
+
+    @NonNull Builder shouldShowEdit(boolean edit) {
+      this.edit = edit;
       return this;
     }
 

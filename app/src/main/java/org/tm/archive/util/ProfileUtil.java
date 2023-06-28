@@ -17,7 +17,7 @@ import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.badges.models.Badge;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Job;
@@ -378,7 +378,7 @@ public final class ProfileUtil {
   }
 
   private static @NonNull SignalServiceAddress toSignalServiceAddress(@NonNull Context context, @NonNull Recipient recipient) throws IOException {
-    if (recipient.getRegistered() == RecipientDatabase.RegisteredState.NOT_REGISTERED) {
+    if (recipient.getRegistered() == RecipientTable.RegisteredState.NOT_REGISTERED) {
       if (recipient.hasServiceId()) {
         return new SignalServiceAddress(recipient.requireServiceId(), recipient.getE164().orElse(null));
       } else {

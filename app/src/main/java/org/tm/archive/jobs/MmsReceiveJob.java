@@ -1,6 +1,7 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.mms.pdu_alt.GenericPdu;
 import com.google.android.mms.pdu_alt.NotificationInd;
@@ -9,10 +10,10 @@ import com.google.android.mms.pdu_alt.PduParser;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.util.Pair;
-import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.Base64;
@@ -44,10 +45,10 @@ public class MmsReceiveJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_DATA, Base64.encodeBytes(data))
-                             .putInt(KEY_SUBSCRIPTION_ID, subscriptionId)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_DATA, Base64.encodeBytes(data))
+                                    .putInt(KEY_SUBSCRIPTION_ID, subscriptionId)
+                                    .serialize();
   }
 
   @Override
@@ -76,14 +77,18 @@ public class MmsReceiveJob extends BaseJob {
     } else if (isNotification(pdu) && isSelf(pdu)) {
       Log.w(TAG, "Received an MMS from ourselves! Ignoring.");
     } else if (isNotification(pdu)) {
-      MessageDatabase  database           = SignalDatabase.mms();
+      MessageTable     database           = SignalDatabase.messages();
       Pair<Long, Long> messageAndThreadId = database.insertMessageInbox((NotificationInd)pdu, subscriptionId);
 
-      Log.i(TAG, "Inserted received MMS notification...");
+      if (messageAndThreadId.first() > 0) {
+        Log.i(TAG, "Inserted received MMS notification...");
 
-      ApplicationDependencies.getJobManager().add(new MmsDownloadJob(messageAndThreadId.first(),
-                                                                     messageAndThreadId.second(),
-                                                                     true));
+        ApplicationDependencies.getJobManager().add(new MmsDownloadJob(messageAndThreadId.first(),
+                                                                       messageAndThreadId.second(),
+                                                                       true));
+      } else {
+        Log.w(TAG, "Did not insert MMS because it was a duplicate!");
+      }
     } else {
       Log.w(TAG, "Unable to process MMS.");
     }
@@ -123,8 +128,9 @@ public class MmsReceiveJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<MmsReceiveJob> {
     @Override
-    public @NonNull MmsReceiveJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull MmsReceiveJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       try {
+        JsonJobData data = JsonJobData.deserialize(serializedData);
         return new MmsReceiveJob(parameters, Base64.decode(data.getString(KEY_DATA)), data.getInt(KEY_SUBSCRIPTION_ID));
       } catch (IOException e) {
         throw new AssertionError(e);

@@ -1,5 +1,6 @@
 package org.tm.archive.keyvalue
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
@@ -15,6 +16,7 @@ import org.tm.archive.crypto.ProfileKeyUtil
 import org.tm.archive.crypto.storage.PreKeyMetadataStore
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobs.PreKeysSyncJob
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.service.KeyCachingService
 import org.tm.archive.util.Base64
@@ -24,7 +26,6 @@ import org.whispersystems.signalservice.api.push.ACI
 import org.whispersystems.signalservice.api.push.PNI
 import org.whispersystems.signalservice.api.push.ServiceIds
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
-import java.lang.IllegalStateException
 import java.security.SecureRandom
 
 internal class AccountValues internal constructor(store: KeyValueStore) : SignalStoreValues(store) {
@@ -46,7 +47,7 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
     private const val KEY_ACI_SIGNED_PREKEY_REGISTERED = "account.aci_signed_prekey_registered"
     private const val KEY_ACI_NEXT_SIGNED_PREKEY_ID = "account.aci_next_signed_prekey_id"
     private const val KEY_ACI_ACTIVE_SIGNED_PREKEY_ID = "account.aci_active_signed_prekey_id"
-    private const val KEY_ACI_SIGNED_PREKEY_FAILURE_COUNT = "account.aci_signed_prekey_failure_count"
+    private const val KEY_ACI_LAST_SIGNED_PREKEY_ROTATION_TIME = "account.aci_last_signed_prekey_rotation_time"
     private const val KEY_ACI_NEXT_ONE_TIME_PREKEY_ID = "account.aci_next_one_time_prekey_id"
 
     private const val KEY_PNI_IDENTITY_PUBLIC_KEY = "account.pni_identity_public_key"
@@ -54,15 +55,18 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
     private const val KEY_PNI_SIGNED_PREKEY_REGISTERED = "account.pni_signed_prekey_registered"
     private const val KEY_PNI_NEXT_SIGNED_PREKEY_ID = "account.pni_next_signed_prekey_id"
     private const val KEY_PNI_ACTIVE_SIGNED_PREKEY_ID = "account.pni_active_signed_prekey_id"
-    private const val KEY_PNI_SIGNED_PREKEY_FAILURE_COUNT = "account.pni_signed_prekey_failure_count"
+    private const val KEY_PNI_LAST_SIGNED_PREKEY_ROTATION_TIME = "account.pni_last_signed_prekey_rotation_time"
     private const val KEY_PNI_NEXT_ONE_TIME_PREKEY_ID = "account.pni_next_one_time_prekey_id"
 
     @VisibleForTesting
     const val KEY_E164 = "account.e164"
+
     @VisibleForTesting
     const val KEY_ACI = "account.aci"
+
     @VisibleForTesting
     const val KEY_PNI = "account.pni"
+
     @VisibleForTesting
     const val KEY_IS_REGISTERED = "account.is_registered"
   }
@@ -84,7 +88,7 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
       KEY_ACI_IDENTITY_PUBLIC_KEY,
       KEY_ACI_IDENTITY_PRIVATE_KEY,
       KEY_PNI_IDENTITY_PUBLIC_KEY,
-      KEY_PNI_IDENTITY_PRIVATE_KEY,
+      KEY_PNI_IDENTITY_PRIVATE_KEY
     )
   }
 
@@ -253,7 +257,7 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
     override var nextSignedPreKeyId: Int by integerValue(KEY_ACI_NEXT_SIGNED_PREKEY_ID, SecureRandom().nextInt(Medium.MAX_VALUE))
     override var activeSignedPreKeyId: Int by integerValue(KEY_ACI_ACTIVE_SIGNED_PREKEY_ID, -1)
     override var isSignedPreKeyRegistered: Boolean by booleanValue(KEY_ACI_SIGNED_PREKEY_REGISTERED, false)
-    override var signedPreKeyFailureCount: Int by integerValue(KEY_ACI_SIGNED_PREKEY_FAILURE_COUNT, 0)
+    override var lastSignedPreKeyRotationTime: Long by longValue(KEY_ACI_LAST_SIGNED_PREKEY_ROTATION_TIME, System.currentTimeMillis() - PreKeysSyncJob.REFRESH_INTERVAL)
     override var nextOneTimePreKeyId: Int by integerValue(KEY_ACI_NEXT_ONE_TIME_PREKEY_ID, SecureRandom().nextInt(Medium.MAX_VALUE))
   }
 
@@ -262,7 +266,7 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
     override var nextSignedPreKeyId: Int by integerValue(KEY_PNI_NEXT_SIGNED_PREKEY_ID, SecureRandom().nextInt(Medium.MAX_VALUE))
     override var activeSignedPreKeyId: Int by integerValue(KEY_PNI_ACTIVE_SIGNED_PREKEY_ID, -1)
     override var isSignedPreKeyRegistered: Boolean by booleanValue(KEY_PNI_SIGNED_PREKEY_REGISTERED, false)
-    override var signedPreKeyFailureCount: Int by integerValue(KEY_PNI_SIGNED_PREKEY_FAILURE_COUNT, 0)
+    override var lastSignedPreKeyRotationTime: Long by longValue(KEY_PNI_LAST_SIGNED_PREKEY_ROTATION_TIME, System.currentTimeMillis() - PreKeysSyncJob.REFRESH_INTERVAL)
     override var nextOneTimePreKeyId: Int by integerValue(KEY_PNI_NEXT_ONE_TIME_PREKEY_ID, SecureRandom().nextInt(Medium.MAX_VALUE))
   }
 
@@ -310,7 +314,7 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
     }
 
     if (previous && !registered) {
-      clearLocalCredentials(ApplicationDependencies.getApplication())
+      clearLocalCredentials()
     }
   }
 
@@ -329,7 +333,7 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
   val isLinkedDevice: Boolean
     get() = !isPrimaryDevice
 
-  private fun clearLocalCredentials(context: Context) {
+  private fun clearLocalCredentials() {
     putString(KEY_SERVICE_PASSWORD, Util.getSecret(18))
 
     val newProfileKey = ProfileKeyUtil.createNew()
@@ -355,6 +359,8 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
   }
 
   /** Do not alter. If you need to migrate more stuff, create a new method. */
+  @SuppressLint("ApplySharedPref")
+  @Suppress("DEPRECATION")
   private fun migrateFromSharedPrefsV2(context: Context) {
     Log.i(TAG, "[V2] Migrating account values from shared prefs.")
 
@@ -390,7 +396,6 @@ internal class AccountValues internal constructor(store: KeyValueStore) : Signal
       .putInteger(KEY_ACI_NEXT_SIGNED_PREKEY_ID, defaultPrefs.getInt("pref_next_signed_pre_key_id", SecureRandom().nextInt(Medium.MAX_VALUE)))
       .putInteger(KEY_ACI_ACTIVE_SIGNED_PREKEY_ID, defaultPrefs.getInt("pref_active_signed_pre_key_id", -1))
       .putInteger(KEY_ACI_NEXT_ONE_TIME_PREKEY_ID, defaultPrefs.getInt("pref_next_pre_key_id", SecureRandom().nextInt(Medium.MAX_VALUE)))
-      .putInteger(KEY_ACI_SIGNED_PREKEY_FAILURE_COUNT, defaultPrefs.getInt("pref_signed_prekey_failure_count", 0))
       .putBoolean(KEY_ACI_SIGNED_PREKEY_REGISTERED, defaultPrefs.getBoolean("pref_signed_prekey_registered", false))
       .commit()
 

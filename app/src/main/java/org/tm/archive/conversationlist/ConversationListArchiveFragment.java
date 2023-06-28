@@ -107,7 +107,7 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
 
   @Override
   protected @DrawableRes int getArchiveIconRes() {
-    return R.drawable.ic_unarchive_24;
+    return R.drawable.symbol_archive_android_up_24;
   }
 
   @Override
@@ -124,7 +124,7 @@ public class ConversationListArchiveFragment extends ConversationListFragment im
 
   @SuppressLint("StaticFieldLeak")
   @Override
-  protected void onItemSwiped(long threadId, int unreadCount) {
+  protected void onItemSwiped(long threadId, int unreadCount, int unreadSelfMentionsCount) {
     archiveDecoration.onArchiveStarted();
     itemAnimator.enable();
 

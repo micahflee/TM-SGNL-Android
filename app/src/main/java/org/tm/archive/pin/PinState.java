@@ -8,6 +8,7 @@ import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.InvalidKeyException;
+import org.signal.libsignal.svr2.PinHash;
 import org.tm.archive.KbsEnclave;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.JobTracker;
@@ -16,15 +17,14 @@ import org.tm.archive.jobs.RefreshAttributesJob;
 import org.tm.archive.jobs.StorageForcePushJob;
 import org.tm.archive.keyvalue.KbsValues;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.lock.PinHashing;
 import org.tm.archive.lock.RegistrationLockReminders;
 import org.tm.archive.lock.v2.PinKeyboardType;
 import org.tm.archive.megaphone.Megaphones;
 import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.KbsPinData;
 import org.whispersystems.signalservice.api.KeyBackupService;
-import org.whispersystems.signalservice.api.kbs.HashedPin;
 import org.whispersystems.signalservice.api.kbs.MasterKey;
+import org.whispersystems.signalservice.api.kbs.PinHashUtil;
 import org.whispersystems.signalservice.internal.contacts.crypto.UnauthenticatedResponseException;
 
 import java.io.IOException;
@@ -43,7 +43,8 @@ public final class PinState {
   public static synchronized void onRegistration(@NonNull Context context,
                                                  @Nullable KbsPinData kbsData,
                                                  @Nullable String pin,
-                                                 boolean hasPinToRestore)
+                                                 boolean hasPinToRestore,
+                                                 boolean setRegistrationLockEnabled)
   {
     Log.i(TAG, "onRegistration()");
 
@@ -56,9 +57,13 @@ public final class PinState {
       TextSecurePreferences.setRegistrationLockLastReminderTime(context, System.currentTimeMillis());
       TextSecurePreferences.setRegistrationLockNextReminderInterval(context, RegistrationLockReminders.INITIAL_INTERVAL);
     } else if (kbsData != null && pin != null) {
-      Log.i(TAG, "Registration Lock V2");
-      TextSecurePreferences.setV1RegistrationLockEnabled(context, false);
-      SignalStore.kbsValues().setV2RegistrationLockEnabled(true);
+      if (setRegistrationLockEnabled) {
+        Log.i(TAG, "Registration Lock V2");
+        TextSecurePreferences.setV1RegistrationLockEnabled(context, false);
+        SignalStore.kbsValues().setV2RegistrationLockEnabled(true);
+      } else {
+        Log.i(TAG, "ReRegistration Skip SMS");
+      }
       SignalStore.kbsValues().setKbsMasterKey(kbsData, pin);
       SignalStore.pinValues().resetPinReminders();
       resetPinRetryCount(context, pin);
@@ -114,8 +119,8 @@ public final class PinState {
     MasterKey                         masterKey        = kbsValues.getOrCreateMasterKey();
     KeyBackupService                  keyBackupService = ApplicationDependencies.getKeyBackupService(kbsEnclave);
     KeyBackupService.PinChangeSession pinChangeSession = keyBackupService.newPinChangeSession();
-    HashedPin                         hashedPin        = PinHashing.hashPin(pin, pinChangeSession);
-    KbsPinData                        kbsData          = pinChangeSession.setPin(hashedPin, masterKey);
+    PinHash                           pinHash          = PinHashUtil.hashPin(pin, pinChangeSession.hashSalt());
+    KbsPinData                        kbsData          = pinChangeSession.setPin(pinHash, masterKey);
 
     kbsValues.setKbsMasterKey(kbsData, pin);
     kbsValues.setPinForgottenOrSkipped(false);
@@ -129,6 +134,7 @@ public final class PinState {
       bestEffortRefreshAttributes();
     } else {
       Log.i(TAG, "Not the first time setting a PIN. Enclave: " + kbsEnclave.getEnclaveName());
+      ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
     }
   }
 
@@ -215,8 +221,8 @@ public final class PinState {
     MasterKey                         masterKey        = kbsValues.getOrCreateMasterKey();
     KeyBackupService                  keyBackupService = ApplicationDependencies.getKeyBackupService(kbsEnclave);
     KeyBackupService.PinChangeSession pinChangeSession = keyBackupService.newPinChangeSession();
-    HashedPin                         hashedPin        = PinHashing.hashPin(pin, pinChangeSession);
-    KbsPinData                        kbsData          = pinChangeSession.setPin(hashedPin, masterKey);
+    PinHash                           pinHash          = PinHashUtil.hashPin(pin, pinChangeSession.hashSalt());
+    KbsPinData                        kbsData          = pinChangeSession.setPin(pinHash, masterKey);
 
     pinChangeSession.enableRegistrationLock(masterKey);
 
@@ -293,8 +299,8 @@ public final class PinState {
 
     KeyBackupService                  kbs              = ApplicationDependencies.getKeyBackupService(enclave);
     KeyBackupService.PinChangeSession pinChangeSession = kbs.newPinChangeSession();
-    HashedPin                         hashedPin        = PinHashing.hashPin(pin, pinChangeSession);
-    KbsPinData                        newData          = pinChangeSession.setPin(hashedPin, masterKey);
+    PinHash                           pinHash          = PinHashUtil.hashPin(pin, pinChangeSession.hashSalt());
+    KbsPinData                        newData          = pinChangeSession.setPin(pinHash, masterKey);
 
     SignalStore.kbsValues().setKbsMasterKey(newData, pin);
 

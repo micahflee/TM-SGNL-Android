@@ -2,11 +2,11 @@ package org.tm.archive.jobs
 
 import org.signal.core.util.logging.Log
 import org.signal.libsignal.protocol.InvalidMessageException
-import org.tm.archive.database.IdentityDatabase.VerifiedStatus
+import org.tm.archive.database.IdentityTable.VerifiedStatus
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobmanager.Data
 import org.tm.archive.jobmanager.Job
+import org.tm.archive.jobmanager.JsonJobData
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.net.NotPushRegisteredException
 import org.tm.archive.profiles.AvatarHelper
@@ -35,10 +35,10 @@ class MultiDeviceContactSyncJob(parameters: Parameters, private val attachmentPo
     AttachmentPointerUtil.createAttachmentPointer(contactsAttachment).toByteArray()
   )
 
-  override fun serialize(): Data {
-    return Data.Builder()
+  override fun serialize(): ByteArray? {
+    return JsonJobData.Builder()
       .putBlobAsString(KEY_ATTACHMENT_POINTER, attachmentPointer)
-      .build()
+      .serialize()
   }
 
   override fun getFactoryKey(): String {
@@ -141,7 +141,8 @@ class MultiDeviceContactSyncJob(parameters: Parameters, private val attachmentPo
   override fun onFailure() = Unit
 
   class Factory : Job.Factory<MultiDeviceContactSyncJob> {
-    override fun create(parameters: Parameters, data: Data): MultiDeviceContactSyncJob {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): MultiDeviceContactSyncJob {
+      val data = JsonJobData.deserialize(serializedData)
       return MultiDeviceContactSyncJob(parameters, data.getStringAsBlob(KEY_ATTACHMENT_POINTER))
     }
   }

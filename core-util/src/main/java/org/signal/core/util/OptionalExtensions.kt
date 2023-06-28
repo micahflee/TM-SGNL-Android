@@ -13,3 +13,11 @@ fun <E> Optional<E>.or(other: Optional<E>): Optional<E> {
 fun <E> Optional<E>.isAbsent(): Boolean {
   return !isPresent
 }
+
+fun <E : Any> E?.toOptional(): Optional<E> {
+  return Optional.ofNullable(this)
+}
+
+fun <E> Optional<E>.orNull(): E? {
+  return orElse(null)
+}

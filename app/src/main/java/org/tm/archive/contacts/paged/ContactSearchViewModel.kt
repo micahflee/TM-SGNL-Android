@@ -13,9 +13,11 @@ import org.signal.paging.LivePagedData
 import org.signal.paging.PagedData
 import org.signal.paging.PagingConfig
 import org.signal.paging.PagingController
+import org.tm.archive.conversationlist.chatfilter.ConversationFilterRequest
 import org.tm.archive.database.model.DistributionListPrivacyMode
 import org.tm.archive.groups.SelectionLimits
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.search.SearchRepository
 import org.tm.archive.util.livedata.Store
 import org.whispersystems.signalservice.api.util.Preconditions
 
@@ -26,8 +28,12 @@ class ContactSearchViewModel(
   private val selectionLimits: SelectionLimits,
   private val contactSearchRepository: ContactSearchRepository,
   private val performSafetyNumberChecks: Boolean,
-  private val safetyNumberRepository: SafetyNumberRepository = SafetyNumberRepository(),
+  private val arbitraryRepository: ArbitraryRepository?,
+  private val searchRepository: SearchRepository,
+  private val contactSearchPagedDataSourceRepository: ContactSearchPagedDataSourceRepository
 ) : ViewModel() {
+
+  private val safetyNumberRepository: SafetyNumberRepository by lazy { SafetyNumberRepository() }
 
   private val disposables = CompositeDisposable()
 
@@ -53,12 +59,21 @@ class ContactSearchViewModel(
   }
 
   fun setConfiguration(contactSearchConfiguration: ContactSearchConfiguration) {
-    val pagedDataSource = ContactSearchPagedDataSource(contactSearchConfiguration)
+    val pagedDataSource = ContactSearchPagedDataSource(
+      contactSearchConfiguration,
+      arbitraryRepository = arbitraryRepository,
+      searchRepository = searchRepository,
+      contactSearchPagedDataSourceRepository = contactSearchPagedDataSourceRepository
+    )
     pagedData.value = PagedData.createForLiveData(pagedDataSource, pagingConfig)
   }
 
   fun setQuery(query: String?) {
     configurationStore.update { it.copy(query = query) }
+  }
+
+  fun setConversationFilterRequest(conversationFilterRequest: ConversationFilterRequest) {
+    configurationStore.update { it.copy(conversationFilterRequest = conversationFilterRequest) }
   }
 
   fun expandSection(sectionKey: ContactSearchConfiguration.SectionKey) {
@@ -98,7 +113,11 @@ class ContactSearchViewModel(
     return selectionStore.state
   }
 
-  fun addToVisibleGroupStories(groupStories: Set<ContactSearchKey.RecipientSearchKey.Story>) {
+  fun clearSelection() {
+    selectionStore.update { emptySet() }
+  }
+
+  fun addToVisibleGroupStories(groupStories: Set<ContactSearchKey.RecipientSearchKey>) {
     disposables += contactSearchRepository.markDisplayAsStory(groupStories.map { it.recipientId }).subscribe {
       configurationStore.update { state ->
         state.copy(
@@ -139,10 +158,22 @@ class ContactSearchViewModel(
   class Factory(
     private val selectionLimits: SelectionLimits,
     private val repository: ContactSearchRepository,
-    private val performSafetyNumberChecks: Boolean
+    private val performSafetyNumberChecks: Boolean,
+    private val arbitraryRepository: ArbitraryRepository?,
+    private val searchRepository: SearchRepository,
+    private val contactSearchPagedDataSourceRepository: ContactSearchPagedDataSourceRepository
   ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-      return modelClass.cast(ContactSearchViewModel(selectionLimits, repository, performSafetyNumberChecks)) as T
+      return modelClass.cast(
+        ContactSearchViewModel(
+          selectionLimits = selectionLimits,
+          contactSearchRepository = repository,
+          performSafetyNumberChecks = performSafetyNumberChecks,
+          arbitraryRepository = arbitraryRepository,
+          searchRepository = searchRepository,
+          contactSearchPagedDataSourceRepository = contactSearchPagedDataSourceRepository
+        )
+      ) as T
     }
   }
 }

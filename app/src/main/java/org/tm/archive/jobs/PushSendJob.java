@@ -2,7 +2,6 @@ package org.tm.archive.jobs;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.media.Image;
 import android.os.Build;
 import android.text.TextUtils;
 
@@ -27,23 +26,26 @@ import org.tm.archive.blurhash.BlurHash;
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.contactshare.ContactModelMapper;
 import org.tm.archive.crypto.ProfileKeyUtil;
+import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.Mention;
+import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.database.model.ParentStoryId;
 import org.tm.archive.database.model.StickerRecord;
+import org.tm.archive.database.model.databaseprotos.BodyRangeList;
 import org.tm.archive.database.model.databaseprotos.GiftBadge;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.PartProgressEvent;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
+import org.tm.archive.jobmanager.JobTracker;
 import org.tm.archive.jobmanager.impl.BackoffUtil;
-import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.CertificateType;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.linkpreview.LinkPreview;
-import org.tm.archive.mms.DecryptableStreamUriLoader;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
-import org.tm.archive.mms.OutgoingMediaMessage;
+import org.tm.archive.mms.OutgoingMessage;
 import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.mms.QuoteModel;
 import org.tm.archive.net.NotPushRegisteredException;
@@ -65,9 +67,11 @@ import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentRemo
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
 import org.whispersystems.signalservice.api.messages.SignalServicePreview;
 import org.whispersystems.signalservice.api.messages.shared.SharedContact;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.ProofRequiredException;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -81,6 +85,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public abstract class PushSendJob extends SendJob {
 
@@ -90,22 +95,23 @@ public abstract class PushSendJob extends SendJob {
 
   protected PushSendJob(Job.Parameters parameters) {
     super(parameters);
-  }
-
-  protected static Job.Parameters constructParameters(@NonNull Recipient recipient, boolean hasMedia) {
-    return new Parameters.Builder()
-                         .setQueue(recipient.getId().toQueueKey(hasMedia))
-                         .addConstraint(NetworkConstraint.KEY)
-                         .setLifespan(TimeUnit.DAYS.toMillis(1))
-                         .setMaxAttempts(Parameters.UNLIMITED)
-                         .build();
+    //**BaseLine*
   }
 
   @Override
   protected final void onSend() throws Exception {
-    if (SignalStore.account().aciPreKeys().getSignedPreKeyFailureCount() > 5) {
-      PreKeysSyncJob.enqueue(true);
-      throw new TextSecureExpiredException("Too many signed prekey rotation failures");
+    long timeSinceSignedPreKeyRotation = System.currentTimeMillis() - SignalStore.account().aciPreKeys().getLastSignedPreKeyRotationTime();
+
+    if (timeSinceSignedPreKeyRotation > PreKeysSyncJob.MAXIMUM_ALLOWED_SIGNED_PREKEY_AGE || timeSinceSignedPreKeyRotation < 0) {
+      warn(TAG, "It's been too long since rotating our signed prekey (" + timeSinceSignedPreKeyRotation + " ms)! Attempting to rotate now.");
+
+      Optional<JobTracker.JobState> state = ApplicationDependencies.getJobManager().runSynchronously(PreKeysSyncJob.create(), TimeUnit.SECONDS.toMillis(30));
+
+      if (state.isPresent() && state.get() == JobTracker.JobState.SUCCESS) {
+        log(TAG, "Successfully refreshed prekeys. Continuing.");
+      } else {
+        throw new RetryLaterException(new TextSecureExpiredException("Failed to refresh prekeys! State: " + (state.isEmpty() ? "<empty>" : state.get())));
+      }
     }
 
     if (!Recipient.self().isRegistered()) {
@@ -203,7 +209,7 @@ public abstract class PushSendJob extends SendJob {
     return null;
   }
 
-  protected static Set<String> enqueueCompressingAndUploadAttachmentsChains(@NonNull JobManager jobManager, OutgoingMediaMessage message) {
+  protected static Set<String> enqueueCompressingAndUploadAttachmentsChains(@NonNull JobManager jobManager, OutgoingMessage message) {
     List<Attachment> attachments = new LinkedList<>();
 
     attachments.addAll(message.getAttachments());
@@ -292,22 +298,41 @@ public abstract class PushSendJob extends SendJob {
   }
 
   protected static void notifyMediaMessageDeliveryFailed(Context context, long messageId) {
-    long                     threadId           = SignalDatabase.mms().getThreadIdForMessage(messageId);
+    long                     threadId           = SignalDatabase.messages().getThreadIdForMessage(messageId);
     Recipient                recipient          = SignalDatabase.threads().getRecipientForThreadId(threadId);
-    ParentStoryId.GroupReply groupReplyStoryId  = SignalDatabase.mms().getParentStoryIdForGroupReply(messageId);
+    ParentStoryId.GroupReply groupReplyStoryId  = SignalDatabase.messages().getParentStoryIdForGroupReply(messageId);
+
+    boolean isStory = false;
+    try {
+      MessageRecord record = SignalDatabase.messages().getMessageRecord(messageId);
+      if (record instanceof MmsMessageRecord) {
+        isStory = (((MmsMessageRecord) record).getStoryType().isStory());
+      }
+    } catch (NoSuchMessageException e) {
+      Log.e(TAG, e);
+    }
 
     if (threadId != -1 && recipient != null) {
-      ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, ConversationId.fromThreadAndReply(threadId, groupReplyStoryId));
+      if (isStory) {
+        SignalDatabase.messages().markAsNotNotified(messageId);
+        ApplicationDependencies.getMessageNotifier().notifyStoryDeliveryFailed(context, recipient, ConversationId.forConversation(threadId));
+      } else {
+        ApplicationDependencies.getMessageNotifier().notifyMessageDeliveryFailed(context, recipient, ConversationId.fromThreadAndReply(threadId, groupReplyStoryId));
+      }
     }
   }
 
-  protected Optional<SignalServiceDataMessage.Quote> getQuoteFor(OutgoingMediaMessage message) throws IOException {
+  protected Optional<SignalServiceDataMessage.Quote> getQuoteFor(OutgoingMessage message) throws IOException {
     if (message.getOutgoingQuote() == null) return Optional.empty();
+    if (message.isMessageEdit()) {
+      return Optional.of(new SignalServiceDataMessage.Quote(0, ServiceId.UNKNOWN, "", null, null, SignalServiceDataMessage.Quote.Type.NORMAL, null));
+    }
 
     long                                                  quoteId              = message.getOutgoingQuote().getId();
     String                                                quoteBody            = message.getOutgoingQuote().getText();
     RecipientId                                           quoteAuthor          = message.getOutgoingQuote().getAuthor();
     List<SignalServiceDataMessage.Mention>                quoteMentions        = getMentionsFor(message.getOutgoingQuote().getMentions());
+    List<SignalServiceProtos.BodyRange>                   bodyRanges           = getBodyRanges(message.getOutgoingQuote().getBodyRanges());
     QuoteModel.Type                                       quoteType            = message.getOutgoingQuote().getType();
     List<SignalServiceDataMessage.Quote.QuotedAttachment> quoteAttachments     = new LinkedList<>();
     Optional<Attachment>                                  localQuoteAttachment = message.getOutgoingQuote()
@@ -356,13 +381,15 @@ public abstract class PushSendJob extends SendJob {
     Recipient quoteAuthorRecipient = Recipient.resolved(quoteAuthor);
 
     if (quoteAuthorRecipient.isMaybeRegistered()) {
-      return Optional.of(new SignalServiceDataMessage.Quote(quoteId, RecipientUtil.getOrFetchServiceId(context, quoteAuthorRecipient), quoteBody, quoteAttachments, quoteMentions, quoteType.getDataMessageType()));
+      return Optional.of(new SignalServiceDataMessage.Quote(quoteId, RecipientUtil.getOrFetchServiceId(context, quoteAuthorRecipient), quoteBody, quoteAttachments, quoteMentions, quoteType.getDataMessageType(), bodyRanges));
+    } else if (quoteAuthorRecipient.hasServiceId()) {
+      return Optional.of(new SignalServiceDataMessage.Quote(quoteId, quoteAuthorRecipient.requireServiceId(), quoteBody, quoteAttachments, quoteMentions, quoteType.getDataMessageType(), bodyRanges));
     } else {
       return Optional.empty();
     }
   }
 
-  protected Optional<SignalServiceDataMessage.Sticker> getStickerFor(OutgoingMediaMessage message) {
+  protected Optional<SignalServiceDataMessage.Sticker> getStickerFor(OutgoingMessage message) {
     Attachment stickerAttachment = Stream.of(message.getAttachments()).filter(Attachment::isSticker).findFirst().orElse(null);
 
     if (stickerAttachment == null) {
@@ -384,7 +411,7 @@ public abstract class PushSendJob extends SendJob {
     }
   }
 
-  protected Optional<SignalServiceDataMessage.Reaction> getStoryReactionFor(@NonNull OutgoingMediaMessage message, @NonNull SignalServiceDataMessage.StoryContext storyContext) {
+  protected Optional<SignalServiceDataMessage.Reaction> getStoryReactionFor(@NonNull OutgoingMessage message, @NonNull SignalServiceDataMessage.StoryContext storyContext) {
     if (message.isStoryReaction()) {
       return Optional.of(new SignalServiceDataMessage.Reaction(message.getBody(),
                                                                false,
@@ -395,7 +422,7 @@ public abstract class PushSendJob extends SendJob {
     }
   }
 
-  List<SharedContact> getSharedContactsFor(OutgoingMediaMessage mediaMessage) {
+  List<SharedContact> getSharedContactsFor(OutgoingMessage mediaMessage) {
     List<SharedContact> sharedContacts = new LinkedList<>();
 
     for (Contact contact : mediaMessage.getSharedContacts()) {
@@ -415,7 +442,7 @@ public abstract class PushSendJob extends SendJob {
     return sharedContacts;
   }
 
-  List<SignalServicePreview> getPreviewsFor(OutgoingMediaMessage mediaMessage) {
+  List<SignalServicePreview> getPreviewsFor(OutgoingMessage mediaMessage) {
     return Stream.of(mediaMessage.getLinkPreviews()).map(lp -> {
       SignalServiceAttachment attachment = lp.getThumbnail().isPresent() ? getAttachmentPointerFor(lp.getThumbnail().get()) : null;
       return new SignalServicePreview(lp.getUrl(), lp.getTitle(), lp.getDescription(), lp.getDate(), Optional.ofNullable(attachment));
@@ -428,7 +455,7 @@ public abstract class PushSendJob extends SendJob {
                  .toList();
   }
 
-  @Nullable SignalServiceDataMessage.GiftBadge getGiftBadgeFor(@NonNull OutgoingMediaMessage message) throws UndeliverableMessageException {
+  @Nullable SignalServiceDataMessage.GiftBadge getGiftBadgeFor(@NonNull OutgoingMessage message) throws UndeliverableMessageException {
     GiftBadge giftBadge = message.getGiftBadge();
     if (giftBadge == null) {
       return null;
@@ -441,6 +468,51 @@ public abstract class PushSendJob extends SendJob {
     } catch (InvalidInputException invalidInputException) {
       throw new UndeliverableMessageException(invalidInputException);
     }
+  }
+
+  protected @Nullable List<SignalServiceProtos.BodyRange> getBodyRanges(@NonNull OutgoingMessage message) {
+    return getBodyRanges(message.getBodyRanges());
+  }
+
+  protected @Nullable List<SignalServiceProtos.BodyRange> getBodyRanges(@Nullable BodyRangeList bodyRanges) {
+    if (bodyRanges == null || bodyRanges.getRangesCount() == 0) {
+      return null;
+    }
+
+    return bodyRanges
+        .getRangesList()
+        .stream()
+        .map(range -> {
+          SignalServiceProtos.BodyRange.Builder builder = SignalServiceProtos.BodyRange.newBuilder()
+                                                                                       .setStart(range.getStart())
+                                                                                       .setLength(range.getLength());
+
+          if (range.hasStyle()) {
+            switch (range.getStyle()) {
+              case BOLD:
+                builder.setStyle(SignalServiceProtos.BodyRange.Style.BOLD);
+                break;
+              case ITALIC:
+                builder.setStyle(SignalServiceProtos.BodyRange.Style.ITALIC);
+                break;
+              case SPOILER:
+                builder.setStyle(SignalServiceProtos.BodyRange.Style.SPOILER);
+                break;
+              case STRIKETHROUGH:
+                builder.setStyle(SignalServiceProtos.BodyRange.Style.STRIKETHROUGH);
+                break;
+              case MONOSPACE:
+                builder.setStyle(SignalServiceProtos.BodyRange.Style.MONOSPACE);
+                break;
+              default:
+                throw new IllegalArgumentException("Unrecognized style");
+            }
+          } else {
+            throw new IllegalArgumentException("Only supports style");
+          }
+
+          return builder.build();
+        }).collect(Collectors.toList());
   }
 
   protected void rotateSenderCertificateIfNecessary() throws IOException {
@@ -504,9 +576,9 @@ public abstract class PushSendJob extends SendJob {
 
     Log.w(TAG, "[Proof Required] Marking message as rate-limited. (id: " + messageId + ", mms: " + isMms + ", thread: " + threadId + ")");
     if (isMms) {
-      SignalDatabase.mms().markAsRateLimited(messageId);
+      SignalDatabase.messages().markAsRateLimited(messageId);
     } else {
-      SignalDatabase.sms().markAsRateLimited(messageId);
+      SignalDatabase.messages().markAsRateLimited(messageId);
     }
 
     if (proofRequired.getOptions().contains(ProofRequiredException.Option.RECAPTCHA)) {
@@ -514,7 +586,7 @@ public abstract class PushSendJob extends SendJob {
       SignalStore.rateLimit().markNeedsRecaptcha(proofRequired.getToken());
 
       if (recipient != null) {
-        ParentStoryId.GroupReply groupReply = SignalDatabase.mms().getParentStoryIdForGroupReply(messageId);
+        ParentStoryId.GroupReply groupReply = SignalDatabase.messages().getParentStoryIdForGroupReply(messageId);
         ApplicationDependencies.getMessageNotifier().notifyProofRequired(context, recipient, ConversationId.fromThreadAndReply(threadId, groupReply));
       } else {
         Log.w(TAG, "[Proof Required] No recipient! Couldn't notify.");

@@ -33,12 +33,14 @@
         android:layout_height="24dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="28dp"
+        android:padding="5dp"
         android:background="@drawable/stories_my_story_add_background"
         android:scaleType="centerInside"
         android:visibility="gone"
         app:layout_constraintStart_toStartOf="@id/avatar"
         app:layout_constraintTop_toTopOf="@id/avatar"
-        app:srcCompat="@drawable/ic_union" />
+        app:tint="@color/signal_colorBackground"
+        app:srcCompat="@drawable/symbol_plus_compact_16" />
 
     <org.tm.archive.components.emoji.EmojiTextView
         android:id="@+id/sender"
@@ -108,7 +110,7 @@
         app:layout_constraintBottom_toBottomOf="@id/story"
         app:layout_constraintEnd_toEndOf="@id/story"
         app:shapeAppearance="@style/ShapeAppearanceOverlay.Signal.Story.Preview"
-        tools:background="@color/green"
+        tools:background="@color/green_500"
         tools:visibility="visible" />
 
     <com.google.android.material.imageview.ShapeableImageView

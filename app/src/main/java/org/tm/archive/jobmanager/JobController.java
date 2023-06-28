@@ -40,7 +40,6 @@ class JobController {
   private final JobStorage             jobStorage;
   private final JobInstantiator        jobInstantiator;
   private final ConstraintInstantiator constraintInstantiator;
-  private final Data.Serializer        dataSerializer;
   private final JobTracker             jobTracker;
   private final Scheduler              scheduler;
   private final Debouncer              debouncer;
@@ -51,7 +50,6 @@ class JobController {
                 @NonNull JobStorage jobStorage,
                 @NonNull JobInstantiator jobInstantiator,
                 @NonNull ConstraintInstantiator constraintInstantiator,
-                @NonNull Data.Serializer dataSerializer,
                 @NonNull JobTracker jobTracker,
                 @NonNull Scheduler scheduler,
                 @NonNull Debouncer debouncer,
@@ -61,7 +59,6 @@ class JobController {
     this.jobStorage             = jobStorage;
     this.jobInstantiator        = jobInstantiator;
     this.constraintInstantiator = constraintInstantiator;
-    this.dataSerializer         = dataSerializer;
     this.jobTracker             = jobTracker;
     this.scheduler              = scheduler;
     this.debouncer              = debouncer;
@@ -80,66 +77,115 @@ class JobController {
   }
 
   @WorkerThread
-  synchronized void submitNewJobChain(@NonNull List<List<Job>> chain) {
-    chain = Stream.of(chain).filterNot(List::isEmpty).toList();
+  void submitNewJobChain(@NonNull List<List<Job>> chain) {
+    synchronized (this) {
+      chain = Stream.of(chain).filterNot(List::isEmpty).toList();
 
-    if (chain.isEmpty()) {
-      Log.w(TAG, "Tried to submit an empty job chain. Skipping.");
-      return;
+      if (chain.isEmpty()) {
+        Log.w(TAG, "Tried to submit an empty job chain. Skipping.");
+        return;
+      }
+
+      if (chainExceedsMaximumInstances(chain)) {
+        Job solo = chain.get(0).get(0);
+        jobTracker.onStateChange(solo, JobTracker.JobState.IGNORED);
+        Log.w(TAG, JobLogger.format(solo, "Already at the max instance count. Factory limit: " + solo.getParameters().getMaxInstancesForFactory() + ", Queue limit: " + solo.getParameters().getMaxInstancesForQueue() + ". Skipping."));
+        return;
+      }
+
+      insertJobChain(chain);
+      scheduleJobs(chain.get(0));
     }
 
-    if (chainExceedsMaximumInstances(chain)) {
-      Job solo = chain.get(0).get(0);
-      jobTracker.onStateChange(solo, JobTracker.JobState.IGNORED);
-      Log.w(TAG, JobLogger.format(solo, "Already at the max instance count. Factory limit: " + solo.getParameters().getMaxInstancesForFactory() + ", Queue limit: " + solo.getParameters().getMaxInstancesForQueue() + ". Skipping."));
-      return;
-    }
-
-    insertJobChain(chain);
+    // We have no control over what happens in jobs' onSubmit method, so we drop our lock to reduce the possibility of a deadlock
     triggerOnSubmit(chain);
-    notifyAll();
-    scheduleJobs(chain.get(0));
+
+    synchronized (this) {
+      notifyAll();
+    }
   }
 
   @WorkerThread
-  synchronized void submitJobWithExistingDependencies(@NonNull Job job, @NonNull Collection<String> dependsOn, @Nullable String dependsOnQueue) {
+  void submitJobWithExistingDependencies(@NonNull Job job, @NonNull Collection<String> dependsOn, @Nullable String dependsOnQueue) {
     List<List<Job>> chain = Collections.singletonList(Collections.singletonList(job));
 
-    if (chainExceedsMaximumInstances(chain)) {
-      jobTracker.onStateChange(job, JobTracker.JobState.IGNORED);
-      Log.w(TAG, JobLogger.format(job, "Already at the max instance count. Factory limit: " + job.getParameters().getMaxInstancesForFactory() + ", Queue limit: " + job.getParameters().getMaxInstancesForQueue() + ". Skipping."));
-      return;
+    synchronized (this) {
+      if (chainExceedsMaximumInstances(chain)) {
+        jobTracker.onStateChange(job, JobTracker.JobState.IGNORED);
+        Log.w(TAG, JobLogger.format(job, "Already at the max instance count. Factory limit: " + job.getParameters().getMaxInstancesForFactory() + ", Queue limit: " + job.getParameters().getMaxInstancesForQueue() + ". Skipping."));
+        return;
+      }
+
+      Set<String> allDependsOn = new HashSet<>(dependsOn);
+      Set<String> aliveDependsOn = Stream.of(dependsOn)
+                                         .filter(id -> jobStorage.getJobSpec(id) != null)
+                                         .collect(Collectors.toSet());
+
+      if (dependsOnQueue != null) {
+        List<String> inQueue = Stream.of(jobStorage.getJobsInQueue(dependsOnQueue))
+                                     .map(JobSpec::getId)
+                                     .toList();
+
+        allDependsOn.addAll(inQueue);
+        aliveDependsOn.addAll(inQueue);
+      }
+
+      if (jobTracker.haveAnyFailed(allDependsOn)) {
+        Log.w(TAG, "This job depends on a job that failed! Failing this job immediately.");
+        List<Job> dependents = onFailure(job);
+        job.setContext(application);
+        job.onFailure();
+        Stream.of(dependents).forEach(Job::onFailure);
+        return;
+      }
+
+      FullSpec fullSpec = buildFullSpec(job, aliveDependsOn);
+      jobStorage.insertJobs(Collections.singletonList(fullSpec));
+
+      scheduleJobs(Collections.singletonList(job));
     }
 
-    Set<String> allDependsOn   = new HashSet<>(dependsOn);
-    Set<String> aliveDependsOn = Stream.of(dependsOn)
-                                       .filter(id -> jobStorage.getJobSpec(id) != null)
-                                       .collect(Collectors.toSet());
-
-    if (dependsOnQueue != null) {
-      List<String> inQueue = Stream.of(jobStorage.getJobsInQueue(dependsOnQueue))
-                                   .map(JobSpec::getId)
-                                   .toList();
-
-      allDependsOn.addAll(inQueue);
-      aliveDependsOn.addAll(inQueue);
-    }
-
-    if (jobTracker.haveAnyFailed(allDependsOn)) {
-      Log.w(TAG, "This job depends on a job that failed! Failing this job immediately.");
-      List<Job> dependents = onFailure(job);
-      job.setContext(application);
-      job.onFailure();
-      Stream.of(dependents).forEach(Job::onFailure);
-      return;
-    }
-
-    FullSpec fullSpec = buildFullSpec(job, aliveDependsOn);
-    jobStorage.insertJobs(Collections.singletonList(fullSpec));
-
-    scheduleJobs(Collections.singletonList(job));
+    // We have no control over what happens in jobs' onSubmit method, so we drop our lock to reduce the possibility of a deadlock
     triggerOnSubmit(chain);
-    notifyAll();
+
+    synchronized (this) {
+      notifyAll();
+    }
+  }
+
+  @WorkerThread
+  void submitJobs(@NonNull List<Job> jobs) {
+    List<Job> canRun = new ArrayList<>(jobs.size());
+
+    synchronized (this) {
+      for (Job job : jobs) {
+        if (exceedsMaximumInstances(job)) {
+          jobTracker.onStateChange(job, JobTracker.JobState.IGNORED);
+          Log.w(TAG, JobLogger.format(job, "Already at the max instance count. Factory limit: " + job.getParameters().getMaxInstancesForFactory() + ", Queue limit: " + job.getParameters().getMaxInstancesForQueue() + ". Skipping."));
+        } else {
+          canRun.add(job);
+        }
+      }
+
+      if (canRun.isEmpty()) {
+        return;
+      }
+
+      List<FullSpec> fullSpecs = canRun.stream().map(it -> buildFullSpec(it, Collections.emptyList())).collect(java.util.stream.Collectors.toList());
+      jobStorage.insertJobs(fullSpecs);
+
+      scheduleJobs(canRun);
+    }
+
+    // We have no control over what happens in jobs' onSubmit method, so we drop our lock to reduce the possibility of a deadlock
+    for (Job job : canRun) {
+      job.setContext(application);
+      job.onSubmit();
+    }
+
+    synchronized (this) {
+      notifyAll();
+    }
   }
 
   @WorkerThread
@@ -180,7 +226,7 @@ class JobController {
     List<JobSpec> updatedJobs = new LinkedList<>();
 
     for (JobSpec job : allJobs) {
-      JobSpec updated = updater.update(job, dataSerializer);
+      JobSpec updated = updater.update(job);
       if (updated != job) {
         updatedJobs.add(updated);
       }
@@ -206,7 +252,7 @@ class JobController {
 
     int    nextRunAttempt     = job.getRunAttempt() + 1;
     long   nextRunAttemptTime = System.currentTimeMillis() + backoffInterval;
-    String serializedData     = dataSerializer.serialize(job.serialize());
+    byte[] serializedData     = job.serialize();
 
     jobStorage.updateJobAfterRetry(job.getId(), false, nextRunAttempt, nextRunAttemptTime, serializedData);
     jobTracker.onStateChange(job, JobTracker.JobState.PENDING);
@@ -230,7 +276,7 @@ class JobController {
   }
 
   @WorkerThread
-  synchronized void onSuccess(@NonNull Job job, @Nullable Data outputData) {
+  synchronized void onSuccess(@NonNull Job job, @Nullable byte[] outputData) {
     if (outputData != null) {
       List<JobSpec> updates = Stream.of(jobStorage.getDependencySpecsThatDependOnJob(job.getId()))
                                     .map(DependencySpec::getJobId)
@@ -345,25 +391,26 @@ class JobController {
   @WorkerThread
   private boolean chainExceedsMaximumInstances(@NonNull List<List<Job>> chain) {
     if (chain.size() == 1 && chain.get(0).size() == 1) {
-      Job solo = chain.get(0).get(0);
+      return exceedsMaximumInstances(chain.get(0).get(0));
+    } else {
+      return false;
+    }
+  }
 
-      boolean exceedsFactory = solo.getParameters().getMaxInstancesForFactory() != Job.Parameters.UNLIMITED &&
-                               jobStorage.getJobCountForFactory(solo.getFactoryKey()) >= solo.getParameters().getMaxInstancesForFactory();
+  @WorkerThread
+  private boolean exceedsMaximumInstances(@NonNull Job job) {
+    boolean exceedsFactory = job.getParameters().getMaxInstancesForFactory() != Job.Parameters.UNLIMITED &&
+                             jobStorage.getJobCountForFactory(job.getFactoryKey()) >= job.getParameters().getMaxInstancesForFactory();
 
-      if (exceedsFactory) {
-        return true;
-      }
-
-      boolean exceedsQueue   = solo.getParameters().getQueue() != null                                    &&
-                               solo.getParameters().getMaxInstancesForQueue() != Job.Parameters.UNLIMITED &&
-                               jobStorage.getJobCountForFactoryAndQueue(solo.getFactoryKey(), solo.getParameters().getQueue()) >= solo.getParameters().getMaxInstancesForQueue();
-
-      if (exceedsQueue) {
-        return true;
-      }
+    if (exceedsFactory) {
+      return true;
     }
 
-    return false;
+    boolean exceedsQueue   = job.getParameters().getQueue() != null                                    &&
+                             job.getParameters().getMaxInstancesForQueue() != Job.Parameters.UNLIMITED &&
+                             jobStorage.getJobCountForFactoryAndQueue(job.getFactoryKey(), job.getParameters().getQueue()) >= job.getParameters().getMaxInstancesForQueue();
+
+    return exceedsQueue;
   }
 
   @WorkerThread
@@ -402,7 +449,7 @@ class JobController {
                                   job.getRunAttempt(),
                                   job.getParameters().getMaxAttempts(),
                                   job.getParameters().getLifespan(),
-                                  dataSerializer.serialize(job.serialize()),
+                                  job.serialize(),
                                   null,
                                   false,
                                   job.getParameters().isMemoryOnly());
@@ -461,8 +508,7 @@ class JobController {
     Job.Parameters parameters = buildJobParameters(jobSpec, constraintSpecs);
 
     try {
-      Data data = dataSerializer.deserialize(jobSpec.getSerializedData());
-      Job  job  = jobInstantiator.instantiate(jobSpec.getFactoryKey(), parameters, data);
+      Job job = jobInstantiator.instantiate(jobSpec.getFactoryKey(), parameters, jobSpec.getSerializedData());
 
       job.setRunAttempt(jobSpec.getRunAttempt());
       job.setNextRunAttemptTime(jobSpec.getNextRunAttemptTime());
@@ -492,11 +538,11 @@ class JobController {
                   .setMaxAttempts(jobSpec.getMaxAttempts())
                   .setQueue(jobSpec.getQueueKey())
                   .setConstraints(Stream.of(constraintSpecs).map(ConstraintSpec::getFactoryKey).toList())
-                  .setInputData(jobSpec.getSerializedInputData() != null ? dataSerializer.deserialize(jobSpec.getSerializedInputData()) : null)
+                  .setInputData(jobSpec.getSerializedInputData())
                   .build();
   }
 
-  private @NonNull JobSpec mapToJobWithInputData(@NonNull JobSpec jobSpec, @NonNull Data inputData) {
+  private @NonNull JobSpec mapToJobWithInputData(@NonNull JobSpec jobSpec, @NonNull byte[] inputData) {
     return new JobSpec(jobSpec.getId(),
                        jobSpec.getFactoryKey(),
                        jobSpec.getQueueKey(),
@@ -506,7 +552,7 @@ class JobController {
                        jobSpec.getMaxAttempts(),
                        jobSpec.getLifespan(),
                        jobSpec.getSerializedData(),
-                       dataSerializer.serialize(inputData),
+                       inputData,
                        jobSpec.isRunning(),
                        jobSpec.isMemoryOnly());
   }

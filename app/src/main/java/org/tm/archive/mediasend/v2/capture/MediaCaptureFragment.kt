@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import app.cash.exhaustive.Exhaustive
 import io.reactivex.rxjava3.core.Flowable
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.mediasend.CameraFragment
@@ -20,7 +21,6 @@ import org.tm.archive.mediasend.v2.MediaSelectionViewModel
 import org.tm.archive.mms.MediaConstraints
 import org.tm.archive.permissions.Permissions
 import org.tm.archive.stories.Stories
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.navigation.safeNavigate
 import java.io.FileDescriptor
 import java.util.Optional
@@ -58,7 +58,7 @@ class MediaCaptureFragment : Fragment(R.layout.fragment_container), CameraFragme
       .replace(R.id.fragment_container, captureChildFragment as Fragment)
       .commitNowAllowingStateLoss()
 
-    viewModel.events.observe(viewLifecycleOwner) { event ->
+    lifecycleDisposable += viewModel.events.subscribe { event ->
       @Exhaustive
       when (event) {
         MediaCaptureEvent.MediaCaptureRenderFailed -> {

@@ -4,6 +4,7 @@ package org.tm.archive.jobs;
 import android.Manifest;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -20,10 +21,8 @@ import org.tm.archive.crypto.AttachmentSecretProvider;
 import org.tm.archive.database.NoExternalStorageException;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
-import org.tm.archive.jobmanager.impl.ChargingConstraint;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.service.GenericForegroundService;
@@ -57,8 +56,6 @@ public final class LocalBackupJob extends BaseJob {
                                                   .setMaxAttempts(3);
     if (force) {
       jobManager.cancelAllInQueue(QUEUE);
-    } else {
-      parameters.addConstraint(ChargingConstraint.KEY);
     }
 
     if (BackupUtil.isUserSelectionRequired(ApplicationDependencies.getApplication())) {
@@ -73,8 +70,8 @@ public final class LocalBackupJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -95,7 +92,7 @@ public final class LocalBackupJob extends BaseJob {
     ProgressUpdater updater = new ProgressUpdater(context.getString(R.string.LocalBackupJob_verifying_signal_backup));
     try (NotificationController notification = GenericForegroundService.startForegroundTask(context,
                                                                      context.getString(R.string.LocalBackupJob_creating_signal_backup),
-                                                                     NotificationChannels.BACKUPS,
+                                                                     NotificationChannels.getInstance().BACKUPS,
                                                                      R.drawable.ic_signal_backup))
     {
       updater.setNotification(notification);
@@ -130,7 +127,7 @@ public final class LocalBackupJob extends BaseJob {
                                                               this::isCanceled);
         stopwatch.split("backup-create");
 
-        boolean valid = BackupVerifier.verifyFile(new FileInputStream(tempFile), backupPassword, finishedEvent.getCount());
+        boolean valid = BackupVerifier.verifyFile(new FileInputStream(tempFile), backupPassword, finishedEvent.getCount(), this::isCanceled);
         stopwatch.split("backup-verify");
         stopwatch.stop(TAG);
 
@@ -164,6 +161,9 @@ public final class LocalBackupJob extends BaseJob {
       }
 
       BackupUtil.deleteOldBackups();
+    } catch (UnableToStartException e) {
+      Log.w(TAG, "This should not happen on API < 31");
+      throw new AssertionError(e);
     } finally {
       EventBus.getDefault().unregister(updater);
       updater.setNotification(null);
@@ -229,7 +229,7 @@ public final class LocalBackupJob extends BaseJob {
 
   public static class Factory implements Job.Factory<LocalBackupJob> {
     @Override
-    public @NonNull LocalBackupJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull LocalBackupJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new LocalBackupJob(parameters);
     }
   }

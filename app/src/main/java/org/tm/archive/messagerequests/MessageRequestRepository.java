@@ -6,14 +6,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 import androidx.core.util.Consumer;
 
+import org.signal.core.util.Result;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.MessageDatabase;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.MessageTable;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.database.ThreadTable;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeException;
 import org.tm.archive.groups.GroupManager;
@@ -23,7 +25,6 @@ import org.tm.archive.jobs.MultiDeviceMessageRequestResponseJob;
 import org.tm.archive.jobs.ReportSpamJob;
 import org.tm.archive.jobs.SendViewedReceiptJob;
 import org.tm.archive.notifications.MarkReadReceiver;
-import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
@@ -37,29 +38,34 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 
-final class MessageRequestRepository {
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import kotlin.Unit;
+
+public final class MessageRequestRepository {
 
   private static final String TAG = Log.tag(MessageRequestRepository.class);
 
   private final Context  context;
   private final Executor executor;
 
-  MessageRequestRepository(@NonNull Context context) {
+  public MessageRequestRepository(@NonNull Context context) {
     this.context  = context.getApplicationContext();
     this.executor = SignalExecutors.BOUNDED;
   }
 
-  void getGroups(@NonNull RecipientId recipientId, @NonNull Consumer<List<String>> onGroupsLoaded) {
+  public void getGroups(@NonNull RecipientId recipientId, @NonNull Consumer<List<String>> onGroupsLoaded) {
     executor.execute(() -> {
-      GroupDatabase groupDatabase = SignalDatabase.groups();
+      GroupTable groupDatabase = SignalDatabase.groups();
       onGroupsLoaded.accept(groupDatabase.getPushGroupNamesContainingMember(recipientId));
     });
   }
 
-  void getGroupInfo(@NonNull RecipientId recipientId, @NonNull Consumer<GroupInfo> onGroupInfoLoaded) {
+  public void getGroupInfo(@NonNull RecipientId recipientId, @NonNull Consumer<GroupInfo> onGroupInfoLoaded) {
     executor.execute(() -> {
-      GroupDatabase                       groupDatabase = SignalDatabase.groups();
-      Optional<GroupDatabase.GroupRecord> groupRecord   = groupDatabase.getGroup(recipientId);
+      GroupTable            groupDatabase = SignalDatabase.groups();
+      Optional<GroupRecord> groupRecord   = groupDatabase.getGroup(recipientId);
       onGroupInfoLoaded.accept(groupRecord.map(record -> {
         if (record.isV2Group()) {
           DecryptedGroup decryptedGroup = record.requireV2GroupProperties().getDecryptedGroup();
@@ -72,7 +78,32 @@ final class MessageRequestRepository {
   }
 
   @WorkerThread
-  @NonNull MessageRequestState getMessageRequestState(@NonNull Recipient recipient, long threadId) {
+  public @NonNull MessageRequestRecipientInfo getRecipientInfo(@NonNull RecipientId recipientId, long threadId) {
+    List<String>          sharedGroups = SignalDatabase.groups().getPushGroupNamesContainingMember(recipientId);
+    Optional<GroupRecord> groupRecord  = SignalDatabase.groups().getGroup(recipientId);
+    GroupInfo             groupInfo    = GroupInfo.ZERO;
+
+    if (groupRecord.isPresent()) {
+      if (groupRecord.get().isV2Group()) {
+        DecryptedGroup decryptedGroup = groupRecord.get().requireV2GroupProperties().getDecryptedGroup();
+        groupInfo = new GroupInfo(decryptedGroup.getMembersCount(), decryptedGroup.getPendingMembersCount(), decryptedGroup.getDescription());
+      } else {
+        groupInfo = new GroupInfo(groupRecord.get().getMembers().size(), 0, "");
+      }
+    }
+
+    Recipient recipient = Recipient.resolved(recipientId);
+
+    return new MessageRequestRecipientInfo(
+        recipient,
+        groupInfo,
+        sharedGroups,
+        getMessageRequestState(recipient, threadId)
+    );
+  }
+
+  @WorkerThread
+  public @NonNull MessageRequestState getMessageRequestState(@NonNull Recipient recipient, long threadId) {
     if (recipient.isBlocked()) {
       if (recipient.isGroup()) {
         return MessageRequestState.BLOCKED_GROUP;
@@ -115,25 +146,41 @@ final class MessageRequestRepository {
     } else {
       if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
         return MessageRequestState.NONE;
+      } else if (RecipientUtil.isRecipientHidden(threadId)) {
+        return MessageRequestState.INDIVIDUAL_HIDDEN;
       } else {
         return MessageRequestState.INDIVIDUAL;
       }
     }
   }
 
-  void acceptMessageRequest(@NonNull LiveRecipient liveRecipient,
-                            long threadId,
-                            @NonNull Runnable onMessageRequestAccepted,
-                            @NonNull GroupChangeErrorCallback error)
+  @SuppressWarnings("unchecked")
+  public @NonNull Single<Result<Unit, GroupChangeFailureReason>> acceptMessageRequest(@NonNull RecipientId recipientId, long threadId) {
+    //noinspection CodeBlock2Expr
+    return Single.<Result<Unit, GroupChangeFailureReason>>create(emitter -> {
+      acceptMessageRequest(
+          recipientId,
+          threadId,
+          () -> emitter.onSuccess(Result.success(Unit.INSTANCE)),
+          reason -> emitter.onSuccess(Result.failure(reason))
+      );
+    }).subscribeOn(Schedulers.io());
+  }
+
+  public void acceptMessageRequest(@NonNull RecipientId recipientId,
+                                   long threadId,
+                                   @NonNull Runnable onMessageRequestAccepted,
+                                   @NonNull GroupChangeErrorCallback error)
   {
     executor.execute(()-> {
-      if (liveRecipient.get().isPushV2Group()) {
+      Recipient recipient = Recipient.resolved(recipientId);
+      if (recipient.isPushV2Group()) {
         try {
           Log.i(TAG, "GV2 accepting invite");
-          GroupManager.acceptInvite(context, liveRecipient.get().requireGroupId().requireV2());
+          GroupManager.acceptInvite(context, recipient.requireGroupId().requireV2());
 
-          RecipientDatabase recipientDatabase = SignalDatabase.recipients();
-          recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
+          RecipientTable recipientTable = SignalDatabase.recipients();
+          recipientTable.setProfileSharing(recipientId, true);
 
           onMessageRequestAccepted.run();
         } catch (GroupChangeException | IOException e) {
@@ -141,21 +188,21 @@ final class MessageRequestRepository {
           error.onError(GroupChangeFailureReason.fromException(e));
         }
       } else {
-        RecipientDatabase recipientDatabase = SignalDatabase.recipients();
-        recipientDatabase.setProfileSharing(liveRecipient.getId(), true);
+        RecipientTable recipientTable = SignalDatabase.recipients();
+        recipientTable.setProfileSharing(recipientId, true);
 
         MessageSender.sendProfileKey(threadId);
 
-        List<MessageDatabase.MarkedMessageInfo> messageIds = SignalDatabase.threads().setEntireThreadRead(threadId);
+        List<MessageTable.MarkedMessageInfo> messageIds = SignalDatabase.threads().setEntireThreadRead(threadId);
         ApplicationDependencies.getMessageNotifier().updateNotification(context);
         MarkReadReceiver.process(context, messageIds);
 
-        List<MessageDatabase.MarkedMessageInfo> viewedInfos = SignalDatabase.mms().getViewedIncomingMessages(threadId);
+        List<MessageTable.MarkedMessageInfo> viewedInfos = SignalDatabase.messages().getViewedIncomingMessages(threadId);
 
-        SendViewedReceiptJob.enqueue(threadId, liveRecipient.getId(), viewedInfos);
+        SendViewedReceiptJob.enqueue(threadId, recipientId, viewedInfos);
 
         if (TextSecurePreferences.isMultiDevice(context)) {
-          ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(liveRecipient.getId()));
+          ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipientId));
         }
 
         onMessageRequestAccepted.run();
@@ -163,13 +210,26 @@ final class MessageRequestRepository {
     });
   }
 
-  void deleteMessageRequest(@NonNull LiveRecipient recipient,
-                            long threadId,
-                            @NonNull Runnable onMessageRequestDeleted,
-                            @NonNull GroupChangeErrorCallback error)
+  @SuppressWarnings("unchecked")
+  public @NonNull Single<Result<Unit, GroupChangeFailureReason>> deleteMessageRequest(@NonNull RecipientId recipientId, long threadId) {
+    //noinspection CodeBlock2Expr
+    return Single.<Result<Unit, GroupChangeFailureReason>>create(emitter -> {
+      deleteMessageRequest(
+          recipientId,
+          threadId,
+          () -> emitter.onSuccess(Result.success(Unit.INSTANCE)),
+          reason -> emitter.onSuccess(Result.failure(reason))
+      );
+    }).subscribeOn(Schedulers.io());
+  }
+
+  public void deleteMessageRequest(@NonNull RecipientId recipientId,
+                                   long threadId,
+                                   @NonNull Runnable onMessageRequestDeleted,
+                                   @NonNull GroupChangeErrorCallback error)
   {
     executor.execute(() -> {
-      Recipient resolved = recipient.resolve();
+      Recipient resolved = Recipient.resolved(recipientId);
 
       if (resolved.isGroup() && resolved.requireGroupId().isPush()) {
         try {
@@ -190,22 +250,34 @@ final class MessageRequestRepository {
       }
 
       if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forDelete(recipient.getId()));
+        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forDelete(recipientId));
       }
 
-      ThreadDatabase threadDatabase = SignalDatabase.threads();
-      threadDatabase.deleteConversation(threadId);
+      ThreadTable threadTable = SignalDatabase.threads();
+      threadTable.deleteConversation(threadId);
 
       onMessageRequestDeleted.run();
     });
   }
 
-  void blockMessageRequest(@NonNull LiveRecipient liveRecipient,
-                           @NonNull Runnable onMessageRequestBlocked,
-                           @NonNull GroupChangeErrorCallback error)
+  @SuppressWarnings("unchecked")
+  public @NonNull Single<Result<Unit, GroupChangeFailureReason>> blockMessageRequest(@NonNull RecipientId recipientId) {
+    //noinspection CodeBlock2Expr
+    return Single.<Result<Unit, GroupChangeFailureReason>>create(emitter -> {
+      blockMessageRequest(
+          recipientId,
+          () -> emitter.onSuccess(Result.success(Unit.INSTANCE)),
+          reason -> emitter.onSuccess(Result.failure(reason))
+      );
+    }).subscribeOn(Schedulers.io());
+  }
+
+  public void blockMessageRequest(@NonNull RecipientId recipientId,
+                                  @NonNull Runnable onMessageRequestBlocked,
+                                  @NonNull GroupChangeErrorCallback error)
   {
     executor.execute(() -> {
-      Recipient recipient = liveRecipient.resolve();
+      Recipient recipient = Recipient.resolved(recipientId);
       try {
         RecipientUtil.block(context, recipient);
       } catch (GroupChangeException | IOException e) {
@@ -213,23 +285,36 @@ final class MessageRequestRepository {
         error.onError(GroupChangeFailureReason.fromException(e));
         return;
       }
-      liveRecipient.refresh();
+      Recipient.live(recipientId).refresh();
 
       if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlock(liveRecipient.getId()));
+        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlock(recipientId));
       }
 
       onMessageRequestBlocked.run();
     });
   }
 
-  void blockAndReportSpamMessageRequest(@NonNull LiveRecipient liveRecipient,
-                                        long threadId,
-                                        @NonNull Runnable onMessageRequestBlocked,
-                                        @NonNull GroupChangeErrorCallback error)
+  @SuppressWarnings("unchecked")
+  public @NonNull Single<Result<Unit, GroupChangeFailureReason>> blockAndReportSpamMessageRequest(@NonNull RecipientId recipientId, long threadId) {
+    //noinspection CodeBlock2Expr
+    return Single.<Result<Unit, GroupChangeFailureReason>>create(emitter -> {
+      blockAndReportSpamMessageRequest(
+          recipientId,
+          threadId,
+          () -> emitter.onSuccess(Result.success(Unit.INSTANCE)),
+          reason -> emitter.onSuccess(Result.failure(reason))
+      );
+    }).subscribeOn(Schedulers.io());
+  }
+
+  public void blockAndReportSpamMessageRequest(@NonNull RecipientId recipientId,
+                                               long threadId,
+                                               @NonNull Runnable onMessageRequestBlocked,
+                                               @NonNull GroupChangeErrorCallback error)
   {
     executor.execute(() -> {
-      Recipient recipient = liveRecipient.resolve();
+      Recipient recipient = Recipient.resolved(recipientId);
       try{
         RecipientUtil.block(context, recipient);
       } catch (GroupChangeException | IOException e) {
@@ -237,37 +322,48 @@ final class MessageRequestRepository {
         error.onError(GroupChangeFailureReason.fromException(e));
         return;
       }
-      liveRecipient.refresh();
+      Recipient.live(recipientId).refresh();
 
       ApplicationDependencies.getJobManager().add(new ReportSpamJob(threadId, System.currentTimeMillis()));
 
       if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlockAndReportSpam(liveRecipient.getId()));
+        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forBlockAndReportSpam(recipientId));
       }
 
       onMessageRequestBlocked.run();
     });
   }
 
-  void unblockAndAccept(@NonNull LiveRecipient liveRecipient, long threadId, @NonNull Runnable onMessageRequestUnblocked) {
-    executor.execute(() -> {
-      Recipient recipient = liveRecipient.resolve();
+  @SuppressWarnings("unchecked")
+  public @NonNull Single<Result<Unit, GroupChangeFailureReason>> unblockAndAccept(@NonNull RecipientId recipientId) {
+    //noinspection CodeBlock2Expr
+    return Single.<Result<Unit, GroupChangeFailureReason>>create(emitter -> {
+      unblockAndAccept(
+          recipientId,
+          () -> emitter.onSuccess(Result.success(Unit.INSTANCE))
+      );
+    }).subscribeOn(Schedulers.io());
+  }
 
-      RecipientUtil.unblock(context, recipient);
+  public void unblockAndAccept(@NonNull RecipientId recipientId, @NonNull Runnable onMessageRequestUnblocked) {
+    executor.execute(() -> {
+      Recipient recipient = Recipient.resolved(recipientId);
+
+      RecipientUtil.unblock(recipient);
 
       if (TextSecurePreferences.isMultiDevice(context)) {
-        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(liveRecipient.getId()));
+        ApplicationDependencies.getJobManager().add(MultiDeviceMessageRequestResponseJob.forAccept(recipientId));
       }
 
       onMessageRequestUnblocked.run();
     });
   }
 
-  private GroupDatabase.MemberLevel getGroupMemberLevel(@NonNull RecipientId recipientId) {
+  private GroupTable.MemberLevel getGroupMemberLevel(@NonNull RecipientId recipientId) {
     return SignalDatabase.groups()
                           .getGroup(recipientId)
                           .map(g -> g.memberLevel(Recipient.self()))
-                          .orElse(GroupDatabase.MemberLevel.NOT_A_MEMBER);
+                          .orElse(GroupTable.MemberLevel.NOT_A_MEMBER);
   }
 
 
@@ -277,6 +373,6 @@ final class MessageRequestRepository {
     Long    threadId = SignalDatabase.threads().getThreadIdFor(recipient.getId());
 
     return threadId != null &&
-        (RecipientUtil.hasSentMessageInThread(context, threadId) || RecipientUtil.isPreMessageRequestThread(context, threadId));
+        (RecipientUtil.hasSentMessageInThread(threadId) || RecipientUtil.isPreMessageRequestThread(threadId));
   }
 }

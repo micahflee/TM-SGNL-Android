@@ -65,7 +65,7 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
 
 
     fun checkIfNeedToCloseTheAppOrJustDismissTheDialog(context: Activity, dialog: DialogInterface?) {
-        if (SelfAuthenticatorManager.isAppValidationTimePassed()) {
+        if (SelfAuthenticatorManager.isAppValidationTimePassed(context)) {
           AuthenticationUtils.forceCloseApplication(context)
         } else {
             dialog?.dismiss()

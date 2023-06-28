@@ -5,7 +5,9 @@ import androidx.annotation.NonNull;
 import org.signal.core.util.logging.Log;
 import org.signal.ringrtc.CallException;
 import org.signal.ringrtc.CallManager;
+import org.signal.ringrtc.PeekInfo;
 import org.tm.archive.components.webrtc.EglBaseWrapper;
+import org.tm.archive.database.CallTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.events.WebRtcViewModel;
 import org.tm.archive.groups.GroupId;
@@ -14,6 +16,7 @@ import org.tm.archive.notifications.profiles.NotificationProfiles;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.ringrtc.RemotePeer;
 import org.tm.archive.service.webrtc.state.WebRtcServiceState;
+import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 
 import java.util.UUID;
@@ -49,8 +52,8 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
     Log.i(TAG, "handleOutgoingCall():");
 
     Recipient recipient = Recipient.resolved(remotePeer.getId());
-    if (recipient.isGroup()) {
-      Log.w(TAG, "Aborting attempt to start 1:1 call for group recipient: " + remotePeer.getId());
+    if (recipient.isGroup() || recipient.isCallLink()) {
+      Log.w(TAG, "Aborting attempt to start 1:1 call for group or call link recipient: " + remotePeer.getId());
       return currentState;
     }
 
@@ -62,7 +65,7 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
   protected @NonNull WebRtcServiceState handlePreJoinCall(@NonNull WebRtcServiceState currentState, @NonNull RemotePeer remotePeer) {
     Log.i(TAG, "handlePreJoinCall():");
 
-    boolean               isGroupCall = remotePeer.getRecipient().isPushV2Group();
+    boolean               isGroupCall = remotePeer.getRecipient().isPushV2Group() || remotePeer.getRecipient().isCallLink();
     WebRtcActionProcessor processor   = isGroupCall ? new GroupPreJoinActionProcessor(webRtcInteractor)
                                                     : new PreJoinActionProcessor(webRtcInteractor);
 
@@ -88,15 +91,21 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
                                                                   @NonNull RemotePeer remotePeerGroup,
                                                                   @NonNull GroupId.V2 groupId,
                                                                   long ringId,
-                                                                  @NonNull UUID uuid,
+                                                                  @NonNull UUID sender,
                                                                   @NonNull CallManager.RingUpdate ringUpdate)
   {
     Log.i(TAG, "handleGroupCallRingUpdate(): recipient: " + remotePeerGroup.getId() + " ring: " + ringId + " update: " + ringUpdate);
 
-    if (ringUpdate != CallManager.RingUpdate.REQUESTED) {
-      SignalDatabase.groupCallRings().insertOrUpdateGroupRing(ringId, System.currentTimeMillis(), ringUpdate);
+    int groupSize = remotePeerGroup.getRecipient().getParticipantIds().size();
+    if (groupSize > FeatureFlags.maxGroupCallRingSize()) {
+      Log.w(TAG, "Received ring request for large group, dropping. size: " + groupSize + " max: " + FeatureFlags.maxGroupCallRingSize());
       return currentState;
-    } else if (SignalDatabase.groupCallRings().isCancelled(ringId)) {
+    }
+
+    if (ringUpdate != CallManager.RingUpdate.REQUESTED) {
+      SignalDatabase.calls().insertOrUpdateGroupCallFromRingState(ringId, remotePeerGroup.getId(), sender, System.currentTimeMillis(), ringUpdate);
+      return currentState;
+    } else if (SignalDatabase.calls().isRingCancelled(ringId, remotePeerGroup.getId())) {
       try {
         Log.i(TAG, "Incoming ring request for already cancelled ring: " + ringId);
         webRtcInteractor.getCallManager().cancelGroupRing(groupId.getDecodedId(), ringId, null);
@@ -110,7 +119,7 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
     if (activeProfile != null && !(activeProfile.isRecipientAllowed(remotePeerGroup.getId()) || activeProfile.getAllowAllCalls())) {
       try {
         Log.i(TAG, "Incoming ring request for profile restricted recipient");
-        SignalDatabase.groupCallRings().insertOrUpdateGroupRing(ringId, System.currentTimeMillis(), CallManager.RingUpdate.EXPIRED_REQUEST);
+        SignalDatabase.calls().insertOrUpdateGroupCallFromRingState(ringId, remotePeerGroup.getId(), sender, System.currentTimeMillis(), CallManager.RingUpdate.EXPIRED_REQUEST);
         webRtcInteractor.getCallManager().cancelGroupRing(groupId.getDecodedId(), ringId, CallManager.RingCancelReason.DeclinedByUser);
       } catch (CallException e) {
         Log.w(TAG, "Error while trying to cancel ring: " + ringId, e);
@@ -118,16 +127,16 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
       return currentState;
     }
 
-    webRtcInteractor.peekGroupCallForRingingCheck(new GroupCallRingCheckInfo(remotePeerGroup.getId(), groupId, ringId, uuid, ringUpdate));
+    webRtcInteractor.peekGroupCallForRingingCheck(new GroupCallRingCheckInfo(remotePeerGroup.getId(), groupId, ringId, sender, ringUpdate));
 
     return currentState;
   }
 
   @Override
-  protected @NonNull WebRtcServiceState handleReceivedGroupCallPeekForRingingCheck(@NonNull WebRtcServiceState currentState, @NonNull GroupCallRingCheckInfo info, long deviceCount) {
-    Log.i(tag, "handleReceivedGroupCallPeekForRingingCheck(): recipient: " + info.getRecipientId() + " ring: " + info.getRingId() + " deviceCount: " + deviceCount);
+  protected @NonNull WebRtcServiceState handleReceivedGroupCallPeekForRingingCheck(@NonNull WebRtcServiceState currentState, @NonNull GroupCallRingCheckInfo info, @NonNull PeekInfo peekInfo) {
+    Log.i(tag, "handleReceivedGroupCallPeekForRingingCheck(): recipient: " + info.getRecipientId() + " ring: " + info.getRingId());
 
-    if (SignalDatabase.groupCallRings().isCancelled(info.getRingId())) {
+    if (SignalDatabase.calls().isRingCancelled(info.getRingId(), info.getRecipientId())) {
       try {
         Log.i(TAG, "Ring was cancelled while getting peek info ring: " + info.getRingId());
         webRtcInteractor.getCallManager().cancelGroupRing(info.getGroupId().getDecodedId(), info.getRingId(), null);
@@ -137,9 +146,13 @@ public class IdleActionProcessor extends WebRtcActionProcessor {
       return currentState;
     }
 
-    if (deviceCount == 0) {
+    if (peekInfo.getDeviceCount() == 0) {
       Log.i(TAG, "No one in the group call, mark as expired and do not ring");
-      SignalDatabase.groupCallRings().insertOrUpdateGroupRing(info.getRingId(), System.currentTimeMillis(), CallManager.RingUpdate.EXPIRED_REQUEST);
+      SignalDatabase.calls().insertOrUpdateGroupCallFromRingState(info.getRingId(), info.getRecipientId(), info.getRingerUuid(), System.currentTimeMillis(), CallManager.RingUpdate.EXPIRED_REQUEST);
+      return currentState;
+    } else if (peekInfo.getJoinedMembers().contains(Recipient.self().requireServiceId().uuid())) {
+      Log.i(TAG, "We are already in the call, mark accepted on another device and do not ring");
+      SignalDatabase.calls().insertOrUpdateGroupCallFromRingState(info.getRingId(), info.getRecipientId(), info.getRingerUuid(), System.currentTimeMillis(), CallManager.RingUpdate.ACCEPTED_ON_ANOTHER_DEVICE);
       return currentState;
     }
 

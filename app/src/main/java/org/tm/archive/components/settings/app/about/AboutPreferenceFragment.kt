@@ -88,7 +88,7 @@ class AboutPreferenceFragment : Fragment() {
             val versionName: String
 
             //  versionName = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
-            versionName = BuildConfig.signal_teleMessage_version
+            versionName = BuildConfig.VERSION_NAME
             return versionName
         }
     }

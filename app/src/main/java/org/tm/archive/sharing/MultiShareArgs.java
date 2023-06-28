@@ -9,10 +9,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.signal.core.util.BreakIteratorCompat;
+import org.signal.core.util.logging.Log;
 import org.tm.archive.contacts.paged.ContactSearchKey;
+import org.tm.archive.contactshare.Contact;
 import org.tm.archive.database.model.Mention;
+import org.tm.archive.database.model.databaseprotos.BodyRangeList;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mediasend.Media;
 import org.tm.archive.stickers.StickerLocator;
@@ -20,15 +24,19 @@ import org.tm.archive.stories.Stories;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.ParcelUtil;
 import org.tm.archive.util.Util;
+import org.whispersystems.signalservice.api.messages.shared.SharedContact;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class MultiShareArgs implements Parcelable {
+
+  private static final String TAG = Log.tag(MultiShareArgs.class);
 
   private final Set<ContactSearchKey> contactSearchKeys;
   private final List<Media>           media;
@@ -43,6 +51,8 @@ public final class MultiShareArgs implements Parcelable {
   private final long                  timestamp;
   private final long                  expiresAt;
   private final boolean               isTextStory;
+  private final BodyRangeList         bodyRanges;
+  private final List<Contact>         sharedContacts;
 
   private MultiShareArgs(@NonNull Builder builder) {
     contactSearchKeys = builder.contactSearchKeys;
@@ -58,14 +68,14 @@ public final class MultiShareArgs implements Parcelable {
     timestamp         = builder.timestamp;
     expiresAt         = builder.expiresAt;
     isTextStory       = builder.isTextStory;
+    bodyRanges        = builder.bodyRanges;
+    sharedContacts    = builder.sharedContacts == null ? new ArrayList<>() : new ArrayList<>(builder.sharedContacts);
   }
 
   protected MultiShareArgs(Parcel in) {
-    List<ContactSearchKey.ParcelableRecipientSearchKey> parcelableRecipientSearchKeys = in.createTypedArrayList(ContactSearchKey.ParcelableRecipientSearchKey.CREATOR);
+    List<ContactSearchKey.RecipientSearchKey> parcelableRecipientSearchKeys = in.createTypedArrayList(ContactSearchKey.RecipientSearchKey.CREATOR);
 
-    contactSearchKeys = parcelableRecipientSearchKeys.stream()
-                                                     .map(ContactSearchKey.ParcelableRecipientSearchKey::asRecipientSearchKey)
-                                                     .collect(Collectors.toSet());
+    contactSearchKeys = new HashSet<>(parcelableRecipientSearchKeys);
     media             = in.createTypedArrayList(Media.CREATOR);
     draftText         = in.readString();
     stickerLocator    = in.readParcelable(StickerLocator.class.getClassLoader());
@@ -87,6 +97,18 @@ public final class MultiShareArgs implements Parcelable {
     }
 
     linkPreview = preview;
+
+    BodyRangeList bodyRanges = null;
+    try {
+      byte[] data = ParcelUtil.readByteArray(in);
+      if (data != null) {
+        bodyRanges = BodyRangeList.parseFrom(data);
+      }
+    } catch (InvalidProtocolBufferException e) {
+      Log.w(TAG, "Invalid body range", e);
+    }
+    this.bodyRanges = bodyRanges;
+    sharedContacts  = in.createTypedArrayList(Contact.CREATOR);
   }
 
   public Set<ContactSearchKey> getContactSearchKeys() {
@@ -148,7 +170,19 @@ public final class MultiShareArgs implements Parcelable {
     return expiresAt;
   }
 
+  public @Nullable BodyRangeList getBodyRanges() {
+    return bodyRanges;
+  }
+
+  public @NonNull List<Contact> getSharedContacts() {
+    return sharedContacts;
+  }
+
   public boolean isValidForStories() {
+    if (isViewOnce() || stickerLocator != null) {
+      return false;
+    }
+
     return isTextStory ||
            (!media.isEmpty() && media.stream().allMatch(m -> MediaUtil.isStorySupportedType(m.getMimeType()))) ||
            MediaUtil.isStorySupportedType(dataType) ||
@@ -193,7 +227,8 @@ public final class MultiShareArgs implements Parcelable {
   }
 
   public boolean allRecipientsAreStories() {
-    return !contactSearchKeys.isEmpty() && contactSearchKeys.stream().allMatch(key -> key instanceof ContactSearchKey.RecipientSearchKey.Story);
+    return !contactSearchKeys.isEmpty() && contactSearchKeys.stream()
+                                                            .allMatch(key -> key.requireRecipientSearchKey().isStory());
   }
 
   public static final Creator<MultiShareArgs> CREATOR = new Creator<MultiShareArgs>() {
@@ -215,7 +250,7 @@ public final class MultiShareArgs implements Parcelable {
 
   @Override
   public void writeToParcel(Parcel dest, int flags) {
-    dest.writeTypedList(Stream.of(contactSearchKeys).map(ContactSearchKey::requireParcelable).toList());
+    dest.writeTypedList(Stream.of(contactSearchKeys).map(ContactSearchKey::requireRecipientSearchKey).toList());
     dest.writeTypedList(media);
     dest.writeString(draftText);
     dest.writeParcelable(stickerLocator, flags);
@@ -237,6 +272,14 @@ public final class MultiShareArgs implements Parcelable {
     } else {
       dest.writeString("");
     }
+
+    if (bodyRanges != null) {
+      ParcelUtil.writeByteArray(dest, bodyRanges.toByteArray());
+    } else {
+      ParcelUtil.writeByteArray(dest, null);
+    }
+
+    dest.writeTypedList(sharedContacts);
   }
 
   public Builder buildUpon() {
@@ -255,7 +298,9 @@ public final class MultiShareArgs implements Parcelable {
                                            .withMentions(mentions)
                                            .withTimestamp(timestamp)
                                            .withExpiration(expiresAt)
-                                           .asTextStory(isTextStory);
+                                           .asTextStory(isTextStory)
+                                           .withBodyRanges(bodyRanges)
+                                           .withSharedContacts(sharedContacts);
   }
 
   private boolean requiresInterstitial() {
@@ -263,25 +308,27 @@ public final class MultiShareArgs implements Parcelable {
            (!media.isEmpty() ||
             !TextUtils.isEmpty(draftText) ||
             MediaUtil.isImageOrVideoType(dataType) ||
-            (!contactSearchKeys.isEmpty() && contactSearchKeys.stream().anyMatch(key -> key instanceof ContactSearchKey.RecipientSearchKey.Story)));
+            (!contactSearchKeys.isEmpty() && contactSearchKeys.stream().anyMatch(key -> key.requireRecipientSearchKey().isStory())));
   }
 
   public static final class Builder {
 
     private final Set<ContactSearchKey> contactSearchKeys;
 
-    private List<Media>    media;
-    private String         draftText;
-    private StickerLocator stickerLocator;
-    private boolean        borderless;
-    private Uri            dataUri;
-    private String         dataType;
-    private LinkPreview    linkPreview;
-    private boolean        viewOnce;
-    private List<Mention>  mentions;
-    private long           timestamp;
-    private long           expiresAt;
-    private boolean        isTextStory;
+    private List<Media>         media;
+    private String              draftText;
+    private StickerLocator      stickerLocator;
+    private boolean             borderless;
+    private Uri                 dataUri;
+    private String              dataType;
+    private LinkPreview         linkPreview;
+    private boolean             viewOnce;
+    private List<Mention>       mentions;
+    private long                timestamp;
+    private long                expiresAt;
+    private boolean             isTextStory;
+    private BodyRangeList       bodyRanges;
+    private List<Contact>       sharedContacts;
 
     public Builder() {
       this(Collections.emptySet());
@@ -348,6 +395,16 @@ public final class MultiShareArgs implements Parcelable {
 
     public @NonNull Builder asTextStory(boolean isTextStory) {
       this.isTextStory = isTextStory;
+      return this;
+    }
+
+    public @NonNull Builder withBodyRanges(@Nullable BodyRangeList bodyRanges) {
+      this.bodyRanges = bodyRanges;
+      return this;
+    }
+
+    public @NonNull Builder withSharedContacts(List<Contact> sharedContacts) {
+      this.sharedContacts = new ArrayList<>(sharedContacts);
       return this;
     }
 

@@ -3,6 +3,7 @@ package org.tm.archive.jobs;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
@@ -11,12 +12,12 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.InvalidKeyException;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.UnknownStorageIdDatabase;
+import org.tm.archive.database.UnknownStorageIdTable;
 import org.tm.archive.database.model.RecipientRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -131,7 +132,7 @@ import java.util.stream.Collectors;
  *     - Adding the parameter to the builder chain when creating a merged model
  * - Update builder usage in StorageSyncModels
  * - Handle the new data when writing to the local storage
- *   (i.e. {@link RecipientDatabase#applyStorageSyncContactUpdate(StorageRecordUpdate)}).
+ *   (i.e. {@link RecipientTable#applyStorageSyncContactUpdate(StorageRecordUpdate)}).
  * - Make sure that whenever you change the field in the UI, we rotate the storageId for that row
  *   and call {@link StorageSyncHelper#scheduleSyncForDataChange()}.
  * - If you're syncing a field that was otherwise already present in the UI, you'll probably want
@@ -159,8 +160,8 @@ public class StorageSyncJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -227,10 +228,11 @@ public class StorageSyncJob extends BaseJob {
     final Stopwatch                   stopwatch         = new Stopwatch("StorageSync");
     final SQLiteDatabase              db                = SignalDatabase.getRawDatabase();
     final SignalServiceAccountManager accountManager    = ApplicationDependencies.getSignalServiceAccountManager();
-    final UnknownStorageIdDatabase    storageIdDatabase = SignalDatabase.unknownStorageIds();
+    final UnknownStorageIdTable       storageIdDatabase = SignalDatabase.unknownStorageIds();
     final StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
     final SignalStorageManifest localManifest  = SignalStore.storageService().getManifest();
+
 
     //**TM_SA**//Start change the following code like that:
     SignalStorageManifest remoteManifest = null;
@@ -254,7 +256,7 @@ public class StorageSyncJob extends BaseJob {
       self = freshSelf();
     }
 
-    Log.i(TAG, "Our version: " + localManifest.getVersion() + ", their version: " + remoteManifest.getVersion());
+    Log.i(TAG, "Our version: " + localManifest.getVersionString() + ", their version: " + remoteManifest.getVersionString());
 
     if (remoteManifest.getVersion() > localManifest.getVersion()) {
       Log.i(TAG, "[Remote Sync] Newer manifest version found!");
@@ -323,7 +325,7 @@ public class StorageSyncJob extends BaseJob {
     }
 
     if (remoteManifest != localManifest) {
-      Log.i(TAG, "[Remote Sync] Saved new manifest. Now at version: " + remoteManifest.getVersion());
+      Log.i(TAG, "[Remote Sync] Saved new manifest. Now at version: " + remoteManifest.getVersionString());
       SignalStore.storageService().setManifest(remoteManifest);
     }
 
@@ -340,14 +342,14 @@ public class StorageSyncJob extends BaseJob {
         Log.i(TAG, "Removed " + removedUnregistered + " recipients from storage service that have been unregistered for longer than 30 days.");
       }
 
-      List<StorageId>           localStorageIds = getAllLocalStorageIds(self);
+      List<StorageId>           localStorageIds = getAllLocalStorageIds(self).stream().filter(it -> !it.isUnknown()).collect(Collectors.toList());
       IdDifferenceResult        idDifference    = StorageSyncHelper.findIdDifference(remoteManifest.getStorageIds(), localStorageIds);
       List<SignalStorageRecord> remoteInserts   = buildLocalStorageRecords(context, self, idDifference.getLocalOnlyIds());
       List<byte[]>              remoteDeletes   = Stream.of(idDifference.getRemoteOnlyIds()).map(StorageId::getRaw).toList();
 
       Log.i(TAG, "ID Difference :: " + idDifference);
 
-      remoteWriteOperation = new WriteOperationResult(new SignalStorageManifest(remoteManifest.getVersion() + 1, localStorageIds),
+      remoteWriteOperation = new WriteOperationResult(new SignalStorageManifest(remoteManifest.getVersion() + 1, SignalStore.account().getDeviceId(), localStorageIds),
                                                       remoteInserts,
                                                       remoteDeletes);
 
@@ -371,19 +373,20 @@ public class StorageSyncJob extends BaseJob {
         conflict = Optional.empty();
       }
       //**TM_SA**//End
+
       if (conflict.isPresent()) {
         Log.w(TAG, "Hit a conflict when trying to resolve the conflict! Retrying.");
         throw new RetryLaterException();
       }
 
-      Log.i(TAG, "Saved new manifest. Now at version: " + remoteWriteOperation.getManifest().getVersion());
+      Log.i(TAG, "Saved new manifest. Now at version: " + remoteWriteOperation.getManifest().getVersionString());
       SignalStore.storageService().setManifest(remoteWriteOperation.getManifest());
 
       stopwatch.split("remote-write");
 
       needsMultiDeviceSync = true;
     } else {
-      Log.i(TAG, "No remote writes needed. Still at version: " + remoteManifest.getVersion());
+      Log.i(TAG, "No remote writes needed. Still at version: " + remoteManifest.getVersionString());
     }
 
     List<Integer>   knownTypes      = getKnownTypes();
@@ -443,8 +446,8 @@ public class StorageSyncJob extends BaseJob {
       return Collections.emptyList();
     }
 
-    RecipientDatabase        recipientDatabase = SignalDatabase.recipients();
-    UnknownStorageIdDatabase storageIdDatabase = SignalDatabase.unknownStorageIds();
+    RecipientTable        recipientTable    = SignalDatabase.recipients();
+    UnknownStorageIdTable storageIdDatabase = SignalDatabase.unknownStorageIds();
 
     List<SignalStorageRecord> records = new ArrayList<>(ids.size());
 
@@ -453,9 +456,9 @@ public class StorageSyncJob extends BaseJob {
         case ManifestRecord.Identifier.Type.CONTACT_VALUE:
         case ManifestRecord.Identifier.Type.GROUPV1_VALUE:
         case ManifestRecord.Identifier.Type.GROUPV2_VALUE:
-          RecipientRecord settings = recipientDatabase.getByStorageId(id.getRaw());
+          RecipientRecord settings = recipientTable.getByStorageId(id.getRaw());
           if (settings != null) {
-            if (settings.getGroupType() == RecipientDatabase.GroupType.SIGNAL_V2 && settings.getSyncExtras().getGroupMasterKey() == null) {
+            if (settings.getGroupType() == RecipientTable.GroupType.SIGNAL_V2 && settings.getSyncExtras().getGroupMasterKey() == null) {
               throw new MissingGv2MasterKeyError();
             } else {
               records.add(StorageSyncModels.localToRemoteRecord(settings));
@@ -471,7 +474,7 @@ public class StorageSyncJob extends BaseJob {
           records.add(StorageSyncHelper.buildAccountRecord(context, self));
           break;
         case ManifestRecord.Identifier.Type.STORY_DISTRIBUTION_LIST_VALUE:
-          RecipientRecord record = recipientDatabase.getByStorageId(id.getRaw());
+          RecipientRecord record = recipientTable.getByStorageId(id.getRaw());
           if (record != null) {
             if (record.getDistributionListId() != null) {
               records.add(StorageSyncModels.localToRemoteRecord(record));
@@ -554,7 +557,7 @@ public class StorageSyncJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<StorageSyncJob> {
     @Override
-    public @NonNull StorageSyncJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull StorageSyncJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new StorageSyncJob(parameters);
     }
   }

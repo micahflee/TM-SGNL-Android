@@ -1,7 +1,6 @@
 package org.tm.archive.database
 
 import android.content.ContentValues
-import android.text.TextUtils
 import org.tm.archive.groups.GroupId
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.IncomingTextMessage
@@ -26,7 +25,7 @@ object TestSms {
     expiresInMillis: Long = 0,
     unidentified: Boolean = false,
     serverGuid: String = UUID.randomUUID().toString(),
-    type: Long = MmsSmsColumns.Types.BASE_INBOX_TYPE,
+    type: Long = MessageTypes.BASE_INBOX_TYPE,
     unread: Boolean = false,
     threadId: Long = 1
   ): Long {
@@ -55,34 +54,27 @@ object TestSms {
   fun insert(
     db: AndroidSQLiteDatabase,
     message: IncomingTextMessage,
-    type: Long = MmsSmsColumns.Types.BASE_INBOX_TYPE,
+    type: Long = MessageTypes.BASE_INBOX_TYPE,
     unread: Boolean = false,
     threadId: Long = 1
   ): Long {
     val values = ContentValues().apply {
-      put(MmsSmsColumns.RECIPIENT_ID, message.sender.serialize())
-      put(MmsSmsColumns.ADDRESS_DEVICE_ID, message.senderDeviceId)
-      put(SmsDatabase.DATE_RECEIVED, message.receivedTimestampMillis)
-      put(SmsDatabase.DATE_SENT, message.sentTimestampMillis)
-      put(MmsSmsColumns.DATE_SERVER, message.serverTimestampMillis)
-      put(SmsDatabase.PROTOCOL, message.protocol)
-      put(MmsSmsColumns.READ, if (unread) 0 else 1)
-      put(MmsSmsColumns.SUBSCRIPTION_ID, message.subscriptionId)
-      put(MmsSmsColumns.EXPIRES_IN, message.expiresIn)
-      put(MmsSmsColumns.UNIDENTIFIED, message.isUnidentified)
-
-      if (!TextUtils.isEmpty(message.pseudoSubject)) {
-        put(SmsDatabase.SUBJECT, message.pseudoSubject)
-      }
-
-      put(SmsDatabase.REPLY_PATH_PRESENT, message.isReplyPathPresent)
-      put(SmsDatabase.SERVICE_CENTER, message.serviceCenterAddress)
-      put(MmsSmsColumns.BODY, message.messageBody)
-      put(SmsDatabase.TYPE, type)
-      put(MmsSmsColumns.THREAD_ID, threadId)
-      put(MmsSmsColumns.SERVER_GUID, message.serverGuid)
+      put(MessageTable.FROM_RECIPIENT_ID, message.authorId.serialize())
+      put(MessageTable.FROM_DEVICE_ID, message.authorDeviceId)
+      put(MessageTable.TO_RECIPIENT_ID, message.authorId.serialize())
+      put(MessageTable.DATE_RECEIVED, message.receivedTimestampMillis)
+      put(MessageTable.DATE_SENT, message.sentTimestampMillis)
+      put(MessageTable.DATE_SERVER, message.serverTimestampMillis)
+      put(MessageTable.READ, if (unread) 0 else 1)
+      put(MessageTable.SMS_SUBSCRIPTION_ID, message.subscriptionId)
+      put(MessageTable.EXPIRES_IN, message.expiresIn)
+      put(MessageTable.UNIDENTIFIED, message.isUnidentified)
+      put(MessageTable.BODY, message.messageBody)
+      put(MessageTable.TYPE, type)
+      put(MessageTable.THREAD_ID, threadId)
+      put(MessageTable.SERVER_GUID, message.serverGuid)
     }
 
-    return db.insert(SmsDatabase.TABLE_NAME, null, values)
+    return db.insert(MessageTable.TABLE_NAME, null, values)
   }
 }

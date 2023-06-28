@@ -15,6 +15,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.util.BottomSheetUtil;
+import org.tm.archive.util.WindowUtil;
 
 /**
  * A bottom sheet to be shown when we need to prompt the user to fill out a reCAPTCHA.
@@ -43,6 +44,12 @@ public final class RecaptchaProofBottomSheetFragment extends BottomSheetDialogFr
     });
 
     return view;
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   @Override

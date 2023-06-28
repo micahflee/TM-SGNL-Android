@@ -34,6 +34,7 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.LongClickMovementMethod;
 import org.tm.archive.util.ThemeUtil;
+import org.tm.archive.util.WindowUtil;
 
 public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogFragment {
 
@@ -138,6 +139,12 @@ public final class GroupJoinBottomSheetDialogFragment extends BottomSheetDialogF
         dismiss();
       }
     );
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   private void updateGroupDescription(@NonNull String name, @NonNull String description) {

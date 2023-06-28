@@ -6,7 +6,7 @@ import org.signal.libsignal.protocol.IdentityKey;
 import org.signal.libsignal.protocol.IdentityKeyPair;
 import org.signal.libsignal.protocol.SignalProtocolAddress;
 import org.signal.libsignal.protocol.state.IdentityKeyStore;
-import org.tm.archive.database.IdentityDatabase.VerifiedStatus;
+import org.tm.archive.database.IdentityTable.VerifiedStatus;
 import org.tm.archive.database.identity.IdentityRecordList;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.recipients.Recipient;

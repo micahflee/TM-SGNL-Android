@@ -21,6 +21,7 @@ import org.tm.archive.groups.ui.GroupMemberListView;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ThemeUtil;
+import org.tm.archive.util.WindowUtil;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 /**
@@ -92,6 +93,12 @@ public final class GroupsV1MigrationInitiationBottomSheetDialogFragment extends 
     upgradeButton.setEnabled(false);
     upgradeButton.setOnClickListener(v -> onUpgradeClicked());
     view.findViewById(R.id.gv1_migrate_cancel_button).setOnClickListener(v -> dismiss());
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   @Override

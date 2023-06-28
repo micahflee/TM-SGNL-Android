@@ -1,11 +1,12 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.recipients.Recipient;
 
@@ -25,8 +26,8 @@ public class RotateProfileKeyJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -53,7 +54,7 @@ public class RotateProfileKeyJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<RotateProfileKeyJob> {
     @Override
-    public @NonNull RotateProfileKeyJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull RotateProfileKeyJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new RotateProfileKeyJob(parameters);
     }
   }

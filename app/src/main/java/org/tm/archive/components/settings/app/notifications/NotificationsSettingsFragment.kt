@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
+import org.signal.core.util.getParcelableExtraCompat
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
@@ -62,10 +63,10 @@ class NotificationsSettingsFragment : DSLSettingsFragment(R.string.preferences__
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     if (requestCode == MESSAGE_SOUND_SELECT && resultCode == Activity.RESULT_OK && data != null) {
-      val uri = data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+      val uri: Uri? = data.getParcelableExtraCompat(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
       viewModel.setMessageNotificationsSound(uri)
     } else if (requestCode == CALL_RINGTONE_SELECT && resultCode == Activity.RESULT_OK && data != null) {
-      val uri = data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+      val uri: Uri? = data.getParcelableExtraCompat(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
       viewModel.setCallRingtone(uri)
     }
   }
@@ -104,11 +105,10 @@ class NotificationsSettingsFragment : DSLSettingsFragment(R.string.preferences__
           summary = DSLSettingsText.from(R.string.preferences__change_sound_and_vibration),
           isEnabled = state.messageNotificationsState.notificationsEnabled,
           onClick = {
-            NotificationChannels.openChannelSettings(requireContext(), NotificationChannels.getMessagesChannel(requireContext()), null)
+            NotificationChannels.getInstance().openChannelSettings(requireActivity(), NotificationChannels.getInstance().messagesChannel, null)
           }
         )
       } else {
-
         clickPref(
           title = DSLSettingsText.from(R.string.preferences__sound),
           summary = DSLSettingsText.from(getRingtoneSummary(state.messageNotificationsState.sound)),
@@ -301,7 +301,7 @@ class NotificationsSettingsFragment : DSLSettingsFragment(R.string.preferences__
     val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
     intent.putExtra(
       Settings.EXTRA_CHANNEL_ID,
-      NotificationChannels.getMessagesChannel(requireContext())
+      NotificationChannels.getInstance().messagesChannel
     )
     intent.putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
     startActivity(intent)

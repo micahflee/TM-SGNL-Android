@@ -34,8 +34,6 @@ public class BackgroundMessageRetriever {
 
   private static final Semaphore ACTIVE_LOCK = new Semaphore(2);
 
-  private static final long NORMAL_TIMEOUT  = TimeUnit.SECONDS.toMillis(10);
-
   public static final long DO_NOT_SHOW_IN_FOREGROUND = DelayedNotificationController.DO_NOT_SHOW;
 
   /**
@@ -109,7 +107,7 @@ public class BackgroundMessageRetriever {
 
       Log.i(TAG, "Attempting strategy: " + strategy.toString() + logSuffix(startTime));
 
-      if (strategy.execute(NORMAL_TIMEOUT)) {
+      if (strategy.execute()) {
         Log.i(TAG, "Strategy succeeded: " + strategy.toString() + logSuffix(startTime));
         success = true;
         break;
@@ -132,8 +130,7 @@ public class BackgroundMessageRetriever {
    *         care of it.
    */
   public static boolean shouldIgnoreFetch() {
-    return ApplicationDependencies.getAppForegroundObserver().isForegrounded() &&
-           !ApplicationDependencies.getSignalServiceNetworkAccess().isCensored();
+    return ApplicationDependencies.getAppForegroundObserver().isForegrounded();
   }
 
   private static String logSuffix(long startTime) {

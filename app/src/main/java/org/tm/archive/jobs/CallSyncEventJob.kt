@@ -1,0 +1,159 @@
+package org.tm.archive.jobs
+
+import org.signal.core.util.logging.Log
+import org.signal.ringrtc.CallId
+import org.tm.archive.database.CallTable
+import org.tm.archive.database.SignalDatabase
+import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobmanager.Job
+import org.tm.archive.jobmanager.JsonJobData
+import org.tm.archive.jobmanager.impl.NetworkConstraint
+import org.tm.archive.jobs.protos.CallSyncEventJobData
+import org.tm.archive.jobs.protos.CallSyncEventJobRecord
+import org.tm.archive.recipients.RecipientId
+import org.tm.archive.ringrtc.RemotePeer
+import org.tm.archive.service.webrtc.CallEventSyncMessageUtil
+import org.tm.archive.util.FeatureFlags
+import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos
+import java.util.Optional
+import java.util.concurrent.TimeUnit
+
+/**
+ * Sends a sync event for the given call when the user first joins.
+ */
+class CallSyncEventJob private constructor(
+  parameters: Parameters,
+  private var events: List<CallSyncEventJobRecord>
+) : BaseJob(parameters) {
+
+  companion object {
+    private val TAG = Log.tag(CallSyncEventJob::class.java)
+
+    const val KEY = "CallSyncEventJob2"
+
+    @JvmStatic
+    fun createForJoin(conversationRecipientId: RecipientId, callId: Long, isIncoming: Boolean): CallSyncEventJob {
+      return CallSyncEventJob(
+        getParameters(),
+        listOf(
+          CallSyncEventJobRecord(
+            recipientId = conversationRecipientId.toLong(),
+            callId = callId,
+            direction = CallTable.Direction.serialize(if (isIncoming) CallTable.Direction.INCOMING else CallTable.Direction.OUTGOING),
+            event = CallTable.Event.serialize(CallTable.Event.ACCEPTED)
+          )
+        )
+      )
+    }
+
+    private fun createForDelete(calls: List<CallTable.Call>): CallSyncEventJob {
+      return CallSyncEventJob(
+        getParameters(),
+        calls.map {
+          CallSyncEventJobRecord(
+            recipientId = it.peer.toLong(),
+            callId = it.callId,
+            direction = CallTable.Direction.serialize(it.direction),
+            event = CallTable.Event.serialize(it.event)
+          )
+        }
+      )
+    }
+
+    fun enqueueDeleteSyncEvents(deletedCalls: Set<CallTable.Call>) {
+      if (FeatureFlags.callDeleteSync()) {
+        deletedCalls.chunked(50).forEach {
+          ApplicationDependencies.getJobManager().add(
+            createForDelete(it)
+          )
+        }
+      }
+    }
+
+    private fun getParameters(): Parameters {
+      return Parameters.Builder()
+        .setQueue("CallSyncEventJob")
+        .setLifespan(TimeUnit.DAYS.toMillis(1))
+        .setMaxAttempts(Parameters.UNLIMITED)
+        .addConstraint(NetworkConstraint.KEY)
+        .build()
+    }
+  }
+
+  override fun serialize(): ByteArray {
+    return CallSyncEventJobData(events).encodeByteString().toByteArray()
+  }
+
+  override fun getFactoryKey(): String = KEY
+
+  override fun onFailure() = Unit
+
+  override fun onRun() {
+    val remainingEvents = events.mapNotNull(this::processEvent)
+    if (remainingEvents.isNotEmpty()) {
+      warn(TAG, "Failed to send sync messages for ${remainingEvents.size} events.")
+    } else {
+      Log.i(TAG, "Successfully sent all sync messages.")
+    }
+
+    events = remainingEvents
+  }
+
+  private fun processEvent(callSyncEvent: CallSyncEventJobRecord): CallSyncEventJobRecord? {
+    val call = SignalDatabase.calls.getCallById(callSyncEvent.callId, callSyncEvent.deserializeRecipientId())
+    if (call == null) {
+      Log.w(TAG, "Cannot process event for call that does not exist. Dropping.")
+      return null
+    }
+
+    val inputTimestamp = JsonJobData.deserialize(inputData).getLongOrDefault(GroupCallUpdateSendJob.KEY_SYNC_TIMESTAMP, System.currentTimeMillis())
+    val syncTimestamp = if (inputTimestamp == 0L) System.currentTimeMillis() else inputTimestamp
+    val syncMessage = createSyncMessage(syncTimestamp, callSyncEvent, call.type)
+
+    return try {
+      ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forCallEvent(syncMessage), Optional.empty())
+      null
+    } catch (e: Exception) {
+      Log.w(TAG, "Unable to send call event sync message for ${callSyncEvent.callId}", e)
+      callSyncEvent
+    }
+  }
+
+  private fun createSyncMessage(syncTimestamp: Long, callSyncEvent: CallSyncEventJobRecord, callType: CallTable.Type): SignalServiceProtos.SyncMessage.CallEvent {
+    return when (callSyncEvent.deserializeEvent()) {
+      CallTable.Event.ACCEPTED -> CallEventSyncMessageUtil.createAcceptedSyncMessage(
+        remotePeer = RemotePeer(callSyncEvent.deserializeRecipientId(), CallId(callSyncEvent.callId)),
+        timestamp = syncTimestamp,
+        isOutgoing = callSyncEvent.deserializeDirection() == CallTable.Direction.OUTGOING,
+        isVideoCall = callType != CallTable.Type.AUDIO_CALL
+      )
+      CallTable.Event.DELETE -> CallEventSyncMessageUtil.createDeleteCallEvent(
+        remotePeer = RemotePeer(callSyncEvent.deserializeRecipientId(), CallId(callSyncEvent.callId)),
+        timestamp = syncTimestamp,
+        isOutgoing = callSyncEvent.deserializeDirection() == CallTable.Direction.OUTGOING,
+        isVideoCall = callType != CallTable.Type.AUDIO_CALL
+      )
+      else -> throw Exception("Unsupported event: ${callSyncEvent.event}")
+    }
+  }
+
+  private fun CallSyncEventJobRecord.deserializeRecipientId(): RecipientId = RecipientId.from(recipientId)
+
+  private fun CallSyncEventJobRecord.deserializeDirection(): CallTable.Direction = CallTable.Direction.deserialize(direction)
+
+  private fun CallSyncEventJobRecord.deserializeEvent(): CallTable.Event = CallTable.Event.deserialize(event)
+
+  override fun onShouldRetry(e: Exception): Boolean = false
+
+  class Factory : Job.Factory<CallSyncEventJob> {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): CallSyncEventJob {
+      val events = CallSyncEventJobData.ADAPTER.decode(serializedData!!).records
+
+      return CallSyncEventJob(
+        parameters,
+        events
+      )
+    }
+  }
+}

@@ -3,10 +3,10 @@ package org.tm.archive.jobs
 import org.signal.core.util.logging.Log
 import org.tm.archive.BuildConfig
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobmanager.Data
 import org.tm.archive.jobmanager.Job
 import org.tm.archive.jobmanager.impl.NetworkConstraint
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.stories.Stories
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState
 import org.whispersystems.signalservice.internal.util.StaticCredentialsProvider
 import org.whispersystems.signalservice.internal.websocket.WebSocketConnection
@@ -41,8 +41,8 @@ class CheckServiceReachabilityJob private constructor(params: Parameters) : Base
     }
   }
 
-  override fun serialize(): Data {
-    return Data.EMPTY
+  override fun serialize(): ByteArray? {
+    return null
   }
 
   override fun getFactoryKey(): String {
@@ -78,7 +78,8 @@ class CheckServiceReachabilityJob private constructor(params: Parameters) : Base
       ),
       BuildConfig.SIGNAL_AGENT,
       null,
-      ""
+      "",
+      Stories.isFeatureEnabled()
     )
 
     try {
@@ -112,7 +113,7 @@ class CheckServiceReachabilityJob private constructor(params: Parameters) : Base
   }
 
   class Factory : Job.Factory<CheckServiceReachabilityJob> {
-    override fun create(parameters: Parameters, data: Data): CheckServiceReachabilityJob {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): CheckServiceReachabilityJob {
       return CheckServiceReachabilityJob(parameters)
     }
   }

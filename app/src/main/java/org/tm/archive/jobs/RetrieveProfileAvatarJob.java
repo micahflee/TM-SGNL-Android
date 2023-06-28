@@ -4,14 +4,15 @@ package org.tm.archive.jobs;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.crypto.ProfileKeyUtil;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -59,10 +60,10 @@ public class RetrieveProfileAvatarJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_PROFILE_AVATAR, profileAvatar)
-                             .putString(KEY_RECIPIENT, recipient.getId().serialize())
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_PROFILE_AVATAR, profileAvatar)
+                                    .putString(KEY_RECIPIENT, recipient.getId().serialize())
+                                    .serialize();
   }
 
   @Override
@@ -72,8 +73,8 @@ public class RetrieveProfileAvatarJob extends BaseJob {
 
   @Override
   public void onRun() throws IOException {
-    RecipientDatabase database   = SignalDatabase.recipients();
-    ProfileKey        profileKey = ProfileKeyUtil.profileKeyOrNull(recipient.resolve().getProfileKey());
+    RecipientTable database   = SignalDatabase.recipients();
+    ProfileKey     profileKey = ProfileKeyUtil.profileKeyOrNull(recipient.resolve().getProfileKey());
 
     if (profileKey == null) {
       Log.w(TAG, "Recipient profile key is gone!");
@@ -95,13 +96,12 @@ public class RetrieveProfileAvatarJob extends BaseJob {
       return;
     }
 
-      File downloadDestination = File.createTempFile("avatar", "jpg", context.getCacheDir());
+    File downloadDestination = File.createTempFile("avatar", "jpg", context.getCacheDir());
 
     try {
-      SignalServiceMessageReceiver receiver     = ApplicationDependencies.getSignalServiceMessageReceiver();
-      InputStream                  avatarStream = receiver.retrieveProfileAvatar(profileAvatar, downloadDestination, profileKey, AvatarHelper.AVATAR_DOWNLOAD_FAILSAFE_MAX_SIZE);
+      SignalServiceMessageReceiver receiver = ApplicationDependencies.getSignalServiceMessageReceiver();
 
-      try {
+      try (InputStream avatarStream = receiver.retrieveProfileAvatar(profileAvatar, downloadDestination, profileKey, AvatarHelper.AVATAR_DOWNLOAD_FAILSAFE_MAX_SIZE)) {
         AvatarHelper.setAvatar(context, recipient.getId(), avatarStream);
 
         if (recipient.isSelf()) {
@@ -137,7 +137,9 @@ public class RetrieveProfileAvatarJob extends BaseJob {
   public static final class Factory implements Job.Factory<RetrieveProfileAvatarJob> {
 
     @Override
-    public @NonNull RetrieveProfileAvatarJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull RetrieveProfileAvatarJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new RetrieveProfileAvatarJob(parameters,
                                           Recipient.resolved(RecipientId.from(data.getString(KEY_RECIPIENT))),
                                           data.getString(KEY_PROFILE_AVATAR));

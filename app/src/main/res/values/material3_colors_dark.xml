@@ -15,6 +15,7 @@
     <color name="signal_dark_colorOnSecondaryContainer">#DCE1F9</color>
     <color name="signal_dark_colorOnSurface">#E2E1E5</color>
     <color name="signal_dark_colorOnSurfaceVariant">#BEBFC5</color>
+    <color name="signal_dark_colorOnSurfaceVariant1">#4D5059</color>
     <color name="signal_dark_colorOnBackground">#E2E1E5</color>
     <color name="signal_dark_colorOutline">#5C5E65</color>
     <color name="signal_dark_neutralSurface">#14FFFFFF</color>
@@ -43,5 +44,6 @@
     <color name="signal_dark_colorNeutralVariantInverse">#A3FFFFFF</color>
 
     <color name="signal_dark_colorBackground_92">#EB1B1C1F</color>
+    <color name="signal_dark_colorSurface_87">#DE1B1C1F</color>
     <color name="signal_dark_colorSurfaceVariant_92">#EB303133</color>
 </resources>

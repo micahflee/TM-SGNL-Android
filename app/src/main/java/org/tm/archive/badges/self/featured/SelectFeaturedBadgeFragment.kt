@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeRepository
 import org.tm.archive.badges.Badges
@@ -15,7 +16,6 @@ import org.tm.archive.badges.models.BadgePreview
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.configure
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.Material3OnScrollHelper
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 

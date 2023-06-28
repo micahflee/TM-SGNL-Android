@@ -1,14 +1,15 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.messages.BackgroundMessageRetriever;
-import org.tm.archive.messages.RestStrategy;
+import org.tm.archive.messages.WebSocketStrategy;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
@@ -47,9 +48,9 @@ public final class PushNotificationReceiveJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putLong(KEY_FOREGROUND_SERVICE_DELAY, foregroundServiceDelayMs)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putLong(KEY_FOREGROUND_SERVICE_DELAY, foregroundServiceDelayMs)
+                                    .serialize();
   }
 
   @Override
@@ -60,7 +61,7 @@ public final class PushNotificationReceiveJob extends BaseJob {
   @Override
   public void onRun() throws IOException {
     BackgroundMessageRetriever retriever = ApplicationDependencies.getBackgroundMessageRetriever();
-    boolean                    result    = retriever.retrieveMessages(context, foregroundServiceDelayMs, new RestStrategy());
+    boolean                    result    = retriever.retrieveMessages(context, foregroundServiceDelayMs, new WebSocketStrategy());
 
     if (result) {
       Log.i(TAG, "Successfully pulled messages.");
@@ -83,7 +84,9 @@ public final class PushNotificationReceiveJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<PushNotificationReceiveJob> {
     @Override
-    public @NonNull PushNotificationReceiveJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PushNotificationReceiveJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new PushNotificationReceiveJob(parameters,
                                             data.getLongOrDefault(KEY_FOREGROUND_SERVICE_DELAY, BackgroundMessageRetriever.DO_NOT_SHOW_IN_FOREGROUND));
     }

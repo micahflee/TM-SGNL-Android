@@ -12,18 +12,19 @@ import org.signal.libsignal.protocol.util.KeyHelper
 import org.signal.libsignal.protocol.util.Medium
 import org.tm.archive.crypto.IdentityKeyUtil
 import org.tm.archive.crypto.PreKeyUtil
-import org.tm.archive.database.IdentityDatabase
+import org.tm.archive.database.IdentityTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.databaseprotos.PendingChangeNumberMetadata
 import org.tm.archive.database.model.toProtoByteString
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobs.RefreshAttributesJob
 import org.tm.archive.keyvalue.CertificateType
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.pin.KbsRepository
 import org.tm.archive.pin.KeyBackupSystemWrongPinException
 import org.tm.archive.pin.TokenData
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.registration.VerifyAccountRepository
+import org.tm.archive.registration.VerifyResponse
 import org.tm.archive.storage.StorageSyncHelper
 import org.whispersystems.signalservice.api.KbsPinData
 import org.whispersystems.signalservice.api.KeyBackupSystemNoDataException
@@ -37,6 +38,7 @@ import org.whispersystems.signalservice.api.push.SignalServiceAddress
 import org.whispersystems.signalservice.api.push.SignedPreKeyEntity
 import org.whispersystems.signalservice.internal.ServiceResponse
 import org.whispersystems.signalservice.internal.push.OutgoingPushMessage
+import org.whispersystems.signalservice.internal.push.RegistrationSessionMetadataResponse
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.SyncMessage
 import org.whispersystems.signalservice.internal.push.VerifyAccountResponse
 import org.whispersystems.signalservice.internal.push.WhoAmIResponse
@@ -44,6 +46,7 @@ import org.whispersystems.signalservice.internal.push.exceptions.MismatchedDevic
 import java.io.IOException
 import java.security.MessageDigest
 import java.security.SecureRandom
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
 private val TAG: String = Log.tag(ChangeNumberRepository::class.java)
@@ -84,15 +87,31 @@ class ChangeNumberRepository(
 
   fun ensureDecryptionsDrained(): Completable {
     return Completable.create { emitter ->
+      val drainedListener = object : Runnable {
+        override fun run() {
+          emitter.onComplete()
+          ApplicationDependencies
+            .getIncomingMessageObserver()
+            .removeDecryptionDrainedListener(this)
+        }
+      }
+
+      emitter.setCancellable {
+        ApplicationDependencies
+          .getIncomingMessageObserver()
+          .removeDecryptionDrainedListener(drainedListener)
+      }
+
       ApplicationDependencies
         .getIncomingMessageObserver()
-        .addDecryptionDrainedListener {
-          emitter.onComplete()
-        }
+        .addDecryptionDrainedListener(drainedListener)
     }.subscribeOn(Schedulers.single())
+      .timeout(15, TimeUnit.SECONDS)
   }
 
-  fun changeNumber(code: String, newE164: String, pniUpdateMode: Boolean = false): Single<ServiceResponse<VerifyAccountResponse>> {
+  fun changeNumber(sessionId: String? = null, recoveryPassword: String? = null, newE164: String, pniUpdateMode: Boolean = false): Single<ServiceResponse<VerifyResponse>> {
+    check((sessionId != null && recoveryPassword == null) || (sessionId == null && recoveryPassword != null))
+
     return Single.fromCallable {
       var completed = false
       var attempts = 0
@@ -100,9 +119,9 @@ class ChangeNumberRepository(
 
       while (!completed && attempts < 5) {
         val (request: ChangePhoneNumberRequest, metadata: PendingChangeNumberMetadata) = createChangeNumberRequest(
-          code = code,
+          sessionId = sessionId,
+          recoveryPassword = recoveryPassword,
           newE164 = newE164,
-          registrationLock = null,
           pniUpdateMode = pniUpdateMode
         )
 
@@ -119,17 +138,17 @@ class ChangeNumberRepository(
         }
       }
 
-      changeNumberResponse
+      VerifyResponse.from(changeNumberResponse, null, null)
     }.subscribeOn(Schedulers.single())
       .onErrorReturn { t -> ServiceResponse.forExecutionError(t) }
   }
 
   fun changeNumber(
-    code: String,
+    sessionId: String,
     newE164: String,
     pin: String,
     tokenData: TokenData
-  ): Single<ServiceResponse<VerifyAccountRepository.VerifyAccountWithRegistrationLockResponse>> {
+  ): Single<ServiceResponse<VerifyResponse>> {
     return Single.fromCallable {
       val kbsData: KbsPinData
       val registrationLock: String
@@ -151,10 +170,9 @@ class ChangeNumberRepository(
 
       while (!completed && attempts < 5) {
         val (request: ChangePhoneNumberRequest, metadata: PendingChangeNumberMetadata) = createChangeNumberRequest(
-          code = code,
+          sessionId = sessionId,
           newE164 = newE164,
-          registrationLock = registrationLock,
-          pniUpdateMode = false
+          registrationLock = registrationLock
         )
 
         SignalStore.misc().setPendingChangeNumberMetadata(metadata)
@@ -170,7 +188,7 @@ class ChangeNumberRepository(
         }
       }
 
-      VerifyAccountRepository.VerifyAccountWithRegistrationLockResponse.from(changeNumberResponse, kbsData)
+      VerifyResponse.from(changeNumberResponse, kbsData, pin)
     }.subscribeOn(Schedulers.single())
       .onErrorReturn { t -> ServiceResponse.forExecutionError(t) }
   }
@@ -235,7 +253,7 @@ class ChangeNumberRepository(
       pniProtocolStore.identities().saveIdentityWithoutSideEffects(
         Recipient.self().id,
         pniProtocolStore.identityKeyPair.publicKey,
-        IdentityDatabase.VerifiedStatus.VERIFIED,
+        IdentityTable.VerifiedStatus.VERIFIED,
         true,
         System.currentTimeMillis(),
         true
@@ -250,6 +268,8 @@ class ChangeNumberRepository(
 
     ApplicationDependencies.closeConnections()
     ApplicationDependencies.getIncomingMessageObserver()
+
+    ApplicationDependencies.getJobManager().add(RefreshAttributesJob())
 
     return rotateCertificates()
   }
@@ -278,10 +298,11 @@ class ChangeNumberRepository(
   @Suppress("UsePropertyAccessSyntax")
   @WorkerThread
   private fun createChangeNumberRequest(
-    code: String,
+    sessionId: String? = null,
+    recoveryPassword: String? = null,
     newE164: String,
-    registrationLock: String?,
-    pniUpdateMode: Boolean
+    registrationLock: String? = null,
+    pniUpdateMode: Boolean = false
   ): ChangeNumberRequestData {
     val selfIdentifier: String = SignalStore.account().requireAci().toString()
     val aciProtocolStore: SignalProtocolStore = ApplicationDependencies.getProtocolStore().aci()
@@ -334,8 +355,9 @@ class ChangeNumberRepository(
       }
 
     val request = ChangePhoneNumberRequest(
+      sessionId,
+      recoveryPassword,
       newE164,
-      code,
       registrationLock,
       pniIdentity.publicKey,
       deviceMessages,
@@ -351,6 +373,12 @@ class ChangeNumberRepository(
       .build()
 
     return ChangeNumberRequestData(request, metadata)
+  }
+
+  fun verifyAccount(sessionId: String, code: String): Single<ServiceResponse<RegistrationSessionMetadataResponse>> {
+    return Single.fromCallable {
+      accountManager.verifyAccount(code, sessionId)
+    }.subscribeOn(Schedulers.io())
   }
 
   data class ChangeNumberRequestData(val changeNumberRequest: ChangePhoneNumberRequest, val pendingChangeNumberMetadata: PendingChangeNumberMetadata)

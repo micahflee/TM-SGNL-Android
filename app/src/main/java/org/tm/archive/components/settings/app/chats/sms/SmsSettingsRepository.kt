@@ -3,43 +3,38 @@ package org.tm.archive.components.settings.app.chats.sms
 import androidx.annotation.WorkerThread
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
-import org.tm.archive.database.MessageDatabase
+import org.tm.archive.database.MessageTable
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.util.FeatureFlags
 
 class SmsSettingsRepository(
-  private val smsDatabase: MessageDatabase = SignalDatabase.sms,
-  private val mmsDatabase: MessageDatabase = SignalDatabase.mms
+  private val smsDatabase: MessageTable = SignalDatabase.messages,
+  private val mmsDatabase: MessageTable = SignalDatabase.messages
 ) {
-  fun getSmsExportState(): Single<SmsSettingsState.SmsExportState> {
-    if (!FeatureFlags.smsExporter()) {
-      return Single.just(SmsSettingsState.SmsExportState.NOT_AVAILABLE)
-    }
-
+  fun getSmsExportState(): Single<SmsExportState> {
     return Single.fromCallable {
       checkInsecureMessageCount() ?: checkUnexportedInsecureMessageCount()
     }.subscribeOn(Schedulers.io())
   }
 
   @WorkerThread
-  private fun checkInsecureMessageCount(): SmsSettingsState.SmsExportState? {
-    val totalSmsMmsCount = smsDatabase.insecureMessageCount + mmsDatabase.insecureMessageCount
+  private fun checkInsecureMessageCount(): SmsExportState? {
+    val totalSmsMmsCount = smsDatabase.getInsecureMessageCount() + mmsDatabase.getInsecureMessageCount()
 
     return if (totalSmsMmsCount == 0) {
-      SmsSettingsState.SmsExportState.NO_SMS_MESSAGES_IN_DATABASE
+      SmsExportState.NO_SMS_MESSAGES_IN_DATABASE
     } else {
       null
     }
   }
 
   @WorkerThread
-  private fun checkUnexportedInsecureMessageCount(): SmsSettingsState.SmsExportState {
-    val totalUnexportedCount = smsDatabase.unexportedInsecureMessagesCount + mmsDatabase.unexportedInsecureMessagesCount
+  private fun checkUnexportedInsecureMessageCount(): SmsExportState {
+    val totalUnexportedCount = smsDatabase.getUnexportedInsecureMessagesCount() + mmsDatabase.getUnexportedInsecureMessagesCount()
 
     return if (totalUnexportedCount > 0) {
-      SmsSettingsState.SmsExportState.HAS_UNEXPORTED_MESSAGES
+      SmsExportState.HAS_UNEXPORTED_MESSAGES
     } else {
-      SmsSettingsState.SmsExportState.ALL_MESSAGES_EXPORTED
+      SmsExportState.ALL_MESSAGES_EXPORTED
     }
   }
 }

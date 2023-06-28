@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import org.tm.archive.database.GroupDatabase;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.GroupTable;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -15,12 +15,12 @@ import java.util.List;
 
 final class MentionsPickerRepository {
 
-  private final RecipientDatabase recipientDatabase;
-  private final GroupDatabase     groupDatabase;
+  private final RecipientTable recipientTable;
+  private final GroupTable     groupDatabase;
 
   MentionsPickerRepository() {
-    recipientDatabase = SignalDatabase.recipients();
-    groupDatabase     = SignalDatabase.groups();
+    recipientTable = SignalDatabase.recipients();
+    groupDatabase  = SignalDatabase.groups();
   }
 
   @WorkerThread
@@ -29,7 +29,7 @@ final class MentionsPickerRepository {
       return Collections.emptyList();
     }
 
-    return groupDatabase.getGroupMemberIds(recipient.requireGroupId(), GroupDatabase.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
+    return groupDatabase.getGroupMemberIds(recipient.requireGroupId(), GroupTable.MemberSet.FULL_MEMBERS_EXCLUDING_SELF);
   }
 
   @WorkerThread
@@ -38,7 +38,7 @@ final class MentionsPickerRepository {
       return Collections.emptyList();
     }
 
-    return recipientDatabase.queryRecipientsForMentions(mentionQuery.query, mentionQuery.members);
+    return recipientTable.queryRecipientsForMentions(mentionQuery.query, mentionQuery.members);
   }
 
   static class MentionQuery {

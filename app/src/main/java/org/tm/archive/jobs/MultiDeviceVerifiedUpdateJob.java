@@ -2,14 +2,15 @@ package org.tm.archive.jobs;
 
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.IdentityKey;
 import org.signal.libsignal.protocol.InvalidKeyException;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.IdentityDatabase.VerifiedStatus;
+import org.tm.archive.database.IdentityTable.VerifiedStatus;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;
@@ -73,12 +74,12 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_DESTINATION, destination.serialize())
-                             .putString(KEY_IDENTITY_KEY, Base64.encodeBytes(identityKey))
-                             .putInt(KEY_VERIFIED_STATUS, verifiedStatus.toInt())
-                             .putLong(KEY_TIMESTAMP, timestamp)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_DESTINATION, destination.serialize())
+                                    .putString(KEY_IDENTITY_KEY, Base64.encodeBytes(identityKey))
+                                    .putInt(KEY_VERIFIED_STATUS, verifiedStatus.toInt())
+                                    .putLong(KEY_TIMESTAMP, timestamp)
+                                    .serialize();
   }
 
   @Override
@@ -148,7 +149,9 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<MultiDeviceVerifiedUpdateJob> {
     @Override
-    public @NonNull MultiDeviceVerifiedUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull MultiDeviceVerifiedUpdateJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       try {
         RecipientId    destination    = RecipientId.from(data.getString(KEY_DESTINATION));
         VerifiedStatus verifiedStatus = VerifiedStatus.forState(data.getInt(KEY_VERIFIED_STATUS));

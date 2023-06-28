@@ -13,6 +13,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
@@ -63,8 +64,13 @@ public class ManageProfileActivity extends PassphraseRequiredActivity implements
       navController.setGraph(graph, extras != null ? extras : new Bundle());
 
       if (extras != null && extras.getBoolean(START_AT_USERNAME, false)) {
-        NavDirections  action = ManageProfileFragmentDirections.actionManageUsername();
-        SafeNavigation.safeNavigate(navController, action);
+        if (SignalStore.uiHints().hasSeenUsernameEducation()) {
+          NavDirections action = ManageProfileFragmentDirections.actionManageUsername();
+          SafeNavigation.safeNavigate(navController, action);
+        } else {
+          NavDirections action = ManageProfileFragmentDirections.actionManageProfileFragmentToUsernameEducationFragment();
+          SafeNavigation.safeNavigate(navController, action);
+        }
       }
 
       if (extras != null && extras.getBoolean(START_AT_AVATAR, false)) {

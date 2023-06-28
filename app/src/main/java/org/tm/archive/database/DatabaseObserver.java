@@ -10,8 +10,10 @@ import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.service.webrtc.links.CallLinkRoomId;
 import org.tm.archive.util.concurrent.SerialExecutor;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,7 +25,7 @@ import java.util.concurrent.Executor;
 /**
  * Allows listening to database changes to varying degrees of specificity.
  *
- * A replacement for the observer system in {@link Database}. We should move to this over time.
+ * A replacement for the observer system in {@link DatabaseTable}. We should move to this over time.
  */
 public class DatabaseObserver {
 
@@ -41,23 +43,32 @@ public class DatabaseObserver {
   private static final String KEY_NOTIFICATION_PROFILES = "NotificationProfiles";
   private static final String KEY_RECIPIENT             = "Recipient";
   private static final String KEY_STORY_OBSERVER        = "Story";
+  private static final String KEY_SCHEDULED_MESSAGES    = "ScheduledMessages";
+  private static final String KEY_CONVERSATION_DELETES  = "ConversationDeletes";
+
+  private static final String KEY_CALL_UPDATES          = "CallUpdates";
+  private static final String KEY_CALL_LINK_UPDATES     = "CallLinkUpdates";
 
   private final Application application;
   private final Executor    executor;
 
-  private final Set<Observer>                   conversationListObservers;
-  private final Map<Long, Set<Observer>>        conversationObservers;
-  private final Map<Long, Set<Observer>>        verboseConversationObservers;
-  private final Map<UUID, Set<Observer>>        paymentObservers;
-  private final Set<Observer>                   allPaymentsObservers;
-  private final Set<Observer>                   chatColorsObservers;
-  private final Set<Observer>                   stickerObservers;
-  private final Set<Observer>                   stickerPackObservers;
-  private final Set<Observer>                   attachmentObservers;
-  private final Set<MessageObserver>            messageUpdateObservers;
-  private final Map<Long, Set<MessageObserver>> messageInsertObservers;
-  private final Set<Observer>                   notificationProfileObservers;
-  private final Map<RecipientId, Set<Observer>> storyObservers;
+  private final Set<Observer>                      conversationListObservers;
+  private final Map<Long, Set<Observer>>           conversationObservers;
+  private final Map<Long, Set<Observer>>           verboseConversationObservers;
+  private final Map<Long, Set<Observer>>           conversationDeleteObservers;
+  private final Map<UUID, Set<Observer>>           paymentObservers;
+  private final Map<Long, Set<Observer>>           scheduledMessageObservers;
+  private final Set<Observer>                      allPaymentsObservers;
+  private final Set<Observer>                      chatColorsObservers;
+  private final Set<Observer>                      stickerObservers;
+  private final Set<Observer>                      stickerPackObservers;
+  private final Set<Observer>                      attachmentObservers;
+  private final Set<MessageObserver>               messageUpdateObservers;
+  private final Map<Long, Set<MessageObserver>>    messageInsertObservers;
+  private final Set<Observer>                      notificationProfileObservers;
+  private final Map<RecipientId, Set<Observer>>    storyObservers;
+  private final Set<Observer>                      callUpdateObservers;
+  private final Map<CallLinkRoomId, Set<Observer>> callLinkObservers;
 
   public DatabaseObserver(Application application) {
     this.application                  = application;
@@ -65,6 +76,7 @@ public class DatabaseObserver {
     this.conversationListObservers    = new HashSet<>();
     this.conversationObservers        = new HashMap<>();
     this.verboseConversationObservers = new HashMap<>();
+    this.conversationDeleteObservers  = new HashMap<>();
     this.paymentObservers             = new HashMap<>();
     this.allPaymentsObservers         = new HashSet<>();
     this.chatColorsObservers          = new HashSet<>();
@@ -75,6 +87,9 @@ public class DatabaseObserver {
     this.messageInsertObservers       = new HashMap<>();
     this.notificationProfileObservers = new HashSet<>();
     this.storyObservers               = new HashMap<>();
+    this.scheduledMessageObservers    = new HashMap<>();
+    this.callUpdateObservers          = new HashSet<>();
+    this.callLinkObservers            = new HashMap<>();
   }
 
   public void registerConversationListObserver(@NonNull Observer listener) {
@@ -92,6 +107,12 @@ public class DatabaseObserver {
   public void registerVerboseConversationObserver(long threadId, @NonNull Observer listener) {
     executor.execute(() -> {
       registerMapped(verboseConversationObservers, threadId, listener);
+    });
+  }
+
+  public void registerConversationDeleteObserver(long threadId, @NonNull Observer listener) {
+    executor.execute(() -> {
+      registerMapped(conversationDeleteObservers, threadId, listener);
     });
   }
 
@@ -158,6 +179,22 @@ public class DatabaseObserver {
     });
   }
 
+  public void registerScheduledMessageObserver(long threadId, @NonNull Observer listener) {
+    executor.execute(() -> {
+      registerMapped(scheduledMessageObservers, threadId, listener);
+    });
+  }
+
+  public void registerCallUpdateObserver(@NonNull Observer observer) {
+    executor.execute(() -> callUpdateObservers.add(observer));
+  }
+
+  public void registerCallLinkObserver(@NonNull CallLinkRoomId callLinkRoomId, @NonNull Observer observer) {
+    executor.execute(() -> {
+      registerMapped(callLinkObservers, callLinkRoomId, observer);
+    });
+  }
+
   public void unregisterObserver(@NonNull Observer listener) {
     executor.execute(() -> {
       conversationListObservers.remove(listener);
@@ -170,6 +207,10 @@ public class DatabaseObserver {
       attachmentObservers.remove(listener);
       notificationProfileObservers.remove(listener);
       unregisterMapped(storyObservers, listener);
+      unregisterMapped(scheduledMessageObservers, listener);
+      unregisterMapped(conversationDeleteObservers, listener);
+      callUpdateObservers.remove(listener);
+      unregisterMapped(callLinkObservers, listener);
     });
   }
 
@@ -199,6 +240,18 @@ public class DatabaseObserver {
         notifyMapped(verboseConversationObservers, threadId);
       });
     }
+  }
+
+  public void notifyConversationDeleteListeners(Set<Long> threadIds) {
+    for (long threadId : threadIds) {
+      notifyConversationDeleteListeners(threadId);
+    }
+  }
+
+  public void notifyConversationDeleteListeners(long threadId) {
+    runPostSuccessfulTransaction(KEY_CONVERSATION_DELETES + threadId, () -> {
+      notifyMapped(conversationDeleteObservers, threadId);
+    });
   }
 
   public void notifyConversationListListeners() {
@@ -279,6 +332,28 @@ public class DatabaseObserver {
     runPostSuccessfulTransaction(KEY_STORY_OBSERVER, () -> {
       notifyMapped(storyObservers, recipientId);
     });
+  }
+
+  public void notifyStoryObservers(@NonNull Collection<RecipientId> recipientIds) {
+    for (RecipientId recipientId : recipientIds) {
+      runPostSuccessfulTransaction(KEY_STORY_OBSERVER, () -> {
+        notifyMapped(storyObservers, recipientId);
+      });
+    }
+  }
+
+  public void notifyScheduledMessageObservers(long threadId) {
+    runPostSuccessfulTransaction(KEY_SCHEDULED_MESSAGES + threadId, () -> {
+      notifyMapped(scheduledMessageObservers, threadId);
+    });
+  }
+
+  public void notifyCallUpdateObservers() {
+    runPostSuccessfulTransaction(KEY_CALL_UPDATES, () -> notifySet(callUpdateObservers));
+  }
+
+  public void notifyCallLinkObservers(@NonNull CallLinkRoomId callLinkRoomId) {
+    runPostSuccessfulTransaction(KEY_CALL_LINK_UPDATES, () -> notifyMapped(callLinkObservers, callLinkRoomId));
   }
 
   private void runPostSuccessfulTransaction(@NonNull String dedupeKey, @NonNull Runnable runnable) {

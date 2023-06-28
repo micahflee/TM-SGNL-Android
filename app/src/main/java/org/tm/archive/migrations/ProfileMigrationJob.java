@@ -1,10 +1,10 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.ProfileUploadJob;
 
@@ -48,7 +48,7 @@ public final class ProfileMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<ProfileMigrationJob> {
     @Override
-    public @NonNull ProfileMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull ProfileMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new ProfileMigrationJob(parameters);
     }
   }

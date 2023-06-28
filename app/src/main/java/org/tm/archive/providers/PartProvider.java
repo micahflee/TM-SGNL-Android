@@ -36,12 +36,13 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import org.signal.core.util.StreamUtil;
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.attachments.DatabaseAttachment;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.mms.PartUriParser;
 import org.tm.archive.service.KeyCachingService;
@@ -201,7 +202,7 @@ public final class PartProvider extends BaseContentProvider {
   @RequiresApi(26)
   private ParcelFileDescriptor getParcelStreamProxyForAttachment(AttachmentId attachmentId) throws IOException {
     StorageManager storageManager = Objects.requireNonNull(getContext().getSystemService(StorageManager.class));
-    HandlerThread  thread         = SignalExecutors.getAndStartHandlerThread("storageservice-proxy");
+    HandlerThread  thread         = SignalExecutors.getAndStartHandlerThread("storageservice-proxy", ThreadUtil.PRIORITY_IMPORTANT_BACKGROUND_THREAD);
     Handler        handler        = new Handler(thread.getLooper());
 
     ParcelFileDescriptor parcelFileDescriptor = storageManager.openProxyFileDescriptor(ParcelFileDescriptor.MODE_READ_ONLY,
@@ -215,10 +216,10 @@ public final class PartProvider extends BaseContentProvider {
   @RequiresApi(26)
   private static final class ProxyCallback extends ProxyFileDescriptorCallback {
 
-    private AttachmentDatabase attachments;
-    private AttachmentId       attachmentId;
+    private AttachmentTable attachments;
+    private AttachmentId    attachmentId;
 
-    public ProxyCallback(@NonNull AttachmentDatabase attachments, @NonNull AttachmentId attachmentId) {
+    public ProxyCallback(@NonNull AttachmentTable attachments, @NonNull AttachmentId attachmentId) {
       this.attachments  = attachments;
       this.attachmentId = attachmentId;
     }

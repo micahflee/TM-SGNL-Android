@@ -14,8 +14,7 @@ object TypefaceHelper {
         weight.value,
         false
       )
-      Build.VERSION.SDK_INT >= 21 -> Typeface.create("${family.familyName}-$weightName", Typeface.NORMAL)
-      else -> Typeface.create(family.familyName, if (weight.value > Weight.MEDIUM.value) Typeface.BOLD else Typeface.NORMAL)
+      else -> Typeface.create("${family.familyName}-$weightName", Typeface.NORMAL)
     }
   }
 
@@ -34,6 +33,6 @@ object TypefaceHelper {
     SEMI_BOLD(600),
     BOLD(700),
     EXTRA_BOLD(800),
-    BLACK(900),
+    BLACK(900)
   }
 }

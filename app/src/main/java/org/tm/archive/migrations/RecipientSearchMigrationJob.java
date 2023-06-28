@@ -1,9 +1,9 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.tm.archive.contacts.sync.ContactDiscovery;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 
@@ -47,7 +47,7 @@ public class RecipientSearchMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<RecipientSearchMigrationJob> {
     @Override
-    public @NonNull RecipientSearchMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull RecipientSearchMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new RecipientSearchMigrationJob(parameters);
     }
   }

@@ -12,13 +12,17 @@ import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.contacts.paged.ContactSearchKey
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.tm.archive.databinding.StoriesTextPostCreationFragmentBinding
+import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.linkpreview.LinkPreviewRepository
 import org.tm.archive.linkpreview.LinkPreviewViewModel
+import org.tm.archive.linkpreview.LinkPreviewViewModel.LinkPreviewState
 import org.tm.archive.mediasend.CameraDisplay
 import org.tm.archive.mediasend.v2.HudCommand
 import org.tm.archive.mediasend.v2.MediaSelectionViewModel
@@ -27,9 +31,9 @@ import org.tm.archive.mediasend.v2.text.send.TextStoryPostSendRepository
 import org.tm.archive.mediasend.v2.text.send.TextStoryPostSendResult
 import org.tm.archive.safety.SafetyNumberBottomSheet
 import org.tm.archive.stories.Stories
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.livedata.LiveDataUtil
 import org.tm.archive.util.visible
+import java.util.Optional
 
 class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creation_fragment), TextStoryPostTextEntryFragment.Callback, SafetyNumberBottomSheet.Callbacks {
 
@@ -154,6 +158,12 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
             )
           )
         }
+      } else if (sharedViewModel.isAddToGroupStoryFlow) {
+        MaterialAlertDialogBuilder(requireContext())
+          .setMessage(getString(R.string.MediaReviewFragment__add_to_the_group_story, sharedViewModel.state.value!!.recipient!!.getDisplayName(requireContext())))
+          .setPositiveButton(R.string.MediaReviewFragment__add_to_story) { _, _ -> performSend(contacts) }
+          .setNegativeButton(android.R.string.cancel) { _, _ -> }
+          .show()
       } else {
         performSend(contacts)
       }
@@ -212,7 +222,7 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
   private fun performSend(contacts: Set<ContactSearchKey>) {
     lifecycleDisposable += viewModel.send(
       contacts = contacts,
-      linkPreviewViewModel.linkPreviewState.value?.linkPreview?.orElse(null)
+      getLinkPreview()
     ).observeOn(AndroidSchedulers.mainThread()).subscribe { result ->
       when (result) {
         TextStoryPostSendResult.Success -> {
@@ -232,6 +242,18 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
             .show(childFragmentManager)
         }
       }
+    }
+  }
+
+  private fun getLinkPreview(): LinkPreview? {
+    val linkPreviewState: LinkPreviewState = linkPreviewViewModel.linkPreviewState.value ?: return null
+
+    return if (linkPreviewState.linkPreview.isPresent) {
+      linkPreviewState.linkPreview.get()
+    } else if (!linkPreviewState.activeUrlForError.isNullOrEmpty()) {
+      LinkPreview(linkPreviewState.activeUrlForError!!, linkPreviewState.activeUrlForError!!, "", 0L, Optional.empty())
+    } else {
+      null
     }
   }
 

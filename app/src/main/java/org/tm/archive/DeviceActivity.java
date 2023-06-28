@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.text.TextUtils;
 import android.transition.TransitionInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -54,6 +56,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
   private DeviceAddFragment  deviceAddFragment;
   private DeviceListFragment deviceListFragment;
   private DeviceLinkFragment deviceLinkFragment;
+  private MenuItem           cameraSwitchItem = null;
 
   @Override
   public void onPreCreate() {
@@ -103,6 +106,18 @@ public class DeviceActivity extends PassphraseRequiredActivity
   }
 
   @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.device_add, menu);
+    cameraSwitchItem = menu.findItem(R.id.device_add_camera_switch);
+    cameraSwitchItem.setVisible(false);
+    return super.onCreateOptionsMenu(menu);
+  }
+
+  public MenuItem getCameraSwitchItem() {
+    return cameraSwitchItem;
+  }
+
+  @Override
   public void onClick(View v) {
     Permissions.with(this)
                .request(Manifest.permission.CAMERA)
@@ -125,27 +140,18 @@ public class DeviceActivity extends PassphraseRequiredActivity
       Uri uri = Uri.parse(data);
       deviceLinkFragment.setLinkClickedListener(uri, DeviceActivity.this);
 
-      if (Build.VERSION.SDK_INT >= 21) {
-        deviceAddFragment.setSharedElementReturnTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(R.transition.fragment_shared));
-        deviceAddFragment.setExitTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(android.R.transition.fade));
+      deviceAddFragment.setSharedElementReturnTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(R.transition.fragment_shared));
+      deviceAddFragment.setExitTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(android.R.transition.fade));
 
-        deviceLinkFragment.setSharedElementEnterTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(R.transition.fragment_shared));
-        deviceLinkFragment.setEnterTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(android.R.transition.fade));
+      deviceLinkFragment.setSharedElementEnterTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(R.transition.fragment_shared));
+      deviceLinkFragment.setEnterTransition(TransitionInflater.from(DeviceActivity.this).inflateTransition(android.R.transition.fade));
 
-        getSupportFragmentManager().beginTransaction()
-                                   .addToBackStack(null)
-                                   .addSharedElement(deviceAddFragment.getDevicesImage(), "devices")
-                                   .replace(R.id.fragment_container, deviceLinkFragment)
-                                   .commit();
+      getSupportFragmentManager().beginTransaction()
+                                 .addToBackStack(null)
+                                 .addSharedElement(deviceAddFragment.getDevicesImage(), "devices")
+                                 .replace(R.id.fragment_container, deviceLinkFragment)
+                                 .commit();
 
-      } else {
-        getSupportFragmentManager().beginTransaction()
-                                   .setCustomAnimations(R.anim.slide_from_bottom, R.anim.slide_to_bottom,
-                                                        R.anim.slide_from_bottom, R.anim.slide_to_bottom)
-                                   .replace(R.id.fragment_container, deviceLinkFragment)
-                                   .addToBackStack(null)
-                                   .commit();
-      }
     });
   }
 

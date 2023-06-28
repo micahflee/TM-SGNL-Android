@@ -22,8 +22,7 @@ import org.tm.archive.R;
 import org.tm.archive.lock.v2.PinKeyboardType;
 import org.tm.archive.pin.TokenData;
 import org.tm.archive.registration.viewmodel.BaseRegistrationViewModel;
-import org.tm.archive.util.LifecycleDisposable;
-import org.tm.archive.util.ServiceUtil;
+import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.views.CircularProgressMaterialButton;
 
@@ -44,7 +43,7 @@ public abstract class BaseRegistrationLockFragment extends LoggingFragment {
   /**
    * Applies to both V1 and V2 pins, because some V2 pins may have been migrated from V1.
    */
-  private static final int MINIMUM_PIN_LENGTH = 4;
+  public static final int MINIMUM_PIN_LENGTH = 4;
 
   private   EditText                       pinEntry;
   private   View                           forgotPin;
@@ -177,7 +176,7 @@ public abstract class BaseRegistrationLockFragment extends LoggingFragment {
                                    if (processor.hasResult()) {
                                      handleSuccessfulPinEntry(pin);
                                    } else if (processor.wrongPin()) {
-                                     onIncorrectKbsRegistrationLockPin(processor.getToken());
+                                     onIncorrectKbsRegistrationLockPin(processor.getTokenData());
                                    } else if (processor.isKbsLocked() || processor.registrationLock()) {
                                      onKbsAccountLocked();
                                    } else if (processor.rateLimit()) {
@@ -286,10 +285,7 @@ public abstract class BaseRegistrationLockFragment extends LoggingFragment {
   private void enableAndFocusPinEntry() {
     pinEntry.setEnabled(true);
     pinEntry.setFocusable(true);
-
-    if (pinEntry.requestFocus()) {
-      ServiceUtil.getInputMethodManager(pinEntry.getContext()).showSoftInput(pinEntry, 0);
-    }
+    ViewUtil.focusAndShowKeyboard(pinEntry);
   }
 
   protected abstract void handleSuccessfulPinEntry(@NonNull String pin);

@@ -26,8 +26,9 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.components.ContactFilterView;
-import org.tm.archive.contacts.ContactsCursorLoader.DisplayMode;
+import org.tm.archive.contacts.ContactSelectionDisplayMode;
 import org.tm.archive.contacts.sync.ContactDiscovery;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
@@ -69,8 +70,8 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActivit
   @Override
   protected void onCreate(Bundle icicle, boolean ready) {
     if (!getIntent().hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
-      int displayMode = Util.isDefaultSmsProvider(this) ? DisplayMode.FLAG_ALL
-                                                        : DisplayMode.FLAG_PUSH | DisplayMode.FLAG_ACTIVE_GROUPS | DisplayMode.FLAG_INACTIVE_GROUPS | DisplayMode.FLAG_SELF;
+      boolean includeSms  = Util.isDefaultSmsProvider(this) && SignalStore.misc().getSmsExportPhase().allowSmsFeatures();
+      int     displayMode = includeSms ? ContactSelectionDisplayMode.FLAG_ALL : ContactSelectionDisplayMode.FLAG_PUSH | ContactSelectionDisplayMode.FLAG_ACTIVE_GROUPS | ContactSelectionDisplayMode.FLAG_INACTIVE_GROUPS | ContactSelectionDisplayMode.FLAG_SELF;
       getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, displayMode);
     }
 
@@ -124,7 +125,7 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActivit
   }
 
   @Override
-  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
     callback.accept(true);
   }
 

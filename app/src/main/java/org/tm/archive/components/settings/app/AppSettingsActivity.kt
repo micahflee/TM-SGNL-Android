@@ -12,7 +12,8 @@ import org.tm.archive.R
 import org.tm.archive.components.settings.DSLSettingsActivity
 import org.tm.archive.components.settings.app.notifications.profiles.EditNotificationProfileScheduleFragmentArgs
 import org.tm.archive.components.settings.app.subscription.DonationPaymentComponent
-import org.tm.archive.components.settings.app.subscription.DonationPaymentRepository
+import org.tm.archive.components.settings.app.subscription.StripeRepository
+import org.tm.archive.components.settings.app.subscription.donate.DonateToSignalType
 import org.tm.archive.help.HelpFragment
 import org.tm.archive.keyvalue.SettingsValues
 import org.tm.archive.keyvalue.SignalStore
@@ -33,7 +34,7 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
 
   private var wasConfigurationUpdated = false
 
-  override val donationPaymentRepository: DonationPaymentRepository by lazy { DonationPaymentRepository(this) }
+  override val stripeRepository: StripeRepository by lazy { StripeRepository(this) }
   override val googlePayResultPublisher: Subject<DonationPaymentComponent.GooglePayResult> = PublishSubject.create()
 
   override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
@@ -54,8 +55,8 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
         StartLocation.PROXY -> AppSettingsFragmentDirections.actionDirectToEditProxyFragment()
         StartLocation.NOTIFICATIONS -> AppSettingsFragmentDirections.actionDirectToNotificationsSettingsFragment()
         StartLocation.CHANGE_NUMBER -> AppSettingsFragmentDirections.actionDirectToChangeNumberFragment()
-        StartLocation.SUBSCRIPTIONS -> AppSettingsFragmentDirections.actionDirectToSubscriptions()
-        StartLocation.BOOST -> AppSettingsFragmentDirections.actionAppSettingsFragmentToBoostsFragment()
+        StartLocation.SUBSCRIPTIONS -> AppSettingsFragmentDirections.actionDirectToDonateToSignal(DonateToSignalType.MONTHLY)
+        StartLocation.BOOST -> AppSettingsFragmentDirections.actionDirectToDonateToSignal(DonateToSignalType.ONE_TIME)
         StartLocation.MANAGE_SUBSCRIPTIONS -> AppSettingsFragmentDirections.actionDirectToManageDonations()
         StartLocation.NOTIFICATION_PROFILES -> AppSettingsFragmentDirections.actionDirectToNotificationProfiles()
         StartLocation.CREATE_NOTIFICATION_PROFILE -> AppSettingsFragmentDirections.actionDirectToCreateNotificationProfiles()
@@ -63,6 +64,7 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
           EditNotificationProfileScheduleFragmentArgs.fromBundle(intent.getBundleExtra(START_ARGUMENTS)!!).profileId
         )
         StartLocation.PRIVACY -> AppSettingsFragmentDirections.actionDirectToPrivacy()
+        StartLocation.LINKED_DEVICES -> AppSettingsFragmentDirections.actionDirectToDevices()
       }
     }
 
@@ -121,6 +123,7 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
     }
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
     googlePayResultPublisher.onNext(DonationPaymentComponent.GooglePayResult(requestCode, resultCode, data))
@@ -182,6 +185,9 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
         .putExtra(START_ARGUMENTS, arguments)
     }
 
+    @JvmStatic
+    fun linkedDevices(context: Context): Intent = getIntentForStartLocation(context, StartLocation.LINKED_DEVICES)
+
     private fun getIntentForStartLocation(context: Context, startLocation: StartLocation): Intent {
       return Intent(context, AppSettingsActivity::class.java)
         .putExtra(ARG_NAV_GRAPH, R.navigation.app_settings)
@@ -202,7 +208,8 @@ class AppSettingsActivity : DSLSettingsActivity(), DonationPaymentComponent {
     NOTIFICATION_PROFILES(9),
     CREATE_NOTIFICATION_PROFILE(10),
     NOTIFICATION_PROFILE_DETAILS(11),
-    PRIVACY(12);
+    PRIVACY(12),
+    LINKED_DEVICES(13);
 
     companion object {
       fun fromCode(code: Int?): StartLocation {

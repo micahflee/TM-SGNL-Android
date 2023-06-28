@@ -10,6 +10,10 @@ import org.tm.archive.R
 import org.tm.archive.util.DynamicNoActionBarTheme
 import org.tm.archive.util.DynamicTheme
 
+/**
+ * The DSL API can be completely replaced by compose.
+ * See ComposeFragment or ComposeBottomSheetFragment for an alternative to this API"
+ */
 open class DSLSettingsActivity : PassphraseRequiredActivity() {
 
   protected open val dynamicTheme: DynamicTheme = DynamicNoActionBarTheme()

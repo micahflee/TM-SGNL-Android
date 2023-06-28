@@ -6,6 +6,7 @@ import io.reactivex.rxjava3.schedulers.TestScheduler
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
@@ -22,6 +23,7 @@ import org.tm.archive.recipients.RecipientId
 import org.tm.archive.stories.Stories
 import org.tm.archive.stories.StoryViewerArgs
 
+@Ignore
 class StoryViewerViewModelTest {
 
   @Rule
@@ -104,7 +106,7 @@ class StoryViewerViewModelTest {
     val testSubject = StoryViewerViewModel(
       StoryViewerArgs(
         recipientId = startStory,
-        isInHiddenStoryMode = false,
+        isInHiddenStoryMode = false
       ),
       repository
     )
@@ -131,7 +133,7 @@ class StoryViewerViewModelTest {
     val testSubject = StoryViewerViewModel(
       StoryViewerArgs(
         recipientId = startStory,
-        isInHiddenStoryMode = false,
+        isInHiddenStoryMode = false
       ),
       repository
     )
@@ -158,7 +160,7 @@ class StoryViewerViewModelTest {
     val testSubject = StoryViewerViewModel(
       StoryViewerArgs(
         recipientId = startStory,
-        isInHiddenStoryMode = false,
+        isInHiddenStoryMode = false
       ),
       repository
     )
@@ -185,7 +187,7 @@ class StoryViewerViewModelTest {
     val testSubject = StoryViewerViewModel(
       StoryViewerArgs(
         recipientId = startStory,
-        isInHiddenStoryMode = false,
+        isInHiddenStoryMode = false
       ),
       repository
     )
@@ -212,7 +214,7 @@ class StoryViewerViewModelTest {
     val testSubject = StoryViewerViewModel(
       StoryViewerArgs(
         recipientId = startStory,
-        isInHiddenStoryMode = false,
+        isInHiddenStoryMode = false
       ),
       repository
     )

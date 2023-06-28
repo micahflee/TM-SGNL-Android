@@ -7,6 +7,7 @@ import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.DistributionListId
 import org.tm.archive.database.model.DistributionListRecord
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.sms.MessageSender
 import org.tm.archive.stories.Stories
 
 class PrivateStorySettingsRepository {
@@ -27,6 +28,13 @@ class PrivateStorySettingsRepository {
     return Completable.fromAction {
       SignalDatabase.distributionLists.deleteList(distributionListId)
       Stories.onStorySettingsChanged(distributionListId)
+
+      val recipientId = SignalDatabase.recipients.getOrInsertFromDistributionListId(distributionListId)
+      SignalDatabase.messages.getAllStoriesFor(recipientId, -1).use { reader ->
+        for (record in reader) {
+          MessageSender.sendRemoteDelete(record.id)
+        }
+      }
     }.subscribeOn(Schedulers.io())
   }
 

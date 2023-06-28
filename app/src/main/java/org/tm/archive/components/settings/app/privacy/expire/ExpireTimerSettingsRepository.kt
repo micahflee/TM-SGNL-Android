@@ -5,11 +5,11 @@ import androidx.annotation.WorkerThread
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.ThreadDatabase
+import org.tm.archive.database.ThreadTable
 import org.tm.archive.groups.GroupChangeException
 import org.tm.archive.groups.GroupManager
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.mms.OutgoingExpirationUpdateMessage
+import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.MessageSender
@@ -39,8 +39,8 @@ class ExpireTimerSettingsRepository(val context: Context) {
         }
       } else {
         SignalDatabase.recipients.setExpireMessages(recipientId, newExpirationTime)
-        val outgoingMessage = OutgoingExpirationUpdateMessage(Recipient.resolved(recipientId), System.currentTimeMillis(), newExpirationTime * 1000L)
-        MessageSender.send(context, outgoingMessage, getThreadId(recipientId), false, null, null)
+        val outgoingMessage = OutgoingMessage.expirationUpdateMessage(Recipient.resolved(recipientId), System.currentTimeMillis(), newExpirationTime * 1000L)
+        MessageSender.send(context, outgoingMessage, getThreadId(recipientId), MessageSender.SendType.SIGNAL, null, null)
         consumer.invoke(Result.success(newExpirationTime))
       }
     }
@@ -57,8 +57,8 @@ class ExpireTimerSettingsRepository(val context: Context) {
 
   @WorkerThread
   private fun getThreadId(recipientId: RecipientId): Long {
-    val threadDatabase: ThreadDatabase = SignalDatabase.threads
+    val threadTable: ThreadTable = SignalDatabase.threads
     val recipient: Recipient = Recipient.resolved(recipientId)
-    return threadDatabase.getOrCreateThreadIdFor(recipient)
+    return threadTable.getOrCreateThreadIdFor(recipient)
   }
 }

@@ -24,11 +24,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.signal.core.util.BreakIteratorCompat;
 import org.signal.core.util.EditTextUtil;
+import org.signal.core.util.StringUtil;
 import org.tm.archive.R;
 import org.tm.archive.components.emoji.EmojiUtil;
 import org.tm.archive.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment;
 import org.tm.archive.recipients.Recipient;
-import org.signal.core.util.StringUtil;
+import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.adapter.AlwaysChangedDiffUtil;
 import org.tm.archive.util.text.AfterTextChanged;
@@ -64,6 +65,7 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
   private TextView                       countView;
   private CircularProgressMaterialButton saveButton;
   private EditAboutViewModel             viewModel;
+  private LifecycleDisposable            lifecycleDisposable;
 
   private String selectedEmoji;
 
@@ -78,6 +80,9 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
     this.bodyView   = view.findViewById(R.id.edit_about_body);
     this.countView  = view.findViewById(R.id.edit_about_count);
     this.saveButton = view.findViewById(R.id.edit_about_save);
+
+    lifecycleDisposable = new LifecycleDisposable();
+    lifecycleDisposable.bindTo(getViewLifecycleOwner());
 
     initializeViewModel();
 
@@ -138,7 +143,7 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
       this.emojiView.setImageDrawable(drawable);
       this.selectedEmoji = emoji;
     } else {
-      this.emojiView.setImageResource(R.drawable.ic_add_emoji);
+      this.emojiView.setImageResource(R.drawable.symbol_emoji_plus_24);
       this.selectedEmoji = "";
     }
   }
@@ -146,8 +151,10 @@ public class EditAboutFragment extends Fragment implements ManageProfileActivity
   private void initializeViewModel() {
     this.viewModel = new ViewModelProvider(this).get(EditAboutViewModel.class);
 
-    viewModel.getSaveState().observe(getViewLifecycleOwner(), this::presentSaveState);
-    viewModel.getEvents().observe(getViewLifecycleOwner(), this::presentEvent);
+    lifecycleDisposable.addAll(
+        viewModel.getSaveState().subscribe(this::presentSaveState),
+        viewModel.getEvents().subscribe(this::presentEvent)
+    );
   }
 
   private void presentCount(@NonNull String aboutBody) {

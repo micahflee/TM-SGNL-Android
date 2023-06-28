@@ -11,7 +11,7 @@ import org.tm.archive.components.settings.DSLSettingsIcon
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.components.settings.conversation.preferences.Utils.formatMutedUntil
-import org.tm.archive.database.RecipientDatabase
+import org.tm.archive.database.RecipientTable
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
@@ -48,7 +48,6 @@ class SoundsAndNotificationsSettingsFragment : DSLSettingsFragment(
 
   private fun getConfiguration(state: SoundsAndNotificationsSettingsState): DSLConfiguration {
     return configure {
-
       val muteSummary = if (state.muteUntil > 0) {
         state.muteUntil.formatMutedUntil(requireContext())
       } else {
@@ -82,7 +81,7 @@ class SoundsAndNotificationsSettingsFragment : DSLSettingsFragment(
       )
 
       if (state.hasMentionsSupport) {
-        val mentionSelection = if (state.mentionSetting == RecipientDatabase.MentionSetting.ALWAYS_NOTIFY) {
+        val mentionSelection = if (state.mentionSetting == RecipientTable.MentionSetting.ALWAYS_NOTIFY) {
           0
         } else {
           1
@@ -96,9 +95,9 @@ class SoundsAndNotificationsSettingsFragment : DSLSettingsFragment(
           onSelected = {
             viewModel.setMentionSetting(
               if (it == 0) {
-                RecipientDatabase.MentionSetting.ALWAYS_NOTIFY
+                RecipientTable.MentionSetting.ALWAYS_NOTIFY
               } else {
-                RecipientDatabase.MentionSetting.DO_NOT_NOTIFY
+                RecipientTable.MentionSetting.DO_NOT_NOTIFY
               }
             )
           }

@@ -36,25 +36,25 @@ object SelfAuthenticatorManager {
         selfAuthenticator.initSelfAuthenticator(
             AuthenticationAppType.SIGNAL,
             phoneNumber,
-          BuildConfig.signal_teleMessage_version
+          BuildConfig.VERSION_NAME
         )
 
     }
 
-    fun startAuthentication(aIAuthenticationStatus: IAuthenticationStatus) {
-        if (!isSelfAuthenticationAlreadyStarted()) {
-            saveSelfAuthenticationFirstTimeTryingTime()
+    fun startAuthentication(context: Context, aIAuthenticationStatus: IAuthenticationStatus) {
+        if (!isSelfAuthenticationAlreadyStarted(context)) {
+            saveSelfAuthenticationFirstTimeTryingTime(context)
         }
         selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
     }
 
-    fun isSelfAuthenticationAlreadyStarted(): Boolean {
-        return getSelfAuthenticationFirstTimeTryingInHours() != -1
+    fun isSelfAuthenticationAlreadyStarted(context: Context): Boolean {
+        return getSelfAuthenticationFirstTimeTryingInHours(context) != -1
     }
 
-    fun saveSelfAuthenticationFirstTimeTryingTime() {
-        if (!isSelfAuthenticationAlreadyStarted()) {
-          ApplicationContext.getInstance().applicationContext.getSharedPreferences(
+    fun saveSelfAuthenticationFirstTimeTryingTime(context: Context) {
+        if (!isSelfAuthenticationAlreadyStarted(context)) {
+          ApplicationContext.getInstance(context).applicationContext.getSharedPreferences(
                 SELF_AUTHENTICATION_PREFERENCE_NAME,
                 Context.MODE_PRIVATE
             ).apply {
@@ -69,8 +69,8 @@ object SelfAuthenticatorManager {
         }
     }
 
-    fun getSelfAuthenticationFirstTimeTryingInHours(): Int {
-        val sharedPreferences = ApplicationContext.getInstance().getSharedPreferences(SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE)
+    fun getSelfAuthenticationFirstTimeTryingInHours(context: Context): Int {
+        val sharedPreferences = ApplicationContext.getInstance(context).getSharedPreferences(SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE)
         val firstTimeInstallInMill =  sharedPreferences.getLong(SELF_AUTHENRICATION_PREF_FIRST_TIME_TRYING_KEY, -1)
         if(firstTimeInstallInMill != (-1).toLong()){
             Log.d("SelfAuthenticatorProcess", "hourDifferenceFromNow() = " + (hourDifferenceFromNow(firstTimeInstallInMill)).toInt())
@@ -89,12 +89,12 @@ object SelfAuthenticatorManager {
         aContext: Activity
     ) {
 
-        Log.d("SelfAuthenticatorProcess", "getSelfAuthenticationFirstTimeTryingInHours() = " + getSelfAuthenticationFirstTimeTryingInHours())
-        Log.d("SelfAuthenticatorProcess", "getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_DAYS = " + (getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS))
-        Log.d("SelfAuthenticatorProcess", "isAppValidationTimePassed() = " + isAppValidationTimePassed())
+        Log.d("SelfAuthenticatorProcess", "getSelfAuthenticationFirstTimeTryingInHours() = " + getSelfAuthenticationFirstTimeTryingInHours(aContext))
+        Log.d("SelfAuthenticatorProcess", "getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_DAYS = " + (getSelfAuthenticationFirstTimeTryingInHours(aContext) > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS))
+        Log.d("SelfAuthenticatorProcess", "isAppValidationTimePassed() = " + isAppValidationTimePassed(aContext))
 
-        if (getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS) {
-            if (!isAppValidationTimePassed()) {
+        if (getSelfAuthenticationFirstTimeTryingInHours(aContext) > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS) {
+            if (!isAppValidationTimePassed(aContext)) {
                 mSelfAuthenticationDialogBuilder.showSelfAuthenticationFirstFailureWarning(aContext)
             } else {
                 mSelfAuthenticationDialogBuilder.showSelfAuthenticationSecondFailureWarning(aContext)
@@ -102,8 +102,8 @@ object SelfAuthenticatorManager {
         }
     }
 
-    fun isAppValidationTimePassed(): Boolean{
-        return getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_SECOND_WARNNING_IN_HOURS
+    fun isAppValidationTimePassed(aContext: Context): Boolean{
+        return getSelfAuthenticationFirstTimeTryingInHours(aContext) > SELF_AUTHENRICATION_WHEN_TO_SHOW_SECOND_WARNNING_IN_HOURS
     }
 
     fun showLogSentIfNeeded(

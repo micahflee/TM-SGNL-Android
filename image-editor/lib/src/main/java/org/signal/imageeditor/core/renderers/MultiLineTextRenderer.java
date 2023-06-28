@@ -320,22 +320,30 @@ public final class MultiLineTextRenderer extends InvalidateableRenderer implemen
       rendererContext.canvasMatrix.concat(projectionMatrix);
 
       if (mode == Mode.HIGHLIGHT) {
-        modeBounds.set(textBounds.left - HIGHLIGHT_HORIZONTAL_PADDING,
-                       selectionBounds.top - HIGHLIGHT_TOP_PADDING,
-                       textBounds.right + HIGHLIGHT_HORIZONTAL_PADDING,
-                       selectionBounds.bottom + HIGHLIGHT_BOTTOM_PADDING);
+        if (text.isEmpty()) {
+          modeBounds.setEmpty();
+        } else {
+          modeBounds.set(textBounds.left - HIGHLIGHT_HORIZONTAL_PADDING,
+                         selectionBounds.top - HIGHLIGHT_TOP_PADDING,
+                         textBounds.right + HIGHLIGHT_HORIZONTAL_PADDING,
+                         selectionBounds.bottom + HIGHLIGHT_BOTTOM_PADDING);
+        }
         int alpha = modePaint.getAlpha();
         modePaint.setAlpha(rendererContext.getAlpha(alpha));
         rendererContext.canvas.drawRoundRect(modeBounds, HIGHLIGHT_CORNER_RADIUS, HIGHLIGHT_CORNER_RADIUS, modePaint);
         modePaint.setAlpha(alpha);
       } else if (mode == Mode.UNDERLINE) {
-        modeBounds.set(textBounds.left, selectionBounds.top, textBounds.right, selectionBounds.bottom);
-        modeBounds.inset(-DimensionUnit.DP.toPixels(2), -DimensionUnit.DP.toPixels(2));
+        if (text.isEmpty()) {
+          modeBounds.setEmpty();
+        } else {
+          modeBounds.set(textBounds.left, selectionBounds.top, textBounds.right, selectionBounds.bottom);
+          modeBounds.inset(-DimensionUnit.DP.toPixels(2), -DimensionUnit.DP.toPixels(2));
 
-        modeBounds.set(modeBounds.left,
-                       Math.max(modeBounds.top, modeBounds.bottom - DimensionUnit.DP.toPixels(6)),
-                       modeBounds.right,
-                       modeBounds.bottom - DimensionUnit.DP.toPixels(2));
+          modeBounds.set(modeBounds.left,
+                         Math.max(modeBounds.top, modeBounds.bottom - DimensionUnit.DP.toPixels(6)),
+                         modeBounds.right,
+                         modeBounds.bottom - DimensionUnit.DP.toPixels(2));
+        }
 
         int alpha = modePaint.getAlpha();
         modePaint.setAlpha(rendererContext.getAlpha(alpha));

@@ -3,6 +3,7 @@ package org.tm.archive.badges.self.overview
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeRepository
 import org.tm.archive.badges.Badges
@@ -12,11 +13,10 @@ import org.tm.archive.badges.view.ViewBadgeBottomSheetDialogFragment
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
-import org.tm.archive.components.settings.app.subscription.SubscriptionsRepository
+import org.tm.archive.components.settings.app.subscription.MonthlyDonationRepository
 import org.tm.archive.components.settings.configure
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
 
@@ -31,7 +31,7 @@ class BadgesOverviewFragment : DSLSettingsFragment(
   private val lifecycleDisposable = LifecycleDisposable()
   private val viewModel: BadgesOverviewViewModel by viewModels(
     factoryProducer = {
-      BadgesOverviewViewModel.Factory(BadgeRepository(requireContext()), SubscriptionsRepository(ApplicationDependencies.getDonationsService()))
+      BadgesOverviewViewModel.Factory(BadgeRepository(requireContext()), MonthlyDonationRepository(ApplicationDependencies.getDonationsService()))
     }
   )
 

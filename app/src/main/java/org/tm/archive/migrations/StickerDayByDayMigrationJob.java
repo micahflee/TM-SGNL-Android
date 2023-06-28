@@ -1,9 +1,9 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobs.StickerPackDownloadJob;
 import org.tm.archive.stickers.BlessedPacks;
@@ -45,7 +45,7 @@ public class StickerDayByDayMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<StickerDayByDayMigrationJob> {
     @Override
-    public @NonNull StickerDayByDayMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull StickerDayByDayMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new StickerDayByDayMigrationJob(parameters);
     }
   }

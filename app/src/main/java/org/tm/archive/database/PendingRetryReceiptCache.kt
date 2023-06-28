@@ -6,7 +6,7 @@ import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.FeatureFlags
 
 /**
- * A write-through cache for [PendingRetryReceiptDatabase].
+ * A write-through cache for [PendingRetryReceiptTable].
  *
  * We have to read from this cache every time we process an incoming message. As a result, it's a very performance-sensitive operation.
  *
@@ -14,7 +14,7 @@ import org.tm.archive.util.FeatureFlags
  * future reads can happen in memory.
  */
 class PendingRetryReceiptCache @VisibleForTesting constructor(
-  private val database: PendingRetryReceiptDatabase = SignalDatabase.pendingRetryReceipts
+  private val database: PendingRetryReceiptTable = SignalDatabase.pendingRetryReceipts
 ) {
 
   private val pendingRetries: MutableMap<RemoteMessageId, PendingRetryReceiptModel> = HashMap()

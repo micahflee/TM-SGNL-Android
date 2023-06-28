@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -25,7 +24,7 @@ import org.tm.archive.R;
 import org.tm.archive.components.emoji.EmojiImageView;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.util.FullscreenHelper;
-import org.tm.archive.util.LifecycleDisposable;
+import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.tm.archive.util.WindowUtil;
 
 import java.util.Objects;
@@ -101,8 +100,14 @@ public final class ReactionsBottomSheetDialogFragment extends BottomSheetDialogF
     setUpRecipientsRecyclerView();
     setUpTabMediator(view, savedInstanceState);
 
-    MessageId messageId = new MessageId(requireArguments().getLong(ARGS_MESSAGE_ID), requireArguments().getBoolean(ARGS_IS_MMS));
+    MessageId messageId = new MessageId(requireArguments().getLong(ARGS_MESSAGE_ID));
     setUpViewModel(messageId);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   @Override

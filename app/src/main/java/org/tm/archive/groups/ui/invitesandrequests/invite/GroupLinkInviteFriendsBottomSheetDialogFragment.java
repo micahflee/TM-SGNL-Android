@@ -24,6 +24,7 @@ import org.tm.archive.groups.GroupId;
 import org.tm.archive.recipients.ui.sharablegrouplink.GroupLinkBottomSheetDialogFragment;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ThemeUtil;
+import org.tm.archive.util.WindowUtil;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 import java.util.Objects;
@@ -127,6 +128,12 @@ public final class GroupLinkInviteFriendsBottomSheetDialogFragment extends Botto
                         shareGroupLinkAndDismiss(groupId);
                       }
              );
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   protected void shareGroupLinkAndDismiss(@NonNull GroupId.V2 groupId) {

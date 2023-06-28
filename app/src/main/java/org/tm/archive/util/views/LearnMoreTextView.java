@@ -22,6 +22,9 @@ import org.tm.archive.R;
 import org.tm.archive.util.CommunicationActions;
 import org.tm.archive.util.ThemeUtil;
 
+/**
+ * Appends an optional "Learn more" link to a given piece of text.
+ */
 public class LearnMoreTextView extends AppCompatTextView {
 
   private OnClickListener linkListener;

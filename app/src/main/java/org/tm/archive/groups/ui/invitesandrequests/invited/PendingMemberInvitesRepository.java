@@ -15,7 +15,7 @@ import org.signal.libsignal.zkgroup.InvalidInputException;
 import org.signal.libsignal.zkgroup.groups.UuidCiphertext;
 import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMember;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.GroupTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupChangeException;
 import org.tm.archive.groups.GroupId;
@@ -49,9 +49,9 @@ final class PendingMemberInvitesRepository {
 
   public void getInvitees(@NonNull Consumer<InviteeResult> onInviteesLoaded) {
     executor.execute(() -> {
-      GroupDatabase                                groupDatabase      = SignalDatabase.groups();
-      GroupDatabase.V2GroupProperties              v2GroupProperties  = groupDatabase.getGroup(groupId).get().requireV2GroupProperties();
-      DecryptedGroup                               decryptedGroup     = v2GroupProperties.getDecryptedGroup();
+      GroupTable                   groupDatabase     = SignalDatabase.groups();
+      GroupTable.V2GroupProperties v2GroupProperties = groupDatabase.getGroup(groupId).get().requireV2GroupProperties();
+      DecryptedGroup               decryptedGroup    = v2GroupProperties.getDecryptedGroup();
       List<DecryptedPendingMember>                 pendingMembersList = decryptedGroup.getPendingMembersList();
       List<SinglePendingMemberInvitedByYou>        byMe               = new ArrayList<>(pendingMembersList.size());
       List<MultiplePendingMembersInvitedByAnother> byOthers           = new ArrayList<>(pendingMembersList.size());

@@ -40,7 +40,8 @@ class LogDatabase private constructor(
     DATABASE_VERSION,
     0,
     SqlCipherDeletingErrorHandler(DATABASE_NAME),
-    SqlCipherDatabaseHook()
+    SqlCipherDatabaseHook(),
+    true
   ),
   SignalDatabaseOpenHelper {
 
@@ -69,7 +70,7 @@ class LogDatabase private constructor(
         $BODY TEXT,
         $SIZE INTEGER
       )
-    """.trimIndent()
+    """
 
     private val CREATE_INDEXES = arrayOf(
       "CREATE INDEX keep_longer_index ON $TABLE_NAME ($KEEP_LONGER)",
@@ -87,7 +88,6 @@ class LogDatabase private constructor(
           if (instance == null) {
             SqlCipherLibraryLoader.load()
             instance = LogDatabase(context, DatabaseSecretProvider.getOrCreateDatabaseSecret(context))
-            instance!!.setWriteAheadLoggingEnabled(true)
           }
         }
       }

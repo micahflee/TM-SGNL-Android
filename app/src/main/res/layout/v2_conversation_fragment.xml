@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<org.tm.archive.components.InputAwareConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:animateKeyboardChanges="true">
+
+    <FrameLayout
+        android:id="@+id/conversation_video_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@id/conversation_item_recycler"
+        app:layout_constraintEnd_toEndOf="@+id/conversation_item_recycler"
+        app:layout_constraintStart_toStartOf="@+id/conversation_item_recycler"
+        app:layout_constraintTop_toTopOf="@+id/conversation_item_recycler" />
+
+    <include layout="@layout/system_ui_guidelines" />
+
+    <ImageView
+        android:id="@+id/conversation_wallpaper"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
+
+    <View
+        android:id="@+id/conversation_wallpaper_dim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black"
+        android:visibility="gone"
+        tools:alpha="0.2f"
+        tools:visibility="visible" />
+
+    <org.tm.archive.conversation.mutiselect.MultiselectRecyclerView
+        android:id="@+id/conversation_item_recycler"
+        android:layout_width="0dp"
+        android:layout_height="0dip"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbars="vertical"
+        android:splitMotionEvents="false"
+        app:layout_constraintBottom_toTopOf="@id/conversation_bottom_panel_barrier"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:itemCount="20"
+        tools:listitem="@layout/conversation_item_sent_text_only" />
+
+    <org.tm.archive.util.views.DarkOverflowToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/signal_m3_toolbar_height"
+        android:background="@color/transparent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:minHeight="@dimen/signal_m3_toolbar_height"
+        android:theme="?attr/actionBarStyle"
+        app:contentInsetStart="46dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
+        app:layout_constraintTop_toTopOf="@id/status_bar_guideline">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:orientation="horizontal">
+
+            <include
+                android:id="@+id/conversation_title_view"
+                layout="@layout/conversation_title_view"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/conversation_group_call_join"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/ConversationActivity_join"
+                android:textAllCaps="false"
+                android:textColor="@color/core_white"
+                android:visibility="gone"
+                app:backgroundTint="@color/core_ultramarine"
+                app:cornerRadius="@dimen/material_button_full_round_corner_radius"
+                app:icon="@drawable/ic_video_solid_18"
+                app:iconGravity="textStart"
+                app:iconTint="@color/core_white"
+                tools:visibility="visible" />
+
+        </LinearLayout>
+
+    </org.tm.archive.util.views.DarkOverflowToolbar>
+
+    <!-- TODO [alex] - Placeholder for banner container -->
+    <View
+        android:id="@+id/conversation_banner_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <FrameLayout
+        android:id="@+id/reactions_shade"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/reactions_screen_light_shade_color"
+        android:foreground="@color/reactions_screen_dark_shade_color"
+        android:visibility="gone" />
+
+    <org.tm.archive.components.ConversationScrollToView
+        android:id="@+id/scroll_to_mention"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="12dp"
+        android:visibility="invisible"
+        app:cstv_scroll_button_src="@drawable/ic_at_20"
+        app:layout_constraintBottom_toTopOf="@id/scroll_to_bottom"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_goneMarginBottom="20dp"
+        tools:visibility="visible" />
+
+    <org.tm.archive.components.ConversationScrollToView
+        android:id="@+id/scroll_to_bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="invisible"
+        app:cstv_scroll_button_src="@drawable/ic_chevron_down_20"
+        app:layout_constraintBottom_toTopOf="@id/conversation_bottom_panel_barrier"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        tools:visibility="visible" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/conversation_bottom_panel_barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="top"
+        app:constraint_referenced_ids="conversation_input_panel,attachment_editor_stub,conversation_disabled_input " />
+
+    <ViewStub
+        android:id="@+id/attachment_editor_stub"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:inflatedId="@+id/attachment_editor"
+        android:layout="@layout/conversation_activity_attachment_editor_stub"
+        app:layout_constraintBottom_toTopOf="@+id/conversation_input_panel"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
+
+    <include
+        android:id="@+id/conversation_input_panel"
+        layout="@layout/conversation_input_panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/conversation_input_space_left"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
+
+    <org.tm.archive.conversation.v2.DisabledInputView
+        android:id="@+id/conversation_disabled_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/keyboard_guideline"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline" />
+
+    <TextView
+        android:id="@+id/conversation_input_space_left"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?android:windowBackground"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/keyboard_guideline"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
+        tools:text="160/160 (1)"
+        tools:visibility="visible" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/input_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@id/navigation_bar_guideline"
+        app:layout_constraintEnd_toEndOf="@id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@id/parent_start_guideline"
+        app:layout_constraintTop_toTopOf="@id/keyboard_guideline" />
+
+    <org.tm.archive.components.menu.SignalBottomActionBar
+        android:id="@+id/conversation_bottom_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/navigation_bar_guideline"
+        app:layout_constraintEnd_toEndOf="@+id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@+id/parent_start_guideline" />
+
+    <ViewStub
+        android:id="@+id/conversation_reaction_scrubber_stub"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:inflatedId="@+id/conversation_reaction_scrubber"
+        android:layout="@layout/conversation_reaction_scrubber"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/parent_end_guideline"
+        app:layout_constraintStart_toStartOf="@+id/parent_start_guideline"
+        app:layout_constraintTop_toTopOf="@+id/status_bar_guideline" />
+
+</org.tm.archive.components.InputAwareConstraintLayout>

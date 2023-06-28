@@ -35,13 +35,11 @@
     <issue id="AlertDialogBuilderUsage" severity="warning" />
 
     <issue id="RestrictedApi" severity="error">
-        <!--//**TM_SA**//Start-->
         <ignore path="*/org/tm/archive/mediasend/camerax/VideoCapture.java" />
         <ignore path="*/org/tm/archive/mediasend/camerax/CameraXModule.java" />
         <ignore path="*/org/tm/archive/conversation/*.java" />
         <ignore path="*/org/tm/archive/lock/v2/CreateKbsPinViewModel.java" />
         <ignore path="*/org/tm/archive/jobs/StickerPackDownloadJob.java" />
-        <!--//**TM_SA**//end-->
     </issue>
 
     <issue id="OptionalUsedAsFieldOrParameterType" severity="ignore" />

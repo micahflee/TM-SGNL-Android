@@ -5,11 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobs.RefreshAttributesJob
-import org.tm.archive.jobs.RefreshOwnProfileJob
-import org.tm.archive.keyvalue.PhoneNumberPrivacyValues
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.livedata.Store
 
@@ -56,26 +52,13 @@ class PrivacySettingsViewModel(
     refresh()
   }
 
-  fun setPhoneNumberSharingMode(phoneNumberSharingMode: PhoneNumberPrivacyValues.PhoneNumberSharingMode) {
-    SignalStore.phoneNumberPrivacy().phoneNumberSharingMode = phoneNumberSharingMode
-    StorageSyncHelper.scheduleSyncForDataChange()
-    refresh()
-  }
-
-  fun setPhoneNumberListingMode(phoneNumberListingMode: PhoneNumberPrivacyValues.PhoneNumberListingMode) {
-    SignalStore.phoneNumberPrivacy().phoneNumberListingMode = phoneNumberListingMode
-    StorageSyncHelper.scheduleSyncForDataChange()
-    ApplicationDependencies.getJobManager().startChain(RefreshAttributesJob()).then(RefreshOwnProfileJob()).enqueue()
-    refresh()
-  }
-
   fun setIncognitoKeyboard(enabled: Boolean) {
     sharedPreferences.edit().putBoolean(TextSecurePreferences.INCOGNITO_KEYBORAD_PREF, enabled).apply()
     refresh()
   }
 
-  fun togglePaymentLock() {
-    SignalStore.paymentsValues().paymentLock = state.value?.let { !it.paymentLock } ?: false
+  fun togglePaymentLock(enable: Boolean) {
+    SignalStore.paymentsValues().paymentLock = enable
     refresh()
   }
 
@@ -103,8 +86,6 @@ class PrivacySettingsViewModel(
       screenSecurity = TextSecurePreferences.isScreenSecurityEnabled(ApplicationDependencies.getApplication()),
       incognitoKeyboard = TextSecurePreferences.isIncognitoKeyboardEnabled(ApplicationDependencies.getApplication()),
       paymentLock = SignalStore.paymentsValues().paymentLock,
-      seeMyPhoneNumber = SignalStore.phoneNumberPrivacy().phoneNumberSharingMode,
-      findMeByPhoneNumber = SignalStore.phoneNumberPrivacy().phoneNumberListingMode,
       isObsoletePasswordEnabled = !TextSecurePreferences.isPasswordDisabled(ApplicationDependencies.getApplication()),
       isObsoletePasswordTimeoutEnabled = TextSecurePreferences.isPassphraseTimeoutEnabled(ApplicationDependencies.getApplication()),
       obsoletePasswordTimeout = TextSecurePreferences.getPassphraseTimeoutInterval(ApplicationDependencies.getApplication()),

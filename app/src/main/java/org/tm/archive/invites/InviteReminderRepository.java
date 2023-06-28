@@ -2,8 +2,8 @@ package org.tm.archive.invites;
 
 import android.content.Context;
 
-import org.tm.archive.database.MmsSmsDatabase;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.MessageTable;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.recipients.Recipient;
 
@@ -17,21 +17,21 @@ public final class InviteReminderRepository implements InviteReminderModel.Repos
 
   @Override
   public void setHasSeenFirstInviteReminder(Recipient recipient) {
-    RecipientDatabase recipientDatabase = SignalDatabase.recipients();
-    recipientDatabase.setSeenFirstInviteReminder(recipient.getId());
+    RecipientTable recipientTable = SignalDatabase.recipients();
+    recipientTable.setSeenFirstInviteReminder(recipient.getId());
   }
 
   @Override
   public void setHasSeenSecondInviteReminder(Recipient recipient) {
-    RecipientDatabase recipientDatabase = SignalDatabase.recipients();
-    recipientDatabase.setSeenSecondInviteReminder(recipient.getId());
+    RecipientTable recipientTable = SignalDatabase.recipients();
+    recipientTable.setSeenSecondInviteReminder(recipient.getId());
   }
 
   @Override
   public int getPercentOfInsecureMessages(int insecureCount) {
-    MmsSmsDatabase mmsSmsDatabase = SignalDatabase.mmsSms();
-    int            insecure       = mmsSmsDatabase.getInsecureMessageCountForInsights();
-    int            secure         = mmsSmsDatabase.getSecureMessageCountForInsights();
+    MessageTable messageTable = SignalDatabase.messages();
+    int          insecure     = messageTable.getInsecureMessageCountForInsights();
+    int          secure       = messageTable.getSecureMessageCountForInsights();
 
     if (insecure + secure == 0) return 0;
     return Math.round(100f * (insecureCount / (float) (insecure + secure)));

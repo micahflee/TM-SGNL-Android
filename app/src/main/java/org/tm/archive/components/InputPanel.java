@@ -5,6 +5,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.text.SpannableString;
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
@@ -16,6 +17,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.Interpolator;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,28 +31,40 @@ import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.animation.AnimationCompleteListener;
+import org.tm.archive.animation.AnimationStartListener;
+import org.tm.archive.audio.AudioRecordingHandler;
 import org.tm.archive.components.emoji.EmojiEventListener;
 import org.tm.archive.components.emoji.EmojiToggle;
 import org.tm.archive.components.emoji.MediaKeyboard;
 import org.tm.archive.components.voice.VoiceNotePlaybackState;
+import org.tm.archive.conversation.ConversationMessage;
 import org.tm.archive.conversation.ConversationStickerSuggestionAdapter;
 import org.tm.archive.conversation.VoiceNoteDraftView;
-import org.tm.archive.database.DraftDatabase;
+import org.tm.archive.database.DraftTable;
+import org.tm.archive.database.model.MediaMmsMessageRecord;
+import org.tm.archive.database.model.MessageId;
+import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.database.model.Quote;
 import org.tm.archive.database.model.StickerRecord;
 import org.tm.archive.keyboard.KeyboardPage;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.linkpreview.LinkPreviewRepository;
+import org.tm.archive.mms.DecryptableStreamUriLoader;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.mms.QuoteModel;
+import org.tm.archive.mms.Slide;
 import org.tm.archive.mms.SlideDeck;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.util.MessageRecordUtil;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.AssertedSuccessListener;
 import org.tm.archive.util.concurrent.ListenableFuture;
@@ -63,7 +77,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class InputPanel extends LinearLayout
-    implements MicrophoneRecorderView.Listener,
+    implements AudioRecordingHandler,
                KeyboardAwareLinearLayout.OnKeyboardShownListener,
                EmojiEventListener,
                ConversationStickerSuggestionAdapter.EventListener
@@ -86,6 +100,9 @@ public class InputPanel extends LinearLayout
   private View            recordingContainer;
   private View            recordLockCancel;
   private ViewGroup       composeContainer;
+  private View            editMessageCancel;
+  private ImageView       editMessageThumbnail;
+  private View            editMessageHeader;
 
   private MicrophoneRecorderView microphoneRecorderView;
   private SlideToCancel          slideToCancel;
@@ -103,6 +120,7 @@ public class InputPanel extends LinearLayout
   private boolean hideForSelection;
 
   private ConversationStickerSuggestionAdapter stickerSuggestionAdapter;
+  private MessageRecord                        messageToEdit;
 
   public InputPanel(Context context) {
     super(context);
@@ -137,13 +155,16 @@ public class InputPanel extends LinearLayout
     this.voiceNoteDraftView     = findViewById(R.id.voice_note_draft_view);
     this.slideToCancel          = new SlideToCancel(findViewById(R.id.slide_to_cancel));
     this.microphoneRecorderView = findViewById(R.id.recorder_view);
-    this.microphoneRecorderView.setListener(this);
+    this.microphoneRecorderView.setHandler(this);
     this.recordTime             = new RecordTime(findViewById(R.id.record_time),
                                                  findViewById(R.id.microphone),
                                                  TimeUnit.HOURS.toSeconds(1),
-                                                 () -> microphoneRecorderView.cancelAction());
+                                                 () -> microphoneRecorderView.cancelAction(false));
+    this.editMessageCancel      = findViewById(R.id.input_panel_exit_edit_mode);
+    this.editMessageHeader      = findViewById(R.id.edit_message_compose_header);
+    this.editMessageThumbnail   = findViewById(R.id.edit_message_thumbnail);
 
-    this.recordLockCancel.setOnClickListener(v -> microphoneRecorderView.cancelAction());
+    this.recordLockCancel.setOnClickListener(v -> microphoneRecorderView.cancelAction(true));
 
     if (SignalStore.settings().isPreferSystemEmoji()) {
       mediaKeyboard.setVisibility(View.GONE);
@@ -165,6 +186,8 @@ public class InputPanel extends LinearLayout
 
     stickerSuggestion.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
     stickerSuggestion.setAdapter(stickerSuggestionAdapter);
+
+    editMessageCancel.setOnClickListener(v -> exitEditMessageMode());
   }
 
   public void setListener(final @NonNull Listener listener) {
@@ -181,7 +204,7 @@ public class InputPanel extends LinearLayout
   public void setQuote(@NonNull GlideRequests glideRequests,
                        long id,
                        @NonNull Recipient author,
-                       @NonNull CharSequence body,
+                       @Nullable CharSequence body,
                        @NonNull SlideDeck attachments,
                        @NonNull QuoteModel.Type quoteType)
   {
@@ -268,7 +291,14 @@ public class InputPanel extends LinearLayout
 
   public Optional<QuoteModel> getQuote() {
     if (quoteView.getQuoteId() > 0 && quoteView.getVisibility() == View.VISIBLE) {
-      return Optional.of(new QuoteModel(quoteView.getQuoteId(), quoteView.getAuthor().getId(), quoteView.getBody().toString(), false, quoteView.getAttachments(), quoteView.getMentions(), quoteView.getQuoteType()));
+      return Optional.of(new QuoteModel(quoteView.getQuoteId(),
+                                        quoteView.getAuthor().getId(),
+                                        quoteView.getBody().toString(),
+                                        false,
+                                        quoteView.getAttachments(),
+                                        quoteView.getMentions(),
+                                        quoteView.getQuoteType(),
+                                        quoteView.getBodyRanges()));
     } else {
       return Optional.empty();
     }
@@ -363,6 +393,73 @@ public class InputPanel extends LinearLayout
     quoteView.setWallpaperEnabled(enabled);
   }
 
+  public void enterEditMessageMode(@NonNull GlideRequests glideRequests, @NonNull ConversationMessage conversationMessageToEdit, boolean fromDraft) {
+    SpannableString textToEdit = conversationMessageToEdit.getDisplayBody(getContext());
+    if (!fromDraft) {
+      composeText.setText(textToEdit);
+      composeText.setSelection(textToEdit.length());
+    }
+    Quote quote = MessageRecordUtil.getQuote(conversationMessageToEdit.getMessageRecord());
+    if (quote == null) {
+      clearQuote();
+    } else {
+      setQuote(glideRequests, quote.getId(), Recipient.resolved(quote.getAuthor()), quote.getDisplayText(), quote.getAttachment(), quote.getQuoteType());
+    }
+    this.messageToEdit = conversationMessageToEdit.getMessageRecord();
+    updateEditModeThumbnail(glideRequests);
+    updateEditModeUi();
+  }
+
+  private void updateEditModeThumbnail(@NonNull GlideRequests glideRequests) {
+    if (messageToEdit instanceof MediaMmsMessageRecord) {
+      MediaMmsMessageRecord mediaEditMessage = (MediaMmsMessageRecord) messageToEdit;
+      SlideDeck             slideDeck        = mediaEditMessage.getSlideDeck();
+      Slide                 imageVideoSlide  = slideDeck.getSlides().stream().filter(s -> s.hasImage() || s.hasVideo() || s.hasSticker()).findFirst().orElse(null);
+
+      if (imageVideoSlide != null && imageVideoSlide.getUri() != null) {
+        editMessageThumbnail.setVisibility(VISIBLE);
+        glideRequests.load(new DecryptableStreamUriLoader.DecryptableUri(imageVideoSlide.getUri()))
+                     .centerCrop()
+                     .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                     .into(editMessageThumbnail);
+      } else {
+        editMessageThumbnail.setVisibility(View.GONE);
+      }
+    } else {
+      editMessageThumbnail.setVisibility(View.GONE);
+    }
+  }
+
+  public void exitEditMessageMode() {
+    if (messageToEdit != null) {
+      composeText.setText("");
+      messageToEdit = null;
+      quoteView.setMessageType(QuoteView.MessageType.PREVIEW);
+    }
+    updateEditModeUi();
+  }
+
+  private void updateEditModeUi() {
+    if (inEditMessageMode()) {
+      ViewUtil.focusAndShowKeyboard(composeText);
+      editMessageHeader.setVisibility(View.VISIBLE);
+      editMessageCancel.setVisibility(View.VISIBLE);
+      if (listener != null) {
+        listener.onEnterEditMode();
+      }
+    } else {
+      editMessageHeader.setVisibility(View.GONE);
+      editMessageCancel.setVisibility(View.GONE);
+      if (listener != null) {
+        listener.onExitEditMode();
+      }
+    }
+  }
+
+  public boolean inEditMessageMode() {
+    return messageToEdit != null;
+  }
+
   public void setHideForMessageRequestState(boolean hideForMessageRequestState) {
     this.hideForMessageRequestState = hideForMessageRequestState;
     updateVisibility();
@@ -419,7 +516,7 @@ public class InputPanel extends LinearLayout
         listener.onRecorderFinished();
       } else {
         Toast.makeText(getContext(), R.string.InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send, Toast.LENGTH_LONG).show();
-        listener.onRecorderCanceled();
+        listener.onRecorderCanceled(true);
       }
     }
   }
@@ -433,14 +530,15 @@ public class InputPanel extends LinearLayout
     if (ViewUtil.isLtr(this) && position <= 0.5 ||
         ViewUtil.isRtl(this) && position >= 0.6)
     {
-      this.microphoneRecorderView.cancelAction();
+      this.microphoneRecorderView.cancelAction(true);
     }
   }
 
   @Override
-  public void onRecordCanceled() {
+  public void onRecordCanceled(boolean byUser) {
+    Log.d(TAG, "Recording canceled byUser=" + byUser);
     onRecordHideEvent();
-    if (listener != null) listener.onRecorderCanceled();
+    if (listener != null) listener.onRecorderCanceled(byUser);
   }
 
   @Override
@@ -452,7 +550,7 @@ public class InputPanel extends LinearLayout
   }
 
   public void onPause() {
-    this.microphoneRecorderView.cancelAction();
+    this.microphoneRecorderView.cancelAction(false);
   }
 
   public @NonNull Observer<VoiceNotePlaybackState> getPlaybackStateObserver() {
@@ -475,7 +573,9 @@ public class InputPanel extends LinearLayout
     future.addListener(new AssertedSuccessListener<Void>() {
       @Override
       public void onSuccess(Void result) {
-        fadeInNormalComposeViews();
+        if (voiceNoteDraftView.getDraft() == null) {
+          fadeInNormalComposeViews();
+        }
       }
     });
 
@@ -485,6 +585,10 @@ public class InputPanel extends LinearLayout
   @Override
   public void onKeyboardShown() {
     mediaKeyboard.setToMedia();
+  }
+
+  public void setToIme() {
+    mediaKeyboard.setToIme();
   }
 
   @Override
@@ -516,11 +620,12 @@ public class InputPanel extends LinearLayout
     microphoneRecorderView.unlockAction();
   }
 
-  public void setVoiceNoteDraft(@Nullable DraftDatabase.Draft voiceNoteDraft) {
+  public void setVoiceNoteDraft(@Nullable DraftTable.Draft voiceNoteDraft) {
     if (voiceNoteDraft != null) {
       voiceNoteDraftView.setDraft(voiceNoteDraft);
       voiceNoteDraftView.setVisibility(VISIBLE);
       hideNormalComposeViews();
+      fadeIn(buttonToggle);
       buttonToggle.displayQuick(sendButton);
     } else {
       voiceNoteDraftView.clearDraft();
@@ -529,7 +634,7 @@ public class InputPanel extends LinearLayout
     }
   }
 
-  public @Nullable DraftDatabase.Draft getVoiceNoteDraft() {
+  public @Nullable DraftTable.Draft getVoiceNoteDraft() {
     return voiceNoteDraftView.getDraft();
   }
 
@@ -557,11 +662,39 @@ public class InputPanel extends LinearLayout
   }
 
   private void fadeIn(@NonNull View v) {
-    v.animate().alpha(1).setDuration(FADE_TIME).start();
+    v.animate()
+     .setListener(new AnimationStartListener() {
+       @Override
+       public void onAnimationStart(@NonNull Animator animation) {
+         v.setVisibility(View.VISIBLE);
+       }
+
+       @Override
+       public void onAnimationCancel(@NonNull Animator animation) {
+         v.setVisibility(View.INVISIBLE);
+       }
+     })
+     .alpha(1)
+     .setDuration(FADE_TIME)
+     .start();
   }
 
   private void fadeOut(@NonNull View v) {
-    v.animate().alpha(0).setDuration(FADE_TIME).start();
+    v.animate()
+     .setListener(new AnimationCompleteListener() {
+       @Override
+       public void onAnimationEnd(Animator animation) {
+         v.setVisibility(View.INVISIBLE);
+       }
+
+       @Override
+       public void onAnimationCancel(Animator animation) {
+         v.setVisibility(View.VISIBLE);
+       }
+     })
+     .alpha(0)
+     .setDuration(FADE_TIME)
+     .start();
   }
 
   private void updateVisibility() {
@@ -572,17 +705,29 @@ public class InputPanel extends LinearLayout
     }
   }
 
+  public @Nullable MessageRecord getEditMessage() {
+    return messageToEdit;
+  }
+  public @Nullable MessageId getEditMessageId() {
+    if (messageToEdit == null) {
+      return null;
+    }
+    return new MessageId(messageToEdit.getId());
+  }
+
   public interface Listener extends VoiceNoteDraftView.Listener {
     void onRecorderStarted();
     void onRecorderLocked();
     void onRecorderFinished();
-    void onRecorderCanceled();
+    void onRecorderCanceled(boolean byUser);
     void onRecorderPermissionRequired();
     void onEmojiToggle();
     void onLinkPreviewCanceled();
     void onStickerSuggestionSelected(@NonNull StickerRecord sticker);
     void onQuoteChanged(long id, @NonNull RecipientId author);
     void onQuoteCleared();
+    void onEnterEditMode();
+    void onExitEditMode();
   }
 
   private static class SlideToCancel {

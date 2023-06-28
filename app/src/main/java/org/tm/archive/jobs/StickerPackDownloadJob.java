@@ -1,15 +1,16 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.util.Preconditions;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.InvalidMessageException;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.StickerDatabase;
+import org.tm.archive.database.StickerTable;
 import org.tm.archive.database.model.IncomingSticker;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -87,12 +88,12 @@ public class StickerPackDownloadJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_PACK_ID, packId)
-                             .putString(KEY_PACK_KEY, packKey)
-                             .putBoolean(KEY_REFERENCE_PACK, isReferencePack)
-                             .putBoolean(KEY_NOTIFY, notify)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_PACK_ID, packId)
+                                    .putString(KEY_PACK_KEY, packKey)
+                                    .putBoolean(KEY_REFERENCE_PACK, isReferencePack)
+                                    .putBoolean(KEY_NOTIFY, notify)
+                                    .serialize();
   }
 
   @Override
@@ -113,9 +114,9 @@ public class StickerPackDownloadJob extends BaseJob {
     }
 
     SignalServiceMessageReceiver receiver        = ApplicationDependencies.getSignalServiceMessageReceiver();
-    JobManager                   jobManager      = ApplicationDependencies.getJobManager();
-    StickerDatabase              stickerDatabase = SignalDatabase.stickers();
-    byte[]                       packIdBytes     = Hex.fromStringCondensed(packId);
+    JobManager   jobManager      = ApplicationDependencies.getJobManager();
+    StickerTable stickerDatabase = SignalDatabase.stickers();
+    byte[]       packIdBytes     = Hex.fromStringCondensed(packId);
     byte[]                       packKeyBytes    = Hex.fromStringCondensed(packKey);
     SignalServiceStickerManifest manifest        = receiver.retrieveStickerManifest(packIdBytes, packKeyBytes);
 
@@ -178,7 +179,9 @@ public class StickerPackDownloadJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<StickerPackDownloadJob> {
     @Override
-    public @NonNull StickerPackDownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull StickerPackDownloadJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new StickerPackDownloadJob(parameters,
                                         data.getString(KEY_PACK_ID),
                                         data.getString(KEY_PACK_KEY),

@@ -15,15 +15,16 @@ import androidx.fragment.app.FragmentManager;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import org.tm.archive.R;
-import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.ParcelableGroupId;
 import org.tm.archive.groups.ui.GroupMemberListView;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.CommunicationActions;
-import org.tm.archive.util.LifecycleDisposable;
+import org.signal.core.util.concurrent.LifecycleDisposable;
+import org.tm.archive.util.WindowUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -82,6 +83,12 @@ public final class ShowAdminsBottomSheetDialog extends BottomSheetDialogFragment
   }
 
   @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
+  }
+
+  @Override
   public void show(@NonNull FragmentManager manager, @Nullable String tag) {
     BottomSheetUtil.show(manager, tag, this);
   }
@@ -94,7 +101,7 @@ public final class ShowAdminsBottomSheetDialog extends BottomSheetDialogFragment
   private static @NonNull List<Recipient> getAdmins(@NonNull Context context, @NonNull GroupId groupId) {
     return SignalDatabase.groups()
                          .getGroup(groupId)
-                         .map(GroupDatabase.GroupRecord::getAdmins)
+                         .map(GroupRecord::getAdmins)
                          .orElse(Collections.emptyList());
   }
 }

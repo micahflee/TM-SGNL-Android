@@ -23,8 +23,8 @@ import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.webrtc.CallBandwidthMode;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 @SuppressWarnings("deprecation")
 public final class SettingsValues extends SignalStoreValues {
@@ -50,6 +50,8 @@ public final class SettingsValues extends SignalStoreValues {
   public static final  String PREFER_SYSTEM_EMOJI                     = "settings.use.system.emoji";
   public static final  String ENTER_KEY_SENDS                         = "settings.enter.key.sends";
   public static final  String BACKUPS_ENABLED                         = "settings.backups.enabled";
+  public static final  String BACKUPS_SCHEDULE_HOUR                   = "settings.backups.schedule.hour";
+  public static final  String BACKUPS_SCHEDULE_MINUTE                 = "settings.backups.schedule.minute";
   public static final  String SMS_DELIVERY_REPORTS_ENABLED            = "settings.sms.delivery.reports.enabled";
   public static final  String WIFI_CALLING_COMPATIBILITY_MODE_ENABLED = "settings.wifi.calling.compatibility.mode.enabled";
   public static final  String MESSAGE_NOTIFICATIONS_ENABLED           = "settings.message.notifications.enabled";
@@ -69,6 +71,10 @@ public final class SettingsValues extends SignalStoreValues {
   private static final String SENT_MEDIA_QUALITY                      = "settings.sentMediaQuality";
   private static final String CENSORSHIP_CIRCUMVENTION_ENABLED        = "settings.censorshipCircumventionEnabled";
   private static final String KEEP_MUTED_CHATS_ARCHIVED               = "settings.keepMutedChatsArchived";
+  private static final String USE_COMPACT_NAVIGATION_BAR              = "settings.useCompactNavigationBar";
+
+  public static final int BACKUP_DEFAULT_HOUR   = 2;
+  public static final int BACKUP_DEFAULT_MINUTE = 0;
 
   private final SingleLiveEvent<String> onConfigurationSettingChanged = new SingleLiveEvent<>();
 
@@ -78,10 +84,15 @@ public final class SettingsValues extends SignalStoreValues {
 
   @Override
   void onFirstEverAppLaunch() {
-    if (!getStore().containsKey(LINK_PREVIEWS)) {
-      getStore().beginWrite()
-                .putBoolean(LINK_PREVIEWS, true)
-                .apply();
+    final KeyValueStore store = getStore();
+    if (!store.containsKey(LINK_PREVIEWS)) {
+      store.beginWrite()
+           .putBoolean(LINK_PREVIEWS, true)
+           .apply();
+    }
+    if (!store.containsKey(BACKUPS_SCHEDULE_HOUR)) {
+      // Initialize backup time to a 5min interval between 1-5am
+      setBackupSchedule(new Random().nextInt(5) + 1, new Random().nextInt(12) * 5);
     }
   }
 
@@ -113,7 +124,8 @@ public final class SettingsValues extends SignalStoreValues {
                          NOTIFY_WHEN_CONTACT_JOINS_SIGNAL,
                          UNIVERSAL_EXPIRE_TIMER,
                          SENT_MEDIA_QUALITY,
-                         KEEP_MUTED_CHATS_ARCHIVED);
+                         KEEP_MUTED_CHATS_ARCHIVED,
+                         USE_COMPACT_NAVIGATION_BAR);
   }
 
   public @NonNull LiveData<String> getOnConfigurationSettingChanged() {
@@ -261,6 +273,19 @@ public final class SettingsValues extends SignalStoreValues {
 
   public void setBackupEnabled(boolean backupEnabled) {
     putBoolean(BACKUPS_ENABLED, backupEnabled);
+  }
+
+  public int getBackupHour() {
+    return getInteger(BACKUPS_SCHEDULE_HOUR, BACKUP_DEFAULT_HOUR);
+  }
+
+  public int getBackupMinute() {
+    return getInteger(BACKUPS_SCHEDULE_MINUTE, BACKUP_DEFAULT_MINUTE);
+  }
+
+  public void setBackupSchedule(int hour, int minute) {
+    putInteger(BACKUPS_SCHEDULE_HOUR, hour);
+    putInteger(BACKUPS_SCHEDULE_MINUTE, minute);
   }
 
   public boolean isSmsDeliveryReportsEnabled() {
@@ -433,11 +458,19 @@ public final class SettingsValues extends SignalStoreValues {
   }
 
   public void setKeepMutedChatsArchived(boolean enabled) {
-   putBoolean(KEEP_MUTED_CHATS_ARCHIVED, enabled);
+    putBoolean(KEEP_MUTED_CHATS_ARCHIVED, enabled);
   }
 
   public boolean shouldKeepMutedChatsArchived() {
     return getBoolean(KEEP_MUTED_CHATS_ARCHIVED, false);
+  }
+
+  public void setUseCompactNavigationBar(boolean enabled) {
+    putBoolean(USE_COMPACT_NAVIGATION_BAR, enabled);
+  }
+
+  public boolean getUseCompactNavigationBar() {
+    return getBoolean(USE_COMPACT_NAVIGATION_BAR, false);
   }
 
   private @Nullable Uri getUri(@NonNull String key) {

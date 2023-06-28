@@ -8,6 +8,7 @@ import org.tm.archive.mediasend.MediaSendConstants
 import org.tm.archive.mms.SentMediaQuality
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.stories.Stories
+import org.tm.archive.util.FeatureFlags
 
 data class MediaSelectionState(
   val sendType: MessageSendType,
@@ -24,13 +25,14 @@ data class MediaSelectionState(
   val editorStateMap: Map<Uri, Any> = mapOf(),
   val cameraFirstCapture: Media? = null,
   val isStory: Boolean,
-  val storySendRequirements: Stories.MediaTransform.SendRequirements = Stories.MediaTransform.SendRequirements.CAN_NOT_SEND
+  val storySendRequirements: Stories.MediaTransform.SendRequirements = Stories.MediaTransform.SendRequirements.CAN_NOT_SEND,
+  val suppressEmptyError: Boolean = true
 ) {
 
   val maxSelection = if (sendType.usesSmsTransport) {
     MediaSendConstants.MAX_SMS
   } else {
-    MediaSendConstants.MAX_PUSH
+    FeatureFlags.maxAttachmentCount()
   }
 
   val canSend = !isSent && selectedMedia.isNotEmpty()

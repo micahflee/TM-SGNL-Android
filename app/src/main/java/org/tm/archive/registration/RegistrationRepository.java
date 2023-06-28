@@ -1,10 +1,12 @@
 package org.tm.archive.registration;
 
 import android.app.Application;
+import android.app.backup.BackupManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
+import androidx.core.app.NotificationManagerCompat;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.state.PreKeyRecord;
@@ -17,19 +19,19 @@ import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.crypto.SenderKeyUtil;
 import org.tm.archive.crypto.storage.PreKeyMetadataStore;
 import org.tm.archive.crypto.storage.SignalServiceAccountDataStoreImpl;
-import org.tm.archive.database.IdentityDatabase;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.IdentityTable;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.DirectoryRefreshJob;
 import org.tm.archive.jobs.RotateCertificateJob;
 import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.pin.PinState;
 import org.tm.archive.push.AccountManagerFactory;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.registration.VerifyAccountRepository.VerifyAccountWithRegistrationLockResponse;
 import org.tm.archive.service.DirectoryRefreshListener;
 import org.tm.archive.service.RotateSignedPreKeyListener;
 import org.tm.archive.util.TextSecurePreferences;
@@ -40,6 +42,7 @@ import org.whispersystems.signalservice.api.push.PNI;
 import org.whispersystems.signalservice.api.push.ServiceIdType;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.internal.ServiceResponse;
+import org.whispersystems.signalservice.internal.push.BackupAuthCheckProcessor;
 import org.whispersystems.signalservice.internal.push.VerifyAccountResponse;
 
 import java.io.IOException;
@@ -93,27 +96,18 @@ public final class RegistrationRepository {
     return profileKey;
   }
 
-  public Single<ServiceResponse<VerifyAccountResponse>> registerAccountWithoutRegistrationLock(@NonNull RegistrationData registrationData,
-                                                                                               @NonNull VerifyAccountResponse response)
+  public Single<ServiceResponse<VerifyResponse>> registerAccount(@NonNull RegistrationData registrationData,
+                                                                 @NonNull VerifyResponse response,
+                                                                 boolean setRegistrationLockEnabled)
   {
-    return registerAccount(registrationData, response, null, null);
-  }
-
-  public Single<ServiceResponse<VerifyAccountResponse>> registerAccountWithRegistrationLock(@NonNull RegistrationData registrationData,
-                                                                                            @NonNull VerifyAccountWithRegistrationLockResponse response,
-                                                                                            @NonNull String pin)
-  {
-    return registerAccount(registrationData, response.getVerifyAccountResponse(), pin, response.getKbsData());
-  }
-
-  private Single<ServiceResponse<VerifyAccountResponse>> registerAccount(@NonNull RegistrationData registrationData,
-                                                                         @NonNull VerifyAccountResponse response,
-                                                                         @Nullable String pin,
-                                                                         @Nullable KbsPinData kbsData)
-  {
-    return Single.<ServiceResponse<VerifyAccountResponse>>fromCallable(() -> {
+    return Single.<ServiceResponse<VerifyResponse>>fromCallable(() -> {
       try {
-        registerAccountInternal(registrationData, response, pin, kbsData);
+        String pin = response.getPin();
+        registerAccountInternal(registrationData, response.getVerifyAccountResponse(), pin, response.getKbsData(), setRegistrationLockEnabled);
+
+        if (pin != null && !pin.isEmpty()) {
+          PinState.onPinChangedOrCreated(context, pin, SignalStore.pinValues().getKeyboardType());
+        }
 
         JobManager jobManager = ApplicationDependencies.getJobManager();
         jobManager.add(new DirectoryRefreshJob(false));
@@ -133,7 +127,8 @@ public final class RegistrationRepository {
   private void registerAccountInternal(@NonNull RegistrationData registrationData,
                                        @NonNull VerifyAccountResponse response,
                                        @Nullable String pin,
-                                       @Nullable KbsPinData kbsData)
+                                       @Nullable KbsPinData kbsData,
+                                       boolean setRegistrationLockEnabled)
       throws IOException
   {
     ACI     aci    = ACI.parseOrThrow(response.getUuid());
@@ -147,7 +142,7 @@ public final class RegistrationRepository {
     ApplicationDependencies.getProtocolStore().pni().sessions().archiveAllSessions();
     SenderKeyUtil.clearAllState();
 
-    SignalServiceAccountManager       accountManager   = AccountManagerFactory.createAuthenticated(context, aci, pni, registrationData.getE164(), SignalServiceAddress.DEFAULT_DEVICE_ID, registrationData.getPassword());
+    SignalServiceAccountManager       accountManager   = AccountManagerFactory.getInstance().createAuthenticated(context, aci, pni, registrationData.getE164(), SignalServiceAddress.DEFAULT_DEVICE_ID, registrationData.getPassword());
     SignalServiceAccountDataStoreImpl aciProtocolStore = ApplicationDependencies.getProtocolStore().aci();
     SignalServiceAccountDataStoreImpl pniProtocolStore = ApplicationDependencies.getProtocolStore().pni();
 
@@ -158,13 +153,13 @@ public final class RegistrationRepository {
       accountManager.setGcmId(Optional.ofNullable(registrationData.getFcmToken()));
     }
 
-    RecipientDatabase recipientDatabase = SignalDatabase.recipients();
-    RecipientId       selfId            = Recipient.trustedPush(aci, pni, registrationData.getE164()).getId();
+    RecipientTable recipientTable = SignalDatabase.recipients();
+    RecipientId    selfId         = Recipient.trustedPush(aci, pni, registrationData.getE164()).getId();
 
-    recipientDatabase.setProfileSharing(selfId, true);
-    recipientDatabase.markRegisteredOrThrow(selfId, aci);
-    recipientDatabase.linkIdsForSelf(aci, pni, registrationData.getE164());
-    recipientDatabase.setProfileKey(selfId, registrationData.getProfileKey());
+    recipientTable.setProfileSharing(selfId, true);
+    recipientTable.markRegisteredOrThrow(selfId, aci);
+    recipientTable.linkIdsForSelf(aci, pni, registrationData.getE164());
+    recipientTable.setProfileKey(selfId, registrationData.getProfileKey());
 
     ApplicationDependencies.getRecipientCache().clearSelf();
 
@@ -180,8 +175,12 @@ public final class RegistrationRepository {
     SignalStore.account().setRegistered(true);
     TextSecurePreferences.setPromptedPushRegistration(context, true);
     TextSecurePreferences.setUnauthorizedReceived(context, false);
+    NotificationManagerCompat.from(context).cancel(NotificationIds.UNREGISTERED_NOTIFICATION_ID);
 
-    PinState.onRegistration(context, kbsData, pin, hasPin);
+    PinState.onRegistration(context, kbsData, pin, hasPin, setRegistrationLockEnabled);
+
+    ApplicationDependencies.closeConnections();
+    ApplicationDependencies.getIncomingMessageObserver();
   }
 
   private void generateAndRegisterPreKeys(@NonNull ServiceIdType serviceIdType,
@@ -201,7 +200,7 @@ public final class RegistrationRepository {
   private void saveOwnIdentityKey(@NonNull RecipientId selfId, @NonNull SignalServiceAccountDataStoreImpl protocolStore, long now) {
     protocolStore.identities().saveIdentityWithoutSideEffects(selfId,
                                                               protocolStore.getIdentityKeyPair().getPublicKey(),
-                                                              IdentityDatabase.VerifiedStatus.VERIFIED,
+                                                              IdentityTable.VerifiedStatus.VERIFIED,
                                                               true,
                                                               now,
                                                               true);
@@ -209,13 +208,25 @@ public final class RegistrationRepository {
 
   @WorkerThread
   private static @Nullable ProfileKey findExistingProfileKey(@NonNull String e164number) {
-    RecipientDatabase     recipientDatabase = SignalDatabase.recipients();
-    Optional<RecipientId> recipient         = recipientDatabase.getByE164(e164number);
+    RecipientTable        recipientTable = SignalDatabase.recipients();
+    Optional<RecipientId> recipient      = recipientTable.getByE164(e164number);
 
     if (recipient.isPresent()) {
       return ProfileKeyUtil.profileKeyOrNull(Recipient.resolved(recipient.get()).getProfileKey());
     }
 
     return null;
+  }
+
+  public Single<BackupAuthCheckProcessor> getKbsAuthCredential(@NonNull RegistrationData registrationData, List<String> usernamePasswords) {
+    SignalServiceAccountManager accountManager = AccountManagerFactory.getInstance().createUnauthenticated(context, registrationData.getE164(), SignalServiceAddress.DEFAULT_DEVICE_ID, registrationData.getPassword());
+
+    return accountManager.checkBackupAuthCredentials(registrationData.getE164(), usernamePasswords)
+                         .map(BackupAuthCheckProcessor::new)
+                         .doOnSuccess(processor -> {
+                           if (SignalStore.kbsValues().removeAuthTokens(processor.getInvalid())) {
+                             new BackupManager(context).dataChanged();
+                           }
+                         });
   }
 }

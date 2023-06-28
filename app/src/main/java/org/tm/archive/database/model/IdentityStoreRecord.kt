@@ -1,13 +1,13 @@
 package org.tm.archive.database.model
 
 import org.signal.libsignal.protocol.IdentityKey
-import org.tm.archive.database.IdentityDatabase
+import org.tm.archive.database.IdentityTable
 import org.tm.archive.recipients.RecipientId
 
 data class IdentityStoreRecord(
   val addressName: String,
   val identityKey: IdentityKey,
-  val verifiedStatus: IdentityDatabase.VerifiedStatus,
+  val verifiedStatus: IdentityTable.VerifiedStatus,
   val firstUse: Boolean,
   val timestamp: Long,
   val nonblockingApproval: Boolean

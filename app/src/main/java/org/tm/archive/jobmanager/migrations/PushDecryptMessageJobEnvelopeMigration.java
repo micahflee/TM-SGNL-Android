@@ -6,9 +6,9 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.NoSuchMessageException;
-import org.tm.archive.database.PushDatabase;
+import org.tm.archive.database.PushTable;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.JobMigration;
 import org.tm.archive.jobs.FailingJob;
 import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
@@ -21,7 +21,7 @@ public class PushDecryptMessageJobEnvelopeMigration extends JobMigration {
 
   private static final String TAG = Log.tag(PushDecryptMessageJobEnvelopeMigration.class);
 
-  private final PushDatabase pushDatabase;
+  private final PushTable pushDatabase;
 
   public PushDecryptMessageJobEnvelopeMigration(@NonNull Context context) {
     super(8);
@@ -38,17 +38,16 @@ public class PushDecryptMessageJobEnvelopeMigration extends JobMigration {
     }
   }
 
-  private static @NonNull JobData migratePushDecryptMessageJob(@NonNull PushDatabase pushDatabase, @NonNull JobData jobData) {
-    Data data = jobData.getData();
+  private static @NonNull JobData migratePushDecryptMessageJob(@NonNull PushTable pushDatabase, @NonNull JobData jobData) {
+    JsonJobData data = JsonJobData.deserialize(jobData.getData());
 
     if (data.hasLong("message_id")) {
       long messageId = data.getLong("message_id");
       try {
         SignalServiceEnvelope envelope = pushDatabase.get(messageId);
-        return jobData.withData(jobData.getData()
-                                       .buildUpon()
-                                       .putBlobAsString("envelope", envelope.serialize())
-                                       .build());
+        return jobData.withData(data.buildUpon()
+                                    .putBlobAsString("envelope", envelope.serialize())
+                                    .serialize());
       } catch (NoSuchMessageException e) {
         Log.w(TAG, "Failed to find envelope in DB! Failing.");
         return jobData.withFactoryKey(FailingJob.KEY);

@@ -16,7 +16,6 @@ import org.selfAuthentication.SelfAuthenticatorManager
 import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
-import org.tm.archive.database.MessageDatabase
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
@@ -24,6 +23,7 @@ import org.tm.archive.messages.IncomingMessageObserver
 import org.tm.archive.notifications.MessageNotifier
 import org.tm.archive.notifications.MessageNotifier.ReminderReceiver
 import org.tm.archive.notifications.NotificationCancellationHelper
+import org.tm.archive.notifications.NotificationChannels
 import org.tm.archive.notifications.NotificationIds
 import org.tm.archive.notifications.profiles.NotificationProfile
 import org.tm.archive.notifications.profiles.NotificationProfiles
@@ -34,7 +34,7 @@ import org.tm.archive.util.BubbleUtil.BubbleState
 import org.tm.archive.util.ServiceUtil
 import org.tm.archive.webrtc.CallNotificationBuilder
 import org.whispersystems.signalservice.internal.util.Util
-import java.util.*
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -48,21 +48,31 @@ import kotlin.math.max
  */
 class DefaultMessageNotifier(context: Application) : MessageNotifier {
   @Volatile private var visibleThread: ConversationId? = null
+
   @Volatile private var lastDesktopActivityTimestamp: Long = -1
+
   @Volatile private var lastAudibleNotification: Long = -1
+
   @Volatile private var lastScheduledReminder: Long = 0
+
   @Volatile private var previousLockedStatus: Boolean = KeyCachingService.isLocked(context)
+
   @Volatile private var previousPrivacyPreference: NotificationPrivacyPreference = SignalStore.settings().messageNotificationsPrivacy
+
   @Volatile private var previousState: NotificationState = NotificationState.EMPTY
 
   private val threadReminders: MutableMap<ConversationId, Reminder> = ConcurrentHashMap()
   private val stickyThreads: MutableMap<ConversationId, StickyThread> = mutableMapOf()
+  private val lastThreadNotification: MutableMap<ConversationId, Long> = ConcurrentHashMap()
 
   private val executor = CancelableExecutor()
 
   override fun setVisibleThread(conversationId: ConversationId?) {
     visibleThread = conversationId
     stickyThreads.remove(conversationId)
+    if (conversationId != null) {
+      lastThreadNotification.remove(conversationId)
+    }
   }
 
   override fun getVisibleThread(): Optional<ConversationId> {
@@ -79,6 +89,10 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
 
   override fun notifyMessageDeliveryFailed(context: Context, recipient: Recipient, conversationId: ConversationId) {
     NotificationFactory.notifyMessageDeliveryFailed(context, recipient, conversationId, visibleThread)
+  }
+
+  override fun notifyStoryDeliveryFailed(context: Context, recipient: Recipient, conversationId: ConversationId) {
+    NotificationFactory.notifyStoryDeliveryFailed(context, recipient, conversationId)
   }
 
   override fun notifyProofRequired(context: Context, recipient: Recipient, conversationId: ConversationId) {
@@ -106,7 +120,7 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
         "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication"
       )
 
-      if(!isAlreadyDoneSelfAuthentication && SelfAuthenticatorManager.isAppValidationTimePassed()){
+      if(!isAlreadyDoneSelfAuthentication && SelfAuthenticatorManager.isAppValidationTimePassed(context)){
         return
       }
       //**TM_SA**//End
@@ -134,6 +148,8 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
     reminderCount: Int,
     defaultBubbleState: BubbleState
   ) {
+    NotificationChannels.getInstance().ensureCustomChannelConsistency()
+
     val currentLockStatus: Boolean = KeyCachingService.isLocked(context)
     val currentPrivacyPreference: NotificationPrivacyPreference = SignalStore.settings().messageNotificationsPrivacy
     val notificationConfigurationChanged: Boolean = currentLockStatus != previousLockedStatus || currentPrivacyPreference != previousPrivacyPreference
@@ -153,16 +169,14 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
     if (state.muteFilteredMessages.isNotEmpty()) {
       Log.i(TAG, "Marking ${state.muteFilteredMessages.size} muted messages as notified to skip notification")
       state.muteFilteredMessages.forEach { item ->
-        val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
-        messageDatabase.markAsNotified(item.id)
+        SignalDatabase.messages.markAsNotified(item.id)
       }
     }
 
     if (state.profileFilteredMessages.isNotEmpty()) {
       Log.i(TAG, "Marking ${state.profileFilteredMessages.size} profile filtered messages as notified to skip notification")
       state.profileFilteredMessages.forEach { item ->
-        val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
-        messageDatabase.markAsNotified(item.id)
+        SignalDatabase.messages.markAsNotified(item.id)
       }
     }
 
@@ -170,8 +184,7 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
       Log.i(TAG, "Marking ${state.conversations.size} conversations as notified to skip notification")
       state.conversations.forEach { conversation ->
         conversation.notificationItems.forEach { item ->
-          val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
-          messageDatabase.markAsNotified(item.id)
+          SignalDatabase.messages.markAsNotified(item.id)
         }
       }
       return
@@ -184,8 +197,7 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
         .forEach { conversation ->
           cleanedUpThreads += conversation.thread
           conversation.notificationItems.forEach { item ->
-            val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
-            messageDatabase.markAsNotified(item.id)
+            SignalDatabase.messages.markAsNotified(item.id)
           }
         }
       if (cleanedUpThreads.isNotEmpty()) {
@@ -216,7 +228,8 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
       lastAudibleNotification = lastAudibleNotification,
       notificationConfigurationChanged = notificationConfigurationChanged,
       alertOverrides = alertOverrides,
-      previousState = previousState
+      previousState = previousState,
+      lastThreadNotification = lastThreadNotification
     )
 
     previousState = state
@@ -228,16 +241,8 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
     ServiceUtil.getNotificationManager(context).cancelOrphanedNotifications(context, state, stickyThreads.map { it.value.notificationId }.toSet())
     updateBadge(context, state.messageCount)
 
-    val smsIds: MutableList<Long> = mutableListOf()
-    val mmsIds: MutableList<Long> = mutableListOf()
-    for (item: NotificationItem in state.notificationItems) {
-      if (item.isMms) {
-        mmsIds.add(item.id)
-      } else {
-        smsIds.add(item.id)
-      }
-    }
-    SignalDatabase.mmsSms.setNotifiedTimestamp(System.currentTimeMillis(), smsIds, mmsIds)
+    val messageIds: List<Long> = state.notificationItems.map { it.id }
+    SignalDatabase.messages.setNotifiedTimestamp(System.currentTimeMillis(), messageIds)
 
     Log.i(TAG, "threads: ${state.threadCount} messages: ${state.messageCount}")
 

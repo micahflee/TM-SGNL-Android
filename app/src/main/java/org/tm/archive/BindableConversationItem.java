@@ -10,6 +10,8 @@ import androidx.lifecycle.Observer;
 
 import org.tm.archive.components.voice.VoiceNotePlaybackState;
 import org.tm.archive.contactshare.Contact;
+import org.tm.archive.conversation.ConversationItem;
+import org.tm.archive.conversation.ConversationItemDisplayMode;
 import org.tm.archive.conversation.ConversationMessage;
 import org.tm.archive.conversation.colors.Colorizable;
 import org.tm.archive.conversation.colors.Colorizer;
@@ -22,6 +24,7 @@ import org.tm.archive.giph.mp4.GiphyMp4Playable;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupMigrationMembershipChange;
 import org.tm.archive.linkpreview.LinkPreview;
+import org.tm.archive.mediapreview.MediaIntentFactory;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -47,7 +50,7 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
             boolean isMessageRequestAccepted,
             boolean canPlayInline,
             @NonNull Colorizer colorizer,
-            boolean isCondensedMode);
+            @NonNull ConversationItemDisplayMode displayMode);
 
   @NonNull ConversationMessage getConversationMessage();
 
@@ -102,11 +105,16 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
     void onDonateClicked();
     void onBlockJoinRequest(@NonNull Recipient recipient);
     void onRecipientNameClicked(@NonNull RecipientId target);
-
+    void onInviteToSignalClicked();
+    void onActivatePaymentsClicked();
+    void onSendPaymentClicked(@NonNull RecipientId recipientId);
+    void onScheduledIndicatorClicked(@NonNull View view, @NonNull ConversationMessage conversationMessage);
     /** @return true if handled, false if you want to let the normal url handling continue */
     boolean onUrlClicked(@NonNull String url);
-
     void onViewGiftBadgeClicked(@NonNull MessageRecord messageRecord);
     void onGiftBadgeRevealed(@NonNull MessageRecord messageRecord);
+    void goToMediaPreview(ConversationItem parent, View sharedElement, MediaIntentFactory.MediaPreviewArgs args);
+    void onEditedIndicatorClicked(@NonNull MessageRecord messageRecord);
+    void onShowGroupDescriptionClicked(@NonNull String groupName, @NonNull String description, boolean shouldLinkifyWebLinks);
   }
 }

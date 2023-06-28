@@ -10,17 +10,18 @@ import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
 import org.tm.archive.badges.models.Badge;
 import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.conversation.colors.ChatColors;
-import org.tm.archive.database.RecipientDatabase.InsightsBannerTier;
-import org.tm.archive.database.RecipientDatabase.MentionSetting;
-import org.tm.archive.database.RecipientDatabase.RegisteredState;
-import org.tm.archive.database.RecipientDatabase.UnidentifiedAccessMode;
-import org.tm.archive.database.RecipientDatabase.VibrateState;
+import org.tm.archive.database.RecipientTable.InsightsBannerTier;
+import org.tm.archive.database.RecipientTable.MentionSetting;
+import org.tm.archive.database.RecipientTable.RegisteredState;
+import org.tm.archive.database.RecipientTable.UnidentifiedAccessMode;
+import org.tm.archive.database.RecipientTable.VibrateState;
 import org.tm.archive.database.model.DistributionListId;
 import org.tm.archive.database.model.ProfileAvatarFileDetails;
 import org.tm.archive.database.model.RecipientRecord;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.profiles.ProfileName;
+import org.tm.archive.service.webrtc.links.CallLinkRoomId;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.tm.archive.wallpaper.ChatWallpaper;
@@ -63,19 +64,15 @@ public class RecipientDetails {
   final String                       profileAvatar;
   final ProfileAvatarFileDetails     profileAvatarFileDetails;
   final boolean                      profileSharing;
+  final boolean                      isHidden;
+  final boolean                      isActiveGroup;
   final long                         lastProfileFetch;
   final boolean                      systemContact;
   final boolean                      isSelf;
   final String                       notificationChannel;
   final UnidentifiedAccessMode       unidentifiedAccessMode;
   final boolean                      forceSmsSelection;
-  final Recipient.Capability         groupsV1MigrationCapability;
-  final Recipient.Capability         senderKeyCapability;
-  final Recipient.Capability         announcementGroupCapability;
-  final Recipient.Capability         changeNumberCapability;
-  final Recipient.Capability         storiesCapability;
-  final Recipient.Capability         giftBadgesCapability;
-  final Recipient.Capability         pnpCapability;
+  final RecipientRecord.Capabilities capabilities;
   final InsightsBannerTier           insightsBannerTier;
   final byte[]                       storageId;
   final MentionSetting               mentionSetting;
@@ -90,6 +87,7 @@ public class RecipientDetails {
   final List<Badge>                  badges;
   final boolean                      isReleaseChannel;
   final boolean                      needsPniSignature;
+  final CallLinkRoomId               callLinkRoomId;
 
   public RecipientDetails(@Nullable String groupName,
                           @Nullable String systemContactName,
@@ -99,7 +97,8 @@ public class RecipientDetails {
                           @NonNull RegisteredState registeredState,
                           @NonNull RecipientRecord record,
                           @Nullable List<RecipientId> participantIds,
-                          boolean isReleaseChannel)
+                          boolean isReleaseChannel,
+                          boolean isActiveGroup)
   {
     this.groupAvatarId                = groupAvatarId;
     this.systemContactPhoto           = Util.uri(record.getSystemContactPhotoUri());
@@ -120,6 +119,7 @@ public class RecipientDetails {
     this.blocked                      = record.isBlocked();
     this.expireMessages               = record.getExpireMessages();
     this.participantIds               = participantIds == null ? new LinkedList<>() : participantIds;
+    this.isActiveGroup                = isActiveGroup;
     this.profileName                  = record.getProfileName();
     this.defaultSubscriptionId        = record.getDefaultSubscriptionId();
     this.registered                   = registeredState;
@@ -128,19 +128,14 @@ public class RecipientDetails {
     this.profileAvatar                = record.getProfileAvatar();
     this.profileAvatarFileDetails     = record.getProfileAvatarFileDetails();
     this.profileSharing               = record.isProfileSharing();
+    this.isHidden                     = record.isHidden();
     this.lastProfileFetch             = record.getLastProfileFetch();
     this.systemContact                = systemContact;
     this.isSelf                       = isSelf;
     this.notificationChannel          = record.getNotificationChannel();
     this.unidentifiedAccessMode       = record.getUnidentifiedAccessMode();
     this.forceSmsSelection            = record.isForceSmsSelection();
-    this.groupsV1MigrationCapability  = record.getGroupsV1MigrationCapability();
-    this.senderKeyCapability          = record.getSenderKeyCapability();
-    this.announcementGroupCapability  = record.getAnnouncementGroupCapability();
-    this.changeNumberCapability       = record.getChangeNumberCapability();
-    this.storiesCapability            = record.getStoriesCapability();
-    this.giftBadgesCapability         = record.getGiftBadgesCapability();
-    this.pnpCapability                = record.getPnpCapability();
+    this.capabilities                 = record.getCapabilities();
     this.insightsBannerTier           = record.getInsightsBannerTier();
     this.storageId                    = record.getStorageId();
     this.mentionSetting               = record.getMentionSetting();
@@ -157,6 +152,7 @@ public class RecipientDetails {
     this.badges                       = record.getBadges();
     this.isReleaseChannel             = isReleaseChannel;
     this.needsPniSignature            = record.needsPniSignature();
+    this.callLinkRoomId               = record.getCallLinkRoomId();
   }
 
   private RecipientDetails() {
@@ -188,6 +184,7 @@ public class RecipientDetails {
     this.profileAvatar                = null;
     this.profileAvatarFileDetails     = ProfileAvatarFileDetails.NO_DETAILS;
     this.profileSharing               = false;
+    this.isHidden                     = false;
     this.lastProfileFetch             = 0;
     this.systemContact                = true;
     this.isSelf                       = false;
@@ -195,13 +192,7 @@ public class RecipientDetails {
     this.unidentifiedAccessMode       = UnidentifiedAccessMode.UNKNOWN;
     this.forceSmsSelection            = false;
     this.groupName                    = null;
-    this.groupsV1MigrationCapability  = Recipient.Capability.UNKNOWN;
-    this.senderKeyCapability          = Recipient.Capability.UNKNOWN;
-    this.announcementGroupCapability  = Recipient.Capability.UNKNOWN;
-    this.changeNumberCapability       = Recipient.Capability.UNKNOWN;
-    this.storiesCapability            = Recipient.Capability.UNKNOWN;
-    this.giftBadgesCapability         = Recipient.Capability.UNKNOWN;
-    this.pnpCapability                = Recipient.Capability.UNKNOWN;
+    this.capabilities                 = RecipientRecord.Capabilities.UNKNOWN;
     this.storageId                    = null;
     this.mentionSetting               = MentionSetting.ALWAYS_NOTIFY;
     this.wallpaper                    = null;
@@ -216,6 +207,8 @@ public class RecipientDetails {
     this.badges                       = Collections.emptyList();
     this.isReleaseChannel             = false;
     this.needsPniSignature            = false;
+    this.isActiveGroup                = false;
+    this.callLinkRoomId               = null;
   }
 
   public static @NonNull RecipientDetails forIndividual(@NonNull Context context, @NonNull RecipientRecord settings) {
@@ -227,18 +220,22 @@ public class RecipientDetails {
     RegisteredState registeredState = settings.getRegistered();
 
     if (isSelf) {
-      if (SignalStore.account().isRegistered() && !TextSecurePreferences.isUnauthorizedRecieved(context)) {
+      if (SignalStore.account().isRegistered() && !TextSecurePreferences.isUnauthorizedReceived(context)) {
         registeredState = RegisteredState.REGISTERED;
       } else {
         registeredState = RegisteredState.NOT_REGISTERED;
       }
     }
 
-    return new RecipientDetails(null, settings.getSystemDisplayName(), Optional.empty(), systemContact, isSelf, registeredState, settings, null, isReleaseChannel);
+    return new RecipientDetails(null, settings.getSystemDisplayName(), Optional.empty(), systemContact, isSelf, registeredState, settings, null, isReleaseChannel, false);
   }
 
   public static @NonNull RecipientDetails forDistributionList(String title, @Nullable List<RecipientId> members, @NonNull RecipientRecord record) {
-    return new RecipientDetails(title, null, Optional.empty(), false, false, record.getRegistered(), record, members, false);
+    return new RecipientDetails(title, null, Optional.empty(), false, false, record.getRegistered(), record, members, false, false);
+  }
+
+  public static @NonNull RecipientDetails forCallLink(String name, @NonNull RecipientRecord record) {
+    return new RecipientDetails(name, null, Optional.empty(), false, false, record.getRegistered(), record, Collections.emptyList(), false, false);
   }
 
   public static @NonNull RecipientDetails forUnknown() {

@@ -22,7 +22,7 @@ object CreateStoryNameFieldItem {
 
   class Model(
     val body: CharSequence,
-    val error: CharSequence?,
+    val error: CharSequence?
   ) : PreferenceModel<Model>() {
     override fun areItemsTheSame(newItem: Model): Boolean = true
     override fun areContentsTheSame(newItem: Model): Boolean {
@@ -43,7 +43,7 @@ object CreateStoryNameFieldItem {
     }
 
     override fun bind(model: Model) {
-      if (model.body != editText.text) {
+      if (model.body.toString() != editText.text.toString()) {
         editText.setText(model.body)
       }
 

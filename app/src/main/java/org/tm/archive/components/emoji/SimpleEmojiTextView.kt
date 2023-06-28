@@ -1,9 +1,12 @@
 package org.tm.archive.components.emoji
 
 import android.content.Context
+import android.graphics.Canvas
+import android.text.Spanned
 import android.text.TextUtils
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
+import org.tm.archive.components.spoiler.SpoilerRendererDelegate
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.ThrottledDebouncer
 import java.util.Optional
@@ -16,9 +19,25 @@ open class SimpleEmojiTextView @JvmOverloads constructor(
 
   private var bufferType: BufferType? = null
   private val sizeChangeDebouncer: ThrottledDebouncer = ThrottledDebouncer(200)
+  private val spoilerRendererDelegate: SpoilerRendererDelegate
 
   init {
-    isEmojiCompatEnabled = SignalStore.settings().isPreferSystemEmoji
+    isEmojiCompatEnabled = isInEditMode || SignalStore.settings().isPreferSystemEmoji
+    spoilerRendererDelegate = SpoilerRendererDelegate(this)
+  }
+
+  override fun onDraw(canvas: Canvas) {
+    if (text is Spanned && layout != null) {
+      val checkpoint = canvas.save()
+      canvas.translate(totalPaddingLeft.toFloat(), totalPaddingTop.toFloat())
+      try {
+        spoilerRendererDelegate.draw(canvas, (text as Spanned), layout)
+      } finally {
+        canvas.restoreToCount(checkpoint)
+      }
+    }
+
+    super.onDraw(canvas)
   }
 
   override fun setText(text: CharSequence?, type: BufferType?) {
@@ -38,11 +57,12 @@ open class SimpleEmojiTextView @JvmOverloads constructor(
         EmojiProvider.emojify(newCandidates, text, this, false)
       }
 
-      val newContent = if (width == 0 || maxLines == -1) {
+      var newContent: CharSequence? = if (width == 0 || maxLines == -1) {
         newText
       } else {
         TextUtils.ellipsize(newText, paint, (adjustedWidth * maxLines).toFloat(), TextUtils.TruncateAt.END, false, null)
       }
+
       bufferType = BufferType.SPANNABLE
       super.setText(newContent, type)
     }

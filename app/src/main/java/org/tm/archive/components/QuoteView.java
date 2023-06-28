@@ -27,9 +27,12 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.components.emoji.EmojiImageView;
+import org.tm.archive.components.emoji.EmojiTextView;
 import org.tm.archive.components.mention.MentionAnnotation;
 import org.tm.archive.components.quotes.QuoteViewColorTheme;
+import org.tm.archive.conversation.MessageStyler;
 import org.tm.archive.database.model.Mention;
+import org.tm.archive.database.model.databaseprotos.BodyRangeList;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.mms.QuoteModel;
@@ -80,7 +83,7 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
   private ViewGroup          mainView;
   private ViewGroup          footerView;
   private TextView           authorView;
-  private TextView           bodyView;
+  private EmojiTextView      bodyView;
   private View               quoteBarView;
   private ShapeableImageView thumbnailView;
   private View               attachmentVideoOverlayView;
@@ -196,6 +199,7 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     params.width = thumbWidth;
 
     thumbnailView.setLayoutParams(params);
+    dismissView.setVisibility(messageType == MessageType.PREVIEW ? View.VISIBLE : View.GONE);
   }
 
   public void setQuote(GlideRequests glideRequests,
@@ -224,7 +228,7 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
   }
 
   private @Nullable CharSequence resolveBody(@Nullable CharSequence body, @NonNull QuoteModel.Type quoteType) {
-    return quoteType == QuoteModel.Type.GIFT_BADGE ? getContext().getString(R.string.QuoteView__gift) : body;
+    return quoteType == QuoteModel.Type.GIFT_BADGE ? getContext().getString(R.string.QuoteView__donation_for_a_friend) : body;
   }
 
   public void setTopCornerSizes(boolean topLeftLarge, boolean topRightLarge) {
@@ -305,12 +309,11 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
       missingStoryReaction.setVisibility(View.GONE);
     }
 
-    boolean isTextStory = !attachments.containsMediaSlide() && isStoryReply();
-
+    StoryTextPostModel textPostModel = isStoryReply() ? getStoryTextPost(body) : null;
     if (!TextUtils.isEmpty(body) || !attachments.containsMediaSlide()) {
-      if (isTextStory && body != null) {
+      if (textPostModel != null) {
         try {
-          bodyView.setText(getStoryTextPost(body).getText());
+          bodyView.setText(textPostModel.getText());
         } catch (Exception e) {
           Log.w(TAG, "Could not parse body of text post.", e);
           bodyView.setText("");
@@ -365,8 +368,8 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     mainView.setMinimumHeight(isStoryReply() && originalMissing ? 0 : thumbHeight);
     thumbnailView.setPadding(0, 0, 0, 0);
 
-    if (!attachments.containsMediaSlide() && isStoryReply()) {
-      StoryTextPostModel model = getStoryTextPost(body);
+    StoryTextPostModel model = isStoryReply() ? getStoryTextPost(body) : null;
+    if (model != null) {
       attachmentVideoOverlayView.setVisibility(GONE);
       attachmentContainerView.setVisibility(GONE);
       thumbnailView.setVisibility(VISIBLE);
@@ -438,7 +441,7 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
     }
 
     try {
-      return StoryTextPostModel.parseFrom(body.toString(), id, author.getId());
+      return StoryTextPostModel.parseFrom(body.toString(), id, author.getId(), MessageStyler.getStyling(body));
     } catch (IOException ioException) {
       return null;
     }
@@ -470,6 +473,10 @@ public class QuoteView extends FrameLayout implements RecipientForeverObserver {
 
   public @NonNull List<Mention> getMentions() {
     return MentionAnnotation.getMentionsFromAnnotations(body);
+  }
+
+  public @Nullable BodyRangeList getBodyRanges() {
+    return MessageStyler.getStyling(body);
   }
 
   private @NonNull ShapeAppearanceModel buildShapeAppearanceForLayoutDirection() {

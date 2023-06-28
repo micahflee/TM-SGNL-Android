@@ -1,14 +1,16 @@
 package org.tm.archive.stories.viewer.info
 
 import android.content.DialogInterface
+import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.fragment.app.viewModels
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsBottomSheetFragment
+import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.fragments.findListener
 
 /**
@@ -58,23 +60,61 @@ class StoryInfoBottomSheetDialogFragment : DSLSettingsBottomSheetFragment() {
         )
       )
 
-      state.sections.map { (section, recipients) ->
-        renderSection(section, recipients)
+      val details = state.messageDetails!!
+
+      if (state.isOutgoing) {
+        renderSection(
+          title = R.string.message_details_recipient_header__not_sent,
+          recipients = details.notSent.map { StoryInfoRecipientRow.Model(it) }
+        )
+
+        renderSection(
+          title = R.string.message_details_recipient_header__viewed,
+          recipients = details.viewed.map { StoryInfoRecipientRow.Model(it) }
+        )
+
+        renderSection(
+          title = R.string.message_details_recipient_header__read_by,
+          recipients = details.read.map { StoryInfoRecipientRow.Model(it) }
+        )
+
+        renderSection(
+          title = R.string.message_details_recipient_header__delivered_to,
+          recipients = details.delivered.map { StoryInfoRecipientRow.Model(it) }
+        )
+
+        renderSection(
+          title = R.string.message_details_recipient_header__sent_to,
+          recipients = details.sent.map { StoryInfoRecipientRow.Model(it) }
+        )
+
+        renderSection(
+          title = R.string.message_details_recipient_header__pending_send,
+          recipients = details.pending.map { StoryInfoRecipientRow.Model(it) }
+        )
+
+        renderSection(
+          title = R.string.message_details_recipient_header__skipped,
+          recipients = details.skipped.map { StoryInfoRecipientRow.Model(it) }
+        )
+      } else {
+        renderSection(
+          title = R.string.message_details_recipient_header__sent_from,
+          recipients = details.sent.map { StoryInfoRecipientRow.Model(it) }
+        )
       }
     }
   }
 
-  private fun DSLConfiguration.renderSection(sectionKey: StoryInfoState.SectionKey, recipients: List<StoryInfoRecipientRow.Model>) {
-    sectionHeaderPref(
-      title = when (sectionKey) {
-        StoryInfoState.SectionKey.FAILED -> R.string.StoryInfoBottomSheetDialogFragment__failed
-        StoryInfoState.SectionKey.SENT_TO -> R.string.StoryInfoBottomSheetDialogFragment__sent_to
-        StoryInfoState.SectionKey.SENT_FROM -> R.string.StoryInfoBottomSheetDialogFragment__sent_from
-      }
-    )
+  private fun DSLConfiguration.renderSection(@StringRes title: Int, recipients: List<StoryInfoRecipientRow.Model>) {
+    if (recipients.isNotEmpty()) {
+      sectionHeaderPref(
+        title = DSLSettingsText.from(title)
+      )
 
-    recipients.forEach {
-      customPref(it)
+      recipients.forEach {
+        customPref(it)
+      }
     }
   }
 

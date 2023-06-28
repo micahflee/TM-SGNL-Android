@@ -50,11 +50,11 @@ import org.signal.libsignal.protocol.fingerprint.NumericFingerprintGenerator;
 import org.tm.archive.R;
 import org.tm.archive.crypto.IdentityKeyParcelable;
 import org.tm.archive.crypto.ReentrantSessionLock;
-import org.tm.archive.database.IdentityDatabase;
+import org.tm.archive.database.IdentityTable;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.MultiDeviceVerifiedUpdateJob;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.qr.QrCode;
+import org.tm.archive.qr.QrCodeUtil;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -284,15 +284,14 @@ public class VerifyDisplayFragment extends Fragment implements ViewTreeObserver.
   public boolean onContextItemSelected(MenuItem item) {
     if (fingerprint == null) return super.onContextItemSelected(item);
 
-    switch (item.getItemId()) {
-      case R.id.menu_copy:
-        handleCopyToClipboard(fingerprint, codes.length);
-        return true;
-      case R.id.menu_compare:
-        handleCompareWithClipboard(fingerprint);
-        return true;
-      default:
-        return super.onContextItemSelected(item);
+    if (item.getItemId() ==  R.id.menu_copy) {
+      handleCopyToClipboard(fingerprint, codes.length);
+      return true;
+    } else if (item.getItemId() == R.id.menu_compare) {
+      handleCompareWithClipboard(fingerprint);
+      return true;
+    } else {
+      return super.onContextItemSelected(item);
     }
   }
 
@@ -409,7 +408,7 @@ public class VerifyDisplayFragment extends Fragment implements ViewTreeObserver.
 
     byte[] qrCodeData   = fingerprint.getScannableFingerprint().getSerialized();
     String qrCodeString = new String(qrCodeData, Charset.forName("ISO-8859-1"));
-    Bitmap qrCodeBitmap = QrCode.create(qrCodeString);
+    Bitmap qrCodeBitmap = QrCodeUtil.create(qrCodeString);
 
     qrCode.setImageBitmap(qrCodeBitmap);
 
@@ -545,19 +544,19 @@ public class VerifyDisplayFragment extends Fragment implements ViewTreeObserver.
             ApplicationDependencies.getProtocolStore().aci().identities()
                                    .saveIdentityWithoutSideEffects(recipientId,
                                                                    remoteIdentity,
-                                                                   IdentityDatabase.VerifiedStatus.VERIFIED,
+                                                                   IdentityTable.VerifiedStatus.VERIFIED,
                                                                    false,
                                                                    System.currentTimeMillis(),
                                                                    true);
           } else {
-            ApplicationDependencies.getProtocolStore().aci().identities().setVerified(recipientId, remoteIdentity, IdentityDatabase.VerifiedStatus.DEFAULT);
+            ApplicationDependencies.getProtocolStore().aci().identities().setVerified(recipientId, remoteIdentity, IdentityTable.VerifiedStatus.DEFAULT);
           }
 
           ApplicationDependencies.getJobManager()
                                  .add(new MultiDeviceVerifiedUpdateJob(recipientId,
                                                                        remoteIdentity,
-                                                                       verified ? IdentityDatabase.VerifiedStatus.VERIFIED
-                                                                                : IdentityDatabase.VerifiedStatus.DEFAULT));
+                                                                       verified ? IdentityTable.VerifiedStatus.VERIFIED
+                                                                                : IdentityTable.VerifiedStatus.DEFAULT));
           StorageSyncHelper.scheduleSyncForDataChange();
 
           IdentityUtil.markIdentityVerified(context, recipient.get(), verified, false);

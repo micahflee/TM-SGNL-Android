@@ -11,12 +11,12 @@ import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.SignalProtocolAddress;
 import org.signal.libsignal.protocol.message.SenderKeyDistributionMessage;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.GroupDatabase.GroupRecord;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.DistributionListRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -107,8 +107,8 @@ public class ResendMessageJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder()
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder()
                    .putString(KEY_RECIPIENT_ID, recipientId.serialize())
                    .putLong(KEY_SENT_TIMESTAMP, sentTimestamp)
                    .putBlobAsString(KEY_CONTENT, content.toByteArray())
@@ -116,7 +116,7 @@ public class ResendMessageJob extends BaseJob {
                    .putBoolean(KEY_URGENT, urgent)
                    .putBlobAsString(KEY_GROUP_ID, groupId != null ? groupId.getDecodedId() : null)
                    .putString(KEY_DISTRIBUTION_ID, distributionId != null ? distributionId.toString() : null)
-                   .build();
+                   .serialize();
   }
 
   @Override
@@ -199,7 +199,9 @@ public class ResendMessageJob extends BaseJob {
   public static final class Factory implements Job.Factory<ResendMessageJob> {
 
     @Override
-    public @NonNull ResendMessageJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull ResendMessageJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       Content content;
       try {
         content = Content.parseFrom(data.getStringAsBlob(KEY_CONTENT));

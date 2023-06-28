@@ -1,6 +1,7 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.signal.core.util.ListUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.MessageDatabase.SyncMessageId;
+import org.tm.archive.database.MessageTable.SyncMessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -80,7 +81,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
+  public @Nullable byte[] serialize() {
     String[] ids = new String[messageIds.size()];
 
     for (int i = 0; i < ids.length; i++) {
@@ -91,7 +92,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob {
       }
     }
 
-    return new Data.Builder().putStringArray(KEY_MESSAGE_IDS, ids).build();
+    return new JsonJobData.Builder().putStringArray(KEY_MESSAGE_IDS, ids).serialize();
   }
 
   @Override
@@ -114,7 +115,7 @@ public class MultiDeviceReadUpdateJob extends BaseJob {
 
     for (SerializableSyncMessageId messageId : messageIds) {
       Recipient recipient = Recipient.resolved(RecipientId.from(messageId.recipientId));
-      if (!recipient.isGroup() && !recipient.isDistributionList() && recipient.isMaybeRegistered()) {
+      if (!recipient.isGroup() && !recipient.isDistributionList() && recipient.isMaybeRegistered() && (recipient.hasServiceId() || recipient.hasE164())) {
         readMessages.add(new ReadMessage(RecipientUtil.getOrFetchServiceId(context, recipient), messageId.timestamp));
       }
     }
@@ -152,7 +153,9 @@ public class MultiDeviceReadUpdateJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<MultiDeviceReadUpdateJob> {
     @Override
-    public @NonNull MultiDeviceReadUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull MultiDeviceReadUpdateJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       List<SyncMessageId> ids = Stream.of(data.getStringArray(KEY_MESSAGE_IDS))
                                       .map(id -> {
                                         try {

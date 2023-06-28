@@ -9,6 +9,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.signal.core.util.Hex
 import org.signal.core.util.concurrent.SignalExecutors
+import org.signal.core.util.isAbsent
+import org.signal.libsignal.zkgroup.profiles.ProfileKey
 import org.tm.archive.MainActivity
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
@@ -16,13 +18,14 @@ import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.database.SignalDatabase
+import org.tm.archive.database.model.RecipientRecord
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientForeverObserver
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.sms.OutgoingEncryptedMessage
 import org.tm.archive.subscription.Subscriber
 import org.tm.archive.util.Base64
 import org.tm.archive.util.FeatureFlags
@@ -219,7 +222,7 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
       sectionHeaderPref(DSLSettingsText.from("PNP"))
 
       clickPref(
-        title = DSLSettingsText.from("Split contact"),
+        title = DSLSettingsText.from("Split and create threads"),
         summary = DSLSettingsText.from("Splits this contact into two recipients and two threads so that you can test merging them together. This will remain the 'primary' recipient."),
         onClick = {
           MaterialAlertDialogBuilder(requireContext())
@@ -241,18 +244,52 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
               val splitRecipient: Recipient = Recipient.resolved(splitRecipientId)
               val splitThreadId: Long = SignalDatabase.threads.getOrCreateThreadIdFor(splitRecipient)
 
-              val messageId: Long = SignalDatabase.sms.insertMessageOutbox(
+              val messageId: Long = SignalDatabase.messages.insertMessageOutbox(
+                OutgoingMessage.text(splitRecipient, "Test Message ${System.currentTimeMillis()}", 0),
                 splitThreadId,
-                OutgoingEncryptedMessage(splitRecipient, "Test Message ${System.currentTimeMillis()}", 0),
                 false,
-                System.currentTimeMillis(),
                 null
               )
-              SignalDatabase.sms.markAsSent(messageId, true)
+              SignalDatabase.messages.markAsSent(messageId, true)
 
               SignalDatabase.threads.update(splitThreadId, true)
 
               Toast.makeText(context, "Done! We split the E164/PNI from this contact into $splitRecipientId", Toast.LENGTH_SHORT).show()
+            }
+            .show()
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from("Split without creating threads"),
+        summary = DSLSettingsText.from("Splits this contact into two recipients so you can test merging them together. This will become the PNI-based recipient. Another recipient will be made with this ACI and profile key. Doing a CDS refresh should allow you to see a Session Switchover Event, as long as you had a session with this PNI."),
+        isEnabled = FeatureFlags.phoneNumberPrivacy(),
+        onClick = {
+          MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Are you sure?")
+            .setNegativeButton(android.R.string.cancel) { d, _ -> d.dismiss() }
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+              if (recipient.pni.isAbsent()) {
+                Toast.makeText(context, "Recipient doesn't have a PNI! Can't split.", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+              }
+
+              if (recipient.serviceId.isAbsent()) {
+                Toast.makeText(context, "Recipient doesn't have a serviceId! Can't split.", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+              }
+
+              SignalDatabase.recipients.debugRemoveAci(recipient.id)
+
+              val aciRecipientId: RecipientId = SignalDatabase.recipients.getAndPossiblyMergePnpVerified(recipient.requireServiceId(), null, null)
+
+              recipient.profileKey?.let { profileKey ->
+                SignalDatabase.recipients.setProfileKey(aciRecipientId, ProfileKey(profileKey))
+              }
+
+              SignalDatabase.recipients.debugClearProfileData(recipient.id)
+
+              Toast.makeText(context, "Done! Split the ACI and profile key off into $aciRecipientId", Toast.LENGTH_SHORT).show()
             }
             .show()
         }
@@ -266,17 +303,23 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
   }
 
   private fun buildCapabilitySpan(recipient: Recipient): CharSequence {
-    return TextUtils.concat(
-      colorize("GV1Migration", recipient.groupsV1MigrationCapability),
-      ", ",
-      colorize("AnnouncementGroup", recipient.announcementGroupCapability),
-      ", ",
-      colorize("SenderKey", recipient.senderKeyCapability),
-      ", ",
-      colorize("ChangeNumber", recipient.changeNumberCapability),
-      ", ",
-      colorize("Stories", recipient.storiesCapability),
-    )
+    val capabilities: RecipientRecord.Capabilities? = SignalDatabase.recipients.getCapabilities(recipient.id)
+
+    return if (capabilities != null) {
+      TextUtils.concat(
+        colorize("GV1Migration", capabilities.groupsV1MigrationCapability),
+        ", ",
+        colorize("AnnouncementGroup", capabilities.announcementGroupCapability),
+        ", ",
+        colorize("SenderKey", capabilities.senderKeyCapability),
+        ", ",
+        colorize("ChangeNumber", capabilities.changeNumberCapability),
+        ", ",
+        colorize("Stories", capabilities.storiesCapability)
+      )
+    } else {
+      "Recipient not found!"
+    }
   }
 
   private fun colorize(name: String, support: Recipient.Capability): CharSequence {

@@ -112,6 +112,14 @@
 
         </action>
 
+        <action
+            android:id="@+id/action_paymentsHome_to_securitySetup"
+            app:destination="@id/paymentsSecuritySetup"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" />
+
     </fragment>
 
     <fragment
@@ -192,6 +200,28 @@
 
     </fragment>
 
+    <fragment
+        android:id="@+id/paymentsSecuritySetup"
+        android:name="org.tm.archive.payments.securitysetup.PaymentsSecuritySetupFragment"
+        tools:layout="@layout/payments_security_setup_fragment">
+
+        <action
+            android:id="@+id/action_paymentsHome_to_privacySettings"
+            app:destination="@id/privacy_settings"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit"
+            app:popUpTo="@id/paymentsHome">
+
+            <argument
+                android:name="show_payment_lock"
+                app:argType="boolean" />
+
+        </action>
+
+    </fragment>
+
     <action
         android:id="@+id/action_directly_to_createPayment"
         app:destination="@id/payments_create"
@@ -212,6 +242,11 @@
             android:defaultValue="@null"
             app:argType="string"
             app:nullable="true" />
+
+        <argument
+            android:name="finish_on_confirm"
+            app:argType="boolean"
+            android:defaultValue="false" />
 
     </action>
 

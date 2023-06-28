@@ -9,7 +9,7 @@ import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;
@@ -76,16 +76,16 @@ public class SendDeliveryReceiptJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    Data.Builder builder = new Data.Builder().putString(KEY_RECIPIENT, recipientId.serialize())
-                                             .putLong(KEY_MESSAGE_SENT_TIMESTAMP, messageSentTimestamp)
-                                             .putLong(KEY_TIMESTAMP, timestamp);
+  public @Nullable byte[] serialize() {
+    JsonJobData.Builder builder = new JsonJobData.Builder().putString(KEY_RECIPIENT, recipientId.serialize())
+                                                           .putLong(KEY_MESSAGE_SENT_TIMESTAMP, messageSentTimestamp)
+                                                           .putLong(KEY_TIMESTAMP, timestamp);
 
     if (messageId != null) {
       builder.putString(KEY_MESSAGE_ID, messageId.serialize());
     }
 
-    return builder.build();
+    return builder.serialize();
   }
 
   @Override
@@ -109,6 +109,11 @@ public class SendDeliveryReceiptJob extends BaseJob {
 
     if (recipient.isUnregistered()) {
       Log.w(TAG, recipient.getId() + " is unregistered!");
+      return;
+    }
+
+    if (!recipient.hasServiceId() && !recipient.hasE164()) {
+      Log.w(TAG, "No serviceId or e164!");
       return;
     }
 
@@ -141,7 +146,9 @@ public class SendDeliveryReceiptJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<SendDeliveryReceiptJob> {
     @Override
-    public @NonNull SendDeliveryReceiptJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull SendDeliveryReceiptJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       MessageId messageId = null;
 
       if (data.hasString(KEY_MESSAGE_ID)) {

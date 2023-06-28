@@ -1,14 +1,15 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
-import org.tm.archive.database.RecipientDatabase;
-import org.tm.archive.database.RecipientDatabase.RecipientReader;
+import org.tm.archive.database.RecipientTable;
+import org.tm.archive.database.RecipientTable.RecipientReader;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;
@@ -49,8 +50,8 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -71,7 +72,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
       return;
     }
 
-    RecipientDatabase database = SignalDatabase.recipients();
+    RecipientTable database = SignalDatabase.recipients();
 
     try (RecipientReader reader = database.readerForBlocked(database.getBlocked())) {
       List<SignalServiceAddress> blockedIndividuals = new LinkedList<>();
@@ -106,7 +107,7 @@ public class MultiDeviceBlockedUpdateJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<MultiDeviceBlockedUpdateJob> {
     @Override
-    public @NonNull MultiDeviceBlockedUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull MultiDeviceBlockedUpdateJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new MultiDeviceBlockedUpdateJob(parameters);
     }
   }

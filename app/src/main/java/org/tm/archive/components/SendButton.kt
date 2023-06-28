@@ -6,10 +6,13 @@ import android.view.View
 import android.view.View.OnLongClickListener
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageButton
+import com.google.android.material.snackbar.Snackbar
 import org.signal.core.util.logging.Log
+import org.tm.archive.R
 import org.tm.archive.components.menu.ActionItem
 import org.tm.archive.components.menu.SignalContextMenu
 import org.tm.archive.conversation.MessageSendType
+import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.ViewUtil
 import java.lang.AssertionError
 import java.util.concurrent.CopyOnWriteArrayList
@@ -25,11 +28,14 @@ class SendButton(context: Context, attributeSet: AttributeSet?) : AppCompatImage
   }
 
   private val listeners: MutableList<SendTypeChangedListener> = CopyOnWriteArrayList()
+  private var scheduledSendListener: ScheduledSendListener? = null
 
   private var availableSendTypes: List<MessageSendType> = MessageSendType.getAllAvailable(context, false)
   private var activeMessageSendType: MessageSendType? = null
-  private var defaultTransportType: MessageSendType.TransportType = MessageSendType.TransportType.SMS
+  private var defaultTransportType: MessageSendType.TransportType = MessageSendType.TransportType.SIGNAL
   private var defaultSubscriptionId: Int? = null
+
+  lateinit var snackbarContainer: View
   private var popupContainer: ViewGroup? = null
 
   init {
@@ -93,10 +99,14 @@ class SendButton(context: Context, attributeSet: AttributeSet?) : AppCompatImage
     onSelectionChanged(newType = selectedSendType, isManualSelection = false)
   }
 
+  fun setScheduledSendListener(listener: ScheduledSendListener?) {
+    this.scheduledSendListener = listener
+  }
+
   fun resetAvailableTransports(isMediaMessage: Boolean) {
     availableSendTypes = MessageSendType.getAllAvailable(context, isMediaMessage)
     activeMessageSendType = null
-    defaultTransportType = MessageSendType.TransportType.SMS
+    defaultTransportType = MessageSendType.TransportType.SIGNAL
     defaultSubscriptionId = null
     onSelectionChanged(newType = selectedSendType, isManualSelection = false)
   }
@@ -145,13 +155,44 @@ class SendButton(context: Context, attributeSet: AttributeSet?) : AppCompatImage
     }
   }
 
+  fun showSendTypeMenu(): Boolean {
+    return if (availableSendTypes.size == 1) {
+      if (scheduledSendListener == null && !SignalStore.misc().smsExportPhase.allowSmsFeatures()) {
+        Snackbar.make(snackbarContainer, R.string.InputPanel__sms_messaging_is_no_longer_supported_in_signal, Snackbar.LENGTH_SHORT).show()
+      }
+      false
+    } else {
+      showSendTypeContextMenu(false)
+      true
+    }
+  }
+
   override fun onLongClick(v: View): Boolean {
-    if (!isEnabled || availableSendTypes.size == 1) {
+    if (!isEnabled) {
       return false
     }
 
-    val currentlySelected: MessageSendType = selectedSendType
+    val scheduleListener = scheduledSendListener
+    if (availableSendTypes.size == 1) {
+      return if (scheduleListener?.canSchedule() == true && selectedSendType.transportType != MessageSendType.TransportType.SMS) {
+        scheduleListener.onSendScheduled()
+        true
+      } else if (!SignalStore.misc().smsExportPhase.allowSmsFeatures()) {
+        Snackbar.make(snackbarContainer, R.string.InputPanel__sms_messaging_is_no_longer_supported_in_signal, Snackbar.LENGTH_SHORT).show()
+        true
+      } else {
+        false
+      }
+    }
 
+    showSendTypeContextMenu(selectedSendType.transportType != MessageSendType.TransportType.SMS)
+
+    return true
+  }
+
+  private fun showSendTypeContextMenu(allowScheduling: Boolean) {
+    val currentlySelected: MessageSendType = selectedSendType
+    val listener = scheduledSendListener
     val items = availableSendTypes
       .filterNot { it == currentlySelected }
       .map { option ->
@@ -160,17 +201,27 @@ class SendButton(context: Context, attributeSet: AttributeSet?) : AppCompatImage
           title = option.getTitle(context),
           action = { setSendType(option) }
         )
-      }
+      }.toMutableList()
+    if (allowScheduling && listener?.canSchedule() == true) {
+      items += ActionItem(
+        iconRes = R.drawable.symbol_calendar_24,
+        title = context.getString(R.string.conversation_activity__option_schedule_message),
+        action = { listener.onSendScheduled() }
+      )
+    }
 
     SignalContextMenu.Builder((parent as View), popupContainer!!)
       .preferredVerticalPosition(SignalContextMenu.VerticalPosition.ABOVE)
       .offsetY(ViewUtil.dpToPx(8))
       .show(items)
-
-    return true
   }
 
-  interface SendTypeChangedListener {
+  fun interface SendTypeChangedListener {
     fun onSendTypeChanged(newType: MessageSendType, manuallySelected: Boolean)
+  }
+
+  interface ScheduledSendListener {
+    fun onSendScheduled()
+    fun canSchedule(): Boolean
   }
 }

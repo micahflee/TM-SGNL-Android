@@ -2,6 +2,8 @@ package org.tm.archive.components.reminder;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import org.tm.archive.R;
 import org.tm.archive.registration.RegistrationNavigationActivity;
 import org.tm.archive.util.TextSecurePreferences;
@@ -9,12 +11,14 @@ import org.tm.archive.util.TextSecurePreferences;
 public class UnauthorizedReminder extends Reminder {
 
   public UnauthorizedReminder(final Context context) {
-    super(context.getString(R.string.UnauthorizedReminder_device_no_longer_registered),
+    super(null,
           context.getString(R.string.UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device));
 
     setOkListener(v -> {
       context.startActivity(RegistrationNavigationActivity.newIntentForReRegistration(context));
     });
+
+    addAction(new Action(context.getString(R.string.UnauthorizedReminder_reregister_action), R.id.reminder_action_re_register));
   }
 
   @Override
@@ -22,7 +26,12 @@ public class UnauthorizedReminder extends Reminder {
     return false;
   }
 
+  @Override
+  public @NonNull Importance getImportance() {
+    return Importance.ERROR;
+  }
+
   public static boolean isEligible(Context context) {
-    return TextSecurePreferences.isUnauthorizedRecieved(context);
+    return TextSecurePreferences.isUnauthorizedReceived(context);
   }
 }

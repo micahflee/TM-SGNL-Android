@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import com.google.android.material.button.MaterialButton
 import org.signal.core.util.DimensionUnit
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.components.WrapperDialogFragment
@@ -20,9 +21,8 @@ import org.tm.archive.components.settings.models.SplashImage
 import org.tm.archive.conversation.ui.error.SafetyNumberChangeRepository
 import org.tm.archive.conversation.ui.error.TrustAndVerifyResult
 import org.tm.archive.crypto.IdentityKeyParcelable
-import org.tm.archive.database.IdentityDatabase
+import org.tm.archive.database.IdentityTable
 import org.tm.archive.safety.review.SafetyNumberReviewConnectionsFragment
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.fragments.findListener
 import org.tm.archive.util.visible
 import org.tm.archive.verify.VerifyIdentityFragment
@@ -156,7 +156,7 @@ class SafetyNumberBottomSheetFragment : DSLSettingsBottomSheetFragment(layoutId 
           customPref(
             SafetyNumberRecipientRowItem.Model(
               recipient = it.recipient,
-              isVerified = it.identityRecord.verifiedStatus == IdentityDatabase.VerifiedStatus.VERIFIED,
+              isVerified = it.identityRecord.verifiedStatus == IdentityTable.VerifiedStatus.VERIFIED,
               distributionListMembershipCount = it.distributionListMembershipCount,
               groupMembershipCount = it.groupMembershipCount,
               getContextMenuActions = { model ->

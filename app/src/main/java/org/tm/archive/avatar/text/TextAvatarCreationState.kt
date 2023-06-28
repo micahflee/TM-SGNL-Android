@@ -5,7 +5,7 @@ import org.tm.archive.avatar.AvatarColorItem
 import org.tm.archive.avatar.Avatars
 
 data class TextAvatarCreationState(
-  val currentAvatar: Avatar.Text,
+  val currentAvatar: Avatar.Text
 ) {
   fun colors(): List<AvatarColorItem> = Avatars.colors.map { AvatarColorItem(it, currentAvatar.color == it) }
 }

@@ -14,9 +14,10 @@ import org.tm.archive.R
 import org.tm.archive.components.LabeledEditText
 import org.tm.archive.components.settings.app.changenumber.ChangeNumberUtil.getViewModel
 import org.tm.archive.components.settings.app.changenumber.ChangeNumberViewModel.ContinueStatus
+import org.tm.archive.databinding.FragmentChangeNumberEnterPhoneNumberBinding
 import org.tm.archive.registration.fragments.CountryPickerFragment
 import org.tm.archive.registration.fragments.CountryPickerFragmentArgs
-import org.tm.archive.registration.util.RegistrationNumberInputController
+import org.tm.archive.registration.util.ChangeNumberInputController
 import org.tm.archive.util.Dialogs
 import org.tm.archive.util.navigation.safeNavigate
 
@@ -25,19 +26,30 @@ private const val NEW_NUMBER_COUNTRY_SELECT = "new_number_country"
 
 class ChangeNumberEnterPhoneNumberFragment : LoggingFragment(R.layout.fragment_change_number_enter_phone_number) {
 
-  private lateinit var scrollView: ScrollView
+  private var binding: FragmentChangeNumberEnterPhoneNumberBinding? = null
 
-  private lateinit var oldNumberCountrySpinner: Spinner
-  private lateinit var oldNumberCountryCode: LabeledEditText
-  private lateinit var oldNumber: LabeledEditText
+  private val scrollView: ScrollView
+    get() = binding!!.changeNumberEnterPhoneNumberScroll
 
-  private lateinit var newNumberCountrySpinner: Spinner
-  private lateinit var newNumberCountryCode: LabeledEditText
-  private lateinit var newNumber: LabeledEditText
+  private val oldNumberCountrySpinner: Spinner
+    get() = binding!!.changeNumberEnterPhoneNumberOldNumberSpinner
+  private val oldNumberCountryCode: LabeledEditText
+    get() = binding!!.changeNumberEnterPhoneNumberOldNumberCountryCode
+  private val oldNumber: LabeledEditText
+    get() = binding!!.changeNumberEnterPhoneNumberOldNumberNumber
+
+  private val newNumberCountrySpinner: Spinner
+    get() = binding!!.changeNumberEnterPhoneNumberNewNumberSpinner
+  private val newNumberCountryCode: LabeledEditText
+    get() = binding!!.changeNumberEnterPhoneNumberNewNumberCountryCode
+  private val newNumber: LabeledEditText
+    get() = binding!!.changeNumberEnterPhoneNumberNewNumberNumber
 
   private lateinit var viewModel: ChangeNumberViewModel
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    binding = FragmentChangeNumberEnterPhoneNumberBinding.bind(view)
+
     viewModel = getViewModel(this)
 
     val toolbar: Toolbar = view.findViewById(R.id.toolbar)
@@ -48,19 +60,13 @@ class ChangeNumberEnterPhoneNumberFragment : LoggingFragment(R.layout.fragment_c
       onContinue()
     }
 
-    scrollView = view.findViewById(R.id.change_number_enter_phone_number_scroll)
-
-    oldNumberCountrySpinner = view.findViewById(R.id.change_number_enter_phone_number_old_number_spinner)
-    oldNumberCountryCode = view.findViewById(R.id.change_number_enter_phone_number_old_number_country_code)
-    oldNumber = view.findViewById(R.id.change_number_enter_phone_number_old_number_number)
-
-    val oldController = RegistrationNumberInputController(
+    val oldController = ChangeNumberInputController(
       requireContext(),
       oldNumberCountryCode,
       oldNumber,
       oldNumberCountrySpinner,
       false,
-      object : RegistrationNumberInputController.Callbacks {
+      object : ChangeNumberInputController.Callbacks {
         override fun onNumberFocused() {
           scrollView.postDelayed({ scrollView.smoothScrollTo(0, oldNumber.bottom) }, 250)
         }
@@ -87,17 +93,13 @@ class ChangeNumberEnterPhoneNumberFragment : LoggingFragment(R.layout.fragment_c
       }
     )
 
-    newNumberCountrySpinner = view.findViewById(R.id.change_number_enter_phone_number_new_number_spinner)
-    newNumberCountryCode = view.findViewById(R.id.change_number_enter_phone_number_new_number_country_code)
-    newNumber = view.findViewById(R.id.change_number_enter_phone_number_new_number_number)
-
-    val newController = RegistrationNumberInputController(
+    val newController = ChangeNumberInputController(
       requireContext(),
       newNumberCountryCode,
       newNumber,
       newNumberCountrySpinner,
       true,
-      object : RegistrationNumberInputController.Callbacks {
+      object : ChangeNumberInputController.Callbacks {
         override fun onNumberFocused() {
           scrollView.postDelayed({ scrollView.smoothScrollTo(0, newNumber.bottom) }, 250)
         }
@@ -136,6 +138,11 @@ class ChangeNumberEnterPhoneNumberFragment : LoggingFragment(R.layout.fragment_c
     viewModel.getLiveNewNumber().observe(viewLifecycleOwner, newController::updateNumber)
   }
 
+  override fun onDestroyView() {
+    binding = null
+    super.onDestroyView()
+  }
+
   private fun onContinue() {
     if (TextUtils.isEmpty(oldNumberCountryCode.text)) {
       Toast.makeText(context, getString(R.string.ChangeNumberEnterPhoneNumberFragment__you_must_specify_your_old_number_country_code), Toast.LENGTH_LONG).show()
@@ -161,7 +168,9 @@ class ChangeNumberEnterPhoneNumberFragment : LoggingFragment(R.layout.fragment_c
       ContinueStatus.CAN_CONTINUE -> findNavController().safeNavigate(R.id.action_enterPhoneNumberChangeFragment_to_changePhoneNumberConfirmFragment)
       ContinueStatus.INVALID_NUMBER -> {
         Dialogs.showAlertDialog(
-          context, getString(R.string.RegistrationActivity_invalid_number), String.format(getString(R.string.RegistrationActivity_the_number_you_specified_s_is_invalid), viewModel.number.e164Number)
+          context,
+          getString(R.string.RegistrationActivity_invalid_number),
+          String.format(getString(R.string.RegistrationActivity_the_number_you_specified_s_is_invalid), viewModel.number.e164Number)
         )
       }
       ContinueStatus.OLD_NUMBER_DOESNT_MATCH -> {

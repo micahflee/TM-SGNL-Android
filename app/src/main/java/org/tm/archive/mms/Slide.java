@@ -29,7 +29,7 @@ import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.UriAttachment;
 import org.tm.archive.audio.AudioHash;
 import org.tm.archive.blurhash.BlurHash;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.stickers.StickerLocator;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.Util;
@@ -133,8 +133,8 @@ public abstract class Slide {
   }
 
   public boolean isPendingDownload() {
-    return getTransferState() == AttachmentDatabase.TRANSFER_PROGRESS_FAILED ||
-           getTransferState() == AttachmentDatabase.TRANSFER_PROGRESS_PENDING;
+    return getTransferState() == AttachmentTable.TRANSFER_PROGRESS_FAILED ||
+           getTransferState() == AttachmentTable.TRANSFER_PROGRESS_PENDING;
   }
 
   public int getTransferState() {
@@ -193,13 +193,13 @@ public abstract class Slide {
                                                                    boolean        borderless,
                                                                    boolean        gif,
                                                                    boolean        quote,
-                                                         @Nullable AttachmentDatabase.TransformProperties transformProperties)
+                                                         @Nullable AttachmentTable.TransformProperties transformProperties)
   {
     String                 resolvedType    = Optional.ofNullable(MediaUtil.getMimeType(context, uri)).orElse(defaultMime);
     String                 fastPreflightId = String.valueOf(new SecureRandom().nextLong());
     return new UriAttachment(uri,
                              resolvedType,
-                             AttachmentDatabase.TRANSFER_PROGRESS_STARTED,
+                             AttachmentTable.TRANSFER_PROGRESS_STARTED,
                              size,
                              width,
                              height,

@@ -9,14 +9,15 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import com.google.android.material.radiobutton.MaterialRadioButton
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.FixedRoundedCornerBottomSheetDialogFragment
 import org.tm.archive.components.WrapperDialogFragment
 import org.tm.archive.database.model.DistributionListPrivacyMode
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.stories.settings.connections.ViewAllSignalConnectionsFragment
 import org.tm.archive.stories.settings.select.BaseStoryRecipientSelectionFragment
 import org.tm.archive.util.BottomSheetUtil
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.fragments.findListener
 import org.tm.archive.util.visible
 
@@ -42,8 +43,11 @@ class ChooseInitialMyStoryMembershipBottomSheetDialogFragment :
   private lateinit var allExceptRadio: MaterialRadioButton
   private lateinit var onlyWitRadio: MaterialRadioButton
 
+  private lateinit var allCount: TextView
   private lateinit var allExceptCount: TextView
   private lateinit var onlyWithCount: TextView
+
+  private lateinit var allView: View
 
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
     return inflater.inflate(R.layout.choose_initial_my_story_membership_fragment, container, false)
@@ -58,8 +62,14 @@ class ChooseInitialMyStoryMembershipBottomSheetDialogFragment :
     allExceptRadio = view.findViewById(R.id.choose_initial_my_story_all_signal_connnections_except_radio)
     onlyWitRadio = view.findViewById(R.id.choose_initial_my_story_only_share_with_radio)
 
+    allCount = view.findViewById(R.id.choose_initial_my_story_all_signal_connnections_count)
     allExceptCount = view.findViewById(R.id.choose_initial_my_story_all_signal_connnections_except_count)
     onlyWithCount = view.findViewById(R.id.choose_initial_my_story_only_share_with_count)
+
+    allView = view.findViewById(R.id.choose_initial_my_story_all_signal_connnections_view)
+    allView.setOnClickListener {
+      ViewAllSignalConnectionsFragment.Dialog.show(parentFragmentManager)
+    }
 
     val save = view.findViewById<View>(R.id.choose_initial_my_story_save).apply {
       isEnabled = false
@@ -69,12 +79,15 @@ class ChooseInitialMyStoryMembershipBottomSheetDialogFragment :
 
     lifecycleDisposable += viewModel.state
       .subscribe { state ->
-        allRadio.isChecked = state.privacyState.privacyMode == DistributionListPrivacyMode.ALL
-        allExceptRadio.isChecked = state.privacyState.privacyMode == DistributionListPrivacyMode.ALL_EXCEPT
-        onlyWitRadio.isChecked = state.privacyState.privacyMode == DistributionListPrivacyMode.ONLY_WITH
+        allRadio.isChecked = state.privacyState.privacyMode == DistributionListPrivacyMode.ALL && state.hasUserPerformedManualSelection
+        allExceptRadio.isChecked = state.privacyState.privacyMode == DistributionListPrivacyMode.ALL_EXCEPT && state.hasUserPerformedManualSelection
+        onlyWitRadio.isChecked = state.privacyState.privacyMode == DistributionListPrivacyMode.ONLY_WITH && state.hasUserPerformedManualSelection
 
         allExceptCount.visible = allExceptRadio.isChecked
         onlyWithCount.visible = onlyWitRadio.isChecked
+
+        allCount.visible = state.allSignalConnectionsCount > 0
+        allCount.text = resources.getQuantityString(R.plurals.MyStorySettingsFragment__viewers, state.allSignalConnectionsCount, state.allSignalConnectionsCount)
 
         when (state.privacyState.privacyMode) {
           DistributionListPrivacyMode.ALL_EXCEPT -> allExceptCount.text = resources.getQuantityString(R.plurals.MyStorySettingsFragment__d_people_excluded, state.privacyState.connectionCount, state.privacyState.connectionCount)
@@ -82,7 +95,7 @@ class ChooseInitialMyStoryMembershipBottomSheetDialogFragment :
           else -> Unit
         }
 
-        save.isEnabled = state.recipientId != null
+        save.isEnabled = state.recipientId != null && state.hasUserPerformedManualSelection
       }
 
     val clickListener = { v: View ->

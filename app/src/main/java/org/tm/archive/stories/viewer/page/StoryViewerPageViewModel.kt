@@ -12,7 +12,9 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import io.reactivex.rxjava3.subjects.PublishSubject
 import io.reactivex.rxjava3.subjects.Subject
-import org.tm.archive.database.AttachmentDatabase
+import org.signal.core.util.logging.Log
+import org.tm.archive.attachments.Attachment
+import org.tm.archive.database.AttachmentTable
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.livedata.Store
 import org.tm.archive.util.rx.RxStore
@@ -30,6 +32,10 @@ class StoryViewerPageViewModel(
   val storyCache: StoryCache
 ) : ViewModel() {
 
+  companion object {
+    private val TAG = Log.tag(StoryViewerPageViewModel::class.java)
+  }
+
   private val store = RxStore(StoryViewerPageState(isReceiptsEnabled = repository.isReadReceiptsEnabled()))
   private val disposables = CompositeDisposable()
   private val storyViewerDialogSubject: Subject<Optional<StoryViewerDialog>> = PublishSubject.create()
@@ -42,6 +48,9 @@ class StoryViewerPageViewModel(
   val groupDirectReplyObservable: Observable<Optional<StoryViewerDialog>> = storyViewerDialogSubject
 
   val state: Flowable<StoryViewerPageState> = store.stateFlowable
+  val postContent: Flowable<Optional<StoryPost.Content>> = store.stateFlowable.map {
+    Optional.ofNullable(it.posts.getOrNull(it.selectedPostIndex)?.content)
+  }
 
   fun getStateSnapshot(): StoryViewerPageState = store.state
 
@@ -84,11 +93,13 @@ class StoryViewerPageViewModel(
         )
       }
 
-      storyCache.prefetch(
-        posts.map { it.content }
-          .filterIsInstance<StoryPost.Content.AttachmentContent>()
-          .map { it.attachment }
-      )
+      val attachments: List<Attachment> = posts.map { it.content }
+        .filterIsInstance<StoryPost.Content.AttachmentContent>()
+        .map { it.attachment }
+
+      if (attachments.isNotEmpty()) {
+        storyCache.prefetch(attachments)
+      }
     }
 
     disposables += storyLongPressSubject.debounce(150, TimeUnit.MILLISECONDS).subscribe { isLongPress ->
@@ -99,6 +110,7 @@ class StoryViewerPageViewModel(
   override fun onCleared() {
     disposables.clear()
     storyCache.clear()
+    store.dispose()
   }
 
   fun hideStory(): Completable {
@@ -112,7 +124,7 @@ class StoryViewerPageViewModel(
   fun setSelectedPostIndex(index: Int) {
     val selectedPost = getPostAt(index)
 
-    if (selectedPost != null && selectedPost.content.transferState != AttachmentDatabase.TRANSFER_PROGRESS_DONE) {
+    if (selectedPost != null && selectedPost.content.transferState != AttachmentTable.TRANSFER_PROGRESS_DONE) {
       disposables += repository.forceDownload(selectedPost).subscribe()
     }
 
@@ -129,7 +141,10 @@ class StoryViewerPageViewModel(
       return
     }
 
+    Log.d(TAG, "goToNextPost: Moving to the next post.")
+
     val postIndex = store.state.selectedPostIndex
+
     val nextUnreadPost: StoryPost? = getNextUnreadPost(store.state.posts.drop(postIndex + 1))
     when {
       nextUnreadPost == null && args.isJumpForwardToUnviewed -> setSelectedPostIndex(store.state.posts.size)
@@ -142,6 +157,8 @@ class StoryViewerPageViewModel(
     if (store.state.posts.isEmpty()) {
       return
     }
+
+    Log.d(TAG, "goToPreviousPost: Moving to the previous post")
 
     val postIndex = store.state.selectedPostIndex
     val minIndex = if (store.state.isFirstPage) 0 else -1
@@ -235,6 +252,10 @@ class StoryViewerPageViewModel(
 
   fun setIsDisplayingCaptionOverlay(isDisplayingCaptionOverlay: Boolean) {
     storyViewerPlaybackStore.update { it.copy(isDisplayingCaptionOverlay = isDisplayingCaptionOverlay) }
+  }
+
+  fun setIsDisplayingRecipientBottomSheet(isDisplayingRecipientBottomSheet: Boolean) {
+    storyViewerPlaybackStore.update { it.copy(isDisplayingRecipientBottomSheet = isDisplayingRecipientBottomSheet) }
   }
 
   fun setIsUserTouching(isUserTouching: Boolean) {

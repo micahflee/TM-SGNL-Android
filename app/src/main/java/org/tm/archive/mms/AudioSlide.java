@@ -27,19 +27,19 @@ import org.tm.archive.R;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.UriAttachment;
 import org.tm.archive.components.voice.VoiceNoteDraft;
-import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.DraftDatabase;
+import org.tm.archive.database.AttachmentTable;
+import org.tm.archive.database.DraftTable;
 import org.tm.archive.util.MediaUtil;
 
 
 public class AudioSlide extends Slide {
 
-  public static @NonNull AudioSlide createFromVoiceNoteDraft(@NonNull Context context, @NonNull DraftDatabase.Draft draft) {
+  public static @NonNull AudioSlide createFromVoiceNoteDraft(@NonNull Context context, @NonNull DraftTable.Draft draft) {
     VoiceNoteDraft voiceNoteDraft = VoiceNoteDraft.fromDraft(draft);
 
     return new AudioSlide(context, new UriAttachment(voiceNoteDraft.getUri(),
                                                      MediaUtil.AUDIO_AAC,
-                                                     AttachmentDatabase.TRANSFER_PROGRESS_DONE,
+                                                     AttachmentTable.TRANSFER_PROGRESS_DONE,
                                                      voiceNoteDraft.getSize(),
                                                      0,
                                                      0,
@@ -61,7 +61,7 @@ public class AudioSlide extends Slide {
   }
 
   public AudioSlide(Context context, Uri uri, long dataSize, String contentType, boolean voiceNote) {
-    super(context,  new UriAttachment(uri, contentType, AttachmentDatabase.TRANSFER_PROGRESS_STARTED, dataSize, 0, 0, null, null, voiceNote, false, false, false, null, null, null, null, null));
+    super(context,  new UriAttachment(uri, contentType, AttachmentTable.TRANSFER_PROGRESS_STARTED, dataSize, 0, 0, null, null, voiceNote, false, false, false, null, null, null, null, null));
   }
 
   public AudioSlide(Context context, Attachment attachment) {

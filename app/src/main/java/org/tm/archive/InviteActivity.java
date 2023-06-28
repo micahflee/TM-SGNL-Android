@@ -23,14 +23,15 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import org.tm.archive.components.ContactFilterView;
 import org.tm.archive.components.ContactFilterView.OnFilterChangedListener;
-import org.tm.archive.contacts.ContactsCursorLoader.DisplayMode;
+import org.tm.archive.contacts.ContactSelectionDisplayMode;
 import org.tm.archive.contacts.SelectedContact;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.SelectionLimits;
+import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.mms.OutgoingMessage;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.MessageSender;
-import org.tm.archive.sms.OutgoingTextMessage;
 import org.tm.archive.util.DynamicNoActionBarInviteTheme;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.Util;
@@ -61,7 +62,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
 
   @Override
   protected void onCreate(Bundle savedInstanceState, boolean ready) {
-    getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, DisplayMode.FLAG_SMS);
+    getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionDisplayMode.FLAG_SMS);
     getIntent().putExtra(ContactSelectionListFragment.SELECTION_LIMITS, SelectionLimits.NO_LIMITS);
     getIntent().putExtra(ContactSelectionListFragment.HIDE_COUNT, true);
     getIntent().putExtra(ContactSelectionListFragment.REFRESHABLE, false);
@@ -118,7 +119,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
     smsSendButton.setOnClickListener(new SmsSendClickListener());
     contactFilter.setOnFilterChangedListener(new ContactFilterChangedListener());
 
-    if (Util.isDefaultSmsProvider(this)) {
+    if (Util.isDefaultSmsProvider(this) && SignalStore.misc().getSmsExportPhase().isSmsSupported()) {
       shareButton.setOnClickListener(new ShareClickListener());
       smsButton.setOnClickListener(new SmsClickListener());
     } else {
@@ -135,7 +136,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
   }
 
   @Override
-  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
     updateSmsButtonText(contactsFragment.getSelectedContacts().size() + 1);
     callback.accept(true);
   }
@@ -253,7 +254,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
         Recipient   recipient      = Recipient.resolved(recipientId);
         int         subscriptionId = recipient.getDefaultSubscriptionId().orElse(-1);
 
-        MessageSender.send(context, new OutgoingTextMessage(recipient, message, subscriptionId), -1L, true, null, null);
+        MessageSender.send(context, OutgoingMessage.sms(recipient, message, subscriptionId), -1L, MessageSender.SendType.SMS, null, null);
 
         if (recipient.getContactUri() != null) {
           SignalDatabase.recipients().setHasSentInvite(recipient.getId());

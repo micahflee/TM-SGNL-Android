@@ -11,14 +11,14 @@ import io.reactivex.rxjava3.subjects.Subject
 import org.tm.archive.R
 import org.tm.archive.components.FragmentWrapperActivity
 import org.tm.archive.components.settings.app.subscription.DonationPaymentComponent
-import org.tm.archive.components.settings.app.subscription.DonationPaymentRepository
+import org.tm.archive.components.settings.app.subscription.StripeRepository
 
 /**
  * Activity which houses the gift flow.
  */
 class GiftFlowActivity : FragmentWrapperActivity(), DonationPaymentComponent {
 
-  override val donationPaymentRepository: DonationPaymentRepository by lazy { DonationPaymentRepository(this) }
+  override val stripeRepository: StripeRepository by lazy { StripeRepository(this) }
 
   override val googlePayResultPublisher: Subject<DonationPaymentComponent.GooglePayResult> = PublishSubject.create()
 
@@ -31,6 +31,7 @@ class GiftFlowActivity : FragmentWrapperActivity(), DonationPaymentComponent {
     return NavHostFragment.create(R.navigation.gift_flow)
   }
 
+  @Suppress("DEPRECATION")
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
     googlePayResultPublisher.onNext(DonationPaymentComponent.GooglePayResult(requestCode, resultCode, data))

@@ -1,9 +1,9 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 
 /**
@@ -44,7 +44,7 @@ public class DatabaseMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<DatabaseMigrationJob> {
     @Override
-    public @NonNull DatabaseMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull DatabaseMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new DatabaseMigrationJob(parameters);
     }
   }

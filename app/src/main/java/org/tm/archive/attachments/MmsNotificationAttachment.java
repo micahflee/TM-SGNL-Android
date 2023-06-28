@@ -5,8 +5,8 @@ import android.net.Uri;
 
 import androidx.annotation.Nullable;
 
-import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.MmsDatabase;
+import org.tm.archive.database.AttachmentTable;
+import org.tm.archive.database.MessageTable;
 
 public class MmsNotificationAttachment extends Attachment {
 
@@ -26,14 +26,14 @@ public class MmsNotificationAttachment extends Attachment {
   }
 
   private static int getTransferStateFromStatus(int status) {
-    if (status == MmsDatabase.Status.DOWNLOAD_INITIALIZED ||
-        status == MmsDatabase.Status.DOWNLOAD_NO_CONNECTIVITY)
+    if (status == MessageTable.MmsStatus.DOWNLOAD_INITIALIZED ||
+        status == MessageTable.MmsStatus.DOWNLOAD_NO_CONNECTIVITY)
     {
-      return AttachmentDatabase.TRANSFER_PROGRESS_PENDING;
-    } else if (status == MmsDatabase.Status.DOWNLOAD_CONNECTING) {
-      return AttachmentDatabase.TRANSFER_PROGRESS_STARTED;
+      return AttachmentTable.TRANSFER_PROGRESS_PENDING;
+    } else if (status == MessageTable.MmsStatus.DOWNLOAD_CONNECTING) {
+      return AttachmentTable.TRANSFER_PROGRESS_STARTED;
     } else {
-      return AttachmentDatabase.TRANSFER_PROGRESS_FAILED;
+      return AttachmentTable.TRANSFER_PROGRESS_FAILED;
     }
   }
 }

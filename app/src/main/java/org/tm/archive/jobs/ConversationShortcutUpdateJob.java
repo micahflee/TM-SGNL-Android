@@ -1,13 +1,14 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.database.ThreadTable;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.transport.RetryLaterException;
@@ -47,8 +48,8 @@ public class ConversationShortcutUpdateJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -64,11 +65,11 @@ public class ConversationShortcutUpdateJob extends BaseJob {
       return;
     }
 
-    ThreadDatabase  threadDatabase = SignalDatabase.threads();
-    int             maxShortcuts   = ConversationUtil.getMaxShortcuts(context);
+    ThreadTable threadTable  = SignalDatabase.threads();
+    int         maxShortcuts = ConversationUtil.getMaxShortcuts(context);
     List<Recipient> ranked         = new ArrayList<>(maxShortcuts);
 
-    try (ThreadDatabase.Reader reader = threadDatabase.readerFor(threadDatabase.getRecentConversationList(maxShortcuts, false, false, false, true, !Util.isDefaultSmsProvider(context), false))) {
+    try (ThreadTable.Reader reader = threadTable.readerFor(threadTable.getRecentConversationList(maxShortcuts, false, false, false, true, !Util.isDefaultSmsProvider(context), false))) {
       ThreadRecord record;
       while ((record = reader.getNext()) != null) {
         ranked.add(record.getRecipient().resolve());
@@ -81,7 +82,7 @@ public class ConversationShortcutUpdateJob extends BaseJob {
       throw new RetryLaterException();
     }
 
-    ConversationUtil.removeLongLivedShortcuts(context, threadDatabase.getArchivedRecipients());
+    ConversationUtil.removeLongLivedShortcuts(context, threadTable.getArchivedRecipients());
   }
 
   @Override
@@ -95,7 +96,7 @@ public class ConversationShortcutUpdateJob extends BaseJob {
 
   public static class Factory implements Job.Factory<ConversationShortcutUpdateJob> {
     @Override
-    public @NonNull ConversationShortcutUpdateJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull ConversationShortcutUpdateJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new ConversationShortcutUpdateJob(parameters);
     }
   }

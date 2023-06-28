@@ -9,16 +9,16 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.button.MaterialButton
+import org.signal.core.util.concurrent.LifecycleDisposable
+import org.signal.core.util.dp
 import org.tm.archive.ContactSelectionListFragment
 import org.tm.archive.R
-import org.tm.archive.contacts.ContactsCursorLoader
+import org.tm.archive.contacts.ContactSelectionDisplayMode
 import org.tm.archive.contacts.HeaderAction
 import org.tm.archive.contacts.selection.ContactSelectionArguments
 import org.tm.archive.database.model.DistributionListId
 import org.tm.archive.groups.SelectionLimits
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.sharing.ShareContact
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.fragments.findListener
 import java.util.Optional
 import java.util.function.Consumer
@@ -77,7 +77,7 @@ abstract class BaseStoryRecipientSelectionFragment : Fragment(R.layout.stories_b
 
     viewModel.state.observe(viewLifecycleOwner) {
       if (it.distributionListId == null || it.privateStory != null) {
-        getAttachedContactSelectionFragment().markSelected(it.selection.map(::ShareContact).toSet())
+        getAttachedContactSelectionFragment().markSelected(it.selection.toSet())
         presentTitle(toolbar, it.selection.size)
       }
     }
@@ -117,7 +117,7 @@ abstract class BaseStoryRecipientSelectionFragment : Fragment(R.layout.stories_b
     }
   }
 
-  override fun onBeforeContactSelected(recipientId: Optional<RecipientId>, number: String?, callback: Consumer<Boolean>) {
+  override fun onBeforeContactSelected(isFromUnknownSearchKey: Boolean, recipientId: Optional<RecipientId>, number: String?, callback: Consumer<Boolean>) {
     viewModel.addRecipient(recipientId.get())
     searchField.setText("")
     callback.accept(true)
@@ -131,7 +131,7 @@ abstract class BaseStoryRecipientSelectionFragment : Fragment(R.layout.stories_b
 
   override fun getHeaderAction(): HeaderAction {
     return HeaderAction(
-      R.string.BaseStoryRecipientSelectionFragment__select_all,
+      R.string.BaseStoryRecipientSelectionFragment__select_all
     ) {
       viewModel.toggleSelectAll()
     }
@@ -140,15 +140,17 @@ abstract class BaseStoryRecipientSelectionFragment : Fragment(R.layout.stories_b
   private fun initializeContactSelectionFragment() {
     val contactSelectionListFragment = ContactSelectionListFragment()
     val arguments = ContactSelectionArguments(
-      displayMode = ContactsCursorLoader.DisplayMode.FLAG_PUSH or ContactsCursorLoader.DisplayMode.FLAG_HIDE_NEW,
+      displayMode = ContactSelectionDisplayMode.FLAG_PUSH or ContactSelectionDisplayMode.FLAG_HIDE_NEW,
       isRefreshable = false,
       displayRecents = false,
       selectionLimits = SelectionLimits.NO_LIMITS,
       canSelectSelf = false,
       currentSelection = emptyList(),
       displaySelectionCount = false,
-      displayChips = false,
-      checkboxResource = checkboxResource
+      displayChips = true,
+      checkboxResource = checkboxResource,
+      recyclerPadBottom = 76.dp,
+      recyclerChildClipping = false
     )
 
     contactSelectionListFragment.arguments = arguments.toArgumentBundle()

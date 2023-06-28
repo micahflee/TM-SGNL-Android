@@ -3,6 +3,8 @@ package org.tm.archive.webrtc.audio
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import org.signal.core.util.readParcelableCompat
+import org.signal.core.util.readSerializableCompat
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.ParcelUtil
 
@@ -36,7 +38,7 @@ sealed class AudioManagerCommand : Parcelable {
       @JvmField
       val CREATOR: Parcelable.Creator<StartIncomingRinger> = ParcelCheat { parcel ->
         StartIncomingRinger(
-          ringtoneUri = parcel.readParcelable(Uri::class.java.classLoader)!!,
+          ringtoneUri = parcel.readParcelableCompat(Uri::class.java)!!,
           vibrate = ParcelUtil.readBoolean(parcel)
         )
       }
@@ -75,15 +77,22 @@ sealed class AudioManagerCommand : Parcelable {
     }
   }
 
-  class SetUserDevice(val recipientId: RecipientId?, val device: SignalAudioManager.AudioDevice) : AudioManagerCommand() {
+  class SetUserDevice(val recipientId: RecipientId?, val device: Int, val isId: Boolean) : AudioManagerCommand() {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
       parcel.writeParcelable(recipientId, flags)
-      parcel.writeSerializable(device)
+      parcel.writeInt(device)
+      ParcelUtil.writeBoolean(parcel, isId)
     }
 
     companion object {
       @JvmField
-      val CREATOR: Parcelable.Creator<SetUserDevice> = ParcelCheat { SetUserDevice(it.readParcelable(RecipientId::class.java.classLoader), it.readSerializable() as SignalAudioManager.AudioDevice) }
+      val CREATOR: Parcelable.Creator<SetUserDevice> = ParcelCheat {
+        SetUserDevice(
+          recipientId = it.readParcelableCompat(RecipientId::class.java),
+          device = it.readInt(),
+          isId = ParcelUtil.readBoolean(it)
+        )
+      }
     }
   }
 
@@ -98,8 +107,8 @@ sealed class AudioManagerCommand : Parcelable {
       @JvmField
       val CREATOR: Parcelable.Creator<SetDefaultDevice> = ParcelCheat { parcel ->
         SetDefaultDevice(
-          recipientId = parcel.readParcelable(RecipientId::class.java.classLoader),
-          device = parcel.readSerializable() as SignalAudioManager.AudioDevice,
+          recipientId = parcel.readParcelableCompat(RecipientId::class.java),
+          device = parcel.readSerializableCompat(SignalAudioManager.AudioDevice::class.java)!!,
           clearUserEarpieceSelection = ParcelUtil.readBoolean(parcel)
         )
       }

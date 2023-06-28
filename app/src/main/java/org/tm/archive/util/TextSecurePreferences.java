@@ -1,5 +1,6 @@
 package org.tm.archive.util;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.Camera.CameraInfo;
@@ -11,13 +12,15 @@ import androidx.annotation.ArrayRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.preference.PreferenceManager;
 
 import org.greenrobot.eventbus.EventBus;
+import org.signal.core.util.PendingIntentFlags;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.R;
-import org.tm.archive.backup.BackupProtos;
+import org.tm.archive.backup.proto.SharedPreference;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -26,8 +29,10 @@ import org.tm.archive.keyvalue.SettingsValues;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.lock.RegistrationLockReminders;
 import org.tm.archive.notifications.NotificationChannels;
+import org.tm.archive.notifications.NotificationIds;
 import org.tm.archive.preferences.widgets.NotificationPrivacyPreference;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.registration.RegistrationNavigationActivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -247,39 +252,39 @@ public class TextSecurePreferences {
     return count;
   }
 
-  public static List<BackupProtos.SharedPreference> getPreferencesToSaveToBackup(@NonNull Context context) {
-    SharedPreferences                   preferences  = getSharedPreferences(context);
-    List<BackupProtos.SharedPreference> backupProtos = new ArrayList<>();
-    String                              defaultFile  = context.getPackageName() + "_preferences";
+  public static List<SharedPreference> getPreferencesToSaveToBackup(@NonNull Context context) {
+    SharedPreferences      preferences  = getSharedPreferences(context);
+    List<SharedPreference> backupProtos = new ArrayList<>();
+    String                 defaultFile  = context.getPackageName() + "_preferences";
 
     for (String booleanPreference : booleanPreferencesToBackup) {
       if (preferences.contains(booleanPreference)) {
-        backupProtos.add(BackupProtos.SharedPreference.newBuilder()
-                                                      .setFile(defaultFile)
-                                                      .setKey(booleanPreference)
-                                                      .setBooleanValue(preferences.getBoolean(booleanPreference, false))
-                                                      .build());
+        backupProtos.add(new SharedPreference.Builder()
+                                             .file_(defaultFile)
+                                             .key(booleanPreference)
+                                             .booleanValue(preferences.getBoolean(booleanPreference, false))
+                                             .build());
       }
     }
 
     for (String stringPreference : stringPreferencesToBackup) {
       if (preferences.contains(stringPreference)) {
-        backupProtos.add(BackupProtos.SharedPreference.newBuilder()
-                                                      .setFile(defaultFile)
-                                                      .setKey(stringPreference)
-                                                      .setValue(preferences.getString(stringPreference, null))
-                                                      .build());
+        backupProtos.add(new SharedPreference.Builder()
+                                             .file_(defaultFile)
+                                             .key(stringPreference)
+                                             .value_(preferences.getString(stringPreference, null))
+                                             .build());
       }
     }
 
     for (String stringSetPreference : stringSetPreferencesToBackup) {
       if (preferences.contains(stringSetPreference)) {
-        backupProtos.add(BackupProtos.SharedPreference.newBuilder()
-                                                      .setFile(defaultFile)
-                                                      .setKey(stringSetPreference)
-                                                      .setIsStringSetValue(true)
-                                                      .addAllStringSetValue(preferences.getStringSet(stringSetPreference, Collections.emptySet()))
-                                                      .build());
+        backupProtos.add(new SharedPreference.Builder()
+                                             .file_(defaultFile)
+                                             .key(stringSetPreference)
+                                             .isStringSetValue(true)
+                                             .stringSetValue(new ArrayList<>(preferences.getStringSet(stringSetPreference, Collections.emptySet())))
+                                             .build());
       }
     }
 
@@ -288,7 +293,7 @@ public class TextSecurePreferences {
 
   public static void onPostBackupRestore(@NonNull Context context) {
     if (NotificationChannels.supported()) {
-      NotificationChannels.updateMessageVibrate(context, SignalStore.settings().isMessageVibrateEnabled());
+      NotificationChannels.getInstance().updateMessageVibrate(SignalStore.settings().isMessageVibrateEnabled());
     }
   }
 
@@ -443,11 +448,14 @@ public class TextSecurePreferences {
   }
 
   public static void setUnauthorizedReceived(Context context, boolean value) {
-    boolean previous = isUnauthorizedRecieved(context);
+    boolean previous = isUnauthorizedReceived(context);
     setBooleanPreference(context, UNAUTHORIZED_RECEIVED, value);
 
     if (previous != value) {
       Recipient.self().live().refresh();
+      if (value) {
+        notifyUnregisteredReceived(context);
+      }
     }
 
     if (value) {
@@ -455,7 +463,7 @@ public class TextSecurePreferences {
     }
   }
 
-  public static boolean isUnauthorizedRecieved(Context context) {
+  public static boolean isUnauthorizedReceived(Context context) {
     return getBooleanPreference(context, UNAUTHORIZED_RECEIVED, false);
   }
 
@@ -1155,6 +1163,20 @@ public class TextSecurePreferences {
       preferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
     return preferences;
+  }
+
+  private static void notifyUnregisteredReceived(Context context) {
+    PendingIntent reRegistrationIntent = PendingIntent.getActivity(context,
+                                                                   0,
+                                                                   RegistrationNavigationActivity.newIntentForReRegistration(context),
+                                                                   PendingIntent.FLAG_UPDATE_CURRENT | PendingIntentFlags.immutable());
+    final NotificationCompat.Builder builder = new NotificationCompat.Builder(context, NotificationChannels.getInstance().FAILURES)
+        .setSmallIcon(R.drawable.ic_signal_logo_large)
+        .setContentText(context.getString(R.string.LoggedOutNotification_you_have_been_logged_out))
+        .setContentIntent(reRegistrationIntent)
+        .setOnlyAlertOnce(true)
+        .setAutoCancel(true);
+    NotificationManagerCompat.from(context).notify(NotificationIds.UNREGISTERED_NOTIFICATION_ID, builder.build());
   }
 
   // NEVER rename these -- they're persisted by name

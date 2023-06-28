@@ -2,6 +2,7 @@ package org.tm.archive.badges.gifts
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentManager
+import org.signal.core.util.getParcelableCompat
 import org.tm.archive.badges.gifts.ExpiredGiftSheetConfiguration.forExpiredBadge
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.components.settings.DSLSettingsAdapter
@@ -28,7 +29,7 @@ class ExpiredGiftSheet : DSLSettingsBottomSheetFragment() {
   }
 
   private val badge: Badge
-    get() = requireArguments().getParcelable(ARG_BADGE)!!
+    get() = requireArguments().getParcelableCompat(ARG_BADGE, Badge::class.java)!!
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
     ExpiredGiftSheetConfiguration.register(adapter)

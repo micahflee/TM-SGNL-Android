@@ -8,7 +8,6 @@ import androidx.annotation.Px;
 import androidx.annotation.StringRes;
 
 import org.tm.archive.R;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.webrtc.audio.SignalAudioManager;
 
 import java.util.Set;
@@ -154,7 +153,7 @@ public final class WebRtcControls {
   }
 
   boolean displayAudioToggle() {
-    return (isPreJoin() || isAtLeastOutgoing()) && (!isLocalVideoEnabled || enableHeadsetInAudioToggle());
+    return (isPreJoin() || isAtLeastOutgoing()) && (!isLocalVideoEnabled || isBluetoothHeadsetAvailableForAudioToggle() || isWiredHeadsetAvailableForAudioToggle());
   }
 
   boolean displayCameraToggle() {
@@ -173,12 +172,16 @@ public final class WebRtcControls {
     return isIncoming();
   }
 
-  boolean enableHandsetInAudioToggle() {
+  boolean isEarpieceAvailableForAudioToggle() {
     return !isLocalVideoEnabled;
   }
 
-  boolean enableHeadsetInAudioToggle() {
+  boolean isBluetoothHeadsetAvailableForAudioToggle() {
     return availableDevices.contains(SignalAudioManager.AudioDevice.BLUETOOTH);
+  }
+
+  boolean isWiredHeadsetAvailableForAudioToggle() {
+    return availableDevices.contains(SignalAudioManager.AudioDevice.WIRED_HEADSET);
   }
 
   boolean isFadeOutEnabled() {
@@ -202,7 +205,9 @@ public final class WebRtcControls {
       case SPEAKER_PHONE:
         return WebRtcAudioOutput.SPEAKER;
       case BLUETOOTH:
-        return WebRtcAudioOutput.HEADSET;
+        return WebRtcAudioOutput.BLUETOOTH_HEADSET;
+      case WIRED_HEADSET:
+        return WebRtcAudioOutput.WIRED_HEADSET;
       default:
         return WebRtcAudioOutput.HANDSET;
     }
@@ -217,7 +222,7 @@ public final class WebRtcControls {
   }
 
   boolean displayRingToggle() {
-    return FeatureFlags.groupCallRinging() && isPreJoin() && isGroupCall() && !hasAtLeastOneRemote;
+    return isPreJoin() && isGroupCall() && !hasAtLeastOneRemote;
   }
 
   private boolean isError() {

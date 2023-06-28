@@ -8,12 +8,12 @@ import androidx.navigation.fragment.findNavController
 import org.tm.archive.R
 import org.tm.archive.components.settings.app.changenumber.ChangeNumberUtil.changeNumberSuccess
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.lock.PinHashing
 import org.tm.archive.registration.fragments.BaseRegistrationLockFragment
 import org.tm.archive.registration.viewmodel.BaseRegistrationViewModel
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.SupportEmailUtil
 import org.tm.archive.util.navigation.safeNavigate
+import org.whispersystems.signalservice.api.kbs.PinHashUtil
 
 class ChangeNumberRegistrationLockFragment : BaseRegistrationLockFragment(R.layout.fragment_change_number_registration_lock) {
 
@@ -42,7 +42,7 @@ class ChangeNumberRegistrationLockFragment : BaseRegistrationLockFragment(R.layo
   }
 
   override fun handleSuccessfulPinEntry(pin: String) {
-    val pinsDiffer: Boolean = SignalStore.kbsValues().localPinHash?.let { !PinHashing.verifyLocalPinHash(it, pin) } ?: false
+    val pinsDiffer: Boolean = SignalStore.kbsValues().localPinHash?.let { !PinHashUtil.verifyLocalPinHash(it, pin) } ?: false
 
     pinButton.cancelSpinning()
 

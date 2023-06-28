@@ -1,6 +1,7 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -8,7 +9,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.EmojiSearchData;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.EmojiValues;
@@ -74,8 +75,8 @@ public final class EmojiSearchIndexDownloadJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -181,7 +182,7 @@ public final class EmojiSearchIndexDownloadJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<EmojiSearchIndexDownloadJob> {
     @Override
-    public @NonNull EmojiSearchIndexDownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull EmojiSearchIndexDownloadJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new EmojiSearchIndexDownloadJob(parameters);
     }
   }

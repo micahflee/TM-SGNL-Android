@@ -1,14 +1,15 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.StickerDatabase;
+import org.tm.archive.database.StickerTable;
 import org.tm.archive.database.model.IncomingSticker;
 import org.tm.archive.database.model.StickerRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.mms.PartAuthority;
@@ -56,18 +57,18 @@ public class StickerDownloadJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_PACK_ID, sticker.getPackId())
-                             .putString(KEY_PACK_KEY, sticker.getPackKey())
-                             .putString(KEY_PACK_TITLE, sticker.getPackTitle())
-                             .putString(KEY_PACK_AUTHOR, sticker.getPackAuthor())
-                             .putInt(KEY_STICKER_ID, sticker.getStickerId())
-                             .putString(KEY_EMOJI, sticker.getEmoji())
-                             .putString(KEY_CONTENT_TYPE, sticker.getContentType())
-                             .putBoolean(KEY_COVER, sticker.isCover())
-                             .putBoolean(KEY_INSTALLED, sticker.isInstalled())
-                             .putBoolean(KEY_NOTIFY, notify)
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_PACK_ID, sticker.getPackId())
+                                    .putString(KEY_PACK_KEY, sticker.getPackKey())
+                                    .putString(KEY_PACK_TITLE, sticker.getPackTitle())
+                                    .putString(KEY_PACK_AUTHOR, sticker.getPackAuthor())
+                                    .putInt(KEY_STICKER_ID, sticker.getStickerId())
+                                    .putString(KEY_EMOJI, sticker.getEmoji())
+                                    .putString(KEY_CONTENT_TYPE, sticker.getContentType())
+                                    .putBoolean(KEY_COVER, sticker.isCover())
+                                    .putBoolean(KEY_INSTALLED, sticker.isInstalled())
+                                    .putBoolean(KEY_NOTIFY, notify)
+                                    .serialize();
   }
 
   @Override
@@ -77,7 +78,7 @@ public class StickerDownloadJob extends BaseJob {
 
   @Override
   protected void onRun() throws Exception {
-    StickerDatabase db = SignalDatabase.stickers();
+    StickerTable db = SignalDatabase.stickers();
 
     StickerRecord stickerRecord = db.getSticker(sticker.getPackId(), sticker.getStickerId(), sticker.isCover());
     if (stickerRecord != null) {
@@ -116,7 +117,9 @@ public class StickerDownloadJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<StickerDownloadJob> {
     @Override
-    public @NonNull StickerDownloadJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull StickerDownloadJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       IncomingSticker sticker = new IncomingSticker(data.getString(KEY_PACK_ID),
                                                     data.getString(KEY_PACK_KEY),
                                                     data.getString(KEY_PACK_TITLE),

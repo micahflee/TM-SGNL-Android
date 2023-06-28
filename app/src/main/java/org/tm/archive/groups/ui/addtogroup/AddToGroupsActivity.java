@@ -16,7 +16,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import org.tm.archive.ContactSelectionActivity;
 import org.tm.archive.ContactSelectionListFragment;
 import org.tm.archive.R;
-import org.tm.archive.contacts.ContactsCursorLoader;
+import org.tm.archive.contacts.ContactSelectionDisplayMode;
 import org.tm.archive.groups.ui.addtogroup.AddToGroupViewModel.Event;
 import org.tm.archive.recipients.RecipientId;
 
@@ -50,7 +50,7 @@ public final class AddToGroupsActivity extends ContactSelectionActivity {
     intent.putExtra(ContactSelectionActivity.EXTRA_LAYOUT_RES_ID, R.layout.add_to_group_activity);
     intent.putExtra(EXTRA_RECIPIENT_ID, recipientId);
 
-    intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactsCursorLoader.DisplayMode.FLAG_ACTIVE_GROUPS);
+    intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionDisplayMode.FLAG_ACTIVE_GROUPS);
 
     intent.putParcelableArrayListExtra(ContactSelectionListFragment.CURRENT_SELECTION, new ArrayList<>(currentGroupsMemberOf));
 
@@ -112,7 +112,7 @@ public final class AddToGroupsActivity extends ContactSelectionActivity {
   }
 
   @Override
-  public void onBeforeContactSelected(@NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
+  public void onBeforeContactSelected(boolean isFromUnknownSearchKey, @NonNull Optional<RecipientId> recipientId, String number, @NonNull Consumer<Boolean> callback) {
     if (contactsFragment.isMulti()) {
       throw new UnsupportedOperationException("Not yet built to handle multi-select.");
 //      if (contactsFragment.hasQueryFilter()) {

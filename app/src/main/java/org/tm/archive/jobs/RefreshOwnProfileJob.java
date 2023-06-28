@@ -6,16 +6,18 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.usernames.BaseUsernameException;
+import org.signal.libsignal.usernames.Username;
 import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.badges.BadgeRepository;
 import org.tm.archive.badges.Badges;
 import org.tm.archive.badges.models.Badge;
 import org.tm.archive.crypto.ProfileKeyUtil;
-import org.tm.archive.database.RecipientDatabase;
+import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -23,6 +25,7 @@ import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.subscription.Subscriber;
 import org.tm.archive.util.Base64;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ProfileUtil;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
@@ -34,8 +37,12 @@ import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException
 import org.whispersystems.signalservice.api.subscriptions.ActiveSubscription;
 import org.whispersystems.signalservice.api.util.ExpiringProfileCredentialUtil;
 import org.whispersystems.signalservice.internal.ServiceResponse;
+import org.whispersystems.signalservice.internal.push.ReserveUsernameResponse;
+import org.whispersystems.signalservice.internal.push.WhoAmIResponse;
+import org.whispersystems.util.Base64UrlSafe;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -84,8 +91,8 @@ public class RefreshOwnProfileJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -142,14 +149,18 @@ public class RefreshOwnProfileJob extends BaseJob {
                         .ifPresent(expiringProfileKeyCredential -> setExpiringProfileKeyCredential(self, ProfileKeyUtil.getSelfProfileKey(), expiringProfileKeyCredential));
 
     StoryOnboardingDownloadJob.Companion.enqueueIfNeeded();
+
+    if (FeatureFlags.usernames()) {
+      checkUsernameIsInSync();
+    }
   }
 
   private void setExpiringProfileKeyCredential(@NonNull Recipient recipient,
                                                @NonNull ProfileKey recipientProfileKey,
                                                @NonNull ExpiringProfileKeyCredential credential)
   {
-    RecipientDatabase recipientDatabase = SignalDatabase.recipients();
-    recipientDatabase.setProfileKeyCredential(recipient.getId(), recipientProfileKey, credential);
+    RecipientTable recipientTable = SignalDatabase.recipients();
+    recipientTable.setProfileKeyCredential(recipient.getId(), recipientProfileKey, credential);
   }
 
   private static SignalServiceProfile.RequestType getRequestType(@NonNull Recipient recipient) {
@@ -238,6 +249,60 @@ public class RefreshOwnProfileJob extends BaseJob {
     if (!verified) {
       Log.w(TAG, "Unidentified access failed to verify! Refreshing attributes.");
       ApplicationDependencies.getJobManager().add(new RefreshAttributesJob());
+    }
+  }
+
+  static void checkUsernameIsInSync() throws IOException {
+    if (TextUtils.isEmpty(SignalDatabase.recipients().getUsername(Recipient.self().getId()))) {
+      Log.i(TAG, "No local username. Clearing username from server.");
+      ApplicationDependencies.getSignalServiceAccountManager().deleteUsername();
+    } else {
+      Log.i(TAG, "Local user has a username, attempting username synchronization.");
+      performLocalRemoteComparison();
+    }
+  }
+
+  private static void performLocalRemoteComparison() {
+    try {
+      String  localUsername    = SignalDatabase.recipients().getUsername(Recipient.self().getId());
+      boolean hasLocalUsername = !TextUtils.isEmpty(localUsername);
+
+      if (!hasLocalUsername) {
+        return;
+      }
+
+      WhoAmIResponse whoAmIResponse     = ApplicationDependencies.getSignalServiceAccountManager().getWhoAmI();
+      boolean        hasServerUsername  = !TextUtils.isEmpty(whoAmIResponse.getUsernameHash());
+      String         serverUsernameHash = whoAmIResponse.getUsernameHash();
+      String         localUsernameHash  = Base64UrlSafe.encodeBytesWithoutPadding(Username.hash(localUsername));
+
+      if (!hasServerUsername) {
+        Log.w(TAG, "No remote username is set.");
+      }
+
+      if (!Objects.equals(localUsernameHash, serverUsernameHash)) {
+        Log.w(TAG, "Local username hash does not match server username hash.");
+      }
+
+      if (!hasServerUsername || !Objects.equals(localUsernameHash, serverUsernameHash)) {
+        Log.i(TAG, "Attempting to resynchronize username.");
+        tryToReserveAndConfirmLocalUsername(localUsername, localUsernameHash);
+      }
+    } catch (IOException | BaseUsernameException e) {
+      Log.w(TAG, "Failed perform synchronization check", e);
+    }
+  }
+
+  private static void tryToReserveAndConfirmLocalUsername(@NonNull String localUsername, @NonNull String localUsernameHash) {
+    try {
+      ReserveUsernameResponse response = ApplicationDependencies.getSignalServiceAccountManager()
+                                                                .reserveUsername(Collections.singletonList(localUsernameHash));
+
+      ApplicationDependencies.getSignalServiceAccountManager()
+                             .confirmUsername(localUsername, response);
+    } catch (IOException e) {
+      Log.d(TAG, "Failed to synchronize username.", e);
+      SignalStore.phoneNumberPrivacy().markUsernameOutOfSync();
     }
   }
 
@@ -379,7 +444,7 @@ public class RefreshOwnProfileJob extends BaseJob {
   public static final class Factory implements Job.Factory<RefreshOwnProfileJob> {
 
     @Override
-    public @NonNull RefreshOwnProfileJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull RefreshOwnProfileJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new RefreshOwnProfileJob(parameters);
     }
   }

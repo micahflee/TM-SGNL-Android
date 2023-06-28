@@ -26,6 +26,7 @@ import org.tm.archive.conversation.ConversationItem;
 import org.tm.archive.conversation.ConversationMessage;
 import org.tm.archive.conversation.colors.Colorizable;
 import org.tm.archive.conversation.colors.Colorizer;
+import org.tm.archive.conversation.ConversationItemDisplayMode;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.giph.mp4.GiphyMp4Playable;
 import org.tm.archive.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
@@ -103,14 +104,14 @@ final class MessageHeaderViewHolder extends RecyclerView.ViewHolder implements G
                           glideRequests,
                           Locale.getDefault(),
                           new HashSet<>(),
-                          conversationMessage.getMessageRecord().getRecipient(),
+                          conversationMessage.getMessageRecord().getToRecipient(),
                           null,
                           false,
                           false,
                           false,
                           true,
                           colorizer,
-                          false);
+                          ConversationItemDisplayMode.DETAILED);
   }
 
   private void bindErrorState(MessageRecord messageRecord) {

@@ -5,6 +5,7 @@ import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import org.signal.ringrtc.CallManager;
 import org.signal.ringrtc.GroupCall;
@@ -84,8 +85,8 @@ public class WebRtcInteractor {
     signalCallManager.sendCallMessage(remotePeer, callMessage);
   }
 
-  void sendGroupCallMessage(@NonNull Recipient recipient, @Nullable String groupCallEraId) {
-    signalCallManager.sendGroupCallUpdateMessage(recipient, groupCallEraId);
+  void sendGroupCallMessage(@NonNull Recipient recipient, @Nullable String groupCallEraId, boolean isIncoming, boolean isJoinEvent) {
+    signalCallManager.sendGroupCallUpdateMessage(recipient, groupCallEraId, isIncoming, isJoinEvent);
   }
 
   void updateGroupCallUpdateMessage(@NonNull RecipientId groupId, @Nullable String groupCallEraId, @NonNull Collection<UUID> joinedMembers, boolean isCallFull) {
@@ -109,11 +110,11 @@ public class WebRtcInteractor {
   }
 
   void insertMissedCall(@NonNull RemotePeer remotePeer, long timestamp, boolean isVideoOffer) {
-    signalCallManager.insertMissedCall(remotePeer, true, timestamp, isVideoOffer);
+    signalCallManager.insertMissedCall(remotePeer, timestamp, isVideoOffer);
   }
 
   void insertReceivedCall(@NonNull RemotePeer remotePeer, boolean isVideoOffer) {
-    signalCallManager.insertReceivedCall(remotePeer, true, isVideoOffer);
+    signalCallManager.insertReceivedCall(remotePeer, isVideoOffer);
   }
 
   boolean startWebRtcCallActivityIfPossible() {
@@ -152,8 +153,12 @@ public class WebRtcInteractor {
     WebRtcCallService.sendAudioManagerCommand(context, new AudioManagerCommand.Start());
   }
 
-  public void setUserAudioDevice(@Nullable RecipientId recipientId, @NonNull SignalAudioManager.AudioDevice userDevice) {
-    WebRtcCallService.sendAudioManagerCommand(context, new AudioManagerCommand.SetUserDevice(recipientId, userDevice));
+  public void setUserAudioDevice(@Nullable RecipientId recipientId, @NonNull SignalAudioManager.ChosenAudioDeviceIdentifier userDevice) {
+    if (userDevice.isLegacy()) {
+      WebRtcCallService.sendAudioManagerCommand(context, new AudioManagerCommand.SetUserDevice(recipientId, userDevice.getDesiredAudioDeviceLegacy().ordinal(), false));
+    } else {
+      WebRtcCallService.sendAudioManagerCommand(context, new AudioManagerCommand.SetUserDevice(recipientId, userDevice.getDesiredAudioDevice31(), true));
+    }
   }
 
   public void setDefaultAudioDevice(@NonNull RecipientId recipientId, @NonNull SignalAudioManager.AudioDevice userDevice, boolean clearUserEarpieceSelection) {
@@ -186,5 +191,13 @@ public class WebRtcInteractor {
 
   public void requestGroupMembershipProof(GroupId.V2 groupId, int groupCallHashCode) {
     signalCallManager.requestGroupMembershipToken(groupId, groupCallHashCode);
+  }
+
+  public void sendAcceptedCallEventSyncMessage(@NonNull RemotePeer remotePeer, boolean isOutgoing, boolean isVideoCall) {
+    signalCallManager.sendAcceptedCallEventSyncMessage(remotePeer, isOutgoing, isVideoCall);
+  }
+
+  public void sendNotAcceptedCallEventSyncMessage(@NonNull RemotePeer remotePeer, boolean isOutgoing, boolean isVideoCall) {
+    signalCallManager.sendNotAcceptedCallEventSyncMessage(remotePeer, isOutgoing, isVideoCall);
   }
 }

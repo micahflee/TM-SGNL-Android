@@ -25,12 +25,17 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
+import org.signal.ringrtc.CallLinkRootKey;
+import org.signal.ringrtc.CallLinkState;
 import org.tm.archive.R;
 import org.tm.archive.WebRtcCallActivity;
+import org.tm.archive.calls.links.CallLinks;
 import org.tm.archive.contacts.sync.ContactDiscovery;
 import org.tm.archive.conversation.ConversationIntents;
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.conversation.colors.AvatarColor;
+import org.tm.archive.database.CallLinkTable;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.ui.invitesandrequests.joining.GroupJoinBottomSheetDialogFragment;
@@ -39,11 +44,16 @@ import org.tm.archive.groups.v2.GroupInviteLinkUrl;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.proxy.ProxyBottomSheetFragment;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.recipients.RecipientId;
+import org.tm.archive.service.webrtc.links.CallLinkCredentials;
+import org.tm.archive.service.webrtc.links.CallLinkRoomId;
+import org.tm.archive.service.webrtc.links.SignalCallLinkState;
 import org.tm.archive.sms.MessageSender;
 import org.tm.archive.util.views.SimpleProgressDialog;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Optional;
 
 public class CommunicationActions {
@@ -142,6 +152,7 @@ public class CommunicationActions {
 
       @Override
       protected void onPostExecute(@Nullable Long threadId) {
+        // TODO [alex] -- ThreadID should *always* exist
         ConversationIntents.Builder builder = ConversationIntents.createBuilder(context, recipient.getId(), threadId != null ? threadId : -1);
         if (!TextUtils.isEmpty(text)) {
           builder.withDraftText(text);
@@ -178,11 +189,25 @@ public class CommunicationActions {
                    .show();
   }
 
-  public static void composeSmsThroughDefaultApp(@NonNull Context context, @NonNull Recipient recipient, @Nullable String text) {
+  public static @NonNull Intent createIntentToShareTextViaShareSheet(@NonNull String text) {
+    Intent intent = new Intent(Intent.ACTION_SEND);
+    intent.setType("text/plain");
+    intent.putExtra(Intent.EXTRA_TEXT, text);
+
+    return intent;
+  }
+
+  public static @NonNull Intent createIntentToComposeSmsThroughDefaultApp(@NonNull Recipient recipient, @Nullable String text) {
     Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + recipient.requireSmsAddress()));
     if (text != null) {
       intent.putExtra("sms_body", text);
     }
+
+    return intent;
+  }
+
+  public static void composeSmsThroughDefaultApp(@NonNull Context context, @NonNull Recipient recipient, @Nullable String text) {
+    Intent intent = createIntentToComposeSmsThroughDefaultApp(recipient, text);
     context.startActivity(intent);
   }
 
@@ -237,7 +262,7 @@ public class CommunicationActions {
     GroupId.V2 groupId = GroupId.v2(groupInviteLinkUrl.getGroupMasterKey());
 
     SimpleTask.run(SignalExecutors.BOUNDED, () -> {
-      GroupDatabase.GroupRecord group = SignalDatabase.groups().getGroup(groupId).orElse(null);
+      GroupRecord group = SignalDatabase.groups().getGroup(groupId).orElse(null);
 
       return group != null && group.isActive() ? Recipient.resolved(group.getRecipientId())
                                                : null;
@@ -291,7 +316,7 @@ public class CommunicationActions {
             }
           }
         } else {
-          Optional<ServiceId> serviceId = UsernameUtil.fetchAciForUsername(username);
+          Optional<ServiceId> serviceId = UsernameUtil.fetchAciForUsernameHash(username);
           if (serviceId.isPresent()) {
             recipient = Recipient.externalUsername(serviceId.get(), username);
           }
@@ -312,6 +337,39 @@ public class CommunicationActions {
         }
       });
     }
+  }
+
+  public static void handlePotentialCallLinkUrl(@NonNull FragmentActivity activity, @NonNull String potentialUrl) {
+    CallLinkRootKey rootKey = CallLinks.parseUrl(potentialUrl);
+    if (rootKey == null) {
+      Log.w(TAG, "Failed to parse root key from call link.");
+      // TODO [alex] -- Display a dialog informing them that the URL was invalid.
+      return;
+    }
+
+    SimpleTask.run(() -> {
+      CallLinkRoomId roomId = CallLinkRoomId.fromBytes(rootKey.deriveRoomId());
+      if (!SignalDatabase.callLinks().callLinkExists(roomId)) {
+        SignalDatabase.callLinks().insertCallLink(new CallLinkTable.CallLink(
+            RecipientId.UNKNOWN,
+            roomId,
+            new CallLinkCredentials(
+                rootKey.getKeyBytes(),
+                null
+            ),
+            new SignalCallLinkState("", CallLinkState.Restrictions.UNKNOWN, false, Instant.MIN),
+            AvatarColor.random()
+        ));
+      }
+
+      return SignalDatabase.recipients().getByCallLinkRoomId(roomId).map(Recipient::resolved);
+    }, callLinkRecipient -> {
+      if (callLinkRecipient.isEmpty()) {
+        // TODO [alex] -- Display a dialog informing them some error happened.
+      } else {
+        startVideoCall(activity, callLinkRecipient.get());
+      }
+    });
   }
 
   private static void startInsecureCallInternal(@NonNull CallContext callContext, @NonNull Recipient recipient) {

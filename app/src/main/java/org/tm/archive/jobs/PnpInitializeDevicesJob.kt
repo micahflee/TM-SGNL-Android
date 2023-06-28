@@ -4,12 +4,12 @@ import org.signal.core.util.concurrent.safeBlockingGet
 import org.signal.core.util.logging.Log
 import org.tm.archive.components.settings.app.changenumber.ChangeNumberRepository
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobmanager.Data
 import org.tm.archive.jobmanager.Job
 import org.tm.archive.jobmanager.impl.NetworkConstraint
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.registration.VerifyAccountResponseWithoutKbs
+import org.tm.archive.registration.VerifyResponseWithoutKbs
+import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.TextSecurePreferences
 import java.io.IOException
 
@@ -23,11 +23,11 @@ class PnpInitializeDevicesJob private constructor(parameters: Parameters) : Base
   companion object {
     const val KEY = "PnpInitializeDevicesJob"
     private val TAG = Log.tag(PnpInitializeDevicesJob::class.java)
-    private const val PLACEHOLDER_CODE = "123456"
+    private const val PLACEHOLDER_SESSION_ID = "123456789"
 
     @JvmStatic
     fun enqueueIfNecessary() {
-      if (SignalStore.misc().hasPniInitializedDevices() || !SignalStore.account().isRegistered || SignalStore.account().aci == null || Recipient.self().pnpCapability != Recipient.Capability.SUPPORTED) {
+      if (SignalStore.misc().hasPniInitializedDevices() || !SignalStore.account().isRegistered || SignalStore.account().aci == null || Recipient.self().pnpCapability != Recipient.Capability.SUPPORTED || !FeatureFlags.phoneNumberPrivacy()) {
         return
       }
 
@@ -37,8 +37,8 @@ class PnpInitializeDevicesJob private constructor(parameters: Parameters) : Base
 
   constructor() : this(Parameters.Builder().addConstraint(NetworkConstraint.KEY).build())
 
-  override fun serialize(): Data {
-    return Data.EMPTY
+  override fun serialize(): ByteArray? {
+    return null
   }
 
   override fun getFactoryKey(): String {
@@ -49,6 +49,14 @@ class PnpInitializeDevicesJob private constructor(parameters: Parameters) : Base
 
   @Throws(Exception::class)
   public override fun onRun() {
+    if (Recipient.self().pnpCapability != Recipient.Capability.SUPPORTED) {
+      throw IllegalStateException("This should only be run if you have the capability!")
+    }
+
+    if (!FeatureFlags.phoneNumberPrivacy()) {
+      throw IllegalStateException("This should only be running if PNP is enabled!")
+    }
+
     if (!SignalStore.account().isRegistered || SignalStore.account().aci == null) {
       Log.w(TAG, "Not registered! Skipping, as it wouldn't do anything.")
       return
@@ -79,8 +87,8 @@ class PnpInitializeDevicesJob private constructor(parameters: Parameters) : Base
       try {
         Log.i(TAG, "Calling change number with our current number to distribute PNI messages")
         changeNumberRepository
-          .changeNumber(code = PLACEHOLDER_CODE, newE164 = e164, pniUpdateMode = true)
-          .map(::VerifyAccountResponseWithoutKbs)
+          .changeNumber(sessionId = PLACEHOLDER_SESSION_ID, newE164 = e164, pniUpdateMode = true)
+          .map(::VerifyResponseWithoutKbs)
           .safeBlockingGet()
           .resultOrThrow
       } catch (e: InterruptedException) {
@@ -101,7 +109,7 @@ class PnpInitializeDevicesJob private constructor(parameters: Parameters) : Base
   }
 
   class Factory : Job.Factory<PnpInitializeDevicesJob?> {
-    override fun create(parameters: Parameters, data: Data): PnpInitializeDevicesJob {
+    override fun create(parameters: Parameters, serializedData: ByteArray?): PnpInitializeDevicesJob {
       return PnpInitializeDevicesJob(parameters)
     }
   }

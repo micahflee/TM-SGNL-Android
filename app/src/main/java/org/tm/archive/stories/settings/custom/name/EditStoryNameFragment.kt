@@ -13,9 +13,9 @@ import androidx.navigation.fragment.findNavController
 import com.airbnb.lottie.SimpleColorFilter
 import com.google.android.material.textfield.TextInputLayout
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.database.model.DistributionListId
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.views.CircularProgressMaterialButton
 

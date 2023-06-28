@@ -14,13 +14,13 @@ import org.tm.archive.R
 import org.tm.archive.components.menu.ActionItem
 import org.tm.archive.components.menu.SignalContextMenu
 import org.tm.archive.components.settings.PreferenceModel
-import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mms.DecryptableStreamUriLoader
 import org.tm.archive.mms.GlideApp
 import org.tm.archive.stories.StoryTextPostModel
 import org.tm.archive.util.DateUtils
-import org.tm.archive.util.TextSecurePreferences
+import org.tm.archive.util.DebouncedOnClickListener
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
@@ -36,9 +36,8 @@ object MyStoriesItem {
   }
 
   class Model(
-    val distributionStory: ConversationMessage,
+    val distributionStory: MyStoriesState.DistributionStory,
     val onClick: (Model, View) -> Unit,
-    val onLongClick: (Model) -> Boolean,
     val onSaveClick: (Model) -> Unit,
     val onDeleteClick: (Model) -> Unit,
     val onForwardClick: (Model) -> Unit,
@@ -105,18 +104,21 @@ object MyStoriesItem {
 
     override fun bind(model: Model) {
       storyPreview.isClickable = false
-      itemView.setOnClickListener { model.onClick(model, storyPreview) }
-      itemView.setOnLongClickListener { model.onLongClick(model) }
+      itemView.setOnClickListener(
+        DebouncedOnClickListener {
+          model.onClick(model, storyPreview)
+        }
+      )
       downloadTarget.setOnClickListener { model.onSaveClick(model) }
       moreTarget.setOnClickListener { showContextMenu(model) }
       presentDateOrStatus(model)
 
       if (model.distributionStory.messageRecord.isSent) {
-        if (TextSecurePreferences.isReadReceiptsEnabled(context)) {
+        if (SignalStore.storyValues().viewedReceiptsEnabled) {
           viewCount.text = context.resources.getQuantityString(
             R.plurals.MyStories__d_views,
-            model.distributionStory.messageRecord.viewedReceiptCount,
-            model.distributionStory.messageRecord.viewedReceiptCount
+            model.distributionStory.views,
+            model.distributionStory.views
           )
         } else {
           viewCount.setText(R.string.StoryViewerPageFragment__views_off)
@@ -187,11 +189,10 @@ object MyStoriesItem {
         .offsetY(DimensionUnit.DP.toPixels(12f).toInt())
         .show(
           listOf(
-            ActionItem(R.drawable.ic_delete_24_tinted, context.getString(R.string.delete)) { model.onDeleteClick(model) },
-            ActionItem(R.drawable.ic_download_24_tinted, context.getString(R.string.save)) { model.onSaveClick(model) },
-            ActionItem(R.drawable.ic_forward_24_tinted, context.getString(R.string.MyStories_forward)) { model.onForwardClick(model) },
-            ActionItem(R.drawable.ic_share_24_tinted, context.getString(R.string.StoriesLandingItem__share)) { model.onShareClick(model) },
-            ActionItem(R.drawable.ic_info_outline_message_details_24, context.getString(R.string.StoriesLandingItem__info)) { model.onInfoClick(model, storyPreview) }
+            ActionItem(R.drawable.symbol_trash_24, context.getString(R.string.delete)) { model.onDeleteClick(model) },
+            ActionItem(R.drawable.symbol_forward_24, context.getString(R.string.MyStories_forward)) { model.onForwardClick(model) },
+            ActionItem(R.drawable.symbol_share_android_24, context.getString(R.string.StoriesLandingItem__share)) { model.onShareClick(model) },
+            ActionItem(R.drawable.symbol_info_24, context.getString(R.string.StoriesLandingItem__info)) { model.onInfoClick(model, storyPreview) }
           )
         )
     }

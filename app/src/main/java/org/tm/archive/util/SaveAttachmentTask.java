@@ -120,6 +120,12 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
     CreateMediaUriResult result       = createMediaUri(getMediaStoreContentUriForType(contentType), contentType, fileName);
     ContentValues        updateValues = new ContentValues();
 
+    final Uri mediaUri = result.mediaUri;
+
+    if (mediaUri == null) {
+      return null;
+    }
+
     try (InputStream inputStream = PartAuthority.getAttachmentStream(context, attachment.uri)) {
 
       if (inputStream == null) {
@@ -127,12 +133,12 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
       }
 
       if (Objects.equals(result.outputUri.getScheme(), ContentResolver.SCHEME_FILE)) {
-        try (OutputStream outputStream = new FileOutputStream(result.mediaUri.getPath())) {
+        try (OutputStream outputStream = new FileOutputStream(mediaUri.getPath())) {
           StreamUtil.copy(inputStream, outputStream);
-          MediaScannerConnection.scanFile(context, new String[] { result.mediaUri.getPath() }, new String[] { contentType }, null);
+          MediaScannerConnection.scanFile(context, new String[] { mediaUri.getPath() }, new String[] { contentType }, null);
         }
       } else {
-        try (OutputStream outputStream = context.getContentResolver().openOutputStream(result.mediaUri, "w")) {
+        try (OutputStream outputStream = context.getContentResolver().openOutputStream(mediaUri, "w")) {
           long total = StreamUtil.copy(inputStream, outputStream);
           if (total > 0) {
             updateValues.put(MediaStore.MediaColumns.SIZE, total);
@@ -146,7 +152,7 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
     }
 
     if (updateValues.size() > 0) {
-      getContext().getContentResolver().update(result.mediaUri, updateValues, null, null);
+      getContext().getContentResolver().update(mediaUri, updateValues, null, null);
     }
 
     return result.outputUri.getLastPathSegment();
@@ -389,8 +395,7 @@ public class SaveAttachmentTask extends ProgressDialogAsyncTask<SaveAttachmentTa
                        Toast.LENGTH_LONG).show();
         break;
       case SUCCESS:
-        String message = !TextUtils.isEmpty(result.second()) ? context.getResources().getString(R.string.SaveAttachmentTask_saved_to, result.second()) : context.getResources().getString(R.string.SaveAttachmentTask_saved);
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        Toast.makeText(context, R.string.SaveAttachmentTask_saved, Toast.LENGTH_LONG).show();
         break;
       case WRITE_ACCESS_FAILURE:
         Toast.makeText(context, R.string.ConversationFragment_unable_to_write_to_sd_card_exclamation, Toast.LENGTH_LONG).show();

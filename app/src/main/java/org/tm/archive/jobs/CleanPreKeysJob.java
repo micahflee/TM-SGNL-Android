@@ -1,13 +1,14 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.state.SignalProtocolStore;
 import org.tm.archive.crypto.PreKeyUtil;
 import org.tm.archive.crypto.storage.PreKeyMetadataStore;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 
@@ -27,8 +28,8 @@ public class CleanPreKeysJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return Data.EMPTY;
+  public @Nullable byte[] serialize() {
+    return null;
   }
 
   @Override
@@ -54,7 +55,7 @@ public class CleanPreKeysJob extends BaseJob {
 
   public static final class Factory implements Job.Factory<CleanPreKeysJob> {
     @Override
-    public @NonNull CleanPreKeysJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull CleanPreKeysJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new CleanPreKeysJob(parameters);
     }
   }

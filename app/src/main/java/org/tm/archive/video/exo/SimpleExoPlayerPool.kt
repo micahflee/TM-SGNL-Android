@@ -3,11 +3,10 @@ package org.tm.archive.video.exo
 import android.content.Context
 import androidx.annotation.MainThread
 import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException
-import com.google.android.exoplayer2.source.MediaSourceFactory
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
+import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.util.MimeTypes
 import org.signal.core.util.logging.Log
@@ -15,15 +14,16 @@ import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.net.ContentProxySelector
 import org.tm.archive.util.AppForegroundObserver
 import org.tm.archive.util.DeviceProperties
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * ExoPlayerPool concrete instance which helps to manage a pool of SimpleExoPlayer objects
  */
-class SimpleExoPlayerPool(context: Context) : ExoPlayerPool<SimpleExoPlayer>(MAXIMUM_RESERVED_PLAYERS) {
+class SimpleExoPlayerPool(context: Context) : ExoPlayerPool<ExoPlayer>(MAXIMUM_RESERVED_PLAYERS) {
   private val context: Context = context.applicationContext
   private val okHttpClient = ApplicationDependencies.getOkHttpClient().newBuilder().proxySelector(ContentProxySelector()).build()
   private val dataSourceFactory: DataSource.Factory = SignalDataSource.Factory(ApplicationDependencies.getApplication(), okHttpClient, null)
-  private val mediaSourceFactory: MediaSourceFactory = ProgressiveMediaSource.Factory(dataSourceFactory)
+  private val mediaSourceFactory: MediaSource.Factory = DefaultMediaSourceFactory(dataSourceFactory)
 
   init {
     ApplicationDependencies.getAppForegroundObserver().addListener(this)
@@ -57,9 +57,11 @@ class SimpleExoPlayerPool(context: Context) : ExoPlayerPool<SimpleExoPlayer>(MAX
   }
 
   @MainThread
-  override fun createPlayer(): SimpleExoPlayer {
-    return SimpleExoPlayer.Builder(context)
+  override fun createPlayer(): ExoPlayer {
+    return ExoPlayer.Builder(context)
       .setMediaSourceFactory(mediaSourceFactory)
+      .setSeekBackIncrementMs(SEEK_INTERVAL.inWholeMilliseconds)
+      .setSeekForwardIncrementMs(SEEK_INTERVAL.inWholeMilliseconds)
       .build()
   }
 
@@ -67,6 +69,7 @@ class SimpleExoPlayerPool(context: Context) : ExoPlayerPool<SimpleExoPlayer>(MAX
     private const val MAXIMUM_RESERVED_PLAYERS = 1
     private const val MAXIMUM_SUPPORTED_PLAYBACK_PRE_23 = 6
     private const val MAXIMUM_SUPPORTED_PLAYBACK_PRE_23_LOW_MEM = 3
+    private val SEEK_INTERVAL = 15.seconds
   }
 }
 
@@ -79,7 +82,7 @@ class SimpleExoPlayerPool(context: Context) : ExoPlayerPool<SimpleExoPlayer>(MAX
  * players will be returned first when a player is requested via require.
  */
 abstract class ExoPlayerPool<T : ExoPlayer>(
-  private val maximumReservedPlayers: Int,
+  private val maximumReservedPlayers: Int
 ) : AppForegroundObserver.Listener {
 
   companion object {
@@ -127,7 +130,7 @@ abstract class ExoPlayerPool<T : ExoPlayer>(
   @MainThread
   private fun get(allowReserved: Boolean, tag: String): T? {
     val player = findAvailablePlayer(allowReserved)
-    return if (player == null && pool.size < getMaximumAllowed(allowReserved)) {
+    val toReturn = if (player == null && pool.size < getMaximumAllowed(allowReserved)) {
       val newPlayer = createPlayer()
       val poolState = createPoolStateForNewEntry(allowReserved, tag)
       pool[newPlayer] = poolState
@@ -137,9 +140,11 @@ abstract class ExoPlayerPool<T : ExoPlayer>(
       pool[player] = poolState
       player
     } else {
-      Log.d(TAG, "Failed to get an ExoPlayer instance for tag: $tag")
+      Log.d(TAG, "Failed to get an ExoPlayer instance for tag: $tag :: ${poolStats()}")
       null
-    }?.apply {
+    }
+
+    return toReturn?.apply {
       configureForVideoPlayback()
     }
   }

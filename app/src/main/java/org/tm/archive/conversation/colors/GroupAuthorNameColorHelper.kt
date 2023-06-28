@@ -1,7 +1,7 @@
 package org.tm.archive.conversation.colors
 
 import androidx.annotation.NonNull
-import org.tm.archive.database.GroupDatabase
+import org.tm.archive.database.GroupTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.groups.GroupId
 import org.tm.archive.recipients.Recipient
@@ -24,7 +24,7 @@ class GroupAuthorNameColorHelper {
   fun getColorMap(@NonNull groupId: GroupId): Map<RecipientId, NameColor> {
     val dbMembers: Set<Recipient> = SignalDatabase
       .groups
-      .getGroupMembers(groupId, GroupDatabase.MemberSet.FULL_MEMBERS_INCLUDING_SELF)
+      .getGroupMembers(groupId, GroupTable.MemberSet.FULL_MEMBERS_INCLUDING_SELF)
       .toSet()
     val cachedMembers: Set<Recipient> = fullMemberCache.getOrDefault(groupId, setOf())
     val allMembers: Set<Recipient> = cachedMembers + dbMembers

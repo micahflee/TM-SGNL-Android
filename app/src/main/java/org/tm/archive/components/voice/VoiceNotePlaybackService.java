@@ -16,7 +16,6 @@ import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.media.MediaBrowserServiceCompat;
 
 import com.google.android.exoplayer2.C;
@@ -30,12 +29,14 @@ import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.jobs.ForegroundServiceUtil;
 import org.tm.archive.jobs.MultiDeviceViewedUpdateJob;
 import org.tm.archive.jobs.SendViewedReceiptJob;
+import org.tm.archive.jobs.UnableToStartException;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.service.KeyCachingService;
 
@@ -253,17 +254,17 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
         if (extras == null) {
           return;
         }
-        long            messageId       = extras.getLong(VoiceNoteMediaItemFactory.EXTRA_MESSAGE_ID);
-        RecipientId     recipientId     = RecipientId.from(extras.getString(VoiceNoteMediaItemFactory.EXTRA_INDIVIDUAL_RECIPIENT_ID));
-        MessageDatabase messageDatabase = SignalDatabase.mms();
+        long         messageId       = extras.getLong(VoiceNoteMediaItemFactory.EXTRA_MESSAGE_ID);
+        RecipientId  recipientId     = RecipientId.from(extras.getString(VoiceNoteMediaItemFactory.EXTRA_INDIVIDUAL_RECIPIENT_ID));
+        MessageTable messageDatabase = SignalDatabase.messages();
 
-        MessageDatabase.MarkedMessageInfo markedMessageInfo = messageDatabase.setIncomingMessageViewed(messageId);
+        MessageTable.MarkedMessageInfo markedMessageInfo = messageDatabase.setIncomingMessageViewed(messageId);
 
         if (markedMessageInfo != null) {
           ApplicationDependencies.getJobManager().add(new SendViewedReceiptJob(markedMessageInfo.getThreadId(),
                                                                                recipientId,
                                                                                markedMessageInfo.getSyncMessageId().getTimetamp(),
-                                                                               new MessageId(messageId, true)));
+                                                                               new MessageId(messageId)));
           MultiDeviceViewedUpdateJob.enqueue(Collections.singletonList(markedMessageInfo.getSyncMessageId()));
         }
       });
@@ -275,9 +276,13 @@ public class VoiceNotePlaybackService extends MediaBrowserServiceCompat {
     @Override
     public void onNotificationPosted(int notificationId, Notification notification, boolean ongoing) {
       if (ongoing && !isForegroundService) {
-        ContextCompat.startForegroundService(getApplicationContext(), new Intent(getApplicationContext(), VoiceNotePlaybackService.class));
-        startForeground(notificationId, notification);
-        isForegroundService = true;
+        try {
+          ForegroundServiceUtil.start(getApplicationContext(), new Intent(getApplicationContext(), VoiceNotePlaybackService.class));
+          startForeground(notificationId, notification);
+          isForegroundService = true;
+        } catch (UnableToStartException e) {
+          Log.e(TAG, "Unable to start foreground service!", e);
+        }
       }
     }
 

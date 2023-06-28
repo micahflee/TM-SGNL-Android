@@ -8,12 +8,13 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
-import org.tm.archive.database.AttachmentDatabase;
-import org.tm.archive.database.AttachmentDatabase.TransformProperties;
+import org.tm.archive.database.AttachmentTable;
+import org.tm.archive.database.AttachmentTable.TransformProperties;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.JobManager;
@@ -56,7 +57,7 @@ public class MediaUploadRepository {
   public MediaUploadRepository(@NonNull Context context) {
     this.context       = context;
     this.uploadResults = new LinkedHashMap<>();
-    this.executor      = SignalExecutors.newCachedSingleThreadExecutor("signal-MediaUpload");
+    this.executor      = SignalExecutors.newCachedSingleThreadExecutor("signal-MediaUpload", ThreadUtil.PRIORITY_IMPORTANT_BACKGROUND_THREAD);
   }
 
   public void startUpload(@NonNull Media media, @Nullable Recipient recipient) {
@@ -165,7 +166,7 @@ public class MediaUploadRepository {
 
   @WorkerThread
   private void updateCaptionsInternal(@NonNull List<Media> updatedMedia) {
-    AttachmentDatabase db = SignalDatabase.attachments();
+    AttachmentTable db = SignalDatabase.attachments();
 
     for (Media updated : updatedMedia) {
       PreUploadResult result = uploadResults.get(updated);

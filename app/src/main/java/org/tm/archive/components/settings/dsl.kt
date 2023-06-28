@@ -1,6 +1,8 @@
+@file:Suppress("ktlint:filename")
+
 package org.tm.archive.components.settings
 
-import androidx.annotation.CallSuper
+import androidx.annotation.Discouraged
 import androidx.annotation.Px
 import androidx.annotation.StringRes
 import org.tm.archive.components.settings.models.AsyncSwitch
@@ -10,12 +12,17 @@ import org.tm.archive.components.settings.models.Text
 import org.tm.archive.util.adapter.mapping.MappingModel
 import org.tm.archive.util.adapter.mapping.MappingModelList
 
+@Discouraged("The DSL API can be completely replaced by compose. See ComposeFragment or ComposeBottomSheetFragment for an alternative to this API")
 fun configure(init: DSLConfiguration.() -> Unit): DSLConfiguration {
   val configuration = DSLConfiguration()
   configuration.init()
   return configuration
 }
 
+/**
+ * The DSL API can be completely replaced by compose.
+ * See ComposeFragment or ComposeBottomSheetFragment for an alternative to this API
+ */
 class DSLConfiguration {
   private val children = arrayListOf<MappingModel<*>>()
 
@@ -151,10 +158,20 @@ class DSLConfiguration {
 
   fun primaryButton(
     text: DSLSettingsText,
+    icon: DSLSettingsIcon? = null,
     isEnabled: Boolean = true,
     onClick: () -> Unit
   ) {
-    val preference = Button.Model.Primary(text, null, isEnabled, onClick)
+    val preference = Button.Model.Primary(text, icon, isEnabled, onClick)
+    children.add(preference)
+  }
+
+  fun primaryWrappedButton(
+    text: DSLSettingsText,
+    isEnabled: Boolean = true,
+    onClick: () -> Unit
+  ) {
+    val preference = Button.Model.PrimaryWrapped(text, null, isEnabled, onClick)
     children.add(preference)
   }
 
@@ -202,7 +219,7 @@ abstract class PreferenceModel<T : PreferenceModel<T>>(
   open val summary: DSLSettingsText? = null,
   open val icon: DSLSettingsIcon? = null,
   open val iconEnd: DSLSettingsIcon? = null,
-  open val isEnabled: Boolean = true,
+  open val isEnabled: Boolean = true
 ) : MappingModel<T> {
   override fun areItemsTheSame(newItem: T): Boolean {
     return when {
@@ -212,7 +229,6 @@ abstract class PreferenceModel<T : PreferenceModel<T>>(
     }
   }
 
-  @CallSuper
   override fun areContentsTheSame(newItem: T): Boolean {
     return areItemsTheSame(newItem) &&
       newItem.summary == summary &&
@@ -275,8 +291,21 @@ class SwitchPreference(
   val isChecked: Boolean,
   val onClick: () -> Unit
 ) : PreferenceModel<SwitchPreference>() {
+
+  companion object {
+    const val PAYLOAD_CHECKED = "payload_checked"
+  }
+
   override fun areContentsTheSame(newItem: SwitchPreference): Boolean {
-    return super.areContentsTheSame(newItem) && isChecked == newItem.isChecked
+    return false
+  }
+
+  override fun getChangePayload(newItem: SwitchPreference): Any? {
+    return if (super.areContentsTheSame(newItem)) {
+      PAYLOAD_CHECKED
+    } else {
+      null
+    }
   }
 }
 

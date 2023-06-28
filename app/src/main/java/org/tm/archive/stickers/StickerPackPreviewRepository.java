@@ -12,7 +12,7 @@ import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.InvalidMessageException;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.StickerDatabase;
+import org.tm.archive.database.StickerTable;
 import org.tm.archive.database.model.StickerPackRecord;
 import org.tm.archive.database.model.StickerRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -29,7 +29,7 @@ public final class StickerPackPreviewRepository {
 
   private static final String TAG = Log.tag(StickerPackPreviewRepository.class);
 
-  private final StickerDatabase              stickerDatabase;
+  private final StickerTable                 stickerDatabase;
   private final SignalServiceMessageReceiver receiver;
 
   public StickerPackPreviewRepository(@NonNull Context context) {
@@ -103,7 +103,7 @@ public final class StickerPackPreviewRepository {
     List<StickerManifest.Sticker> stickers = new ArrayList<>();
 
     try (Cursor cursor = stickerDatabase.getStickersForPack(packId)) {
-      StickerDatabase.StickerRecordReader reader = new StickerDatabase.StickerRecordReader(cursor);
+      StickerTable.StickerRecordReader reader = new StickerTable.StickerRecordReader(cursor);
 
       StickerRecord record;
       while ((record = reader.getNext()) != null) {

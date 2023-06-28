@@ -9,7 +9,7 @@ import androidx.lifecycle.LiveData;
 import com.annimon.stream.Stream;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.payments.Direction;
@@ -29,7 +29,7 @@ public class PaymentsRepository {
 
   private static final String TAG = Log.tag(PaymentsRepository.class);
 
-  private final PaymentDatabase         paymentDatabase;
+  private final PaymentTable            paymentDatabase;
   private final LiveData<List<Payment>> recentPayments;
   private final LiveData<List<Payment>> recentSentPayments;
   private final LiveData<List<Payment>> recentReceivedPayments;
@@ -37,8 +37,8 @@ public class PaymentsRepository {
   public PaymentsRepository() {
     paymentDatabase = SignalDatabase.payments();
 
-    LiveData<List<PaymentDatabase.PaymentTransaction>> localPayments = paymentDatabase.getAllLive();
-    LiveData<MobileCoinLedgerWrapper>                  ledger        = SignalStore.paymentsValues().liveMobileCoinLedger();
+    LiveData<List<PaymentTable.PaymentTransaction>> localPayments = paymentDatabase.getAllLive();
+    LiveData<MobileCoinLedgerWrapper>               ledger        = SignalStore.paymentsValues().liveMobileCoinLedger();
 
     //noinspection NullableProblems
     this.recentPayments         = LiveDataUtil.mapAsync(LiveDataUtil.combineLatest(localPayments, ledger, Pair::create), p -> reconcile(p.first, p.second));
@@ -47,7 +47,7 @@ public class PaymentsRepository {
   }
 
   @WorkerThread
-  private @NonNull List<Payment> reconcile(@NonNull Collection<PaymentDatabase.PaymentTransaction> paymentTransactions, @NonNull MobileCoinLedgerWrapper ledger) {
+  private @NonNull List<Payment> reconcile(@NonNull Collection<PaymentTable.PaymentTransaction> paymentTransactions, @NonNull MobileCoinLedgerWrapper ledger) {
     List<Payment> reconcile = LedgerReconcile.reconcile(paymentTransactions, ledger);
 
     updateDatabaseWithNewBlockInformation(reconcile);

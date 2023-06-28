@@ -7,10 +7,10 @@ import androidx.annotation.NonNull;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.components.emoji.EmojiUtil;
-import org.tm.archive.database.AttachmentDatabase;
+import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.StickerDatabase;
-import org.tm.archive.database.StickerDatabase.StickerRecordReader;
+import org.tm.archive.database.StickerTable;
+import org.tm.archive.database.StickerTable.StickerRecordReader;
 import org.tm.archive.database.model.StickerRecord;
 
 import java.util.ArrayList;
@@ -19,8 +19,8 @@ import java.util.Set;
 
 public final class StickerSearchRepository {
 
-  private final StickerDatabase    stickerDatabase;
-  private final AttachmentDatabase attachmentDatabase;
+  private final StickerTable    stickerDatabase;
+  private final AttachmentTable attachmentDatabase;
 
   public StickerSearchRepository(@NonNull Context context) {
     this.stickerDatabase    = SignalDatabase.stickers();

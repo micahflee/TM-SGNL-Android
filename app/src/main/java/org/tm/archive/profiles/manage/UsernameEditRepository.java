@@ -4,19 +4,24 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.Result;
-import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.usernames.BaseUsernameException;
+import org.signal.libsignal.usernames.Username;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.util.UsernameUtil;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.push.exceptions.UsernameIsNotReservedException;
 import org.whispersystems.signalservice.api.push.exceptions.UsernameMalformedException;
 import org.whispersystems.signalservice.api.push.exceptions.UsernameTakenException;
 import org.whispersystems.signalservice.internal.push.ReserveUsernameResponse;
+import org.whispersystems.util.Base64UrlSafe;
 
 import java.io.IOException;
-import java.util.concurrent.Executor;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -31,12 +36,12 @@ class UsernameEditRepository {
     this.accountManager = ApplicationDependencies.getSignalServiceAccountManager();
   }
 
-  @NonNull Single<Result<ReserveUsernameResponse, UsernameSetResult>> reserveUsername(@NonNull String nickname) {
+  @NonNull Single<Result<UsernameState.Reserved, UsernameSetResult>> reserveUsername(@NonNull String nickname) {
     return Single.fromCallable(() -> reserveUsernameInternal(nickname)).subscribeOn(Schedulers.io());
   }
 
-  @NonNull Single<UsernameSetResult> confirmUsername(@NonNull ReserveUsernameResponse reserveUsernameResponse) {
-    return Single.fromCallable(() -> confirmUsernameInternal(reserveUsernameResponse)).subscribeOn(Schedulers.io());
+  @NonNull Single<UsernameSetResult> confirmUsername(@NonNull UsernameState.Reserved reserved) {
+    return Single.fromCallable(() -> confirmUsernameInternal(reserved)).subscribeOn(Schedulers.io());
   }
 
   @NonNull Single<UsernameDeleteResult> deleteUsername() {
@@ -44,11 +49,28 @@ class UsernameEditRepository {
   }
 
   @WorkerThread
-  private @NonNull Result<ReserveUsernameResponse, UsernameSetResult> reserveUsernameInternal(@NonNull String nickname) {
+  private @NonNull Result<UsernameState.Reserved, UsernameSetResult> reserveUsernameInternal(@NonNull String nickname) {
     try {
-      ReserveUsernameResponse username = accountManager.reserveUsername(nickname);
+      List<String> candidates = Username.generateCandidates(nickname, UsernameUtil.MIN_LENGTH, UsernameUtil.MAX_LENGTH);
+      List<String> hashes     = new ArrayList<>();
+
+      for (String candidate : candidates) {
+        byte[] hash = Username.hash(candidate);
+        hashes.add(Base64UrlSafe.encodeBytesWithoutPadding(hash));
+      }
+
+      ReserveUsernameResponse response  = accountManager.reserveUsername(hashes);
+      int                     hashIndex = hashes.indexOf(response.getUsernameHash());
+      if (hashIndex == -1) {
+        Log.w(TAG, "[reserveUsername] The response hash could not be found in our set of hashes.");
+        return Result.failure(UsernameSetResult.CANDIDATE_GENERATION_ERROR);
+      }
+
       Log.i(TAG, "[reserveUsername] Successfully reserved username.");
-      return Result.success(username);
+      return Result.success(new UsernameState.Reserved(candidates.get(hashIndex), response));
+    } catch (BaseUsernameException e) {
+      Log.w(TAG, "[reserveUsername] An error occurred while generating candidates.");
+      return Result.failure(UsernameSetResult.CANDIDATE_GENERATION_ERROR);
     } catch (UsernameTakenException e) {
       Log.w(TAG, "[reserveUsername] Username taken.");
       return Result.failure(UsernameSetResult.USERNAME_UNAVAILABLE);
@@ -62,10 +84,11 @@ class UsernameEditRepository {
   }
 
   @WorkerThread
-  private @NonNull UsernameSetResult confirmUsernameInternal(@NonNull ReserveUsernameResponse reserveUsernameResponse) {
+  private @NonNull UsernameSetResult confirmUsernameInternal(@NonNull UsernameState.Reserved reserved) {
     try {
-      accountManager.confirmUsername(reserveUsernameResponse);
-      SignalDatabase.recipients().setUsername(Recipient.self().getId(), reserveUsernameResponse.getUsername());
+      accountManager.confirmUsername(reserved.getUsername(), reserved.getReserveUsernameResponse());
+      SignalDatabase.recipients().setUsername(Recipient.self().getId(), reserved.getUsername());
+      SignalStore.phoneNumberPrivacy().clearUsernameOutOfSync();
       Log.i(TAG, "[confirmUsername] Successfully reserved username.");
       return UsernameSetResult.SUCCESS;
     } catch (UsernameTakenException e) {
@@ -85,6 +108,7 @@ class UsernameEditRepository {
     try {
       accountManager.deleteUsername();
       SignalDatabase.recipients().setUsername(Recipient.self().getId(), null);
+      SignalStore.phoneNumberPrivacy().clearUsernameOutOfSync();
       Log.i(TAG, "[deleteUsername] Successfully deleted the username.");
       return UsernameDeleteResult.SUCCESS;
     } catch (IOException e) {
@@ -94,7 +118,7 @@ class UsernameEditRepository {
   }
 
   enum UsernameSetResult {
-    SUCCESS, USERNAME_UNAVAILABLE, USERNAME_INVALID, NETWORK_ERROR
+    SUCCESS, USERNAME_UNAVAILABLE, USERNAME_INVALID, NETWORK_ERROR, CANDIDATE_GENERATION_ERROR
   }
 
   enum UsernameDeleteResult {

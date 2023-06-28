@@ -3,6 +3,7 @@ package org.tm.archive.jobs;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
@@ -10,15 +11,15 @@ import com.annimon.stream.Stream;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.DatabaseAttachment;
-import org.tm.archive.database.GroupReceiptDatabase;
-import org.tm.archive.database.MessageDatabase;
+import org.tm.archive.database.GroupReceiptTable;
+import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.NoSuchMessageException;
 import org.tm.archive.database.SentStorySyncManifest;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.database.documents.NetworkFailure;
 import org.tm.archive.database.model.MessageId;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobLogger;
 import org.tm.archive.jobmanager.JobManager;
@@ -26,7 +27,7 @@ import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.messages.GroupSendUtil;
 import org.tm.archive.messages.StorySendUtil;
 import org.tm.archive.mms.MmsException;
-import org.tm.archive.mms.OutgoingMediaMessage;
+import org.tm.archive.mms.OutgoingMessage;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.stories.Stories;
@@ -39,6 +40,7 @@ import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
 import org.whispersystems.signalservice.api.messages.SignalServiceStoryMessage;
 import org.whispersystems.signalservice.api.messages.SignalServiceStoryMessageRecipient;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -96,7 +98,7 @@ public final class PushDistributionListSendJob extends PushSendJob {
         throw new AssertionError("Not a distribution list! MessageId: " + messageId);
       }
 
-      OutgoingMediaMessage message = SignalDatabase.mms().getOutgoingMessage(messageId);
+      OutgoingMessage message = SignalDatabase.messages().getOutgoingMessage(messageId);
 
       if (!message.getStoryType().isStory()) {
         throw new AssertionError("Only story messages are currently supported! MessageId: " + messageId);
@@ -112,16 +114,16 @@ public final class PushDistributionListSendJob extends PushSendJob {
       jobManager.add(new PushDistributionListSendJob(messageId, destination, !attachmentUploadIds.isEmpty(), filterRecipientIds), attachmentUploadIds, attachmentUploadIds.isEmpty() ? null : destination.toQueueKey());
     } catch (NoSuchMessageException | MmsException e) {
       Log.w(TAG, "Failed to enqueue message.", e);
-      SignalDatabase.mms().markAsSentFailed(messageId);
+      SignalDatabase.messages().markAsSentFailed(messageId);
       notifyMediaMessageDeliveryFailed(context, messageId);
     }
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putLong(KEY_MESSAGE_ID, messageId)
-                             .putString(KEY_FILTERED_RECIPIENT_IDS, RecipientId.toSerializedList(filterRecipientIds))
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putLong(KEY_MESSAGE_ID, messageId)
+                                    .putString(KEY_FILTERED_RECIPIENT_IDS, RecipientId.toSerializedList(filterRecipientIds))
+                                    .serialize();
   }
 
   @Override
@@ -131,17 +133,17 @@ public final class PushDistributionListSendJob extends PushSendJob {
 
   @Override
   public void onAdded() {
-    SignalDatabase.mms().markAsSending(messageId);
+    SignalDatabase.messages().markAsSending(messageId);
   }
 
   @Override
   public void onPushSend()
       throws IOException, MmsException, NoSuchMessageException, RetryLaterException
   {
-    MessageDatabase          database                   = SignalDatabase.mms();
-    OutgoingMediaMessage     message                    = database.getOutgoingMessage(messageId);
-    Set<NetworkFailure>      existingNetworkFailures    = message.getNetworkFailures();
-    Set<IdentityKeyMismatch> existingIdentityMismatches = message.getIdentityKeyMismatches();
+    MessageTable             database                   = SignalDatabase.messages();
+    OutgoingMessage          message                    = database.getOutgoingMessage(messageId);
+    Set<NetworkFailure>      existingNetworkFailures    = new HashSet<>(message.getNetworkFailures());
+    Set<IdentityKeyMismatch> existingIdentityMismatches = new HashSet<>(message.getIdentityKeyMismatches());
 
     if (!message.getStoryType().isStory()) {
       throw new MmsException("Only story sends are currently supported!");
@@ -152,16 +154,17 @@ public final class PushDistributionListSendJob extends PushSendJob {
       return;
     }
 
-    Recipient listRecipient = message.getRecipient().resolve();
+    Recipient listRecipient = message.getThreadRecipient().resolve();
 
     if (!listRecipient.isDistributionList()) {
       throw new MmsException("Message recipient isn't a distribution list!");
     }
 
     try {
-      log(TAG, String.valueOf(message.getSentTimeMillis()), "Sending message: " + messageId + ", Recipient: " + message.getRecipient().getId() + ", Attachments: " + buildAttachmentString(message.getAttachments()));
+      log(TAG, String.valueOf(message.getSentTimeMillis()), "Sending message: " + messageId + ", Recipient: " + message.getThreadRecipient().getId() + ", Attachments: " + buildAttachmentString(message.getAttachments()));
 
       List<Recipient> targets;
+      List<RecipientId> skipped = Collections.emptyList();
 
       if (Util.hasItems(filterRecipientIds)) {
         targets = new ArrayList<>(filterRecipientIds.size() + existingNetworkFailures.size());
@@ -170,13 +173,15 @@ public final class PushDistributionListSendJob extends PushSendJob {
       } else if (!existingNetworkFailures.isEmpty()) {
         targets = Stream.of(existingNetworkFailures).map(nf -> nf.getRecipientId(context)).distinct().map(Recipient::resolved).toList();
       } else {
-        targets = Stream.of(Stories.getRecipientsToSendTo(messageId, message.getSentTimeMillis(), message.getStoryType().isStoryWithReplies())).distinctBy(Recipient::getId).toList();
+        Stories.SendData data = Stories.getRecipientsToSendTo(messageId, message.getSentTimeMillis(), message.getStoryType().isStoryWithReplies());
+        targets = data.getTargets();
+        skipped = data.getSkipped();
       }
 
       List<SendMessageResult> results = deliver(message, targets);
       Log.i(TAG, JobLogger.format(this, "Finished send."));
 
-      PushGroupSendJob.processGroupMessageResults(context, messageId, -1, null, message, results, targets, Collections.emptyList(), existingNetworkFailures, existingIdentityMismatches);
+      PushGroupSendJob.processGroupMessageResults(context, messageId, -1, null, message, results, targets, skipped, existingNetworkFailures, existingIdentityMismatches);
 
     } catch (UntrustedIdentityException | UndeliverableMessageException e) {
       warn(TAG, String.valueOf(message.getSentTimeMillis()), e);
@@ -187,25 +192,26 @@ public final class PushDistributionListSendJob extends PushSendJob {
 
   @Override
   public void onFailure() {
-    SignalDatabase.mms().markAsSentFailed(messageId);
+    SignalDatabase.messages().markAsSentFailed(messageId);
   }
 
-  private List<SendMessageResult> deliver(@NonNull OutgoingMediaMessage message, @NonNull List<Recipient> destinations)
+  private List<SendMessageResult> deliver(@NonNull OutgoingMessage message, @NonNull List<Recipient> destinations)
       throws IOException, UntrustedIdentityException, UndeliverableMessageException
   {
     try {
       rotateSenderCertificateIfNecessary();
 
-      List<Attachment>              attachments        = Stream.of(message.getAttachments()).filterNot(Attachment::isSticker).toList();
-      List<SignalServiceAttachment> attachmentPointers = getAttachmentPointersFor(attachments);
-      boolean isRecipientUpdate = Stream.of(SignalDatabase.groupReceipts().getGroupReceiptInfo(messageId))
-                                        .anyMatch(info -> info.getStatus() > GroupReceiptDatabase.STATUS_UNDELIVERED);
+      List<Attachment>                    attachments        = Stream.of(message.getAttachments()).filterNot(Attachment::isSticker).toList();
+      List<SignalServiceAttachment>       attachmentPointers = getAttachmentPointersFor(attachments);
+      List<SignalServiceProtos.BodyRange> bodyRanges         = getBodyRanges(message);
+      boolean                             isRecipientUpdate  = Stream.of(SignalDatabase.groupReceipts().getGroupReceiptInfo(messageId))
+                                                                     .anyMatch(info -> info.getStatus() > GroupReceiptTable.STATUS_UNDELIVERED);
 
       final SignalServiceStoryMessage storyMessage;
       if (message.getStoryType().isTextStory()) {
-        storyMessage = SignalServiceStoryMessage.forTextAttachment(Recipient.self().getProfileKey(), null, StorySendUtil.deserializeBodyToStoryTextAttachment(message, this::getPreviewsFor), message.getStoryType().isStoryWithReplies());
+        storyMessage = SignalServiceStoryMessage.forTextAttachment(Recipient.self().getProfileKey(), null, StorySendUtil.deserializeBodyToStoryTextAttachment(message, this::getPreviewsFor), message.getStoryType().isStoryWithReplies(), bodyRanges);
       } else if (!attachmentPointers.isEmpty()) {
-        storyMessage = SignalServiceStoryMessage.forFileAttachment(Recipient.self().getProfileKey(), null, attachmentPointers.get(0), message.getStoryType().isStoryWithReplies());
+        storyMessage = SignalServiceStoryMessage.forFileAttachment(Recipient.self().getProfileKey(), null, attachmentPointers.get(0), message.getStoryType().isStoryWithReplies(), bodyRanges);
       } else {
         throw new UndeliverableMessageException("No attachment on non-text story.");
       }
@@ -213,7 +219,9 @@ public final class PushDistributionListSendJob extends PushSendJob {
       SentStorySyncManifest                   manifest           = SignalDatabase.storySends().getFullSentStorySyncManifest(messageId, message.getSentTimeMillis());
       Set<SignalServiceStoryMessageRecipient> manifestCollection = manifest != null ? manifest.toRecipientsSet() : Collections.emptySet();
 
-      return GroupSendUtil.sendStoryMessage(context, message.getRecipient().requireDistributionListId(), destinations, isRecipientUpdate, new MessageId(messageId, true), message.getSentTimeMillis(), storyMessage, manifestCollection);
+      Log.d(TAG, "[" + messageId + "] Sending a story message with a manifest of size " + manifestCollection.size());
+
+      return GroupSendUtil.sendStoryMessage(context, message.getThreadRecipient().requireDistributionListId(), destinations, isRecipientUpdate, new MessageId(messageId), message.getSentTimeMillis(), storyMessage, manifestCollection);
     } catch (ServerRejectedException e) {
       throw new UndeliverableMessageException(e);
     }
@@ -221,7 +229,9 @@ public final class PushDistributionListSendJob extends PushSendJob {
 
   public static class Factory implements Job.Factory<PushDistributionListSendJob> {
     @Override
-    public @NonNull PushDistributionListSendJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PushDistributionListSendJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       Set<RecipientId> recipientIds = new HashSet<>(RecipientId.fromSerializedList(data.getStringOrDefault(KEY_FILTERED_RECIPIENT_IDS, "")));
       return new PushDistributionListSendJob(parameters, data.getLong(KEY_MESSAGE_ID), recipientIds);
     }

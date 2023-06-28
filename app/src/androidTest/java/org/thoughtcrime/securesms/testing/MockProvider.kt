@@ -11,6 +11,7 @@ import org.signal.libsignal.protocol.ecc.Curve
 import org.signal.libsignal.protocol.state.PreKeyRecord
 import org.signal.libsignal.protocol.util.KeyHelper
 import org.signal.libsignal.protocol.util.Medium
+import org.signal.libsignal.svr2.PinHash
 import org.tm.archive.crypto.PreKeyUtil
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
@@ -19,7 +20,6 @@ import org.tm.archive.pin.TokenData
 import org.tm.archive.test.BuildConfig
 import org.whispersystems.signalservice.api.KbsPinData
 import org.whispersystems.signalservice.api.KeyBackupService
-import org.whispersystems.signalservice.api.kbs.HashedPin
 import org.whispersystems.signalservice.api.kbs.MasterKey
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceInfo
 import org.whispersystems.signalservice.api.push.ServiceId
@@ -32,6 +32,7 @@ import org.whispersystems.signalservice.internal.push.PreKeyEntity
 import org.whispersystems.signalservice.internal.push.PreKeyResponse
 import org.whispersystems.signalservice.internal.push.PreKeyResponseItem
 import org.whispersystems.signalservice.internal.push.PushServiceSocket
+import org.whispersystems.signalservice.internal.push.RegistrationSessionMetadataJson
 import org.whispersystems.signalservice.internal.push.SenderCertificate
 import org.whispersystems.signalservice.internal.push.VerifyAccountResponse
 import org.whispersystems.signalservice.internal.push.WhoAmIResponse
@@ -55,6 +56,16 @@ object MockProvider {
       }
     )
   }
+
+  val sessionMetadataJson = RegistrationSessionMetadataJson(
+    id = "asdfasdfasdfasdf",
+    nextCall = null,
+    nextSms = null,
+    nextVerificationAttempt = null,
+    allowedToRequestCode = true,
+    requestedInformation = emptyList(),
+    verified = true
+  )
 
   fun createVerifyAccountResponse(aci: ServiceId, newPni: ServiceId): VerifyAccountResponse {
     return VerifyAccountResponse().apply {
@@ -81,12 +92,12 @@ object MockProvider {
     }
 
     kbsRepository.stub {
-      on { getToken(any() as String) } doReturn Single.just(ServiceResponse.forResult(tokenData, 200, ""))
+      on { getToken(any() as? String) } doReturn Single.just(ServiceResponse.forResult(tokenData, 200, ""))
     }
 
     val session: KeyBackupService.RestoreSession = object : KeyBackupService.RestoreSession {
       override fun hashSalt(): ByteArray = Hex.fromStringCondensed("cba811749042b303a6a7efa5ccd160aea5e3ea243c8d2692bd13d515732f51a8")
-      override fun restorePin(hashedPin: HashedPin?): KbsPinData = KbsPinData(MasterKey.createNew(SecureRandom()), null)
+      override fun restorePin(hashedPin: PinHash?): KbsPinData = KbsPinData(MasterKey.createNew(SecureRandom()), null)
     }
 
     val kbsService = ApplicationDependencies.getKeyBackupService(BuildConfig.KBS_ENCLAVE)

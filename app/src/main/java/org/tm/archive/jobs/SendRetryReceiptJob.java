@@ -1,6 +1,7 @@
 package org.tm.archive.jobs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.InvalidMessageException;
@@ -8,7 +9,7 @@ import org.signal.libsignal.protocol.message.DecryptionErrorMessage;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.recipients.Recipient;
@@ -59,8 +60,8 @@ public final class SendRetryReceiptJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    Data.Builder builder = new Data.Builder()
+  public @Nullable byte[] serialize() {
+    JsonJobData.Builder builder = new JsonJobData.Builder()
                                    .putString(KEY_RECIPIENT_ID, recipientId.serialize())
                                    .putBlobAsString(KEY_ERROR_MESSAGE, errorMessage.serialize());
 
@@ -68,7 +69,7 @@ public final class SendRetryReceiptJob extends BaseJob {
       builder.putBlobAsString(KEY_GROUP_ID, groupId.get().getDecodedId());
     }
 
-    return builder.build();
+    return builder.serialize();
   }
 
   @Override
@@ -100,11 +101,14 @@ public final class SendRetryReceiptJob extends BaseJob {
 
   @Override
   public void onFailure() {
+    ApplicationDependencies.getJobManager().add(new AutomaticSessionResetJob(recipientId, errorMessage.getDeviceId(), System.currentTimeMillis()));
   }
 
   public static final class Factory implements Job.Factory<SendRetryReceiptJob> {
     @Override
-    public @NonNull SendRetryReceiptJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull SendRetryReceiptJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       try {
         RecipientId            recipientId  = RecipientId.from(data.getString(KEY_RECIPIENT_ID));
         DecryptionErrorMessage errorMessage = new DecryptionErrorMessage(data.getStringAsBlob(KEY_ERROR_MESSAGE));

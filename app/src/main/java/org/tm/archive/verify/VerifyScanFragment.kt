@@ -8,12 +8,12 @@ import android.widget.ImageView
 import androidx.core.view.OneShotPreDrawListener
 import androidx.fragment.app.Fragment
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.qr.QrScannerView
 import org.signal.qr.kitkat.ScanListener
 import org.tm.archive.R
 import org.tm.archive.components.ShapeScrim
 import org.tm.archive.mediasend.camerax.CameraXModelBlocklist
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.fragments.findListener
 

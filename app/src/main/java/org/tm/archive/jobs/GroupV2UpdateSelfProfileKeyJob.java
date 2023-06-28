@@ -2,14 +2,15 @@ package org.tm.archive.jobs;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.protobuf.ByteString;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.signal.storageservice.protos.groups.local.DecryptedMember;
-import org.tm.archive.database.GroupDatabase;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupChangeBusyException;
 import org.tm.archive.groups.GroupChangeFailedException;
@@ -17,7 +18,7 @@ import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupInsufficientRightsException;
 import org.tm.archive.groups.GroupManager;
 import org.tm.archive.groups.GroupNotAMemberException;
-import org.tm.archive.jobmanager.Data;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.DecryptionsDrainedConstraint;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
@@ -112,7 +113,7 @@ public final class GroupV2UpdateSelfProfileKeyJob extends BaseJob {
       boolean foundMismatch = false;
 
       for (GroupId.V2 id : SignalDatabase.groups().getAllGroupV2Ids()) {
-        Optional<GroupDatabase.GroupRecord> group = SignalDatabase.groups().getGroup(id);
+        Optional<GroupRecord> group = SignalDatabase.groups().getGroup(id);
         if (!group.isPresent()) {
           Log.w(TAG, "Group " + group + " no longer exists?");
           continue;
@@ -145,9 +146,9 @@ public final class GroupV2UpdateSelfProfileKeyJob extends BaseJob {
   }
 
   @Override
-  public @NonNull Data serialize() {
-    return new Data.Builder().putString(KEY_GROUP_ID, groupId.toString())
-                             .build();
+  public @Nullable byte[] serialize() {
+    return new JsonJobData.Builder().putString(KEY_GROUP_ID, groupId.toString())
+                                    .serialize();
   }
 
   @Override
@@ -177,7 +178,9 @@ public final class GroupV2UpdateSelfProfileKeyJob extends BaseJob {
   public static final class Factory implements Job.Factory<GroupV2UpdateSelfProfileKeyJob> {
 
     @Override
-    public @NonNull GroupV2UpdateSelfProfileKeyJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull GroupV2UpdateSelfProfileKeyJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
+      JsonJobData data = JsonJobData.deserialize(serializedData);
+
       return new GroupV2UpdateSelfProfileKeyJob(parameters,
                                                 GroupId.parseOrThrow(data.getString(KEY_GROUP_ID)).requireV2());
     }

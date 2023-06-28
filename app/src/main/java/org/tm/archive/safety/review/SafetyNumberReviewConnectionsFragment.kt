@@ -5,6 +5,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.WrapperDialogFragment
 import org.tm.archive.components.menu.ActionItem
@@ -13,13 +14,12 @@ import org.tm.archive.components.settings.DSLSettingsFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.crypto.IdentityKeyParcelable
-import org.tm.archive.database.IdentityDatabase
+import org.tm.archive.database.IdentityTable
 import org.tm.archive.safety.SafetyNumberBottomSheetState
 import org.tm.archive.safety.SafetyNumberBottomSheetViewModel
 import org.tm.archive.safety.SafetyNumberBucket
 import org.tm.archive.safety.SafetyNumberBucketRowItem
 import org.tm.archive.safety.SafetyNumberRecipientRowItem
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.verify.VerifyIdentityFragment
 
@@ -71,7 +71,7 @@ class SafetyNumberReviewConnectionsFragment : DSLSettingsFragment(
           customPref(
             SafetyNumberRecipientRowItem.Model(
               recipient = it.recipient,
-              isVerified = it.identityRecord.verifiedStatus == IdentityDatabase.VerifiedStatus.VERIFIED,
+              isVerified = it.identityRecord.verifiedStatus == IdentityTable.VerifiedStatus.VERIFIED,
               distributionListMembershipCount = it.distributionListMembershipCount,
               groupMembershipCount = it.groupMembershipCount,
               getContextMenuActions = { model ->

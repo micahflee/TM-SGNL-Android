@@ -2,6 +2,7 @@ package org.signal.paging;
 
 import androidx.annotation.NonNull;
 
+import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 
@@ -23,7 +24,7 @@ class FixedSizePagingController<Key, Data> implements PagingController<Key> {
 
   private static final String TAG = Log.tag(FixedSizePagingController.class);
 
-  private static final Executor FETCH_EXECUTOR = SignalExecutors.newCachedSingleThreadExecutor("signal-FixedSizePagingController");
+  private static final Executor FETCH_EXECUTOR = SignalExecutors.newCachedSingleThreadExecutor("signal-FixedSizePagingController", ThreadUtil.PRIORITY_UI_BLOCKING_THREAD);
   private static final boolean  DEBUG          = false;
 
   private final PagedDataSource<Key, Data>  dataSource;
@@ -65,6 +66,7 @@ class FixedSizePagingController<Key, Data> implements PagingController<Key> {
 
     final int loadStart;
     final int loadEnd;
+    final int totalSize;
 
     synchronized (loadState) {
       if (loadState.size() == 0) {
@@ -93,7 +95,7 @@ class FixedSizePagingController<Key, Data> implements PagingController<Key> {
         return;
       }
 
-      int totalSize = loadState.size();
+      totalSize = loadState.size();
 
       loadState.markRange(loadStart, loadEnd);
 
@@ -106,7 +108,7 @@ class FixedSizePagingController<Key, Data> implements PagingController<Key> {
         return;
       }
 
-      List<Data> loaded = dataSource.load(loadStart, loadEnd - loadStart, () -> invalidated);
+      List<Data> loaded = dataSource.load(loadStart, loadEnd - loadStart, totalSize, () -> invalidated);
 
       if (invalidated) {
         Log.w(TAG, buildDataNeededLog(aroundIndex, "Invalidated! Just after data was loaded."));

@@ -18,7 +18,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.database.CursorRecyclerViewAdapter;
-import org.tm.archive.database.MediaDatabase;
+import org.tm.archive.database.MediaTable;
+import org.tm.archive.mediapreview.MediaPreviewCache;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.mms.Slide;
 import org.tm.archive.util.MediaUtil;
@@ -88,16 +89,17 @@ public class ThreadPhotoRailView extends FrameLayout {
 
     @Override
     public void onBindItemViewHolder(ThreadPhotoViewHolder viewHolder, @NonNull Cursor cursor) {
-      ThumbnailView             imageView   = viewHolder.imageView;
-      MediaDatabase.MediaRecord mediaRecord = MediaDatabase.MediaRecord.from(getContext(), cursor);
-      Slide                     slide       = MediaUtil.getSlideForAttachment(getContext(), mediaRecord.getAttachment());
+      ThumbnailView          imageView   = viewHolder.imageView;
+      MediaTable.MediaRecord mediaRecord = MediaTable.MediaRecord.from(cursor);
+      Slide                  slide       = MediaUtil.getSlideForAttachment(getContext(), mediaRecord.getAttachment());
 
       if (slide != null) {
         imageView.setImageResource(glideRequests, slide, false, false);
       }
 
       imageView.setOnClickListener(v -> {
-        if (clickedListener != null) clickedListener.onItemClicked(mediaRecord);
+        MediaPreviewCache.INSTANCE.setDrawable(imageView.getImageDrawable());
+        if (clickedListener != null) clickedListener.onItemClicked(imageView, mediaRecord);
       });
     }
 
@@ -118,6 +120,6 @@ public class ThreadPhotoRailView extends FrameLayout {
   }
 
   public interface OnItemClickedListener {
-    void onItemClicked(MediaDatabase.MediaRecord mediaRecord);
+    void onItemClicked(View itemView, MediaTable.MediaRecord mediaRecord);
   }
 }

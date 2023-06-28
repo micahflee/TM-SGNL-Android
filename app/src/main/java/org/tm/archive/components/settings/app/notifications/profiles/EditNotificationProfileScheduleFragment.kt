@@ -15,14 +15,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.LoggingFragment
 import org.tm.archive.R
 import org.tm.archive.components.settings.app.notifications.profiles.EditNotificationProfileScheduleViewModel.SaveScheduleResult
-import org.tm.archive.util.LifecycleDisposable
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.formatHours
 import org.tm.archive.util.navigation.safeNavigate
@@ -41,7 +41,7 @@ private val DAY_TO_STARTING_LETTER: Map<DayOfWeek, Int> = mapOf(
   DayOfWeek.WEDNESDAY to R.string.EditNotificationProfileSchedule__wednesday_first_letter,
   DayOfWeek.THURSDAY to R.string.EditNotificationProfileSchedule__thursday_first_letter,
   DayOfWeek.FRIDAY to R.string.EditNotificationProfileSchedule__friday_first_letter,
-  DayOfWeek.SATURDAY to R.string.EditNotificationProfileSchedule__saturday_first_letter,
+  DayOfWeek.SATURDAY to R.string.EditNotificationProfileSchedule__saturday_first_letter
 )
 
 /**
@@ -69,7 +69,7 @@ class EditNotificationProfileScheduleFragment : LoggingFragment(R.layout.fragmen
 
     lifecycleDisposable.bindTo(viewLifecycleOwner.lifecycle)
 
-    val enableToggle: SwitchMaterial = view.findViewById(R.id.edit_notification_profile_schedule_switch)
+    val enableToggle: MaterialSwitch = view.findViewById(R.id.edit_notification_profile_schedule_switch)
     enableToggle.setOnClickListener { viewModel.setEnabled(enableToggle.isChecked) }
 
     val startTime: TextView = view.findViewById(R.id.edit_notification_profile_schedule_start_time)

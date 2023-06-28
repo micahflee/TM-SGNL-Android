@@ -3,6 +3,7 @@ package org.tm.archive.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.os.CancellationSignal;
 import android.util.Pair;
 
@@ -10,7 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import androidx.sqlite.db.SupportSQLiteQuery;
 
-import net.zetetic.database.SQLException;
 import net.zetetic.database.sqlcipher.SQLiteStatement;
 import net.zetetic.database.sqlcipher.SQLiteTransactionListener;
 
@@ -313,12 +313,13 @@ public class SQLiteDatabase implements SupportSQLiteDatabase {
   public void endTransaction() {
     trace("endTransaction()", wrapped::endTransaction);
     traceLockEnd();
-
-    Set<Runnable> tasks = getPostSuccessfulTransactionTasks();
-    for (Runnable r : new HashSet<>(tasks)) {
-      r.run();
+    if (!wrapped.inTransaction()) {
+      Set<Runnable> tasks = getPostSuccessfulTransactionTasks();
+      for (Runnable r : new HashSet<>(tasks)) {
+        r.run();
+      }
+      tasks.clear();
     }
-    tasks.clear();
   }
 
   public void setTransactionSuccessful() {

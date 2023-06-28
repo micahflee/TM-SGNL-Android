@@ -26,6 +26,7 @@ import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
+import org.tm.archive.util.WindowUtil;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -116,6 +117,12 @@ public final class GroupLinkBottomSheetDialogFragment extends BottomSheetDialogF
     });
 
     return view;
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   @Override

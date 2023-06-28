@@ -7,7 +7,7 @@ import org.signal.core.util.CursorUtil
 import org.signal.core.util.SqlUtil
 import org.tm.archive.avatar.Avatar
 import org.tm.archive.avatar.Avatars
-import org.tm.archive.database.Database
+import org.tm.archive.database.DatabaseTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.databaseprotos.CustomAvatar
 import org.tm.archive.groups.GroupId
@@ -15,7 +15,7 @@ import org.tm.archive.groups.GroupId
 /**
  * Database which manages the record keeping for custom created avatars.
  */
-class AvatarPickerDatabase(context: Context, databaseHelper: SignalDatabase) : Database(context, databaseHelper) {
+class AvatarPickerDatabase(context: Context, databaseHelper: SignalDatabase) : DatabaseTable(context, databaseHelper) {
 
   companion object {
     const val TABLE_NAME = "avatar_picker"
@@ -33,7 +33,7 @@ class AvatarPickerDatabase(context: Context, databaseHelper: SignalDatabase) : D
         $GROUP_ID TEXT DEFAULT NULL,
         $AVATAR BLOB NOT NULL
       )
-    """.trimIndent()
+    """
   }
 
   fun saveAvatarForSelf(avatar: Avatar): Avatar {

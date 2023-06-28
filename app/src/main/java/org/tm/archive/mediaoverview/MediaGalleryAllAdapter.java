@@ -40,9 +40,10 @@ import org.tm.archive.attachments.AttachmentId;
 import org.tm.archive.components.AudioView;
 import org.tm.archive.components.ThumbnailView;
 import org.tm.archive.components.voice.VoiceNotePlaybackState;
-import org.tm.archive.database.MediaDatabase;
-import org.tm.archive.database.MediaDatabase.MediaRecord;
+import org.tm.archive.database.MediaTable;
+import org.tm.archive.database.MediaTable.MediaRecord;
 import org.tm.archive.database.loaders.GroupedThreadMediaLoader.GroupedThreadMedia;
+import org.tm.archive.mediapreview.MediaPreviewCache;
 import org.tm.archive.mms.AudioSlide;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.mms.Slide;
@@ -142,8 +143,8 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
 
   @Override
   public int getSectionItemViewType(int section, int offset) {
-    MediaDatabase.MediaRecord mediaRecord = media.get(section, offset);
-    Slide                     slide       = MediaUtil.getSlideForAttachment(context, mediaRecord.getAttachment());
+    MediaTable.MediaRecord mediaRecord = media.get(section, offset);
+    Slide                  slide       = MediaUtil.getSlideForAttachment(context, mediaRecord.getAttachment());
 
     if (slide.hasAudio()) return AUDIO_DETAIL;
     if (slide.hasImage() || slide.hasVideo()) return detailView ? GALLERY_DETAIL : GALLERY;
@@ -169,8 +170,8 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
 
   @Override
   public void onBindItemViewHolder(ItemViewHolder viewHolder, int section, int offset) {
-    MediaDatabase.MediaRecord mediaRecord = media.get(section, offset);
-    Slide                     slide       = MediaUtil.getSlideForAttachment(context, mediaRecord.getAttachment());
+    MediaTable.MediaRecord mediaRecord = media.get(section, offset);
+    Slide                  slide       = MediaUtil.getSlideForAttachment(context, mediaRecord.getAttachment());
 
     ((SelectableViewHolder) viewHolder).bind(context, mediaRecord, slide);
   }
@@ -180,6 +181,14 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
     super.onViewDetachedFromWindow(holder);
     if (holder instanceof SelectableViewHolder) {
       ((SelectableViewHolder) holder).onDetached();
+    }
+  }
+
+  @Override
+  public void onViewAttachedToWindow(@NonNull ViewHolder holder) {
+    super.onViewAttachedToWindow(holder);
+    if (holder instanceof SelectableViewHolder) {
+      ((SelectableViewHolder) holder).onAttached();
     }
   }
 
@@ -194,8 +203,8 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
   }
 
   public void toggleSelection(@NonNull MediaRecord mediaRecord) {
-    AttachmentId              attachmentId = mediaRecord.getAttachment().getAttachmentId();
-    MediaDatabase.MediaRecord removed      = selected.remove(attachmentId);
+    AttachmentId           attachmentId = mediaRecord.getAttachment().getAttachmentId();
+    MediaTable.MediaRecord removed      = selected.remove(attachmentId);
     if (removed == null) {
       selected.put(attachmentId, mediaRecord);
     }
@@ -247,20 +256,24 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
 
     protected final View selectedIndicator;
 
-    private MediaDatabase.MediaRecord mediaRecord;
-    private boolean                   bound;
+    private MediaTable.MediaRecord mediaRecord;
+    private boolean                bound;
 
     SelectableViewHolder(@NonNull View itemView) {
       super(itemView);
       this.selectedIndicator = itemView.findViewById(R.id.selected_indicator);
     }
 
-    public void bind(@NonNull Context context, @NonNull MediaDatabase.MediaRecord mediaRecord, @NonNull Slide slide) {
+    public void bind(@NonNull Context context, @NonNull MediaTable.MediaRecord mediaRecord, @NonNull Slide slide) {
       if (bound) {
         unbind();
       }
       this.mediaRecord = mediaRecord;
       updateSelectedView();
+      bound = true;
+    }
+
+    void rebind() {
       bound = true;
     }
 
@@ -297,6 +310,12 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
         unbind();
       }
     }
+
+    void onAttached() {
+      if (!bound) {
+        rebind();
+      }
+    }
   }
 
   private class GalleryViewHolder extends SelectableViewHolder {
@@ -307,6 +326,8 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
     private final ThumbnailView thumbnailView;
     private final TextView      imageFileSize;
 
+    private Slide slide;
+
     GalleryViewHolder(@NonNull View itemView) {
       super(itemView);
       this.thumbnailView = itemView.findViewById(R.id.image);
@@ -314,9 +335,9 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
     }
 
     @Override
-    public void bind(@NonNull Context context, @NonNull MediaDatabase.MediaRecord mediaRecord, @NonNull Slide slide) {
+    public void bind(@NonNull Context context, @NonNull MediaTable.MediaRecord mediaRecord, @NonNull Slide slide) {
       super.bind(context, mediaRecord, slide);
-
+      this.slide = slide;
       if (showFileSizes | detailView) {
         imageFileSize.setText(Util.getPrettyFileSize(slide.getFileSize()));
         imageFileSize.setVisibility(View.VISIBLE);
@@ -325,7 +346,10 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
       }
 
       thumbnailView.setImageResource(glideRequests, slide, false, false);
-      thumbnailView.setOnClickListener(view -> itemClickListener.onMediaClicked(mediaRecord));
+      thumbnailView.setOnClickListener(view -> {
+        MediaPreviewCache.INSTANCE.setDrawable(thumbnailView.getImageDrawable());
+        itemClickListener.onMediaClicked(thumbnailView, mediaRecord);
+      });
       thumbnailView.setOnLongClickListener(view -> onLongClick());
     }
 
@@ -338,6 +362,12 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
       float scale = isSelected() ? SCALE_SELECTED : SCALE_NORMAL;
       thumbnailView.setScaleX(scale);
       thumbnailView.setScaleY(scale);
+    }
+
+    @Override
+    void rebind() {
+      thumbnailView.setImageResource(glideRequests, slide, false, false);
+      super.rebind();
     }
 
     @Override
@@ -377,7 +407,7 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
     }
 
     @Override
-    public void bind(@NonNull Context context, @NonNull MediaDatabase.MediaRecord mediaRecord, @NonNull Slide slide) {
+    public void bind(@NonNull Context context, @NonNull MediaTable.MediaRecord mediaRecord, @NonNull Slide slide) {
       super.bind(context, mediaRecord, slide);
 
       fileName            = slide.getFileName();
@@ -385,7 +415,7 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
 
       line1.setText(fileName.orElse(fileTypeDescription));
       line2.setText(getLine2(context, mediaRecord, slide));
-      itemView.setOnClickListener(view -> itemClickListener.onMediaClicked(mediaRecord));
+      itemView.setOnClickListener(view -> itemClickListener.onMediaClicked(getTransitionAnchor(), mediaRecord));
       itemView.setOnLongClickListener(view -> onLongClick());
       selectForMarque = () -> line1.setSelected(true);
       handler         = new Handler(Looper.getMainLooper());
@@ -399,6 +429,13 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
     }
 
     @Override
+    void rebind() {
+      liveDataPair.observeForever(this);
+      handler.postDelayed(selectForMarque, 2500);
+      super.rebind();
+    }
+
+    @Override
     void unbind() {
       liveDataPair.removeObserver(this);
       handler.removeCallbacks(selectForMarque);
@@ -406,7 +443,7 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
       super.unbind();
     }
 
-    private String getLine2(@NonNull Context context, @NonNull MediaDatabase.MediaRecord mediaRecord, @NonNull Slide slide) {
+    private String getLine2(@NonNull Context context, @NonNull MediaTable.MediaRecord mediaRecord, @NonNull Slide slide) {
       return context.getString(R.string.MediaOverviewActivity_detail_line_3_part,
                                Util.getPrettyFileSize(slide.getFileSize()),
                                getFileTypeDescription(context, slide),
@@ -424,6 +461,10 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
 
     protected @Nullable String getMediaTitle() {
       return fileName.orElse(null);
+    }
+
+    protected @NonNull View getTransitionAnchor() {
+      return itemView;
     }
 
     private @NonNull String describe(@NonNull Recipient from, @NonNull Recipient thread) {
@@ -474,7 +515,7 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
     }
 
     @Override
-    public void bind(@NonNull Context context, @NonNull MediaDatabase.MediaRecord mediaRecord, @NonNull Slide slide) {
+    public void bind(@NonNull Context context, @NonNull MediaTable.MediaRecord mediaRecord, @NonNull Slide slide) {
       super.bind(context, mediaRecord, slide);
 
       documentType.setText(slide.getFileType(context).orElse("").toLowerCase());
@@ -493,7 +534,7 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
     }
 
     @Override
-    public void bind(@NonNull Context context, @NonNull MediaDatabase.MediaRecord mediaRecord, @NonNull Slide slide) {
+    public void bind(@NonNull Context context, @NonNull MediaTable.MediaRecord mediaRecord, @NonNull Slide slide) {
       if (!slide.hasAudio()) {
         throw new AssertionError();
       }
@@ -508,13 +549,19 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
       audioView.setAudio((AudioSlide) slide, new AudioViewCallbacksAdapter(audioItemListener, mmsId), true, true);
       audioItemListener.registerPlaybackStateObserver(audioView.getPlaybackStateObserver());
 
-      audioView.setOnClickListener(view -> itemClickListener.onMediaClicked(mediaRecord));
-      itemView.setOnClickListener(view -> itemClickListener.onMediaClicked(mediaRecord));
+      audioView.setOnClickListener(view -> itemClickListener.onMediaClicked(audioView, mediaRecord));
+      itemView.setOnClickListener(view -> itemClickListener.onMediaClicked(audioView, mediaRecord));
     }
 
     @Override
     protected @NonNull String getMediaTitle() {
       return context.getString(R.string.ThreadRecord_voice_message);
+    }
+
+    @Override
+    void rebind() {
+      super.rebind();
+      audioItemListener.registerPlaybackStateObserver(audioView.getPlaybackStateObserver());
     }
 
     @Override
@@ -533,18 +580,26 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
 
     private final ThumbnailView thumbnailView;
 
+    private Slide slide;
+
     GalleryDetailViewHolder(@NonNull View itemView) {
       super(itemView);
       this.thumbnailView = itemView.findViewById(R.id.image);
     }
 
     @Override
-    public void bind(@NonNull Context context, @NonNull MediaDatabase.MediaRecord mediaRecord, @NonNull Slide slide) {
+    public void bind(@NonNull Context context, @NonNull MediaTable.MediaRecord mediaRecord, @NonNull Slide slide) {
       super.bind(context, mediaRecord, slide);
-
+      this.slide = slide;
       thumbnailView.setImageResource(glideRequests, slide, false, false);
-      thumbnailView.setOnClickListener(view -> itemClickListener.onMediaClicked(mediaRecord));
+      thumbnailView.setOnClickListener(view -> itemClickListener.onMediaClicked(thumbnailView, mediaRecord));
       thumbnailView.setOnLongClickListener(view -> onLongClick());
+    }
+
+    @Override
+    protected @NonNull View getTransitionAnchor() {
+      MediaPreviewCache.INSTANCE.setDrawable(null);
+      return thumbnailView;
     }
 
     @Override
@@ -552,6 +607,12 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
       if (slide.hasVideo()) return context.getString(R.string.MediaOverviewActivity_video);
       if (slide.hasImage()) return context.getString(R.string.MediaOverviewActivity_image);
       return super.getFileTypeDescription(context, slide);
+    }
+
+    @Override
+    void rebind() {
+      thumbnailView.setImageResource(glideRequests, slide, false, false);
+      super.rebind();
     }
 
     @Override
@@ -601,9 +662,9 @@ final class MediaGalleryAllAdapter extends StickyHeaderGridAdapter {
   }
 
   interface ItemClickListener {
-    void onMediaClicked(@NonNull MediaDatabase.MediaRecord mediaRecord);
+    void onMediaClicked(@NonNull View view, @NonNull MediaTable.MediaRecord mediaRecord);
 
-    void onMediaLongClicked(MediaDatabase.MediaRecord mediaRecord);
+    void onMediaLongClicked(MediaTable.MediaRecord mediaRecord);
   }
 
   interface AudioItemListener {

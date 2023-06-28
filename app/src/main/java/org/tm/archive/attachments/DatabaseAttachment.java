@@ -6,7 +6,7 @@ import androidx.annotation.Nullable;
 
 import org.tm.archive.audio.AudioHash;
 import org.tm.archive.blurhash.BlurHash;
-import org.tm.archive.database.AttachmentDatabase.TransformProperties;
+import org.tm.archive.database.AttachmentTable.TransformProperties;
 import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.stickers.StickerLocator;
 

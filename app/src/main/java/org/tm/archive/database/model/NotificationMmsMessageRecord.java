@@ -23,8 +23,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.tm.archive.R;
-import org.tm.archive.database.MmsDatabase;
-import org.tm.archive.database.SmsDatabase.Status;
+import org.tm.archive.database.MessageTable;
+import org.tm.archive.database.MessageTable.Status;
 import org.tm.archive.database.model.databaseprotos.GiftBadge;
 import org.tm.archive.mms.SlideDeck;
 import org.tm.archive.recipients.Recipient;
@@ -48,8 +48,7 @@ public class NotificationMmsMessageRecord extends MmsMessageRecord {
   private final int    status;
   private final byte[] transactionId;
 
-  public NotificationMmsMessageRecord(long id, Recipient conversationRecipient,
-                                      Recipient individualRecipient, int recipientDeviceId,
+  public NotificationMmsMessageRecord(long id, Recipient fromRecipient, int fromDeviceId, Recipient toRecipient,
                                       long dateSent, long dateReceived, int deliveryReceiptCount,
                                       long threadId, byte[] contentLocation, long messageSize,
                                       long expiry, int status, byte[] transactionId, long mailbox,
@@ -57,11 +56,11 @@ public class NotificationMmsMessageRecord extends MmsMessageRecord {
                                       int viewedReceiptCount, long receiptTimestamp, @NonNull StoryType storyType,
                                       @Nullable ParentStoryId parentStoryId, @Nullable GiftBadge giftBadge)
   {
-    super(id, "", conversationRecipient, individualRecipient, recipientDeviceId,
+    super(id, "", fromRecipient, fromDeviceId, toRecipient,
           dateSent, dateReceived, -1, threadId, Status.STATUS_NONE, deliveryReceiptCount, mailbox,
           new HashSet<>(), new HashSet<>(), subscriptionId,
           0, 0, false, slideDeck, readReceiptCount, null, Collections.emptyList(), Collections.emptyList(), false,
-          Collections.emptyList(), false, 0, viewedReceiptCount, receiptTimestamp, storyType, parentStoryId, giftBadge);
+          Collections.emptyList(), false, 0, viewedReceiptCount, receiptTimestamp, storyType, parentStoryId, giftBadge, null, 0);
 
     this.contentLocation = contentLocation;
     this.messageSize     = messageSize;
@@ -117,9 +116,9 @@ public class NotificationMmsMessageRecord extends MmsMessageRecord {
 
   @Override
   public SpannableString getDisplayBody(@NonNull Context context) {
-    if (status == MmsDatabase.Status.DOWNLOAD_INITIALIZED) {
+    if (status == MessageTable.MmsStatus.DOWNLOAD_INITIALIZED) {
       return emphasisAdded(context.getString(R.string.NotificationMmsMessageRecord_multimedia_message));
-    } else if (status == MmsDatabase.Status.DOWNLOAD_CONNECTING) {
+    } else if (status == MessageTable.MmsStatus.DOWNLOAD_CONNECTING) {
       return emphasisAdded(context.getString(R.string.NotificationMmsMessageRecord_downloading_mms_message));
     } else {
       return emphasisAdded(context.getString(R.string.NotificationMmsMessageRecord_error_downloading_mms_message));

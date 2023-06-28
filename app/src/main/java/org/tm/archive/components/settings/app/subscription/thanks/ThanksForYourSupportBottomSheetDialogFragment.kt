@@ -13,7 +13,7 @@ import androidx.navigation.fragment.findNavController
 import com.airbnb.lottie.LottieAnimationView
 import com.airbnb.lottie.LottieDrawable
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.materialswitch.MaterialSwitch
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
@@ -31,7 +31,7 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
 
   override val peekHeightPercentage: Float = 1f
 
-  private lateinit var switch: SwitchMaterial
+  private lateinit var switch: MaterialSwitch
   private lateinit var heading: TextView
 
   private lateinit var badgeRepository: BadgeRepository
@@ -51,7 +51,6 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
 
     val badgeView: BadgeImageView = view.findViewById(R.id.thanks_bottom_sheet_badge)
     val lottie: LottieAnimationView = view.findViewById(R.id.thanks_bottom_sheet_lottie)
-    val badgeName: TextView = view.findViewById(R.id.thanks_bottom_sheet_badge_name)
     val done: MaterialButton = view.findViewById(R.id.thanks_bottom_sheet_done)
     val controlText: TextView = view.findViewById(R.id.thanks_bottom_sheet_control_text)
     val controlNote: View = view.findViewById(R.id.thanks_bottom_sheet_featured_note)
@@ -63,20 +62,19 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
     val args = ThanksForYourSupportBottomSheetDialogFragmentArgs.fromBundle(requireArguments())
 
     badgeView.setBadge(args.badge)
-    badgeName.text = args.badge.name
 
     if (args.badge.isBoost()) {
       if (Recipient.self().badges.any { !it.isBoost() }) {
-        subhead.setText(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_display)
+        subhead.setText(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_donor_badge)
       } else {
-        subhead.text = SpannableStringBuilder(getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_boost_badge_display))
+        subhead.text = SpannableStringBuilder(getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_donor_badge))
           .append(" ")
           .append(getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__you_can_also))
           .append(" ")
           .append(
             SpanUtil.clickable(
               getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__become_a_montly_sustainer),
-              ContextCompat.getColor(requireContext(), R.color.signal_accent_primary),
+              ContextCompat.getColor(requireContext(), R.color.signal_accent_primary)
             ) {
               requireActivity().finish()
               requireActivity().startActivity(AppSettingsActivity.subscriptions(requireContext()))
@@ -84,7 +82,7 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
           )
       }
     } else {
-      subhead.text = getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_s_badge_display, args.badge.name)
+      subhead.text = getString(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__youve_earned_a_donor_badge)
     }
 
     val otherBadges = Recipient.self().badges.filterNot { it.id == args.badge.id }
@@ -96,7 +94,7 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
       controlText.setText(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__make_featured_badge)
       controlNote.visible = true
       controlState = ControlState.FEATURE
-    } else if (hasOtherBadges && !displayingBadges) {
+    } else if (hasOtherBadges) {
       switch.isChecked = false
       controlText.setText(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__display_on_profile)
       controlNote.visible = false
@@ -109,12 +107,11 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
     }
 
     if (args.isBoost) {
-      presentBoostCopy()
       badgeView.visibility = View.INVISIBLE
       lottie.visible = true
       lottie.playAnimation()
       lottie.addAnimatorListener(object : AnimationCompleteListener() {
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
           lottie.removeAnimatorListener(this)
           lottie.setMinAndMaxFrame(30, 91)
           lottie.repeatMode = LottieDrawable.RESTART
@@ -124,7 +121,6 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
         }
       })
     } else {
-      presentSubscriptionCopy()
       lottie.visible = false
     }
 
@@ -155,14 +151,6 @@ class ThanksForYourSupportBottomSheetDialogFragment : FixedRoundedCornerBottomSh
       requireActivity().finish()
       requireActivity().startActivity(AppSettingsActivity.manageSubscriptions(requireContext()))
     }
-  }
-
-  private fun presentBoostCopy() {
-    heading.setText(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_the_boost)
-  }
-
-  private fun presentSubscriptionCopy() {
-    heading.setText(R.string.SubscribeThanksForYourSupportBottomSheetDialogFragment__thanks_for_your_support)
   }
 
   companion object {

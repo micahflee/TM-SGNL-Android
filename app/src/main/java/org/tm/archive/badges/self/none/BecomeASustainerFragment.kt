@@ -12,7 +12,7 @@ import org.tm.archive.components.settings.DSLSettingsAdapter
 import org.tm.archive.components.settings.DSLSettingsBottomSheetFragment
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.app.AppSettingsActivity
-import org.tm.archive.components.settings.app.subscription.SubscriptionsRepository
+import org.tm.archive.components.settings.app.subscription.MonthlyDonationRepository
 import org.tm.archive.components.settings.configure
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.util.BottomSheetUtil
@@ -21,7 +21,7 @@ class BecomeASustainerFragment : DSLSettingsBottomSheetFragment() {
 
   private val viewModel: BecomeASustainerViewModel by viewModels(
     factoryProducer = {
-      BecomeASustainerViewModel.Factory(SubscriptionsRepository(ApplicationDependencies.getDonationsService()))
+      BecomeASustainerViewModel.Factory(MonthlyDonationRepository(ApplicationDependencies.getDonationsService()))
     }
   )
 

@@ -20,6 +20,7 @@ import org.tm.archive.groups.ui.GroupMemberListView;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ThemeUtil;
+import org.tm.archive.util.WindowUtil;
 
 import java.util.List;
 
@@ -83,6 +84,12 @@ public final class GroupsV1MigrationInfoBottomSheetDialogFragment extends Bottom
     viewModel.getDroppedMembers().observe(getViewLifecycleOwner(), this::onDroppedMembersChanged);
 
     view.findViewById(R.id.gv1_learn_more_ok_button).setOnClickListener(v -> dismiss());
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   @Override

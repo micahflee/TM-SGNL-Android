@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.jobs.NewRegistrationUsernameSyncJob;
 import org.tm.archive.jobs.StorageAccountRestoreJob;
 import org.tm.archive.jobs.StorageSyncJob;
 import org.signal.core.util.Stopwatch;
@@ -34,7 +35,11 @@ public class PinRestoreRepository {
         ApplicationDependencies.getJobManager().runSynchronously(new StorageAccountRestoreJob(), StorageAccountRestoreJob.LIFESPAN);
         stopwatch.split("AccountRestore");
 
-        ApplicationDependencies.getJobManager().runSynchronously(new StorageSyncJob(), TimeUnit.SECONDS.toMillis(10));
+        ApplicationDependencies
+            .getJobManager()
+            .startChain(new StorageSyncJob())
+            .then(new NewRegistrationUsernameSyncJob())
+            .enqueueAndBlockUntilCompletion(TimeUnit.SECONDS.toMillis(10));
         stopwatch.split("ContactRestore");
 
         stopwatch.stop(TAG);

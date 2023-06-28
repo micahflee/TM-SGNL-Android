@@ -4,10 +4,10 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 
@@ -60,7 +60,7 @@ public class TrimByLengthSettingsMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<TrimByLengthSettingsMigrationJob> {
     @Override
-    public @NonNull TrimByLengthSettingsMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull TrimByLengthSettingsMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new TrimByLengthSettingsMigrationJob(parameters);
     }
   }

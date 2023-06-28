@@ -1,16 +1,14 @@
 package org.tm.archive.migrations;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.Data;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.recipients.Recipient;
-import org.tm.archive.recipients.RecipientId;
 import org.whispersystems.signalservice.api.push.PNI;
 
 import java.io.IOException;
@@ -66,7 +64,7 @@ public class PniMigrationJob extends MigrationJob {
 
   public static class Factory implements Job.Factory<PniMigrationJob> {
     @Override
-    public @NonNull PniMigrationJob create(@NonNull Parameters parameters, @NonNull Data data) {
+    public @NonNull PniMigrationJob create(@NonNull Parameters parameters, @Nullable byte[] serializedData) {
       return new PniMigrationJob(parameters);
     }
   }

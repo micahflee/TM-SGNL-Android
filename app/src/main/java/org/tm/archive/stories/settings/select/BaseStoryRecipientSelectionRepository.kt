@@ -4,7 +4,7 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.CursorUtil
 import org.signal.core.util.concurrent.SignalExecutors
-import org.tm.archive.database.RecipientDatabase
+import org.tm.archive.database.RecipientTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.DistributionListId
 import org.tm.archive.database.model.DistributionListRecord
@@ -42,7 +42,7 @@ class BaseStoryRecipientSelectionRepository {
       SignalDatabase.recipients.getSignalContacts(false)?.use {
         val recipientSet = mutableSetOf<RecipientId>()
         while (it.moveToNext()) {
-          recipientSet.add(RecipientId.from(CursorUtil.requireLong(it, RecipientDatabase.ID)))
+          recipientSet.add(RecipientId.from(CursorUtil.requireLong(it, RecipientTable.ID)))
         }
 
         recipientSet

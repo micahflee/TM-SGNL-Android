@@ -2,17 +2,22 @@ package org.tm.archive.mediasend.v2.text
 
 import android.content.DialogInterface
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.View
 import android.widget.EditText
 import androidx.constraintlayout.widget.Group
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
+import com.google.android.material.snackbar.Snackbar
 import org.tm.archive.R
 import org.tm.archive.components.KeyboardEntryDialogFragment
 import org.tm.archive.linkpreview.LinkPreviewRepository
 import org.tm.archive.linkpreview.LinkPreviewViewModel
 import org.tm.archive.stories.StoryLinkPreviewView
+import org.tm.archive.util.LinkUtil
+import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.ViewUtil
+import org.tm.archive.util.setIncognitoKeyboardEnabled
 import org.tm.archive.util.visible
 
 class TextStoryPostLinkEntryFragment : KeyboardEntryDialogFragment(
@@ -38,6 +43,7 @@ class TextStoryPostLinkEntryFragment : KeyboardEntryDialogFragment(
     val confirmButton: View = view.findViewById(R.id.confirm_button)
     val shareALinkGroup: Group = view.findViewById(R.id.share_a_link_group)
 
+    input.setIncognitoKeyboardEnabled(TextSecurePreferences.isIncognitoKeyboardEnabled(requireContext()))
     input.addTextChangedListener(
       afterTextChanged = {
         val scheme = "https://"
@@ -51,20 +57,29 @@ class TextStoryPostLinkEntryFragment : KeyboardEntryDialogFragment(
       }
     )
 
+    confirmButton.isEnabled = false
     confirmButton.setOnClickListener {
       val linkPreviewState = linkPreviewViewModel.linkPreviewState.value
       if (linkPreviewState != null) {
         val url = linkPreviewState.linkPreview.map { it.url }.orElseGet { linkPreviewState.activeUrlForError }
-        viewModel.setLinkPreview(url)
-      }
 
-      dismissAllowingStateLoss()
+        if (LinkUtil.isValidTextStoryPostPreview(url)) {
+          viewModel.setLinkPreview(url)
+          dismissAllowingStateLoss()
+        } else {
+          val snackbar = Snackbar.make(requireView(), R.string.TextStoryPostSendFragment__please_enter_a_valid_link, Snackbar.LENGTH_SHORT)
+          snackbar.anchorView = linkPreview
+          snackbar.show()
+        }
+      } else {
+        dismissAllowingStateLoss()
+      }
     }
 
     linkPreviewViewModel.linkPreviewState.observe(viewLifecycleOwner) { state ->
       linkPreview.bind(state, useLargeThumbnail = false)
       shareALinkGroup.visible = !state.isLoading && !state.linkPreview.isPresent && (state.error == null && state.activeUrlForError == null)
-      confirmButton.isEnabled = state.linkPreview.isPresent || state.activeUrlForError != null
+      confirmButton.isEnabled = state.linkPreview.isPresent || !TextUtils.isEmpty(state.activeUrlForError)
     }
   }
 

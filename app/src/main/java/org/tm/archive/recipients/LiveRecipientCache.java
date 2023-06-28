@@ -1,20 +1,20 @@
 package org.tm.archive.recipients;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.RecipientDatabase;
-import org.tm.archive.database.RecipientDatabase.MissingRecipientException;
+import org.tm.archive.database.RecipientTable;
+import org.tm.archive.database.RecipientTable.MissingRecipientException;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.ThreadDatabase;
+import org.tm.archive.database.ThreadTable;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.keyvalue.SignalStore;
 import org.signal.core.util.CursorUtil;
@@ -40,7 +40,7 @@ public final class LiveRecipientCache {
   private static final int CONTACT_CACHE_WARM_MAX = 50;
 
   private final Context                         context;
-  private final RecipientDatabase               recipientDatabase;
+  private final RecipientTable                  recipientTable;
   private final Map<RecipientId, LiveRecipient> recipients;
   private final LiveRecipient                   unknown;
   private final Executor                        resolveExecutor;
@@ -48,15 +48,19 @@ public final class LiveRecipientCache {
   private final AtomicReference<RecipientId> localRecipientId;
   private final AtomicBoolean                warmedUp;
 
-  @SuppressLint("UseSparseArrays")
   public LiveRecipientCache(@NonNull Context context) {
-    this.context           = context.getApplicationContext();
-    this.recipientDatabase = SignalDatabase.recipients();
-    this.recipients        = new LRUCache<>(CACHE_MAX);
+    this(context, new FilteredExecutor(SignalExecutors.newCachedBoundedExecutor("signal-recipients", ThreadUtil.PRIORITY_UI_BLOCKING_THREAD, 1, 4, 15), () -> !SignalDatabase.inTransaction()));
+  }
+
+  @VisibleForTesting
+  public LiveRecipientCache(@NonNull Context context, @NonNull Executor executor) {
+    this.context        = context.getApplicationContext();
+    this.recipientTable = SignalDatabase.recipients();
+    this.recipients     = new LRUCache<>(CACHE_MAX);
     this.warmedUp          = new AtomicBoolean(false);
     this.localRecipientId  = new AtomicReference<>(null);
     this.unknown           = new LiveRecipient(context, Recipient.UNKNOWN);
-    this.resolveExecutor   = ThreadUtil.trace(new FilteredExecutor(SignalExecutors.newCachedBoundedExecutor("signal-recipients", 1, 4, 15), () -> !SignalDatabase.inTransaction()));
+    this.resolveExecutor   = executor;
   }
 
   @AnyThread
@@ -156,15 +160,17 @@ public final class LiveRecipientCache {
       }
 
       if (localAci != null) {
-        selfId = recipientDatabase.getByServiceId(localAci).orElse(null);
+        selfId = recipientTable.getByServiceId(localAci).orElse(null);
       }
 
       if (selfId == null && localE164 != null) {
-        selfId = recipientDatabase.getByE164(localE164).orElse(null);
+        selfId = recipientTable.getByE164(localE164).orElse(null);
       }
 
       if (selfId == null) {
-        selfId = recipientDatabase.getAndPossiblyMerge(localAci, localE164);
+        Log.i(TAG, "Creating self for the first time.");
+        selfId = recipientTable.getAndPossiblyMerge(localAci, localE164);
+        recipientTable.updatePendingSelfData(selfId);
       }
 
       synchronized (localRecipientId) {
@@ -210,10 +216,10 @@ public final class LiveRecipientCache {
     Stopwatch stopwatch = new Stopwatch("recipient-warm-up");
 
     SignalExecutors.BOUNDED.execute(() -> {
-      ThreadDatabase  threadDatabase = SignalDatabase.threads();
-      List<Recipient> recipients     = new ArrayList<>();
+      ThreadTable     threadTable = SignalDatabase.threads();
+      List<Recipient> recipients  = new ArrayList<>();
 
-      try (ThreadDatabase.Reader reader = threadDatabase.readerFor(threadDatabase.getRecentConversationList(THREAD_CACHE_WARM_MAX, false, false))) {
+      try (ThreadTable.Reader reader = threadTable.readerFor(threadTable.getRecentConversationList(THREAD_CACHE_WARM_MAX, false, false))) {
         int          i      = 0;
         ThreadRecord record = null;
 
@@ -232,7 +238,7 @@ public final class LiveRecipientCache {
         try (Cursor cursor = SignalDatabase.recipients().getNonGroupContacts(false)) {
           int count = 0;
           while (cursor != null && cursor.moveToNext() && count < CONTACT_CACHE_WARM_MAX) {
-            RecipientId id = RecipientId.from(CursorUtil.requireLong(cursor, RecipientDatabase.ID));
+            RecipientId id = RecipientId.from(CursorUtil.requireLong(cursor, RecipientTable.ID));
             Recipient.resolved(id);
             count++;
           }

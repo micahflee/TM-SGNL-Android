@@ -6,7 +6,7 @@ import androidx.lifecycle.LiveData;
 
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.tm.archive.database.DatabaseObserver;
-import org.tm.archive.database.PaymentDatabase;
+import org.tm.archive.database.PaymentTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
@@ -23,7 +23,7 @@ import java.util.concurrent.Executor;
  */
 public final class UnreadPaymentsLiveData extends LiveData<Optional<UnreadPayments>> {
 
-  private final PaymentDatabase           paymentDatabase;
+  private final PaymentTable              paymentDatabase;
   private final DatabaseObserver.Observer observer;
   private final Executor                  executor;
 
@@ -50,14 +50,14 @@ public final class UnreadPaymentsLiveData extends LiveData<Optional<UnreadPaymen
 
   @WorkerThread
   private @Nullable UnreadPayments getUnreadPayments() {
-    List<PaymentDatabase.PaymentTransaction> unseenPayments  = paymentDatabase.getUnseenPayments();
-    int                                      unseenCount     = unseenPayments.size();
+    List<PaymentTable.PaymentTransaction> unseenPayments = paymentDatabase.getUnseenPayments();
+    int                                   unseenCount    = unseenPayments.size();
 
     switch (unseenCount) {
       case 0:
         return null;
       case 1:
-        PaymentDatabase.PaymentTransaction transaction = unseenPayments.get(0);
+        PaymentTable.PaymentTransaction transaction = unseenPayments.get(0);
         Recipient                          recipient   = transaction.getPayee().hasRecipientId()
                                                          ? Recipient.resolved(transaction.getPayee().requireRecipientId())
                                                          : null;

@@ -7,8 +7,9 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import org.tm.archive.database.GroupDatabase;
+import org.tm.archive.database.GroupTable;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.databaseprotos.ProfileChangeDetails;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -60,11 +61,11 @@ public final class ReviewUtil {
     }
 
     List<Recipient> members = SignalDatabase.groups()
-                                             .getGroupMembers(groupId, GroupDatabase.MemberSet.FULL_MEMBERS_INCLUDING_SELF);
+                                             .getGroupMembers(groupId, GroupTable.MemberSet.FULL_MEMBERS_INCLUDING_SELF);
 
     List<ReviewRecipient> changed = Stream.of(profileChangeRecords)
-                                          .distinctBy(record -> record.getRecipient().getId())
-                                          .map(record -> new ReviewRecipient(record.getRecipient().resolve(), getProfileChangeDetails(record)))
+                                          .distinctBy(record -> record.getFromRecipient().getId())
+                                          .map(record -> new ReviewRecipient(record.getFromRecipient().resolve(), getProfileChangeDetails(record)))
                                           .filter(recipient -> !recipient.getRecipient().isSystemContact())
                                           .toList();
 
@@ -96,7 +97,7 @@ public final class ReviewUtil {
     if (threadId == null) {
       return Collections.emptyList();
     } else {
-      return SignalDatabase.sms().getProfileChangeDetailsRecords(threadId, System.currentTimeMillis() - TIMEOUT);
+      return SignalDatabase.messages().getProfileChangeDetailsRecords(threadId, System.currentTimeMillis() - TIMEOUT);
     }
   }
 
@@ -105,7 +106,7 @@ public final class ReviewUtil {
     return Stream.of(SignalDatabase.groups()
                  .getPushGroupsContainingMember(recipientId))
                  .filter(g -> g.getMembers().contains(Recipient.self().getId()))
-                 .map(GroupDatabase.GroupRecord::getRecipientId)
+                 .map(GroupRecord::getRecipientId)
                  .toList()
                  .size();
   }

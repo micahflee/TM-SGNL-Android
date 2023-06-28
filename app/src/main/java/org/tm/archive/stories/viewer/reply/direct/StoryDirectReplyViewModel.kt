@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.livedata.Store
@@ -33,12 +34,24 @@ class StoryDirectReplyViewModel(
     }
   }
 
-  fun sendReply(charSequence: CharSequence): Completable {
-    return repository.send(storyId, groupDirectReplyRecipientId, charSequence, false)
+  fun sendReply(body: CharSequence, bodyRangeList: BodyRangeList?): Completable {
+    return repository.send(
+      storyId = storyId,
+      groupDirectReplyRecipientId = groupDirectReplyRecipientId,
+      body = body,
+      bodyRangeList = bodyRangeList,
+      isReaction = false
+    )
   }
 
   fun sendReaction(emoji: CharSequence): Completable {
-    return repository.send(storyId, groupDirectReplyRecipientId, emoji, true)
+    return repository.send(
+      storyId = storyId,
+      groupDirectReplyRecipientId = groupDirectReplyRecipientId,
+      body = emoji,
+      bodyRangeList = null,
+      isReaction = true
+    )
   }
 
   override fun onCleared() {

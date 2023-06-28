@@ -18,6 +18,7 @@ import org.tm.archive.R;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.PlayStoreUtil;
 import org.tm.archive.util.ThemeUtil;
+import org.tm.archive.util.WindowUtil;
 
 public final class GroupJoinUpdateRequiredBottomSheetDialogFragment extends BottomSheetDialogFragment {
 
@@ -60,6 +61,12 @@ public final class GroupJoinUpdateRequiredBottomSheetDialogFragment extends Bott
       PlayStoreUtil.openPlayStoreOrOurApkDownloadPage(requireContext());
       dismiss();
     });
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    WindowUtil.initializeScreenshotSecurity(requireContext(), requireDialog().getWindow());
   }
 
   @Override
