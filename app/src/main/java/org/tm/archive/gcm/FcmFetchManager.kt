@@ -8,7 +8,7 @@ import org.signal.core.util.logging.Log
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.ForegroundServiceUtil
 import org.tm.archive.jobs.PushNotificationReceiveJob
-import org.tm.archive.messages.WebSocketStrategy1
+import org.tm.archive.messages.WebSocketStrategy
 import org.tm.archive.util.concurrent.SerialMonoLifoExecutor
 
 /**
@@ -121,7 +121,7 @@ object FcmFetchManager {
   @JvmStatic
   fun retrieveMessages(context: Context) {
     val success = ApplicationDependencies.getBackgroundMessageRetriever().retrieveMessages(context,
-      WebSocketStrategy1()
+      WebSocketStrategy()
     )
 
     if (success) {

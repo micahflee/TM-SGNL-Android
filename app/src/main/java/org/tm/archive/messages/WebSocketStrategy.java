@@ -18,19 +18,19 @@ import java.util.concurrent.TimeUnit;
 /**
  * Retrieves messages over the websocket.
  */
-public class WebSocketStrategy1 extends MessageRetrievalStrategy {
+public class WebSocketStrategy extends MessageRetrievalStrategy {
 
-    private static final String TAG = Log.tag(WebSocketStrategy1.class);
+    private static final String TAG = Log.tag(WebSocketStrategy.class);
 
     private static final String KEEP_ALIVE_TOKEN = "WebsocketStrategy";
     private static final long   QUEUE_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 
     private final long websocketDrainTimeoutMs;
-    public WebSocketStrategy1() {
+    public WebSocketStrategy() {
         this(TimeUnit.MINUTES.toMillis(1));
     }
 
-    public WebSocketStrategy1(long websocketDrainTimeoutMs) {
+    public WebSocketStrategy(long websocketDrainTimeoutMs) {
         this.websocketDrainTimeoutMs = websocketDrainTimeoutMs;
     }
 
@@ -115,6 +115,6 @@ public class WebSocketStrategy1 extends MessageRetrievalStrategy {
 
     @Override
     public @NonNull String toString() {
-        return Log.tag(WebSocketStrategy1.class);
+        return Log.tag(WebSocketStrategy.class);
     }
 }

@@ -9,7 +9,7 @@ import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.messages.BackgroundMessageRetriever;
-import org.tm.archive.messages.WebSocketStrategy1;
+import org.tm.archive.messages.WebSocketStrategy;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.io.IOException;
@@ -61,7 +61,7 @@ public final class PushNotificationReceiveJob extends BaseJob {
   @Override
   public void onRun() throws IOException {
     BackgroundMessageRetriever retriever = ApplicationDependencies.getBackgroundMessageRetriever();
-    boolean                    result    = retriever.retrieveMessages(context, foregroundServiceDelayMs, new WebSocketStrategy1());
+    boolean                    result    = retriever.retrieveMessages(context, foregroundServiceDelayMs, new WebSocketStrategy());
 
     if (result) {
       Log.i(TAG, "Successfully pulled messages.");
