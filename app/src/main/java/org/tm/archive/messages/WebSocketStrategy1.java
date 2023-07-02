@@ -3,7 +3,6 @@ package org.tm.archive.messages;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 import org.signal.core.util.Stopwatch;
-import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.JobManager;
@@ -19,19 +18,19 @@ import java.util.concurrent.TimeUnit;
 /**
  * Retrieves messages over the websocket.
  */
-public class WebSocketStrategy extends MessageRetrievalStrategy {
+public class WebSocketStrategy1 extends MessageRetrievalStrategy {
 
-    private static final String TAG = Log.tag(WebSocketStrategy.class);
+    private static final String TAG = Log.tag(WebSocketStrategy1.class);
 
     private static final String KEEP_ALIVE_TOKEN = "WebsocketStrategy";
     private static final long   QUEUE_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 
     private final long websocketDrainTimeoutMs;
-    public WebSocketStrategy() {
+    public WebSocketStrategy1() {
         this(TimeUnit.MINUTES.toMillis(1));
     }
 
-    public WebSocketStrategy(long websocketDrainTimeoutMs) {
+    public WebSocketStrategy1(long websocketDrainTimeoutMs) {
         this.websocketDrainTimeoutMs = websocketDrainTimeoutMs;
     }
 
@@ -116,6 +115,6 @@ public class WebSocketStrategy extends MessageRetrievalStrategy {
 
     @Override
     public @NonNull String toString() {
-        return Log.tag(WebSocketStrategy.class);
+        return Log.tag(WebSocketStrategy1.class);
     }
 }

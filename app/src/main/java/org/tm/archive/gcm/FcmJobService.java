@@ -13,7 +13,7 @@ import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.messages.BackgroundMessageRetriever;
-import org.tm.archive.messages.WebSocketStrategy;
+import org.tm.archive.messages.WebSocketStrategy1;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.TextSecurePreferences;
 
@@ -49,7 +49,7 @@ public class FcmJobService extends JobService {
     SignalExecutors.UNBOUNDED.execute(() -> {
       Context                    context   = getApplicationContext();
       BackgroundMessageRetriever retriever = ApplicationDependencies.getBackgroundMessageRetriever();
-      boolean                    success   = retriever.retrieveMessages(context, new WebSocketStrategy());
+      boolean                    success   = retriever.retrieveMessages(context, new WebSocketStrategy1());
 
       if (success) {
         Log.i(TAG, "Successfully retrieved messages.");
