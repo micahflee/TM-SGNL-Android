@@ -48,9 +48,9 @@ ktlint {
 }
 
 //**TM_SA**//Start - Change the version code and version name upon the current version
-def canonicalVersionCode = 1275
-def canonicalVersionName = "6.22.5.5"
-def signal_teleMessage_version = "6.22.5.5"//Change this param in Jenkins builder and delete it.
+def canonicalVersionCode = 1276
+def canonicalVersionName = "6.22.5.6"
+def signal_teleMessage_version = "6.22.5.6"//Change this param in Jenkins builder and delete it.
 //**TM_SA**//end
 
 def postFixSize = 100
