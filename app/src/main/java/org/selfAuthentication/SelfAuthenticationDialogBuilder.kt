@@ -32,7 +32,7 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
     lateinit var mProgressDialog : Dialog
 
     companion object{
-        val TEXT_MESSAGE_FOR_SENDING_LOGS = "Signal signup failure for " + BuildConfig.VERSION_NAME + " authentication version – could not locate the TeleMessage account. Please help."
+        val TEXT_MESSAGE_FOR_SENDING_LOGS = "Signal signup failure for " + org.tm.archive.BuildConfig.signal_teleMessage_version + " authentication version – could not locate the TeleMessage account. Please help."
     }
 
 
