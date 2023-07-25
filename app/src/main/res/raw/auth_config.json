@@ -1,0 +1,14 @@
+{
+  "client_id" : "0672aeb4-b439-44c0-b98b-118e987d4397",
+  "authorization_user_agent" : "DEFAULT",
+  "redirect_uri" : "msauth://org.tm.archive.prodshilo/a1GN26oMeVmtFyYoymQgC5B3diQ%3D",
+  "authorities" : [
+    {
+      "type": "AAD",
+      "audience": {
+        "type": "AzureADMyOrg",
+        "tenant_id": "69624173-d877-4932-8b12-2d6aa8f357db"
+      }
+    }
+  ]
+}

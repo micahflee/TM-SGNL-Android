@@ -111,7 +111,34 @@
                  android:theme="@style/TextSecure.LightTheme"
                  android:largeHeap="true">
 
-    <meta-data
+        <activity android:name="com.microsoft.identity.client.BrowserTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!--
+                    Add in your scheme/host from registered redirect URI
+                    note that the leading "/" is required for android:path
+                -->
+                <!--debug-->
+                <!--<data
+                    android:host="org.tm.archive.prodshilo"
+                    android:path="/QGKhFQhiONVb16luOCu0/IA+Ut4="
+                    android:scheme="msauth" />-->
+
+                <!--release-->
+                <data
+                    android:host="org.tm.archive.prodshilo"
+                    android:path="/a1GN26oMeVmtFyYoymQgC5B3diQ="
+                    android:scheme="msauth" />
+            </intent-filter>
+        </activity>
+
+
+        <meta-data
             android:name="com.google.android.gms.wallet.api.enabled"
             android:value="true" />
 
