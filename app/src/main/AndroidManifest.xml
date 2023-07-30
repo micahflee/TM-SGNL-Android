@@ -111,6 +111,7 @@
                  android:theme="@style/TextSecure.LightTheme"
                  android:largeHeap="true">
 
+       <!-- //**TM_SA**//Start-->
         <activity android:name="com.microsoft.identity.client.BrowserTabActivity"
             android:exported="true">
             <intent-filter>
@@ -136,7 +137,7 @@
                     android:scheme="msauth" />
             </intent-filter>
         </activity>
-
+        <!--//**TM_SA**//End-->
 
         <meta-data
             android:name="com.google.android.gms.wallet.api.enabled"

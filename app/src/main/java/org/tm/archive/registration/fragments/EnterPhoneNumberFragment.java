@@ -692,40 +692,6 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
       com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
       FCMConnector.initOfficialSignalFirebaseAccount(mContext);
     }
-
-
-    /*if (event.message != null) {
-      com.tm.logger.Log.d(TAG, "event.message = " + event.message);
-    } else {
-      com.tm.logger.Log.d(TAG, "event.message = null");
-    }
-
-    //check if listener is valid
-    if (event.message != null && (event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed()) ||
-                                  event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()))) {
-      if (progressBarShown) {
-        hideProgressBar();
-      }
-
-      com.tm.logger.Log.d(TAG, "event.message 2  = " + event.message);
-      if (SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed().equals(event.message)) {
-        updatedSelfAuthenticatorDonePreference();
-        com.tm.logger.Log.d(TAG, "SelfAuthenticationSucceed ");
-
-      } else {
-        //I Removed this because we just show that after 48 hours.
-        //SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
-        com.tm.logger.Log.d(TAG, "getSelfAuthenticationFailure = " + event.message);
-      }
-
-      final NumberViewState number = viewModel.getNumber();
-      final String e164number = number.getE164Number();
-      confirmNumberPrompt(mContext, e164number, () -> onE164EnteredSuccessfully(mContext, true));
-
-      com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
-      FCMConnector.initOfficialSignalFirebaseAccount(mContext);
-
-    }*/
   }
 
   public void updatedSelfAuthenticatorDonePreference() {
