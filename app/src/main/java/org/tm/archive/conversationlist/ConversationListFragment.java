@@ -78,14 +78,18 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.tm.androidcopysdk.MessageEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
+import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
+import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
 
 import org.archive.selfAuthentication.SelfAuthenticatorConstants;
+import org.archiver.ArchivePreferenceConstants;
 import org.archiver.ArchiveUtil;
 import org.archiver.FCMConnector;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.intune.IntuneAuthManager;
 import org.jetbrains.annotations.NotNull;
 import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.DimensionUnit;
@@ -94,6 +98,7 @@ import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.BuildConfig;
 import org.tm.archive.MainActivity;
 import org.tm.archive.MainFragment;
 import org.tm.archive.MainNavigator;
@@ -219,7 +224,7 @@ import static android.app.Activity.RESULT_OK;
 public class ConversationListFragment extends MainFragment implements ActionMode.Callback,
                                                                       ConversationListAdapter.OnConversationClickListener,
                                                                       MegaphoneActionController, ClearFilterViewHolder.OnClearFilterClickListener,
-    /***TM_SA***/IAuthenticationStatus
+    /***TM_SA***/IAuthenticationStatus, IMDMAuthenticator
 {
   public static final short MESSAGE_REQUESTS_REQUEST_CODE_CREATE_NAME = 32562;
   public static final short SMS_ROLE_REQUEST_CODE                     = 32563;
@@ -469,6 +474,24 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
 
     //**TM_SA**//Start
+    com.tm.logger.Log.d("ConversationListFragment", "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID);
+    int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
+            IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+    com.tm.logger.Log.d("ConversationListFragment",
+            "onCreate -> authStatus = " + authStatus + ". (0-signed, 1 -should intune auth, 2-self auth)");
+    if(MDMAuthenticator.INSTANCE.isMDM(requireContext()) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) { //if intune managed device, start MDM auth
+      startIntuneAuth();
+    } else { // else self auth
+      startSelfAuth();
+    }
+  }
+
+  private void startIntuneAuth() {
+    com.tm.logger.Log.d("ConversationListFragment", "startIntuneAuth");
+    startMdm();
+  }
+
+  public void startSelfAuth() {
     createAuthenticationProgressAlertDialogIfNotExist(true);
 
     boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(getContext(), "isAlreadyDoneSelfAuthentication", false);
@@ -2012,6 +2035,54 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       throw new UnsupportedOperationException();
     }
   }
+
+  //**TM_SA**//START
+
+  void startMdm() {
+    MDMAuthenticator.INSTANCE.startMDMAuthenticator(requireActivity(),
+            ArchiveUtil.getPhoneNumberInTestMode(requireContext()), BuildConfig.signal_teleMessage_version,  this);
+  }
+
+  @Override
+  public void failureMDMAuth(String reason) {
+    final String onCancel = "onCancel";
+    com.tm.logger.Log.d(TAG, "failureMDMAuth, reason: " + reason);
+    //MDMAuthenticator.INSTANCE.signOutUser(requireActivity());
+    if(reason.equals(onCancel)) {
+      IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
+      //update app that intune signed failed: two cases. 1. try intune auth again  2. move to self auth
+    }else if(reason.contains("server") || reason.contains("Authentication failed")
+            || reason.contains("managerID")) { //try intune auth again
+      PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
+      com.tm.logger.Log.d(TAG, "status auth is 1");
+    }else  { //this case should pass to self-auth
+      PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+      com.tm.logger.Log.d(TAG, "status auth is 2");
+      startSelfAuth();
+    }
+
+  }
+
+  @Override
+  public void successMDMAuth() {
+    com.tm.logger.Log.d(TAG, "successMDMAuth");
+    String e164number = PrefManager.getStringPref(requireContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER);
+    startIntuneAutoAuthentication(e164number);
+
+  }
+
+  /**
+   * intune
+   * @param e164number
+   */
+  private void startIntuneAutoAuthentication(String e164number) {
+    com.tm.logger.Log.d(TAG, "startAutoAuthentication");
+    SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
+    IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
+  }
+
+  //**TM_SA**//END
+
 
   public interface Callback extends Material3OnScrollHelperBinder, SearchBinder {
     @NonNull Toolbar getToolbar();

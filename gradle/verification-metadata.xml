@@ -29,6 +29,13 @@ https://docs.gradle.org/current/userguide/dependency_verification.html
          <trust file = "retrofit-2.6.1.jar" regex="true"/>
          <trust file = "work-runtime-2.7.1.*" regex="true"/>
          <trust file = "room-common-2.2.5.jar" regex="true"/>
+         <trust file = "javassist-3.22.0-GA.jar" regex="true"/>
+         <trust file = "accessors-smart-1.2.jar" regex="true"/>
+         <trust file = "asm-5.0.4.jar" regex="true"/>
+         <trust file = "jcip-annotations-1.0-1.jar" regex="true"/>
+         <trust file = "json-smart-2.3.jar" regex="true"/>
+         <trust file = "nimbus-jose-jwt-8.2.jar" regex="true"/>
+         <trust file = "display-mask-0.3.0.jar" regex="true"/>
          <!--**TM_SA** End-->
       </trusted-artifacts>
    </configuration>

@@ -38,6 +38,8 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.MessageEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
+import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
+import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
 
 import org.archive.selfAuthentication.SelfAuthenticatorConstants;
@@ -48,12 +50,14 @@ import org.archiver.FCMConnector;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.intune.IntuneAuthManager;
 import org.jetbrains.annotations.NotNull;
 import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
+import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
@@ -83,7 +87,8 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
 import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
 
-public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks, IAuthenticationStatus { //*TM_SA*//
+public final class EnterPhoneNumberFragment extends LoggingFragment
+        implements RegistrationNumberInputController.Callbacks, IAuthenticationStatus, IMDMAuthenticator { //*TM_SA*//
 
   private static final String TAG = Log.tag(EnterPhoneNumberFragment.class);
 
@@ -101,6 +106,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   public static boolean mIsLoginAuthenticationInProgress = false;
   private ConstraintLayout constraintLayout;
   private View progressBarCustomView;
+  String mobileNumber;
   //**TM_SA**// END
 
   private final LifecycleDisposable disposables = new LifecycleDisposable();
@@ -279,7 +285,17 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
       AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
       mIsLoginAuthenticationInProgress = true;
-      startAutoAuthentication(requireContext(), e164number);
+//      startAutoAuthentication(requireContext(), e164number);
+      mobileNumber = e164number;
+      int authStatus = PrefManager.getIntPref(requireContext(),
+              IntuneAuthManager.MDM_Auth_Status_String, IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
+      if (MDMAuthenticator.INSTANCE.isMDM(context) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) {// mdm auth skip this fragment and work on EnterSmsCodeFragment
+        startMdm();
+        //confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
+      } else {
+        startAutoAuthentication(requireContext(), e164number); //start self auth
+      }
+
 
       //confirmNumberPrompt(context, e164number, () -> onE164EnteredSuccessfully(context, true));
       //**TM_SA**//End
@@ -295,6 +311,60 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   }
 
   //**TM_SA**//START
+  protected void startMdm() {
+    Log.d(TAG, "startMdm");
+    MDMAuthenticator.INSTANCE.startMDMAuthenticator(requireActivity(), mobileNumber, BuildConfig.signal_teleMessage_version, this);
+  }
+
+
+  @Override
+  public void failureMDMAuth(String reason) {
+    final String onCancel = "onCancel", server = "server";
+    com.tm.logger.Log.d(TAG, "failureMDMAuth, reason: " + reason);
+    if(reason.equals(onCancel)) {
+      IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
+    } //update app that intune signed failed: two cases. 1. try intune auth again  2. move to self auth
+    else if(reason.contains(server) || reason.contains("Authentication failed")
+            || reason.contains("managerID")) { //try intune auth again
+      PrefManager.setIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
+      com.tm.logger.Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
+      requireActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          confirmNumberPrompt(requireContext(), mobileNumber, () -> handleRequestVerification(requireContext(), true));
+        }
+      });
+    }else  { //this case should pass to self-auth
+      PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+      com.tm.logger.Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+      requireActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          confirmNumberPrompt(requireContext(), mobileNumber, () -> handleRequestVerification(requireContext(), true));
+        }
+      });
+    }
+
+  }
+
+  @Override
+  public void successMDMAuth() {
+    com.tm.logger.Log.d(TAG, "successMDMAuth");
+    startIntuneAutoAuthentication(mobileNumber);
+  }
+
+  /**
+   * intune
+   *
+   * @param e164number
+   */
+  private void startIntuneAutoAuthentication(String e164number) {
+    Log.d(TAG, "startAutoAuthentication");
+    com.tm.logger.Log.d(TAG, "startAutoAuthentication");
+    SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
+    IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
+  }
+
   private void startAutoAuthentication(Context context, String e164number) {
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     SelfAuthenticatorManager.INSTANCE.startAuthentication(context, this);
@@ -571,7 +641,60 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   //**TM_SA**//START
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onMessageEvent(MessageEvent event) {
+    com.tm.logger.Log.d(TAG,"onMessageEvent -> SelfAuthenticator and Intune authenticator");
     if (event.message != null) {
+      com.tm.logger.Log.d(TAG, "event.message = " + event.message);
+    } else {
+      com.tm.logger.Log.d(TAG, "event.message = null, return;");
+      return;
+    }
+    boolean authSucceed = event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed());
+    boolean authFailed = event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed());
+
+
+    //check if listener is valid
+    if (authSucceed || authFailed) {
+      int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
+              IntuneAuthManager.MdmAuthStatus.ALREADY_SIGN.ordinal());
+      if (MDMAuthenticator.INSTANCE.isMDM(requireContext()) &&
+              authStatus!= IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal()) {// for managed device,
+        //this is managed device. if successful, user is signed and finish auth. if failure, move to self auth for regular flow.
+        if (authSucceed) {
+          PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,
+                  IntuneAuthManager.MdmAuthStatus.ALREADY_SIGN.ordinal()); //update app that intune signed successfully
+          updatedSelfAuthenticatorDonePreference();//for self auth. update that signed successfully
+          com.tm.logger.Log.d(TAG, "status auth is ALREADY_SIGN");
+        } else {
+          PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal()); //update app that auth should pass to self auth
+          com.tm.logger.Log.d(TAG, "status auth is START_SELF_AUTH");
+        }
+      } else {
+
+        if (progressBarShown) {
+          hideProgressBar();
+        }
+
+        com.tm.logger.Log.d(TAG, "event.message 2  = " + event.message);
+        if (authSucceed) {
+          updatedSelfAuthenticatorDonePreference();
+          com.tm.logger.Log.d(TAG, "SelfAuthenticationSucceed ");
+
+        } else {
+          //I Removed this because we just show that after 48 hours.
+          //SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
+          com.tm.logger.Log.d(TAG, "getSelfAuthenticationFailure = " + event.message);
+        }
+
+      }
+      final NumberViewState number = viewModel.getNumber();
+      final String e164number = number.getE164Number();
+      confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
+      com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+      FCMConnector.initOfficialSignalFirebaseAccount(mContext);
+    }
+
+
+    /*if (event.message != null) {
       com.tm.logger.Log.d(TAG, "event.message = " + event.message);
     } else {
       com.tm.logger.Log.d(TAG, "event.message = null");
@@ -602,9 +725,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
       FCMConnector.initOfficialSignalFirebaseAccount(mContext);
 
-    }
-
-
+    }*/
   }
 
   public void updatedSelfAuthenticatorDonePreference() {

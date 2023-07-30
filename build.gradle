@@ -3,6 +3,10 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url 'https://pkgs.dev.azure.com/MicrosoftDeviceSDK/DuoSDK-Public/_packaging/Duo-SDK-Feed/maven/v1'
+        }
+
         jcenter {
             content {
                 includeVersion 'org.jetbrains.trove4j', 'trove4j', '20160824'
@@ -32,6 +36,12 @@ buildscript {
             exclude group: 'io.outfoxx', module: 'swiftpoet'
         }
         classpath 'androidx.benchmark:benchmark-gradle-plugin:1.1.0-beta04'
+        //**TM_SA**//START
+        // Include the MAM build plugin and Javassist, which it depends on
+        classpath "org.javassist:javassist:3.22.0-GA"
+        classpath files("app/MAMSDK/com.microsoft.intune.mam.build.jar") //gradle can't see files from 'libs' folder. check why
+        //**TM_SA**//END
+
     }
 }
 

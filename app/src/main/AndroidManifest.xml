@@ -111,7 +111,34 @@
                  android:theme="@style/TextSecure.LightTheme"
                  android:largeHeap="true">
 
-    <meta-data
+        <activity android:name="com.microsoft.identity.client.BrowserTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!--
+                    Add in your scheme/host from registered redirect URI
+                    note that the leading "/" is required for android:path
+                -->
+                <!--debug-->
+                <!--<data
+                    android:host="org.tm.archive.prodshilo"
+                    android:path="/QGKhFQhiONVb16luOCu0/IA+Ut4="
+                    android:scheme="msauth" />-->
+
+                <!--release-->
+                <data
+                    android:host="org.tm.archive.prodshilo"
+                    android:path="/a1GN26oMeVmtFyYoymQgC5B3diQ="
+                    android:scheme="msauth" />
+            </intent-filter>
+        </activity>
+
+
+        <meta-data
             android:name="com.google.android.gms.wallet.api.enabled"
             android:value="true" />
 
@@ -124,9 +151,6 @@
 
     <meta-data android:name="com.google.android.gms.version"
                android:value="@integer/google_play_services_version" />
-
-    <meta-data android:name="com.google.android.gms.car.application"
-               android:resource="@xml/automotive_app_desc" />
 
     <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
     <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
