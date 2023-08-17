@@ -158,7 +158,7 @@ public final class WelcomeFragment extends LoggingFragment {
     boolean isUserSelectionRequired = BackupUtil.isUserSelectionRequired(requireContext());
 
     //**TM_SA**// START
-    if (!environmentAlreadySelected) {
+    if (!environmentAlreadySelected && BuildConfig.DEBUG) {
       ApiUtil.Companion.selectServerEnvironment(getContext());
       environmentAlreadySelected = true;
     } else {

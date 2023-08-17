@@ -96,3 +96,10 @@ intune
    2. then, App configuration policies -> create app configuration policy -> manage apps -> Settings -> add the values(managerID etc)
    3. Then, Assignments -> include groups you want or assign everyone.
 
+5. http://everythingaboutintune.com/2021/07/guide-for-integrating-intune-sdk-and-msal-to-lob-application/
+
+https://www.youtube.com/watch?v=1AyGpcdDRkY&t=741s&ab_channel=EverythingAboutIntune
+
+https://github.com/msintuneappsdk/Taskr-Sample-Intune-Android-App#readme
+
+

@@ -2052,7 +2052,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
       //update app that intune signed failed: two cases. 1. try intune auth again  2. move to self auth
     }else if(reason.contains("server") || reason.contains("Authentication failed")
-            || reason.contains("managerID")) { //try intune auth again
+            /*|| reason.contains("managerID")*/) { //try intune auth again
       PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
       com.tm.logger.Log.d(TAG, "status auth is 1");
     }else  { //this case should pass to self-auth
