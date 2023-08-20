@@ -380,7 +380,7 @@ android {
 
         prod {
             dimension 'environment'
-            /*applicationIdSuffix ".prodshilo"*/ //**TM_SA**//
+//            applicationIdSuffix ".prodshilo" //**TM_SA**//to comment it. it's for intune debugs
             isDefault true
 
             buildConfigField "String", "MOBILE_COIN_ENVIRONMENT", "\"mainnet\""

@@ -1094,14 +1094,17 @@ object DataMessageProcessor {
         updateArchiveSDKToSendMMSMessage(context, filesToSend[0]!!.name, true)
       }
     } else if (aInboxArchiveTypes === InboxArchiveTypes.CONTACT) {
+      filesToSend = arrayOfNulls(mediaMessage.sharedContacts.size)
       if (mediaMessage.sharedContacts.isNotEmpty()) {
-        val vcfFile = ArchiveFileUtil.createVCFFileFromContact(
-          context,
-          mediaMessage.sharedContacts[0]
-        )
-        archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,attachments)
+        for (i in mediaMessage.sharedContacts.indices) {
+          tempFileForArchiving = ArchiveFileUtil.createVCFFileFromContact(
+            context,
+            mediaMessage.sharedContacts[0])
+          filesToSend[i] = tempFileForArchiving
+        }
+        archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,filesToSend)
 
-        updateArchiveSDKToSendMMSMessage(context, vcfFile.name, false)
+        updateArchiveSDKToSendMMSMessage(context, filesToSend[0]!!.name, false)
       }
     }/* else if (aInboxArchiveTypes === InboxArchiveTypes.MENTIONS) {
       archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,attachments)
