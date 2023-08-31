@@ -495,7 +495,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     createAuthenticationProgressAlertDialogIfNotExist(true);
 
     boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(getContext(), "isAlreadyDoneSelfAuthentication", false);
-    com.tm.logger.Log.d("SelfAuthenticatorProcess", "onCreate = isAlreadyDoneSelfAuthentication = " + isAlreadyDoneSelfAuthentication);
+    com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> onCreate = isAlreadyDoneSelfAuthentication = " + isAlreadyDoneSelfAuthentication);
 
     if(!isAlreadyDoneSelfAuthentication && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()){
       startAuthenticationProcess(getContext(), ArchiveUtil.getPhoneNumberInTestMode(getContext()));
@@ -1935,9 +1935,9 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
   public void onMessageEvent(MessageEvent event) {
     if(event.message != null){
-      com.tm.logger.Log.d("SelfAuthenticatorProcess", "event.message = " + event.message);
+      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> event.message = " + event.message);
     }else{
-      com.tm.logger.Log.d("SelfAuthenticatorProcess", "event.message = null");
+      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess event.message = null");
     }
 
     //check if listener is valid
@@ -1949,12 +1949,12 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       }
 
 
-      com.tm.logger.Log.d("SelfAuthenticatorProcess", "event.message 2  = " + event.message);
+      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> event.message 2  = " + event.message);
       if (SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed().equals(event.message)) {
         updatedSelfAuthenticatorPreference();
-        com.tm.logger.Log.d("SelfAuthenticatorProcess", "SelfAuthenticationSucceed ");
+        com.tm.logger.Log.d("ConversationListFragment","SelfAuthenticatorProcess -> SelfAuthenticationSucceed ");
       } else {
-        com.tm.logger.Log.d("SelfAuthenticatorProcess", "getSelfAuthenticationFailure = " + event.message);
+        com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> getSelfAuthenticationFailure = " + event.message);
         Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(new Runnable() {
           @Override
@@ -1965,7 +1965,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         }, 20);
       }
 
-      com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticator -> initOfficialSignalFirebaseAccount!!! ");
       FCMConnector.initOfficialSignalFirebaseAccount(getContext());
 
     }
@@ -1980,7 +1980,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   @Override
   public void authenticationProcessMessage(@NotNull String message) {
-    com.tm.logger.Log.d("SelfAuthenticatorProcess", "authenticationProcessMessage = " + message);
+    com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> authenticationProcessMessage = " + message);
     if (!message.isEmpty()) {
       EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
     }
@@ -2046,7 +2046,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   @Override
   public void failureMDMAuth(String reason) {
     final String onCancel = "onCancel";
-    com.tm.logger.Log.d(TAG, "failureMDMAuth, reason: " + reason);
+    com.tm.logger.Log.d("ConversationListFragment", "failureMDMAuth, reason: " + reason);
     //MDMAuthenticator.INSTANCE.signOutUser(requireActivity());
     if(reason.equals(onCancel)) {
       IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
@@ -2054,10 +2054,10 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }else if(reason.contains("server") || reason.contains("Authentication failed")
             /*|| reason.contains("managerID")*/) { //try intune auth again
       PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
-      com.tm.logger.Log.d(TAG, "status auth is 1");
+      com.tm.logger.Log.d("ConversationListFragment", "status auth is 1");
     }else  { //this case should pass to self-auth
       PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
-      com.tm.logger.Log.d(TAG, "status auth is 2");
+      com.tm.logger.Log.d("ConversationListFragment", "status auth is 2");
       startSelfAuth();
     }
 
@@ -2065,7 +2065,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   @Override
   public void successMDMAuth() {
-    com.tm.logger.Log.d(TAG, "successMDMAuth");
+    com.tm.logger.Log.d("ConversationListFragment", "successMDMAuth");
     String e164number = PrefManager.getStringPref(requireContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER);
     startIntuneAutoAuthentication(e164number);
 

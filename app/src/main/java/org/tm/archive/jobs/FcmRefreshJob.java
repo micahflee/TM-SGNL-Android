@@ -92,6 +92,8 @@ public class FcmRefreshJob extends BaseJob {
       Optional<String> token = FcmUtil.getToken(context);
 
       if (token.isPresent()) {
+        Log.i(TAG, "FcmRefreshJob  -> FCM_TM_UTILS refresh ********* " + token.get());
+
         String oldToken = SignalStore.account().getFcmToken();
 
         if (!token.get().equals(oldToken)) {

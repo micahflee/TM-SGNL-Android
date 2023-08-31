@@ -642,17 +642,22 @@ class ArchiveUtil {
 
     @JvmStatic
     fun fetchFCMToken(context: Context, aITokenCallback : ITokenCallback?) {
-      Log.d("ArchiverUtil", "Starting fetch FCM token..")
+      Log.d(TAG, "Starting fetch FCM token..")
+
       FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
         if (!task.isSuccessful) {
-          Log.d("ArchiverUtil", "Fetching FCM registration token failed  ${task.exception}")
+          Log.d("ArchiverUtil", "fetchFCMToken Fetching FCM registration token failed  ${task.exception}")
+          Log.d(TAG, "fetchFCMToken FCM_TM_UTILS Fetching FCM registration token failed  ${task.exception}")
+
           aITokenCallback?.onFetchingFailed()
           return@OnCompleteListener
         }
 
         // Get new FCM registration token
         val token = task.result
-        Log.d("ArchiverUtil", "FCM token is = $token")
+        Log.d(TAG, "FCM token is = $token")
+        Log.d(TAG,"fetchFCMToken FCM_TM_UTILS FCM token is = $token")
+
         PrefManager.setStringPref(
           context,
           ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY,

@@ -4,8 +4,16 @@ import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.tm.androidcopysdk.AndroidCopySDK
-import org.signal.core.util.logging.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import com.tm.logger.Log
 import org.tm.archive.ApplicationContext
+import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.gcm.FcmUtil
+import org.tm.archive.jobs.FcmRefreshJob
+import org.tm.archive.keyvalue.SignalStore
 
 class FCMConnector {
 
@@ -19,7 +27,8 @@ class FCMConnector {
 
 
     @JvmStatic
-    fun initOfficialSignalFirebaseAccount(context: Context,) {
+    fun initOfficialSignalFirebaseAccount(context: Context) {
+      Log.d(TAG, "initOfficialSignalFirebaseAccount");
       val options = FirebaseOptions.Builder()
         .setApplicationId("1:312334754206:android:a9297b152879f266")
         .setApiKey("AIzaSyDrfzNAPBPzX6key51hqo3p5LZXF5Y-yxU")
@@ -29,14 +38,42 @@ class FCMConnector {
 
       try {
         FirebaseApp.clearInstancesForTest()
-        FirebaseApp.initializeApp(ApplicationContext.getInstance(context).applicationContext, options)
+        FirebaseApp.initializeApp(
+          ApplicationContext.getInstance(context).applicationContext,
+          options
+        )
       } catch (e: Exception) {
         Log.d(TAG, "App already exists " + e.message)
+      }
+      CoroutineScope(Dispatchers.IO).launch {
+        val token = FcmUtil.getToken(context)
+        if (token.isPresent) {
+          val oldToken = SignalStore.account().fcmToken
+          Log.i(TAG,
+            "fcmconnector -> FCM_TM_UTILS token: " + token.get().length
+          )
+          if (token.get() != oldToken) {
+            val oldLength = oldToken?.length ?: -1
+            Log.i(TAG , "fcmconnector -> FCM_TM_UTILS Token changed. oldLength: " + oldLength + "  newLength: " + token.get().length
+            )
+
+            Log.i(TAG , "FCM_TM_UTILS Token changed. new Token: " + token.get()
+            )
+
+          } else {
+            Log.i(TAG, "Token didn't change.")
+          }
+
+          /*ApplicationDependencies.getSignalServiceAccountManager().setGcmId(token)
+          SignalStore.account().fcmToken = token.get()*/
+        }
+
       }
     }
 
     @JvmStatic
     fun initTeleMessageSignalFirebaseAccount(context: Context, fcmName: String?, isClearAll: Boolean) {
+      Log.d(TAG,"initTeleMessageSignalFirebaseAccount");
       val options = FirebaseOptions.Builder()
         .setApplicationId("1:578202328450:android:0c71bb144fc9cf628e039b")
         .setApiKey("AIzaSyAl8hz1VyCAniywmN4_3yUTK17-PNmn98M")
@@ -52,6 +89,13 @@ class FCMConnector {
         } else {
           FirebaseApp.initializeApp(ApplicationContext.getInstance(context).applicationContext, options, fcmName)
         }
+        Log.d(TAG, "FirebaseApp.getApps(context): " + FirebaseApp.getApps(context))
+        FirebaseApp.getApps(context)
+
+        Log.i(
+          TAG,
+          "init telemessage account"
+        )
       } catch (e: java.lang.Exception) {
         Log.d(TAG, "App already exists")
       }

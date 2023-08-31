@@ -24,7 +24,7 @@ import org.archiver.ArchivePreferenceConstants;
 import org.archiver.FCMConnector;
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
-import org.signal.core.util.logging.Log;
+import com.tm.logger.Log;
 import org.tm.archive.ApplicationContext;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -40,19 +40,19 @@ import java.util.concurrent.TimeUnit;
 
 public class FcmReceiveService extends FirebaseMessagingService implements IOnCredentialsArrived { //*TM_SA*//
 
-  private static final String TAG = Log.tag(FcmReceiveService.class);
+  private static final String TAG = "FcmReceiveService";
 
   private static final long FCM_FOREGROUND_INTERVAL = TimeUnit.MINUTES.toMillis(3);
 
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
     //**TM_SA**// Start
-    com.tm.logger.Log.d("SelfAuthenticatorM", "onMessageReceived!!!!! message = " + remoteMessage.getData().toString());
+    com.tm.logger.Log.d(TAG, "SelfAuthenticatorM -> onMessageReceived!!!!! message = " + remoteMessage.getData().toString());
     if (remoteMessage.getData().get("Type") != null && remoteMessage.getData().get("Type").equals(FCMConnector.RETRIEVE_ONE_TIME_PIN_FCM_FROM_TYPE)) {
       String msgBody = remoteMessage.getData().get(FCMConnector.RETRIEVE_ONE_TIME_PIN_FCM_MSG);
       if (msgBody != null) {
         String pinCode = msgBody.split(" ")[msgBody.split(" ").length -1];
-        com.tm.logger.Log.d("SelfAuthenticatorProcess", "The code is: " + pinCode);
+        com.tm.logger.Log.d(TAG, "The code is: " + pinCode);
         SelfAuthenticator.INSTANCE.getUserCredentials(pinCode, this);
       }
     } else { //**TM_SA**// END
@@ -159,7 +159,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
     com.tm.logger.Log.d("SelfAuthenticatorM", "onCredentialsArrived user = " + userName + "   password = " + password + " environmentProduction = " + environmentProduction + "  environmentKeeper = " + environmentKeeper);
 
     if(!userName.isEmpty()) {
-      com.tm.logger.Log.d("SelfAuthenticatorM", "before updateSignUpCredentials");
+      com.tm.logger.Log.d(TAG , "SelfAuthenticatorM -> before updateSignUpCredentials");
       new Handler(Looper.getMainLooper()).post(new Runnable() {
         @Override
         public void run() {
@@ -173,7 +173,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
         }
       });
 
-      com.tm.logger.Log.d("SelfAuthenticatorM", "after updateSignUpCredentials");
+      com.tm.logger.Log.d(TAG, "SelfAuthenticatorM -> after updateSignUpCredentials");
       EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed()));
     }else{
       EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));

@@ -255,7 +255,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     );
 
     if(ArchiveUtil.getFCMTokenIfExists(this) == null || ArchiveUtil.getFCMTokenIfExists(this).isEmpty() || !isAlreadyDoneSelfAuthentication){
-      com.tm.logger.Log.d("SelfAuthenticator","initTeleMessageSignalFirebaseAccount");
       FCMConnector.initTeleMessageSignalFirebaseAccount(this, null, true);
       ArchiveUtil.fetchFCMToken(this, null);
     }
