@@ -359,13 +359,13 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
    * @param e164number
    */
   private void startIntuneAutoAuthentication(String e164number) {
-    Log.d(TAG, "startAutoAuthentication");
     com.tm.logger.Log.d(TAG, "startAutoAuthentication");
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
   }
 
   private void startAutoAuthentication(Context context, String e164number) {
+    com.tm.logger.Log.i(TAG , "startAutoAuthentication");
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     SelfAuthenticatorManager.INSTANCE.startAuthentication(context, this);
     if (!progressBarShown) {

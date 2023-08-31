@@ -87,7 +87,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
 
   @Override
   public void onNewToken(String token) {
-    Log.i(TAG, "onNewToken()");
+    Log.i(TAG, "onNewToken(). token: " + token);//**TM_SA**//
 
     if (!SignalStore.account().isRegistered()) {
       Log.i(TAG, "Got a new FCM token, but the user isn't registered.");
