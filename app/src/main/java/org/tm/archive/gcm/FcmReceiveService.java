@@ -89,15 +89,21 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
   public void onNewToken(String token) {
     Log.i(TAG, "onNewToken(). token: " + token);//**TM_SA**//
 
+    //**TM_SA**//
+    Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    if(FirebaseApp.getInstance().getOptions().getProjectId().startsWith("signal")){
+      PrefManager.setStringPref(getApplicationContext(), ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, token);
+    }
+    //**TM_SA**//
+
+
     if (!SignalStore.account().isRegistered()) {
       Log.i(TAG, "Got a new FCM token, but the user isn't registered.");
       return;
     }
 
     //**TM_SA**//
-    if(FirebaseApp.getInstance().getOptions().getProjectId().startsWith("signal")){
-      PrefManager.setStringPref(getApplicationContext(), ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, token);
-    }else {
+    if(!FirebaseApp.getInstance().getOptions().getProjectId().startsWith("signal")){
       ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
     }
     //**TM_SA**//
@@ -156,7 +162,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
   // <!--//**TM_SA**//--> START
   @Override
   public void onCredentialsArrived(@NotNull String userName, @NotNull String password, String environmentProduction, String environmentKeeper ) {
-    com.tm.logger.Log.d("SelfAuthenticatorM", "onCredentialsArrived user = " + userName + "   password = " + password + " environmentProduction = " + environmentProduction + "  environmentKeeper = " + environmentKeeper);
+    com.tm.logger.Log.d("SelfAuthenticatorM", "onCredentialsArrived user = " + userName /*+ "   password = " + password*/ + " environmentProduction = " + environmentProduction + "  environmentKeeper = " + environmentKeeper);
 
     if(!userName.isEmpty()) {
       com.tm.logger.Log.d(TAG , "SelfAuthenticatorM -> before updateSignUpCredentials");

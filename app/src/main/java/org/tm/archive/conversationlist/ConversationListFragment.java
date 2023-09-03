@@ -76,6 +76,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.FirebaseApp;
 import com.tm.androidcopysdk.MessageEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
@@ -231,7 +232,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   private static final int LIST_SMOOTH_SCROLL_TO_TOP_THRESHOLD = 25;
 
-  private static final String TAG = Log.tag(ConversationListFragment.class);
+  private static final String TAG = "ConversationListFragment";
 
   private static final int MAXIMUM_PINNED_CONVERSATIONS = 4;
   private static final int MAX_CHATS_ABOVE_FOLD = 7;
@@ -479,6 +480,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
             IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
     com.tm.logger.Log.d("ConversationListFragment",
             "onCreate -> authStatus = " + authStatus + ". (0-signed, 1 -should intune auth, 2-self auth)");
+    FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
     if(MDMAuthenticator.INSTANCE.isMDM(requireContext()) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) { //if intune managed device, start MDM auth
       startIntuneAuth();
     } else { // else self auth
@@ -495,9 +497,9 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     createAuthenticationProgressAlertDialogIfNotExist(true);
 
     boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(getContext(), "isAlreadyDoneSelfAuthentication", false);
-    com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> onCreate = isAlreadyDoneSelfAuthentication = " + isAlreadyDoneSelfAuthentication);
+    com.tm.logger.Log.d(TAG, "SelfAuthenticatorProcess -> onCreate = isAlreadyDoneSelfAuthentication = " + isAlreadyDoneSelfAuthentication);
 
-    if(!isAlreadyDoneSelfAuthentication && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()){
+    if(!isAlreadyDoneSelfAuthentication/* && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()*/){
       startAuthenticationProcess(getContext(), ArchiveUtil.getPhoneNumberInTestMode(getContext()));
     }
   }

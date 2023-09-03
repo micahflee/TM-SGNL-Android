@@ -27,6 +27,7 @@ import androidx.annotation.WorkerThread;
 import androidx.multidex.MultiDexApplication;
 
 import com.google.android.gms.security.ProviderInstaller;
+import com.google.firebase.FirebaseApp;
 import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.AndroidCopySettings;
 import com.tm.androidcopysdk.BackupService;
@@ -241,23 +242,13 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
 
     //**TM_SA**// start
-
+    com.tm.logger.Log.i(TAG, "1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     mApplicationContext = this;
 
     com.tm.logger.Log.createInstance(getApplicationContext());
     ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
 
     initArchiveUrlsAndStartArchive();
-
-    boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(
-        this,
-        "isAlreadyDoneSelfAuthentication", false
-    );
-
-    if(ArchiveUtil.getFCMTokenIfExists(this) == null || ArchiveUtil.getFCMTokenIfExists(this).isEmpty() || !isAlreadyDoneSelfAuthentication){
-      FCMConnector.initTeleMessageSignalFirebaseAccount(this, null, true);
-      ArchiveUtil.fetchFCMToken(this, null);
-    }
   }
 
   private void initArchiveUrlsAndStartArchive() {
@@ -458,7 +449,8 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       long nextSetTime = SignalStore.account().getFcmTokenLastSetTime() + TimeUnit.HOURS.toMillis(6);
 
       if (SignalStore.account().getFcmToken() == null || nextSetTime <= System.currentTimeMillis()) {
-        ApplicationDependencies.getJobManager().add(new FcmRefreshJob());
+        FCMConnector.initOfficialSignalFirebaseAccount(this);//**TM_SA**//
+//        ApplicationDependencies.getJobManager().add(new FcmRefreshJob());//**TM_SA**//
       }
     }
   }
