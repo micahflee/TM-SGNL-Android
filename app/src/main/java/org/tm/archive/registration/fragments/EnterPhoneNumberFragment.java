@@ -32,6 +32,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.FirebaseApp;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
@@ -187,7 +188,6 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
     }
 
     constraintLayout.addView(progressBarCustomView);//**TM_SA**//
-    FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);//**TM_SA**//
   }
 
   //**TM_SA**// START
@@ -289,11 +289,18 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
       mobileNumber = e164number;
       int authStatus = PrefManager.getIntPref(requireContext(),
               IntuneAuthManager.MDM_Auth_Status_String, IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
-      if (MDMAuthenticator.INSTANCE.isMDM(context) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) {// mdm auth skip this fragment and work on EnterSmsCodeFragment
-        startMdm();
-        //confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
+
+      FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
+      boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false);
+      if(!isAlreadyDoneSelfAuthentication/* && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()*/) {
+        if (MDMAuthenticator.INSTANCE.isMDM(context) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) {// mdm auth skip this fragment and work on EnterSmsCodeFragment
+          startMdm();
+          //confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
+        } else {
+          startAutoAuthentication(requireContext(), e164number); //start self auth
+        }
       } else {
-        startAutoAuthentication(requireContext(), e164number); //start self auth
+        confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
       }
 
 
@@ -325,7 +332,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
       IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
     } //update app that intune signed failed: two cases. 1. try intune auth again  2. move to self auth
     else if(reason.contains(server) || reason.contains("Authentication failed")
-            || reason.contains("managerID")) { //try intune auth again
+            /*|| reason.contains("managerID")*/) { //try intune auth again
       PrefManager.setIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
       com.tm.logger.Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
       requireActivity().runOnUiThread(new Runnable() {
@@ -359,13 +366,14 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
    * @param e164number
    */
   private void startIntuneAutoAuthentication(String e164number) {
-    Log.d(TAG, "startAutoAuthentication");
     com.tm.logger.Log.d(TAG, "startAutoAuthentication");
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
   }
 
   private void startAutoAuthentication(Context context, String e164number) {
+    com.tm.logger.Log.i(TAG , "startAutoAuthentication");
+    com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     SelfAuthenticatorManager.INSTANCE.startAuthentication(context, this);
     if (!progressBarShown) {
@@ -662,7 +670,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
         if (authSucceed) {
           PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,
                   IntuneAuthManager.MdmAuthStatus.ALREADY_SIGN.ordinal()); //update app that intune signed successfully
-          updatedSelfAuthenticatorDonePreference();//for self auth. update that signed successfully
+          updatedSelfAuthenticatorDonePreference();//update that signed successfully
           com.tm.logger.Log.d(TAG, "status auth is ALREADY_SIGN");
         } else {
           PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal()); //update app that auth should pass to self auth
@@ -689,17 +697,20 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
       final NumberViewState number = viewModel.getNumber();
       final String e164number = number.getE164Number();
       confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
+      com.tm.logger.Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
       com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
       FCMConnector.initOfficialSignalFirebaseAccount(mContext);
+      com.tm.logger.Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     }
   }
 
   public void updatedSelfAuthenticatorDonePreference() {
-
-    SharedPreferences        preferences = ApplicationContext.getInstance().getSharedPreferences(SelfAuthenticatorManager.SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE);
+    com.tm.logger.Log.d("SelfAuthenticator", "updatedSelfAuthenticatorDonePreference ");
+    /*SharedPreferences        preferences = ApplicationContext.getInstance().getSharedPreferences(SelfAuthenticatorManager.SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE);
     SharedPreferences.Editor editor      = preferences.edit();
     editor.putBoolean("isAlreadyDoneSelfAuthentication", true);
-    editor.apply();
+    editor.apply();*/
+    PrefManager.setBooleanPref(requireContext(), "isAlreadyDoneSelfAuthentication", true);
   }
 
 

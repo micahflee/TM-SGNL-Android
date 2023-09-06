@@ -209,9 +209,12 @@ public class SignalServiceAccountManager {
    * @throws IOException
    */
   public void setGcmId(Optional<String> gcmRegistrationId) throws IOException {
+
     if (gcmRegistrationId.isPresent()) {
+      Log.i("lior","SignalServiceAccountManager SignalServiceAccountManager-> FCM_TM_UTILS gcmRegistrationId " + gcmRegistrationId.get());
       this.pushServiceSocket.registerGcmId(gcmRegistrationId.get());
     } else {
+      Log.i("lior"," SignalServiceAccountManager SignalServiceAccountManager-> FCM_TM_UTILS gcmRegistrationId null");
       this.pushServiceSocket.unregisterGcmId();
     }
   }

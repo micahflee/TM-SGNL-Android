@@ -98,7 +98,7 @@ public final class WelcomeFragment extends LoggingFragment {
     viewModel = new ViewModelProvider(requireActivity()).get(RegistrationViewModel.class);
 
     //**TM_SA**//
-    SelfAuthenticatorConstants.Companion.setAuthenticationProcessOpened(true);
+//    SelfAuthenticatorConstants.Companion.setAuthenticationProcessOpened(true);
     //**TM_SA**//
 
     if (viewModel.isReregister()) {
@@ -158,7 +158,7 @@ public final class WelcomeFragment extends LoggingFragment {
     boolean isUserSelectionRequired = BackupUtil.isUserSelectionRequired(requireContext());
 
     //**TM_SA**// START
-    if (!environmentAlreadySelected) {
+    if (!environmentAlreadySelected && BuildConfig.DEBUG) {
       ApiUtil.Companion.selectServerEnvironment(getContext());
       environmentAlreadySelected = true;
     } else {

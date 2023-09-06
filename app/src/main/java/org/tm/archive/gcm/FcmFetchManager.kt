@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import org.signal.core.util.concurrent.SignalExecutors
-import org.signal.core.util.logging.Log
+import com.tm.logger.Log
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.ForegroundServiceUtil
 import org.tm.archive.jobs.PushNotificationReceiveJob
@@ -29,7 +29,7 @@ import org.tm.archive.util.concurrent.SerialMonoLifoExecutor
  */
 object FcmFetchManager {
 
-  private val TAG = Log.tag(FcmFetchManager::class.java)
+  private val TAG = /*Log.tag(FcmFetchManager::class.java)*/"FcmFetchManager"
   private const val MAX_BLOCKING_TIME_MS = 500L
   private val EXECUTOR = SerialMonoLifoExecutor(SignalExecutors.UNBOUNDED)
 
@@ -102,6 +102,7 @@ object FcmFetchManager {
   @JvmStatic
   fun tryLegacyFallback(context: Context) {
     synchronized(this) {
+      Log.d(TAG, "tryLegacyFallback start")
       if (startedForeground) {
         val performedReplace = EXECUTOR.enqueue { fetch(context) }
 

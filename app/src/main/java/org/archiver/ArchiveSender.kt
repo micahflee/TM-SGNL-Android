@@ -36,7 +36,7 @@ class ArchiveSender {
         const val TAG = "ArchiveSender"
         private fun sendArchiveMessage(context: Context, uniqueMessageId: String , aProtocolType: ArchiveConstants.ProtocolType, toRecipientsList: Array<String>, from: String, messageBody: String?, dateInTimeStamp: Long, subject: String, chatMode: DataGrabber.CHAT_MODE, chatName: String, chatId: String?, fromNameString: Contact, toRecipientsListNames: Array<Contact>, archiveFile: Array<File?>? = null){
           //  Log.d(TAG, "messageId = $uniqueMessageId message text $messageBody")
-          Log.d("graber2", "body = $messageBody sub = $subject")
+          Log.d(TAG, "sendArchiveMessage -> body = $messageBody sub = $subject")
 
           if(archiveFile == null) {
                 DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, uniqueMessageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, from, toRecipientsListNames, toRecipientsList)
@@ -51,7 +51,7 @@ class ArchiveSender {
         }
 
         fun archiveMessageInbox(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, message: IncomingTextMessage, messageId: Long, groupTile: String) {
-
+          Log.d(TAG, "archiveMessageInbox")
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = message.groupId != null
             var inboxRecipient = ""
@@ -81,7 +81,7 @@ class ArchiveSender {
         }
 
       fun archiveMessageInboxV2(context: Context, type: ArchiveConstants.ProtocolType, senderRecipient: Recipient, threadRecipient: Recipient, messageBody: String , messageSendingTime: Long) {
-
+        Log.d(TAG, "archiveMessageInboxV2 -> message = $messageBody")
         val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
         val isGroup = threadRecipient.isGroup
         var inboxRecipient = ""
@@ -108,7 +108,7 @@ class ArchiveSender {
 
 
       fun archiveMessageOutboxV1(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, messageBody: String, messageId: Long, sendingTime: Long) {
-
+            Log.d(TAG, "archiveMessageOutboxV1 -> message = $messageBody")
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = archiveRecipient.isGroup
             val inboxRecipient = ""

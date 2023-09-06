@@ -260,7 +260,8 @@ class AppSettingsFragment : DSLSettingsFragment(
 
       dividerPref()
 
-      if (SignalStore.paymentsValues().paymentsAvailability.showPaymentsMenu()) {
+      //**TM_SA**// Mark this part
+      /*if (SignalStore.paymentsValues().paymentsAvailability.showPaymentsMenu()) {
         customPref(
           PaymentsPreference(
             unreadCount = state.unreadPaymentsCount
@@ -270,9 +271,9 @@ class AppSettingsFragment : DSLSettingsFragment(
         )
 
         dividerPref()
-      }
+      }*/
 
-      //**TM_SA**// Mark this part
+
       /*clickPref(
         title = DSLSettingsText.from(R.string.preferences__help),
         icon = DSLSettingsIcon.from(R.drawable.ic_help_24),

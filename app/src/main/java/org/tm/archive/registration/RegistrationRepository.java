@@ -164,6 +164,7 @@ public final class RegistrationRepository {
     ApplicationDependencies.getRecipientCache().clearSelf();
 
     SignalStore.account().setE164(registrationData.getE164());
+    com.tm.logger.Log.i("RegistrationRepository","registerAccountInternal ->  fcmToken: "+registrationData.getFcmToken());//**TM_SA**//
     SignalStore.account().setFcmToken(registrationData.getFcmToken());
     SignalStore.account().setFcmEnabled(registrationData.isFcm());
 

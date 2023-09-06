@@ -6,8 +6,8 @@
     {
       "type": "AAD",
       "audience": {
-        "type": "AzureADMyOrg",
-        "tenant_id": "69624173-d877-4932-8b12-2d6aa8f357db"
+        "type": "AzureADMultipleOrgs",
+        "tenant_id": "organizations"
       }
     }
   ]
