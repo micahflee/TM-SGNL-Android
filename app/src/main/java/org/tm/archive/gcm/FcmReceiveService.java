@@ -128,20 +128,24 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
 
       Log.d(TAG, String.format(Locale.US, "[handleReceivedNotification] API: %s, FeatureFlag: %s, RemoteMessagePriority: %s, TimeSinceLastRefresh: %s ms", Build.VERSION.SDK_INT, FeatureFlags.useFcmForegroundService(), remoteMessage != null ? remoteMessage.getPriority() : "n/a", timeSinceLastRefresh));
 
+      Log.d(TAG, "handleReceivedNotification -> useFcmForegroundService: " + FeatureFlags.useFcmForegroundService());
       if (highPriority && FeatureFlags.useFcmForegroundService()) {
+        Log.d(TAG, "handleReceivedNotification -> 1");
         enqueueSuccessful = FcmFetchManager.enqueue(context, true);
         SignalStore.misc().setLastFcmForegroundServiceTime(System.currentTimeMillis());
       } else if (highPriority && Build.VERSION.SDK_INT >= 31 && timeSinceLastRefresh > FCM_FOREGROUND_INTERVAL) {
+        Log.d(TAG, "handleReceivedNotification -> 2");
         enqueueSuccessful = FcmFetchManager.enqueue(context, true);
         SignalStore.misc().setLastFcmForegroundServiceTime(System.currentTimeMillis());
       } else if (highPriority || Build.VERSION.SDK_INT < 26 || remoteMessage == null) {
+        Log.d(TAG, "handleReceivedNotification -> 3");
         enqueueSuccessful = FcmFetchManager.enqueue(context, false);
       }
     } catch (Exception e) {
       Log.w(TAG, "Failed to start service.", e);
       enqueueSuccessful = false;
     }
-
+    Log.d(TAG, "handleReceivedNotification -> enqueueSuccessful: " + enqueueSuccessful);
     if (!enqueueSuccessful) {
       Log.w(TAG, "Unable to start service. Falling back to legacy approach.");
       FcmFetchManager.tryLegacyFallback(context);

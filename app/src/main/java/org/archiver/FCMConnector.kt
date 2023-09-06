@@ -96,7 +96,7 @@ class FCMConnector {
         Log.d(TAG, "ArchiveUtil.getFCMTokenIfExists(this) == null --" + (getFCMTokenIfExists(context) == null))
         Log.d(TAG, "ArchiveUtil.getFCMTokenIfExists(this).isEmpty() --" + getFCMTokenIfExists(context)!!.isEmpty())
         Log.d(TAG, "!isAlreadyDoneSelfAuthentication --" + !isAlreadyDoneSelfAuthentication)
-        Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().options.projectId)
+        Log.i(TAG, "init Telemessage -> current FCM: " + FirebaseApp.getInstance().options.projectId)
         val options = FirebaseOptions.Builder()
           .setApplicationId("1:578202328450:android:0c71bb144fc9cf628e039b")
           .setApiKey("AIzaSyAl8hz1VyCAniywmN4_3yUTK17-PNmn98M")
