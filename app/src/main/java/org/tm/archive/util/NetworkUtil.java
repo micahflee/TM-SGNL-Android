@@ -33,6 +33,11 @@ public final class NetworkUtil {
     return info != null && info.isConnected() && info.isRoaming() && info.getType() == ConnectivityManager.TYPE_MOBILE;
   }
 
+  public static boolean isConnected(@NonNull Context context) {
+    final NetworkInfo info = getNetworkInfo(context);
+    return info != null && info.isConnected();
+  }
+
   public static @NonNull CallManager.BandwidthMode getCallingBandwidthMode(@NonNull Context context) {
     return getCallingBandwidthMode(context, PeerConnection.AdapterType.UNKNOWN);
   }

@@ -617,7 +617,7 @@ public class SignalServiceAccountManager {
     }
   }
 
-  public Map<String, Object> getRemoteConfig() throws IOException {
+  /*public Map<String, Object> getRemoteConfig() throws IOException {
     RemoteConfigResponse response = this.pushServiceSocket.getRemoteConfig();
     Map<String, Object>  out      = new HashMap<>();
 
@@ -626,6 +626,17 @@ public class SignalServiceAccountManager {
     }
 
     return out;
+  }*/
+
+  public RemoteConfigResult getRemoteConfig() throws IOException {
+    RemoteConfigResponse response = this.pushServiceSocket.getRemoteConfig();
+    Map<String, Object>  out      = new HashMap<>();
+
+    for (RemoteConfigResponse.Config config : response.getConfig()) {
+      out.put(config.getName(), config.getValue() != null ? config.getValue() : config.isEnabled());
+    }
+
+    return new RemoteConfigResult(out, response.getServerEpochTime());
   }
 
   public String getAccountDataReport() throws IOException {

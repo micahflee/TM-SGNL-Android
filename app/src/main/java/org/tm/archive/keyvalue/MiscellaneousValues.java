@@ -39,6 +39,8 @@ public final class MiscellaneousValues extends SignalStoreValues {
   private static final String KEYBOARD_LANDSCAPE_HEIGHT      = "misc.keyboard.landscape_height";
   private static final String KEYBOARD_PORTRAIT_HEIGHT       = "misc.keyboard.protrait_height";
   private static final String LAST_CONSISTENCY_CHECK_TIME    = "misc.last_consistency_check_time";
+  private static final String SERVER_TIME_OFFSET             = "misc.server_time_offset";
+  private static final String LAST_SERVER_TIME_OFFSET_UPDATE = "misc.last_server_time_offset_update";
 
   MiscellaneousValues(@NonNull KeyValueStore store) {
     super(store);
@@ -315,6 +317,26 @@ public final class MiscellaneousValues extends SignalStoreValues {
       }
     }
     return height;
+  }
+
+  /**
+   * Sets the last-known server time.
+   */
+  public void setLastKnownServerTime(long serverTime, long currentTime) {
+    getStore()
+            .beginWrite()
+            .putLong(SERVER_TIME_OFFSET, currentTime - serverTime)
+            .putLong(LAST_SERVER_TIME_OFFSET_UPDATE, System.currentTimeMillis())
+            .apply();
+  }
+
+  /**
+   * The last-known offset between our local clock and the server. To get an estimate of the server time, take your current time and subtract this offset. e.g.
+   *
+   * estimatedServerTime = System.currentTimeMillis() - SignalStore.misc().getLastKnownServerTimeOffset()
+   */
+  public long getLastKnownServerTimeOffset() {
+    return getLong(SERVER_TIME_OFFSET, 0);
   }
 
   public void setKeyboardPortraitHeight(int height) {

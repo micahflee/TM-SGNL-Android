@@ -193,17 +193,21 @@ public final class AttachmentDownloadJob extends BaseJob {
                                   final Attachment attachment)
       throws IOException, RetryLaterException
   {
+    long maxReceiveSize = FeatureFlags.maxAttachmentReceiveSizeBytes();
 
     AttachmentTable database       = SignalDatabase.attachments();
     File            attachmentFile = database.getOrCreateTransferFile(attachmentId);
 
     try {
+      if (attachment.getSize() > maxReceiveSize) {
+        throw new MmsException("Attachment too large, failing download");
+      }
       SignalServiceMessageReceiver   messageReceiver = ApplicationDependencies.getSignalServiceMessageReceiver();
       SignalServiceAttachmentPointer pointer         = createAttachmentPointer(attachment);
       InputStream                    stream          = messageReceiver.retrieveAttachment(pointer,
-                                                                                          attachmentFile,
-                                                                                          ByteUnit.MEGABYTES.toBytes(FeatureFlags.maxAttachmentSizeMb()) + MAX_ATTACHMENT_SIZE_BUFFER,
-                                                                                          (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
+              attachmentFile,
+              maxReceiveSize,
+              (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
 
       //**TM_SA**//Start
       Pair<InputStream, InputStream> inputStreamPair  = FileUtils.duplicateInputStream(stream);

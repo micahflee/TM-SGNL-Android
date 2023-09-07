@@ -14,7 +14,7 @@ class ConversationFilterBehavior(context: Context, attributeSet: AttributeSet) :
   var callback: Callback? = null
 
   override fun onStartNestedScroll(parent: CoordinatorLayout, child: AppBarLayout, directTargetChild: View, target: View, nestedScrollAxes: Int, type: Int): Boolean {
-    if (type == ViewCompat.TYPE_NON_TOUCH || !FeatureFlags.chatFilters() || callback?.canStartNestedScroll() == false) {
+    if (type == ViewCompat.TYPE_NON_TOUCH || callback?.canStartNestedScroll() == false) {
       return false
     } else {
       return super.onStartNestedScroll(parent, child, directTargetChild, target, nestedScrollAxes, type)
