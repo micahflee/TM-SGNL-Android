@@ -62,12 +62,10 @@ class CallSyncEventJob private constructor(
     }
 
     fun enqueueDeleteSyncEvents(deletedCalls: Set<CallTable.Call>) {
-      if (FeatureFlags.callDeleteSync()) {
-        deletedCalls.chunked(50).forEach {
-          ApplicationDependencies.getJobManager().add(
-            createForDelete(it)
-          )
-        }
+      deletedCalls.chunked(50).forEach {
+        ApplicationDependencies.getJobManager().add(
+          createForDelete(it)
+        )
       }
     }
 

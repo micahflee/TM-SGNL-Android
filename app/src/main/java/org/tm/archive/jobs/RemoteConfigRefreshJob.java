@@ -10,6 +10,7 @@ import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.FeatureFlags;
+import org.whispersystems.signalservice.api.RemoteConfigResult;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
 import java.util.Map;
@@ -52,8 +53,9 @@ public class RemoteConfigRefreshJob extends BaseJob {
       return;
     }
 
-    Map<String, Object> config = ApplicationDependencies.getSignalServiceAccountManager().getRemoteConfig();
-    FeatureFlags.update(config);
+    RemoteConfigResult result = ApplicationDependencies.getSignalServiceAccountManager().getRemoteConfig();
+    FeatureFlags.update(result.getConfig());
+    SignalStore.misc().setLastKnownServerTime(TimeUnit.SECONDS.toMillis(result.getServerEpochTimeSeconds()), System.currentTimeMillis());
   }
 
   @Override

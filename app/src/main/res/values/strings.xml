@@ -110,6 +110,10 @@
     <!-- BackgroundMessageRetriever -->
     <string name="BackgroundMessageRetriever_checking_for_messages">Checking for messages…</string>
 
+    <!-- Fcm notifications -->
+    <!-- Notification we show when there may be messages for you, but we cannot connect to the server to check -->
+    <string name="FcmFetchManager__you_may_have_messages">You may have new messages</string>
+
     <!-- BlockedUsersActivity -->
     <string name="BlockedUsersActivity__blocked_users">Blocked users</string>
     <string name="BlockedUsersActivity__add_blocked_user">Add blocked user</string>

@@ -34,6 +34,7 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.registration.PushChallengeRequest;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.NetworkUtil;
+import org.tm.archive.util.SignalLocalMetrics;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +64,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
                                (System.currentTimeMillis() - remoteMessage.getSentTime()),
                                remoteMessage.getPriority(),
                                remoteMessage.getOriginalPriority(),
+
                                NetworkUtil.getNetworkStatus(this)));
 
 
@@ -120,36 +122,21 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
   }
 
   private static void handleReceivedNotification(Context context, @Nullable RemoteMessage remoteMessage) {
-    boolean enqueueSuccessful = false;
-
+    boolean highPriority = remoteMessage != null && remoteMessage.getPriority() == RemoteMessage.PRIORITY_HIGH;
     try {
-      boolean highPriority         = remoteMessage != null && remoteMessage.getPriority() == RemoteMessage.PRIORITY_HIGH;
-      long    timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().getLastFcmForegroundServiceTime();
+      Log.d(TAG, String.format(Locale.US, "[handleReceivedNotification] API: %s, RemoteMessagePriority: %s", Build.VERSION.SDK_INT, remoteMessage != null ? remoteMessage.getPriority() : "n/a"));
 
-      Log.d(TAG, String.format(Locale.US, "[handleReceivedNotification] API: %s, FeatureFlag: %s, RemoteMessagePriority: %s, TimeSinceLastRefresh: %s ms", Build.VERSION.SDK_INT, FeatureFlags.useFcmForegroundService(), remoteMessage != null ? remoteMessage.getPriority() : "n/a", timeSinceLastRefresh));
-
-      Log.d(TAG, "handleReceivedNotification -> useFcmForegroundService: " + FeatureFlags.useFcmForegroundService());
-      if (highPriority && FeatureFlags.useFcmForegroundService()) {
-        Log.d(TAG, "handleReceivedNotification -> 1");
-        enqueueSuccessful = FcmFetchManager.enqueue(context, true);
-        SignalStore.misc().setLastFcmForegroundServiceTime(System.currentTimeMillis());
-      } else if (highPriority && Build.VERSION.SDK_INT >= 31 && timeSinceLastRefresh > FCM_FOREGROUND_INTERVAL) {
-        Log.d(TAG, "handleReceivedNotification -> 2");
-        enqueueSuccessful = FcmFetchManager.enqueue(context, true);
-        SignalStore.misc().setLastFcmForegroundServiceTime(System.currentTimeMillis());
-      } else if (highPriority || Build.VERSION.SDK_INT < 26 || remoteMessage == null) {
-        Log.d(TAG, "handleReceivedNotification -> 3");
-        enqueueSuccessful = FcmFetchManager.enqueue(context, false);
+      if (highPriority) {
+        FcmFetchManager.startForegroundService(context);
+      } else if (Build.VERSION.SDK_INT < 26) {
+        FcmFetchManager.startBackgroundService(context);
       }
     } catch (Exception e) {
       Log.w(TAG, "Failed to start service.", e);
-      enqueueSuccessful = false;
+      SignalLocalMetrics.FcmServiceStartFailure.onFcmFailedToStart();
     }
-    Log.d(TAG, "handleReceivedNotification -> enqueueSuccessful: " + enqueueSuccessful);
-    if (!enqueueSuccessful) {
-      Log.w(TAG, "Unable to start service. Falling back to legacy approach.");
-      FcmFetchManager.tryLegacyFallback(context);
-    }
+
+    FcmFetchManager.enqueueFetch(context, highPriority);
   }
 
   private static void handleRegistrationPushChallenge(@NonNull String challenge) {

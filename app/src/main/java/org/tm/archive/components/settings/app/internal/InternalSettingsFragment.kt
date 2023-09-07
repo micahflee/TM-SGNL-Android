@@ -585,16 +585,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         }
       )
 
-      if (FeatureFlags.chatFilters()) {
-        dividerPref()
-        sectionHeaderPref(DSLSettingsText.from("Chat Filters"))
-        clickPref(
-          title = DSLSettingsText.from("Reset pull to refresh tip count"),
-          onClick = {
-            SignalStore.uiHints().resetNeverDisplayPullToRefreshCount()
-          }
-        )
-      }
+      dividerPref()
+      sectionHeaderPref(DSLSettingsText.from("Chat Filters"))
+      clickPref(
+        title = DSLSettingsText.from("Reset pull to refresh tip count"),
+        onClick = {
+          SignalStore.uiHints().resetNeverDisplayPullToRefreshCount()
+        }
+      )
 
       dividerPref()
       switchPref(

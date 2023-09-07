@@ -11,6 +11,7 @@ public final class NotificationIds {
   public static final int MESSAGE_SUMMARY                = 1338;
   public static final int APPLICATION_MIGRATION          = 4242;
   public static final int SMS_IMPORT_COMPLETE            = 31337;
+  public static final int MAY_HAVE_MESSAGES_NOTIFICATION_ID = 31365;
   public static final int PRE_REGISTRATION_SMS           = 5050;
   public static final int THREAD                         = 50000;
   public static final int INTERNAL_ERROR                 = 258069;

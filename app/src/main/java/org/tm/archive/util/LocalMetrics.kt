@@ -1,5 +1,6 @@
 package org.tm.archive.util
 
+import android.os.SystemClock
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
@@ -8,6 +9,7 @@ import org.tm.archive.database.model.LocalMetricsEvent
 import org.tm.archive.database.model.LocalMetricsSplit
 import org.tm.archive.dependencies.ApplicationDependencies
 import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
 
 /**
  * A class for keeping track of local-only metrics.
@@ -19,7 +21,7 @@ import java.util.concurrent.Executor
  *  - split("mySpecialId", "enqueue-job")
  *  - split("mySpecialId", "job-prep")
  *  - split("mySpecialId", "network")
- *  - split("mySpecialId", "ui-refresh")
+ *  - split("mySpecialId", "ui-refresh")NetworkUtil
  *  - end("mySpecialId")
  *
  * These metrics are only ever included in debug logs in an aggregate fashion (i.e. p50, p90, p99) and are never automatically uploaded anywhere.
@@ -44,15 +46,17 @@ object LocalMetrics {
    * @param id A constant that should be unique to this *specific event*. You'll use this same id when calling [split] and [end]. e.g. "message-send-1234"
    * @param name The name of the event. Does not need to be unique. e.g. "message-send"
    */
-  fun start(id: String, name: String) {
-    val time = System.currentTimeMillis()
+  @JvmOverloads
+  fun start(id: String, name: String, timeunit: TimeUnit = TimeUnit.MILLISECONDS) {
+    val time = SystemClock.elapsedRealtimeNanos()
 
     executor.execute {
       eventsById[id] = LocalMetricsEvent(
         createdAt = System.currentTimeMillis(),
         eventId = id,
         eventName = name,
-        splits = mutableListOf()
+        splits = mutableListOf(),
+        timeunit = timeunit
       )
       lastSplitTimeById[id] = time
     }
@@ -65,13 +69,33 @@ object LocalMetrics {
    * If an event with the provided ID does not exist, this is effectively a no-op.
    */
   fun split(id: String, split: String) {
-    val time = System.currentTimeMillis()
+    val time = SystemClock.elapsedRealtimeNanos()
 
     executor.execute {
       val lastTime: Long? = lastSplitTimeById[id]
       val splitDoesNotExist: Boolean = eventsById[id]?.splits?.none { it.name == split } ?: true
       if (lastTime != null && splitDoesNotExist) {
-        eventsById[id]?.splits?.add(LocalMetricsSplit(split, time - lastTime))
+        val event = eventsById[id]
+        event?.splits?.add(LocalMetricsSplit(split, time - lastTime, event.timeunit))
+        lastSplitTimeById[id] = time
+      }
+    }
+  }
+
+  /**
+   * Marks a split for an event. Updates the last time, so future splits will have duration relative to this event.
+   *
+   * If an event with the provided ID does not exist, this is effectively a no-op.
+   */
+  @JvmOverloads
+  fun splitWithDuration(id: String, split: String, duration: Long, timeunit: TimeUnit = TimeUnit.MILLISECONDS) {
+    val time = SystemClock.elapsedRealtimeNanos()
+
+    executor.execute {
+      val lastTime: Long? = lastSplitTimeById[id]
+      val splitDoesNotExist: Boolean = eventsById[id]?.splits?.none { it.name == split } ?: true
+      if (lastTime != null && splitDoesNotExist) {
+        eventsById[id]?.splits?.add(LocalMetricsSplit(split, TimeUnit.NANOSECONDS.convert(duration, timeunit)))
         lastSplitTimeById[id] = time
       }
     }
