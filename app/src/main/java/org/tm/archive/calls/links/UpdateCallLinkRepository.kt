@@ -10,6 +10,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.ringrtc.CallLinkState
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.jobs.CallLinkUpdateSendJob
 import org.tm.archive.service.webrtc.links.CallLinkCredentials
 import org.tm.archive.service.webrtc.links.SignalCallLinkManager
 import org.tm.archive.service.webrtc.links.UpdateCallLinkResult
@@ -58,6 +59,7 @@ class UpdateCallLinkRepository(
     return { result ->
       if (result is UpdateCallLinkResult.Success) {
         SignalDatabase.callLinks.updateCallLinkState(credentials.roomId, result.state)
+        ApplicationDependencies.getJobManager().add(CallLinkUpdateSendJob(credentials.roomId))
       }
     }
   }

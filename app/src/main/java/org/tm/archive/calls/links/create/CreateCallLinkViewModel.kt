@@ -9,6 +9,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
@@ -16,7 +17,6 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.ringrtc.CallLinkState.Restrictions
 import org.tm.archive.calls.links.CallLinks
 import org.tm.archive.calls.links.UpdateCallLinkRepository
-import org.tm.archive.conversation.colors.AvatarColor
 import org.tm.archive.database.CallLinkTable
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.service.webrtc.links.CallLinkCredentials
@@ -29,7 +29,6 @@ class CreateCallLinkViewModel(
   private val mutationRepository: UpdateCallLinkRepository = UpdateCallLinkRepository()
 ) : ViewModel() {
   private val credentials = CallLinkCredentials.generate()
-  private val avatarColor = AvatarColor.random()
   private val _callLink: MutableState<CallLinkTable.CallLink> = mutableStateOf(
     CallLinkTable.CallLink(
       recipientId = RecipientId.UNKNOWN,
@@ -40,8 +39,7 @@ class CreateCallLinkViewModel(
         restrictions = Restrictions.NONE,
         revoked = false,
         expiration = Instant.MAX
-      ),
-      avatarColor = avatarColor
+      )
     )
   )
 
@@ -63,7 +61,8 @@ class CreateCallLinkViewModel(
   }
 
   fun commitCallLink(): Single<EnsureCallLinkCreatedResult> {
-    return repository.ensureCallLinkCreated(credentials, avatarColor)
+    return repository.ensureCallLinkCreated(credentials)
+      .observeOn(AndroidSchedulers.mainThread())
   }
 
   fun setApproveAllMembers(approveAllMembers: Boolean): Single<UpdateCallLinkResult> {
@@ -77,10 +76,12 @@ class CreateCallLinkViewModel(
           is EnsureCallLinkCreatedResult.Failure -> Single.just(UpdateCallLinkResult.Failure(it.failure.status))
         }
       }
+      .observeOn(AndroidSchedulers.mainThread())
   }
 
   fun toggleApproveAllMembers(): Single<UpdateCallLinkResult> {
     return setApproveAllMembers(_callLink.value.state.restrictions != Restrictions.ADMIN_APPROVAL)
+      .observeOn(AndroidSchedulers.mainThread())
   }
 
   fun setCallName(callName: String): Single<UpdateCallLinkResult> {
@@ -94,5 +95,6 @@ class CreateCallLinkViewModel(
           is EnsureCallLinkCreatedResult.Failure -> Single.just(UpdateCallLinkResult.Failure(it.failure.status))
         }
       }
+      .observeOn(AndroidSchedulers.mainThread())
   }
 }

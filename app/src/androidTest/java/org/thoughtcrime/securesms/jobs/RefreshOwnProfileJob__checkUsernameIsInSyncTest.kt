@@ -12,6 +12,7 @@ import org.signal.libsignal.usernames.Username
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.InstrumentationApplicationDependencyProvider
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.testing.Delete
 import org.tm.archive.testing.Get
 import org.tm.archive.testing.Put
 import org.tm.archive.testing.SignalActivityRule
@@ -36,6 +37,11 @@ class RefreshOwnProfileJob__checkUsernameIsInSyncTest {
 
   @Test
   fun givenNoLocalUsername_whenICheckUsernameIsInSync_thenIExpectNoFailures() {
+    // GIVEN
+    InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
+      Delete("/v1/accounts/username_hash") { MockResponse().success() }
+    )
+
     // WHEN
     RefreshOwnProfileJob.checkUsernameIsInSync()
   }

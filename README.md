@@ -6,7 +6,7 @@ Signal uses your phone's data connection (WiFi/3G/4G/5G) to communicate securely
 
 Currently available on the Play Store and [signal.org](https://signal.org/android/apk/).
 
-<a href='https://play.google.com/store/apps/details?id=org.thoughtcrime.securesms&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' height='80px'/></a>
+<a href='https://play.google.com/store/apps/details?id=org.tm.archive&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' height='80px'/></a>
 
 ## Contributing Bug reports
 We use GitHub for bug tracking. Please search the existing issues for your bug and create a new one if the issue is not yet tracked!
@@ -17,7 +17,7 @@ https://github.com/signalapp/Signal-Android/issues
 Want to live life on the bleeding edge and help out with testing?
 
 You can subscribe to Signal Android Beta releases here:
-https://play.google.com/apps/testing/org.thoughtcrime.securesms
+https://play.google.com/apps/testing/org.tm.archive
 
 If you're interested in a life of peace and tranquility, stick with the standard releases.
 
@@ -61,7 +61,6 @@ Licensed under the GNU AGPLv3: https://www.gnu.org/licenses/agpl-3.0.html
 Google Play and the Google Play logo are trademarks of Google LLC.
 
 
-
 //**TM_SA**//
 Signal – New Base-line
 1.	Download the Signal official open source from this link:
@@ -87,19 +86,18 @@ intune
 1. add dependencies using //**TM_SA**//
 2. add MAMSDK folder with aar and jar
 3. 1. register the app to intune server
-   2. https://aad.portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview3. Azure Active Directory > App registrations > New Registration
-   3. Authentication, add platform -> add uri -> package name. 
-   4. then add auth-config file using the View button that show it. put it in resource-> raw
-   5. API permissions...
+2. https://aad.portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview3. Azure Active Directory > App registrations > New Registration
+3. Authentication, add platform -> add uri -> package name.
+4. then add auth-config file using the View button that show it. put it in resource-> raw
+5. API permissions...
 
 4. 1. https://aad.portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps
-   2. then, App configuration policies -> create app configuration policy -> manage apps -> Settings -> add the values(managerID etc)
-   3. Then, Assignments -> include groups you want or assign everyone.
+2. then, App configuration policies -> create app configuration policy -> manage apps -> Settings -> add the values(managerID etc)
+3. Then, Assignments -> include groups you want or assign everyone.
 
 5. http://everythingaboutintune.com/2021/07/guide-for-integrating-intune-sdk-and-msal-to-lob-application/
 
 https://www.youtube.com/watch?v=1AyGpcdDRkY&t=741s&ab_channel=EverythingAboutIntune
 
 https://github.com/msintuneappsdk/Taskr-Sample-Intune-Android-App#readme
-
 

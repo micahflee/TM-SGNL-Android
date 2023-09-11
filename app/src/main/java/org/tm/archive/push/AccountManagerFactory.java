@@ -13,8 +13,8 @@ import org.tm.archive.BuildConfig;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
-import org.whispersystems.signalservice.api.push.ACI;
-import org.whispersystems.signalservice.api.push.PNI;
+import org.whispersystems.signalservice.api.push.ServiceId.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId.PNI;
 
 public class AccountManagerFactory {
 

@@ -18,6 +18,8 @@ import org.tm.archive.contactshare.Contact
 import org.tm.archive.contactshare.ContactUtil
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.DirectoryRefreshJob
+import org.tm.archive.recipients.Recipient
+import org.tm.archive.recipients.RecipientExporter
 
 /**
  * Wraps up the "Add shared contact to contact list" into a contract. The flow here is a little
@@ -44,7 +46,31 @@ class AddToContactsContract : ActivityResultContract<Intent, Unit>() {
       launcher: ActivityResultLauncher<Intent>,
       contact: Contact
     ): Disposable {
-      return Single.fromCallable { ContactUtil.buildAddToContactsIntent(fragment.requireContext(), contact) }
+      return launchIntent(
+        fragment = fragment,
+        launcher = launcher,
+        intentProducer = Single.fromCallable { ContactUtil.buildAddToContactsIntent(fragment.requireContext(), contact) }
+      )
+    }
+
+    fun createIntentAndLaunch(
+      fragment: Fragment,
+      launcher: ActivityResultLauncher<Intent>,
+      recipient: Recipient
+    ): Disposable {
+      return launchIntent(
+        fragment = fragment,
+        launcher = launcher,
+        intentProducer = Single.just(RecipientExporter.export(recipient).asAddContactIntent())
+      )
+    }
+
+    private fun launchIntent(
+      fragment: Fragment,
+      launcher: ActivityResultLauncher<Intent>,
+      intentProducer: Single<Intent>
+    ): Disposable {
+      return intentProducer
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeBy {

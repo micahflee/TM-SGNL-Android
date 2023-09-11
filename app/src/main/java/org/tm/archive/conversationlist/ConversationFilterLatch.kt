@@ -6,5 +6,5 @@ package org.tm.archive.conversationlist
  */
 enum class ConversationFilterLatch {
   SET,
-  RESET;
+  RESET
 }

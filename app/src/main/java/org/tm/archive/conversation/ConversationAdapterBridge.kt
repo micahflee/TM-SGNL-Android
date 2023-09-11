@@ -12,6 +12,12 @@ import org.tm.archive.conversation.mutiselect.MultiselectPart
  * shared decorators and other utils.
  */
 interface ConversationAdapterBridge {
+  companion object {
+    const val PAYLOAD_TIMESTAMP = 0
+    const val PAYLOAD_NAME_COLORS = 1
+    const val PAYLOAD_SELECTED = 2
+  }
+
   fun hasNoConversationMessages(): Boolean
   fun getConversationMessage(position: Int): ConversationMessage?
   fun consumePulseRequest(): PulseRequest?

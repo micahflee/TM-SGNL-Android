@@ -7,6 +7,7 @@ import org.signal.core.util.Stopwatch
 import org.signal.core.util.logging.Log
 import org.tm.archive.keyvalue.SignalStore
 
+@Suppress("ClassName")
 object V168_SingleMessageTableMigration : SignalDatabaseMigration {
   private val TAG = Log.tag(V168_SingleMessageTableMigration::class.java)
 

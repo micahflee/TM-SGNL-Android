@@ -12,10 +12,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import org.tm.archive.R;
 import org.tm.archive.components.spoiler.SpoilerAnnotation;
+import org.tm.archive.dependencies.ApplicationDependencies;
 
 import java.lang.ref.WeakReference;
 
@@ -114,6 +116,11 @@ public class LongClickMovementMethod extends LinkMovementMethod {
       return gestureDetector.onTouchEvent(event);
     }
     return super.onTouchEvent(widget, buffer, event);
+  }
+
+  /** This signature is available in the base class and can lead to the wrong instance being returned. */
+  public static LongClickMovementMethod getInstance() {
+    return getInstance(ApplicationDependencies.getApplication());
   }
 
   public static LongClickMovementMethod getInstance(Context context) {

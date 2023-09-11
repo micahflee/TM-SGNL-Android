@@ -5,6 +5,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LiveData;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.tm.archive.groups.LiveGroup;
 import org.tm.archive.groups.ui.GroupMemberEntry;
 import org.tm.archive.groups.ui.GroupMemberListView;
@@ -26,7 +28,7 @@ public final class GroupMembersDialog {
   }
 
   public void display() {
-    AlertDialog dialog = new AlertDialog.Builder(fragmentActivity)
+    AlertDialog dialog = new MaterialAlertDialogBuilder(fragmentActivity)
                                         .setTitle(R.string.ConversationActivity_group_members)
                                         .setIcon(R.drawable.ic_group_24)
                                         .setCancelable(true)

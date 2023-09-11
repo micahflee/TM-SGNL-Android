@@ -17,7 +17,6 @@ import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -107,7 +106,7 @@ public class RefreshOwnProfileJob extends BaseJob {
       return;
     }
 
-    if (SignalStore.kbsValues().hasPin() && !SignalStore.kbsValues().hasOptedOut() && SignalStore.storageService().getLastSyncTime() == 0) {
+    if (SignalStore.svr().hasPin() && !SignalStore.svr().hasOptedOut() && SignalStore.storageService().getLastSyncTime() == 0) {
       Log.i(TAG, "Registered with PIN but haven't completed storage sync yet.");
       return;
     }

@@ -1,6 +1,5 @@
 package org.tm.archive.payments.preferences;
 
-import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,7 +30,7 @@ import org.tm.archive.components.reminder.ReminderView;
 import org.tm.archive.components.settings.app.AppSettingsActivity;
 import org.tm.archive.help.HelpFragment;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.lock.v2.CreateKbsPinActivity;
+import org.tm.archive.lock.v2.CreateSvrPinActivity;
 import org.tm.archive.payments.FiatMoneyUtil;
 import org.tm.archive.payments.MoneyView;
 import org.tm.archive.payments.backup.RecoveryPhraseStates;
@@ -319,7 +318,7 @@ public class PaymentsHomeFragment extends LoggingFragment {
   }
 
   private void showPaymentsDisabledDialog() {
-    new AlertDialog.Builder(requireActivity())
+    new MaterialAlertDialogBuilder(requireActivity())
                    .setMessage(R.string.PaymentsHomeFragment__payments_not_available)
                    .setPositiveButton(android.R.string.ok, null)
                    .show();
@@ -369,7 +368,7 @@ public class PaymentsHomeFragment extends LoggingFragment {
 
     @Override
     public void onUpdatePin() {
-      startActivityForResult(CreateKbsPinActivity.getIntentForPinChangeFromSettings(requireContext()), CreateKbsPinActivity.REQUEST_NEW_PIN);
+      startActivityForResult(CreateSvrPinActivity.getIntentForPinChangeFromSettings(requireContext()), CreateSvrPinActivity.REQUEST_NEW_PIN);
     }
 
     @Override

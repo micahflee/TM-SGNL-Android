@@ -7,7 +7,6 @@ import android.view.View
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import com.google.android.material.appbar.AppBarLayout
-import org.tm.archive.util.FeatureFlags
 
 class ConversationFilterBehavior(context: Context, attributeSet: AttributeSet) : AppBarLayout.Behavior(context, attributeSet) {
 

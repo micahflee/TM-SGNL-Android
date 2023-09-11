@@ -238,6 +238,20 @@ public class AttachmentManager {
     return returnResult;
   }
 
+  public void setLocation(@NonNull final SignalPlace place,
+                          @NonNull final Uri thumbnailUri)
+  {
+    inflateStub();
+
+    mapView.display(place);
+
+    attachmentViewStub.get().setVisibility(View.VISIBLE);
+    removableMediaView.display(mapView, false);
+    LocationSlide locationSlide = new LocationSlide(context, thumbnailUri, BlobProvider.getFileSize(thumbnailUri), place);
+    setSlide(locationSlide);
+    attachmentListener.onAttachmentChanged();
+  }
+
   @SuppressLint("StaticFieldLeak")
   public ListenableFuture<Boolean> setMedia(@NonNull final GlideRequests glideRequests,
                                             @NonNull final Uri uri,
@@ -388,14 +402,7 @@ public class AttachmentManager {
   }
 
   public static void selectDocument(Fragment fragment, int requestCode) {
-    //**TM_SA**//Start
-    Permissions.with(fragment)
-               .request(Manifest.permission.READ_EXTERNAL_STORAGE)
-               .ifNecessary()
-               .withPermanentDenialDialog(fragment.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
-               .onAllGranted(() -> selectMediaType(fragment, "*/*", null, requestCode))
-               .execute();
-    //**TM_SA**//End
+    selectMediaType(fragment, "*/*", null, requestCode);
   }
 
   public static void selectGallery(Fragment fragment, int requestCode, @NonNull Recipient recipient, @NonNull CharSequence body, @NonNull MessageSendType messageSendType, boolean hasQuote) {
@@ -482,8 +489,7 @@ public class AttachmentManager {
         .show();
   }
 
-  //**TM_SA**//Replace private tp public
-  public @Nullable Uri getSlideUri() {
+  private @Nullable Uri getSlideUri() {
     return slide.isPresent() ? slide.get().getUri() : null;
   }
 

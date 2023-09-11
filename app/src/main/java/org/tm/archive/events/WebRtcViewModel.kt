@@ -5,6 +5,8 @@ import org.tm.archive.components.webrtc.BroadcastVideoSink
 import org.tm.archive.events.CallParticipant.Companion.createLocal
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.service.webrtc.CallLinkDisconnectReason
+import org.tm.archive.service.webrtc.PendingParticipantCollection
 import org.tm.archive.service.webrtc.state.WebRtcServiceState
 import org.tm.archive.webrtc.audio.SignalAudioManager
 import org.webrtc.PeerConnection
@@ -54,6 +56,7 @@ class WebRtcViewModel(state: WebRtcServiceState) {
     CONNECTING,
     RECONNECTING,
     CONNECTED,
+    CONNECTED_AND_PENDING,
     CONNECTED_AND_JOINING,
     CONNECTED_AND_JOINED;
 
@@ -66,7 +69,7 @@ class WebRtcViewModel(state: WebRtcServiceState) {
     val isConnected: Boolean
       get() {
         return when (this) {
-          CONNECTED, CONNECTED_AND_JOINING, CONNECTED_AND_JOINED -> true
+          CONNECTED, CONNECTED_AND_JOINING, CONNECTED_AND_JOINED, CONNECTED_AND_PENDING -> true
           else -> false
         }
       }
@@ -92,6 +95,9 @@ class WebRtcViewModel(state: WebRtcServiceState) {
   val identityChangedParticipants: Set<RecipientId> = state.callInfoState.identityChangedRecipients
   val remoteDevicesCount: OptionalLong = state.callInfoState.remoteDevicesCount
   val participantLimit: Long? = state.callInfoState.participantLimit
+  val pendingParticipants: PendingParticipantCollection = state.callInfoState.pendingParticipants
+  val isCallLink: Boolean = state.callInfoState.callRecipient.isCallLink
+  val callLinkDisconnectReason: CallLinkDisconnectReason? = state.callInfoState.callLinkDisconnectReason
 
   @get:JvmName("shouldRingGroup")
   val ringGroup: Boolean = state.getCallSetupState(state.callInfoState.activePeer?.callId).ringGroup

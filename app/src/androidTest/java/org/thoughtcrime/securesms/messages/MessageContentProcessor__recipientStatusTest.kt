@@ -1,0 +1,84 @@
+package org.tm.archive.messages
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.tm.archive.database.GroupReceiptTable
+import org.tm.archive.database.SignalDatabase
+import org.tm.archive.database.model.toProtoByteString
+import org.tm.archive.messages.SignalServiceProtoUtil.buildWith
+import org.tm.archive.testing.GroupTestingUtils
+import org.tm.archive.testing.GroupTestingUtils.asMember
+import org.tm.archive.testing.MessageContentFuzzer
+import org.tm.archive.testing.SignalActivityRule
+import org.tm.archive.testing.assertIs
+import org.tm.archive.util.MessageTableTestUtils
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.DataMessage
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContextV2
+
+@Suppress("ClassName")
+@RunWith(AndroidJUnit4::class)
+class MessageContentProcessor__recipientStatusTest {
+
+  @get:Rule
+  val harness = SignalActivityRule()
+
+  private lateinit var processor: MessageContentProcessor
+  private var envelopeTimestamp: Long = 0
+
+  @Before
+  fun setup() {
+    processor = MessageContentProcessor(harness.context)
+    envelopeTimestamp = System.currentTimeMillis()
+  }
+
+  /**
+   * Process sync group sent text transcript with partial send and then process second sync with recipient update
+   * flag set to true with the rest of the send completed.
+   */
+  @Test
+  fun syncGroupSentTextMessageWithRecipientUpdateFollowup() {
+    val (groupId, masterKey, groupRecipientId) = GroupTestingUtils.insertGroup(revision = 0, harness.self.asMember(), harness.others[0].asMember(), harness.others[1].asMember())
+    val groupContextV2 = GroupContextV2.newBuilder().setRevision(0).setMasterKey(masterKey.serialize().toProtoByteString()).build()
+
+    val initialTextMessage = DataMessage.newBuilder().buildWith {
+      body = MessageContentFuzzer.string()
+      groupV2 = groupContextV2
+      timestamp = envelopeTimestamp
+    }
+
+    processor.process(
+      envelope = MessageContentFuzzer.envelope(envelopeTimestamp),
+      content = MessageContentFuzzer.syncSentTextMessage(initialTextMessage, deliveredTo = listOf(harness.others[0])),
+      metadata = MessageContentFuzzer.envelopeMetadata(harness.self.id, harness.self.id, groupId),
+      serverDeliveredTimestamp = MessageContentFuzzer.fuzzServerDeliveredTimestamp(envelopeTimestamp)
+    )
+
+    val threadId = SignalDatabase.threads.getThreadIdFor(groupRecipientId)!!
+    val firstSyncMessages = MessageTableTestUtils.getMessages(threadId)
+    val firstMessageId = firstSyncMessages[0].id
+    val firstReceiptInfo = SignalDatabase.groupReceipts.getGroupReceiptInfo(firstMessageId)
+
+    processor.process(
+      envelope = MessageContentFuzzer.envelope(envelopeTimestamp),
+      content = MessageContentFuzzer.syncSentTextMessage(initialTextMessage, deliveredTo = listOf(harness.others[0], harness.others[1]), recipientUpdate = true),
+      metadata = MessageContentFuzzer.envelopeMetadata(harness.self.id, harness.self.id, groupId),
+      serverDeliveredTimestamp = MessageContentFuzzer.fuzzServerDeliveredTimestamp(envelopeTimestamp)
+    )
+
+    val secondSyncMessages = MessageTableTestUtils.getMessages(threadId)
+    val secondReceiptInfo = SignalDatabase.groupReceipts.getGroupReceiptInfo(firstMessageId)
+
+    firstSyncMessages.size assertIs 1
+    firstSyncMessages[0].body assertIs initialTextMessage.body
+    firstReceiptInfo.first { it.recipientId == harness.others[0] }.status assertIs GroupReceiptTable.STATUS_UNDELIVERED
+    firstReceiptInfo.first { it.recipientId == harness.others[1] }.status assertIs GroupReceiptTable.STATUS_UNKNOWN
+
+    secondSyncMessages.size assertIs 1
+    secondSyncMessages[0].body assertIs initialTextMessage.body
+    secondReceiptInfo.first { it.recipientId == harness.others[0] }.status assertIs GroupReceiptTable.STATUS_UNDELIVERED
+    secondReceiptInfo.first { it.recipientId == harness.others[1] }.status assertIs GroupReceiptTable.STATUS_UNDELIVERED
+  }
+}

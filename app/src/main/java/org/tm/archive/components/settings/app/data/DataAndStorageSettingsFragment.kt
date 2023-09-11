@@ -12,7 +12,7 @@ import org.tm.archive.mms.SentMediaQuality
 import org.tm.archive.util.Util
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.navigation.safeNavigate
-import org.tm.archive.webrtc.CallBandwidthMode
+import org.tm.archive.webrtc.CallDataMode
 import kotlin.math.abs
 
 class DataAndStorageSettingsFragment : DSLSettingsFragment(R.string.preferences__data_and_storage) {
@@ -22,7 +22,7 @@ class DataAndStorageSettingsFragment : DSLSettingsFragment(R.string.preferences_
 
   private val sentMediaQualityLabels by lazy { SentMediaQuality.getLabels(requireContext()) }
 
-  private val callBandwidthLabels by lazy { resources.getStringArray(R.array.pref_data_and_storage_call_bandwidth_values) }
+  private val callDataModeLabels by lazy { resources.getStringArray(R.array.pref_data_and_storage_call_data_mode_values) }
 
   private lateinit var viewModel: DataAndStorageSettingsViewModel
 
@@ -107,10 +107,10 @@ class DataAndStorageSettingsFragment : DSLSettingsFragment(R.string.preferences_
 
       radioListPref(
         title = DSLSettingsText.from(R.string.preferences_data_and_storage__use_less_data_for_calls),
-        listItems = callBandwidthLabels,
-        selected = abs(state.callBandwidthMode.code - 2),
+        listItems = callDataModeLabels,
+        selected = abs(state.callDataMode.code - 2),
         onSelected = {
-          viewModel.setCallBandwidthMode(CallBandwidthMode.fromCode(abs(it - 2)))
+          viewModel.setCallDataMode(CallDataMode.fromCode(abs(it - 2)))
         }
       )
 

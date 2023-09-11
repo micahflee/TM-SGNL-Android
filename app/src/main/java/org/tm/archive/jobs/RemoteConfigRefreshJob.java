@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -13,7 +12,6 @@ import org.tm.archive.util.FeatureFlags;
 import org.whispersystems.signalservice.api.RemoteConfigResult;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class RemoteConfigRefreshJob extends BaseJob {

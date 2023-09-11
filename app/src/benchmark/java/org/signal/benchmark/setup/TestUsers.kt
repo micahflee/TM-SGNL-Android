@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import org.signal.benchmark.DummyAccountManagerFactory
+import org.signal.core.util.concurrent.safeBlockingGet
 import org.signal.libsignal.protocol.SignalProtocolAddress
 import org.tm.archive.crypto.IdentityKeyUtil
 import org.tm.archive.crypto.MasterSecretUtil
@@ -22,7 +23,7 @@ import org.tm.archive.registration.RegistrationUtil
 import org.tm.archive.registration.VerifyResponse
 import org.tm.archive.util.Util
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile
-import org.whispersystems.signalservice.api.push.ACI
+import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
 import org.whispersystems.signalservice.internal.ServiceResponse
 import org.whispersystems.signalservice.internal.ServiceResponseProcessor
@@ -43,6 +44,9 @@ object TestUsers {
     val preferences: SharedPreferences = application.getSharedPreferences(MasterSecretUtil.PREFERENCES_NAME, 0)
     preferences.edit().putBoolean("passphrase_initialized", true).commit()
 
+    SignalStore.account().generateAciIdentityKeyIfNecessary()
+    SignalStore.account().generatePniIdentityKeyIfNecessary()
+
     val registrationRepository = RegistrationRepository(application)
     val registrationData = RegistrationData(
       code = "123123",
@@ -54,16 +58,26 @@ object TestUsers {
       pniRegistrationId = registrationRepository.pniRegistrationId,
       recoveryPassword = "asdfasdfasdfasdf"
     )
-    val verifyResponse = VerifyResponse(VerifyAccountResponse(UUID.randomUUID().toString(), UUID.randomUUID().toString(), false), null, null)
+
+    val verifyResponse = VerifyResponse(
+      VerifyAccountResponse(UUID.randomUUID().toString(), UUID.randomUUID().toString(), false),
+      masterKey = null,
+      pin = null,
+      aciPreKeyCollection = RegistrationRepository.generateSignedAndLastResortPreKeys(SignalStore.account().aciIdentityKey, SignalStore.account().aciPreKeys),
+      pniPreKeyCollection = RegistrationRepository.generateSignedAndLastResortPreKeys(SignalStore.account().aciIdentityKey, SignalStore.account().pniPreKeys)
+    )
+
     AccountManagerFactory.setInstance(DummyAccountManagerFactory())
+
     val response: ServiceResponse<VerifyResponse> = registrationRepository.registerAccount(
       registrationData,
       verifyResponse,
       false
-    ).blockingGet()
+    ).safeBlockingGet()
+
     ServiceResponseProcessor.DefaultProcessor(response).resultOrThrow
 
-    SignalStore.kbsValues().optOut()
+    SignalStore.svr().optOut()
     RegistrationUtil.maybeMarkRegistrationComplete()
     SignalDatabase.recipients.setProfileName(Recipient.self().id, ProfileName.fromParts("Tester", "McTesterson"))
 

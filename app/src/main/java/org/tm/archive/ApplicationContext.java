@@ -18,7 +18,6 @@ package org.tm.archive;
 
 import android.app.Application;
 import android.content.Context;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,11 +36,11 @@ import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveLogger;
-import org.archiver.ArchiveUtil;
 import org.archiver.FCMConnector;
 import org.conscrypt.Conscrypt;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.aesgcmprovider.AesGcmProvider;
+import org.signal.core.util.MemoryTracker;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.AndroidLogger;
 import org.signal.core.util.logging.Log;
@@ -59,7 +58,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.dependencies.ApplicationDependencyProvider;
 import org.tm.archive.emoji.EmojiSource;
 import org.tm.archive.emoji.JumboEmoji;
-import org.tm.archive.gcm.FcmJobService;
+import org.tm.archive.gcm.FcmFetchManager;
 import org.tm.archive.jobs.AccountConsistencyWorkerJob;
 import org.tm.archive.jobs.CheckServiceReachabilityJob;
 import org.tm.archive.jobs.DownloadLatestEmojiDataJob;
@@ -71,8 +70,7 @@ import org.tm.archive.jobs.MultiDeviceContactUpdateJob;
 import org.tm.archive.jobs.PnpInitializeDevicesJob;
 import org.tm.archive.jobs.PreKeysSyncJob;
 import org.tm.archive.jobs.ProfileUploadJob;
-import org.tm.archive.jobs.PushNotificationReceiveJob;
-import org.tm.archive.jobs.RefreshKbsCredentialsJob;
+import org.tm.archive.jobs.RefreshSvrCredentialsJob;
 import org.tm.archive.jobs.RetrieveProfileJob;
 import org.tm.archive.jobs.RetrieveRemoteAnnouncementsJob;
 import org.tm.archive.jobs.StoryOnboardingDownloadJob;
@@ -81,7 +79,7 @@ import org.tm.archive.keyvalue.KeepMessagesDuration;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.logging.CustomSignalProtocolLogger;
 import org.tm.archive.logging.PersistentLogger;
-import org.tm.archive.messageprocessingalarm.MessageProcessReceiver;
+import org.tm.archive.messageprocessingalarm.RoutineMessageFetchReceiver;
 import org.tm.archive.migrations.ApplicationMigrations;
 import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.SignalGlideComponents;
@@ -103,6 +101,8 @@ import org.tm.archive.util.AppForegroundObserver;
 import org.tm.archive.util.AppStartup;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.FeatureFlags;
+import org.tm.archive.util.PowerManagerCompat;
+import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.SignalLocalMetrics;
 import org.tm.archive.util.SignalUncaughtExceptionHandler;
 import org.tm.archive.util.TextSecurePreferences;
@@ -137,11 +137,9 @@ import static org.archiver.ArchiveConstants.isTestMode;
 public class ApplicationContext extends MultiDexApplication implements AppForegroundObserver.Listener {
 
   private static final String TAG = Log.tag(ApplicationContext.class);
-
-  private static Application mApplicationContext;//**TM_SA**//
-
+  private static Application      mApplicationContext;//**TM_SA**//
   @VisibleForTesting
-  protected PersistentLogger persistentLogger;
+  protected      PersistentLogger persistentLogger;
 
   public static ApplicationContext getInstance(Context context) {
     return (ApplicationContext)context.getApplicationContext();
@@ -205,7 +203,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                             .addNonBlocking(PreKeysSyncJob::enqueueIfNeeded)
                             .addNonBlocking(this::initializePeriodicTasks)
                             .addNonBlocking(this::initializeCircumvention)
-                            .addNonBlocking(this::initializePendingMessages)
                             .addNonBlocking(this::initializeCleanup)
                             .addNonBlocking(this::initializeGlideCodecs)
                             .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)
@@ -219,7 +216,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                             .addPostRender(this::initializeExpiringMessageManager)
                             .addPostRender(() -> SignalStore.settings().setDefaultSms(Util.isDefaultSmsProvider(this)))
                             .addPostRender(this::initializeTrimThreadsByDateManager)
-                            .addPostRender(RefreshKbsCredentialsJob::enqueueIfNecessary)
+                            .addPostRender(RefreshSvrCredentialsJob::enqueueIfNecessary)
                             .addPostRender(() -> DownloadLatestEmojiDataJob.scheduleIfNecessary(this))
                             .addPostRender(EmojiSearchIndexDownloadJob::scheduleIfNecessary)
                             .addPostRender(() -> SignalDatabase.messageLog().trimOldMessages(System.currentTimeMillis(), FeatureFlags.retryRespondMaxAge()))
@@ -240,7 +237,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     SignalLocalMetrics.ColdStart.onApplicationCreateFinished();
     Tracer.getInstance().end("Application#onCreate()");
 
-
     //**TM_SA**// start
     com.tm.logger.Log.i(TAG, "1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     mApplicationContext = this;
@@ -254,11 +250,11 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   private void initArchiveUrlsAndStartArchive() {
 
     if(CommonUtils.isMyServiceRunning(mApplicationContext, BackupService.class)){
-      CommonUtils.stopBackupService(mApplicationContext);
+      CommonUtils.stopBackupService(mApplicationContext, false);
     }
 
     ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive \nsetUrl: \nchosenUrl =" + ArchiveConstants.charlieProduction + "\nKeeperUrl =" + ArchiveConstants.prodKeeper);
-    if(BuildConfig.DEBUG){
+    if(org.tm.archive.BuildConfig.DEBUG){
       String baseUrlPrefProd = PrefManager.getStringPref(mApplicationContext, ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, ArchiveConstants.charlieProduction);
       String baseUrlPrefKeeper = PrefManager.getStringPref(mApplicationContext, ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY,ArchiveConstants.prodKeeper);
       AuthenticatorConstants.Companion.setBASE_URL(new Pair(baseUrlPrefProd, baseUrlPrefKeeper));
@@ -310,6 +306,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     ApplicationDependencies.getMegaphoneRepository().onAppForegrounded();
     ApplicationDependencies.getDeadlockDetector().start();
     SubscriptionKeepAliveJob.enqueueAndTrackTimeIfNecessary();
+    FcmFetchManager.onForeground(this);
 
     SignalExecutors.BOUNDED.execute(() -> {
       FeatureFlags.refreshIfNecessary();
@@ -318,6 +315,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       KeyCachingService.onAppForegrounded(this);
       ApplicationDependencies.getShakeToReport().enable();
       checkBuildExpiration();
+      MemoryTracker.start();
 
       long lastForegroundTime = SignalStore.misc().getLastForegroundTime();
       long currentTime        = System.currentTimeMillis();
@@ -341,6 +339,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     ApplicationDependencies.getFrameRateTracker().stop();
     ApplicationDependencies.getShakeToReport().disable();
     ApplicationDependencies.getDeadlockDetector().stop();
+    MemoryTracker.stop();
   }
 
   public PersistentLogger getPersistentLogger() {
@@ -483,7 +482,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     DirectoryRefreshListener.schedule(this);
     LocalBackupListener.schedule(this);
     RotateSenderCertificateListener.schedule(this);
-    MessageProcessReceiver.startOrUpdateAlarm(this);
+    RoutineMessageFetchReceiver.startOrUpdateAlarm(this);
 
     if (BuildConfig.PLAY_STORE_DISABLED) {
       UpdateApkRefreshListener.schedule(this);
@@ -523,18 +522,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   private void executePendingContactSync() {
     if (TextSecurePreferences.needsFullContactSync(this)) {
       ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(true));
-    }
-  }
-
-  private void initializePendingMessages() {
-    if (TextSecurePreferences.getNeedsMessagePull(this)) {
-      Log.i(TAG, "Scheduling a message fetch.");
-      if (Build.VERSION.SDK_INT >= 26) {
-        FcmJobService.schedule(this);
-      } else {
-        ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob());
-      }
-      TextSecurePreferences.setNeedsMessagePull(this, false);
     }
   }
 

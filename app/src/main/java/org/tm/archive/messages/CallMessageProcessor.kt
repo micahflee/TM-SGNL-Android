@@ -3,7 +3,7 @@ package org.tm.archive.messages
 import org.signal.ringrtc.CallId
 import org.tm.archive.database.model.IdentityRecord
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.log
+import org.tm.archive.messages.MessageContentProcessor.Companion.log
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.ringrtc.RemotePeer
@@ -42,7 +42,7 @@ object CallMessageProcessor {
         handleCallHangupMessage(envelope, metadata, hangup, senderRecipient.id, callMessage.hasLegacyHangup())
       }
       callMessage.hasBusy() -> handleCallBusyMessage(envelope, metadata, callMessage.busy, senderRecipient.id)
-      callMessage.hasOpaque() -> handleCallOpaqueMessage(envelope, metadata, callMessage.opaque, senderRecipient.requireServiceId(), serverDeliveredTimestamp)
+      callMessage.hasOpaque() -> handleCallOpaqueMessage(envelope, metadata, callMessage.opaque, senderRecipient.requireAci(), serverDeliveredTimestamp)
     }
   }
 
@@ -146,7 +146,7 @@ object CallMessageProcessor {
     ApplicationDependencies.getSignalCallManager()
       .receivedOpaqueMessage(
         OpaqueMessageMetadata(
-          senderServiceId.uuid(),
+          senderServiceId.rawUuid,
           opaque.data.toByteArray(),
           metadata.sourceDeviceId,
           messageAgeSeconds

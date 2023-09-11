@@ -101,6 +101,16 @@ public class SignalServiceAccountDataStoreImpl implements SignalServiceAccountDa
   }
 
   @Override
+  public void markAllOneTimeEcPreKeysStaleIfNecessary(long staleTime) {
+    preKeyStore.markAllOneTimeEcPreKeysStaleIfNecessary(staleTime);
+  }
+
+  @Override
+  public void deleteAllStaleOneTimeEcPreKeys(long threshold, int minCount) {
+    preKeyStore.deleteAllStaleOneTimeEcPreKeys(threshold, minCount);
+  }
+
+  @Override
   public SessionRecord loadSession(SignalProtocolAddress axolotlAddress) {
     return sessionStore.loadSession(axolotlAddress);
   }
@@ -182,8 +192,18 @@ public class SignalServiceAccountDataStoreImpl implements SignalServiceAccountDa
   }
 
   @Override
+  public @NonNull List<KyberPreKeyRecord> loadLastResortKyberPreKeys() {
+    return kyberPreKeyStore.loadLastResortKyberPreKeys();
+  }
+
+  @Override
   public void storeKyberPreKey(int kyberPreKeyId, KyberPreKeyRecord record) {
     kyberPreKeyStore.storeKyberPreKey(kyberPreKeyId, record);
+  }
+
+  @Override
+  public void storeLastResortKyberPreKey(int kyberPreKeyId, @NonNull KyberPreKeyRecord kyberPreKeyRecord) {
+    kyberPreKeyStore.storeKyberPreKey(kyberPreKeyId, kyberPreKeyRecord);
   }
 
   @Override
@@ -194,6 +214,21 @@ public class SignalServiceAccountDataStoreImpl implements SignalServiceAccountDa
   @Override
   public void markKyberPreKeyUsed(int kyberPreKeyId) {
     kyberPreKeyStore.markKyberPreKeyUsed(kyberPreKeyId);
+  }
+
+  @Override
+  public void removeKyberPreKey(int kyberPreKeyId) {
+    kyberPreKeyStore.removeKyberPreKey(kyberPreKeyId);
+  }
+
+  @Override
+  public void markAllOneTimeKyberPreKeysStaleIfNecessary(long staleTime) {
+    kyberPreKeyStore.markAllOneTimeKyberPreKeysStaleIfNecessary(staleTime);
+  }
+
+  @Override
+  public void deleteAllStaleOneTimeKyberPreKeys(long threshold, int minCount) {
+    kyberPreKeyStore.deleteAllStaleOneTimeKyberPreKeys(threshold, minCount);
   }
 
   @Override
@@ -236,5 +271,4 @@ public class SignalServiceAccountDataStoreImpl implements SignalServiceAccountDa
   public @NonNull SignalSenderKeyStore senderKeys() {
     return senderKeyStore;
   }
-
 }

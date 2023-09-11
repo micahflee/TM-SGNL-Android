@@ -34,6 +34,7 @@ import androidx.core.app.ShareCompat
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.ui.BottomSheets
 import org.signal.core.ui.Buttons
 import org.signal.core.ui.Dividers
 import org.signal.core.ui.Rows
@@ -45,12 +46,10 @@ import org.tm.archive.calls.links.CallLinks
 import org.tm.archive.calls.links.EditCallLinkNameDialogFragment
 import org.tm.archive.calls.links.SignalCallRow
 import org.tm.archive.compose.ComposeBottomSheetDialogFragment
-import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment
-import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.tm.archive.database.CallLinkTable
 import org.tm.archive.service.webrtc.links.CreateCallLinkResult
 import org.tm.archive.service.webrtc.links.UpdateCallLinkResult
-import org.tm.archive.sharing.MultiShareArgs
+import org.tm.archive.sharing.v2.ShareActivity
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.Util
 
@@ -86,7 +85,7 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
     ) {
       val callLink: CallLinkTable.CallLink by viewModel.callLink
 
-      Handle(modifier = Modifier.align(Alignment.CenterHorizontally))
+      BottomSheets.Handle(modifier = Modifier.align(Alignment.CenterHorizontally))
 
       Spacer(modifier = Modifier.height(20.dp))
 
@@ -108,7 +107,7 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
 
       Rows.TextRow(
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__add_call_name),
-        modifier = Modifier.clickable(onClick = this@CreateCallLinkBottomSheetDialogFragment::onAddACallNameClicked)
+        onClick = this@CreateCallLinkBottomSheetDialogFragment::onAddACallNameClicked
       )
 
       Rows.ToggleRow(
@@ -123,19 +122,19 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
       Rows.TextRow(
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__share_link_via_signal),
         icon = ImageVector.vectorResource(id = R.drawable.symbol_forward_24),
-        modifier = Modifier.clickable(onClick = this@CreateCallLinkBottomSheetDialogFragment::onShareViaSignalClicked)
+        onClick = this@CreateCallLinkBottomSheetDialogFragment::onShareViaSignalClicked
       )
 
       Rows.TextRow(
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__copy_link),
         icon = ImageVector.vectorResource(id = R.drawable.symbol_copy_android_24),
-        modifier = Modifier.clickable(onClick = this@CreateCallLinkBottomSheetDialogFragment::onCopyLinkClicked)
+        onClick = this@CreateCallLinkBottomSheetDialogFragment::onCopyLinkClicked
       )
 
       Rows.TextRow(
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__share_link),
         icon = ImageVector.vectorResource(id = R.drawable.symbol_share_android_24),
-        modifier = Modifier.clickable(onClick = this@CreateCallLinkBottomSheetDialogFragment::onShareLinkClicked)
+        onClick = this@CreateCallLinkBottomSheetDialogFragment::onShareLinkClicked
       )
 
       Buttons.MediumTonal(
@@ -211,15 +210,10 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
     lifecycleDisposable += viewModel.commitCallLink().subscribeBy(onSuccess = {
       when (it) {
         is EnsureCallLinkCreatedResult.Success -> {
-          MultiselectForwardFragment.showFullScreen(
-            childFragmentManager,
-            MultiselectForwardFragmentArgs(
-              canSendToNonPush = false,
-              multiShareArgs = listOf(
-                MultiShareArgs.Builder()
-                  .withDraftText(CallLinks.url(viewModel.linkKeyBytes))
-                  .build()
-              )
+          startActivity(
+            ShareActivity.sendSimpleText(
+              requireContext(),
+              getString(R.string.CreateCallLink__use_this_link_to_join_a_signal_call, CallLinks.url(viewModel.linkKeyBytes))
             )
           )
         }

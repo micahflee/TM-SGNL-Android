@@ -2,7 +2,6 @@ package org.tm.archive.conversation.drafts
 
 import org.tm.archive.database.DraftTable
 import org.tm.archive.database.DraftTable.Drafts
-import org.tm.archive.recipients.RecipientId
 
 /**
  * State object responsible for holding Voice Note draft state. The intention is to allow
@@ -10,9 +9,7 @@ import org.tm.archive.recipients.RecipientId
  * management pattern going forward for drafts.
  */
 data class DraftState(
-  val recipientId: RecipientId = RecipientId.UNKNOWN,
   val threadId: Long = -1,
-  val distributionType: Int = 0,
   val textDraft: DraftTable.Draft? = null,
   val bodyRangesDraft: DraftTable.Draft? = null,
   val quoteDraft: DraftTable.Draft? = null,
@@ -22,7 +19,7 @@ data class DraftState(
 ) {
 
   fun copyAndClearDrafts(threadId: Long = this.threadId): DraftState {
-    return DraftState(recipientId = recipientId, threadId = threadId, distributionType = distributionType)
+    return DraftState(threadId = threadId)
   }
 
   fun toDrafts(): Drafts {
@@ -36,7 +33,7 @@ data class DraftState(
     }
   }
 
-  fun copyAndSetDrafts(threadId: Long, drafts: Drafts): DraftState {
+  fun copyAndSetDrafts(threadId: Long = this.threadId, drafts: Drafts): DraftState {
     return copy(
       threadId = threadId,
       textDraft = drafts.getDraftOfType(DraftTable.Draft.TEXT),

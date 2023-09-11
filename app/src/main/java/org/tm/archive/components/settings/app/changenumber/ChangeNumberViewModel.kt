@@ -16,8 +16,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.logging.Log
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.pin.KbsRepository
-import org.tm.archive.pin.TokenData
 import org.tm.archive.registration.RegistrationSessionProcessor
 import org.tm.archive.registration.SmsRetrieverReceiver
 import org.tm.archive.registration.VerifyAccountRepository
@@ -27,8 +25,9 @@ import org.tm.archive.registration.VerifyResponseWithRegistrationLockProcessor
 import org.tm.archive.registration.VerifyResponseWithoutKbs
 import org.tm.archive.registration.viewmodel.BaseRegistrationViewModel
 import org.tm.archive.registration.viewmodel.NumberViewState
+import org.tm.archive.registration.viewmodel.SvrAuthCredentialSet
 import org.tm.archive.util.DefaultValueLiveData
-import org.whispersystems.signalservice.api.push.PNI
+import org.whispersystems.signalservice.api.push.ServiceId.PNI
 import org.whispersystems.signalservice.api.push.exceptions.IncorrectCodeException
 import org.whispersystems.signalservice.internal.ServiceResponse
 import java.util.Objects
@@ -41,9 +40,8 @@ class ChangeNumberViewModel(
   savedState: SavedStateHandle,
   password: String,
   verifyAccountRepository: VerifyAccountRepository,
-  kbsRepository: KbsRepository,
   private val smsRetrieverReceiver: SmsRetrieverReceiver = SmsRetrieverReceiver(ApplicationDependencies.getApplication())
-) : BaseRegistrationViewModel(savedState, verifyAccountRepository, kbsRepository, password) {
+) : BaseRegistrationViewModel(savedState, verifyAccountRepository, password) {
 
   var oldNumberState: NumberViewState = NumberViewState.Builder().build()
     private set
@@ -179,9 +177,9 @@ class ChangeNumberViewModel(
       }
   }
 
-  override fun verifyAccountWithRegistrationLock(pin: String, kbsTokenData: TokenData): Single<ServiceResponse<VerifyResponse>> {
+  override fun verifyAccountWithRegistrationLock(pin: String, svrAuthCredentials: SvrAuthCredentialSet): Single<ServiceResponse<VerifyResponse>> {
     val sessionId = sessionId ?: throw IllegalStateException("No valid registration session")
-    return changeNumberRepository.changeNumber(sessionId, number.e164Number, pin, kbsTokenData)
+    return changeNumberRepository.changeNumber(sessionId, number.e164Number, pin, svrAuthCredentials)
   }
 
   @WorkerThread
@@ -199,14 +197,14 @@ class ChangeNumberViewModel(
       .map { processor }
       .onErrorReturn { t ->
         Log.w(TAG, "Error attempting to change local number", t)
-        VerifyResponseWithRegistrationLockProcessor(ServiceResponse.forUnknownError(t), processor.tokenData)
+        VerifyResponseWithRegistrationLockProcessor(ServiceResponse.forUnknownError(t), processor.svrAuthCredentials)
       }
   }
 
   fun changeNumberWithRecoveryPassword(): Single<Boolean> {
-    val recoveryPassword = SignalStore.kbsValues().recoveryPassword
+    val recoveryPassword = SignalStore.svr().recoveryPassword
 
-    return if (SignalStore.kbsValues().hasPin() && recoveryPassword != null) {
+    return if (SignalStore.svr().hasPin() && recoveryPassword != null) {
       changeNumberRepository.changeNumber(recoveryPassword = recoveryPassword, newE164 = number.e164Number)
         .map { r -> VerifyResponseWithoutKbs(r) }
         .flatMap { p ->
@@ -233,8 +231,7 @@ class ChangeNumberViewModel(
         changeNumberRepository = ChangeNumberRepository(),
         savedState = handle,
         password = password,
-        verifyAccountRepository = VerifyAccountRepository(context),
-        kbsRepository = KbsRepository()
+        verifyAccountRepository = VerifyAccountRepository(context)
       )
 
       return requireNotNull(modelClass.cast(viewModel))

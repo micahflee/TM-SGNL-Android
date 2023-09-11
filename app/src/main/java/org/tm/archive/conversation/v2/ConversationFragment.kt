@@ -5,14 +5,24 @@
 
 package org.tm.archive.conversation.v2
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
+import android.app.PendingIntent
+import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Browser
+import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.KeyEvent
@@ -21,7 +31,9 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnFocusChangeListener
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.view.animation.AnimationUtils
 import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
 import android.widget.TextView
@@ -32,19 +44,25 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
+import androidx.appcompat.widget.SearchView
+import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.view.ViewCompat
-import androidx.core.view.doOnNextLayout
 import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentResultListener
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.ConversationLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -53,12 +71,14 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
+import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.Result
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.LifecycleDisposable
@@ -66,11 +86,15 @@ import org.signal.core.util.concurrent.addTo
 import org.signal.core.util.dp
 import org.signal.core.util.logging.Log
 import org.signal.core.util.orNull
-import org.signal.libsignal.protocol.InvalidMessageException
+import org.signal.core.util.setActionItemTint
+import org.signal.ringrtc.CallLinkRootKey
 import org.tm.archive.BlockUnblockDialog
+import org.tm.archive.GroupMembersDialog
 import org.tm.archive.LoggingFragment
 import org.tm.archive.MainActivity
+import org.tm.archive.MuteDialog
 import org.tm.archive.R
+import org.tm.archive.audio.AudioRecorder
 import org.tm.archive.badges.gifts.OpenableGift
 import org.tm.archive.badges.gifts.OpenableGiftItemDecoration
 import org.tm.archive.badges.gifts.flow.GiftFlowActivity
@@ -78,60 +102,107 @@ import org.tm.archive.badges.gifts.viewgift.received.ViewReceivedGiftBottomSheet
 import org.tm.archive.badges.gifts.viewgift.sent.ViewSentGiftBottomSheet
 import org.tm.archive.components.AnimatingToggle
 import org.tm.archive.components.ComposeText
+import org.tm.archive.components.ConversationSearchBottomBar
 import org.tm.archive.components.HidingLinearLayout
 import org.tm.archive.components.InputAwareConstraintLayout
 import org.tm.archive.components.InputPanel
+import org.tm.archive.components.InsetAwareConstraintLayout
+import org.tm.archive.components.ProgressCardDialogFragment
+import org.tm.archive.components.ProgressCardDialogFragmentArgs
 import org.tm.archive.components.ScrollToPositionDelegate
 import org.tm.archive.components.SendButton
 import org.tm.archive.components.ViewBinderDelegate
+import org.tm.archive.components.emoji.EmojiEventListener
+import org.tm.archive.components.emoji.MediaKeyboard
+import org.tm.archive.components.emoji.RecentEmojiPageModel
+import org.tm.archive.components.location.SignalPlace
+import org.tm.archive.components.mention.MentionAnnotation
 import org.tm.archive.components.menu.ActionItem
 import org.tm.archive.components.menu.SignalBottomActionBar
-import org.tm.archive.components.recyclerview.SmoothScrollingLinearLayoutManager
 import org.tm.archive.components.settings.app.subscription.donate.DonateToSignalFragment
 import org.tm.archive.components.settings.app.subscription.donate.DonateToSignalType
+import org.tm.archive.components.settings.conversation.ConversationSettingsActivity
+import org.tm.archive.components.spoiler.SpoilerAnnotation
+import org.tm.archive.components.voice.VoiceNoteDraft
 import org.tm.archive.components.voice.VoiceNoteMediaControllerOwner
 import org.tm.archive.components.voice.VoiceNotePlaybackState
+import org.tm.archive.components.voice.VoiceNotePlayerView
+import org.tm.archive.contacts.paged.ContactSearchKey.RecipientSearchKey
 import org.tm.archive.contactshare.Contact
 import org.tm.archive.contactshare.ContactUtil
 import org.tm.archive.contactshare.SharedContactDetailsActivity
 import org.tm.archive.conversation.AttachmentKeyboardButton
 import org.tm.archive.conversation.BadDecryptLearnMoreDialog
 import org.tm.archive.conversation.ConversationAdapter
+import org.tm.archive.conversation.ConversationBottomSheetCallback
+import org.tm.archive.conversation.ConversationData
+import org.tm.archive.conversation.ConversationHeaderView
 import org.tm.archive.conversation.ConversationIntents
 import org.tm.archive.conversation.ConversationIntents.ConversationScreenType
 import org.tm.archive.conversation.ConversationItem
 import org.tm.archive.conversation.ConversationItemSelection
+import org.tm.archive.conversation.ConversationItemSwipeCallback
 import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.conversation.ConversationOptionsMenu
 import org.tm.archive.conversation.ConversationReactionDelegate
 import org.tm.archive.conversation.ConversationReactionOverlay
 import org.tm.archive.conversation.ConversationReactionOverlay.OnActionSelectedListener
 import org.tm.archive.conversation.ConversationReactionOverlay.OnHideListener
+import org.tm.archive.conversation.ConversationSearchViewModel
+import org.tm.archive.conversation.ConversationUpdateTick
 import org.tm.archive.conversation.MarkReadHelper
 import org.tm.archive.conversation.MenuState
 import org.tm.archive.conversation.MessageSendType
+import org.tm.archive.conversation.MessageStyler.getStyling
+import org.tm.archive.conversation.ReenableScheduledMessagesDialogFragment
+import org.tm.archive.conversation.ScheduleMessageContextMenu
+import org.tm.archive.conversation.ScheduleMessageDialogCallback
+import org.tm.archive.conversation.ScheduleMessageTimePickerBottomSheet
+import org.tm.archive.conversation.ScheduleMessageTimePickerBottomSheet.Companion.showSchedule
+import org.tm.archive.conversation.ScheduledMessagesBottomSheet
+import org.tm.archive.conversation.ScheduledMessagesRepository
 import org.tm.archive.conversation.SelectedConversationModel
 import org.tm.archive.conversation.ShowAdminsBottomSheetDialog
 import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.conversation.colors.Colorizer
 import org.tm.archive.conversation.colors.RecyclerViewColorizer
+import org.tm.archive.conversation.drafts.DraftRepository
+import org.tm.archive.conversation.drafts.DraftRepository.ShareOrDraftData
+import org.tm.archive.conversation.drafts.DraftViewModel
 import org.tm.archive.conversation.mutiselect.ConversationItemAnimator
 import org.tm.archive.conversation.mutiselect.MultiselectItemDecoration
 import org.tm.archive.conversation.mutiselect.MultiselectPart
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardBottomSheet
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment
+import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.tm.archive.conversation.quotes.MessageQuotesBottomSheet
 import org.tm.archive.conversation.ui.edit.EditMessageHistoryDialog
 import org.tm.archive.conversation.ui.error.EnableCallNotificationSettingsDialog
+import org.tm.archive.conversation.ui.inlinequery.InlineQuery
+import org.tm.archive.conversation.ui.inlinequery.InlineQueryChangedListener
+import org.tm.archive.conversation.ui.inlinequery.InlineQueryReplacement
+import org.tm.archive.conversation.ui.inlinequery.InlineQueryResultsControllerV2
+import org.tm.archive.conversation.ui.inlinequery.InlineQueryViewModelV2
 import org.tm.archive.conversation.v2.groups.ConversationGroupCallViewModel
 import org.tm.archive.conversation.v2.groups.ConversationGroupViewModel
+import org.tm.archive.conversation.v2.items.ChatColorsDrawable
+import org.tm.archive.conversation.v2.items.InteractiveConversationElement
 import org.tm.archive.conversation.v2.keyboard.AttachmentKeyboardFragment
+import org.tm.archive.database.DraftTable
+import org.tm.archive.database.model.IdentityRecord
 import org.tm.archive.database.model.InMemoryMessageRecord
 import org.tm.archive.database.model.MediaMmsMessageRecord
+import org.tm.archive.database.model.Mention
 import org.tm.archive.database.model.MessageId
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.Quote
+import org.tm.archive.database.model.StickerRecord
+import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.databinding.V2ConversationFragmentBinding
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.events.GroupCallPeekEvent
+import org.tm.archive.events.ReminderUpdateEvent
 import org.tm.archive.giph.mp4.GiphyMp4ItemDecoration
 import org.tm.archive.giph.mp4.GiphyMp4PlaybackController
 import org.tm.archive.giph.mp4.GiphyMp4PlaybackPolicy
@@ -141,72 +212,145 @@ import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.GroupMigrationMembershipChange
 import org.tm.archive.groups.ui.GroupChangeFailureReason
 import org.tm.archive.groups.ui.GroupErrors
+import org.tm.archive.groups.ui.LeaveGroupDialog
+import org.tm.archive.groups.ui.invitesandrequests.ManagePendingAndRequestingMembersActivity
 import org.tm.archive.groups.ui.invitesandrequests.invite.GroupLinkInviteFriendsBottomSheetDialogFragment
 import org.tm.archive.groups.ui.managegroup.dialogs.GroupDescriptionDialog
 import org.tm.archive.groups.ui.migration.GroupsV1MigrationInfoBottomSheetDialogFragment
 import org.tm.archive.groups.ui.migration.GroupsV1MigrationInitiationBottomSheetDialogFragment
+import org.tm.archive.groups.ui.migration.GroupsV1MigrationSuggestionsDialog
 import org.tm.archive.groups.v2.GroupBlockJoinRequestResult
 import org.tm.archive.invites.InviteActions
+import org.tm.archive.keyboard.KeyboardPage
+import org.tm.archive.keyboard.KeyboardPagerFragment
+import org.tm.archive.keyboard.KeyboardPagerViewModel
+import org.tm.archive.keyboard.KeyboardUtil
+import org.tm.archive.keyboard.emoji.EmojiKeyboardPageFragment
+import org.tm.archive.keyboard.emoji.search.EmojiSearchFragment
+import org.tm.archive.keyboard.gif.GifKeyboardPageFragment
+import org.tm.archive.keyboard.sticker.StickerKeyboardPageFragment
+import org.tm.archive.keyboard.sticker.StickerSearchDialogFragment
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.linkpreview.LinkPreview
+import org.tm.archive.linkpreview.LinkPreviewViewModelV2
 import org.tm.archive.longmessage.LongMessageFragment
+import org.tm.archive.mediaoverview.MediaOverviewActivity
 import org.tm.archive.mediapreview.MediaIntentFactory
-import org.tm.archive.mediapreview.MediaIntentFactory.create
 import org.tm.archive.mediapreview.MediaPreviewV2Activity
 import org.tm.archive.mediasend.Media
-import org.tm.archive.mediasend.v2.MediaSelectionActivity
+import org.tm.archive.mediasend.MediaSendActivityResult
 import org.tm.archive.messagedetails.MessageDetailsFragment
 import org.tm.archive.messagerequests.MessageRequestRepository
 import org.tm.archive.messagerequests.MessageRequestState
 import org.tm.archive.mms.AttachmentManager
+import org.tm.archive.mms.AudioSlide
+import org.tm.archive.mms.GifSlide
 import org.tm.archive.mms.GlideApp
+import org.tm.archive.mms.ImageSlide
+import org.tm.archive.mms.MediaConstraints
+import org.tm.archive.mms.QuoteModel
+import org.tm.archive.mms.Slide
 import org.tm.archive.mms.SlideDeck
+import org.tm.archive.mms.SlideFactory
+import org.tm.archive.mms.StickerSlide
+import org.tm.archive.mms.VideoSlide
 import org.tm.archive.notifications.v2.ConversationId
 import org.tm.archive.payments.preferences.PaymentsActivity
+import org.tm.archive.permissions.Permissions
+import org.tm.archive.profiles.spoofing.ReviewCardDialogFragment
+import org.tm.archive.providers.BlobProvider
 import org.tm.archive.ratelimit.RecaptchaProofBottomSheetFragment
+import org.tm.archive.ratelimit.RecaptchaRequiredEvent
 import org.tm.archive.reactions.ReactionsBottomSheetDialogFragment
+import org.tm.archive.reactions.any.ReactWithAnyEmojiBottomSheetDialogFragment
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientExporter
-import org.tm.archive.recipients.RecipientFormattingException
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment
+import org.tm.archive.recipients.ui.disappearingmessages.RecipientDisappearingMessagesActivity
 import org.tm.archive.registration.RegistrationNavigationActivity
+import org.tm.archive.revealable.ViewOnceMessageActivity
+import org.tm.archive.revealable.ViewOnceUtil
 import org.tm.archive.safety.SafetyNumberBottomSheet
+import org.tm.archive.sms.MessageSender
+import org.tm.archive.stickers.StickerEventListener
 import org.tm.archive.stickers.StickerLocator
+import org.tm.archive.stickers.StickerManagementActivity
+import org.tm.archive.stickers.StickerPackInstallEvent
 import org.tm.archive.stickers.StickerPackPreviewActivity
 import org.tm.archive.stories.StoryViewerArgs
 import org.tm.archive.stories.viewer.StoryViewerActivity
 import org.tm.archive.util.BottomSheetUtil
+import org.tm.archive.util.BubbleUtil
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.ContextUtil
+import org.tm.archive.util.ConversationUtil
+import org.tm.archive.util.DateUtils
+import org.tm.archive.util.Debouncer
+import org.tm.archive.util.DeleteDialog
+import org.tm.archive.util.Dialogs
 import org.tm.archive.util.DrawableUtil
 import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.FullscreenHelper
+import org.tm.archive.util.MediaUtil
+import org.tm.archive.util.MessageConstraintsUtil
+import org.tm.archive.util.MessageConstraintsUtil.getEditMessageThresholdHours
+import org.tm.archive.util.MessageConstraintsUtil.isValidEditMessageSend
 import org.tm.archive.util.PlayStoreUtil
+import org.tm.archive.util.SaveAttachmentUtil
 import org.tm.archive.util.SignalLocalMetrics
+import org.tm.archive.util.StorageUtil
 import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.WindowUtil
 import org.tm.archive.util.concurrent.ListenableFuture
+import org.tm.archive.util.createActivityViewModel
 import org.tm.archive.util.doAfterNextLayout
 import org.tm.archive.util.fragments.requireListener
+import org.tm.archive.util.getRecordQuoteType
 import org.tm.archive.util.hasAudio
 import org.tm.archive.util.hasGiftBadge
+import org.tm.archive.util.isValidReactionTarget
 import org.tm.archive.util.viewModel
 import org.tm.archive.util.views.Stub
 import org.tm.archive.util.visible
+import org.tm.archive.verify.VerifyIdentityActivity
 import org.tm.archive.wallpaper.ChatWallpaper
 import org.tm.archive.wallpaper.ChatWallpaperDimLevelUtil
 import java.util.Locale
+import java.util.Optional
 import java.util.concurrent.ExecutionException
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * A single unified fragment for Conversations.
  */
-class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) {
+class ConversationFragment :
+  LoggingFragment(R.layout.v2_conversation_fragment),
+  ReactWithAnyEmojiBottomSheetDialogFragment.Callback,
+  ReactionsBottomSheetDialogFragment.Callback,
+  EmojiKeyboardPageFragment.Callback,
+  EmojiEventListener,
+  GifKeyboardPageFragment.Host,
+  StickerEventListener,
+  StickerKeyboardPageFragment.Callback,
+  MediaKeyboard.MediaKeyboardListener,
+  EmojiSearchFragment.Callback,
+  ScheduleMessageTimePickerBottomSheet.ScheduleCallback,
+  ScheduleMessageDialogCallback,
+  ConversationBottomSheetCallback,
+  SafetyNumberBottomSheet.Callbacks,
+  EnableCallNotificationSettingsDialog.Callback,
+  MultiselectForwardBottomSheet.Callback {
 
   companion object {
     private val TAG = Log.tag(ConversationFragment::class.java)
+    private const val ACTION_PINNED_SHORTCUT = "action_pinned_shortcut"
+    private const val SAVED_STATE_IS_SEARCH_REQUESTED = "is_search_requested"
+    private const val EMOJI_SEARCH_FRAGMENT_TAG = "EmojiSearchFragment"
+
+    private const val SCROLL_HEADER_ANIMATION_DURATION: Long = 100L
+    private const val SCROLL_HEADER_CLOSE_DELAY: Long = SCROLL_HEADER_ANIMATION_DURATION * 4
   }
 
   private val args: ConversationIntents.Args by lazy {
@@ -222,22 +366,51 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
   }
 
   private val disposables = LifecycleDisposable()
-  private val binding by ViewBinderDelegate(V2ConversationFragmentBinding::bind)
+  private val binding by ViewBinderDelegate(V2ConversationFragmentBinding::bind) { _binding ->
+    _binding.conversationInputPanel.embeddedTextEditor.apply {
+      setOnEditorActionListener(null)
+      setCursorPositionChangedListener(null)
+      setOnKeyListener(null)
+      removeTextChangedListener(composeTextEventsListener)
+      setStylingChangedListener(null)
+      setOnClickListener(null)
+      removeOnFocusChangeListener(composeTextEventsListener)
+    }
+
+    dataObserver?.let {
+      adapter.unregisterAdapterDataObserver(it)
+    }
+
+    scrollListener?.let {
+      _binding.conversationItemRecycler.removeOnScrollListener(it)
+    }
+    scrollListener = null
+
+    _binding.conversationItemRecycler.adapter = null
+
+    textDraftSaveDebouncer.clear()
+  }
+
   private val viewModel: ConversationViewModel by viewModel {
     ConversationViewModel(
-      args.threadId,
-      args.startingPosition,
-      ConversationRepository(requireContext()),
-      conversationRecipientRepository,
-      messageRequestRepository
+      threadId = args.threadId,
+      requestedStartingPosition = args.startingPosition,
+      repository = ConversationRepository(localContext = requireContext(), isInBubble = args.conversationScreenType == ConversationScreenType.BUBBLE),
+      recipientRepository = conversationRecipientRepository,
+      messageRequestRepository = messageRequestRepository,
+      scheduledMessagesRepository = ScheduledMessagesRepository()
     )
   }
 
-  private val groupCallViewModel: ConversationGroupCallViewModel by viewModels(
-    factoryProducer = {
-      ConversationGroupCallViewModel.Factory(args.threadId, conversationRecipientRepository)
-    }
-  )
+  private val linkPreviewViewModel: LinkPreviewViewModelV2 by viewModel {
+    LinkPreviewViewModelV2(
+      enablePlaceholder = false
+    )
+  }
+
+  private val groupCallViewModel: ConversationGroupCallViewModel by viewModel {
+    ConversationGroupCallViewModel(conversationRecipientRepository)
+  }
 
   private val conversationGroupViewModel: ConversationGroupViewModel by viewModels(
     factoryProducer = {
@@ -249,23 +422,71 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     MessageRequestViewModel(args.threadId, conversationRecipientRepository, messageRequestRepository)
   }
 
+  private val draftViewModel: DraftViewModel by viewModel {
+    DraftViewModel(threadId = args.threadId, repository = DraftRepository(conversationArguments = args))
+  }
+
+  private val searchViewModel: ConversationSearchViewModel by viewModel {
+    ConversationSearchViewModel(getString(R.string.note_to_self))
+  }
+
+  private val keyboardPagerViewModel: KeyboardPagerViewModel by activityViewModels()
+
+  private val stickerViewModel: StickerSuggestionsViewModel by viewModel {
+    StickerSuggestionsViewModel()
+  }
+
+  private lateinit var inlineQueryViewModel: InlineQueryViewModelV2
+
+  private val shareDataTimestampViewModel: ShareDataTimestampViewModel by activityViewModels()
+
+  private val inlineQueryController: InlineQueryResultsControllerV2 by lazy {
+    InlineQueryResultsControllerV2(
+      this,
+      inlineQueryViewModel,
+      inputPanel,
+      (requireView() as ViewGroup),
+      composeText
+    )
+  }
+
+  private val voiceNotePlayerListener: VoiceNotePlayerView.Listener by lazy {
+    VoiceNotePlayerViewListener()
+  }
+
   private val conversationTooltips = ConversationTooltips(this)
   private val colorizer = Colorizer()
+  private val textDraftSaveDebouncer = Debouncer(500)
+  private val recentEmojis: RecentEmojiPageModel by lazy { RecentEmojiPageModel(ApplicationDependencies.getApplication(), TextSecurePreferences.RECENT_STORAGE_KEY) }
 
-  private lateinit var conversationOptionsMenuProvider: ConversationOptionsMenu.Provider
-  private lateinit var layoutManager: LinearLayoutManager
+  private lateinit var layoutManager: ConversationLayoutManager
   private lateinit var markReadHelper: MarkReadHelper
   private lateinit var giphyMp4ProjectionRecycler: GiphyMp4ProjectionRecycler
   private lateinit var addToContactsLauncher: ActivityResultLauncher<Intent>
+  private lateinit var conversationActivityResultContracts: ConversationActivityResultContracts
   private lateinit var scrollToPositionDelegate: ScrollToPositionDelegate
   private lateinit var adapter: ConversationAdapterV2
   private lateinit var recyclerViewColorizer: RecyclerViewColorizer
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var multiselectItemDecoration: MultiselectItemDecoration
   private lateinit var openableGiftItemDecoration: OpenableGiftItemDecoration
+  private lateinit var threadHeaderMarginDecoration: ThreadHeaderMarginDecoration
+  private lateinit var conversationItemDecorations: ConversationItemDecorations
+  private lateinit var optionsMenuCallback: ConversationOptionsMenuCallback
+  private lateinit var typingIndicatorDecoration: TypingIndicatorDecoration
+  private lateinit var backPressedCallback: BackPressedDelegate
 
   private var animationsAllowed = false
   private var actionMode: ActionMode? = null
+  private var pinnedShortcutReceiver: BroadcastReceiver? = null
+  private var searchMenuItem: MenuItem? = null
+  private var isSearchRequested: Boolean = false
+  private var previousPages: Set<KeyboardPage>? = null
+  private var reShowScheduleMessagesBar: Boolean = false
+  private var composeTextEventsListener: ComposeTextEventsListener? = null
+  private var dataObserver: DataObserver? = null
+  private var menuProvider: ConversationOptionsMenu.Provider? = null
+  private var scrollListener: ScrollListener? = null
 
   private val jumpAndPulseScrollStrategy = object : ScrollToPositionDelegate.ScrollStrategy {
     override fun performScroll(recyclerView: RecyclerView, layoutManager: LinearLayoutManager, position: Int, smooth: Boolean) {
@@ -296,7 +517,15 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
   private val bottomActionBar: SignalBottomActionBar
     get() = binding.conversationBottomActionBar
 
+  private val searchNav: ConversationSearchBottomBar
+    get() = binding.conversationSearchBottomBar.root
+
+  private val scheduledMessagesStub: Stub<View> by lazy { Stub(binding.scheduledMessagesStub) }
+
   private lateinit var reactionDelegate: ConversationReactionDelegate
+  private lateinit var voiceMessageRecordingDelegate: VoiceMessageRecordingDelegate
+
+  //region Android Lifecycle
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -304,35 +533,67 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    registerForResults()
     disposables.bindTo(viewLifecycleOwner)
     FullscreenHelper(requireActivity()).showSystemUI()
 
-    conversationOptionsMenuProvider = ConversationOptionsMenu.Provider(ConversationOptionsMenuCallback(), disposables)
     markReadHelper = MarkReadHelper(ConversationId.forConversation(args.threadId), requireContext(), viewLifecycleOwner)
+    markReadHelper.ignoreViewReveals()
+
+    inlineQueryViewModel = createActivityViewModel { InlineQueryViewModelV2(recipientRepository = conversationRecipientRepository) }
+
+    attachmentManager = AttachmentManager(requireContext(), requireView(), AttachmentManagerListener())
 
     initializeConversationThreadUi()
 
     val conversationToolbarOnScrollHelper = ConversationToolbarOnScrollHelper(
       requireActivity(),
-      binding.toolbar,
-      viewModel::wallpaperSnapshot
+      binding.toolbarBackground,
+      viewModel::wallpaperSnapshot,
+      viewLifecycleOwner
     )
     conversationToolbarOnScrollHelper.attach(binding.conversationItemRecycler)
     presentWallpaper(args.wallpaper)
     presentChatColors(args.chatColors)
+    presentConversationTitle(viewModel.recipientSnapshot)
     presentActionBarMenu()
+    presentStoryRing()
 
     observeConversationThread()
 
     viewModel
       .inputReadyState
+      .distinctUntilChanged()
       .subscribeBy(
         onNext = this::presentInputReadyState
       )
       .addTo(disposables)
 
     container.fragmentManager = childFragmentManager
+
+    ToolbarDependentMarginListener(binding.toolbar)
+    initializeMediaKeyboard()
+
+    binding.conversationVideoContainer.setClipToOutline(true)
+
+    SpoilerAnnotation.resetRevealedSpoilers()
+
+    registerForResults()
+
+    inputPanel.setMediaListener(InputPanelMediaListener())
+
+    ChatColorsDrawable.attach(binding.conversationItemRecycler)
+  }
+
+  override fun onViewStateRestored(savedInstanceState: Bundle?) {
+    super.onViewStateRestored(savedInstanceState)
+
+    isSearchRequested = savedInstanceState?.getBoolean(SAVED_STATE_IS_SEARCH_REQUESTED, false) ?: args.isWithSearchOpen
+  }
+
+  override fun onSaveInstanceState(outState: Bundle) {
+    super.onSaveInstanceState(outState)
+
+    outState.putBoolean(SAVED_STATE_IS_SEARCH_REQUESTED, isSearchRequested)
   }
 
   override fun onResume() {
@@ -340,20 +601,229 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
 
     WindowUtil.setLightNavigationBarFromTheme(requireActivity())
     WindowUtil.setLightStatusBarFromTheme(requireActivity())
+
+    EventBus.getDefault().register(this)
+
     groupCallViewModel.peekGroupCall()
 
     if (!args.conversationScreenType.isInBubble) {
       ApplicationDependencies.getMessageNotifier().setVisibleThread(ConversationId.forConversation(args.threadId))
     }
 
-    motionEventRelay.setDrain(MotionEventRelayDrain())
+    viewModel.updateIdentityRecordsInBackground()
+
+    if (args.isFirstTimeInSelfCreatedGroup) {
+      conversationGroupViewModel.checkJustSelfInGroup().subscribeBy(
+        onSuccess = {
+          GroupLinkInviteFriendsBottomSheetDialogFragment.show(childFragmentManager, it)
+        }
+      ).addTo(disposables)
+    }
+
+    ConversationUtil.refreshRecipientShortcuts()
+
+    if (SignalStore.rateLimit().needsRecaptcha()) {
+      RecaptchaProofBottomSheetFragment.show(childFragmentManager)
+    }
   }
 
   override fun onPause() {
     super.onPause()
-    ApplicationDependencies.getMessageNotifier().clearVisibleThread()
-    motionEventRelay.setDrain(null)
+
+    if (!args.conversationScreenType.isInBubble) {
+      ApplicationDependencies.getMessageNotifier().clearVisibleThread()
+    }
+
+    if (activity?.isFinishing == true) {
+      activity?.overridePendingTransition(R.anim.fade_scale_in, R.anim.slide_to_end)
+    }
+
+    inputPanel.onPause()
+
+    viewModel.markLastSeen()
+
+    EventBus.getDefault().unregister(this)
   }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+    ToolbarDependentMarginListener(binding.toolbar)
+    inlineQueryController.onOrientationChange(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
+  }
+
+  override fun onDestroyView() {
+    super.onDestroyView()
+    if (pinnedShortcutReceiver != null) {
+      requireActivity().unregisterReceiver(pinnedShortcutReceiver)
+    }
+  }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
+  }
+
+  override fun startActivity(intent: Intent) {
+    if (intent.getStringArrayExtra(Browser.EXTRA_APPLICATION_ID) != null) {
+      intent.removeExtra(Browser.EXTRA_APPLICATION_ID)
+    }
+
+    try {
+      super.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+      Log.w(TAG, e)
+      toast(
+        toastTextId = R.string.ConversationActivity_there_is_no_app_available_to_handle_this_link_on_your_device,
+        toastDuration = Toast.LENGTH_LONG
+      )
+    }
+  }
+
+  //endregion
+
+  //region Fragment callbacks and listeners
+
+  override fun getConversationAdapterListener(): ConversationAdapter.ItemClickListener {
+    return adapter.clickListener
+  }
+
+  override fun jumpToMessage(messageRecord: MessageRecord) {
+    viewModel
+      .moveToMessage(messageRecord)
+      .subscribeBy {
+        moveToPosition(it)
+      }
+      .addTo(disposables)
+  }
+
+  override fun onReactWithAnyEmojiDialogDismissed() {
+    reactionDelegate.hide()
+  }
+
+  override fun onReactWithAnyEmojiSelected(emoji: String) {
+    reactionDelegate.hide()
+  }
+
+  override fun onReactionsDialogDismissed() {
+    clearFocusedItem()
+  }
+
+  override fun openEmojiSearch() {
+    val fragment = childFragmentManager.findFragmentByTag(EMOJI_SEARCH_FRAGMENT_TAG)
+    if (fragment == null) {
+      childFragmentManager.commit {
+        add(R.id.emoji_search_container, EmojiSearchFragment(), EMOJI_SEARCH_FRAGMENT_TAG)
+      }
+    }
+  }
+
+  override fun closeEmojiSearch() {
+    val fragment = childFragmentManager.findFragmentByTag(EMOJI_SEARCH_FRAGMENT_TAG)
+    if (fragment != null) {
+      childFragmentManager.commit(allowStateLoss = true) {
+        remove(fragment)
+      }
+    }
+  }
+
+  override fun onEmojiSelected(emoji: String?) {
+    if (emoji != null) {
+      inputPanel.onEmojiSelected(emoji)
+      recentEmojis.onCodePointSelected(emoji)
+    }
+  }
+
+  override fun onKeyEvent(keyEvent: KeyEvent?) {
+    if (keyEvent != null) {
+      inputPanel.onKeyEvent(keyEvent)
+    }
+  }
+
+  override fun openStickerSearch() {
+    StickerSearchDialogFragment.show(childFragmentManager)
+  }
+
+  override fun onStickerSelected(sticker: StickerRecord) {
+    sendSticker(
+      stickerRecord = sticker,
+      clearCompose = false
+    )
+  }
+
+  override fun onStickerManagementClicked() {
+    startActivity(StickerManagementActivity.getIntent(requireContext()))
+    container.hideInput()
+  }
+
+  override fun isMms(): Boolean {
+    return false
+  }
+
+  override fun openGifSearch() {
+    val recipientId = viewModel.recipientSnapshot?.id ?: return
+    conversationActivityResultContracts.launchGifSearch(recipientId, composeText.textTrimmed)
+  }
+
+  override fun onGifSelectSuccess(blobUri: Uri, width: Int, height: Int) {
+    setMedia(
+      uri = blobUri,
+      mediaType = SlideFactory.MediaType.from(BlobProvider.getMimeType(blobUri))!!,
+      width = width,
+      height = height,
+      videoGif = true
+    )
+  }
+
+  override fun onShown() {
+    inputPanel.mediaKeyboardListener.onShown()
+  }
+
+  override fun onHidden() {
+    inputPanel.mediaKeyboardListener.onHidden()
+    closeEmojiSearch()
+  }
+
+  override fun onKeyboardChanged(page: KeyboardPage) {
+    inputPanel.mediaKeyboardListener.onKeyboardChanged(page)
+  }
+
+  override fun onScheduleSend(scheduledTime: Long) {
+    sendMessage(scheduledDate = scheduledTime)
+  }
+
+  override fun onSchedulePermissionsGranted(metricId: String?, scheduledDate: Long) {
+    sendMessage(scheduledDate = scheduledDate)
+  }
+
+  override fun sendAnywayAfterSafetyNumberChangedInBottomSheet(destinations: List<RecipientSearchKey>) {
+    Log.d(TAG, "onSendAnywayAfterSafetyNumberChange")
+    viewModel
+      .updateIdentityRecords()
+      .subscribeBy(
+        onError = { t -> Log.w(TAG, "Error sending", t) },
+        onComplete = { sendMessage() }
+      )
+      .addTo(disposables)
+  }
+
+  override fun onMessageResentAfterSafetyNumberChangeInBottomSheet() {
+    Log.d(TAG, "onMessageResentAfterSafetyNumberChange")
+    viewModel.updateIdentityRecordsInBackground()
+  }
+
+  override fun onCanceled() = Unit
+
+  override fun onCallNotificationSettingsDialogDismissed() {
+    adapter.notifyDataSetChanged()
+  }
+
+  override fun onFinishForwardAction() {
+    actionMode?.finish()
+  }
+
+  override fun onDismissForwardSheet() = Unit
+
+  //endregion
 
   private fun observeConversationThread() {
     var firstRender = true
@@ -361,13 +831,14 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       .conversationThreadState
       .subscribeOn(Schedulers.io())
       .doOnSuccess { state ->
+        updateMessageRequestAcceptedState(state.meta.messageRequestData.isMessageRequestAccepted)
         SignalLocalMetrics.ConversationOpen.onDataLoaded()
-        binding.conversationItemRecycler.doOnNextLayout {
-          layoutManager.scrollToPositionWithOffset(
-            adapter.getAdapterPositionForMessagePosition(state.meta.getStartPosition()),
-            binding.conversationItemRecycler.height
-          )
-        }
+        conversationItemDecorations.setFirstUnreadCount(state.meta.unreadCount)
+        colorizer.onGroupMembershipChanged(state.meta.groupMemberAcis)
+      }
+      .observeOn(AndroidSchedulers.mainThread())
+      .doOnSuccess { state ->
+        moveToStartPosition(state.meta)
       }
       .flatMapObservable { it.items.data }
       .observeOn(AndroidSchedulers.mainThread())
@@ -378,13 +849,13 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
 
         adapter.submitList(it) {
           scrollToPositionDelegate.notifyListCommitted()
+          conversationItemDecorations.currentItems = it
 
           if (firstRender) {
             firstRender = false
             binding.conversationItemRecycler.doAfterNextLayout {
               SignalLocalMetrics.ConversationOpen.onRenderFinished()
               doAfterFirstRender()
-              animationsAllowed = true
             }
           }
         }
@@ -393,35 +864,41 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
 
   private fun doAfterFirstRender() {
     Log.d(TAG, "doAfterFirstRender")
-    attachmentManager = AttachmentManager(requireContext(), requireView(), AttachmentManagerListener())
 
-    EventBus.getDefault().registerForLifecycle(groupCallViewModel, viewLifecycleOwner)
-    viewLifecycleOwner.lifecycle.addObserver(LastSeenPositionUpdater(adapter, layoutManager, viewModel))
+    if (!isAdded || view == null) {
+      Log.w(TAG, "Bailing, fragment no longer added")
+      return
+    }
+
+    activity?.supportStartPostponedEnterTransition()
+
+    backPressedCallback = BackPressedDelegate()
+    requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backPressedCallback)
+
+    menuProvider?.afterFirstRenderMode = true
+
+    viewLifecycleOwner.lifecycle.addObserver(LastScrolledPositionUpdater(adapter, layoutManager, viewModel))
 
     disposables += viewModel.recipient
       .observeOn(AndroidSchedulers.mainThread())
+      .distinctUntilChanged { r1, r2 -> r1 === r2 || r1.hasSameContent(r2) }
       .subscribeBy(onNext = this::onRecipientChanged)
-
-    disposables += viewModel.markReadRequests
-      .observeOn(AndroidSchedulers.mainThread())
-      .subscribeBy(onNext = markReadHelper::onViewsRevealed)
 
     disposables += viewModel.scrollButtonState
       .subscribeBy(onNext = this::presentScrollButtons)
 
     disposables += viewModel
-      .nameColorsMap
-      .observeOn(AndroidSchedulers.mainThread())
+      .groupMemberServiceIds
       .subscribeBy(onNext = {
-        colorizer.onNameColorsChanged(it)
-        adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        colorizer.onGroupMembershipChanged(it)
+        adapter.updateNameColors()
       })
 
     val disabledInputListener = DisabledInputListener()
     binding.conversationDisabledInput.listener = disabledInputListener
 
     val sendButtonListener = SendButtonListener()
-    val composeTextEventsListener = ComposeTextEventsListener()
+    composeTextEventsListener = ComposeTextEventsListener()
 
     composeText.apply {
       setOnEditorActionListener(sendButtonListener)
@@ -429,17 +906,19 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       setCursorPositionChangedListener(composeTextEventsListener)
       setOnKeyListener(composeTextEventsListener)
       addTextChangedListener(composeTextEventsListener)
+      setStylingChangedListener(composeTextEventsListener)
       setOnClickListener(composeTextEventsListener)
       onFocusChangeListener = composeTextEventsListener
-
-      setMessageSendType(MessageSendType.SignalMessageSendType)
     }
 
     sendButton.apply {
+      setPopupContainer(binding.root)
       setOnClickListener(sendButtonListener)
+      setScheduledSendListener(sendButtonListener)
       isEnabled = true
-      post { sendButton.triggerSelectedChangedEvent() }
     }
+
+    sendEditButton.setOnClickListener { handleSendEditMessage() }
 
     val attachListener = { _: View ->
       container.toggleInput(AttachmentKeyboardFragmentCreator, composeText)
@@ -450,17 +929,21 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     presentGroupCallJoinButton()
 
     binding.scrollToBottom.setOnClickListener {
+      binding.conversationItemRecycler.stopScroll()
       scrollToPositionDelegate.resetScrollPosition()
     }
 
     binding.scrollToMention.setOnClickListener {
+      binding.conversationItemRecycler.stopScroll()
       scrollToNextMention()
     }
 
-    adapter.registerAdapterDataObserver(DataObserver(scrollToPositionDelegate))
+    dataObserver = DataObserver()
+    adapter.registerAdapterDataObserver(dataObserver!!)
 
     val keyboardEvents = KeyboardEvents()
     container.listener = keyboardEvents
+    container.addKeyboardStateListener(keyboardEvents)
     requireActivity()
       .onBackPressedDispatcher
       .addCallback(
@@ -473,18 +956,172 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     val conversationReactionStub = Stub<ConversationReactionOverlay>(binding.conversationReactionScrubberStub)
     reactionDelegate = ConversationReactionDelegate(conversationReactionStub)
     reactionDelegate.setOnReactionSelectedListener(OnReactionsSelectedListener())
+    motionEventRelay.setDrain(MotionEventRelayDrain(this))
+
+    voiceMessageRecordingDelegate = VoiceMessageRecordingDelegate(
+      this,
+      AudioRecorder(requireContext(), inputPanel),
+      VoiceMessageRecordingSessionCallbacks()
+    )
+
+    binding.conversationBanner.listener = ConversationBannerListener()
+    viewModel
+      .reminder
+      .subscribeBy { reminder ->
+        if (reminder.isPresent) {
+          binding.conversationBanner.showReminder(reminder.get())
+        } else {
+          binding.conversationBanner.clearReminder()
+        }
+      }
+      .addTo(disposables)
+
+    viewModel
+      .identityRecordsObservable
+      .distinctUntilChanged()
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribeBy { presentIdentityRecordsState(it) }
+      .addTo(disposables)
+
+    viewModel
+      .getRequestReviewState()
+      .subscribeBy { presentRequestReviewState(it) }
+      .addTo(disposables)
+
+    ConversationItemSwipeCallback(
+      SwipeAvailabilityProvider(),
+      this::handleReplyToMessage
+    ).attachToRecyclerView(binding.conversationItemRecycler)
+
+    draftViewModel.loadShareOrDraftData(shareDataTimestampViewModel.timestamp)
+      .subscribeBy { data -> handleShareOrDraftData(data) }
+      .addTo(disposables)
+
+    disposables.add(
+      draftViewModel
+        .state
+        .distinctUntilChanged { previous, next -> previous.voiceNoteDraft == next.voiceNoteDraft }
+        .subscribe {
+          inputPanel.voiceNoteDraft = it.voiceNoteDraft
+          updateToggleButtonState()
+        }
+    )
+
+    initializeSearch()
+    initializeLinkPreviews()
+    initializeStickerSuggestions()
+    initializeInlineSearch()
+
+    inputPanel.setListener(InputPanelListener())
+
+    viewModel
+      .getScheduledMessagesCount()
+      .subscribeBy { count -> handleScheduledMessagesCountChange(count) }
+      .addTo(disposables)
+
+    presentTypingIndicator()
+
+    getVoiceNoteMediaController().finishPostpone()
+
+    getVoiceNoteMediaController()
+      .voiceNotePlayerViewState
+      .observe(viewLifecycleOwner) { state: Optional<VoiceNotePlayerView.State> ->
+        if (state.isPresent) {
+          binding.conversationBanner.showVoiceNotePlayer(state.get(), voiceNotePlayerListener)
+        } else {
+          binding.conversationBanner.clearVoiceNotePlayer()
+        }
+      }
+
+    getVoiceNoteMediaController().voiceNotePlaybackState.observe(viewLifecycleOwner, inputPanel.playbackStateObserver)
+
+    val conversationUpdateTick = ConversationUpdateTick { viewModel.pagingController.onDataInvalidated() }
+    viewLifecycleOwner.lifecycle.addObserver(conversationUpdateTick)
+
+    if (args.conversationScreenType.isInPopup) {
+      composeText.requestFocus()
+      binding.conversationInputPanel.quickAttachmentToggle.disable()
+    }
+  }
+
+  private fun initializeInlineSearch() {
+    inlineQueryController.onOrientationChange(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+
+    composeText.apply {
+      setInlineQueryChangedListener(object : InlineQueryChangedListener {
+        override fun onQueryChanged(inlineQuery: InlineQuery) {
+          inlineQueryViewModel.onQueryChange(inlineQuery)
+        }
+      })
+
+      setMentionValidator { annotations ->
+        val recipient = viewModel.recipientSnapshot ?: return@setMentionValidator annotations
+
+        val validIds = recipient.participantIds
+          .map { MentionAnnotation.idToMentionAnnotationValue(it) }
+          .toSet()
+
+        annotations.filterNot { validIds.contains(it.value) }
+      }
+    }
+
+    inlineQueryViewModel
+      .selection
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribe { r: InlineQueryReplacement -> composeText.replaceText(r) }
+      .addTo(disposables)
+  }
+
+  private fun presentTypingIndicator() {
+    typingIndicatorDecoration = TypingIndicatorDecoration(requireContext(), binding.conversationItemRecycler)
+    binding.conversationItemRecycler.addItemDecoration(typingIndicatorDecoration)
+
+    ApplicationDependencies.getTypingStatusRepository().getTypists(args.threadId).observe(viewLifecycleOwner) {
+      val recipient = viewModel.recipientSnapshot ?: return@observe
+
+      typingIndicatorDecoration.setTypists(
+        GlideApp.with(this),
+        it.typists,
+        recipient.isGroup,
+        recipient.hasWallpaper(),
+        it.isReplacedByIncomingMessage
+      )
+    }
+  }
+
+  private fun presentStoryRing() {
+    if (SignalStore.storyValues().isFeatureDisabled) {
+      return
+    }
+
+    disposables += viewModel.storyRingState.subscribeBy {
+      binding.conversationTitleView.conversationTitleView.setStoryRingFromState(it)
+    }
+
+    binding.conversationTitleView.conversationTitleView.setOnStoryRingClickListener {
+      val recipient: Recipient = viewModel.recipientSnapshot ?: return@setOnStoryRingClickListener
+      val args = StoryViewerArgs.Builder(recipient.id, recipient.shouldHideStory())
+        .isFromQuote(true)
+        .build()
+
+      startActivity(StoryViewerActivity.createIntent(requireContext(), args))
+    }
   }
 
   private fun presentInputReadyState(inputReadyState: InputReadyState) {
+    presentConversationTitle(inputReadyState.conversationRecipient)
+
     val disabledInputView = binding.conversationDisabledInput
 
     var inputDisabled = true
     when {
       inputReadyState.isClientExpired || inputReadyState.isUnauthorized -> disabledInputView.showAsExpiredOrUnauthorized(inputReadyState.isClientExpired, inputReadyState.isUnauthorized)
-      inputReadyState.messageRequestState != MessageRequestState.NONE -> disabledInputView.showAsMessageRequest(inputReadyState.conversationRecipient, inputReadyState.messageRequestState)
+      inputReadyState.messageRequestState != MessageRequestState.NONE && inputReadyState.messageRequestState != MessageRequestState.NONE_HIDDEN -> disabledInputView.showAsMessageRequest(inputReadyState.conversationRecipient, inputReadyState.messageRequestState)
       inputReadyState.isActiveGroup == false -> disabledInputView.showAsNoLongerAMember()
       inputReadyState.isRequestingMember == true -> disabledInputView.showAsRequestingMember()
       inputReadyState.isAnnouncementGroup == true && inputReadyState.isAdmin == false -> disabledInputView.showAsAnnouncementGroupAdminsOnly()
+      inputReadyState.conversationRecipient.isReleaseNotes -> disabledInputView.showAsReleaseNotesChannel(inputReadyState.conversationRecipient)
+      inputReadyState.shouldShowInviteToSignal() -> disabledInputView.showAsInviteToSignal(requireContext(), inputReadyState.conversationRecipient)
       else -> inputDisabled = false
     }
 
@@ -494,6 +1131,55 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       WindowUtil.setNavigationBarColor(requireActivity(), disabledInputView.color)
     } else {
       disabledInputView.clear()
+    }
+
+    composeText.setMessageSendType(MessageSendType.SignalMessageSendType)
+  }
+
+  private fun presentIdentityRecordsState(identityRecordsState: IdentityRecordsState) {
+    if (!identityRecordsState.isGroup) {
+      binding.conversationTitleView.root.setVerified(identityRecordsState.isVerified)
+    }
+
+    if (identityRecordsState.isUnverified) {
+      binding.conversationBanner.showUnverifiedBanner(identityRecordsState.identityRecords)
+    } else {
+      binding.conversationBanner.clearUnverifiedBanner()
+    }
+  }
+
+  private fun presentRequestReviewState(requestReviewState: RequestReviewState) {
+    if (requestReviewState.shouldShowReviewBanner()) {
+      binding.conversationBanner.showReviewBanner(requestReviewState)
+    } else {
+      binding.conversationBanner.clearRequestReview()
+    }
+  }
+
+  private fun setMedia(uri: Uri, mediaType: SlideFactory.MediaType, width: Int = 0, height: Int = 0, borderless: Boolean = false, videoGif: Boolean = false) {
+    val recipientId: RecipientId = viewModel.recipientSnapshot?.id ?: return
+
+    if (mediaType == SlideFactory.MediaType.VCARD) {
+      conversationActivityResultContracts.launchContactShareEditor(uri, viewModel.recipientSnapshot!!.chatColors)
+    } else if (mediaType == SlideFactory.MediaType.IMAGE || mediaType == SlideFactory.MediaType.GIF || mediaType == SlideFactory.MediaType.VIDEO) {
+      val mimeType = MediaUtil.getMimeType(requireContext(), uri) ?: mediaType.toFallbackMimeType()
+      val media = Media(
+        uri,
+        mimeType,
+        0,
+        width,
+        height,
+        0,
+        0,
+        borderless,
+        videoGif,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.empty()
+      )
+      conversationActivityResultContracts.launchMediaEditor(listOf(media), recipientId, composeText.textTrimmed)
+    } else {
+      attachmentManager.setMedia(GlideApp.with(this), uri, mediaType, MediaConstraints.getPushMediaConstraints(), width, height)
     }
   }
 
@@ -518,29 +1204,47 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
 
   private fun registerForResults() {
     addToContactsLauncher = registerForActivityResult(AddToContactsContract()) {}
+    conversationActivityResultContracts = ConversationActivityResultContracts(this, ActivityResultCallbacks())
   }
 
   private fun onRecipientChanged(recipient: Recipient) {
     presentWallpaper(recipient.wallpaper)
     presentConversationTitle(recipient)
     presentChatColors(recipient.chatColors)
+    invalidateOptionsMenu()
+
+    updateMessageRequestAcceptedState(!viewModel.hasMessageRequestState)
+  }
+
+  private fun updateMessageRequestAcceptedState(isMessageRequestAccepted: Boolean) {
+    if (binding.conversationItemRecycler.isInLayout) {
+      binding.conversationItemRecycler.doAfterNextLayout {
+        adapter.setMessageRequestIsAccepted(isMessageRequestAccepted)
+      }
+    } else {
+      adapter.setMessageRequestIsAccepted(isMessageRequestAccepted)
+    }
   }
 
   private fun invalidateOptionsMenu() {
-    // TODO [alex] -- Handle search... is there a better way to manage this state? Maybe an event system?
-    conversationOptionsMenuProvider.onCreateMenu(binding.toolbar.menu, requireActivity().menuInflater)
+    if (searchMenuItem?.isActionViewExpanded != true || !isSearchRequested) {
+      binding.toolbar.invalidateMenu()
+    }
   }
 
   private fun presentActionBarMenu() {
-    invalidateOptionsMenu()
+    if (!args.conversationScreenType.isInPopup) {
+      optionsMenuCallback = ConversationOptionsMenuCallback()
+      menuProvider = ConversationOptionsMenu.Provider(optionsMenuCallback, disposables)
+      binding.toolbar.addMenuProvider(menuProvider!!)
+      invalidateOptionsMenu()
+    }
 
     when (args.conversationScreenType) {
       ConversationScreenType.NORMAL -> presentNavigationIconForNormal()
-      ConversationScreenType.BUBBLE -> presentNavigationIconForBubble()
-      ConversationScreenType.POPUP -> Unit
+      ConversationScreenType.BUBBLE,
+      ConversationScreenType.POPUP -> presentNavigationIconForBubble()
     }
-
-    binding.toolbar.setOnMenuItemClickListener(conversationOptionsMenuProvider::onMenuItemSelected)
   }
 
   private fun presentNavigationIconForNormal() {
@@ -564,8 +1268,25 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     }
   }
 
-  private fun presentConversationTitle(recipient: Recipient) {
-    binding.conversationTitleView.root.setTitle(GlideApp.with(this), recipient)
+  private fun presentConversationTitle(recipient: Recipient?) {
+    if (recipient == null) {
+      return
+    }
+
+    val titleView = binding.conversationTitleView.root
+
+    titleView.setTitle(GlideApp.with(this), recipient)
+    if (recipient.expiresInSeconds > 0) {
+      titleView.showExpiring(recipient)
+    } else {
+      titleView.clearExpiring()
+    }
+
+    if (!args.conversationScreenType.isInPopup) {
+      titleView.setOnClickListener {
+        optionsMenuCallback.handleConversationSettings()
+      }
+    }
   }
 
   private fun presentWallpaper(chatWallpaper: ChatWallpaper?) {
@@ -576,13 +1297,49 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       binding.conversationWallpaperDim.visible = false
     }
 
+    val toolbarTint = ContextCompat.getColor(
+      requireContext(),
+      if (chatWallpaper != null) {
+        R.color.signal_colorNeutralInverse
+      } else {
+        R.color.signal_colorOnSurface
+      }
+    )
+
+    binding.toolbar.setTitleTextColor(toolbarTint)
+    binding.toolbar.setActionItemTint(toolbarTint)
+
     val wallpaperEnabled = chatWallpaper != null
     binding.conversationWallpaper.visible = wallpaperEnabled
     binding.scrollToBottom.setWallpaperEnabled(wallpaperEnabled)
     binding.scrollToMention.setWallpaperEnabled(wallpaperEnabled)
     binding.conversationDisabledInput.setWallpaperEnabled(wallpaperEnabled)
+    inputPanel.setWallpaperEnabled(wallpaperEnabled)
 
-    adapter.onHasWallpaperChanged(wallpaperEnabled)
+    val stateChanged = adapter.onHasWallpaperChanged(wallpaperEnabled)
+    conversationItemDecorations.hasWallpaper = wallpaperEnabled
+    if (stateChanged) {
+      binding.conversationItemRecycler.invalidateItemDecorations()
+    }
+
+    val navColor = if (wallpaperEnabled) {
+      R.color.conversation_navigation_wallpaper
+    } else {
+      R.color.signal_colorBackground
+    }
+
+    binding.scrollDateHeader.setBackgroundResource(
+      if (wallpaperEnabled) R.drawable.sticky_date_header_background_wallpaper else R.drawable.sticky_date_header_background
+    )
+
+    binding.scrollDateHeader.setTextColor(
+      ContextCompat.getColor(
+        requireContext(),
+        if (wallpaperEnabled) R.color.sticky_header_foreground_wallpaper else R.color.signal_colorOnSurfaceVariant
+      )
+    )
+
+    WindowUtil.setNavigationBarColor(requireActivity(), ContextCompat.getColor(requireContext(), navColor))
   }
 
   private fun presentChatColors(chatColors: ChatColors) {
@@ -607,24 +1364,27 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       handleVideoCall()
     }
 
-    disposables += groupCallViewModel.hasActiveGroupCall.subscribeBy(onNext = {
-      invalidateOptionsMenu()
-      binding.conversationGroupCallJoin.visible = it
-    })
-
-    disposables += groupCallViewModel.hasCapacity.subscribeBy(onNext = {
-      binding.conversationGroupCallJoin.setText(
-        if (it) R.string.ConversationActivity_join else R.string.ConversationActivity_full
-      )
-    })
+    disposables += groupCallViewModel
+      .state
+      .distinctUntilChanged()
+      .subscribeBy {
+        binding.conversationGroupCallJoin.visible = it.ongoingCall
+        binding.conversationGroupCallJoin.setText(if (it.hasCapacity) R.string.ConversationActivity_join else R.string.ConversationActivity_full)
+        invalidateOptionsMenu()
+      }
   }
 
   private fun handleVideoCall() {
-    val recipient: Single<Recipient> = viewModel.recipient.firstOrError()
-    val hasActiveGroupCall: Single<Boolean> = groupCallViewModel.hasActiveGroupCall.firstOrError()
+    val recipient = viewModel.recipientSnapshot ?: return
+    if (!recipient.isGroup) {
+      CommunicationActions.startVideoCall(this, recipient)
+      return
+    }
+
+    val hasActiveGroupCall: Single<Boolean> = groupCallViewModel.state.map { it.ongoingCall }.firstOrError()
     val isNonAdminInAnnouncementGroup: Boolean = conversationGroupViewModel.isNonAdminInAnnouncementGroup()
-    val cannotCreateGroupCall = Single.zip(recipient, hasActiveGroupCall) { r, active ->
-      r to (r.isPushV2Group && !active && isNonAdminInAnnouncementGroup)
+    val cannotCreateGroupCall = hasActiveGroupCall.map { active ->
+      recipient to (recipient.isPushV2Group && !active && isNonAdminInAnnouncementGroup)
     }
 
     disposables += cannotCreateGroupCall
@@ -649,34 +1409,126 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     }
   }
 
+  private fun handleShareOrDraftData(data: ShareOrDraftData) {
+    shareDataTimestampViewModel.timestamp = args.shareDataTimestamp
+
+    when (data) {
+      is ShareOrDraftData.SendKeyboardImage -> sendMessageWithoutComposeInput(slide = data.slide, clearCompose = false)
+      is ShareOrDraftData.SendSticker -> sendMessageWithoutComposeInput(slide = data.slide, clearCompose = true)
+      is ShareOrDraftData.SetText -> composeText.setDraftText(data.text)
+      is ShareOrDraftData.SetLocation -> attachmentManager.setLocation(data.location, MediaConstraints.getPushMediaConstraints())
+      is ShareOrDraftData.SetEditMessage -> {
+        composeText.setDraftText(data.draftText)
+        inputPanel.enterEditMessageMode(GlideApp.with(this), data.messageEdit, true)
+      }
+
+      is ShareOrDraftData.SetMedia -> {
+        composeText.setDraftText(data.text)
+        setMedia(data.media, data.mediaType)
+      }
+
+      is ShareOrDraftData.SetQuote -> {
+        composeText.setDraftText(data.draftText)
+        handleReplyToMessage(data.quote)
+      }
+
+      is ShareOrDraftData.StartSendMedia -> {
+        val recipientId = viewModel.recipientSnapshot?.id ?: return
+        conversationActivityResultContracts.launchMediaEditor(data.mediaList, recipientId, data.text)
+      }
+    }
+  }
+
+  private fun handleScheduledMessagesCountChange(count: Int) {
+    if (count <= 0) {
+      scheduledMessagesStub.visibility = View.GONE
+      reShowScheduleMessagesBar = false
+    } else {
+      scheduledMessagesStub.get().apply {
+        visibility = View.VISIBLE
+
+        findViewById<View>(R.id.scheduled_messages_show_all)
+          .setOnClickListener {
+            val recipient = viewModel.recipientSnapshot ?: return@setOnClickListener
+            ScheduledMessagesBottomSheet.show(childFragmentManager, args.threadId, recipient.id)
+          }
+
+        findViewById<TextView>(R.id.scheduled_messages_text).text = resources.getQuantityString(R.plurals.conversation_scheduled_messages_bar__number_of_messages, count, count)
+      }
+      reShowScheduleMessagesBar = true
+    }
+  }
+
+  private fun handleSendEditMessage() {
+    if (!FeatureFlags.editMessageSending()) {
+      Log.w(TAG, "Edit message sending disabled, forcing exit of edit mode")
+      inputPanel.exitEditMessageMode()
+      return
+    }
+
+    if (!inputPanel.inEditMessageMode()) {
+      Log.w(TAG, "Not in edit message mode, unknown state, forcing re-exit")
+      inputPanel.exitEditMessageMode()
+      return
+    }
+
+    if (SignalStore.uiHints().hasNotSeenEditMessageBetaAlert()) {
+      Dialogs.showEditMessageBetaDialog(requireContext()) { handleSendEditMessage() }
+      return
+    }
+
+    val editMessage = inputPanel.editMessage
+    if (editMessage == null) {
+      Log.w(TAG, "No edit message found, forcing exit")
+      inputPanel.exitEditMessageMode()
+      return
+    }
+
+    if (!MessageConstraintsUtil.isWithinMaxEdits(editMessage)) {
+      Log.i(TAG, "Too many edits to the message")
+      Dialogs.showAlertDialog(requireContext(), null, resources.getQuantityString(R.plurals.ConversationActivity_edit_message_too_many_edits, MessageConstraintsUtil.MAX_EDIT_COUNT, MessageConstraintsUtil.MAX_EDIT_COUNT))
+      return
+    }
+
+    if (!isValidEditMessageSend(editMessage, System.currentTimeMillis())) {
+      Log.i(TAG, "Edit message no longer valid")
+      val editDurationHours = getEditMessageThresholdHours()
+      Dialogs.showAlertDialog(requireContext(), null, resources.getQuantityString(R.plurals.ConversationActivity_edit_message_too_old, editDurationHours, editDurationHours))
+      return
+    }
+
+    sendMessage()
+  }
+
   private fun getVoiceNoteMediaController() = requireListener<VoiceNoteMediaControllerOwner>().voiceNoteMediaController
 
   private fun initializeConversationThreadUi() {
-    layoutManager = SmoothScrollingLinearLayoutManager(requireContext(), true)
+    layoutManager = ConversationLayoutManager(requireContext())
     binding.conversationItemRecycler.setHasFixedSize(false)
     binding.conversationItemRecycler.layoutManager = layoutManager
-    binding.conversationItemRecycler.addOnScrollListener(ScrollListener())
+    scrollListener = ScrollListener()
+    binding.conversationItemRecycler.addOnScrollListener(scrollListener!!)
 
     adapter = ConversationAdapterV2(
       lifecycleOwner = viewLifecycleOwner,
       glideRequests = GlideApp.with(this),
       clickListener = ConversationItemClickListener(),
       hasWallpaper = args.wallpaper != null,
-      colorizer = colorizer
+      colorizer = colorizer,
+      startExpirationTimeout = viewModel::startExpirationTimeout
     )
 
     scrollToPositionDelegate = ScrollToPositionDelegate(
-      binding.conversationItemRecycler,
-      adapter::canJumpToPosition,
-      adapter::getAdapterPositionForMessagePosition
+      recyclerView = binding.conversationItemRecycler,
+      canJumpToPosition = adapter::canJumpToPosition
     )
 
-    ConversationAdapter.initializePool(binding.conversationItemRecycler.recycledViewPool)
     adapter.setPagingController(viewModel.pagingController)
 
-    binding.conversationItemRecycler.adapter = adapter
-    giphyMp4ProjectionRecycler = initializeGiphyMp4()
+    recyclerViewColorizer = RecyclerViewColorizer(binding.conversationItemRecycler)
+    recyclerViewColorizer.setChatColors(args.chatColors)
 
+    binding.conversationItemRecycler.adapter = adapter
     multiselectItemDecoration = MultiselectItemDecoration(
       requireContext()
     ) { viewModel.wallpaperSnapshot }
@@ -687,11 +1539,10 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     binding.conversationItemRecycler.addItemDecoration(multiselectItemDecoration)
     viewLifecycleOwner.lifecycle.addObserver(multiselectItemDecoration)
 
+    giphyMp4ProjectionRecycler = initializeGiphyMp4()
+
     val layoutTransitionListener = BubbleLayoutTransitionListener(binding.conversationItemRecycler)
     viewLifecycleOwner.lifecycle.addObserver(layoutTransitionListener)
-
-    recyclerViewColorizer = RecyclerViewColorizer(binding.conversationItemRecycler)
-    recyclerViewColorizer.setChatColors(args.chatColors)
 
     binding.conversationItemRecycler.itemAnimator = ConversationItemAnimator(
       isInMultiSelectMode = adapter.selectedItems::isNotEmpty,
@@ -705,6 +1556,12 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
         true
       }
     )
+
+    threadHeaderMarginDecoration = ThreadHeaderMarginDecoration()
+    binding.conversationItemRecycler.addItemDecoration(threadHeaderMarginDecoration)
+
+    conversationItemDecorations = ConversationItemDecorations(hasWallpaper = args.wallpaper != null)
+    binding.conversationItemRecycler.addItemDecoration(conversationItemDecorations, 0)
   }
 
   private fun initializeGiphyMp4(): GiphyMp4ProjectionRecycler {
@@ -719,12 +1576,93 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     val callback = GiphyMp4ProjectionRecycler(holders)
     GiphyMp4PlaybackController.attach(binding.conversationItemRecycler, callback, maxPlayback)
     binding.conversationItemRecycler.addItemDecoration(
-      GiphyMp4ItemDecoration(callback) { translationY: Float ->
-        binding.reactionsShade.translationY = translationY + binding.conversationItemRecycler.height
-      },
+      GiphyMp4ItemDecoration(callback),
       0
     )
     return callback
+  }
+
+  private fun initializeSearch() {
+    searchViewModel.searchResults.observe(viewLifecycleOwner) { result ->
+      if (result == null) {
+        return@observe
+      }
+
+      if (result.results.isNotEmpty()) {
+        val messageResult = result.results[result.position]
+        disposables += viewModel
+          .moveToSearchResult(messageResult)
+          .observeOn(AndroidSchedulers.mainThread())
+          .subscribeBy {
+            moveToPosition(it)
+          }
+      }
+
+      searchNav.setData(result.position, result.results.size)
+    }
+
+    searchNav.setEventListener(SearchEventListener())
+
+    disposables += viewModel.searchQuery.subscribeBy {
+      adapter.updateSearchQuery(it)
+    }
+  }
+
+  private fun initializeLinkPreviews() {
+    linkPreviewViewModel.linkPreviewState
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribeBy { state ->
+        if (state.isLoading) {
+          inputPanel.setLinkPreviewLoading()
+        } else if (state.hasLinks() && !state.linkPreview.isPresent) {
+          inputPanel.setLinkPreviewNoPreview(state.error)
+        } else {
+          inputPanel.setLinkPreview(GlideApp.with(this), state.linkPreview)
+        }
+
+        updateToggleButtonState()
+      }
+      .addTo(disposables)
+  }
+
+  private fun initializeMediaKeyboard() {
+    val isSystemEmojiPreferred = SignalStore.settings().isPreferSystemEmoji
+    val keyboardMode: TextSecurePreferences.MediaKeyboardMode = TextSecurePreferences.getMediaKeyboardMode(requireContext())
+    val stickerIntro: Boolean = !TextSecurePreferences.hasSeenStickerIntroTooltip(requireContext())
+
+    inputPanel.showMediaKeyboardToggle(true)
+
+    val keyboardPage = when (keyboardMode) {
+      TextSecurePreferences.MediaKeyboardMode.EMOJI -> if (isSystemEmojiPreferred) KeyboardPage.STICKER else KeyboardPage.EMOJI
+      TextSecurePreferences.MediaKeyboardMode.STICKER -> KeyboardPage.STICKER
+      TextSecurePreferences.MediaKeyboardMode.GIF -> KeyboardPage.GIF
+    }
+
+    inputPanel.setMediaKeyboardToggleMode(keyboardPage)
+    keyboardPagerViewModel.switchToPage(keyboardPage)
+
+    if (stickerIntro) {
+      TextSecurePreferences.setMediaKeyboardMode(requireContext(), TextSecurePreferences.MediaKeyboardMode.STICKER)
+      inputPanel.setMediaKeyboardToggleMode(KeyboardPage.STICKER)
+      conversationTooltips.displayStickerIntroductionTooltip(inputPanel.mediaKeyboardToggleAnchorView) {
+        EventBus.getDefault().removeStickyEvent(StickerPackInstallEvent::class.java)
+      }
+    }
+  }
+
+  private fun initializeStickerSuggestions() {
+    stickerViewModel.stickers
+      .subscribeBy(onNext = inputPanel::setStickerSuggestions)
+      .addTo(disposables)
+  }
+
+  private fun updateLinkPreviewState() {
+    if (viewModel.isPushAvailable && !attachmentManager.isAttachmentPresent && context != null) {
+      linkPreviewViewModel.onEnabled()
+      linkPreviewViewModel.onTextChanged(composeText.textTrimmed.toString(), composeText.selectionStart, composeText.selectionEnd)
+    } else {
+      linkPreviewViewModel.onUserCancel()
+    }
   }
 
   private fun updateToggleButtonState() {
@@ -744,12 +1682,14 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
         quickAttachment.hide()
         inlineAttachment.hide()
       }
-      // todo [cody] draftViewModel.voiceNoteDraft != null) { {
-      // buttonToggle.display(sendButton)
-      // quickAttachment.hide()
-      // inlineAttachment.hide()
-      // }
-      composeText.text?.isEmpty() == true && !attachmentManager.isAttachmentPresent -> {
+
+      draftViewModel.voiceNoteDraft != null -> {
+        buttonToggle.display(sendButton)
+        quickAttachment.hide()
+        inlineAttachment.hide()
+      }
+
+      composeText.text.isNullOrBlank() && !attachmentManager.isAttachmentPresent -> {
         buttonToggle.display(binding.conversationInputPanel.attachButton)
         quickAttachment.show()
         inlineAttachment.hide()
@@ -759,7 +1699,7 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
         buttonToggle.display(sendButton)
         quickAttachment.hide()
 
-        if (!attachmentManager.isAttachmentPresent) { // todo [cody] && !linkPreviewViewModel.hasLinkPreviewUi()) {
+        if (!attachmentManager.isAttachmentPresent && !linkPreviewViewModel.hasLinkPreviewUi) {
           inlineAttachment.show()
         } else {
           inlineAttachment.hide()
@@ -768,56 +1708,165 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     }
   }
 
-  private fun sendMessage(
-    metricId: String? = null,
-    scheduledDate: Long = -1,
-    slideDeck: SlideDeck? = if (attachmentManager.isAttachmentPresent) attachmentManager.buildSlideDeck() else null
+  private fun sendSticker(
+    stickerRecord: StickerRecord,
+    clearCompose: Boolean
   ) {
+    val stickerLocator = StickerLocator(stickerRecord.packId, stickerRecord.packKey, stickerRecord.stickerId, stickerRecord.emoji)
+    val slide = StickerSlide(
+      requireContext(),
+      stickerRecord.uri,
+      stickerRecord.size,
+      stickerLocator,
+      stickerRecord.contentType
+    )
+
+    sendMessageWithoutComposeInput(slide = slide, clearCompose = clearCompose)
+
+    viewModel.updateStickerLastUsedTime(stickerRecord, System.currentTimeMillis().milliseconds)
+  }
+
+  private fun sendMessageWithoutComposeInput(
+    slide: Slide? = null,
+    contacts: List<Contact> = emptyList(),
+    quote: QuoteModel? = null,
+    clearCompose: Boolean = true
+  ) {
+    sendMessage(
+      slideDeck = slide?.let { SlideDeck().apply { addSlide(slide) } },
+      contacts = contacts,
+      clearCompose = clearCompose,
+      body = "",
+      mentions = emptyList(),
+      bodyRanges = null,
+      messageToEdit = null,
+      quote = quote,
+      linkPreviews = emptyList(),
+      bypassPreSendSafetyNumberCheck = true
+    )
+  }
+
+  private fun sendMessage(
+    body: String = composeText.editableText.toString(),
+    mentions: List<Mention> = composeText.mentions,
+    bodyRanges: BodyRangeList? = composeText.styling,
+    messageToEdit: MessageId? = inputPanel.editMessageId,
+    quote: QuoteModel? = inputPanel.quote.orNull(),
+    scheduledDate: Long = -1,
+    slideDeck: SlideDeck? = if (attachmentManager.isAttachmentPresent) attachmentManager.buildSlideDeck() else null,
+    contacts: List<Contact> = emptyList(),
+    clearCompose: Boolean = true,
+    linkPreviews: List<LinkPreview> = linkPreviewViewModel.onSend(),
+    preUploadResults: List<MessageSender.PreUploadResult> = emptyList(),
+    bypassPreSendSafetyNumberCheck: Boolean = false,
+    isViewOnce: Boolean = false,
+    afterSendComplete: () -> Unit = {}
+  ) {
+    val threadRecipient = viewModel.recipientSnapshot
+
+    if (threadRecipient == null) {
+      Log.w(TAG, "Unable to send due to invalid thread recipient")
+      toast(R.string.ConversationActivity_recipient_is_not_a_valid_sms_or_email_address_exclamation, Toast.LENGTH_LONG)
+      return
+    }
+
+    if (scheduledDate != -1L && ReenableScheduledMessagesDialogFragment.showIfNeeded(requireContext(), childFragmentManager, null, scheduledDate)) {
+      return
+    }
+
+    if (SignalStore.uiHints().hasNotSeenTextFormattingAlert() && bodyRanges != null && bodyRanges.rangesCount > 0) {
+      Dialogs.showFormattedTextDialog(requireContext()) {
+        sendMessage(body, mentions, bodyRanges, messageToEdit, quote, scheduledDate, slideDeck, contacts, clearCompose, linkPreviews, preUploadResults, bypassPreSendSafetyNumberCheck, isViewOnce, afterSendComplete)
+      }
+      return
+    }
+
+    if (inputPanel.isRecordingInLockedMode) {
+      inputPanel.releaseRecordingLock()
+      return
+    }
+
+    if (slideDeck == null) {
+      val voiceNote: DraftTable.Draft? = draftViewModel.voiceNoteDraft
+      if (voiceNote != null) {
+        sendMessageWithoutComposeInput(slide = AudioSlide.createFromVoiceNoteDraft(requireContext(), voiceNote), clearCompose = true)
+        return
+      }
+    }
+
+    if (body.isNullOrBlank() && slideDeck?.containsMediaSlide() != true && preUploadResults.isEmpty() && contacts.isEmpty()) {
+      Log.i(TAG, "Unable to send due to empty message")
+      toast(R.string.ConversationActivity_message_is_empty_exclamation)
+      return
+    }
+
+    if (viewModel.identityRecordsState.hasRecentSafetyNumberChange() && !bypassPreSendSafetyNumberCheck) {
+      Log.i(TAG, "Unable to send due to SNC")
+      handleRecentSafetyNumberChange(viewModel.identityRecordsState.getRecentSafetyNumberChangeRecords())
+      return
+    }
+
+    val metricId = viewModel.recipientSnapshot?.let { if (it.isGroup) SignalLocalMetrics.GroupMessageSend.start() else SignalLocalMetrics.IndividualMessageSend.start() }
+
     val send: Completable = viewModel.sendMessage(
       metricId = metricId,
-      body = composeText.editableText.toString(),
+      threadRecipient = threadRecipient,
+      body = body,
       slideDeck = slideDeck,
       scheduledDate = scheduledDate,
-      messageToEdit = inputPanel.editMessageId,
-      quote = inputPanel.quote.orNull(),
-      mentions = composeText.mentions,
-      bodyRanges = composeText.styling
+      messageToEdit = messageToEdit,
+      quote = quote,
+      mentions = mentions,
+      bodyRanges = bodyRanges,
+      contacts = contacts,
+      linkPreviews = linkPreviews,
+      preUploadResults = preUploadResults,
+      isViewOnce = isViewOnce
     )
 
     disposables += send
       .doOnSubscribe {
-        composeText.setText("")
+        if (clearCompose) {
+          composeTextEventsListener?.typingStatusEnabled = false
+          composeText.setText("")
+          composeTextEventsListener?.typingStatusEnabled = true
+          attachmentManager.clear(GlideApp.with(this@ConversationFragment), false)
+          inputPanel.clearQuote()
+        }
+        scrollToPositionDelegate.markListCommittedVersion()
       }
       .subscribeBy(
-        onError = { t ->
-          Log.w(TAG, "Error sending", t)
-          when (t) {
-            is InvalidMessageException -> toast(R.string.ConversationActivity_message_is_empty_exclamation)
-            is RecipientFormattingException -> toast(R.string.ConversationActivity_recipient_is_not_a_valid_sms_or_email_address_exclamation, Toast.LENGTH_LONG)
-          }
-        },
-        onComplete = this::onSendComplete
+        onComplete = {
+          onSendComplete()
+          afterSendComplete()
+        }
       )
   }
 
   private fun onSendComplete() {
     if (isDetached || activity?.isFinishing == true) {
-      if (args.conversationScreenType.isInPopup) {
-        activity?.finish()
-      }
       return
     }
 
-    // todo [cody] fragment.setLastSeen(0);
-
-    scrollToPositionDelegate.resetScrollPosition()
+    scrollToPositionDelegate.resetScrollPositionAfterMarkListVersionSurpassed()
     attachmentManager.cleanup()
 
-    // todo [cody] updateLinkPreviewState();
+    updateLinkPreviewState()
 
-    // todo [cody] draftViewModel.onSendComplete(threadId);
+    draftViewModel.onSendComplete()
 
     inputPanel.exitEditMessageMode()
+
+    if (args.conversationScreenType.isInPopup) {
+      activity?.finish()
+    }
+  }
+
+  private fun handleRecentSafetyNumberChange(changedRecords: List<IdentityRecord>) {
+    val recipient = viewModel.recipientSnapshot ?: return
+    SafetyNumberBottomSheet
+      .forIdentityRecordsAndDestination(changedRecords, RecipientSearchKey(recipient.getId(), false))
+      .show(childFragmentManager)
   }
 
   private fun toast(@StringRes toastTextId: Int, toastDuration: Int = Toast.LENGTH_SHORT) {
@@ -961,18 +2010,21 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     val additionalScrollOffset = 54.dp
     if (isVisible) {
       ViewUtil.animateIn(bottomActionBar, bottomActionBar.enterAnimation)
+      container.hideInput()
       inputPanel.setHideForSelection(true)
+      animationsAllowed = false
 
       bottomActionBar.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
         override fun onPreDraw(): Boolean {
           if (bottomActionBar.height == 0 && bottomActionBar.visible) {
             return false
           }
-
           bottomActionBar.viewTreeObserver.removeOnPreDrawListener(this)
-          val bottomPadding = bottomActionBar.height + 18.dp
+
+          val bottomPadding = bottomActionBar.height + ((bottomActionBar.layoutParams as? ViewGroup.MarginLayoutParams)?.bottomMargin ?: 18.dp)
           ViewUtil.setPaddingBottom(binding.conversationItemRecycler, bottomPadding)
           binding.conversationItemRecycler.scrollBy(0, -(bottomPadding - additionalScrollOffset))
+          animationsAllowed = true
           return false
         }
       })
@@ -1021,48 +2073,215 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     reactionDelegate.setOnHideListener(onHideListener)
     reactionDelegate.show(requireActivity(), viewModel.recipientSnapshot!!, conversationMessage, conversationGroupViewModel.isNonAdminInAnnouncementGroup(), selectedConversationModel)
     composeText.clearFocus()
+  }
 
-    /*
-    // TODO [alex]
-    if (attachmentKeyboardStub.resolved()) {
-      attachmentKeyboardStub.get().hide(true);
+  private inner class BackPressedDelegate : OnBackPressedCallback(true) {
+    override fun handleOnBackPressed() {
+      Log.d(TAG, "onBackPressed()")
+      if (reactionDelegate.isShowing) {
+        reactionDelegate.hide()
+      } else if (isSearchRequested) {
+        searchMenuItem?.collapseActionView()
+      } else if (args.conversationScreenType.isInBubble) {
+        isEnabled = false
+        requireActivity().onBackPressed()
+      } else {
+        requireActivity().finish()
+      }
     }
-     */
   }
 
   //region Message action handling
 
   private fun handleReplyToMessage(conversationMessage: ConversationMessage) {
-    // TODO [alex] -- Not implemented yet.
+    if (isSearchRequested) {
+      searchMenuItem?.collapseActionView()
+    }
+
+    if (inputPanel.inEditMessageMode()) {
+      inputPanel.exitEditMessageMode()
+    }
+
+    val (slideDeck, body) = viewModel.getSlideDeckAndBodyForReply(requireContext(), conversationMessage)
+    val author = conversationMessage.messageRecord.fromRecipient
+
+    inputPanel.setQuote(
+      GlideApp.with(this),
+      conversationMessage.messageRecord.dateSent,
+      author,
+      body,
+      slideDeck,
+      conversationMessage.messageRecord.getRecordQuoteType()
+    )
+
+    inputPanel.clickOnComposeInput()
   }
 
   private fun handleEditMessage(conversationMessage: ConversationMessage) {
-    // TODO [alex] -- Not implemented yet.
+    if (!FeatureFlags.editMessageSending()) {
+      return
+    }
+
+    if (isSearchRequested) {
+      searchMenuItem?.collapseActionView()
+    }
+
+    viewModel.resolveMessageToEdit(conversationMessage)
+      .subscribeBy { updatedMessage ->
+        inputPanel.enterEditMessageMode(GlideApp.with(this), updatedMessage, false)
+      }
+      .addTo(disposables)
   }
 
   private fun handleForwardMessageParts(messageParts: Set<MultiselectPart>) {
-    // TODO [alex] -- Not implemented yet.
+    inputPanel.clearQuote()
+
+    MultiselectForwardFragmentArgs.create(requireContext(), messageParts) { args ->
+      MultiselectForwardFragment.showBottomSheet(childFragmentManager, args)
+    }
   }
 
   private fun handleSaveAttachment(record: MediaMmsMessageRecord) {
-    // TODO [alex] -- Not implemented yet.
+    if (record.isViewOnce) {
+      error("Cannot save a view-once message")
+    }
+
+    val attachments = SaveAttachmentUtil.getAttachmentsForRecord(record)
+
+    SaveAttachmentUtil.showWarningDialog(requireContext(), attachments.size) { _, _ ->
+      if (StorageUtil.canWriteToMediaStore()) {
+        performAttachmentSave(attachments)
+      } else {
+        Permissions.with(this)
+          .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+          .ifNecessary()
+          .withPermanentDenialDialog(getString(R.string.MediaPreviewActivity_signal_needs_the_storage_permission_in_order_to_write_to_external_storage_but_it_has_been_permanently_denied))
+          .onAnyDenied { toast(R.string.MediaPreviewActivity_unable_to_write_to_external_storage_without_permission, toastDuration = Toast.LENGTH_LONG) }
+          .onAllGranted { performAttachmentSave(attachments) }
+          .execute()
+      }
+    }
+  }
+
+  private fun performAttachmentSave(attachments: Set<SaveAttachmentUtil.SaveAttachment>) {
+    val progressDialog = ProgressCardDialogFragment.create()
+    progressDialog.arguments = ProgressCardDialogFragmentArgs.Builder(
+      resources.getQuantityString(R.plurals.ConversationFragment_saving_n_attachments_to_sd_card, attachments.size, attachments.size)
+    ).build().toBundle()
+
+    SaveAttachmentUtil.saveAttachments(attachments)
+      .subscribeOn(Schedulers.io())
+      .observeOn(AndroidSchedulers.mainThread())
+      .doOnSubscribe { progressDialog.show(parentFragmentManager, null) }
+      .doOnTerminate { progressDialog.dismissAllowingStateLoss() }
+      .subscribeBy { it.toast(requireContext()) }
+      .addTo(disposables)
   }
 
   private fun handleCopyMessage(messageParts: Set<MultiselectPart>) {
-    // TODO [alex] -- Not implemented yet.
+    viewModel.copyToClipboard(requireContext(), messageParts).subscribe().addTo(disposables)
+  }
+
+  private fun handleResend(conversationMessage: ConversationMessage) {
+    viewModel.resendMessage(conversationMessage).subscribe()
+  }
+
+  private fun handleEnterMultiselect(conversationMessage: ConversationMessage) {
+    val parts = conversationMessage.multiselectCollection.toSet()
+    parts.forEach { adapter.toggleSelection(it) }
+    binding.conversationItemRecycler.invalidateItemDecorations()
+    actionMode = (requireActivity() as AppCompatActivity).startSupportActionMode(actionModeCallback)
+  }
+
+  private fun handleViewPaymentDetails(conversationMessage: ConversationMessage) {
+    val record: MediaMmsMessageRecord = conversationMessage.messageRecord as? MediaMmsMessageRecord ?: return
+    val payment = record.payment ?: return
+    if (record.isPaymentNotification) {
+      startActivity(PaymentsActivity.navigateToPaymentDetails(requireContext(), payment.uuid))
+    }
   }
 
   private fun handleDisplayDetails(conversationMessage: ConversationMessage) {
-    // TODO [alex] -- Not implemented yet.
+    val recipientSnapshot = viewModel.recipientSnapshot ?: return
+    MessageDetailsFragment.create(conversationMessage.messageRecord, recipientSnapshot.id).show(childFragmentManager, null)
   }
 
   private fun handleDeleteMessages(messageParts: Set<MultiselectPart>) {
-    // TODO [alex] -- Not implemented yet.
+    val records = messageParts.map(MultiselectPart::getMessageRecord).toSet()
+    disposables += DeleteDialog.show(
+      context = requireContext(),
+      messageRecords = records
+    ).observeOn(AndroidSchedulers.mainThread())
+      .subscribe { (deleted: Boolean, _: Boolean) ->
+        if (!deleted) return@subscribe
+        val editMessageId = inputPanel.editMessageId?.id
+        if (editMessageId != null && records.any { it.id == editMessageId }) {
+          inputPanel.exitEditMessageMode()
+        }
+      }
+  }
+
+  private inner class SwipeAvailabilityProvider : ConversationItemSwipeCallback.SwipeAvailabilityProvider {
+    override fun isSwipeAvailable(conversationMessage: ConversationMessage): Boolean {
+      val recipient = viewModel.recipientSnapshot ?: return false
+
+      return actionMode == null && MenuState.canReplyToMessage(
+        recipient,
+        MenuState.isActionMessage(conversationMessage.messageRecord),
+        conversationMessage.messageRecord,
+        viewModel.hasMessageRequestState,
+        conversationGroupViewModel.isNonAdminInAnnouncementGroup()
+      )
+    }
   }
 
   //endregion
 
   //region Scroll Handling
+
+  private fun moveToStartPosition(meta: ConversationData) {
+    if (meta.getStartPosition() == 0) {
+      layoutManager.scrollToPositionWithOffset(0, 0) {
+        animationsAllowed = true
+        markReadHelper.stopIgnoringViewReveals(MarkReadHelper.getLatestTimestamp(adapter, layoutManager).orNull())
+      }
+    } else {
+      binding.toolbar.viewTreeObserver.addOnGlobalLayoutListener(StartPositionScroller(meta))
+    }
+  }
+
+  /** Helper to scroll the conversation to the correct position and offset based on toolbar height and the type of position */
+  private inner class StartPositionScroller(private val meta: ConversationData) : ViewTreeObserver.OnGlobalLayoutListener {
+
+    override fun onGlobalLayout() {
+      if (!isAdded || view == null) {
+        return
+      }
+
+      val rect = Rect()
+      binding.toolbar.getGlobalVisibleRect(rect)
+      val toolbarOffset = rect.bottom
+      binding.toolbar.viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+      val offset = when {
+        meta.getStartPosition() == 0 -> 0
+        meta.shouldJumpToMessage() -> (binding.conversationItemRecycler.height - toolbarOffset) / 4
+        meta.shouldScrollToLastSeen() -> binding.conversationItemRecycler.height - toolbarOffset
+        else -> binding.conversationItemRecycler.height
+      }
+
+      Log.d(TAG, "Scrolling to start position ${meta.getStartPosition()}")
+      layoutManager.scrollToPositionWithOffset(meta.getStartPosition(), offset) {
+        animationsAllowed = true
+        markReadHelper.stopIgnoringViewReveals(MarkReadHelper.getLatestTimestamp(adapter, layoutManager).orNull())
+        if (meta.shouldJumpToMessage()) {
+          binding.conversationItemRecycler.post {
+            adapter.pulseAtPosition(meta.getStartPosition())
+          }
+        }
+      }
+    }
+  }
 
   /**
    * Requests a jump to the desired position, and ensures that the position desired will be visible on the screen.
@@ -1089,28 +2308,135 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     return layoutManager.findFirstCompletelyVisibleItemPosition() > 4
   }
 
-  private inner class ScrollListener : RecyclerView.OnScrollListener() {
-    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-      if (isScrolledToBottom()) {
-        viewModel.setShowScrollButtons(false)
-      } else if (isScrolledPastButtonThreshold()) {
-        viewModel.setShowScrollButtons(true)
+  private fun shouldScrollToBottom(): Boolean {
+    return isScrolledToBottom() || layoutManager.findFirstVisibleItemPosition() <= 0
+  }
+
+  /**
+   * Controls animation and visibility of the scrollDateHeader.
+   */
+  private inner class ScrollDateHeaderHelper {
+
+    private val slideIn = AnimationUtils.loadAnimation(
+      requireContext(),
+      R.anim.slide_from_top
+    ).apply {
+      duration = SCROLL_HEADER_ANIMATION_DURATION
+    }
+
+    private val slideOut = AnimationUtils.loadAnimation(
+      requireContext(),
+      R.anim.conversation_scroll_date_header_slide_to_top
+    ).apply {
+      duration = SCROLL_HEADER_ANIMATION_DURATION
+    }
+
+    private var pendingHide = false
+
+    fun show() {
+      if (binding.scrollDateHeader.text.isNullOrEmpty()) {
+        return
       }
 
-      val timestamp = MarkReadHelper.getLatestTimestamp(adapter, layoutManager)
-      timestamp.ifPresent(viewModel::requestMarkRead)
+      if (pendingHide) {
+        pendingHide = false
+      } else {
+        ViewUtil.animateIn(binding.scrollDateHeader, slideIn)
+      }
+    }
+
+    fun bind(message: ConversationMessage?) {
+      if (message != null) {
+        binding.scrollDateHeader.text = DateUtils.getConversationDateHeaderString(requireContext(), Locale.getDefault(), message.conversationTimestamp)
+      }
+    }
+
+    fun hide() {
+      pendingHide = true
+
+      val header = binding.scrollDateHeader
+
+      header.postDelayed({
+        if (pendingHide) {
+          pendingHide = false
+          ViewUtil.animateOut(header, slideOut)
+        }
+      }, SCROLL_HEADER_CLOSE_DELAY)
     }
   }
 
-  private inner class DataObserver(
-    private val scrollToPositionDelegate: ScrollToPositionDelegate
-  ) : RecyclerView.AdapterDataObserver() {
-    override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-      Log.d(TAG, "onItemRangeInserted $positionStart $itemCount")
-      if (positionStart == 0 && itemCount == 1 && !binding.conversationItemRecycler.canScrollVertically(1)) {
-        Log.d(TAG, "Requesting scroll to bottom.")
-        scrollToPositionDelegate.resetScrollPosition()
+  private inner class ScrollListener : RecyclerView.OnScrollListener() {
+
+    private var wasAtBottom = true
+    private val scrollDateHeaderHelper = ScrollDateHeaderHelper()
+
+    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+      if (isScrolledToBottom()) {
+        viewModel.setShowScrollButtonsForScrollPosition(showScrollButtons = false, willScrollToBottomOnNewMessage = true)
+      } else if (isScrolledPastButtonThreshold()) {
+        viewModel.setShowScrollButtonsForScrollPosition(showScrollButtons = true, willScrollToBottomOnNewMessage = false)
+      } else {
+        viewModel.setShowScrollButtonsForScrollPosition(showScrollButtons = false, willScrollToBottomOnNewMessage = shouldScrollToBottom())
       }
+
+      presentComposeDivider()
+
+      val message = adapter.getConversationMessage(layoutManager.findLastVisibleItemPosition())
+      scrollDateHeaderHelper.bind(message)
+
+      val timestamp = MarkReadHelper.getLatestTimestamp(adapter, layoutManager)
+      timestamp.ifPresent(markReadHelper::onViewsRevealed)
+    }
+
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      if (newState != RecyclerView.SCROLL_STATE_IDLE) {
+        scrollDateHeaderHelper.show()
+      } else {
+        scrollDateHeaderHelper.hide()
+      }
+    }
+
+    private fun presentComposeDivider() {
+      val isAtBottom = isScrolledToBottom()
+      if (isAtBottom && !wasAtBottom) {
+        ViewUtil.fadeOut(binding.composeDivider, 50, View.INVISIBLE)
+      } else if (wasAtBottom && !isAtBottom) {
+        ViewUtil.fadeIn(binding.composeDivider, 500)
+      }
+
+      wasAtBottom = isAtBottom
+    }
+  }
+
+  private inner class DataObserver : RecyclerView.AdapterDataObserver() {
+    override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+      if (positionStart == 0 && shouldScrollToBottom()) {
+        layoutManager.scrollToPositionWithOffset(0, 0)
+        scrollListener?.onScrolled(binding.conversationItemRecycler, 0, 0)
+      }
+    }
+
+    override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+      if (actionMode == null) {
+        return
+      }
+
+      val expired: Set<MultiselectPart> = adapter
+        .selectedItems
+        .filter { it.isExpired() }
+        .toSet()
+
+      adapter.removeFromSelection(expired)
+
+      if (adapter.selectedItems.isEmpty()) {
+        actionMode?.finish()
+      } else {
+        actionMode?.setTitle(calculateSelectedItemCount())
+      }
+    }
+
+    override fun onItemRangeChanged(positionStart: Int, itemCount: Int) {
+      scrollListener?.onScrolled(binding.conversationItemRecycler, 0, 0)
     }
   }
 
@@ -1185,7 +2511,29 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     }
 
     override fun onViewOnceMessageClicked(messageRecord: MmsMessageRecord) {
-      // TODO [alex] - ("Not yet implemented")
+      if (!messageRecord.isViewOnce) {
+        error("Non-revealable message clicked.")
+      }
+
+      if (!ViewOnceUtil.isViewable(messageRecord)) {
+        val toastText = if (messageRecord.isOutgoing) {
+          R.string.ConversationFragment_outgoing_view_once_media_files_are_automatically_removed
+        } else {
+          R.string.ConversationFragment_you_already_viewed_this_message
+        }
+
+        toast(toastText)
+      }
+
+      disposables += viewModel.getTemporaryViewOnceUri(messageRecord).subscribeBy(
+        onSuccess = {
+          container.hideAll(composeText)
+          startActivity(ViewOnceMessageActivity.getIntent(requireContext(), messageRecord.id, it))
+        },
+        onComplete = {
+          toast(R.string.ConversationFragment_failed_to_open_message)
+        }
+      )
     }
 
     override fun onSharedContactDetailsClicked(contact: Contact, avatarTransitionView: View) {
@@ -1225,13 +2573,13 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       context ?: return
       val reactionsTag = "REACTIONS"
       if (parentFragmentManager.findFragmentByTag(reactionsTag) == null) {
-        ReactionsBottomSheetDialogFragment.create(messageId, isMms).show(parentFragmentManager, reactionsTag)
+        ReactionsBottomSheetDialogFragment.create(messageId, isMms).show(childFragmentManager, reactionsTag)
       }
     }
 
     override fun onGroupMemberClicked(recipientId: RecipientId, groupId: GroupId) {
       context ?: return
-      RecipientBottomSheetDialogFragment.create(recipientId, groupId).show(parentFragmentManager, "BOTTOM")
+      RecipientBottomSheetDialogFragment.create(recipientId, groupId).show(childFragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG)
     }
 
     override fun onMessageWithErrorClicked(messageRecord: MessageRecord) {
@@ -1415,7 +2763,13 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
 
     override fun goToMediaPreview(parent: ConversationItem, sharedElement: View, args: MediaIntentFactory.MediaPreviewArgs) {
       if (this@ConversationFragment.args.conversationScreenType.isInBubble) {
-        requireActivity().startActivity(create(requireActivity(), args.skipSharedElementTransition(true)))
+        val recipient = viewModel.recipientSnapshot ?: return
+        val intent = ConversationIntents.createBuilderSync(requireActivity(), recipient.id, viewModel.threadId)
+          .withStartingPosition(binding.conversationItemRecycler.getChildAdapterPosition(parent))
+          .build()
+
+        requireActivity().startActivity(intent)
+        requireActivity().startActivity(MediaIntentFactory.create(requireActivity(), args.skipSharedElementTransition(true)))
         return
       }
 
@@ -1428,10 +2782,12 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
         }
       }
 
+      container.hideAll(composeText)
+
       sharedElement.transitionName = MediaPreviewV2Activity.SHARED_ELEMENT_TRANSITION_NAME
       requireActivity().setExitSharedElementCallback(MaterialContainerTransformSharedElementCallback())
       val options = ActivityOptions.makeSceneTransitionAnimation(requireActivity(), sharedElement, MediaPreviewV2Activity.SHARED_ELEMENT_TRANSITION_NAME)
-      requireActivity().startActivity(create(requireActivity(), args), options.toBundle())
+      requireActivity().startActivity(MediaIntentFactory.create(requireActivity(), args), options.toBundle())
     }
 
     override fun onEditedIndicatorClicked(messageRecord: MessageRecord) {
@@ -1442,8 +2798,18 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       }
     }
 
-    override fun onItemClick(item: MultiselectPart?) {
-      // TODO [alex] -- ("Not yet implemented")
+    override fun onItemClick(item: MultiselectPart) {
+      if (actionMode != null) {
+        adapter.toggleSelection(item)
+        binding.conversationItemRecycler.invalidateItemDecorations()
+
+        if (adapter.selectedItems.isEmpty()) {
+          actionMode?.finish()
+        } else {
+          setCorrectActionModeMenuVisibility()
+          actionMode?.title = calculateSelectedItemCount()
+        }
+      }
     }
 
     override fun onItemLongClick(itemView: View, item: MultiselectPart) {
@@ -1457,9 +2823,7 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
         return
       }
 
-      if (messageRecord.isSecure &&
-        !messageRecord.isRemoteDelete &&
-        !messageRecord.isUpdate &&
+      if (messageRecord.isValidReactionTarget() &&
         !recipient.isBlocked &&
         !viewModel.hasMessageRequestState &&
         (!recipient.isGroup || recipient.isActiveGroup) &&
@@ -1470,13 +2834,24 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
         binding.reactionsShade.visibility = View.VISIBLE
         binding.conversationItemRecycler.suppressLayout(true)
 
-        if (itemView is ConversationItem) {
+        val target: InteractiveConversationElement? = if (itemView is InteractiveConversationElement) {
+          itemView
+        } else {
+          val viewHolder = binding.conversationItemRecycler.getChildViewHolder(itemView)
+          if (viewHolder is InteractiveConversationElement) {
+            viewHolder
+          } else {
+            null
+          }
+        }
+
+        if (target != null) {
           val audioUri = messageRecord.getAudioUriForLongClick()
           if (audioUri != null) {
             getVoiceNoteMediaController().pausePlayback(audioUri)
           }
 
-          val childAdapterPosition = binding.conversationItemRecycler.getChildAdapterPosition(itemView)
+          val childAdapterPosition = target.getAdapterPosition(binding.conversationItemRecycler)
           var mp4Holder: GiphyMp4ProjectionPlayerHolder? = null
           var videoBitmap: Bitmap? = null
           if (childAdapterPosition != RecyclerView.NO_POSITION) {
@@ -1488,48 +2863,50 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
             }
           }
 
-          val snapshot = ConversationItemSelection.snapshotView(itemView, binding.conversationItemRecycler, messageRecord, videoBitmap)
+          val snapshot = ConversationItemSelection.snapshotView(target, binding.conversationItemRecycler, messageRecord, videoBitmap)
 
-          // TODO [alex] -- Should only have a focused view if the keyboard was open.
-          val focusedView = null // itemView.rootView.findFocus()
-          val bodyBubble = itemView.bodyBubble!!
+          val focusedView = if (container.isInputShowing || !container.isKeyboardShowing) null else itemView.rootView.findFocus()
+          val bodyBubble = target.bubbleView
           val selectedConversationModel = SelectedConversationModel(
-            snapshot,
-            itemView.x,
-            itemView.y + binding.conversationItemRecycler.translationY,
-            bodyBubble.x,
-            bodyBubble.y,
-            bodyBubble.width,
-            audioUri,
-            messageRecord.isOutgoing,
-            focusedView
+            bitmap = snapshot,
+            itemX = itemView.x,
+            itemY = itemView.y + binding.conversationItemRecycler.translationY,
+            bubbleY = bodyBubble.y,
+            bubbleWidth = bodyBubble.width,
+            audioUri = audioUri,
+            isOutgoing = messageRecord.isOutgoing,
+            focusedView = focusedView,
+            snapshotMetrics = target.getSnapshotStrategy()?.snapshotMetrics ?: InteractiveConversationElement.SnapshotMetrics(
+              snapshotOffset = bodyBubble.x,
+              contextMenuPadding = bodyBubble.x
+            )
           )
 
           bodyBubble.visibility = View.INVISIBLE
-          itemView.reactionsView?.visibility = View.INVISIBLE
+          target.reactionsView.visibility = View.INVISIBLE
 
-          val quotedIndicatorVisible = itemView.quotedIndicator?.visibility == View.VISIBLE
+          val quotedIndicatorVisible = target.quotedIndicatorView?.visibility == View.VISIBLE
           if (quotedIndicatorVisible) {
-            ViewUtil.fadeOut(itemView.quotedIndicator!!, 150, View.INVISIBLE)
+            ViewUtil.fadeOut(target.quotedIndicatorView!!, 150, View.INVISIBLE)
           }
 
-          ViewUtil.hideKeyboard(requireContext(), itemView)
+          container.hideKeyboard(composeText, keepHeightOverride = true)
 
-          val showScrollButtons = viewModel.showScrollButtonsSnapshot
-          if (showScrollButtons) {
-            viewModel.setShowScrollButtons(false)
-          }
+          viewModel.setHideScrollButtonsForReactionOverlay(true)
 
-          val conversationItem: ConversationItem = itemView
-          val isAttachmentKeyboardOpen = false /* TODO [alex] -- isAttachmentKeyboardOpen */
+          val targetViews: InteractiveConversationElement = target
           handleReaction(
             item.conversationMessage,
             ReactionsToolbarListener(item.conversationMessage),
             selectedConversationModel,
             object : OnHideListener {
-              override fun startHide() {
+              override fun startHide(focusedView: View?) {
                 multiselectItemDecoration.hideShade(binding.conversationItemRecycler)
                 ViewUtil.fadeOut(binding.reactionsShade, resources.getInteger(R.integer.reaction_scrubber_hide_duration), View.GONE)
+
+                if (focusedView == composeText) {
+                  container.showSoftkey(composeText)
+                }
               }
 
               override fun onHide() {
@@ -1551,34 +2928,32 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
                 }
 
                 bodyBubble.visibility = View.VISIBLE
-                conversationItem.reactionsView?.visibility = View.VISIBLE
+                targetViews.reactionsView.visibility = View.VISIBLE
 
-                if (quotedIndicatorVisible && conversationItem.quotedIndicator != null) {
-                  ViewUtil.fadeIn(conversationItem.quotedIndicator!!, 150)
+                if (quotedIndicatorVisible && targetViews.quotedIndicatorView != null) {
+                  ViewUtil.fadeIn(targetViews.quotedIndicatorView!!, 150)
                 }
 
-                if (showScrollButtons) {
-                  viewModel.setShowScrollButtons(true)
-                }
-
-                if (isAttachmentKeyboardOpen) {
-                  // listener.openAttachmentKeyboard();
-                }
+                viewModel.setHideScrollButtonsForReactionOverlay(false)
               }
             }
           )
-        } else {
-          clearFocusedItem()
-          adapter.toggleSelection(item)
-          binding.conversationItemRecycler.invalidateItemDecorations()
-
-          actionMode = (requireActivity() as AppCompatActivity).startSupportActionMode(actionModeCallback)
         }
+      } else {
+        clearFocusedItem()
+        adapter.toggleSelection(item)
+        binding.conversationItemRecycler.invalidateItemDecorations()
+
+        actionMode = (requireActivity() as AppCompatActivity).startSupportActionMode(actionModeCallback)
       }
     }
 
     override fun onShowGroupDescriptionClicked(groupName: String, description: String, shouldLinkifyWebLinks: Boolean) {
       GroupDescriptionDialog.show(childFragmentManager, groupName, description, shouldLinkifyWebLinks)
+    }
+
+    override fun onJoinCallLink(callLinkRootKey: CallLinkRootKey) {
+      CommunicationActions.startVideoCall(this@ConversationFragment, callLinkRootKey)
     }
 
     private fun MessageRecord.getAudioUriForLongClick(): Uri? {
@@ -1597,16 +2972,17 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
   }
 
   private inner class ConversationOptionsMenuCallback : ConversationOptionsMenu.Callback {
+
     override fun getSnapshot(): ConversationOptionsMenu.Snapshot {
       val recipient: Recipient? = viewModel.recipientSnapshot
       return ConversationOptionsMenu.Snapshot(
         recipient = recipient,
-        isPushAvailable = true, // TODO [alex]
-        canShowAsBubble = Observable.empty(),
+        isPushAvailable = viewModel.isPushAvailable,
+        canShowAsBubble = viewModel.canShowAsBubble(requireContext()),
         isActiveGroup = recipient?.isActiveGroup == true,
         isActiveV2Group = recipient?.let { it.isActiveGroup && it.isPushV2Group } == true,
         isInActiveGroup = recipient?.isActiveGroup == false,
-        hasActiveGroupCall = groupCallViewModel.hasActiveGroupCallSnapshot,
+        hasActiveGroupCall = groupCallViewModel.hasOngoingGroupCallSnapshot,
         distributionType = args.distributionType,
         threadId = args.threadId,
         isInMessageRequest = viewModel.hasMessageRequestState,
@@ -1614,8 +2990,78 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       )
     }
 
+    override fun isTextHighlighted(): Boolean {
+      return composeText.isTextHighlighted
+    }
+
     override fun onOptionsMenuCreated(menu: Menu) {
-      // TODO [alex]
+      searchMenuItem = menu.findItem(R.id.menu_search)
+
+      val searchView: SearchView = searchMenuItem!!.actionView as SearchView
+      val queryListener: SearchView.OnQueryTextListener = object : SearchView.OnQueryTextListener {
+        override fun onQueryTextSubmit(query: String): Boolean {
+          searchViewModel.onQueryUpdated(query, args.threadId, true)
+          searchNav.showLoading()
+          viewModel.setSearchQuery(query)
+          return true
+        }
+
+        override fun onQueryTextChange(newText: String): Boolean {
+          searchViewModel.onQueryUpdated(newText, args.threadId, false)
+          searchNav.showLoading()
+          viewModel.setSearchQuery(newText)
+          return true
+        }
+      }
+
+      searchMenuItem!!.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+        override fun onMenuItemActionExpand(item: MenuItem): Boolean {
+          searchView.setOnQueryTextListener(queryListener)
+          isSearchRequested = true
+          searchViewModel.onSearchOpened()
+          searchNav.visible = true
+          searchNav.setData(0, 0)
+          inputPanel.setHideForSearch(true)
+
+          (0 until menu.size()).forEach {
+            if (menu.getItem(it) != searchMenuItem) {
+              menu.getItem(it).isVisible = false
+            }
+          }
+
+          return true
+        }
+
+        override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
+          searchView.setOnQueryTextListener(null)
+          isSearchRequested = false
+          searchViewModel.onSearchClosed()
+          searchNav.visible = false
+          inputPanel.setHideForSearch(false)
+          viewModel.setSearchQuery(null)
+          invalidateOptionsMenu()
+          return true
+        }
+      })
+
+      searchView.maxWidth = Integer.MAX_VALUE
+
+      if (isSearchRequested) {
+        if (searchMenuItem!!.expandActionView()) {
+          searchViewModel.onSearchOpened()
+        }
+      }
+
+      val toolbarTextAndIconColor = ContextCompat.getColor(
+        requireContext(),
+        if (viewModel.wallpaperSnapshot != null) {
+          R.color.signal_colorNeutralInverse
+        } else {
+          R.color.signal_colorOnSurface
+        }
+      )
+
+      binding.toolbar.setActionItemTint(toolbarTextAndIconColor)
     }
 
     override fun handleVideo() {
@@ -1623,99 +3069,193 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     }
 
     override fun handleDial(isSecure: Boolean) {
-      // TODO [alex] - ("Not yet implemented")
+      val recipient: Recipient = viewModel.recipientSnapshot ?: return
+
+      if (isSecure) {
+        CommunicationActions.startVoiceCall(this@ConversationFragment, recipient)
+      } else {
+        CommunicationActions.startInsecureCall(this@ConversationFragment, recipient)
+      }
     }
 
     override fun handleViewMedia() {
-      // TODO [alex] - ("Not yet implemented")
+      startActivity(MediaOverviewActivity.forThread(requireContext(), args.threadId))
     }
 
     override fun handleAddShortcut() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipient: Recipient = viewModel.recipientSnapshot ?: return
+      Log.i(TAG, "Creating home screen shortcut for recipient ${recipient.id}")
+
+      if (pinnedShortcutReceiver == null) {
+        pinnedShortcutReceiver = object : BroadcastReceiver() {
+          override fun onReceive(context: Context, intent: Intent?) {
+            toast(
+              toastTextId = R.string.ConversationActivity_added_to_home_screen,
+              toastDuration = Toast.LENGTH_LONG
+            )
+          }
+        }
+
+        requireActivity().registerReceiver(pinnedShortcutReceiver, IntentFilter(ACTION_PINNED_SHORTCUT))
+      }
+
+      viewModel.getContactPhotoIcon(requireContext(), GlideApp.with(this@ConversationFragment))
+        .subscribe { infoCompat ->
+          val intent = Intent(ACTION_PINNED_SHORTCUT)
+          val callback = PendingIntent.getBroadcast(requireContext(), 902, intent, PendingIntentFlags.mutable())
+          ShortcutManagerCompat.requestPinShortcut(requireContext(), infoCompat, callback.intentSender)
+        }
+        .addTo(disposables)
     }
 
     override fun handleSearch() {
-      // TODO [alex] - ("Not yet implemented")
+      searchViewModel.onSearchOpened()
     }
 
     override fun handleAddToContacts() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipient = viewModel.recipientSnapshot?.takeIf { it.isIndividual } ?: return
+
+      AddToContactsContract.createIntentAndLaunch(
+        fragment = this@ConversationFragment,
+        launcher = addToContactsLauncher,
+        recipient = recipient
+      )
     }
 
     override fun handleDisplayGroupRecipients() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipientSnapshot = viewModel.recipientSnapshot?.takeIf { it.isGroup } ?: return
+      GroupMembersDialog(requireActivity(), recipientSnapshot).display()
     }
 
-    override fun handleDistributionBroadcastEnabled(menuItem: MenuItem) {
-      // TODO [alex] - ("Not yet implemented")
-    }
+    override fun handleDistributionBroadcastEnabled(menuItem: MenuItem) = error("This fragment does not support this action.")
 
-    override fun handleDistributionConversationEnabled(menuItem: MenuItem) {
-      // TODO [alex] - ("Not yet implemented")
-    }
+    override fun handleDistributionConversationEnabled(menuItem: MenuItem) = error("This fragment does not support this action.")
 
     override fun handleManageGroup() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipient = viewModel.recipientSnapshot ?: return
+      val intent = ConversationSettingsActivity.forGroup(requireContext(), recipient.requireGroupId())
+      val bundle = ConversationSettingsActivity.createTransitionBundle(
+        requireContext(),
+        binding.conversationTitleView.root.findViewById(R.id.contact_photo_image),
+        binding.toolbar
+      )
+
+      ActivityCompat.startActivity(requireContext(), intent, bundle)
     }
 
     override fun handleLeavePushGroup() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipient = viewModel.recipientSnapshot
+      if (recipient == null) {
+        toast(R.string.ConversationActivity_invalid_recipient, toastDuration = Toast.LENGTH_LONG)
+        return
+      }
+
+      LeaveGroupDialog.handleLeavePushGroup(
+        requireActivity(),
+        recipient.requireGroupId().requirePush()
+      ) { requireActivity().finish() }
     }
 
     override fun handleInviteLink() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipient = viewModel.recipientSnapshot ?: return
+
+      InviteActions.inviteUserToSignal(
+        context = requireContext(),
+        recipient = recipient,
+        appendInviteToComposer = composeText::appendInvite,
+        launchIntent = this@ConversationFragment::startActivity
+      )
     }
 
     override fun handleMuteNotifications() {
-      // TODO [alex] - ("Not yet implemented")
+      MuteDialog.show(requireContext(), viewModel::muteConversation)
     }
 
     override fun handleUnmuteNotifications() {
-      // TODO [alex] - ("Not yet implemented")
+      viewModel.muteConversation(0L)
     }
 
     override fun handleConversationSettings() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipient = viewModel.recipientSnapshot ?: return
+      if (recipient.isGroup) {
+        handleManageGroup()
+        return
+      }
+
+      if (viewModel.hasMessageRequestState && !recipient.isBlocked) {
+        return
+      }
+
+      val intent = ConversationSettingsActivity.forRecipient(requireContext(), recipient.id)
+      val bundle = ConversationSettingsActivity.createTransitionBundle(
+        requireActivity(),
+        binding.conversationTitleView.root.findViewById(R.id.contact_photo_image),
+        binding.toolbar
+      )
+
+      ActivityCompat.startActivity(requireActivity(), intent, bundle)
     }
 
     override fun handleSelectMessageExpiration() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipient = viewModel.recipientSnapshot ?: return
+      if (recipient.isPushGroup && !recipient.isActiveGroup) {
+        return
+      }
+
+      startActivity(RecipientDisappearingMessagesActivity.forRecipient(requireContext(), recipient.id))
     }
 
     override fun handleCreateBubble() {
-      // TODO [alex] - ("Not yet implemented")
+      val recipientId = viewModel.recipientSnapshot?.id ?: return
+
+      BubbleUtil.displayAsBubble(requireContext(), recipientId, args.threadId)
+      requireActivity().finish()
     }
 
     override fun handleGoHome() {
-      // TODO [alex] - ("Not yet implemented")
+      requireActivity().finish()
     }
 
-    override fun showExpiring(recipient: Recipient) {
-      binding.conversationTitleView.root.showExpiring(recipient)
-    }
+    override fun showExpiring(recipient: Recipient) = Unit
+    override fun clearExpiring() = Unit
 
-    override fun clearExpiring() {
-      binding.conversationTitleView.root.clearExpiring()
-    }
-
-    override fun showGroupCallingTooltip() {
-      conversationTooltips.displayGroupCallingTooltip(requireView().findViewById(R.id.menu_video_secure))
+    override fun handleFormatText(id: Int) {
+      composeText.handleFormatText(id)
     }
   }
 
   private inner class OnReactionsSelectedListener : ConversationReactionOverlay.OnReactionSelectedListener {
     override fun onReactionSelected(messageRecord: MessageRecord, emoji: String?) {
       reactionDelegate.hide()
+
+      if (emoji != null) {
+        disposables += viewModel.updateReaction(messageRecord, emoji).subscribe()
+      }
     }
 
     override fun onCustomReactionSelected(messageRecord: MessageRecord, hasAddedCustomEmoji: Boolean) {
       reactionDelegate.hide()
+      disposables += viewModel.updateCustomReaction(messageRecord, hasAddedCustomEmoji)
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribeBy(
+          onSuccess = {
+            ReactWithAnyEmojiBottomSheetDialogFragment
+              .createForMessageRecord(messageRecord, -1)
+              .show(childFragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG)
+          }
+        )
     }
   }
 
-  private inner class MotionEventRelayDrain : MotionEventRelay.Drain {
+  private inner class MotionEventRelayDrain(lifecycleOwner: LifecycleOwner) : MotionEventRelay.Drain {
+    private val lifecycle = lifecycleOwner.lifecycle
+
     override fun accept(motionEvent: MotionEvent): Boolean {
-      return reactionDelegate.applyTouchEvent(motionEvent)
+      return if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+        reactionDelegate.applyTouchEvent(motionEvent)
+      } else {
+        false
+      }
     }
   }
 
@@ -1727,11 +3267,11 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
         ConversationReactionOverlay.Action.REPLY -> handleReplyToMessage(conversationMessage)
         ConversationReactionOverlay.Action.EDIT -> handleEditMessage(conversationMessage)
         ConversationReactionOverlay.Action.FORWARD -> handleForwardMessageParts(conversationMessage.multiselectCollection.toSet())
-        ConversationReactionOverlay.Action.RESEND -> Unit // TODO [cfv2]
+        ConversationReactionOverlay.Action.RESEND -> handleResend(conversationMessage)
         ConversationReactionOverlay.Action.DOWNLOAD -> handleSaveAttachment(conversationMessage.messageRecord as MediaMmsMessageRecord)
         ConversationReactionOverlay.Action.COPY -> handleCopyMessage(conversationMessage.multiselectCollection.toSet())
-        ConversationReactionOverlay.Action.MULTISELECT -> Unit // TODO [cfv2]
-        ConversationReactionOverlay.Action.PAYMENT_DETAILS -> Unit // TODO [cfv2]
+        ConversationReactionOverlay.Action.MULTISELECT -> handleEnterMultiselect(conversationMessage)
+        ConversationReactionOverlay.Action.PAYMENT_DETAILS -> handleViewPaymentDetails(conversationMessage)
         ConversationReactionOverlay.Action.VIEW_INFO -> handleDisplayDetails(conversationMessage)
         ConversationReactionOverlay.Action.DELETE -> handleDeleteMessages(conversationMessage.multiselectCollection.toSet())
       }
@@ -1741,7 +3281,14 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
   inner class ActionModeCallback : ActionMode.Callback {
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
       mode.title = calculateSelectedItemCount()
-      // TODO [alex] listener.onMessageActionToolbarOpened();
+
+      searchMenuItem?.collapseActionView()
+      binding.toolbar.visible = false
+      if (scheduledMessagesStub.isVisible) {
+        reShowScheduleMessagesBar = true
+        scheduledMessagesStub.visibility = View.GONE
+      }
+
       setCorrectActionModeMenuVisibility()
       return true
     }
@@ -1753,14 +3300,118 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     override fun onDestroyActionMode(mode: ActionMode) {
       adapter.clearSelection()
       setBottomActionBarVisibility(false)
-      // TODO [alex] listener.onMessageActionToolbarClosed();
+
+      binding.toolbar.visible = true
+      if (reShowScheduleMessagesBar) {
+        scheduledMessagesStub.visibility = View.VISIBLE
+        reShowScheduleMessagesBar = false
+      }
+
       binding.conversationItemRecycler.invalidateItemDecorations()
       actionMode = null
     }
   }
   // endregion Conversation Callbacks
 
-  private class LastSeenPositionUpdater(
+  //region Activity Results Callbacks
+
+  private inner class ActivityResultCallbacks : ConversationActivityResultContracts.Callbacks {
+    override fun onSendContacts(contacts: List<Contact>) {
+      sendMessageWithoutComposeInput(
+        contacts = contacts,
+        clearCompose = false
+      )
+    }
+
+    override fun onMediaSend(result: MediaSendActivityResult?) {
+      if (result == null) {
+        return
+      }
+
+      val recipientSnapshot = viewModel.recipientSnapshot
+      if (result.recipientId != recipientSnapshot?.id) {
+        Log.w(TAG, "Result's recipientId did not match ours! Result: " + result.recipientId + ", Ours: " + recipientSnapshot?.id)
+        toast(R.string.ConversationActivity_error_sending_media)
+        return
+      }
+
+      if (result.isPushPreUpload) {
+        sendPreUploadMediaMessage(result)
+        return
+      }
+
+      val slides: List<Slide> = result.nonUploadedMedia.mapNotNull {
+        when {
+          MediaUtil.isVideoType(it.mimeType) -> VideoSlide(requireContext(), it.uri, it.size, it.isVideoGif, it.width, it.height, it.caption.orNull(), it.transformProperties.orNull())
+          MediaUtil.isGif(it.mimeType) -> GifSlide(requireContext(), it.uri, it.size, it.width, it.height, it.isBorderless, it.caption.orNull())
+          MediaUtil.isImageType(it.mimeType) -> ImageSlide(requireContext(), it.uri, it.mimeType, it.size, it.width, it.height, it.isBorderless, it.caption.orNull(), null, it.transformProperties.orNull())
+          else -> {
+            Log.w(TAG, "Asked to send an unexpected mimeType: '${it.mimeType}'. Skipping.")
+            null
+          }
+        }
+      }
+
+      sendMessage(
+        body = result.body,
+        mentions = result.mentions,
+        bodyRanges = result.bodyRanges,
+        messageToEdit = null,
+        quote = if (result.isViewOnce) null else inputPanel.quote.orNull(),
+        scheduledDate = result.scheduledTime,
+        slideDeck = SlideDeck().apply { slides.forEach { addSlide(it) } },
+        contacts = emptyList(),
+        clearCompose = true,
+        linkPreviews = emptyList(),
+        isViewOnce = result.isViewOnce
+      ) {
+        viewModel.deleteSlideData(slides)
+      }
+    }
+
+    private fun sendPreUploadMediaMessage(result: MediaSendActivityResult) {
+      sendMessage(
+        body = result.body,
+        mentions = result.mentions,
+        bodyRanges = result.bodyRanges,
+        messageToEdit = null,
+        quote = if (result.isViewOnce) null else inputPanel.quote.orNull(),
+        scheduledDate = result.scheduledTime,
+        slideDeck = null,
+        contacts = emptyList(),
+        clearCompose = true,
+        linkPreviews = emptyList(),
+        preUploadResults = result.preUploadResults,
+        isViewOnce = result.isViewOnce
+      )
+    }
+
+    override fun onContactSelect(uri: Uri?) {
+      val recipient = viewModel.recipientSnapshot
+      if (uri != null && recipient != null) {
+        conversationActivityResultContracts.launchContactShareEditor(uri, recipient.chatColors)
+      }
+    }
+
+    override fun onLocationSelected(place: SignalPlace?, uri: Uri?) {
+      if (place != null && uri != null) {
+        attachmentManager.setLocation(place, uri)
+        draftViewModel.setLocationDraft(place)
+      } else {
+        Log.w(TAG, "Location missing thumbnail")
+      }
+    }
+
+    override fun onFileSelected(uri: Uri?) {
+      if (uri != null) {
+        setMedia(uri, SlideFactory.MediaType.DOCUMENT)
+      }
+    }
+  }
+
+  //endregion
+
+  private class LastScrolledPositionUpdater(
     val adapter: ConversationAdapterV2,
     val layoutManager: LinearLayoutManager,
     val viewModel: ConversationViewModel
@@ -1777,6 +3428,77 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       viewModel.setLastScrolled(lastVisibleMessageTimestamp)
     }
   }
+
+  //region Conversation Banner Callbacks
+
+  private inner class ConversationBannerListener : ConversationBannerView.Listener {
+    override fun updateAppAction() {
+      PlayStoreUtil.openPlayStoreOrOurApkDownloadPage(requireContext())
+    }
+
+    override fun reRegisterAction() {
+      startActivity(RegistrationNavigationActivity.newIntentForReRegistration(requireContext()))
+    }
+
+    override fun reviewJoinRequestsAction() {
+      viewModel.recipientSnapshot?.let { recipient ->
+        val intent = ManagePendingAndRequestingMembersActivity.newIntent(requireContext(), recipient.requireGroupId().requireV2())
+        startActivity(intent)
+      }
+    }
+
+    override fun gv1SuggestionsAction(actionId: Int) {
+      if (actionId == R.id.reminder_action_gv1_suggestion_add_members) {
+        conversationGroupViewModel.groupRecordSnapshot?.let { groupRecord ->
+          GroupsV1MigrationSuggestionsDialog.show(requireActivity(), groupRecord.id.requireV2(), groupRecord.gv1MigrationSuggestions)
+        }
+      } else if (actionId == R.id.reminder_action_gv1_suggestion_no_thanks) {
+        conversationGroupViewModel.onSuggestedMembersBannerDismissed()
+      }
+    }
+
+    @SuppressLint("InlinedApi")
+    override fun changeBubbleSettingAction(disableSetting: Boolean) {
+      SignalStore.tooltips().markBubbleOptOutTooltipSeen()
+
+      if (disableSetting) {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_BUBBLE_SETTINGS)
+          .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
+          .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+      }
+    }
+
+    override fun onUnverifiedBannerClicked(unverifiedIdentities: List<IdentityRecord>) {
+      if (unverifiedIdentities.size == 1) {
+        VerifyIdentityActivity.startOrShowExchangeMessagesDialog(requireContext(), unverifiedIdentities[0], false)
+      } else {
+        val unverifiedNames = unverifiedIdentities
+          .map { Recipient.resolved(it.recipientId).getDisplayName(requireContext()) }
+          .toTypedArray()
+
+        MaterialAlertDialogBuilder(requireContext())
+          .setIcon(R.drawable.ic_warning)
+          .setTitle(R.string.ConversationFragment__no_longer_verified)
+          .setItems(unverifiedNames) { _, which: Int -> VerifyIdentityActivity.startOrShowExchangeMessagesDialog(requireContext(), unverifiedIdentities[which], false) }
+          .show()
+      }
+    }
+
+    override fun onUnverifiedBannerDismissed(unverifiedIdentities: List<IdentityRecord>) {
+      viewModel.resetVerifiedStatusToDefault(unverifiedIdentities)
+    }
+
+    override fun onRequestReviewIndividual(recipientId: RecipientId) {
+      ReviewCardDialogFragment.createForReviewRequest(recipientId).show(childFragmentManager, null)
+    }
+
+    override fun onReviewGroupMembers(groupId: GroupId.V2) {
+      ReviewCardDialogFragment.createForReviewMembers(groupId).show(childFragmentManager, null)
+    }
+  }
+
+  //endregion
 
   //region Disabled Input Callbacks
 
@@ -1883,6 +3605,19 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       GroupsV1MigrationInitiationBottomSheetDialogFragment.showForInitiation(childFragmentManager, recipient.id)
     }
 
+    override fun onInviteToSignal(recipient: Recipient) {
+      InviteActions.inviteUserToSignal(
+        context = requireContext(),
+        recipient = recipient,
+        appendInviteToComposer = null,
+        launchIntent = this@ConversationFragment::startActivity
+      )
+    }
+
+    override fun onUnmuteReleaseNotesChannel() {
+      viewModel.muteConversation(0L)
+    }
+
     private fun Single<Result<Unit, GroupChangeFailureReason>>.subscribeWithShowProgress(logMessage: String): Disposable {
       return doOnSubscribe { binding.conversationDisabledInput.showBusy() }
         .doOnTerminate { binding.conversationDisabledInput.hideBusy() }
@@ -1902,18 +3637,12 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
 
   //region Compose + Send Callbacks
 
-  private inner class SendButtonListener : View.OnClickListener, OnEditorActionListener {
+  private inner class SendButtonListener : View.OnClickListener, OnEditorActionListener, SendButton.ScheduledSendListener {
     override fun onClick(v: View) {
-      val metricId = if (viewModel.recipientSnapshot?.isGroup == true) {
-        SignalLocalMetrics.GroupMessageSend.start()
-      } else {
-        SignalLocalMetrics.IndividualMessageSend.start()
-      }
-
-      sendMessage(metricId)
+      sendMessage()
     }
 
-    override fun onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean {
+    override fun onEditorAction(v: TextView, actionId: Int, event: KeyEvent?): Boolean {
       if (actionId == EditorInfo.IME_ACTION_SEND) {
         if (inputPanel.isInEditMode) {
           sendEditButton.performClick()
@@ -1924,6 +3653,20 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       }
       return false
     }
+
+    override fun onSendScheduled() {
+      ScheduleMessageContextMenu.show(sendButton, (requireView() as ViewGroup)) { time ->
+        if (time == -1L) {
+          showSchedule(childFragmentManager)
+        } else {
+          sendMessage(scheduledDate = time)
+        }
+      }
+    }
+
+    override fun canSchedule(): Boolean {
+      return !(inputPanel.isRecordingInLockedMode || draftViewModel.voiceNoteDraft != null)
+    }
   }
 
   private inner class ComposeTextEventsListener :
@@ -1931,9 +3674,13 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     View.OnClickListener,
     TextWatcher,
     OnFocusChangeListener,
-    ComposeText.CursorPositionChangedListener {
+    ComposeText.CursorPositionChangedListener,
+    ComposeText.StylingChangedListener {
 
     private var beforeLength = 0
+    private var previousText = ""
+
+    var typingStatusEnabled = true
 
     override fun onKey(v: View, keyCode: Int, event: KeyEvent): Boolean {
       if (event.action == KeyEvent.ACTION_DOWN) {
@@ -1961,7 +3708,12 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
       if (composeText.textTrimmed.isEmpty() || beforeLength == 0) {
         composeText.postDelayed({ updateToggleButtonState() }, 50)
       }
-      // todo [cody] stickerViewModel.onInputTextUpdated(s.toString())
+
+      if (!inputPanel.inEditMessageMode()) {
+        stickerViewModel.onInputTextUpdated(s.toString())
+      } else {
+        stickerViewModel.onInputTextUpdated("")
+      }
     }
 
     override fun onFocusChange(v: View, hasFocus: Boolean) {
@@ -1971,23 +3723,194 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     }
 
     override fun onCursorPositionChanged(start: Int, end: Int) {
-      // todo [cody] linkPreviewViewModel.onTextChanged(requireContext(), composeText.getTextTrimmed().toString(), start, end);
+      linkPreviewViewModel.onTextChanged(composeText.textTrimmed.toString(), start, end)
     }
 
-    override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) = Unit
+    override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+      handleSaveDraftOnTextChange(composeText.textTrimmed)
+      handleTypingIndicatorOnTextChange(s.toString())
+    }
+
+    private fun handleSaveDraftOnTextChange(text: CharSequence) {
+      textDraftSaveDebouncer.publish {
+        if (inputPanel.inEditMessageMode()) {
+          draftViewModel.setMessageEditDraft(inputPanel.editMessageId!!, text.toString(), MentionAnnotation.getMentionsFromAnnotations(text), getStyling(text))
+        } else {
+          draftViewModel.setTextDraft(text.toString(), MentionAnnotation.getMentionsFromAnnotations(text), getStyling(text))
+        }
+      }
+    }
+
+    private fun handleTypingIndicatorOnTextChange(text: String) {
+      val recipient = viewModel.recipientSnapshot
+
+      if (recipient == null || !typingStatusEnabled || recipient.isBlocked || recipient.isSelf) {
+        return
+      }
+
+      val typingStatusSender = ApplicationDependencies.getTypingStatusSender()
+      if (text.length == 0) {
+        typingStatusSender.onTypingStoppedWithNotify(args.threadId)
+      } else if (text.length < previousText.length && previousText.contains(text)) {
+        typingStatusSender.onTypingStopped(args.threadId)
+      } else {
+        typingStatusSender.onTypingStarted(args.threadId)
+      }
+
+      previousText = text
+    }
+
+    override fun onStylingChanged() {
+      handleSaveDraftOnTextChange(composeText.textTrimmed)
+    }
   }
 
   //endregion Compose + Send Callbacks
+
+  //region Input Panel Callbacks
+
+  private inner class InputPanelListener : InputPanel.Listener {
+    override fun onVoiceNoteDraftPlay(audioUri: Uri, progress: Double) {
+      getVoiceNoteMediaController().startSinglePlaybackForDraft(audioUri, args.threadId, progress)
+    }
+
+    override fun onVoiceNoteDraftSeekTo(audioUri: Uri, progress: Double) {
+      getVoiceNoteMediaController().seekToPosition(audioUri, progress)
+    }
+
+    override fun onVoiceNoteDraftPause(audioUri: Uri) {
+      getVoiceNoteMediaController().pausePlayback(audioUri)
+    }
+
+    override fun onVoiceNoteDraftDelete(audioUri: Uri) {
+      getVoiceNoteMediaController().stopPlaybackAndReset(audioUri)
+      draftViewModel.deleteVoiceNoteDraft()
+    }
+
+    override fun onRecorderStarted() {
+      voiceMessageRecordingDelegate.onRecorderStarted()
+    }
+
+    override fun onRecorderLocked() {
+      updateToggleButtonState()
+      voiceMessageRecordingDelegate.onRecorderLocked()
+    }
+
+    override fun onRecorderFinished() {
+      updateToggleButtonState()
+      voiceMessageRecordingDelegate.onRecorderFinished()
+    }
+
+    override fun onRecorderCanceled(byUser: Boolean) {
+      updateToggleButtonState()
+      voiceMessageRecordingDelegate.onRecorderCanceled(byUser)
+    }
+
+    override fun onRecorderPermissionRequired() {
+      Permissions
+        .with(this@ConversationFragment)
+        .request(Manifest.permission.RECORD_AUDIO)
+        .ifNecessary()
+        .withRationaleDialog(getString(R.string.ConversationActivity_to_send_audio_messages_allow_signal_access_to_your_microphone), R.drawable.ic_mic_solid_24)
+        .withPermanentDenialDialog(getString(R.string.ConversationActivity_signal_requires_the_microphone_permission_in_order_to_send_audio_messages))
+        .execute()
+    }
+
+    override fun onEmojiToggle() {
+      container.toggleInput(MediaKeyboardFragmentCreator, composeText, showSoftKeyOnHide = true)
+    }
+
+    override fun onLinkPreviewCanceled() {
+      linkPreviewViewModel.onUserCancel()
+    }
+
+    override fun onStickerSuggestionSelected(sticker: StickerRecord) {
+      sendSticker(
+        stickerRecord = sticker,
+        clearCompose = true
+      )
+    }
+
+    override fun onQuoteChanged(id: Long, author: RecipientId) {
+      draftViewModel.setQuoteDraft(id, author)
+    }
+
+    override fun onQuoteCleared() {
+      draftViewModel.clearQuoteDraft()
+    }
+
+    override fun onEnterEditMode() {
+      updateToggleButtonState()
+      previousPages = keyboardPagerViewModel.pages().value
+      keyboardPagerViewModel.setOnlyPage(KeyboardPage.EMOJI)
+      onKeyboardChanged(KeyboardPage.EMOJI)
+      stickerViewModel.onInputTextUpdated("")
+    }
+
+    override fun onExitEditMode() {
+      updateToggleButtonState()
+      draftViewModel.deleteMessageEditDraft()
+      if (previousPages != null) {
+        keyboardPagerViewModel.setPages(previousPages!!)
+        previousPages = null
+      }
+    }
+
+    override fun onQuickCameraToggleClicked() {
+      val recipientId = viewModel.recipientSnapshot?.id ?: return
+      composeText.clearFocus()
+      conversationActivityResultContracts.launchCamera(recipientId, inputPanel.quote.isPresent)
+    }
+  }
+
+  private inner class InputPanelMediaListener : InputPanel.MediaListener {
+    override fun onMediaSelected(uri: Uri, contentType: String?) {
+      if (MediaUtil.isGif(contentType) || MediaUtil.isImageType(contentType)) {
+        disposables += viewModel.getKeyboardImageDetails(uri)
+          .observeOn(AndroidSchedulers.mainThread())
+          .subscribeBy(
+            onSuccess = {
+              sendKeyboardImage(uri, contentType!!, it)
+            },
+            onComplete = {
+              sendKeyboardImage(uri, contentType!!, null)
+            }
+          )
+      } else if (MediaUtil.isVideoType(contentType)) {
+        setMedia(uri, SlideFactory.MediaType.VIDEO)
+      } else {
+        setMedia(uri, SlideFactory.MediaType.AUDIO)
+      }
+    }
+
+    private fun sendKeyboardImage(uri: Uri, contentType: String, keyboardImageDetails: KeyboardUtil.ImageDetails?) {
+      if (keyboardImageDetails == null || !keyboardImageDetails.hasTransparency) {
+        setMedia(uri, requireNotNull(SlideFactory.MediaType.from(contentType)))
+        return
+      }
+
+      val slide: Slide = when {
+        MediaUtil.isGif(contentType) -> GifSlide(requireContext(), uri, 0, keyboardImageDetails.width, keyboardImageDetails.height, true, null)
+        MediaUtil.isImageType(contentType) -> ImageSlide(requireContext(), uri, contentType, 0, keyboardImageDetails.width, keyboardImageDetails.height, true, null, null)
+        else -> null
+      } ?: error("Only images are supported!")
+
+      sendMessageWithoutComposeInput(slide = slide)
+    }
+  }
+
+  //endregion
 
   //region Attachment + Media Keyboard
 
   private inner class AttachmentManagerListener : AttachmentManager.AttachmentListener {
     override fun onAttachmentChanged() {
-      // TODO [cody] implement
+      updateToggleButtonState()
+      updateLinkPreviewState()
     }
 
     override fun onLocationRemoved() {
-      // TODO [cody] implement
+      draftViewModel.clearLocationDraft()
     }
   }
 
@@ -1999,26 +3922,36 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
   private inner class AttachmentKeyboardFragmentListener : FragmentResultListener {
     @Suppress("DEPRECATION")
     override fun onFragmentResult(requestKey: String, result: Bundle) {
+      val recipient = viewModel.recipientSnapshot ?: return
       val button: AttachmentKeyboardButton? = result.getSerializable(AttachmentKeyboardFragment.BUTTON_RESULT) as? AttachmentKeyboardButton
       val media: Media? = result.getParcelable(AttachmentKeyboardFragment.MEDIA_RESULT)
 
       if (button != null) {
         when (button) {
-          AttachmentKeyboardButton.GALLERY -> AttachmentManager.selectGallery(this@ConversationFragment, 1, viewModel.recipientSnapshot!!, composeText.textTrimmed, sendButton.selectedSendType, inputPanel.quote.isPresent)
-          AttachmentKeyboardButton.FILE -> AttachmentManager.selectDocument(this@ConversationFragment, 1)
-          AttachmentKeyboardButton.CONTACT -> AttachmentManager.selectContactInfo(this@ConversationFragment, 1)
-          AttachmentKeyboardButton.LOCATION -> AttachmentManager.selectLocation(this@ConversationFragment, 1, viewModel.recipientSnapshot!!.chatColors.asSingleColor())
-          AttachmentKeyboardButton.PAYMENT -> AttachmentManager.selectPayment(this@ConversationFragment, viewModel.recipientSnapshot!!)
+          AttachmentKeyboardButton.GALLERY -> conversationActivityResultContracts.launchGallery(recipient.id, composeText.textTrimmed, inputPanel.quote.isPresent)
+          AttachmentKeyboardButton.CONTACT -> conversationActivityResultContracts.launchSelectContact()
+          AttachmentKeyboardButton.LOCATION -> conversationActivityResultContracts.launchSelectLocation(recipient.chatColors)
+          AttachmentKeyboardButton.PAYMENT -> AttachmentManager.selectPayment(this@ConversationFragment, recipient)
+          AttachmentKeyboardButton.FILE -> {
+            if (!conversationActivityResultContracts.launchSelectFile()) {
+              toast(R.string.AttachmentManager_cant_open_media_selection, Toast.LENGTH_LONG)
+            }
+          }
         }
       } else if (media != null) {
-        startActivityForResult(MediaSelectionActivity.editor(requireActivity(), sendButton.selectedSendType, listOf(media), viewModel.recipientSnapshot!!.id, composeText.textTrimmed), 12)
+        conversationActivityResultContracts.launchMediaEditor(listOf(media), recipient.id, composeText.textTrimmed)
       }
 
       container.hideInput()
     }
   }
 
-  private inner class KeyboardEvents : OnBackPressedCallback(false), InputAwareConstraintLayout.Listener {
+  private object MediaKeyboardFragmentCreator : InputAwareConstraintLayout.FragmentCreator {
+    override val id: Int = 2
+    override fun create(): Fragment = KeyboardPagerFragment()
+  }
+
+  private inner class KeyboardEvents : OnBackPressedCallback(false), InputAwareConstraintLayout.Listener, InsetAwareConstraintLayout.KeyboardStateListener {
     override fun handleOnBackPressed() {
       container.hideInput()
     }
@@ -2030,7 +3963,152 @@ class ConversationFragment : LoggingFragment(R.layout.v2_conversation_fragment) 
     override fun onInputHidden() {
       isEnabled = false
     }
+
+    override fun onKeyboardShown() = Unit
+
+    override fun onKeyboardHidden() {
+      closeEmojiSearch()
+    }
   }
 
   //endregion
+
+  //region Event Bus
+
+  @Subscribe(threadMode = ThreadMode.POSTING)
+  fun onIdentityRecordUpdate(event: IdentityRecord?) {
+    viewModel.updateIdentityRecordsInBackground()
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+  fun onStickerPackInstalled(event: StickerPackInstallEvent?) {
+    if (event == null) {
+      return
+    }
+
+    if (!TextSecurePreferences.hasSeenStickerIntroTooltip(requireContext())) {
+      return
+    }
+
+    EventBus.getDefault().removeStickyEvent(event)
+
+    if (!inputPanel.isStickerMode) {
+      conversationTooltips.displayStickerPackInstalledTooltip(inputPanel.mediaKeyboardToggleAnchorView, event)
+    }
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+  fun onGroupCallPeekEvent(groupCallPeekEvent: GroupCallPeekEvent) {
+    groupCallViewModel.onGroupCallPeekEvent(groupCallPeekEvent)
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  fun onReminderUpdateEvent(reminderUpdateEvent: ReminderUpdateEvent) {
+    viewModel.refreshReminder()
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  fun onRecaptchaRequiredEvent(recaptchaRequiredEvent: RecaptchaRequiredEvent) {
+    RecaptchaProofBottomSheetFragment.show(childFragmentManager)
+  }
+
+  //endregion
+
+  private inner class SearchEventListener : ConversationSearchBottomBar.EventListener {
+    override fun onSearchMoveUpPressed() {
+      searchViewModel.onMoveUp()
+    }
+
+    override fun onSearchMoveDownPressed() {
+      searchViewModel.onMoveDown()
+    }
+  }
+
+  private inner class ToolbarDependentMarginListener(private val toolbar: Toolbar) : ViewTreeObserver.OnGlobalLayoutListener {
+
+    init {
+      toolbar.viewTreeObserver.addOnGlobalLayoutListener(this)
+    }
+
+    override fun onGlobalLayout() {
+      if (!isAdded || view == null) {
+        return
+      }
+
+      val rect = Rect()
+      toolbar.getGlobalVisibleRect(rect)
+      threadHeaderMarginDecoration.toolbarMargin = rect.bottom + 16.dp
+      binding.conversationItemRecycler.invalidateItemDecorations()
+      toolbar.viewTreeObserver.removeOnGlobalLayoutListener(this)
+    }
+  }
+
+  private inner class ThreadHeaderMarginDecoration : RecyclerView.ItemDecoration() {
+    var toolbarMargin: Int = 0
+
+    override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+      super.getItemOffsets(outRect, view, parent, state)
+      if (view is ConversationHeaderView) {
+        outRect.top = toolbarMargin
+      }
+    }
+  }
+
+  private inner class VoiceMessageRecordingSessionCallbacks : VoiceMessageRecordingDelegate.SessionCallback {
+    override fun onSessionWillBegin() {
+      getVoiceNoteMediaController().pausePlayback()
+    }
+
+    override fun sendVoiceNote(draft: VoiceNoteDraft) {
+      val audioSlide = AudioSlide(requireContext(), draft.uri, draft.size, MediaUtil.AUDIO_AAC, true)
+
+      sendMessageWithoutComposeInput(
+        slide = audioSlide,
+        quote = inputPanel.quote.orNull()
+      )
+    }
+
+    override fun cancelEphemeralVoiceNoteDraft(draft: VoiceNoteDraft) {
+      draftViewModel.cancelEphemeralVoiceNoteDraft(draft.asDraft())
+    }
+
+    override fun saveEphemeralVoiceNoteDraft(draft: VoiceNoteDraft) {
+      draftViewModel.saveEphemeralVoiceNoteDraft(draft.asDraft())
+    }
+  }
+
+  private inner class VoiceNotePlayerViewListener : VoiceNotePlayerView.Listener {
+    override fun onCloseRequested(uri: Uri) {
+      getVoiceNoteMediaController().stopPlaybackAndReset(uri)
+    }
+
+    override fun onSpeedChangeRequested(uri: Uri, speed: Float) {
+      getVoiceNoteMediaController().setPlaybackSpeed(uri, speed)
+    }
+
+    override fun onPlay(uri: Uri, messageId: Long, position: Double) {
+      getVoiceNoteMediaController().startSinglePlayback(uri, messageId, position)
+    }
+
+    override fun onPause(uri: Uri) {
+      getVoiceNoteMediaController().pausePlayback(uri)
+    }
+
+    override fun onNavigateToMessage(threadId: Long, threadRecipientId: RecipientId, senderId: RecipientId, messageTimestamp: Long, messagePositionInThread: Long) {
+      if (threadId != viewModel.threadId) {
+        startActivity(
+          ConversationIntents.createBuilderSync(requireActivity(), threadRecipientId, threadId)
+            .withStartingPosition(messagePositionInThread.toInt())
+            .build()
+        )
+      } else {
+        viewModel
+          .moveToMessage(messageTimestamp, senderId)
+          .subscribeBy {
+            moveToPosition(it)
+          }
+          .addTo(disposables)
+      }
+    }
+  }
 }

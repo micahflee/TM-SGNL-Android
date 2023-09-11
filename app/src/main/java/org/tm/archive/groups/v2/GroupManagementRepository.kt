@@ -2,12 +2,14 @@ package org.tm.archive.groups.v2
 
 import android.content.Context
 import androidx.core.util.Consumer
+import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.Result
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.tm.archive.contacts.sync.ContactDiscovery
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupChangeBusyException
 import org.tm.archive.groups.GroupChangeException
@@ -97,5 +99,17 @@ class GroupManagementRepository @JvmOverloads constructor(private val context: C
         emitter.onSuccess(Result.failure(GroupChangeFailureReason.fromException(gcbe)))
       }
     }.subscribeOn(Schedulers.io())
+  }
+
+  fun removeUnmigratedV1Members(groupId: GroupId.V2): Completable {
+    return Completable.fromCallable {
+      SignalDatabase.groups.removeUnmigratedV1Members(groupId)
+    }.subscribeOn(Schedulers.io())
+  }
+
+  fun isJustSelf(groupId: GroupId): Single<Boolean> {
+    return Single.fromCallable {
+      SignalDatabase.groups.requireGroup(groupId).members == listOf(Recipient.self().id)
+    }
   }
 }

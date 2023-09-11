@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
+import android.hardware.Camera;
 import android.net.Uri;
 import android.text.SpannableString;
 import android.text.format.DateUtils;
@@ -26,6 +27,7 @@ import androidx.annotation.DimenRes;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -45,6 +47,7 @@ import org.tm.archive.components.emoji.MediaKeyboard;
 import org.tm.archive.components.voice.VoiceNotePlaybackState;
 import org.tm.archive.conversation.ConversationMessage;
 import org.tm.archive.conversation.ConversationStickerSuggestionAdapter;
+import org.tm.archive.conversation.MessageStyler;
 import org.tm.archive.conversation.VoiceNoteDraftView;
 import org.tm.archive.database.DraftTable;
 import org.tm.archive.database.model.MediaMmsMessageRecord;
@@ -76,7 +79,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-public class InputPanel extends LinearLayout
+public class InputPanel extends ConstraintLayout
     implements AudioRecordingHandler,
                KeyboardAwareLinearLayout.OnKeyboardShownListener,
                EmojiEventListener,
@@ -99,10 +102,10 @@ public class InputPanel extends LinearLayout
   private SendButton      sendButton;
   private View            recordingContainer;
   private View            recordLockCancel;
-  private ViewGroup       composeContainer;
+  private View            composeContainer;
   private View            editMessageCancel;
   private ImageView       editMessageThumbnail;
-  private View            editMessageHeader;
+  private View            editMessageTitle;
 
   private MicrophoneRecorderView microphoneRecorderView;
   private SlideToCancel          slideToCancel;
@@ -161,7 +164,7 @@ public class InputPanel extends LinearLayout
                                                  TimeUnit.HOURS.toSeconds(1),
                                                  () -> microphoneRecorderView.cancelAction(false));
     this.editMessageCancel      = findViewById(R.id.input_panel_exit_edit_mode);
-    this.editMessageHeader      = findViewById(R.id.edit_message_compose_header);
+    this.editMessageTitle       = findViewById(R.id.edit_message_title);
     this.editMessageThumbnail   = findViewById(R.id.edit_message_thumbnail);
 
     this.recordLockCancel.setOnClickListener(v -> microphoneRecorderView.cancelAction(true));
@@ -188,6 +191,8 @@ public class InputPanel extends LinearLayout
     stickerSuggestion.setAdapter(stickerSuggestionAdapter);
 
     editMessageCancel.setOnClickListener(v -> exitEditMessageMode());
+
+    quickCameraToggle.setVisibility(View.GONE);
   }
 
   public void setListener(final @NonNull Listener listener) {
@@ -195,6 +200,13 @@ public class InputPanel extends LinearLayout
 
     mediaKeyboard.setOnClickListener(v -> listener.onEmojiToggle());
     voiceNoteDraftView.setListener(listener);
+
+    if (Camera.getNumberOfCameras() > 0) {
+      quickCameraToggle.setOnClickListener(v -> listener.onQuickCameraToggleClicked());
+      quickCameraToggle.setVisibility(View.VISIBLE);
+    } else {
+      quickCameraToggle.setVisibility(View.GONE);
+    }
   }
 
   public void setMediaListener(@NonNull MediaListener listener) {
@@ -396,6 +408,7 @@ public class InputPanel extends LinearLayout
   public void enterEditMessageMode(@NonNull GlideRequests glideRequests, @NonNull ConversationMessage conversationMessageToEdit, boolean fromDraft) {
     SpannableString textToEdit = conversationMessageToEdit.getDisplayBody(getContext());
     if (!fromDraft) {
+      MessageStyler.convertSpoilersToComposeMode(textToEdit);
       composeText.setText(textToEdit);
       composeText.setSelection(textToEdit.length());
     }
@@ -442,13 +455,15 @@ public class InputPanel extends LinearLayout
   private void updateEditModeUi() {
     if (inEditMessageMode()) {
       ViewUtil.focusAndShowKeyboard(composeText);
-      editMessageHeader.setVisibility(View.VISIBLE);
+      editMessageTitle.setVisibility(View.VISIBLE);
+      editMessageThumbnail.setVisibility(View.VISIBLE);
       editMessageCancel.setVisibility(View.VISIBLE);
       if (listener != null) {
         listener.onEnterEditMode();
       }
     } else {
-      editMessageHeader.setVisibility(View.GONE);
+      editMessageTitle.setVisibility(View.GONE);
+      editMessageThumbnail.setVisibility(View.GONE);
       editMessageCancel.setVisibility(View.GONE);
       if (listener != null) {
         listener.onExitEditMode();
@@ -728,6 +743,7 @@ public class InputPanel extends LinearLayout
     void onQuoteCleared();
     void onEnterEditMode();
     void onExitEditMode();
+    void onQuickCameraToggleClicked();
   }
 
   private static class SlideToCancel {

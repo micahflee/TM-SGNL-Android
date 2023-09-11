@@ -2,8 +2,6 @@
 
 package org.thoughtcrime.benchmark
 
-import android.content.ComponentName
-import android.content.Intent
 import androidx.benchmark.macro.ExperimentalBaselineProfilesApi
 import androidx.benchmark.macro.junit4.BaselineProfileRule
 import androidx.test.uiautomator.By
@@ -18,6 +16,7 @@ import org.junit.Test
  *  - start the app
  *  - open a conversation
  */
+@OptIn(ExperimentalBaselineProfilesApi::class)
 class BaselineProfileGenerator {
   @get:Rule
   val baselineProfileRule = BaselineProfileRule()
@@ -26,7 +25,7 @@ class BaselineProfileGenerator {
   fun startup() {
     var setup = false
     baselineProfileRule.collectBaselineProfile(
-      packageName = "org.thoughtcrime.securesms",
+      packageName = "org.tm.archive",
       profileBlock = {
         if (!setup) {
           BenchmarkSetup.setup("cold-start", device)

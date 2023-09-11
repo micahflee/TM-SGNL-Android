@@ -12,8 +12,8 @@ import org.tm.archive.R
 import org.tm.archive.components.ThumbnailView
 import org.tm.archive.databinding.StoriesTextPostLinkPreviewBinding
 import org.tm.archive.linkpreview.LinkPreview
+import org.tm.archive.linkpreview.LinkPreviewState
 import org.tm.archive.linkpreview.LinkPreviewUtil
-import org.tm.archive.linkpreview.LinkPreviewViewModel
 import org.tm.archive.mms.GlideApp
 import org.tm.archive.mms.ImageSlide
 import org.tm.archive.mms.Slide
@@ -73,7 +73,7 @@ class StoryLinkPreviewView @JvmOverloads constructor(
     return future ?: SettableFuture(false)
   }
 
-  fun bind(linkPreviewState: LinkPreviewViewModel.LinkPreviewState, hiddenVisibility: Int = View.INVISIBLE, useLargeThumbnail: Boolean) {
+  fun bind(linkPreviewState: LinkPreviewState, hiddenVisibility: Int = View.INVISIBLE, useLargeThumbnail: Boolean) {
     val linkPreview: LinkPreview? = linkPreviewState.linkPreview.orElseGet {
       linkPreviewState.activeUrlForError?.let {
         LinkPreview(it, LinkPreviewUtil.getTopLevelDomain(it) ?: it, null, -1L, null)
@@ -116,7 +116,7 @@ class StoryLinkPreviewView @JvmOverloads constructor(
 
     notImage.visible = false
 
-    val imageSlide: Slide? = linkPreview.thumbnail.map { ImageSlide(context, it) }.orElse(null)
+    val imageSlide: Slide? = linkPreview.thumbnail.map { ImageSlide(it) }.orElse(null)
     if (imageSlide != null) {
       if (loadThumbnail) {
         future = image.setImageResource(

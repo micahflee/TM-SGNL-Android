@@ -129,12 +129,40 @@ class BufferedSignalServiceAccountDataStore(selfServiceId: ServiceId) : SignalSe
     kyberPreKeyStore.storeKyberPreKey(kyberPreKeyId, record)
   }
 
+  override fun storeLastResortKyberPreKey(kyberPreKeyId: Int, kyberPreKeyRecord: KyberPreKeyRecord) {
+    kyberPreKeyStore.storeKyberPreKey(kyberPreKeyId, kyberPreKeyRecord)
+  }
+
   override fun containsKyberPreKey(kyberPreKeyId: Int): Boolean {
     return kyberPreKeyStore.containsKyberPreKey(kyberPreKeyId)
   }
 
   override fun markKyberPreKeyUsed(kyberPreKeyId: Int) {
     return kyberPreKeyStore.markKyberPreKeyUsed(kyberPreKeyId)
+  }
+
+  override fun deleteAllStaleOneTimeEcPreKeys(threshold: Long, minCount: Int) {
+    error("Should not happen during the intended usage pattern of this class")
+  }
+
+  override fun markAllOneTimeEcPreKeysStaleIfNecessary(staleTime: Long) {
+    error("Should not happen during the intended usage pattern of this class")
+  }
+
+  override fun removeKyberPreKey(kyberPreKeyId: Int) {
+    kyberPreKeyStore.removeKyberPreKey(kyberPreKeyId)
+  }
+
+  override fun markAllOneTimeKyberPreKeysStaleIfNecessary(staleTime: Long) {
+    kyberPreKeyStore.markAllOneTimeKyberPreKeysStaleIfNecessary(staleTime)
+  }
+
+  override fun deleteAllStaleOneTimeKyberPreKeys(threshold: Long, minCount: Int) {
+    kyberPreKeyStore.deleteAllStaleOneTimeKyberPreKeys(threshold, minCount)
+  }
+
+  override fun loadLastResortKyberPreKeys(): List<KyberPreKeyRecord> {
+    return kyberPreKeyStore.loadLastResortKyberPreKeys()
   }
 
   override fun storeSenderKey(sender: SignalProtocolAddress, distributionId: UUID, record: SenderKeyRecord) {

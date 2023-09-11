@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 
+import org.signal.ringrtc.CallLinkRootKey;
 import org.tm.archive.components.voice.VoiceNotePlaybackState;
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.conversation.ConversationItem;
@@ -116,5 +117,6 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
     void goToMediaPreview(ConversationItem parent, View sharedElement, MediaIntentFactory.MediaPreviewArgs args);
     void onEditedIndicatorClicked(@NonNull MessageRecord messageRecord);
     void onShowGroupDescriptionClicked(@NonNull String groupName, @NonNull String description, boolean shouldLinkifyWebLinks);
+    void onJoinCallLink(@NonNull CallLinkRootKey callLinkRootKey);
   }
 }

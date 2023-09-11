@@ -267,7 +267,7 @@ public class MessageSender {
                                                   final long threadId,
                                                   final MessageTable.InsertListener insertListener)
   {
-    Log.i(TAG, "sendPushWithPreUploadedMedia -> Sending media message with pre-uploads to " + message.getThreadRecipient().getId() + ", thread: " + threadId + ", pre-uploads: " + preUploadResults);
+    Log.i(TAG, "Sending media message with pre-uploads to " + message.getThreadRecipient().getId() + ", thread: " + threadId + ", pre-uploads: " + preUploadResults);
     Preconditions.checkArgument(message.getAttachments().isEmpty(), "If the media is pre-uploaded, there should be no attachments on the message.");
 
     try {
@@ -284,31 +284,32 @@ public class MessageSender {
 
       List<AttachmentId> attachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
       List<String>       jobIds        = Stream.of(preUploadResults).map(PreUploadResult::getJobIds).flatMap(Stream::of).toList();
+
       attachmentDatabase.updateMessageId(attachmentIds, messageId, message.getStoryType().isStory());
 
       sendMessageInternal(context, recipient, SendType.SIGNAL, messageId, jobIds, false);
       onMessageSent();
       threadTable.update(allocatedThreadId, true);
 
-    //**TM_SA**//
+      //**TM_SA**//start
       for(AttachmentId attachmentId : attachmentIds) {
         DatabaseAttachment att = attachmentDatabase.getAttachment(attachmentId);
         if (att != null) {
           File file = ArchiveFileUtil.getFileFromDataBaseUri(context, att.getUri().toString());
-          ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, new File[]{file});
+          ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, new File[]{ file});
           String fileNameWithType = ArchiveFileUtil.getFileNameWithType(
-                  file.getName(),
-                  messageId,
-                  att.getAttachmentId().getRowId(),
-                  att.getContentType(),
-                  false
+              file.getName(),
+              messageId,
+              att.getAttachmentId().getRowId(),
+              att.getContentType(),
+              false
           );
           File tempFileForArchiving =
-                  FileUtils.createPlaceHolderTempFile(context, fileNameWithType);
+              FileUtils.createPlaceHolderTempFile(context, fileNameWithType);
           ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), true);
         }
       }
-    //**TM_SA**//
+      //**TM_SA**//end
 
       return allocatedThreadId;
     } catch (MmsException e) {

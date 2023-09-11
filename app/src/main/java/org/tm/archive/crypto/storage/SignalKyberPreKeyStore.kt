@@ -10,13 +10,14 @@ import org.signal.libsignal.protocol.state.KyberPreKeyRecord
 import org.signal.libsignal.protocol.state.KyberPreKeyStore
 import org.tm.archive.crypto.ReentrantSessionLock
 import org.tm.archive.database.SignalDatabase
+import org.whispersystems.signalservice.api.SignalServiceKyberPreKeyStore
 import org.whispersystems.signalservice.api.push.ServiceId
 import kotlin.jvm.Throws
 
 /**
  * An implementation of the [KyberPreKeyStore] that stores entries in [org.tm.archive.database.KyberPreKeyTable].
  */
-class SignalKyberPreKeyStore(private val selfServiceId: ServiceId) : KyberPreKeyStore {
+class SignalKyberPreKeyStore(private val selfServiceId: ServiceId) : SignalServiceKyberPreKeyStore {
 
   @Throws(InvalidKeyIdException::class)
   override fun loadKyberPreKey(kyberPreKeyId: Int): KyberPreKeyRecord {
@@ -31,8 +32,22 @@ class SignalKyberPreKeyStore(private val selfServiceId: ServiceId) : KyberPreKey
     }
   }
 
+  override fun loadLastResortKyberPreKeys(): List<KyberPreKeyRecord> {
+    ReentrantSessionLock.INSTANCE.acquire().use {
+      return SignalDatabase.kyberPreKeys.getAllLastResort(selfServiceId).map { it.record }
+    }
+  }
+
   override fun storeKyberPreKey(kyberPreKeyId: Int, record: KyberPreKeyRecord) {
-    error("This method is only used in tests")
+    ReentrantSessionLock.INSTANCE.acquire().use {
+      return SignalDatabase.kyberPreKeys.insert(selfServiceId, kyberPreKeyId, record, false)
+    }
+  }
+
+  override fun storeLastResortKyberPreKey(kyberPreKeyId: Int, kyberPreKeyRecord: KyberPreKeyRecord) {
+    ReentrantSessionLock.INSTANCE.acquire().use {
+      return SignalDatabase.kyberPreKeys.insert(selfServiceId, kyberPreKeyId, kyberPreKeyRecord, true)
+    }
   }
 
   override fun containsKyberPreKey(kyberPreKeyId: Int): Boolean {
@@ -44,6 +59,24 @@ class SignalKyberPreKeyStore(private val selfServiceId: ServiceId) : KyberPreKey
   override fun markKyberPreKeyUsed(kyberPreKeyId: Int) {
     ReentrantSessionLock.INSTANCE.acquire().use {
       SignalDatabase.kyberPreKeys.deleteIfNotLastResort(selfServiceId, kyberPreKeyId)
+    }
+  }
+
+  override fun removeKyberPreKey(kyberPreKeyId: Int) {
+    ReentrantSessionLock.INSTANCE.acquire().use {
+      SignalDatabase.kyberPreKeys.delete(selfServiceId, kyberPreKeyId)
+    }
+  }
+
+  override fun markAllOneTimeKyberPreKeysStaleIfNecessary(staleTime: Long) {
+    ReentrantSessionLock.INSTANCE.acquire().use {
+      SignalDatabase.kyberPreKeys.markAllStaleIfNecessary(selfServiceId, staleTime)
+    }
+  }
+
+  override fun deleteAllStaleOneTimeKyberPreKeys(threshold: Long, minCount: Int) {
+    ReentrantSessionLock.INSTANCE.acquire().use {
+      SignalDatabase.kyberPreKeys.deleteAllStaleBefore(selfServiceId, threshold, minCount)
     }
   }
 }

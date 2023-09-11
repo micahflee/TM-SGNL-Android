@@ -17,7 +17,6 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.SelectionLimits;
 import org.tm.archive.jobs.RemoteConfigRefreshJob;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.messageprocessingalarm.MessageProcessReceiver;
 import org.tm.archive.messageprocessingalarm.RoutineMessageFetchReceiver;
 import org.whispersystems.signalservice.api.RemoteConfigResult;
 
@@ -102,7 +101,7 @@ public final class FeatureFlags {
   private static final String PAYPAL_RECURRING_DONATIONS        = "android.recurringPayPalDonations.3";
   private static final String ANY_ADDRESS_PORTS_KILL_SWITCH     = "android.calling.fieldTrial.anyAddressPortsKillSwitch";
   private static final String AD_HOC_CALLING                    = "android.calling.ad.hoc.2";
-  private static final String EDIT_MESSAGE_SEND                 = "android.editMessage.send.10";
+  private static final String EDIT_MESSAGE_SEND                 = "android.editMessage.send.9";
   private static final String MAX_ATTACHMENT_COUNT              = "android.attachments.maxCount";
   private static final String MAX_ATTACHMENT_RECEIVE_SIZE_BYTES = "global.attachments.maxReceiveBytes";
   private static final String MAX_ATTACHMENT_SIZE_BYTES         = "global.attachments.maxBytes";
@@ -114,8 +113,6 @@ public final class FeatureFlags {
   private static final String PROMPT_FOR_NOTIFICATION_CONFIG    = "android.logs.promptNotificationsConfig";
   public  static final String PROMPT_BATTERY_SAVER              = "android.promptBatterySaver";
   public  static final String USERNAMES                         = "android.usernames";
-  public  static final String INSTANT_VIDEO_PLAYBACK            = "android.instantVideoPlayback";
-  private static final String CONVERSATION_ITEM_V2_TEXT         = "android.conversationItemV2.text";
 
   /**
    * We will only store remote values for flags in this set. If you want a flag to be controllable
@@ -123,71 +120,69 @@ public final class FeatureFlags {
    */
   @VisibleForTesting
   static final Set<String> REMOTE_CAPABLE = SetUtil.newHashSet(
-          PAYMENTS_KILL_SWITCH,
-          GROUPS_V2_RECOMMENDED_LIMIT, GROUPS_V2_HARD_LIMIT,
-          INTERNAL_USER,
-          VERIFY_V2,
-          CLIENT_EXPIRATION,
-          DONATE_MEGAPHONE,
-          CUSTOM_VIDEO_MUXER,
-          CDS_REFRESH_INTERVAL,
-          GROUP_NAME_MAX_LENGTH,
-          AUTOMATIC_SESSION_RESET,
-          AUTOMATIC_SESSION_INTERVAL,
-          DEFAULT_MAX_BACKOFF,
-          SERVER_ERROR_MAX_BACKOFF,
-          OKHTTP_AUTOMATIC_RETRY,
-          SHARE_SELECTION_LIMIT,
-          ANIMATED_STICKER_MIN_MEMORY,
-          ANIMATED_STICKER_MIN_TOTAL_MEMORY,
-          MESSAGE_PROCESSOR_ALARM_INTERVAL,
-          MESSAGE_PROCESSOR_DELAY,
-          MEDIA_QUALITY_LEVELS,
-          RETRY_RECEIPT_LIFESPAN,
-          RETRY_RESPOND_MAX_AGE,
-          RETRY_RECEIPTS,
-          MAX_GROUP_CALL_RING_SIZE,
-          SENDER_KEY_MAX_AGE,
-          STORIES_TEXT_FUNCTIONS,
-          HARDWARE_AEC_BLOCKLIST_MODELS,
-          SOFTWARE_AEC_BLOCKLIST_MODELS,
-          USE_HARDWARE_AEC_IF_OLD,
-          USE_AEC3,
-          PAYMENTS_COUNTRY_BLOCKLIST,
-          STORIES_AUTO_DOWNLOAD_MAXIMUM,
-          TELECOM_MANUFACTURER_ALLOWLIST,
-          TELECOM_MODEL_BLOCKLIST,
-          CAMERAX_MODEL_BLOCKLIST,
-          CAMERAX_MIXED_MODEL_BLOCKLIST,
-          HIDE_CONTACTS,
-          PAYMENTS_REQUEST_ACTIVATE_FLOW,
-          GOOGLE_PAY_DISABLED_REGIONS,
-          CREDIT_CARD_DISABLED_REGIONS,
-          PAYPAL_DISABLED_REGIONS,
-          CDS_HARD_LIMIT,
-          PAYPAL_ONE_TIME_DONATIONS,
-          PAYPAL_RECURRING_DONATIONS,
-          ANY_ADDRESS_PORTS_KILL_SWITCH,
-          EDIT_MESSAGE_SEND,
-          MAX_ATTACHMENT_COUNT,
-          MAX_ATTACHMENT_RECEIVE_SIZE_BYTES,
-          MAX_ATTACHMENT_SIZE_BYTES,
-          AD_HOC_CALLING,
-          SVR2_KILLSWITCH,
-          CDS_DISABLE_COMPAT_MODE,
-          SAFETY_NUMBER_ACI,
-          FCM_MAY_HAVE_MESSAGES_KILL_SWITCH,
-          PROMPT_FOR_NOTIFICATION_LOGS,
-          PROMPT_FOR_NOTIFICATION_CONFIG,
-          PROMPT_BATTERY_SAVER,
-          USERNAMES,
-          INSTANT_VIDEO_PLAYBACK,
-          CONVERSATION_ITEM_V2_TEXT
+      PAYMENTS_KILL_SWITCH,
+      GROUPS_V2_RECOMMENDED_LIMIT, GROUPS_V2_HARD_LIMIT,
+      INTERNAL_USER,
+      VERIFY_V2,
+      CLIENT_EXPIRATION,
+      DONATE_MEGAPHONE,
+      CUSTOM_VIDEO_MUXER,
+      CDS_REFRESH_INTERVAL,
+      GROUP_NAME_MAX_LENGTH,
+      AUTOMATIC_SESSION_RESET,
+      AUTOMATIC_SESSION_INTERVAL,
+      DEFAULT_MAX_BACKOFF,
+      SERVER_ERROR_MAX_BACKOFF,
+      OKHTTP_AUTOMATIC_RETRY,
+      SHARE_SELECTION_LIMIT,
+      ANIMATED_STICKER_MIN_MEMORY,
+      ANIMATED_STICKER_MIN_TOTAL_MEMORY,
+      MESSAGE_PROCESSOR_ALARM_INTERVAL,
+      MESSAGE_PROCESSOR_DELAY,
+      MEDIA_QUALITY_LEVELS,
+      RETRY_RECEIPT_LIFESPAN,
+      RETRY_RESPOND_MAX_AGE,
+      RETRY_RECEIPTS,
+      MAX_GROUP_CALL_RING_SIZE,
+      SENDER_KEY_MAX_AGE,
+      STORIES_TEXT_FUNCTIONS,
+      HARDWARE_AEC_BLOCKLIST_MODELS,
+      SOFTWARE_AEC_BLOCKLIST_MODELS,
+      USE_HARDWARE_AEC_IF_OLD,
+      USE_AEC3,
+      PAYMENTS_COUNTRY_BLOCKLIST,
+      STORIES_AUTO_DOWNLOAD_MAXIMUM,
+      TELECOM_MANUFACTURER_ALLOWLIST,
+      TELECOM_MODEL_BLOCKLIST,
+      CAMERAX_MODEL_BLOCKLIST,
+      CAMERAX_MIXED_MODEL_BLOCKLIST,
+      HIDE_CONTACTS,
+      PAYMENTS_REQUEST_ACTIVATE_FLOW,
+      GOOGLE_PAY_DISABLED_REGIONS,
+      CREDIT_CARD_DISABLED_REGIONS,
+      PAYPAL_DISABLED_REGIONS,
+      CDS_HARD_LIMIT,
+      PAYPAL_ONE_TIME_DONATIONS,
+      PAYPAL_RECURRING_DONATIONS,
+      ANY_ADDRESS_PORTS_KILL_SWITCH,
+      EDIT_MESSAGE_SEND,
+      MAX_ATTACHMENT_COUNT,
+      MAX_ATTACHMENT_RECEIVE_SIZE_BYTES,
+      MAX_ATTACHMENT_SIZE_BYTES,
+      AD_HOC_CALLING,
+      SVR2_KILLSWITCH,
+      CDS_DISABLE_COMPAT_MODE,
+      SAFETY_NUMBER_ACI,
+      FCM_MAY_HAVE_MESSAGES_KILL_SWITCH,
+      PROMPT_FOR_NOTIFICATION_LOGS,
+      PROMPT_FOR_NOTIFICATION_CONFIG,
+      PROMPT_BATTERY_SAVER,
+      USERNAMES
   );
 
   @VisibleForTesting
   static final Set<String> NOT_REMOTE_CAPABLE = SetUtil.newHashSet(
-          PHONE_NUMBER_PRIVACY
+      PHONE_NUMBER_PRIVACY
   );
 
   /**
@@ -210,50 +205,50 @@ public final class FeatureFlags {
    */
   @VisibleForTesting
   static final Set<String> HOT_SWAPPABLE = SetUtil.newHashSet(
-          VERIFY_V2,
-          CLIENT_EXPIRATION,
-          CUSTOM_VIDEO_MUXER,
-          CDS_REFRESH_INTERVAL,
-          GROUP_NAME_MAX_LENGTH,
-          AUTOMATIC_SESSION_RESET,
-          AUTOMATIC_SESSION_INTERVAL,
-          DEFAULT_MAX_BACKOFF,
-          SERVER_ERROR_MAX_BACKOFF,
-          OKHTTP_AUTOMATIC_RETRY,
-          SHARE_SELECTION_LIMIT,
-          ANIMATED_STICKER_MIN_MEMORY,
-          ANIMATED_STICKER_MIN_TOTAL_MEMORY,
-          MESSAGE_PROCESSOR_ALARM_INTERVAL,
-          MESSAGE_PROCESSOR_DELAY,
-          MEDIA_QUALITY_LEVELS,
-          RETRY_RECEIPT_LIFESPAN,
-          RETRY_RESPOND_MAX_AGE,
-          RETRY_RECEIPTS,
-          MAX_GROUP_CALL_RING_SIZE,
-          SENDER_KEY_MAX_AGE,
-          DONATE_MEGAPHONE,
-          HARDWARE_AEC_BLOCKLIST_MODELS,
-          SOFTWARE_AEC_BLOCKLIST_MODELS,
-          USE_HARDWARE_AEC_IF_OLD,
-          USE_AEC3,
-          PAYMENTS_COUNTRY_BLOCKLIST,
-          TELECOM_MANUFACTURER_ALLOWLIST,
-          TELECOM_MODEL_BLOCKLIST,
-          CAMERAX_MODEL_BLOCKLIST,
-          PAYMENTS_REQUEST_ACTIVATE_FLOW,
-          CDS_HARD_LIMIT,
-          EDIT_MESSAGE_SEND,
-          MAX_ATTACHMENT_COUNT,
-          MAX_ATTACHMENT_RECEIVE_SIZE_BYTES,
-          MAX_ATTACHMENT_SIZE_BYTES,
-          SVR2_KILLSWITCH,
-          CDS_DISABLE_COMPAT_MODE,
-          SAFETY_NUMBER_ACI,
-          FCM_MAY_HAVE_MESSAGES_KILL_SWITCH,
-          PROMPT_FOR_NOTIFICATION_LOGS,
-          PROMPT_FOR_NOTIFICATION_CONFIG,
-          PROMPT_BATTERY_SAVER,
-          USERNAMES
+      VERIFY_V2,
+      CLIENT_EXPIRATION,
+      CUSTOM_VIDEO_MUXER,
+      CDS_REFRESH_INTERVAL,
+      GROUP_NAME_MAX_LENGTH,
+      AUTOMATIC_SESSION_RESET,
+      AUTOMATIC_SESSION_INTERVAL,
+      DEFAULT_MAX_BACKOFF,
+      SERVER_ERROR_MAX_BACKOFF,
+      OKHTTP_AUTOMATIC_RETRY,
+      SHARE_SELECTION_LIMIT,
+      ANIMATED_STICKER_MIN_MEMORY,
+      ANIMATED_STICKER_MIN_TOTAL_MEMORY,
+      MESSAGE_PROCESSOR_ALARM_INTERVAL,
+      MESSAGE_PROCESSOR_DELAY,
+      MEDIA_QUALITY_LEVELS,
+      RETRY_RECEIPT_LIFESPAN,
+      RETRY_RESPOND_MAX_AGE,
+      RETRY_RECEIPTS,
+      MAX_GROUP_CALL_RING_SIZE,
+      SENDER_KEY_MAX_AGE,
+      DONATE_MEGAPHONE,
+      HARDWARE_AEC_BLOCKLIST_MODELS,
+      SOFTWARE_AEC_BLOCKLIST_MODELS,
+      USE_HARDWARE_AEC_IF_OLD,
+      USE_AEC3,
+      PAYMENTS_COUNTRY_BLOCKLIST,
+      TELECOM_MANUFACTURER_ALLOWLIST,
+      TELECOM_MODEL_BLOCKLIST,
+      CAMERAX_MODEL_BLOCKLIST,
+      PAYMENTS_REQUEST_ACTIVATE_FLOW,
+      CDS_HARD_LIMIT,
+      EDIT_MESSAGE_SEND,
+      MAX_ATTACHMENT_COUNT,
+      MAX_ATTACHMENT_RECEIVE_SIZE_BYTES,
+      MAX_ATTACHMENT_SIZE_BYTES,
+      SVR2_KILLSWITCH,
+      CDS_DISABLE_COMPAT_MODE,
+      SAFETY_NUMBER_ACI,
+      FCM_MAY_HAVE_MESSAGES_KILL_SWITCH,
+      PROMPT_FOR_NOTIFICATION_LOGS,
+      PROMPT_FOR_NOTIFICATION_CONFIG,
+      PROMPT_BATTERY_SAVER,
+      USERNAMES
   );
 
   /**
@@ -261,9 +256,9 @@ public final class FeatureFlags {
    */
   @VisibleForTesting
   static final Set<String> STICKY = SetUtil.newHashSet(
-          VERIFY_V2,
-          SVR2_KILLSWITCH,
-          FCM_MAY_HAVE_MESSAGES_KILL_SWITCH
+      VERIFY_V2,
+      SVR2_KILLSWITCH,
+      FCM_MAY_HAVE_MESSAGES_KILL_SWITCH
   );
 
   /**
@@ -271,7 +266,7 @@ public final class FeatureFlags {
    * hot-swappable flags will have this invoked as soon as we know about that change, but otherwise
    * these will only run during initialization.
    *
-   * These can be called on any thread, including the main thread, so be careful!FeatureFlags
+   * These can be called on any thread, including the main thread, so be careful!
    *
    * Also note that this doesn't play well with {@link #FORCED_VALUES} -- changes there will not
    * trigger changes in this map, so you'll have to do some manual hacking to get yourself in the
@@ -342,7 +337,7 @@ public final class FeatureFlags {
    */
   public static SelectionLimits groupLimits() {
     return new SelectionLimits(getInteger(GROUPS_V2_RECOMMENDED_LIMIT, 151),
-            getInteger(GROUPS_V2_HARD_LIMIT, 1001));
+                               getInteger(GROUPS_V2_HARD_LIMIT, 1001));
   }
 
   /** Payments Support */
@@ -634,23 +629,6 @@ public final class FeatureFlags {
     }
   }
 
-  /**
-   * Allow the video players to read from the temporary download files for attachments.
-   * @return whether this functionality is enabled.
-   */
-  public static boolean instantVideoPlayback() {
-    return getBoolean(INSTANT_VIDEO_PLAYBACK, false);
-  }
-
-  /**
-   * Note: this setting is currently
-   *
-   * @return Whether to use TextOnly V2 Conversation Items.
-   */
-  public static boolean useTextOnlyConversationItemV2() {
-    return getBoolean(CONVERSATION_ITEM_V2_TEXT, false);
-  }
-
   public static String promptForDelayedNotificationLogs() {
     return getString(PROMPT_FOR_NOTIFICATION_LOGS, "*");
   }
@@ -662,7 +640,6 @@ public final class FeatureFlags {
   public static String promptBatterySaver() {
     return getString(PROMPT_BATTERY_SAVER, "*");
   }
-
 
   /** Only for rendering debug info. */
   public static synchronized @NonNull Map<String, Object> getMemoryValues() {
@@ -701,55 +678,55 @@ public final class FeatureFlags {
     allKeys.addAll(localMemory.keySet());
 
     Stream.of(allKeys)
-            .filter(remoteCapable::contains)
-            .forEach(key -> {
-              Object remoteValue = remote.get(key);
-              Object diskValue   = localDisk.get(key);
-              Object newValue    = remoteValue;
+          .filter(remoteCapable::contains)
+          .forEach(key -> {
+            Object remoteValue = remote.get(key);
+            Object diskValue   = localDisk.get(key);
+            Object newValue    = remoteValue;
 
-              if (newValue != null && diskValue != null && newValue.getClass() != diskValue.getClass()) {
-                Log.w(TAG, "Type mismatch! key: " + key);
+            if (newValue != null && diskValue != null && newValue.getClass() != diskValue.getClass()) {
+              Log.w(TAG, "Type mismatch! key: " + key);
 
-                newDisk.remove(key);
-
-                if (hotSwap.contains(key)) {
-                  newMemory.remove(key);
-                }
-
-                return;
-              }
-
-              if (sticky.contains(key) && (newValue instanceof Boolean || diskValue instanceof Boolean)) {
-                newValue = diskValue == Boolean.TRUE ? Boolean.TRUE : newValue;
-              } else if (sticky.contains(key)) {
-                Log.w(TAG, "Tried to make a non-boolean sticky! Ignoring. (key: " + key + ")");
-              }
-
-              if (newValue != null) {
-                newDisk.put(key, newValue);
-              } else {
-                newDisk.remove(key);
-              }
-
-              if (hotSwap.contains(key)) {
-                if (newValue != null) {
-                  newMemory.put(key, newValue);
-                } else {
-                  newMemory.remove(key);
-                }
-              }
-            });
-
-    Stream.of(allKeys)
-            .filterNot(remoteCapable::contains)
-            .filterNot(key -> sticky.contains(key) && localDisk.get(key) == Boolean.TRUE)
-            .forEach(key -> {
               newDisk.remove(key);
 
               if (hotSwap.contains(key)) {
                 newMemory.remove(key);
               }
-            });
+
+              return;
+            }
+
+            if (sticky.contains(key) && (newValue instanceof Boolean || diskValue instanceof Boolean)) {
+              newValue = diskValue == Boolean.TRUE ? Boolean.TRUE : newValue;
+            } else if (sticky.contains(key)) {
+              Log.w(TAG, "Tried to make a non-boolean sticky! Ignoring. (key: " + key + ")");
+            }
+
+            if (newValue != null) {
+              newDisk.put(key, newValue);
+            } else {
+              newDisk.remove(key);
+            }
+
+            if (hotSwap.contains(key)) {
+              if (newValue != null) {
+                newMemory.put(key, newValue);
+              } else {
+                newMemory.remove(key);
+              }
+            }
+          });
+
+    Stream.of(allKeys)
+          .filterNot(remoteCapable::contains)
+          .filterNot(key -> sticky.contains(key) && localDisk.get(key) == Boolean.TRUE)
+          .forEach(key -> {
+            newDisk.remove(key);
+
+            if (hotSwap.contains(key)) {
+              newMemory.remove(key);
+            }
+          });
 
     return new UpdateResult(newMemory, newDisk, computeChanges(localMemory, newMemory));
   }

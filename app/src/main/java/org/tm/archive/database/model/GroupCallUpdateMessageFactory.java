@@ -12,7 +12,7 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DateUtils;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ public class GroupCallUpdateMessageFactory implements UpdateDescription.Spannabl
   private final ACI                    selfAci;
 
   public GroupCallUpdateMessageFactory(@NonNull Context context,
-                                       @NonNull List<ServiceId> joinedMembers,
+                                       @NonNull List<ACI> joinedMembers,
                                        boolean withTime,
                                        @NonNull GroupCallUpdateDetails groupCallUpdateDetails)
   {
@@ -61,8 +61,13 @@ public class GroupCallUpdateMessageFactory implements UpdateDescription.Spannabl
                         : context.getString(R.string.MessageRecord_group_call);
       case 1:
         if (joinedMembers.get(0).toString().equals(groupCallUpdateDetails.getStartedCallUuid())) {
-          return withTime ? context.getString(R.string.MessageRecord_s_started_a_group_call_s, describe(joinedMembers.get(0)), time)
-                          : context.getString(R.string.MessageRecord_s_started_a_group_call, describe(joinedMembers.get(0)));
+          if (Objects.equals(joinedMembers.get(0), selfAci)) {
+            return withTime ? context.getString(R.string.MessageRecord_you_started_a_group_call_s, time)
+                            : context.getString(R.string.MessageRecord_you_started_a_group_call);
+          } else {
+            return withTime ? context.getString(R.string.MessageRecord_s_started_a_group_call_s, describe(joinedMembers.get(0)), time)
+                            : context.getString(R.string.MessageRecord_s_started_a_group_call, describe(joinedMembers.get(0)));
+          }
         } else if (Objects.equals(joinedMembers.get(0), selfAci)) {
           return withTime ? context.getString(R.string.MessageRecord_you_are_in_the_group_call_s1, time)
                           : context.getString(R.string.MessageRecord_you_are_in_the_group_call);

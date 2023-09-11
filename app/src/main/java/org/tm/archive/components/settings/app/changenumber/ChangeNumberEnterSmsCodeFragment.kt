@@ -5,6 +5,7 @@ import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.Toolbar
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.components.settings.app.changenumber.ChangeNumberUtil.changeNumberSuccess
 import org.tm.archive.components.settings.app.changenumber.ChangeNumberUtil.getCaptchaArguments
@@ -13,6 +14,8 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.registration.fragments.BaseEnterSmsCodeFragment
 import org.tm.archive.util.navigation.safeNavigate
 
+private val TAG: String = Log.tag(ChangeNumberEnterSmsCodeFragment::class.java)
+
 class ChangeNumberEnterSmsCodeFragment : BaseEnterSmsCodeFragment<ChangeNumberViewModel>(R.layout.fragment_change_number_enter_code) {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -20,7 +23,10 @@ class ChangeNumberEnterSmsCodeFragment : BaseEnterSmsCodeFragment<ChangeNumberVi
 
     val toolbar: Toolbar = view.findViewById(R.id.toolbar)
     toolbar.title = viewModel.number.fullFormattedNumber
-    toolbar.setNavigationOnClickListener { navigateUp() }
+    toolbar.setNavigationOnClickListener {
+      Log.d(TAG, "Toolbar navigation clicked.")
+      navigateUp()
+    }
 
     view.findViewById<View>(R.id.verify_header).setOnClickListener(null)
 
@@ -28,6 +34,7 @@ class ChangeNumberEnterSmsCodeFragment : BaseEnterSmsCodeFragment<ChangeNumberVi
       viewLifecycleOwner,
       object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
+          Log.d(TAG, "onBackPressed")
           navigateUp()
         }
       }
@@ -36,8 +43,10 @@ class ChangeNumberEnterSmsCodeFragment : BaseEnterSmsCodeFragment<ChangeNumberVi
 
   private fun navigateUp() {
     if (SignalStore.misc().isChangeNumberLocked) {
+      Log.d(TAG, "Change number locked, navigateUp")
       startActivity(ChangeNumberLockActivity.createIntent(requireContext()))
     } else {
+      Log.d(TAG, "navigateUp")
       findNavController().navigateUp()
     }
   }
@@ -47,18 +56,22 @@ class ChangeNumberEnterSmsCodeFragment : BaseEnterSmsCodeFragment<ChangeNumberVi
   }
 
   override fun handleSuccessfulVerify() {
+    Log.d(TAG, "handleSuccessfulVerify")
     displaySuccess { changeNumberSuccess() }
   }
 
   override fun navigateToCaptcha() {
+    Log.d(TAG, "navigateToCaptcha")
     findNavController().safeNavigate(R.id.action_changeNumberEnterCodeFragment_to_captchaFragment, getCaptchaArguments())
   }
 
   override fun navigateToRegistrationLock(timeRemaining: Long) {
+    Log.d(TAG, "navigateToRegistrationLock")
     findNavController().safeNavigate(ChangeNumberEnterSmsCodeFragmentDirections.actionChangeNumberEnterCodeFragmentToChangeNumberRegistrationLock(timeRemaining))
   }
 
   override fun navigateToKbsAccountLocked() {
+    Log.d(TAG, "navigateToKbsAccountLocked")
     findNavController().safeNavigate(ChangeNumberEnterSmsCodeFragmentDirections.actionChangeNumberEnterCodeFragmentToChangeNumberAccountLocked())
   }
 }

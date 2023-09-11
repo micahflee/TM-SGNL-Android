@@ -34,7 +34,6 @@ import org.tm.archive.s3.S3;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.AttachmentUtil;
 import org.tm.archive.util.Base64;
-import org.tm.archive.util.ByteUnit;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.FileUtils;
 import org.tm.archive.util.Util;
@@ -62,9 +61,6 @@ public final class AttachmentDownloadJob extends BaseJob {
   public static final String KEY = "AttachmentDownloadJob";
 
   private static final String TAG = Log.tag(AttachmentDownloadJob.class);
-
-  /** A little extra allowed size to account for any adjustments made by other clients */
-  private static final int MAX_ATTACHMENT_SIZE_BUFFER = 25 * 1024  * 1024;
 
   private static final String KEY_MESSAGE_ID    = "message_id";
   private static final String KEY_PART_ROW_ID   = "part_row_id";
@@ -205,9 +201,9 @@ public final class AttachmentDownloadJob extends BaseJob {
       SignalServiceMessageReceiver   messageReceiver = ApplicationDependencies.getSignalServiceMessageReceiver();
       SignalServiceAttachmentPointer pointer         = createAttachmentPointer(attachment);
       InputStream                    stream          = messageReceiver.retrieveAttachment(pointer,
-              attachmentFile,
-              maxReceiveSize,
-              (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
+                                                                                          attachmentFile,
+                                                                                          maxReceiveSize,
+                                                                                          (total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)));
 
       //**TM_SA**//Start
       Pair<InputStream, InputStream> inputStreamPair  = FileUtils.duplicateInputStream(stream);
@@ -266,6 +262,7 @@ public final class AttachmentDownloadJob extends BaseJob {
                                                 Optional.empty(),
                                                 0, 0,
                                                 Optional.ofNullable(attachment.getDigest()),
+                                                Optional.ofNullable(attachment.getIncrementalDigest()),
                                                 Optional.ofNullable(attachment.getFileName()),
                                                 attachment.isVoiceNote(),
                                                 attachment.isBorderless(),
@@ -287,6 +284,9 @@ public final class AttachmentDownloadJob extends BaseJob {
     try (Response response = S3.getObject(Objects.requireNonNull(attachment.getFileName()))) {
       ResponseBody body = response.body();
       if (body != null) {
+        if (body.contentLength() > FeatureFlags.maxAttachmentReceiveSizeBytes()) {
+          throw new MmsException("Attachment too large, failing download");
+        }
         SignalDatabase.attachments().insertAttachmentsForPlaceholder(messageId, attachmentId, Okio.buffer(body.source()).inputStream());
       }
     } catch (MmsException e) {

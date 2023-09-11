@@ -7,7 +7,7 @@ import org.tm.archive.database.model.DistributionListId
 import org.tm.archive.database.model.DistributionListRecord
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.recipients.RecipientId
-import org.whispersystems.signalservice.api.push.ACI
+import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import java.util.UUID
 
 class DistributionListTablesTest {

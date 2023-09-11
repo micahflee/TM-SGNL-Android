@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- smartling.instruction_comments_enabled = on -->
 <resources>
-    <string name="app_name" translatable="false">TM SGNL</string>
-
+    <string name="app_name" translatable="false">TM SGNL</string><!--//**TM_SA**//-->
 
     <!--//**TM_SA**// START Change the URL's to our-->
     <string name="install_url" translatable="false">https://play.google.com/store/apps/details?id=org.tm.archive</string>
@@ -11,15 +10,16 @@
     <string name="transfer_support_url" translatable="false">https://www.telemessage.com/contact-us</string>
     <string name="support_center_url" translatable="false">https://www.telemessage.com/contact-us</string>
     <string name="terms_and_privacy_policy_url" translatable="false">http://www.telemessage.com/Privacy-Policy</string>
-    <string name="sustainer_boost_and_badges" translatable="false">https://www.telemessage.com/faqs/</string>
     <string name="username_support_url" translatable="false">https://www.telemessage.com/contact-us</string>
     <string name="donation_decline_code_error_url" translatable="false">https://www.telemessage.com/contact-us</string>
     <string name="sms_export_url" translatable="false">https://www.telemessage.com/contact-us</string>
     <string name="export_account_data_url" translatable="false">https://www.telemessage.com/contact-us</string>
     <!--//**TM_SA**// END Change the URL's to our-->
+
     <string name="google_pay_url" translatable="false">https://pay.google.com</string>
     <string name="signal_me_username_url" translatable="false">https://signal.me/#u/%1$s</string>
-    <string name="signal_me_username_url_no_scheme" translatable="false">TM SGNL.me/#u/%1$s</string>
+
+
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -222,11 +222,6 @@
     <!-- Action to prompt the user to dismiss the alert at the bottom of the chat list -->
     <string name="CensorshipCircumventionMegaphone_no_thanks">No thanks</string>
 
-    <!-- ClearProfileActivity -->
-    <string name="ClearProfileActivity_remove">Remove</string>
-    <string name="ClearProfileActivity_remove_profile_photo">Remove profile photo?</string>
-    <string name="ClearProfileActivity_remove_group_photo">Remove group photo?</string>
-
     <!-- ClientDeprecatedActivity -->
     <string name="ClientDeprecatedActivity_update_signal">Update TM SGNL</string>
     <string name="ClientDeprecatedActivity_this_version_of_the_app_is_no_longer_supported">This version of the app is no longer supported. To continue sending and receiving messages, update to the latest version.</string>
@@ -244,6 +239,12 @@
     <string name="CommunicationActions_call">Call</string>
     <string name="CommunicationActions_insecure_call">Insecure call</string>
     <string name="CommunicationActions_carrier_charges_may_apply">Carrier charges may apply. The number you are calling is not registered with TM SGNL. This call will be placed through your mobile carrier, not over the internet.</string>
+    <string name="CommunicationActions_cant_join_call">Can\'t join call</string>
+    <string name="CommunicationActions_this_call_link_is_no_longer_valid">This call link is no longer valid.</string>
+    <!-- Title on dialog when call link url cannot be parsed -->
+    <string name="CommunicationActions_invalid_link">Invalid link</string>
+    <!-- Message on dialog when call link url cannot be parsed -->
+    <string name="CommunicationActions_this_is_not_a_valid_call_link">This is not a valid call link. Make sure the entire link is intact and correct before attempting to join.</string>
 
     <!-- ConfirmIdentityDialog -->
 
@@ -253,9 +254,6 @@
     <string name="ContactsCursorLoader_groups">Groups</string>
     <!-- Contact search header for individuals who the user has not started a conversation with but is in a group with -->
     <string name="ContactsCursorLoader_group_members">Group members</string>
-    <string name="ContactsCursorLoader_phone_number_search">Phone number search</string>
-    <!-- Header for username search -->
-    <string name="ContactsCursorLoader_find_by_username">Find by username</string>
     <!-- Label for my stories when selecting who to send media to -->
     <string name="ContactsCursorLoader_my_stories">My Stories</string>
     <!-- Text for a button that brings up a bottom sheet to create a new story. -->
@@ -294,7 +292,6 @@
     <string name="ConversationItem_error_not_sent_tap_for_details">Not sent, tap for details</string>
     <string name="ConversationItem_error_partially_not_delivered">Partially sent, tap for details</string>
     <string name="ConversationItem_error_network_not_delivered">Send failed</string>
-    <string name="ConversationItem_received_key_exchange_message_tap_to_process">Received key exchange message, tap to process.</string>
     <string name="ConversationItem_group_action_left">%1$s has left the group.</string>
     <string name="ConversationItem_send_paused">Send paused</string>
     <string name="ConversationItem_click_to_approve_unencrypted">Send failed, tap for unsecured fallback</string>
@@ -323,25 +320,28 @@
     <!-- Dialog error message shown when user can\'t download a their own video message via a linked device due to a permanent failure (e.g., unable to decrypt) -->
     <string name="ConversationItem_cant_download_video_you_will_need_to_send_it_again">Can\'t download video. You will need to send it again.</string>
     <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. The timestamp will go from \'11m\' to \'edited 11m\' -->
-    <string name="ConversationItem_edited_timestamp_footer">edited\u2000%1$s</string>
+    <string name="ConversationItem_edited_timestamp_footer">Edited\u2000%1$s</string>
+    <!-- Displayed if the link preview in the conversation item is for a call link call -->
+    <string name="ConversationItem__join_call">Join call</string>
 
     <!-- ConversationActivity -->
     <string name="ConversationActivity_add_attachment">Add attachment</string>
     <!-- Accessibility text associated with image button to send an edited message. -->
     <string name="ConversationActivity_send_edit">Send edit</string>
-    <string name="ConversationActivity_select_contact_info">Select contact info</string>
     <string name="ConversationActivity_compose_message">Compose message</string>
     <string name="ConversationActivity_sorry_there_was_an_error_setting_your_attachment">Sorry, there was an error setting your attachment.</string>
     <string name="ConversationActivity_recipient_is_not_a_valid_sms_or_email_address_exclamation">Recipient is not a valid SMS or email address!</string>
     <string name="ConversationActivity_message_is_empty_exclamation">Message is empty!</string>
     <string name="ConversationActivity_group_members">Group members</string>
-    <string name="ConversationActivity__tap_here_to_start_a_group_call">Tap here to start a group call</string>
-    <!-- Warning toast shown to user if they somehow try to edit an sms/mms message -->
-    <string name="ConversationActivity_edit_sms_message_error">Unable to edit SMS messages</string>
     <!-- Warning dialog text shown to user if they try to send a message edit that is too old where %1$d is replaced with the amount of hours, e.g. 3 -->
     <plurals name="ConversationActivity_edit_message_too_old">
         <item quantity="one">Edits can only be applied within %1$d hour from the time you sent this message.</item>
         <item quantity="other">Edits can only be applied within %1$d hours from the time you sent this message.</item>
+    </plurals>
+    <!-- Warning dialog text shown to user if they try to edit a message too many times. Where %1$d is replaced with the number of edits -->
+    <plurals name="ConversationActivity_edit_message_too_many_edits">
+        <item quantity="one">Only %1$d edit can be applied to this message.</item>
+        <item quantity="other">Only %1$d edits can be applied to this message.</item>
     </plurals>
 
     <string name="ConversationActivity_invalid_recipient">Invalid recipient!</string>
@@ -356,7 +356,6 @@
     <string name="ConversationActivity_transport_signal">TM SGNL message</string>
     <string name="ConversationActivity_lets_switch_to_signal">Let\'s switch to TM SGNL %1$s</string>
     <string name="ConversationActivity_specify_recipient">Please choose a contact</string>
-    <string name="ConversationActivity_unblock">Unblock</string>
     <string name="ConversationActivity_attachment_exceeds_size_limits">Attachment exceeds size limits for the type of message you\'re sending.</string>
     <string name="ConversationActivity_unable_to_record_audio">Unable to record audio!</string>
     <string name="ConversationActivity_you_cant_send_messages_to_this_group">You can\'t send messages to this group because you\'re no longer a member.</string>
@@ -380,8 +379,6 @@
     <string name="ConversationActivity_signal_needs_recording_permissions_to_capture_video">TM SGNL needs microphone permissions to record videos.</string>
 
     <string name="ConversationActivity_quoted_contact_message">%1$s %2$s</string>
-    <string name="ConversationActivity_signal_cannot_sent_sms_mms_messages_because_it_is_not_your_default_sms_app">TM SGNL cannot send SMS/MMS messages because it is not your default SMS app. Would you like to change this in your Android settings?</string>
-    <string name="ConversationActivity_yes">Yes</string>
     <string name="ConversationActivity_no">No</string>
     <string name="ConversationActivity_search_position">%1$d of %2$d</string>
     <string name="ConversationActivity_no_results">No results</string>
@@ -404,16 +401,6 @@
 
     <string name="ConversationActivity_error_sending_media">Error sending media</string>
 
-    <string name="ConversationActivity__reported_as_spam_and_blocked">Reported as spam and blocked.</string>
-
-    <!-- Message shown when opening an SMS conversation with SMS disabled and they have unexported sms messages -->
-    <string name="ConversationActivity__sms_messaging_is_currently_disabled_you_can_export_your_messages_to_another_app_on_your_phone">SMS messaging is currently disabled. You can export your messages to another app on your phone.</string>
-    <!-- Message shown when opening an SMS conversation with SMS disabled and they have unexported sms messages -->
-    <string name="ConversationActivity__sms_messaging_is_no_longer_supported_in_signal_you_can_export_your_messages_to_another_app_on_your_phone">SMS messaging is no longer supported in TM SGNL. You can export your messages to another app on your phone.</string>
-    <!-- Action button shown when in sms conversation, sms is disabled, and unexported sms messages are present -->
-    <string name="ConversationActivity__export_sms_messages">Export SMS messages</string>
-    <!-- Message shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
-    <string name="ConversationActivity__sms_messaging_is_currently_disabled_invite_s_to_to_signal_to_keep_the_conversation_here">SMS messaging is currently disabled. Invite %1$s to TM SGNL to keep the conversation here.</string>
     <!-- Message shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
     <string name="ConversationActivity__sms_messaging_is_no_longer_supported_in_signal_invite_s_to_to_signal_to_keep_the_conversation_here">SMS messaging is no longer supported in TM SGNL. Invite %1$s to TM SGNL to keep the conversation here.</string>
     <!-- Action button shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
@@ -462,7 +449,7 @@
         <item quantity="other">Saving %1$d attachments to storage…</item>
     </plurals>
     <string name="ConversationFragment_pending">Pending…</string>
-    <string name="ConversationFragment_push">Data (TM SGNL)</string>
+    <string name="ConversationFragment_push">Data (Signal)</string>
     <string name="ConversationFragment_mms">MMS</string>
     <string name="ConversationFragment_sms">SMS</string>
     <string name="ConversationFragment_deleting">Deleting</string>
@@ -491,8 +478,6 @@
     <string name="ConversationFragment_not_now">Not now</string>
     <string name="ConversationFragment_your_safety_number_with_s_changed">Your safety number with %s changed</string>
     <string name="ConversationFragment_your_safety_number_with_s_changed_likey_because_they_reinstalled_signal">Your safety number with %s changed, likely because they reinstalled TM SGNL or changed devices. Tap Verify to confirm the new safety number. This is optional.</string>
-    <!-- Message shown to indicate which notification profile is on/active -->
-    <string name="ConversationFragment__s_on">%1$s on</string>
     <!-- Dialog title for block group link join requests -->
     <string name="ConversationFragment__block_request">Block request?</string>
     <!-- Dialog message for block group link join requests -->
@@ -511,6 +496,9 @@
     <string name="ConversationFragment__content_description_back_button">Navigate back.</string>
     <!-- Label for a button displayed in the conversation toolbar to open the main screen of the app. -->
     <string name="ConversationFragment__content_description_launch_signal_button">Open TM SGNL</string>
+    <!-- Dialog title shown when more than one contact in a group conversation is no longer verified -->
+    <string name="ConversationFragment__no_longer_verified">No longer verified</string>
+
     <!-- Label for a button displayed in conversation list to clear the chat filter -->
     <string name="ConversationListFragment__clear_filter">Clear filter</string>
     <!-- Notice on chat list when no unread chats are available, centered on display -->
@@ -587,12 +575,6 @@
 
     <!-- CreateGroupActivity -->
     <string name="CreateGroupActivity__select_members">Select members</string>
-
-    <!-- ConversationListFilterPullView -->
-    <!-- Note in revealable view before fully revealed -->
-    <string name="ConversationListFilterPullView__pull_down_to_filter">Pull down to filter</string>
-    <!-- Note in revealable view after fully revealed -->
-    <string name="ConversationListFilterPullView__release_to_filter">Release to filter</string>
 
     <!-- CreateProfileActivity -->
     <string name="CreateProfileActivity__profile">Profile</string>
@@ -691,8 +673,6 @@
     <string name="ScheduleMessageFTUXBottomSheet__disclaimer">When you send a scheduled message, make sure your device will be on and connected to the internet at the time of sending. If not, your message will send when your device reconnects.</string>
     <!-- Confirmation button text acknowledging the user understands the disclaimer -->
     <string name="ScheduleMessageFTUXBottomSheet__okay">Okay</string>
-    <!-- Title for section asking users to allow alarm permissions for scheduled messages -->
-    <string name="ScheduleMessageFTUXBottomSheet_enable_title">To enable message scheduling:</string>
     <!-- Title for dialog asking users to allow alarm permissions for scheduled messages -->
     <string name="ReenableScheduleMessagesDialogFragment_reenable_title">To re-enable message scheduling:</string>
     <!-- Title of dialog with a calendar to select the date the user wants to schedule a message. -->
@@ -884,12 +864,29 @@
     <string name="LinkPreviewView_no_link_preview_available">No link preview available</string>
     <string name="LinkPreviewView_this_group_link_is_not_active">This group link is not active</string>
     <string name="LinkPreviewView_domain_date">%1$s · %2$s</string>
+    <!-- Description for Call Link url previews -->
+    <string name="LinkPreviewView__use_this_link_to_join_a_signal_call">Use this link to join a TM SGNL Call</string>
 
     <!-- LinkPreviewRepository -->
     <plurals name="LinkPreviewRepository_d_members">
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
+
+    <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
+    <string name="PromptLogsSlowNotificationsDialog__title">We noticed notifications are delayed. Submit debug log?</string>
+    <!-- Message for dialog asking user to submit logs for debugging slow notification issues -->
+    <string name="PromptLogsSlowNotificationsDialog__message">Debug logs helps us diagnose and fix the issue, and do not contain identifying information.</string>
+
+    <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
+    <string name="PromptBatterySaverBottomSheet__title">Notifications may be delayed due to battery optimizations</string>
+    <!-- Message explaining that battery saver may delay notifications -->
+    <string name="PromptBatterySaverBottomSheet__message">You can disable battery optimizations for TM SGNL to ensure that message notifications will not be delayed.</string>
+
+    <!-- Button to continue to try and disable battery saver -->
+    <string name="PromptBatterySaverBottomSheet__continue">Continue</string>
+    <!-- Button to dismiss battery saver dialog prompt-->
+    <string name="PromptBatterySaverBottomSheet__dismiss">Dismiss</string>
 
     <!-- PendingMembersActivity -->
     <string name="PendingMembersActivity_pending_group_invites">Pending group invites</string>
@@ -1113,8 +1110,6 @@
 
     <!-- InputPanel -->
     <string name="InputPanel_tap_and_hold_to_record_a_voice_message_release_to_send">Tap and hold to record a voice message, release to send</string>
-    <!-- Message shown if the user tries to switch a conversation from TM SGNL to SMS -->
-    <string name="InputPanel__sms_messaging_is_no_longer_supported_in_signal">SMS messaging is no longer supported in TM SGNL.</string>
     <!-- When editing a message, label shown above the text input field in the composer -->
     <string name="InputPanel_edit_message">Edit message</string>
 
@@ -1148,9 +1143,6 @@
     <!-- MessageRetrievalService -->
     <string name="MessageRetrievalService_signal">TM SGNL</string>
     <string name="MessageRetrievalService_background_connection_enabled">Background connection enabled</string>
-
-    <!-- MmsDownloader -->
-    <string name="MmsDownloader_error_reading_mms_settings">Error reading wireless provider MMS settings</string>
 
     <!-- MediaOverviewActivity -->
     <string name="MediaOverviewActivity_Media">Media</string>
@@ -1210,7 +1202,6 @@
     <string name="Megaphones_get_started">Get started</string>
     <string name="Megaphones_new_group">New group</string>
     <string name="Megaphones_invite_friends">Invite friends</string>
-    <string name="Megaphones_use_sms">Use SMS</string>
     <string name="Megaphones_chat_colors">Chat colors</string>
     <string name="Megaphones_add_a_profile_photo">Add a profile photo</string>
 
@@ -1218,18 +1209,11 @@
     <string name="MessageQuotesBottomSheet_replies">Replies</string>
 
     <!-- NotificationBarManager -->
-    <string name="NotificationBarManager_signal_call_in_progress">TM SGNL call in progress</string>
     <string name="NotificationBarManager__establishing_signal_call">Establishing TM SGNL call</string>
-    <string name="NotificationBarManager__incoming_signal_call">Incoming TM SGNL call</string>
-    <string name="NotificationBarManager__incoming_signal_group_call">Incoming TM SGNL group call</string>
     <!-- Temporary notification shown when starting the calling service -->
     <string name="NotificationBarManager__starting_signal_call_service">Starting TM SGNL call service</string>
     <string name="NotificationBarManager__stopping_signal_call_service">Stopping TM SGNL call service</string>
-    <string name="NotificationBarManager__decline_call">Decline call</string>
-    <string name="NotificationBarManager__answer_call">Answer call</string>
-    <string name="NotificationBarManager__end_call">End call</string>
     <string name="NotificationBarManager__cancel_call">Cancel call</string>
-    <string name="NotificationBarManager__join_call">Join call</string>
 
     <!-- NotificationsMegaphone -->
     <string name="NotificationsMegaphone_turn_on_notifications">Turn on Notifications?</string>
@@ -1485,12 +1469,14 @@
 
     <!-- Group Calling update messages -->
     <string name="MessageRecord_s_started_a_group_call_s">%1$s started a group call · %2$s</string>
+    <string name="MessageRecord_you_started_a_group_call_s">You started a group call · %1$s</string>
     <string name="MessageRecord_s_is_in_the_group_call_s">%1$s is in the group call · %2$s</string>
     <string name="MessageRecord_you_are_in_the_group_call_s1">You are in the group call · %1$s</string>
     <string name="MessageRecord_s_and_s_are_in_the_group_call_s1">%1$s and %2$s are in the group call · %3$s</string>
     <string name="MessageRecord_group_call_s">Group call · %1$s</string>
 
     <string name="MessageRecord_s_started_a_group_call">%1$s started a group call</string>
+    <string name="MessageRecord_you_started_a_group_call">You started a group call</string>
     <string name="MessageRecord_s_is_in_the_group_call">%1$s is in the group call</string>
     <string name="MessageRecord_you_are_in_the_group_call">You are in the group call</string>
     <string name="MessageRecord_s_and_s_are_in_the_group_call">%1$s and %2$s are in the group call</string>
@@ -1629,8 +1615,6 @@
         <item quantity="other">You have %1$d attempts remaining. If you run out of attempts, you can create a new PIN. You can register and use your account but you\'ll lose some saved settings like your profile information.</item>
     </plurals>
     <string name="PinRestoreEntryFragment_signal_registration_need_help_with_pin">TM SGNL Registration - Need Help with PIN for Android</string>
-    <string name="PinRestoreEntryFragment_enter_alphanumeric_pin">Enter alphanumeric PIN</string>
-    <string name="PinRestoreEntryFragment_enter_numeric_pin">Enter numeric PIN</string>
 
     <!-- PinRestoreLockedFragment -->
     <string name="PinRestoreLockedFragment_create_your_pin">Create your PIN</string>
@@ -1708,7 +1692,6 @@
     <string name="WebRtcCallActivity__to_call_s_signal_needs_access_to_your_camera">To call %1$s, TM SGNL needs access to your camera</string>
     <string name="WebRtcCallActivity__signal_s">TM SGNL %1$s</string>
     <string name="WebRtcCallActivity__calling">Calling…</string>
-    <string name="WebRtcCallActivity__group_is_too_large_to_ring_the_participants">Group is too large to ring the participants.</string>
     <!-- Call status shown when an active call was disconnected (e.g., network hiccup) and is trying to reconnect -->
     <string name="WebRtcCallActivity__reconnecting">Reconnecting…</string>
     <!-- Title for dialog warning about lacking bluetooth permissions during a call -->
@@ -1719,6 +1702,48 @@
     <string name="WebRtcCallActivity__open_settings">Open settings</string>
     <!-- Negative action for bluetooth warning dialog to dismiss dialog -->
     <string name="WebRtcCallActivity__not_now">Not now</string>
+    <!-- Title for dialog to approve all requests -->
+    <plurals name="WebRtcCallActivity__approve_d_requests">
+        <item quantity="one">Approve %1$d request?</item>
+        <item quantity="other">Approve %1$d requests?</item>
+    </plurals>
+    <!-- Positive action for call link approve all dialog -->
+    <string name="WebRtcCallActivity__approve_all">Approve all</string>
+    <!-- Message for dialog to approve all requests -->
+    <plurals name="WebRtcCallActivity__d_people_will_be_added_to_the_call">
+        <item quantity="one">%1$d person will be added to the call.</item>
+        <item quantity="other">%1$d people will be added to the call.</item>
+    </plurals>
+    <!-- Title for dialog to deny all requests -->
+    <plurals name="WebRtcCallActivity__deny_d_requests">
+        <item quantity="one">Deny %1$d request?</item>
+        <item quantity="other">Deny %1$d requests?</item>
+    </plurals>
+    <!-- Message for dialog to deny all requests -->
+    <plurals name="WebRtcCallActivity__d_people_will_not_be_added_to_the_call">
+        <item quantity="one">%1$d person will not be added to the call.</item>
+        <item quantity="other">%1$d people will not be added to the call.</item>
+    </plurals>
+    <!-- Positive action for call link deny all dialog -->
+    <string name="WebRtcCallActivity__deny_all">Deny all</string>
+    <!-- Displayed in call status when users are pending -->
+    <plurals name="WebRtcCallActivity__d_people_waiting">
+        <item quantity="one">%1$d person waiting</item>
+        <item quantity="other">%1$d people waiting</item>
+    </plurals>
+    <!-- Displayed in call status during call link when no users are pending -->
+    <plurals name="WebRtcCallActivity__d_people">
+        <item quantity="one">%1$d person</item>
+        <item quantity="other">%1$d people</item>
+    </plurals>
+    <!-- Title of dialog displayed when a user\'s join request is denied for call link entry -->
+    <string name="WebRtcCallActivity__join_request_denied">Join request denied</string>
+    <!-- Message of dialog displayed when a user\'s join request is denied for call link entry -->
+    <string name="WebRtcCallActivity__your_request_to_join_this_call_has_been_denied">Your request to join this call has been denied.</string>
+    <!-- Title of dialog displayed when a user is removed from a call link -->
+    <string name="WebRtcCallActivity__removed_from_call">Removed from call</string>
+    <!-- Message of dialog displayed when a user is removed from a call link -->
+    <string name="WebRtcCallActivity__someone_has_removed_you_from_the_call">Someone has removed you from the call.</string>
 
     <!-- WebRtcCallView -->
     <string name="WebRtcCallView__signal_call">TM SGNL Call</string>
@@ -1731,6 +1756,12 @@
     <string name="WebRtcCallView__reconnecting">Reconnecting…</string>
     <string name="WebRtcCallView__joining">Joining…</string>
     <string name="WebRtcCallView__disconnected">Disconnected</string>
+    <!-- Utilized in the lobby before joining a call link -->
+    <string name="WebRtcCallView__signal_call_link">TM SGNL call link</string>
+    <!-- Warning displayed when entering a call via a link -->
+    <string name="WebRtcCallView__anyone_who_joins">Anyone who joins this call via the link will see your name, photo, and phone number.</string>
+    <!-- Displayed on the call screen as the status when waiting to be let into a call link by an admin -->
+    <string name="WebRtcCallView__waiting_to_be_let_in">Waiting to be let in…</string>
 
     <string name="WebRtcCallView__signal_will_ring_s">TM SGNL will ring %1$s</string>
     <string name="WebRtcCallView__signal_will_ring_s_and_s">TM SGNL will ring %1$s and %2$s</string>
@@ -1779,8 +1810,6 @@
     <string name="WebRtcCallView__toggle_camera">Toggle camera</string>
     <!-- Toggle content description for toggling mute state  -->
     <string name="WebRtcCallView__toggle_mute">Toggle mute</string>
-    <!-- Toggle content description for toggling group ring state  -->
-    <string name="WebRtcCallView__toggle_ring">Toggle ring</string>
     <!-- Content description for end-call button -->
     <string name="WebRtcCallView__end_call">End call</string>
 
@@ -1843,7 +1872,6 @@
     <!-- Dialog message shown when we need to verify sms and carrier rates may apply. -->
     <string name="RegistrationActivity_a_verification_code_will_be_sent_to_this_number">A verification code will be sent to this number. Carrier rates may apply.</string>
     <string name="RegistrationActivity_you_will_receive_a_call_to_verify_this_number">You\'ll receive a call to verify this number.</string>
-    <string name="RegistrationActivity_is_your_phone_number_above_correct">Is your phone number above correct?</string>
     <string name="RegistrationActivity_edit_number">Edit number</string>
     <string name="RegistrationActivity_missing_google_play_services">Missing Google Play Services</string>
     <string name="RegistrationActivity_this_device_is_missing_google_play_services">This device is missing Google Play Services. You can still use TM SGNL, but this configuration may result in reduced reliability or performance.\n\nIf you are not an advanced user, are not running an aftermarket Android ROM, or believe that you are seeing this in error, please contact support@signal.org for help troubleshooting.</string>
@@ -1857,6 +1885,8 @@
     <!--    During registration, if the user attempts (and fails) to register, we display this error message with a number of minutes timer they are allowed to try again.-->
     <string name="RegistrationActivity_rate_limited_to_try_again">You\'ve made too many attempts to register this number. Please try again in %s.</string>
     <string name="RegistrationActivity_unable_to_connect_to_service">Unable to connect to service. Please check network connection and try again.</string>
+    <!-- A description text for an alert dialog when the entered phone number is not eligible for a verification SMS. -->
+    <string name="RegistrationActivity_we_couldnt_send_you_a_verification_code">We couldn\'t send you a verification code via SMS. Try receiving your code via voice call instead.</string>
     <!-- Generic error when the app is unable to request an SMS code for an unknown reason. -->
     <string name="RegistrationActivity_unable_to_request_verification_code">Unable to request a verification code. Please check network connection and try again.</string>
     <string name="RegistrationActivity_non_standard_number_format">Non-standard number format</string>
@@ -1873,8 +1903,10 @@
         <item quantity="other">You are now %d steps away from submitting a debug log.</item>
     </plurals>
     <string name="RegistrationActivity_we_need_to_verify_that_youre_human">We need to verify that you\'re human.</string>
-    <!-- An error shown when the request was valid, but due to an issue with a partner vendor, the server is unable to send an SMS code -->
-    <string name="RegistrationActivity_external_service_error">TM SGNL was unable to send an SMS code due to an external failure.</string>
+    <!-- Button label to trigger a phone call to provide the registration code, in lieu of an SMS code -->
+    <string name="RegistrationActivity_voice_call">Voice Call</string>
+    <!-- Dialog button to cancel the pending action and return to the previous state. -->
+    <string name="RegistrationActivity_cancel">Cancel</string>
     <string name="RegistrationActivity_next">Next</string>
     <string name="RegistrationActivity_continue">Continue</string>
     <string name="RegistrationActivity_take_privacy_with_you_be_yourself_in_every_message">Take privacy with you.\nBe yourself in every message.</string>
@@ -1883,11 +1915,9 @@
     <!-- Subtitle of registration screen when asking for the users phone number -->
     <string name="RegistrationActivity_enter_your_phone_number_to_get_started">Enter your phone number to get started.</string>
     <string name="RegistrationActivity_enter_the_code_we_sent_to_s">Enter the code we sent to %s</string>
-    <string name="RegistrationActivity_make_sure_your_phone_has_a_cellular_signal">Make sure your phone has a cellular TM SGNL to receive your SMS or call</string>
 
     <string name="RegistrationActivity_phone_number_description">Phone number</string>
     <string name="RegistrationActivity_country_code_description">Country code</string>
-    <string name="RegistrationActivity_country_code_hint">Country</string>
     <string name="RegistrationActivity_call">Call</string>
     <string name="RegistrationActivity_verification_code">Verification Code</string>
     <string name="RegistrationActivity_resend_code">Resend Code</string>
@@ -1917,9 +1947,6 @@
 
     <!-- Search -->
     <string name="SearchFragment_no_results">No results found for \'%s\'</string>
-    <string name="SearchFragment_header_conversations">Chats</string>
-    <string name="SearchFragment_header_contacts">Contacts</string>
-    <string name="SearchFragment_header_messages">Messages</string>
 
     <!-- ShakeToReport -->
     <string name="ShakeToReport_shake_detected" translatable="false">Shake detected</string>
@@ -1940,10 +1967,10 @@
     <string name="SharedContactView_invite_to_signal">Invite to TM SGNL</string>
     <string name="SharedContactView_message">TM SGNL Message</string>
 
-    <!-- SignalBottomActionBar -->
+    <!-- TM SGNLBottomActionBar -->
     <string name="SignalBottomActionBar_more">More</string>
 
-    <!-- SignalPinReminders -->
+    <!-- TM SGNLPinReminders -->
     <string name="SignalPinReminders_well_remind_you_again_later">PIN verified successfully. We\'ll remind you again later.</string>
     <string name="SignalPinReminders_well_remind_you_again_tomorrow">PIN verified successfully. We\'ll remind you again tomorrow.</string>
     <string name="SignalPinReminders_well_remind_you_again_in_a_few_days">PIN verified successfully. We\'ll remind you again in a few days.</string>
@@ -1958,18 +1985,9 @@
     <string name="Slide_video">Video</string>
 
     <!-- SmsMessageRecord -->
-    <string name="SmsMessageRecord_received_corrupted_key_exchange_message">Received corrupted key
-        exchange message!
-    </string>
-    <string name="SmsMessageRecord_received_key_exchange_message_for_invalid_protocol_version">
-        Received key exchange message for invalid protocol version.
-    </string>
-    <string name="SmsMessageRecord_received_message_with_new_safety_number_tap_to_process">Received message with new safety number. Tap to process and display.</string>
     <string name="SmsMessageRecord_secure_session_reset">You reset the secure session.</string>
     <string name="SmsMessageRecord_secure_session_reset_s">%s reset the secure session.</string>
     <string name="SmsMessageRecord_duplicate_message">Duplicate message.</string>
-    <string name="SmsMessageRecord_this_message_could_not_be_processed_because_it_was_sent_from_a_newer_version">This message could not be processed because it was sent from a newer version of TM SGNL. You can ask your contact to send this message again after you update.</string>
-    <string name="SmsMessageRecord_error_handling_incoming_message">Error handling incoming message.</string>
 
     <!-- StickerManagementActivity -->
     <string name="StickerManagementActivity_stickers">Stickers</string>
@@ -2122,7 +2140,6 @@
     <string name="UsernameShareBottomSheet__copy_or_share_a_username_link">Copy or share a username link</string>
 
     <!-- VerifyIdentityActivity -->
-    <string name="VerifyIdentityActivity_your_contact_is_running_an_old_version_of_signal">Your contact is running an old version of TM SGNL. Please ask them to update before verifying your safety number.</string>
     <string name="VerifyIdentityActivity_your_contact_is_running_a_newer_version_of_Signal">Your contact is running a newer version of TM SGNL with an incompatible QR code format. Please update to compare.</string>
     <string name="VerifyIdentityActivity_the_scanned_qr_code_is_not_a_correctly_formatted_safety_number">The scanned QR code is not a correctly formatted safety number verification code. Please try scanning again.</string>
     <string name="VerifyIdentityActivity_share_safety_number_via">Share safety number via…</string>
@@ -2132,6 +2149,14 @@
     <string name="VerifyIdentityActivity_signal_needs_the_camera_permission_in_order_to_scan_a_qr_code_but_it_has_been_permanently_denied">TM SGNL needs the Camera permission in order to scan a QR code, but it has been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Camera\".</string>
     <string name="VerifyIdentityActivity_unable_to_scan_qr_code_without_camera_permission">Unable to scan QR code without Camera permission</string>
     <string name="VerifyIdentityActivity_you_must_first_exchange_messages_in_order_to_view">You must first exchange messages in order to view %1$s\'s safety number.</string>
+    <!-- Dialog message explaining to user they must exchange messages first to create a safety number -->
+    <string name="VerifyIdentityActivity_dialog_exchange_messages_to_create_safety_number_message">A safety number will be created with this person after they exchange messages with you.</string>
+    <!-- Confirmation option for dialog explaining to user they must exchange messages first to create a safety number  -->
+    <string name="VerifyIdentityActivity_dialog_exchange_messages_to_create_safety_number_ok">OK</string>
+    <!-- Learn more option for dialog explaining to user they must exchange messages first to create a safety number  -->
+    <string name="VerifyIdentityActivity_dialog_exchange_messages_to_create_safety_number_learn_more">Learn more</string>
+    <!-- Confirmation button on scan result dialogs -->
+    <string name="VerifyDisplayFragment__scan_result_dialog_ok">OK</string>
 
     <!-- ViewOnceMessageActivity -->
     <string name="ViewOnceMessageActivity_video_duration" translatable="false">%1$02d:%2$02d</string>
@@ -2148,12 +2173,6 @@
 
     <!-- MuteDialog -->
     <string name="MuteDialog_mute_notifications">Mute notifications</string>
-
-    <!-- ApplicationMigrationService -->
-    <string name="ApplicationMigrationService_import_in_progress">Import in progress</string>
-    <string name="ApplicationMigrationService_importing_text_messages">Importing text messages</string>
-    <string name="ApplicationMigrationService_import_complete">Import complete</string>
-    <string name="ApplicationMigrationService_system_database_import_is_complete">System database import is complete.</string>
 
     <!-- KeyCachingService -->
     <string name="KeyCachingService_signal_passphrase_cached">Touch to open.</string>
@@ -2198,7 +2217,6 @@
         <item quantity="one">%1$d chat</item>
         <item quantity="other">%1$d chats</item>
     </plurals>
-    <string name="MessageNotifier_d_new_messages_in_d_conversations">%1$d new messages in %2$d chats</string>
     <string name="MessageNotifier_most_recent_from_s">Most recent from: %1$s</string>
     <string name="MessageNotifier_locked_message">Locked message</string>
     <string name="MessageNotifier_message_delivery_failed">Message delivery failed.</string>
@@ -2217,7 +2235,6 @@
     <string name="MessageNotifier_view_once_video">View-once video</string>
     <string name="MessageNotifier_reply">Reply</string>
     <string name="MessageNotifier_signal_message">TM SGNL Message</string>
-    <string name="MessageNotifier_unsecured_sms">Unsecured SMS</string>
     <string name="MessageNotifier_contact_message">%1$s %2$s</string>
     <string name="MessageNotifier_unknown_contact_message">Contact</string>
     <string name="MessageNotifier_reacted_s_to_s">Reacted %1$s to: \"%2$s\".</string>
@@ -2253,6 +2270,8 @@
     <string name="NotificationChannel_call_status">Call status</string>
     <!-- Notification channel name for occasional alerts to the user. Will appear in the system notification settings as the title of this notification channel. -->
     <string name="NotificationChannel_critical_app_alerts">Critical app alerts</string>
+    <!-- Notification channel name for other notifications related to messages. Will appear in the system notification settings as the title of this notification channel. -->
+    <string name="NotificationChannel_additional_message_notifications">Additional message notifications</string>
 
     <!-- ProfileEditNameFragment -->
 
@@ -2295,7 +2314,6 @@
     </plurals>
 
     <!-- UnauthorizedReminder -->
-    <string name="UnauthorizedReminder_device_no_longer_registered">Device no longer registered</string>
     <!-- Message shown in a reminder banner when the user\'s device is no longer registered -->
     <string name="UnauthorizedReminder_this_is_likely_because_you_registered_your_phone_number_with_Signal_on_a_different_device">This device is no longer registered. This is likely because you registered your phone number with TM SGNL on a different device.</string>
     <!-- Action in reminder banner that will take user to re-register -->
@@ -2311,7 +2329,8 @@
 
     <!-- WebRtcCallActivity -->
     <string name="WebRtcCallActivity_to_answer_the_call_give_signal_access_to_your_microphone">To answer the call, give TM SGNL access to your microphone.</string>
-    <string name="WebRtcCallActivity_to_answer_the_call_from_s_give_signal_access_to_your_microphone">To answer the call from %s, give TM SGNL access to your microphone.</string>
+    <!-- Message shown in permission dialog when attempting to answer a video call without camera or microphone permissions already granted. -->
+    <string name="WebRtcCallActivity_to_answer_the_call_give_signal_access_to_your_microphone_and_camera">To answer the video call, give TM SGNL access to your microphone and camera.</string>
     <string name="WebRtcCallActivity_signal_requires_microphone_and_camera_permissions_in_order_to_make_or_receive_calls">TM SGNL requires Microphone and Camera permissions in order to make or receive calls, but they have been permanently denied. Please continue to app settings, select \"Permissions\", and enable \"Microphone\" and \"Camera\".</string>
     <string name="WebRtcCallActivity__answered_on_a_linked_device">Answered on a linked device.</string>
     <string name="WebRtcCallActivity__declined_on_a_linked_device">Declined on a linked device.</string>
@@ -2339,7 +2358,9 @@
     <string name="WebRtcAudioOutputToggle__speaker">Speaker</string>
     <!-- Audio output option referring to an external audio device connected via wireless Bluetooth -->
     <string name="WebRtcAudioOutputToggle__bluetooth">Bluetooth</string>
-    <!-- Audio output option referring to an external headset connected via a 3.5mm headphone jack -->
+    <!-- Audio output option referring to a pair of headphones that do not contain a microphone connected via a 3.5mm headphone jack -->
+    <string name="WebRtcAudioOutputToggle__wired_headphones">Wired Headphones</string>
+    <!-- Audio output option referring to an external headset that contains a microphone connected via a 3.5mm headphone jack -->
     <string name="WebRtcAudioOutputToggle__wired_headset">Wired Headset</string>
     <!-- Audio output option referring to an external headset connected via a USB-C data cable -->
     <string name="WebRtcAudioOutputToggle__wired_headset_usb">Wired Headset (USB)</string>
@@ -2409,8 +2430,6 @@
     <string name="conversation_activity__type_message_sms_insecure">Unsecured SMS</string>
     <string name="conversation_activity__type_message_mms_insecure">Unsecured MMS</string>
     <!-- Option in send button context menu to schedule the message instead of sending it directly -->
-    <string name="conversation_activity__option_schedule_message">Schedule message</string>
-    <string name="conversation_activity__from_sim_name">From %1$s</string>
     <string name="conversation_activity__sim_n">SIM %1$d</string>
     <string name="conversation_activity__send">Send</string>
     <string name="conversation_activity__compose_description">Message composition</string>
@@ -2419,7 +2438,6 @@
     <string name="conversation_activity__quick_attachment_drawer_toggle_camera_description">Toggle quick camera attachment drawer</string>
     <string name="conversation_activity__quick_attachment_drawer_record_and_send_audio_description">Record and send audio attachment</string>
     <string name="conversation_activity__quick_attachment_drawer_lock_record_description">Lock recording of audio attachment</string>
-    <string name="conversation_activity__enable_signal_for_sms">Enable TM SGNL for SMS</string>
     <string name="conversation_activity__message_could_not_be_sent">Message could not be sent. Check your connection and try again.</string>
 
     <!-- conversation_input_panel -->
@@ -2484,16 +2502,6 @@
     <string name="QuoteView_no_longer_available">No longer available</string>
     <!-- Label for quoted gift -->
     <string name="QuoteView__donation_for_a_friend">Donation for a friend</string>
-
-    <!-- ConversationParentFragment -->
-    <!-- Title for dialog warning about lacking bluetooth permissions during a voice message -->
-    <string name="ConversationParentFragment__bluetooth_permission_denied">Bluetooth permission denied</string>
-    <!-- Message for dialog warning about lacking bluetooth permissions during a voice message and references the permission needed by name -->
-    <string name="ConversationParentFragment__please_enable_the_nearby_devices_permission_to_use_bluetooth_during_a_call">Please enable the \"Nearby devices\" permission to use bluetooth to record voice messages.</string>
-    <!-- Positive action for bluetooth warning dialog to open settings -->
-    <string name="ConversationParentFragment__open_settings">Open settings</string>
-    <!-- Negative action for bluetooth warning dialog to dismiss dialog -->
-    <string name="ConversationParentFragment__not_now">Not now</string>
 
     <!-- conversation_fragment -->
     <string name="conversation_fragment__scroll_to_the_bottom_content_description">Scroll to the bottom</string>
@@ -2608,17 +2616,7 @@
     <!-- giphy_fragment -->
     <string name="giphy_fragment__nothing_found">Nothing found</string>
 
-    <!-- database_migration_activity -->
-    <string name="database_migration_activity__would_you_like_to_import_your_existing_text_messages">Would you like to import your existing text messages into TM SGNL\'s encrypted database?</string>
-    <string name="database_migration_activity__the_default_system_database_will_not_be_modified">The default system database will not be modified or altered in any way.</string>
-    <string name="database_migration_activity__skip">Skip</string>
-    <string name="database_migration_activity__import">Import</string>
-    <string name="database_migration_activity__this_could_take_a_moment_please_be_patient">This could take a moment. Please be patient, we\'ll notify you when the import is complete.</string>
-    <string name="database_migration_activity__importing">IMPORTING</string>
-
-
     <!-- load_more_header -->
-    <string name="load_more_header__see_full_conversation">See full chat</string>
     <string name="load_more_header__loading">Loading</string>
 
     <!-- media_overview_activity -->
@@ -2675,7 +2673,7 @@
     <string name="EditProfileFragment__edit_group">Edit group</string>
     <string name="EditProfileFragment__group_name">Group name</string>
     <string name="EditProfileFragment__group_description">Group description</string>
-    <string name="EditProfileFragment__support_link" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="EditProfileFragment__support_link" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
 
     <!-- EditProfileNameFragment -->
     <string name="EditProfileNameFragment_your_name">Your name</string>
@@ -2690,16 +2688,25 @@
     <!-- recipients_panel -->
 
     <!-- verify_display_fragment -->
-    <string name="verify_display_fragment__to_verify_the_security_of_your_end_to_end_encryption_with_s"><![CDATA[To verify the security of your end-to-end encryption with %s, compare the numbers above with their device. You can also scan the code on their phone. <a href="https://www.telemessage.com/faqs/">Learn more.</a>]]></string><!--//**TM_SA**Change yhe link to FAQ//-->
+    <!-- Explanation of how to verify the safety numbers. %s is replaced with the name of the other recipient -->
+    <string name="verify_display_fragment__pnp_verify_safety_numbers_explanation_with_s">To verify end-to-end encryption with %s, match the color card above with their device and compare the numbers. If these don’t match, swipe and try the other pair of safety numbers. Only one pair needs to match.</string>
     <string name="verify_display_fragment__tap_to_scan">Tap to scan</string>
     <string name="verify_display_fragment__successful_match">Successful match</string>
     <string name="verify_display_fragment__failed_to_verify_safety_number">Failed to verify safety number</string>
     <string name="verify_display_fragment__loading">Loading…</string>
     <string name="verify_display_fragment__mark_as_verified">Mark as verified</string>
     <string name="verify_display_fragment__clear_verification">Clear verification</string>
+    <!-- Banner at top of safety numbers screen explaining that we\'re updating how safety numbers work. -->
+    <string name="verify_display_fragment__safety_numbers_are_updating_banner_no_learn_more">Safety numbers are being updated.</string>
 
-    <!-- verify_identity -->
-    <string name="verify_identity__share_safety_number">Share safety number</string>
+    <!-- Title for dialog explaining for how safety numbers are transitioning to support usernames -->
+    <string name="PnpSafetyNumberEducationDialog__title">Changes to safety numbers</string>
+    <!-- Message for dialog explaining for how safety numbers are transitioning to support usernames -->
+    <string name="PnpSafetyNumberEducationDialog__body">Safety numbers are being updated over a transition period to enable upcoming privacy features in TM SGNL.\n\nTo verify safety numbers, match the color card with your contact’s device. If these don’t match, swipe and try the other pair of safety numbers. Only one pair needs to match.</string>
+    <!-- Button for more information about the safety number changes. Takes user to support article -->
+    <string name="PnpSafetyNumberEducationDialog__help">Need help?</string>
+    <!-- Confirmation button for educating users about new safety number changes -->
+    <string name="PnpSafetyNumberEducationDialog__confirm">Got it</string>
 
     <!-- verity_scan_fragment -->
     <string name="verify_scan_fragment__scan_the_qr_code_on_your_contact">Scan the QR Code on your contact\'s device.</string>
@@ -2741,7 +2748,6 @@
     <string name="AndroidManifest__linked_devices">Linked devices</string>
     <string name="AndroidManifest__invite_friends">Invite friends</string>
     <string name="AndroidManifest_archived_conversations">Archived chats</string>
-    <string name="AndroidManifest_remove_photo">Remove photo</string>
 
     <!-- HelpFragment -->
     <string name="HelpFragment__have_you_read_our_faq_yet">Have you read our FAQ yet?</string>
@@ -2775,6 +2781,14 @@
         <item>Donations &amp; Badges</item>
         <item>SMS Export</item>
     </string-array>
+    <!-- Subject of email when submitting debug logs to help debug slow notifications -->
+    <string name="DebugLogsPromptDialogFragment__signal_android_support_request">TM SGNL Android Debug Log Submission</string>
+    <!-- Category to organize the support email sent -->
+    <string name="DebugLogsPromptDialogFragment__slow_notifications_category">Slow notifications</string>
+    <!-- Action to submit logs and take user to send an e-mail -->
+    <string name="DebugLogsPromptDialogFragment__submit">Submit</string>
+    <!-- Action to decline to submit logs -->
+    <string name="DebugLogsPromptDialogFragment__no_thanks">No thanks</string>
 
     <!-- ReactWithAnyEmojiBottomSheetDialogFragment -->
     <string name="ReactWithAnyEmojiBottomSheetDialogFragment__this_message">This Message</string>
@@ -2924,8 +2938,6 @@
     <string name="preferences__app_icon_notification_warning">Notifications will always display the default TM SGNL icon and name.</string>
     <!--Call to action to get more information about the limitations of the change app icon functionality. -->
     <string name="preferences__app_icon_learn_more">Learn\u00A0more</string>
-    <!--Text description of the app icon option for visually impaired users. -->
-    <string name="preferences__app_icon_content_description">Icon for %1$s</string>
     <!--Text description of a graphic illustrating the limitations of the app icon change. -->
     <string name="preferences__graphic_illustrating_where_the_replacement_app_icon_will_be_visible">Graphic illustrating where the replacement app icon will be visible.</string>
     <string name="preferences__disable_pin">Disable PIN</string>
@@ -2948,7 +2960,7 @@
     <string name="preferences__if_typing_indicators_are_disabled_you_wont_be_able_to_see_typing_indicators">If typing indicators are disabled, you won\'t be able to see typing indicators from others.</string>
     <string name="preferences__request_keyboard_to_disable">Request keyboard to disable personalized learning.</string>
     <string name="preferences__this_setting_is_not_a_guarantee">This setting is not a guarantee, and your keyboard may ignore it.</string>
-    <string name="preferences__incognito_keyboard_learn_more" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="preferences__incognito_keyboard_learn_more" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
     <string name="preferences_chats__when_using_mobile_data">When using mobile data</string>
     <string name="preferences_chats__when_using_wifi">When using Wi-Fi</string>
     <string name="preferences_chats__when_roaming">When roaming</string>
@@ -2982,7 +2994,6 @@
     <string name="preferences_advanced__use_system_emoji">Use system emoji</string>
     <string name="preferences_advanced__relay_all_calls_through_the_signal_server_to_avoid_revealing_your_ip_address">Relay all calls through the TM SGNL server to avoid revealing your IP address to your contact. Enabling will reduce call quality.</string>
     <string name="preferences_advanced__always_relay_calls">Always relay calls</string>
-    <string name="preferences_app_protection__who_can">Who can…</string>
     <!-- Privacy settings payments section title -->
     <string name="preferences_app_protection__payments">Payments</string>
     <string name="preferences_chats__chats">Chats</string>
@@ -2997,6 +3008,8 @@
     <string name="preferences_notifications__ringtone">Ringtone</string>
     <string name="preferences_chats__message_text_size">Message font size</string>
     <string name="preferences_notifications__priority">Priority</string>
+    <!-- Option in settings to trouble shoot delayed notifications -->
+    <string name="preferences_notifications__troubleshoot">Troubleshoot notifications</string>
     <!-- Heading for the \'censorship circumvention\' section of privacy preferences -->
     <string name="preferences_communication__category_censorship_circumvention">Censorship circumvention</string>
     <!-- Title of the \'censorship circumvention\' toggle switch -->
@@ -3013,8 +3026,6 @@
     <string name="preferences_communication__category_sealed_sender">Sealed Sender</string>
     <string name="preferences_communication__sealed_sender_allow_from_anyone">Allow from anyone</string>
     <string name="preferences_communication__sealed_sender_allow_from_anyone_description">Enable sealed sender for incoming messages from non-contacts and people with whom you have not shared your profile.</string>
-    <string name="preferences_communication__sealed_sender_learn_more">Learn more</string>
-    <string name="preferences_setup_a_username">Setup a username</string>
     <string name="preferences_proxy">Proxy</string>
     <string name="preferences_use_proxy">Use proxy</string>
     <string name="preferences_off">Off</string>
@@ -3087,7 +3098,7 @@
     <string name="PaymentsHomeFragment__payments_deactivated">Payments deactivated.</string>
     <string name="PaymentsHomeFragment__payment_failed">Payment failed</string>
     <string name="PaymentsHomeFragment__details">Details</string>
-    <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
     <string name="PaymentsHomeFragment__you_can_use_signal_to_send">You can use TM SGNL to send and receive MobileCoin. All payments are subject to the Terms of Use for MobileCoins and the MobileCoin Wallet. This is a beta feature so you may encounter some issues and payments or balances you may lose can\'t be recovered. </string>
     <string name="PaymentsHomeFragment__activate">Activate</string>
     <string name="PaymentsHomeFragment__view_mobile_coin_terms">View MobileCoin terms</string>
@@ -3137,7 +3148,7 @@
     <string name="PaymentsAddMoneyFragment__copy">Copy</string>
     <string name="PaymentsAddMoneyFragment__copied_to_clipboard">Copied to clipboard</string>
     <string name="PaymentsAddMoneyFragment__to_add_funds">To add funds, send MobileCoin to your wallet address. Start a transaction from your account on an exchange that supports MobileCoin, then scan the QR code or copy your wallet address.</string>
-    <string name="PaymentsAddMoneyFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="PaymentsAddMoneyFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs</string><!--//**TM_SA**//-->
 
     <!-- PaymentsDetailsFragment -->
     <string name="PaymentsDetailsFragment__details">Details</string>
@@ -3157,8 +3168,8 @@
     <string name="PaymentsDetailsFragment__coin_cleanup_fee">Coin cleanup fee</string>
     <string name="PaymentsDetailsFragment__coin_cleanup_information">A “coin cleanup fee” is charged when the coins in your possession can not be combined to complete a transaction. Cleanup will allow you to continue sending payments.</string>
     <string name="PaymentsDetailsFragment__no_details_available">No further details available for this transaction</string>
-    <string name="PaymentsDetailsFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
-    <string name="PaymentsDetailsFragment__learn_more__cleanup_fee" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="PaymentsDetailsFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="PaymentsDetailsFragment__learn_more__cleanup_fee" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
     <string name="PaymentsDetailsFragment__sent_payment">Sent payment</string>
     <string name="PaymentsDetailsFragment__received_payment">Received payment</string>
     <string name="PaymentsDeatilsFragment__payment_completed_s">Payment completed %1$s</string>
@@ -3202,7 +3213,7 @@
     <string name="CreatePaymentFragment__backspace">Backspace</string>
     <string name="CreatePaymentFragment__add_note">Add note</string>
     <string name="CreatePaymentFragment__conversions_are_just_estimates">Conversions are just estimates and may not be accurate.</string>
-    <string name="CreatePaymentFragment__learn_more__conversions" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="CreatePaymentFragment__learn_more__conversions" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
 
     <!-- EditNoteFragment -->
     <string name="EditNoteFragment_note">Note</string>
@@ -3338,9 +3349,10 @@
     <string name="conversation__menu_conversation_settings">Chat settings</string>
     <string name="conversation__menu_add_shortcut">Add to home screen</string>
     <string name="conversation__menu_create_bubble">Create bubble</string>
+    <!-- Overflow menu option that allows formatting of text -->
+    <string name="conversation__menu_format_text">Format text</string>
 
     <!-- conversation_popup -->
-    <string name="conversation_popup__menu_expand_popup">Expand popup</string>
 
     <!-- conversation_callable_insecure -->
     <string name="conversation_add_to_contacts__menu_add_to_contacts">Add to contacts</string>
@@ -3378,8 +3390,6 @@
     <string name="verify_display_fragment_context_menu__compare_with_clipboard">Compare with clipboard</string>
 
     <!-- reminder_header -->
-    <string name="reminder_header_sms_import_title">Import system SMS</string>
-    <string name="reminder_header_sms_import_text">Tap to copy your phone\'s SMS messages into TM SGNL\'s encrypted database.</string>
     <string name="reminder_header_push_title">Enable TM SGNL messages and calls</string>
     <string name="reminder_header_push_text">Upgrade your communication experience.</string>
     <string name="reminder_header_service_outage_text">TM SGNL is experiencing technical difficulties. We are working hard to restore service as quickly as possible.</string>
@@ -3405,40 +3415,15 @@
     <string name="new_conversation_activity__refresh">Refresh</string>
     <!-- redphone_audio_popup_menu -->
 
-    <!-- Insights -->
-    <string name="Insights__percent">%</string>
-    <string name="Insights__title">Insights</string>
-    <string name="InsightsDashboardFragment__title">Insights</string>
-    <!-- Body text for a page describing how many TM SGNL messages you\'ve sent. The first placeholder represents the number of TM SGNL messages sent, and the second placeholder represents how many days have passed. -->
-    <string name="InsightsDashboardFragment__signal_protocol_automatically_protected">TM SGNL Protocol automatically protected %1$d%% of your outgoing messages over the past %2$d days. Chats between TM SGNL users are always end-to-end encrypted.</string>
-    <string name="InsightsDashboardFragment__spread_the_word">Spread the word</string>
-    <string name="InsightsDashboardFragment__not_enough_data">Not enough data</string>
-    <string name="InsightsDashboardFragment__your_insights_percentage_is_calculated_based_on">Your Insights percentage is calculated based on outgoing messages within the past %1$d days that have not disappeared or been deleted.</string>
-    <!-- Label for a button that, when pressed, will begin a chat with a person whose name is showed on the screen. -->
-    <string name="InsightsDashboardFragment__start_a_conversation">Start a chat</string>
-    <string name="InsightsDashboardFragment__invite_your_contacts">Start communicating securely and enable new features that go beyond the limitations of unencrypted SMS messages by inviting more contacts to join TM SGNL.</string>
-    <string name="InsightsDashboardFragment__this_stat_was_generated_locally">These statistics were locally generated on your device and can only be seen by you. They are never transmitted anywhere.</string>
-    <string name="InsightsDashboardFragment__encrypted_messages">Encrypted messages</string>
-    <string name="InsightsDashboardFragment__cancel">Cancel</string>
-    <string name="InsightsDashboardFragment__send">Send</string>
-    <string name="InsightsModalFragment__title">Introducing Insights</string>
-    <string name="InsightsModalFragment__description">Find out how many of your outgoing messages were sent securely, then quickly invite new contacts to boost your TM SGNL percentage.</string>
-    <string name="InsightsModalFragment__view_insights">View Insights</string>
-
-    <string name="FirstInviteReminder__title">Invite to TM SGNL</string>
-    <string name="FirstInviteReminder__description">You could increase the number of encrypted messages you send by %1$d%%</string>
-    <string name="SecondInviteReminder__title">Boost your TM SGNL</string>
-    <string name="SecondInviteReminder__description">Invite %1$s</string>
-    <string name="InsightsReminder__view_insights">View Insights</string>
-    <string name="InsightsReminder__invite">Invite</string>
-
     <!-- Edit KBS Pin -->
 
     <!-- BaseKbsPinFragment -->
     <string name="BaseKbsPinFragment__next">Next</string>
+    <!-- Button label to prompt them to create a password ("PIN") using numbers and letters rather than only numbers. -->
     <string name="BaseKbsPinFragment__create_alphanumeric_pin">Create alphanumeric PIN</string>
+    <!-- Button label to prompt them to return to creating a numbers-only password ("PIN") -->
     <string name="BaseKbsPinFragment__create_numeric_pin">Create numeric PIN</string>
-    <string name="BaseKbsPinFragment__learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="BaseKbsPinFragment__learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
 
     <!-- CreateKbsPinFragment -->
     <plurals name="CreateKbsPinFragment__pin_must_be_at_least_characters">
@@ -3470,7 +3455,7 @@
     <string name="KbsSplashFragment__introducing_pins">Introducing PINs</string>
     <string name="KbsSplashFragment__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with TM SGNL encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won\'t need your PIN to open the app.</string>
     <string name="KbsSplashFragment__learn_more">Learn More</string>
-    <string name="KbsSplashFragment__learn_more_link" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="KbsSplashFragment__learn_more_link" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
     <string name="KbsSplashFragment__registration_lock_equals_pin">Registration Lock = PIN</string>
     <string name="KbsSplashFragment__your_registration_lock_is_now_called_a_pin">Your Registration Lock is now called a PIN, and it does more. Update it now.</string>
     <string name="KbsSplashFragment__update_pin">Update PIN</string>
@@ -3491,15 +3476,15 @@
     <string name="AccountLockedFragment__your_account_has_been_locked_to_protect_your_privacy">Your account has been locked to protect your privacy and security. After %1$d days of inactivity in your account you\'ll be able to re-register this phone number without needing your PIN. All content will be deleted.</string>
     <string name="AccountLockedFragment__next">Next</string>
     <string name="AccountLockedFragment__learn_more">Learn More</string>
-    <string name="AccountLockedFragment__learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="AccountLockedFragment__learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
 
     <!-- KbsLockFragment -->
     <string name="RegistrationLockFragment__enter_your_pin">Enter your PIN</string>
     <string name="RegistrationLockFragment__enter_the_pin_you_created">Enter the PIN you created for your account. This is different from your SMS verification code.</string>
     <!-- Info text shown above a pin entry text box describing what pin they should be entering. -->
     <string name="RegistrationLockFragment__enter_the_pin_you_created_for_your_account">Enter the PIN you created for your account.</string>
-    <string name="RegistrationLockFragment__enter_alphanumeric_pin">Enter alphanumeric PIN</string>
-    <string name="RegistrationLockFragment__enter_numeric_pin">Enter numeric PIN</string>
+    <!-- Button label to prompt the user to switch between an alphanumeric and numeric-only keyboards -->
+    <string name="RegistrationLockFragment__switch_keyboard">Switch keyboard</string>
     <string name="RegistrationLockFragment__incorrect_pin_try_again">Incorrect PIN. Try again.</string>
     <string name="RegistrationLockFragment__forgot_pin">Forgot PIN?</string>
     <string name="RegistrationLockFragment__incorrect_pin">Incorrect PIN</string>
@@ -3540,18 +3525,27 @@
     <string name="KbsMegaphone__pins_keep_information_thats_stored_with_signal_encrytped">PINs keep information that’s stored with TM SGNL encrypted.</string>
     <string name="KbsMegaphone__create_pin">Create PIN</string>
 
+    <!-- CallNotificationBuilder -->
+    <!-- Displayed in a notification when a TM SGNL voice call is ringing -->
+    <string name="CallNotificationBuilder__incoming_signal_voice_call">Incoming TM SGNL voice call</string>
+    <!-- Displayed in a notification when a TM SGNL video call is ringing -->
+    <string name="CallNotificationBuilder__incoming_signal_video_call">Incoming TM SGNL video call</string>
+    <!-- Displayed in a notification when a TM SGNL group call is ringing -->
+    <string name="CallNotificationBuilder__incoming_signal_group_call">Incoming TM SGNL group call</string>
+    <!-- Displayed in a notification when a TM SGNL voice call is in progress -->
+    <string name="CallNotificationBuilder__ongoing_signal_voice_call">Ongoing TM SGNL voice call</string>
+    <!-- Displayed in a notification when a TM SGNL video call is in progress -->
+    <string name="CallNotificationBuilder__ongoing_signal_video_call">Ongoing TM SGNL video call</string>
+    <!-- Displayed in a notification when a TM SGNL group call is in progress -->
+    <string name="CallNotificationBuilder__ongoing_signal_group_call">Ongoing TM SGNL group call</string>
+
     <!-- transport_selection_list_item -->
-    <string name="transport_selection_list_item__transport_icon">Transport icon</string>
     <string name="ConversationListFragment_loading">Loading…</string>
     <string name="CallNotificationBuilder_connecting">Connecting…</string>
     <string name="Permissions_permission_required">Permission required</string>
-    <string name="ConversationActivity_signal_needs_sms_permission_in_order_to_send_an_sms">TM SGNL needs SMS permission in order to send an SMS, but it has been permanently denied. Please continue to app settings, select \"Permissions\" and enable \"SMS\".</string>
     <string name="Permissions_continue">Continue</string>
     <string name="Permissions_not_now">Not now</string>
-    <string name="conversation_activity__enable_signal_messages">ENABLE TM SGNL MESSAGES</string>
     <string name="SQLCipherMigrationHelper_migrating_signal_database">Migrating TM SGNL database</string>
-    <string name="PushDecryptJob_new_locked_message">New locked message</string>
-    <string name="PushDecryptJob_unlock_to_view_pending_messages">Unlock to view pending messages</string>
     <string name="enter_backup_passphrase_dialog__backup_passphrase">Backup passphrase</string>
     <string name="backup_enable_dialog__backups_will_be_saved_to_external_storage_and_encrypted_with_the_passphrase_below_you_must_have_this_passphrase_in_order_to_restore_a_backup">Backups will be saved to external storage and encrypted with the passphrase below. You must have this passphrase in order to restore a backup.</string>
     <string name="backup_enable_dialog__you_must_have_this_passphrase">You must have this passphrase in order to restore a backup.</string>
@@ -3612,8 +3606,6 @@
     <string name="RegistrationActivity_incorrect_code">Incorrect code</string>
     <string name="BackupUtil_never">Never</string>
     <string name="BackupUtil_unknown">Unknown</string>
-    <string name="preferences_app_protection__see_my_phone_number">See my phone number</string>
-    <string name="preferences_app_protection__find_me_by_phone_number">Find me by phone number</string>
     <!-- Phone number heading displayed as a screen title -->
     <string name="preferences_app_protection__phone_number">Phone number</string>
     <!-- Subtext below option to launch into phone number privacy settings screen -->
@@ -3627,10 +3619,7 @@
     <!-- Subtext below radio buttons when who can see my number is set to everyone -->
     <string name="PhoneNumberPrivacySettingsFragment__your_phone_number">Your phone number will be visible to people and groups you message. People who have your number in their phone contacts will also see it on TM SGNL.</string>
     <string name="PhoneNumberPrivacy_everyone">Everyone</string>
-    <string name="PhoneNumberPrivacy_my_contacts">My contacts</string>
     <string name="PhoneNumberPrivacy_nobody">Nobody</string>
-    <string name="PhoneNumberPrivacy_everyone_see_description">Your phone number will be visible to all people and groups you message.</string>
-    <string name="PhoneNumberPrivacy_everyone_find_description">Anyone who has your phone number in their contacts will see you as a contact on TM SGNL. Others will be able to find you in search.</string>
     <string name="preferences_app_protection__screen_lock">Screen lock</string>
     <string name="preferences_app_protection__lock_signal_access_with_android_screen_lock_or_fingerprint">Lock TM SGNL access with Android screen lock or fingerprint</string>
     <string name="preferences_app_protection__screen_lock_inactivity_timeout">Screen lock inactivity timeout</string>
@@ -4016,9 +4005,9 @@
     <string name="payment_info_card_with_a_high_balance">With a high balance, you may want to update to an alphanumeric PIN to add more protection to your account.</string>
     <string name="payment_info_card_update_pin">Update PIN</string>
 
-    <string name="payment_info_card__learn_more__about_mobilecoin" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
-    <string name="payment_info_card__learn_more__adding_to_your_wallet" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
-    <string name="payment_info_card__learn_more__cashing_out" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="payment_info_card__learn_more__about_mobilecoin" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="payment_info_card__learn_more__adding_to_your_wallet" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="payment_info_card__learn_more__cashing_out" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
 
     <!-- DeactivateWalletFragment -->
     <string name="DeactivateWalletFragment__deactivate_wallet">Deactivate Wallet</string>
@@ -4030,7 +4019,7 @@
     <string name="DeactivateWalletFragment__deactivate_without_transferring_question">Deactivate without transferring?</string>
     <string name="DeactivateWalletFragment__your_balance_will_remain">Your balance will remain in your wallet linked to TM SGNL if you choose to reactivate payments.</string>
     <string name="DeactivateWalletFragment__error_deactivating_wallet">Error deactivating wallet.</string>
-    <string name="DeactivateWalletFragment__learn_more__we_recommend_transferring_your_funds" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="DeactivateWalletFragment__learn_more__we_recommend_transferring_your_funds" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
 
     <!-- PaymentsRecoveryStartFragment -->
     <string name="PaymentsRecoveryStartFragment__recovery_phrase">Recovery phrase</string>
@@ -4066,8 +4055,8 @@
     <string name="PaymentsRecoveryPasteFragment__invalid_recovery_phrase">Invalid recovery phrase</string>
     <string name="PaymentsRecoveryPasteFragment__make_sure">Make sure you\'ve entered %1$d words and try again.</string>
 
-    <string name="PaymentsRecoveryStartFragment__learn_more__view" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
-    <string name="PaymentsRecoveryStartFragment__learn_more__restore" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="PaymentsRecoveryStartFragment__learn_more__view" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="PaymentsRecoveryStartFragment__learn_more__restore" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
 
     <!-- PaymentsRecoveryPhraseFragment -->
     <string name="PaymentsRecoveryPhraseFragment__next">Next</string>
@@ -4098,11 +4087,6 @@
     <string name="PaymentsRecoveryEntryFragment__next">Next</string>
     <string name="PaymentsRecoveryEntryFragment__invalid_word">Invalid word</string>
 
-    <!-- ClearClipboardAlarmReceiver -->
-
-    <!-- PaymentNotificationsView -->
-    <string name="PaymentNotificationsView__view">View</string>
-
     <!-- UnreadPayments -->
     <string name="UnreadPayments__s_sent_you_s">%1$s sent you %2$s</string>
     <string name="UnreadPayments__d_new_payment_notifications">%1$d new payment notifications</string>
@@ -4117,7 +4101,7 @@
     <string name="GroupsInCommonMessageRequest__none_of_your_contacts_or_people_you_chat_with_are_in_this_group">None of your contacts or people you chat with are in this group. Review requests carefully before accepting to avoid unwanted messages.</string>
     <string name="GroupsInCommonMessageRequest__about_message_requests">About message requests</string>
     <string name="GroupsInCommonMessageRequest__okay">Okay</string>
-    <string name="GroupsInCommonMessageRequest__support_article" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="GroupsInCommonMessageRequest__support_article" translatable="false">https://support.signal.org/hc/articles/360007459591</string>
     <string name="ChatColorSelectionFragment__heres_a_preview_of_the_chat_color">Here\'s a preview of the chat color.</string>
     <string name="ChatColorSelectionFragment__the_color_is_visible_to_only_you">The color is visible to only you.</string>
 
@@ -4254,7 +4238,7 @@
     <!-- Preference title to delete sms -->
     <string name="SmsSettingsFragment__remove_sms_messages">Remove SMS messages</string>
     <!-- Snackbar text to confirm deletion -->
-    <string name="SmsSettingsFragment__removing_sms_messages_from_signal">Removing SMS messages from TM SGNL...</string>
+    <string name="SmsSettingsFragment__removing_sms_messages_from_signal">Removing SMS messages from TM SGNL…</string>
     <!-- Snackbar text to indicate can delete later -->
     <string name="SmsSettingsFragment__you_can_remove_sms_messages_from_signal_in_settings">You can remove SMS messages from TM SGNL in Settings at any time.</string>
     <!-- Description for export sms preference -->
@@ -4306,7 +4290,7 @@
     <!-- Alert dialog button to cancel the dialog -->
 
     <!-- AdvancedPrivacySettingsFragment -->
-    <string name="AdvancedPrivacySettingsFragment__sealed_sender_link" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="AdvancedPrivacySettingsFragment__sealed_sender_link" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
     <string name="AdvancedPrivacySettingsFragment__show_status_icon">Show status icon</string>
     <string name="AdvancedPrivacySettingsFragment__show_an_icon">Show an icon in message details when they were delivered using sealed sender.</string>
 
@@ -4571,7 +4555,6 @@
 
     <!-- ContactSelectionListItem -->
     <string name="ContactSelectionListItem__sms">SMS</string>
-    <string name="ContactSelectionListItem__dot_s">· %1$s</string>
 
     <!-- Displayed in the toolbar when externally sharing text to multiple recipients -->
     <string name="ShareInterstitialActivity__share">Share</string>
@@ -4724,7 +4707,6 @@
     <string name="ManageDonationsFragment__donate_for_a_friend">Donate for a Friend</string>
 
     <string name="Boost__enter_custom_amount">Enter Custom Amount</string>
-    <string name="Boost__one_time_contribution">One-time contribution</string>
     <!-- Error label when the amount is smaller than what we can accept -->
     <string name="Boost__the_minimum_amount_you_can_donate_is_s">The minimum amount you can donate is %s</string>
 
@@ -5169,8 +5151,6 @@
     <!-- Description of action for reaction button -->
     <string name="StoryReplyComposer__react_to_this_story">React to this story</string>
     <!-- Displayed when the user is replying privately to someone who replied to one of their stories -->
-    <string name="StoryReplyComposer__replying_privately_to_s">Replying privately to %1$s</string>
-    <!-- Displayed when the user is replying privately to someone who replied to one of their stories -->
     <string name="StoryReplyComposer__reply_to_s">Reply to %1$s</string>
     <!-- Context menu item to privately reply to a story response -->
     <!-- Context menu item to copy a story response -->
@@ -5418,8 +5398,6 @@
     <string name="ViewReceivedGiftSheet__not_now">Not now</string>
     <!-- Dialog text while redeeming a gift -->
     <string name="ViewReceivedGiftSheet__redeeming_badge">Redeeming badge…</string>
-    <!-- Snackbar text when user presses "not now" on redemption sheet -->
-    <string name="ConversationFragment__you_can_redeem_your_badge_later">You can redeem your badge later.</string>
     <!-- Description text in gift thanks sheet -->
     <string name="GiftThanksSheet__youve_made_a_donation">You’ve made a donation to TM SGNL on behalf of %1$s. They’ll be given the option to show their support on their profile.</string>
     <!-- Expired gift sheet title -->
@@ -5724,23 +5702,10 @@
     <string name="SmsExportMegaphoneActivity__signal_will_no_longer_support_sms">TM SGNL will no longer support SMS</string>
     <!-- Phase 3 title of full screen megaphone indicating sms is longer supported  -->
     <string name="SmsExportMegaphoneActivity__signal_no_longer_supports_sms">TM SGNL no longer supports SMS</string>
-    <!-- Phase 2 message describing that sms is going away soon -->
-    <string name="SmsExportMegaphoneActivity__signal_will_soon_remove_support_for_sending_sms_messages">TM SGNL will soon remove support for sending SMS messages because TM SGNL messages provide end-to-end encryption and strong privacy that SMS messages don\'t. This will also allow us to improve the TM SGNL messaging experience.</string>
-    <!-- Phase 3 message describing that sms has gone away -->
-    <string name="SmsExportMegaphoneActivity__signal_has_removed_support_for_sending_sms_messages">TM SGNL has removed support for sending SMS messages because TM SGNL messages provide end-to-end encryption and strong privacy that SMS messages don\'t. This will also allow us to improve the TM SGNL messaging experience.</string>
-    <!-- The text on a button in a popup that, when clicked, will take the user to a screen to export their SMS messages -->
-    <string name="SmsExportMegaphoneActivity__export_sms">Export SMS</string>
     <!-- The text on a button in a popup that, when clicked, will dismiss the popup and schedule the prompt to occur at a later time. -->
     <string name="SmsExportMegaphoneActivity__remind_me_later">Remind me later</string>
     <!-- The text on a button in a popup that, when clicked, will navigate the user to a web article on SMS removal -->
-    <string name="SmsExportMegaphoneActivity__learn_more">Learn more</string>
 
-    <!-- Phase 1 Small megaphone title indicating sms is going away -->
-    <string name="SmsExportMegaphone__sms_support_going_away">SMS support going away</string>
-    <!-- Phase 1 small megaphone description indicating sms is going away -->
-    <string name="SmsExportMegaphone__dont_worry_encrypted_signal_messages_will_continue_to_work">Don’t worry, encrypted TM SGNL messages will continue to work.</string>
-    <!-- Phase 1 small megaphone button that takes the user to the sms export flow -->
-    <string name="SmsExportMegaphone__continue">Continue</string>
     <!-- Title for screen shown after sms export has completed -->
     <string name="ExportSmsCompleteFragment__export_complete">Export Complete</string>
     <!-- Button to continue to next screen -->
@@ -5867,7 +5832,7 @@
     <!-- Title for screen describing that sms support is going to be removed soon -->
     <string name="SmsRemoval_title_going_away">SMS support is going away</string>
     <!-- Bullet point message shown on describing screen as first bullet why sms is being removed, placeholder with be date of removal (e.g., March 21st) -->
-    <string name="SmsRemoval_info_bullet_1_s">SMS messaging in the TM SGNL app will soon no longer be supported on %1$s.</string>
+    <string name="SmsRemoval_info_bullet_1">SMS messaging in the TM SGNL app will soon no longer be supported.</string>
     <!-- Bullet point message shown on describing screen as second bullet why sms is being removed -->
     <string name="SmsRemoval_info_bullet_2">SMS messages are different than TM SGNL messages. <b>This does not affect encrypted TM SGNL messaging which will continue to work.</b></string>
     <!-- Bullet point message shown on describing screen as third bullet why sms is being removed -->
@@ -5898,6 +5863,8 @@
     <string name="TextFormatting_monospace">Monospace</string>
     <!-- Popup menu label for applying spoiler style -->
     <string name="TextFormatting_spoiler">Spoiler</string>
+    <!-- Popup menu label for clearing applied formatting -->
+    <string name="TextFormatting_clear_formatting">Clear formatting</string>
 
     <!-- UsernameEducationFragment -->
     <!-- Continue button which takes the user to the add a username screen -->
@@ -5944,14 +5911,14 @@
     <string name="CallLogAdapter__d_s">(%1$d) %2$s</string>
     <!-- Status text on call links -->
     <string name="CallLogAdapter__call_link">Call link</string>
+    <!-- Accessibility description for the video call button -->
+    <string name="CallLogAdapter__start_a_video_call">Start a video call</string>
+    <!-- Accessibility description for the voice call button -->
+    <string name="CallLogAdapter__start_a_voice_call">Start a voice call</string>
 
     <!-- Call Log context menu -->
     <!-- Displayed as a context menu item to start a video call -->
     <string name="CallContextMenu__video_call">Video call</string>
-    <!-- Displayed as a context menu item to join an ongoing group call -->
-    <string name="CallContextMenu__join_call">Join call</string>
-    <!-- Displayed as a context menu item to return to active call -->
-    <string name="CallContextMenu__return_to_call">Return to call</string>
     <!-- Displayed as a context menu item to start an audio call -->
     <string name="CallContextMenu__audio_call">Voice call</string>
     <!-- Displayed as a context menu item to go to chat -->
@@ -5964,6 +5931,23 @@
     <string name="CallContextMenu__delete">Delete</string>
 
     <!-- Call Log Fragment -->
+    <!-- Displayed when deleting call history items -->
+    <string name="CallLogFragment__deleting">Deleting…</string>
+    <!-- Displayed in a toast when a deletion fails for an unknown reason -->
+    <string name="CallLogFragment__deletion_failed">Deletion failed.</string>
+    <!-- Displayed as message in error dialog when can\'t delete links -->
+    <plurals name="CallLogFragment__cant_delete_call_link">
+        <item quantity="one">Can\'t delete link. Check your connection and try again.</item>
+        <item quantity="other">Not all call links could be deleted. Check your connection and try again.</item>
+    </plurals>
+    <!-- Snackbar text after clearing the call history -->
+    <string name="CallLogFragment__cleared_call_history">Cleared call history</string>
+    <!-- Dialog title to clear all call events -->
+    <string name="CallLogFragment__clear_call_history_question">Clear call history?</string>
+    <!-- Dialog body to clear all call events -->
+    <string name="CallLogFragment__this_will_permanently_delete_all_call_history">This will permanently delete all call history</string>
+    <!-- Action bar menu item to delete all call events -->
+    <string name="CallLogFragment__clear_call_history">Clear call history</string>
     <!-- Action bar menu item to only display missed calls -->
     <string name="CallLogFragment__filter_missed_calls">Filter missed calls</string>
     <!-- Action bar menu item to clear missed call filter -->
@@ -5978,21 +5962,17 @@
     <string name="CallLogFragment__filtered_by_missed">Filtered by missed</string>
     <!-- Bottom bar option to select all call entries -->
     <string name="CallLogFragment__select_all">Select all</string>
-    <!-- Bottom bar option to delete all selected call entries -->
+    <!-- Bottom bar option to delete all selected call entries and dialog action to confirm deletion -->
     <string name="CallLogFragment__delete">Delete</string>
     <plurals name="CallLogFragment__delete_d_calls">
         <item quantity="one">Delete %1$d call?</item>
         <item quantity="other">Delete %1$d calls?</item>
     </plurals>
-    <!-- Positive action on multi-delete protection dialog -->
-    <string name="CallLogFragment__delete_for_me">Delete for me</string>
     <!-- Snackbar label after deleting call logs -->
     <plurals name="CallLogFragment__d_calls_deleted">
         <item quantity="one">%1$d call deleted</item>
         <item quantity="other">%1$d calls deleted</item>
     </plurals>
-    <!-- Undo action for deletion snackbar -->
-    <string name="CallLogFragment__undo">Undo</string>
     <!-- Shown during empty state -->
     <string name="CallLogFragment__no_calls">No calls.</string>
     <!-- Shown during empty state -->
@@ -6013,6 +5993,10 @@
     <string name="CallStateUpdatePopupWindow__mic_on">Mic on</string>
     <!-- Displayed when the user turns off their mic -->
     <string name="CallStateUpdatePopupWindow__mic_off">Mic off</string>
+    <!-- Displayed when the user turns on their speakerphone -->
+    <string name="CallStateUpdatePopupWindow__speaker_on">Speaker on</string>
+    <!-- Displayed when the user turns off their speakerphone -->
+    <string name="CallStateUpdatePopupWindow__speaker_off">Speaker off</string>
 
     <!-- Accessibility label describing the capture button on the camera screen -->
     <string name="CameraControls_capture_button_accessibility_label">Capture Button</string>
@@ -6034,6 +6018,18 @@
     <string name="CreateCallLink__create_a_call_link">Create a Call Link</string>
     <!-- Call link creation item description on calls tab -->
     <string name="CreateCallLink__share_a_link_for">Share a link for a TM SGNL call</string>
+    <!-- Text inserted when sharing a call link within TM SGNL. Placeholder is a call link url. -->
+    <string name="CreateCallLink__use_this_link_to_join_a_signal_call">Use this link to join a TM SGNL call: %1$s</string>
+
+    <!-- CallLinkInfoSheet -->
+    <!-- Sheet title -->
+    <string name="CallLinkInfoSheet__call_info">Call info</string>
+    <!-- Dialog title for removing or blocking participants -->
+    <string name="CallLinkInfoSheet__remove_s_from_the_call">Remove %1$s from the call?</string>
+    <!-- Dialog action to remove participant from the call -->
+    <string name="CallLinkInfoSheet__remove">Remove</string>
+    <!-- Dialog action to block participant from the call -->
+    <string name="CallLinkInfoSheet__block_from_call">Block from call</string>
 
     <!-- CreateCallLinkBottomSheetDialogFragment -->
     <!-- Fragment title -->
@@ -6077,6 +6073,15 @@
 
     <!-- Title shown at top of bottom sheet dialog for displaying a message\'s edit history -->
     <string name="EditMessageHistoryDialog_title">Edit history</string>
+    <!-- Title of dialog shown alerting user that edit message is in beta only -->
+    <string name="SendingEditMessageBetaOnlyDialog_title">TM SGNL beta only</string>
+    <!-- Body of dialog shown alerting user that edit message is in beta only and only sent to beta users. -->
+    <string name="SendingEditMessageBetaOnlyDialog_body">Editing messages is available to TM SGNL beta users only. If you edit a message, it will only be visible to people who are on the latest version of TM SGNL beta.</string>
+    <!-- Button to cancel sending edit message as it is beta only -->
+    <string name="SendingEditMessageBetaOnlyDialog_cancel">Cancel</string>
+    <!-- Button to continue sending edit message despite it being beta only -->
+    <string name="SendingEditMessageBetaOnlyDialog_send">Send</string>
+
 
     <!-- CallLinkDetailsFragment -->
     <!-- Displayed in action bar at the top of the fragment -->
@@ -6125,9 +6130,31 @@
     <!-- Body of a dialog that is displayed when we experienced a network error when looking up a username. -->
     <string name="UsernameLinkSettings_qr_result_network_error">Experienced a network error. Please try again.</string>
 
+    <!-- PendingParticipantsView -->
+    <!-- Displayed in the popup card when a remote user attempts to join a call link -->
+    <string name="PendingParticipantsView__would_like_to_join">Would like to join…</string>
+    <!-- Displayed in a button on the popup card denoting that there are other pending requests to join a call link -->
+    <plurals name="PendingParticipantsView__plus_d_requests">
+        <item quantity="one">+%1$d request</item>
+        <item quantity="other">+%1$d requests</item>
+    </plurals>
+
+    <!-- PendingParticipantsBottomSheet -->
+    <!-- Title of the bottom sheet displaying requests to join the call link -->
+    <string name="PendingParticipantsBottomSheet__requests_to_join_this_call">Requests to join this call</string>
+    <!-- Subtitle of the bottom sheet denoting the total number of people waiting -->
+    <plurals name="PendingParticipantsBottomSheet__d_people_waiting">
+        <item quantity="one">%1$d person waiting</item>
+        <item quantity="other">%1$d people waiting</item>
+    </plurals>
+    <!-- Content description for rejecting a user -->
+    <string name="PendingParticipantsBottomSheet__reject">Reject</string>
+    <!-- Content desccription for confirming a user -->
+    <string name="PendingParticipantsBottomSheet__approve">Approve</string>
+
     <!-- EOF -->
 
-        <!--//**TM_SA**//Start-->
+    <!--//**TM_SA**//Start-->
     <string name="preferences__send_logs_to_telemessage">Send Logs to TeleMessage</string>
 
     <string name="installation_event_sent">installation_event_sent</string>

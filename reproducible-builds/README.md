@@ -60,7 +60,7 @@ First make sure that the Signal version you want to verify is installed on your 
 Plug your device to your computer and run this command to pull the APK from the device:
 
 ```bash
-adb pull $(adb shell pm path org.thoughtcrime.securesms | grep /base.apk | awk -F':' '{print $2}') ~/reproducible-signal/apk-from-google-play-store/Signal-$(adb shell dumpsys package org.tm.archive | grep versionName | awk -F'=' '{print $2}').apk
+adb pull $(adb shell pm path org.tm.archive | grep /base.apk | awk -F':' '{print $2}') ~/reproducible-signal/apk-from-google-play-store/Signal-$(adb shell dumpsys package org.tm.archive | grep versionName | awk -F'=' '{print $2}').apk
 ```
 
 This will pull a file into `~/reproducible-signal/apk-from-google-play-store/` with the name `Signal-<version>.apk`
@@ -68,22 +68,22 @@ This will pull a file into `~/reproducible-signal/apk-from-google-play-store/` w
 Alternatively, you can do this step-by-step:
 
 ```bash
-adb shell pm path org.thoughtcrime.securesms
+adb shell pm path org.tm.archive
 ```
 
 This will output something like:
 
 ```bash
-package:/data/app/org.thoughtcrime.securesms-aWRzcGlzcG9wZA==/base.apk
+package:/data/app/org.tm.archive-aWRzcGlzcG9wZA==/base.apk
 ```
 
-The output will tell you where the Signal APK is located in your device. (In this example the path is `/data/app/org.thoughtcrime.securesms-aWRzcGlzcG9wZA==/base.apk`)
+The output will tell you where the Signal APK is located in your device. (In this example the path is `/data/app/org.tm.archive-aWRzcGlzcG9wZA==/base.apk`)
 
 Now using this information, pull the APK from your device to the `reproducible-signal/apk-from-google-play-store` directory you created before:
 
 ```bash
 adb pull \
-  /data/app/org.thoughtcrime.securesms-aWRzcGlzcG9wZA==/base.apk \
+  /data/app/org.tm.archive-aWRzcGlzcG9wZA==/base.apk \
   ~/reproducible-signal/apk-from-google-play-store/Signal-3.15.2.apk
 ```
 

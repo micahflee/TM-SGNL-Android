@@ -9,11 +9,8 @@ import androidx.navigation.fragment.findNavController
 import org.tm.archive.LoggingFragment
 import org.tm.archive.R
 import org.tm.archive.databinding.SmsRemovalInformationFragmentBinding
-import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.util.CommunicationActions
-import org.tm.archive.util.DateUtils
 import org.tm.archive.util.navigation.safeNavigate
-import java.util.Locale
 
 /**
  * Fragment shown when entering the sms export flow from the basic megaphone.
@@ -42,8 +39,7 @@ class SmsRemovalInformationFragment : LoggingFragment() {
         }
       }
 
-      val phase3Start = DateUtils.formatDateWithMonthAndDay(Locale.getDefault(), SignalStore.misc().smsPhase3Start)
-      binding.bullet1Text.text = getString(R.string.SmsRemoval_info_bullet_1_s, phase3Start)
+      binding.bullet1Text.text = getString(R.string.SmsRemoval_info_bullet_1)
 
       binding.toolbar.setNavigationOnClickListener(goBackClickListener)
       binding.laterButton.setOnClickListener(goBackClickListener)

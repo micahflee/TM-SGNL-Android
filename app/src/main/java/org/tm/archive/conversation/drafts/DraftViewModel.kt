@@ -4,17 +4,13 @@ import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
-import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.schedulers.Schedulers
 import org.tm.archive.components.location.SignalPlace
-import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.database.DraftTable.Draft
 import org.tm.archive.database.MentionUtil
 import org.tm.archive.database.model.Mention
 import org.tm.archive.database.model.MessageId
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.mms.QuoteId
-import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.Base64
 import org.tm.archive.util.rx.RxStore
@@ -25,10 +21,11 @@ import org.tm.archive.util.rx.RxStore
  * management pattern going forward for drafts.
  */
 class DraftViewModel @JvmOverloads constructor(
+  threadId: Long = -1,
   private val repository: DraftRepository = DraftRepository()
 ) : ViewModel() {
 
-  private val store = RxStore(DraftState())
+  private val store = RxStore(DraftState(threadId = threadId))
 
   val state: Flowable<DraftState> = store.stateFlowable.observeOn(AndroidSchedulers.mainThread())
 
@@ -37,14 +34,6 @@ class DraftViewModel @JvmOverloads constructor(
 
   override fun onCleared() {
     store.dispose()
-  }
-
-  fun setThreadId(threadId: Long) {
-    store.update { it.copy(threadId = threadId) }
-  }
-
-  fun setDistributionType(distributionType: Int) {
-    store.update { it.copy(distributionType = distributionType) }
   }
 
   fun saveEphemeralVoiceNoteDraft(draft: Draft) {
@@ -62,10 +51,6 @@ class DraftViewModel @JvmOverloads constructor(
       repository.deleteVoiceNoteDraftData(it.voiceNoteDraft)
       saveDrafts(it.copy(voiceNoteDraft = null))
     }
-  }
-
-  fun onRecipientChanged(recipient: Recipient) {
-    store.update { it.copy(recipientId = recipient.id) }
   }
 
   fun setMessageEditDraft(messageId: MessageId, text: String, mentions: List<Mention>, styleBodyRanges: BodyRangeList?) {
@@ -130,34 +115,30 @@ class DraftViewModel @JvmOverloads constructor(
     }
   }
 
-  fun onSendComplete(threadId: Long) {
+  fun onSendComplete(threadId: Long = store.state.threadId) {
     repository.deleteVoiceNoteDraftData(store.state.voiceNoteDraft)
     store.update { saveDrafts(it.copyAndClearDrafts(threadId)) }
   }
 
   private fun saveDrafts(state: DraftState): DraftState {
-    repository.saveDrafts(Recipient.resolved(state.recipientId), state.threadId, state.distributionType, state.toDrafts())
+    repository.saveDrafts(state.threadId, state.toDrafts())
     return state
   }
 
-  fun loadDrafts(threadId: Long): Single<DraftRepository.DatabaseDraft> {
-    return repository
-      .loadDrafts(threadId)
-      .doOnSuccess { drafts ->
-        store.update { saveDrafts(it.copyAndSetDrafts(threadId, drafts.drafts)) }
+  fun loadShareOrDraftData(lastShareDataTimestamp: Long): Maybe<DraftRepository.ShareOrDraftData> {
+    return repository.getShareOrDraftData(lastShareDataTimestamp)
+      .doOnSuccess { (_, drafts) ->
+        if (drafts != null) {
+          store.update { saveDrafts(it.copyAndSetDrafts(drafts = drafts)) }
+        }
       }
-      .observeOn(AndroidSchedulers.mainThread())
-  }
-
-  fun loadDraftQuote(serialized: String): Maybe<ConversationMessage> {
-    return repository.loadDraftQuote(serialized)
-      .subscribeOn(Schedulers.io())
-      .observeOn(AndroidSchedulers.mainThread())
-  }
-
-  fun loadDraftEditMessage(serialized: String): Maybe<ConversationMessage> {
-    return repository.loadDraftMessageEdit(serialized)
-      .subscribeOn(Schedulers.io())
+      .flatMap { (data, _) ->
+        if (data == null) {
+          Maybe.empty()
+        } else {
+          Maybe.just(data)
+        }
+      }
       .observeOn(AndroidSchedulers.mainThread())
   }
 }

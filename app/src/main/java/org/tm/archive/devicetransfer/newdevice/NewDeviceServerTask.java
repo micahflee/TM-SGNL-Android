@@ -17,6 +17,7 @@ import org.tm.archive.backup.BackupPassphrase;
 import org.tm.archive.backup.FullBackupImporter;
 import org.tm.archive.crypto.AttachmentSecretProvider;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.jobmanager.impl.DataRestoreConstraint;
 import org.tm.archive.notifications.NotificationChannels;
 
 import java.io.IOException;
@@ -38,6 +39,7 @@ final class NewDeviceServerTask implements ServerTask {
 
     EventBus.getDefault().register(this);
     try {
+      DataRestoreConstraint.setRestoringData(true);
       SQLiteDatabase database = SignalDatabase.getBackupDatabase();
 
       String passphrase = "deadbeef";
@@ -66,6 +68,7 @@ final class NewDeviceServerTask implements ServerTask {
       EventBus.getDefault().post(new Status(0, Status.State.FAILURE_UNKNOWN));
     } finally {
       EventBus.getDefault().unregister(this);
+      DataRestoreConstraint.setRestoringData(false);
     }
 
     long end = System.currentTimeMillis();

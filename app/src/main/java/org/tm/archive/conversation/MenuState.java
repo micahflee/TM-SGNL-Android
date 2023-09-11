@@ -162,7 +162,9 @@ public final class MenuState {
              .shouldShowResendAction(false)
              .shouldShowEdit(false);
     } else {
-      MessageRecord messageRecord = selectedParts.iterator().next().getMessageRecord();
+      MultiselectPart multiSelectRecord = selectedParts.iterator().next();
+
+      MessageRecord messageRecord = multiSelectRecord.getMessageRecord();
 
       builder.shouldShowResendAction(messageRecord.isFailed())
              .shouldShowSaveAttachmentAction(mediaIsSelected                                             &&
@@ -180,7 +182,8 @@ public final class MenuState {
 
       builder.shouldShowEdit(!actionMessage &&
                              hasText &&
-                             MessageConstraintsUtil.isValidEditMessageSend(messageRecord, System.currentTimeMillis()));
+                             !multiSelectRecord.getConversationMessage().getOriginalMessage().isFailed() &&
+                             MessageConstraintsUtil.isValidEditMessageSend(multiSelectRecord.getConversationMessage().getOriginalMessage(), System.currentTimeMillis()));
     }
 
     return builder.shouldShowCopyAction(!actionMessage && !remoteDelete && hasText && !hasGift && !hasPayment)
@@ -197,11 +200,11 @@ public final class MenuState {
                            .allMatch(collection -> multiselectParts.containsAll(collection.toSet()));
   }
 
-  static boolean canReplyToMessage(@NonNull Recipient conversationRecipient,
-                                   boolean actionMessage,
-                                   @NonNull MessageRecord messageRecord,
-                                   boolean isDisplayingMessageRequest,
-                                   boolean isNonAdminInAnnouncementGroup)
+  public static boolean canReplyToMessage(@NonNull Recipient conversationRecipient,
+                                          boolean actionMessage,
+                                          @NonNull MessageRecord messageRecord,
+                                          boolean isDisplayingMessageRequest,
+                                          boolean isNonAdminInAnnouncementGroup)
   {
     return !actionMessage &&
            !isNonAdminInAnnouncementGroup &&
@@ -215,7 +218,7 @@ public final class MenuState {
            !conversationRecipient.isReleaseNotes();
   }
 
-  static boolean isActionMessage(@NonNull MessageRecord messageRecord) {
+  public static boolean isActionMessage(@NonNull MessageRecord messageRecord) {
     return messageRecord.isInMemoryMessageRecord() || messageRecord.isUpdate();
   }
 

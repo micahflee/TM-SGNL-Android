@@ -16,7 +16,7 @@ import org.signal.core.util.requireString
 import org.tm.archive.database.KeyValueDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.recipients.RecipientId
-import org.whispersystems.signalservice.api.push.ACI
+import org.whispersystems.signalservice.api.push.ServiceId.ACI
 
 /**
  * This is a combination of the edit message and message recipient migrations (would have been V185 and v186), but as they
@@ -30,6 +30,7 @@ import org.whispersystems.signalservice.api.push.ACI
  * Changes needed for edit message. New foreign keys require recreating the table.
  *
  */
+@Suppress("ClassName")
 object V185_MessageRecipientsAndEditMessageMigration : SignalDatabaseMigration {
 
   private val TAG = Log.tag(V185_MessageRecipientsAndEditMessageMigration::class.java)

@@ -17,7 +17,6 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.selfAuthentication.ProgressDialog
-import org.signal.glide.Log
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.components.AvatarImageView
@@ -86,7 +85,7 @@ class AppSettingsFragment : DSLSettingsFragment(
     if (ExpiredBuildReminder.isEligible()) {
       showReminder(ExpiredBuildReminder(context))
     } else if (UnauthorizedReminder.isEligible(context)) {
-      showReminder(UnauthorizedReminder(context))
+      showReminder(UnauthorizedReminder())
     } else {
       hideReminders()
     }
@@ -142,7 +141,7 @@ class AppSettingsFragment : DSLSettingsFragment(
             findNavController().safeNavigate(R.id.action_appSettingsFragment_to_manageProfileActivity)
           },
           onQrButtonClicked = {
-            if (Recipient.self().getUsername().isPresent()) {
+            if (Recipient.self().username.isPresent && Recipient.self().username.get().isNotEmpty()) {
               findNavController().safeNavigate(R.id.action_appSettingsFragment_to_usernameLinkSettingsFragment)
             } else {
               findNavController().safeNavigate(R.id.action_appSettingsFragment_to_usernameEducationFragment)
@@ -170,7 +169,7 @@ class AppSettingsFragment : DSLSettingsFragment(
 
       //**TM_SA**// Start - Comment all the Signal mention and put our about and sending logs logic.
       if (false/*state.allowUserToGoToDonationManagementScreen*/) {
-       /* clickPref(
+        /*clickPref(
           title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
           icon = DSLSettingsIcon.from(R.drawable.symbol_heart_24),
           iconEnd = if (state.hasExpiredGiftBadge) DSLSettingsIcon.from(R.drawable.symbol_info_fill_24, R.color.signal_accent_primary) else null,
@@ -180,11 +179,12 @@ class AppSettingsFragment : DSLSettingsFragment(
           onLongClick = this@AppSettingsFragment::copySubscriberIdToClipboard
         )*/
       } else {
-       /* externalLinkPref(
+        /*externalLinkPref(
           title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
           icon = DSLSettingsIcon.from(R.drawable.symbol_heart_24),
           linkId = R.string.donate_url
-        )*/
+        )
+      }*/
 
         clickPref(
           title = DSLSettingsText.from(R.string.preferences__send_logs_to_telemessage),
@@ -202,7 +202,6 @@ class AppSettingsFragment : DSLSettingsFragment(
         )
 
         //**TM_SA**// End
-      }
 
       dividerPref()
 
@@ -260,7 +259,7 @@ class AppSettingsFragment : DSLSettingsFragment(
 
       dividerPref()
 
-      //**TM_SA**// Mark this part
+        //**TM_SA**// Mark this part
       /*if (SignalStore.paymentsValues().paymentsAvailability.showPaymentsMenu()) {
         customPref(
           PaymentsPreference(
@@ -273,15 +272,14 @@ class AppSettingsFragment : DSLSettingsFragment(
         dividerPref()
       }*/
 
-
       /*clickPref(
         title = DSLSettingsText.from(R.string.preferences__help),
-        icon = DSLSettingsIcon.from(R.drawable.ic_help_24),
+        icon = DSLSettingsIcon.from(R.drawable.symbol_help_24),
         onClick = {
           findNavController().safeNavigate(R.id.action_appSettingsFragment_to_helpSettingsFragment)
         }
       )*/
-      //**TM_SA**//
+        //**TM_SA**//
 
       clickPref(
         title = DSLSettingsText.from(R.string.AppSettingsFragment__invite_your_friends),
@@ -301,9 +299,11 @@ class AppSettingsFragment : DSLSettingsFragment(
           }
         )
       }
-    }
-  }
+      }
 
+    }
+
+  }
 
   //**TM_SA**// start
 

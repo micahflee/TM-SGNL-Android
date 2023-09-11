@@ -10,7 +10,6 @@ import org.tm.archive.contacts.paged.ContactSearchKey
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingModel
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
-import org.tm.archive.R
 
 class ContactSelectionListAdapter(
   context: Context,

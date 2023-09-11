@@ -1,18 +1,18 @@
 package org.tm.archive.giph.mp4
 
 import android.graphics.Canvas
+import android.graphics.Rect
 import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
-import org.tm.archive.conversation.ConversationAdapter
-import org.tm.archive.conversation.v2.ConversationAdapterV2
+import org.tm.archive.conversation.ConversationHeaderView
 import kotlin.math.min
 
 /**
  * Decoration that will make the video display params update on each recycler redraw.
  */
 class GiphyMp4ItemDecoration(
-  val callback: GiphyMp4PlaybackController.Callback,
-  val onRecyclerVerticalTranslationSet: (Float) -> Unit
+  private val callback: GiphyMp4PlaybackController.Callback,
+  private val onRecyclerVerticalTranslationSet: ((Float) -> Unit)? = null
 ) : RecyclerView.ItemDecoration() {
   override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
     setParentRecyclerTranslationY(parent)
@@ -25,22 +25,26 @@ class GiphyMp4ItemDecoration(
   private fun setParentRecyclerTranslationY(parent: RecyclerView) {
     if (parent.childCount == 0 || parent.canScrollVertically(-1) || parent.canScrollVertically(1)) {
       parent.translationY = 0f
-      onRecyclerVerticalTranslationSet(parent.translationY)
+      onRecyclerVerticalTranslationSet?.invoke(parent.translationY)
     } else {
-      val footerViewHolder = parent.children
-        .map { parent.getChildViewHolder(it) }
-        .filter { it is ConversationAdapter.FooterViewHolder || it is ConversationAdapterV2.ThreadHeaderViewHolder }
+      val threadHeaderView: ConversationHeaderView? = parent.children
+        .filterIsInstance<ConversationHeaderView>()
         .firstOrNull()
 
-      if (footerViewHolder == null) {
+      if (threadHeaderView == null) {
         parent.translationY = 0f
-        onRecyclerVerticalTranslationSet(parent.translationY)
+        onRecyclerVerticalTranslationSet?.invoke(parent.translationY)
         return
       }
 
-      val childTop: Int = footerViewHolder.itemView.top
+      // A decorator adds the margin for the toolbar, margin is difference of the bounds "height" and the view height
+      val bounds = Rect()
+      parent.getDecoratedBoundsWithMargins(threadHeaderView, bounds)
+      val toolbarMargin = bounds.bottom - bounds.top - threadHeaderView.height
+
+      val childTop: Int = threadHeaderView.top - toolbarMargin
       parent.translationY = min(0, -childTop).toFloat()
-      onRecyclerVerticalTranslationSet(parent.translationY)
+      onRecyclerVerticalTranslationSet?.invoke(parent.translationY)
     }
   }
 }

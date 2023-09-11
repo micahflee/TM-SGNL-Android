@@ -47,8 +47,8 @@ import org.tm.archive.util.FileUtils
 import org.tm.archive.util.ServiceUtil
 import org.tm.archive.util.Triple
 import org.tm.archive.util.Util
-import org.whispersystems.signalservice.api.push.ACI
 import org.whispersystems.signalservice.api.push.DistributionId
+import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import java.io.File
 import java.util.LinkedList
 import java.util.Locale

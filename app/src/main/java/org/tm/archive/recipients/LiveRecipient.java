@@ -13,6 +13,7 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.database.CallLinkTable;
 import org.tm.archive.database.DistributionListTables;
 import org.tm.archive.database.GroupTable;
@@ -211,18 +212,10 @@ public final class LiveRecipient {
     Optional<GroupRecord> groupRecord = groupDatabase.getGroup(record.getId());
 
     if (groupRecord.isPresent()) {
-      String            title    = groupRecord.get().getTitle();
-      List<RecipientId> members  = Stream.of(groupRecord.get().getMembers()).filterNot(RecipientId::isUnknown).toList();
-      Optional<Long>    avatarId = Optional.empty();
-
-      if (groupRecord.get().hasAvatar()) {
-        avatarId = Optional.of(groupRecord.get().getAvatarId());
-      }
-
-      return new RecipientDetails(title, null,  avatarId, false, false, record.getRegistered(), record, members, false, groupRecord.get().isActive());
+      return RecipientDetails.forGroup(groupRecord.get(), record);
+    } else {
+      return RecipientDetails.forUnknown();
     }
-
-    return new RecipientDetails(null, null, Optional.empty(), false, false, record.getRegistered(), record, null, false, false);
   }
 
   @WorkerThread
@@ -247,10 +240,10 @@ public final class LiveRecipient {
     if (callLink != null) {
       String name = callLink.getState().getName();
 
-      return RecipientDetails.forCallLink(name, record);
+      return RecipientDetails.forCallLink(name, record, callLink.getAvatarColor());
     }
 
-    return RecipientDetails.forCallLink(null, record);
+    return RecipientDetails.forCallLink(null, record, AvatarColor.UNKNOWN);
   }
 
   synchronized void set(@NonNull Recipient recipient) {

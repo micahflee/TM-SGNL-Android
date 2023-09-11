@@ -1,6 +1,7 @@
 package org.tm.archive.calls.log
 
 import androidx.annotation.MainThread
+import io.reactivex.rxjava3.core.Single
 
 /**
  * Encapsulates a single deletion action
@@ -13,19 +14,13 @@ class CallLogStagedDeletion(
 
   private var isCommitted = false
 
-  fun isStagedForDeletion(id: CallLogRow.Id): Boolean {
-    return stateSnapshot.contains(id)
-  }
-
+  /**
+   * Returns a Single<Int> which contains the number of failed call-link revocations.
+   */
   @MainThread
-  fun cancel() {
-    isCommitted = true
-  }
-
-  @MainThread
-  fun commit() {
+  fun commit(): Single<Int> {
     if (isCommitted) {
-      return
+      return Single.just(0)
     }
 
     isCommitted = true
@@ -35,10 +30,26 @@ class CallLogStagedDeletion(
       .flatten()
       .toSet()
 
-    if (stateSnapshot.isExclusionary()) {
-      repository.deleteAllCallLogsExcept(callRowIds, filter == CallLogFilter.MISSED).subscribe()
-    } else {
-      repository.deleteSelectedCallLogs(callRowIds).subscribe()
+    val callLinkIds = stateSnapshot.selected()
+      .filterIsInstance<CallLogRow.Id.CallLink>()
+      .map { it.roomId }
+      .toSet()
+
+    return when {
+      stateSnapshot is CallLogSelectionState.All && filter == CallLogFilter.ALL -> {
+        repository.deleteAllCallLogsOnOrBeforeNow()
+      }
+      stateSnapshot is CallLogSelectionState.Excludes || stateSnapshot is CallLogSelectionState.All -> {
+        repository.deleteAllCallLogsExcept(callRowIds, filter == CallLogFilter.MISSED).andThen(
+          repository.deleteAllCallLinksExcept(callRowIds, callLinkIds)
+        )
+      }
+      stateSnapshot is CallLogSelectionState.Includes -> {
+        repository.deleteSelectedCallLogs(callRowIds).andThen(
+          repository.deleteSelectedCallLinks(callRowIds, callLinkIds)
+        )
+      }
+      else -> error("Unhandled state $stateSnapshot $filter")
     }
   }
 }

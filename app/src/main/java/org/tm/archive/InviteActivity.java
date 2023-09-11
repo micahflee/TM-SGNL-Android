@@ -21,6 +21,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.tm.archive.components.ContactFilterView;
 import org.tm.archive.components.ContactFilterView.OnFilterChangedListener;
 import org.tm.archive.contacts.ContactSelectionDisplayMode;
@@ -217,7 +219,7 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
   private class SmsSendClickListener implements OnClickListener {
     @Override
     public void onClick(View v) {
-      new AlertDialog.Builder(InviteActivity.this)
+      new MaterialAlertDialogBuilder(InviteActivity.this)
           .setTitle(getResources().getQuantityString(R.plurals.InviteActivity_send_sms_invites,
                                                      contactsFragment.getSelectedContacts().size(),
                                                      contactsFragment.getSelectedContacts().size()))
@@ -252,13 +254,8 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
       for (SelectedContact contact : contacts) {
         RecipientId recipientId    = contact.getOrCreateRecipientId(context);
         Recipient   recipient      = Recipient.resolved(recipientId);
-        int         subscriptionId = recipient.getDefaultSubscriptionId().orElse(-1);
 
-        MessageSender.send(context, OutgoingMessage.sms(recipient, message, subscriptionId), -1L, MessageSender.SendType.SMS, null, null);
-
-        if (recipient.getContactUri() != null) {
-          SignalDatabase.recipients().setHasSentInvite(recipient.getId());
-        }
+        MessageSender.send(context, OutgoingMessage.sms(recipient, message), -1L, MessageSender.SendType.SMS, null, null);
       }
 
       return null;

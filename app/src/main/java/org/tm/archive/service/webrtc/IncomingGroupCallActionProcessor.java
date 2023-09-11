@@ -24,6 +24,7 @@ import org.tm.archive.ringrtc.RemotePeer;
 import org.tm.archive.service.webrtc.state.WebRtcServiceState;
 import org.tm.archive.util.NetworkUtil;
 import org.tm.archive.webrtc.locks.LockManager;
+import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.Optional;
@@ -49,7 +50,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
                                                                   @NonNull RemotePeer remotePeerGroup,
                                                                   @NonNull GroupId.V2 groupId,
                                                                   long ringId,
-                                                                  @NonNull UUID sender,
+                                                                  @NonNull ACI sender,
                                                                   @NonNull CallManager.RingUpdate ringUpdate)
   {
     Log.i(TAG, "handleGroupCallRingUpdate(): recipient: " + remotePeerGroup.getId() + " ring: " + Long.toHexString(ringId) + " update: " + ringUpdate);
@@ -108,7 +109,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
 
     Log.i(TAG, "Requesting new ring: " + Long.toHexString(ringId));
 
-    Recipient ringerRecipient = Recipient.externalPush(ServiceId.from(sender));
+    Recipient ringerRecipient = Recipient.externalPush(sender);
     SignalDatabase.calls().insertOrUpdateGroupCallFromRingState(
         ringId,
         remotePeerGroup.getId(),
@@ -119,7 +120,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
 
     currentState = WebRtcVideoUtil.initializeVideo(context, webRtcInteractor.getCameraEventListener(), currentState, RemotePeer.GROUP_CALL_ID.longValue());
 
-    webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_RINGING, remotePeerGroup);
+    webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_RINGING, remotePeerGroup, true);
     webRtcInteractor.updatePhoneState(LockManager.PhoneState.INTERACTIVE);
     webRtcInteractor.initializeAudioForCall();
 
@@ -189,7 +190,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
     try {
       groupCall.setOutgoingAudioMuted(true);
       groupCall.setOutgoingVideoMuted(true);
-      groupCall.setBandwidthMode(NetworkUtil.getCallingBandwidthMode(context, groupCall.getLocalDeviceState().getNetworkRoute().getLocalAdapterType()));
+      groupCall.setDataMode(NetworkUtil.getCallingDataMode(context, groupCall.getLocalDeviceState().getNetworkRoute().getLocalAdapterType()));
 
       Log.i(TAG, "Connecting to group call: " + currentState.getCallInfoState().getCallRecipient().getId());
       groupCall.connect();
@@ -207,7 +208,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
                                .enableVideoOnCreate(answerWithVideo)
                                .build();
 
-    webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, currentState.getCallInfoState().getCallRecipient());
+    webRtcInteractor.setCallInProgressNotification(TYPE_INCOMING_CONNECTING, currentState.getCallInfoState().getCallRecipient(), true);
     webRtcInteractor.updatePhoneState(WebRtcUtil.getInCallPhoneState(context));
     webRtcInteractor.initializeAudioForCall();
 
@@ -215,7 +216,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
       groupCall.setOutgoingVideoSource(currentState.getVideoState().requireLocalSink(), currentState.getVideoState().requireCamera());
       groupCall.setOutgoingVideoMuted(answerWithVideo);
       groupCall.setOutgoingAudioMuted(!currentState.getLocalDeviceState().isMicrophoneEnabled());
-      groupCall.setBandwidthMode(NetworkUtil.getCallingBandwidthMode(context, groupCall.getLocalDeviceState().getNetworkRoute().getLocalAdapterType()));
+      groupCall.setDataMode(NetworkUtil.getCallingDataMode(context, groupCall.getLocalDeviceState().getNetworkRoute().getLocalAdapterType()));
 
       groupCall.join();
     } catch (CallException e) {
@@ -223,7 +224,7 @@ public final class IncomingGroupCallActionProcessor extends DeviceAwareActionPro
     }
 
     return currentState.builder()
-                       .actionProcessor(new GroupJoiningActionProcessor(webRtcInteractor))
+                       .actionProcessor(MultiPeerActionProcessorFactory.GroupActionProcessorFactory.INSTANCE.createJoiningActionProcessor(webRtcInteractor))
                        .changeCallInfoState()
                        .callState(WebRtcViewModel.State.CALL_OUTGOING)
                        .groupCallState(WebRtcViewModel.GroupCallState.CONNECTED_AND_JOINING)

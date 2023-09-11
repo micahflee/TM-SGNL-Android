@@ -10,6 +10,7 @@ import org.tm.archive.database.GV2UpdateTransformer
 import org.tm.archive.database.IsStoryTransformer
 import org.tm.archive.database.JobDatabase
 import org.tm.archive.database.KeyValueDatabase
+import org.tm.archive.database.KyberKeyTransformer
 import org.tm.archive.database.LocalMetricsDatabase
 import org.tm.archive.database.LogDatabase
 import org.tm.archive.database.MegaphoneDatabase
@@ -17,6 +18,7 @@ import org.tm.archive.database.MessageBitmaskColumnTransformer
 import org.tm.archive.database.MessageRangesTransformer
 import org.tm.archive.database.ProfileKeyCredentialTransformer
 import org.tm.archive.database.QueryMonitor
+import org.tm.archive.database.RecipientTransformer
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.TimestampTransformer
 import org.tm.archive.keyvalue.SignalStore
@@ -51,7 +53,7 @@ class SpinnerApplicationContext : ApplicationContext() {
       linkedMapOf(
         "signal" to DatabaseConfig(
           db = { SignalDatabase.rawDatabase },
-          columnTransformers = listOf(MessageBitmaskColumnTransformer, GV2Transformer, GV2UpdateTransformer, IsStoryTransformer, TimestampTransformer, ProfileKeyCredentialTransformer, MessageRangesTransformer)
+          columnTransformers = listOf(MessageBitmaskColumnTransformer, GV2Transformer, GV2UpdateTransformer, IsStoryTransformer, TimestampTransformer, ProfileKeyCredentialTransformer, MessageRangesTransformer, KyberKeyTransformer, RecipientTransformer)
         ),
         "jobmanager" to DatabaseConfig(db = { JobDatabase.getInstance(this).sqlCipherDatabase }),
         "keyvalue" to DatabaseConfig(db = { KeyValueDatabase.getInstance(this).sqlCipherDatabase }),

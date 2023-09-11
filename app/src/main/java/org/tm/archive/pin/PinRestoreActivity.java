@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.tm.archive.MainActivity;
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
-import org.tm.archive.lock.v2.CreateKbsPinActivity;
+import org.tm.archive.lock.v2.CreateSvrPinActivity;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
 
@@ -32,7 +32,7 @@ public final class PinRestoreActivity extends AppCompatActivity {
 
   void navigateToPinCreation() {
     final Intent main      = MainActivity.clearTop(this);
-    final Intent createPin = CreateKbsPinActivity.getIntentForPinCreate(this);
+    final Intent createPin = CreateSvrPinActivity.getIntentForPinCreate(this);
     final Intent chained   = PassphraseRequiredActivity.chainIntent(createPin, main);
 
     startActivity(chained);

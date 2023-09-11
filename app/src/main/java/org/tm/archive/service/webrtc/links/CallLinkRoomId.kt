@@ -17,6 +17,7 @@ class CallLinkRoomId private constructor(private val roomId: ByteArray) : Parcel
   fun serialize(): String = DatabaseSerializer.serialize(this)
 
   fun encodeForProto(): ByteString = ByteString.copyFrom(roomId)
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -30,6 +31,10 @@ class CallLinkRoomId private constructor(private val roomId: ByteArray) : Parcel
 
   override fun hashCode(): Int {
     return roomId.contentHashCode()
+  }
+
+  override fun toString(): String {
+    return DatabaseSerializer.serialize(this)
   }
 
   object DatabaseSerializer : Serializer<CallLinkRoomId, String> {

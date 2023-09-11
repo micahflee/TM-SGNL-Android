@@ -6,14 +6,15 @@
 package org.tm.archive.calls.links
 
 import io.reactivex.rxjava3.core.Observable
-import org.signal.core.util.Hex
 import org.signal.core.util.logging.Log
+import org.signal.ringrtc.CallException
 import org.signal.ringrtc.CallLinkRootKey
 import org.tm.archive.database.CallLinkTable
 import org.tm.archive.database.DatabaseObserver
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.service.webrtc.links.CallLinkRoomId
+import org.tm.archive.util.FeatureFlags
 import java.net.URLDecoder
 
 /**
@@ -21,10 +22,12 @@ import java.net.URLDecoder
  */
 object CallLinks {
   private const val ROOT_KEY = "key"
+  private const val HTTPS_LINK_PREFIX = "https://signal.link/call/#key="
+  private const val SNGL_LINK_PREFIX = "sgnl://signal.link/#key="
 
   private val TAG = Log.tag(CallLinks::class.java)
 
-  fun url(linkKeyBytes: ByteArray) = "https://signal.link/call/#key=${Hex.dump(linkKeyBytes)}"
+  fun url(linkKeyBytes: ByteArray) = "$HTTPS_LINK_PREFIX${CallLinkRootKey(linkKeyBytes)}"
 
   fun watchCallLink(roomId: CallLinkRoomId): Observable<CallLinkTable.CallLink> {
     return Observable.create { emitter ->
@@ -50,7 +53,30 @@ object CallLinks {
   }
 
   @JvmStatic
+  fun isCallLink(url: String): Boolean {
+    if (!FeatureFlags.adHocCalling()) {
+      return false
+    }
+
+    if (!url.startsWith(HTTPS_LINK_PREFIX) && !url.startsWith(SNGL_LINK_PREFIX)) {
+      Log.w(TAG, "Invalid url prefix.")
+      return false
+    }
+
+    return url.split("#").last().startsWith("key=")
+  }
+
+  @JvmStatic
   fun parseUrl(url: String): CallLinkRootKey? {
+    if (!FeatureFlags.adHocCalling()) {
+      return null
+    }
+
+    if (!url.startsWith(HTTPS_LINK_PREFIX) && !url.startsWith(SNGL_LINK_PREFIX)) {
+      Log.w(TAG, "Invalid url prefix.")
+      return null
+    }
+
     val parts = url.split("#")
     if (parts.size != 2) {
       Log.w(TAG, "Invalid fragment delimiter count in url.")
@@ -77,7 +103,11 @@ object CallLinks {
       return null
     }
 
-    // TODO Parse the key into a byte array
-    return null
+    return try {
+      CallLinkRootKey(key)
+    } catch (e: CallException) {
+      Log.w(TAG, "Invalid root key found in fragment query string.")
+      null
+    }
   }
 }

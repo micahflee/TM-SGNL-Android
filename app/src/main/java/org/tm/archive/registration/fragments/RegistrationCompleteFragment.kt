@@ -16,7 +16,7 @@ import org.tm.archive.jobs.MultiDeviceProfileContentUpdateJob
 import org.tm.archive.jobs.MultiDeviceProfileKeyUpdateJob
 import org.tm.archive.jobs.ProfileUploadJob
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.lock.v2.CreateKbsPinActivity
+import org.tm.archive.lock.v2.CreateSvrPinActivity
 import org.tm.archive.pin.PinRestoreActivity
 import org.tm.archive.profiles.AvatarHelper
 import org.tm.archive.profiles.edit.EditProfileActivity
@@ -51,7 +51,7 @@ class RegistrationCompleteFragment : LoggingFragment() {
       val isProfileNameEmpty = Recipient.self().profileName.isEmpty
       val isAvatarEmpty = !AvatarHelper.hasAvatar(activity, Recipient.self().id)
       val needsProfile = isProfileNameEmpty || isAvatarEmpty
-      val needsPin = !SignalStore.kbsValues().hasPin() && !viewModel.isReregister
+      val needsPin = !SignalStore.svr().hasPin() && !viewModel.isReregister
 
       Log.i(TAG, "Pin restore flow not required. Profile name: $isProfileNameEmpty | Profile avatar: $isAvatarEmpty | Needs PIN: $needsPin")
 
@@ -66,7 +66,7 @@ class RegistrationCompleteFragment : LoggingFragment() {
       var startIntent = MainActivity.clearTop(activity)
 
       if (needsPin) {
-        startIntent = chainIntents(CreateKbsPinActivity.getIntentForPinCreate(activity), startIntent)
+        startIntent = chainIntents(CreateSvrPinActivity.getIntentForPinCreate(activity), startIntent)
       }
 
       if (needsProfile) {

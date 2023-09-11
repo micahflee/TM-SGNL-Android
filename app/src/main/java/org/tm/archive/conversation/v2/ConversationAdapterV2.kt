@@ -9,20 +9,24 @@ import android.text.TextUtils
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.text.HtmlCompat
+import androidx.core.view.children
 import androidx.lifecycle.LifecycleOwner
-import com.google.android.exoplayer2.MediaItem
+import androidx.media3.common.MediaItem
+import androidx.recyclerview.widget.RecyclerView
 import org.signal.core.util.logging.Log
 import org.signal.core.util.toOptional
 import org.tm.archive.BindableConversationItem
 import org.tm.archive.R
-import org.tm.archive.conversation.ConversationAdapter
+import org.tm.archive.Unbindable
+import org.tm.archive.conversation.ConversationAdapter.ItemClickListener
 import org.tm.archive.conversation.ConversationAdapterBridge
-import org.tm.archive.conversation.ConversationBannerView
+import org.tm.archive.conversation.ConversationHeaderView
 import org.tm.archive.conversation.ConversationItemDisplayMode
 import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.conversation.colors.Colorizable
 import org.tm.archive.conversation.colors.Colorizer
 import org.tm.archive.conversation.mutiselect.MultiselectPart
+import org.tm.archive.conversation.mutiselect.Multiselectable
 import org.tm.archive.conversation.v2.data.ConversationElementKey
 import org.tm.archive.conversation.v2.data.ConversationMessageElement
 import org.tm.archive.conversation.v2.data.ConversationUpdate
@@ -31,10 +35,15 @@ import org.tm.archive.conversation.v2.data.IncomingTextOnly
 import org.tm.archive.conversation.v2.data.OutgoingMedia
 import org.tm.archive.conversation.v2.data.OutgoingTextOnly
 import org.tm.archive.conversation.v2.data.ThreadHeader
+import org.tm.archive.conversation.v2.items.V2ConversationContext
+import org.tm.archive.conversation.v2.items.V2TextOnlyViewHolder
+import org.tm.archive.conversation.v2.items.bridge
 import org.tm.archive.database.model.MessageRecord
-import org.tm.archive.giph.mp4.GiphyMp4Playable
+import org.tm.archive.databinding.V2ConversationItemTextOnlyIncomingBinding
+import org.tm.archive.databinding.V2ConversationItemTextOnlyOutgoingBinding
 import org.tm.archive.giph.mp4.GiphyMp4PlaybackPolicyEnforcer
 import org.tm.archive.groups.v2.GroupDescriptionUtil
+import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.messagerequests.MessageRequestState
 import org.tm.archive.mms.GlideRequests
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
@@ -50,11 +59,12 @@ import java.util.Optional
 
 class ConversationAdapterV2(
   private val lifecycleOwner: LifecycleOwner,
-  private val glideRequests: GlideRequests,
-  private val clickListener: ConversationAdapter.ItemClickListener,
+  override val glideRequests: GlideRequests,
+  override val clickListener: ItemClickListener,
   private var hasWallpaper: Boolean,
-  private val colorizer: Colorizer
-) : PagingMappingAdapter<ConversationElementKey>(), ConversationAdapterBridge {
+  private val colorizer: Colorizer,
+  private val startExpirationTimeout: (MessageRecord) -> Unit
+) : PagingMappingAdapter<ConversationElementKey>(), ConversationAdapterBridge, V2ConversationContext {
 
   companion object {
     private val TAG = Log.tag(ConversationAdapterV2::class.java)
@@ -65,7 +75,7 @@ class ConversationAdapterV2(
   override val selectedItems: Set<MultiselectPart>
     get() = _selected.toSet()
 
-  private var searchQuery: String? = null
+  override var searchQuery: String? = null
   private var inlineContent: ConversationMessage? = null
 
   private var recordToPulse: ConversationMessage? = null
@@ -73,17 +83,14 @@ class ConversationAdapterV2(
 
   private val condensedMode: ConversationItemDisplayMode? = null
 
+  override var isMessageRequestAccepted: Boolean = false
+
   init {
-    registerFactory(ThreadHeader::class.java, ::ThreadHeaderViewHolder, R.layout.conversation_item_banner)
+    registerFactory(ThreadHeader::class.java, ::ThreadHeaderViewHolder, R.layout.conversation_item_thread_header)
 
     registerFactory(ConversationUpdate::class.java) { parent ->
       val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_update, parent, false)
       ConversationUpdateViewHolder(view)
-    }
-
-    registerFactory(OutgoingTextOnly::class.java) { parent ->
-      val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_sent_text_only, parent, false)
-      OutgoingTextOnlyViewHolder(view)
     }
 
     registerFactory(OutgoingMedia::class.java) { parent ->
@@ -91,20 +98,91 @@ class ConversationAdapterV2(
       OutgoingMediaViewHolder(view)
     }
 
-    registerFactory(IncomingTextOnly::class.java) { parent ->
-      val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_received_text_only, parent, false)
-      IncomingTextOnlyViewHolder(view)
-    }
-
     registerFactory(IncomingMedia::class.java) { parent ->
       val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_received_multimedia, parent, false)
       IncomingMediaViewHolder(view)
     }
+
+    if (SignalStore.internalValues().useConversationItemV2()) {
+      registerFactory(OutgoingTextOnly::class.java) { parent ->
+        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_text_only_outgoing, parent, false)
+        V2TextOnlyViewHolder(V2ConversationItemTextOnlyOutgoingBinding.bind(view).bridge(), this)
+      }
+
+      registerFactory(IncomingTextOnly::class.java) { parent ->
+        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_text_only_incoming, parent, false)
+        V2TextOnlyViewHolder(V2ConversationItemTextOnlyIncomingBinding.bind(view).bridge(), this)
+      }
+    } else {
+      registerFactory(OutgoingTextOnly::class.java) { parent ->
+        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_sent_text_only, parent, false)
+        OutgoingTextOnlyViewHolder(view)
+      }
+
+      registerFactory(IncomingTextOnly::class.java) { parent ->
+        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_received_text_only, parent, false)
+        IncomingTextOnlyViewHolder(view)
+      }
+    }
   }
 
-  /** [messagePosition] is one-based index and adapter is zero-based. */
-  fun getAdapterPositionForMessagePosition(messagePosition: Int): Int {
-    return messagePosition - 1
+  override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+    super.onAttachedToRecyclerView(recyclerView)
+
+    for ((model, type) in itemTypes) {
+      val count: Int = when (model) {
+        ThreadHeader::class.java -> 1
+        ConversationUpdate::class.java -> 5
+        OutgoingTextOnly::class.java -> 25
+        OutgoingMedia::class.java -> 15
+        IncomingTextOnly::class.java -> 25
+        IncomingMedia::class.java -> 15
+        Placeholder::class.java -> 5
+        else -> 0
+      }
+
+      if (count > 0) {
+        recyclerView.recycledViewPool.setMaxRecycledViews(type, count)
+      }
+    }
+  }
+
+  override fun onViewRecycled(holder: MappingViewHolder<*>) {
+    if (holder is ConversationViewHolder) {
+      holder.bindable.unbind()
+    }
+  }
+
+  /** Triggered when switching addapters or by setting adapter to null on [recyclerView] in [ConversationFragment] */
+  override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+    recyclerView
+      .children
+      .filterIsInstance<Unbindable>()
+      .forEach { it.unbind() }
+  }
+
+  override val displayMode: ConversationItemDisplayMode
+    get() = condensedMode ?: ConversationItemDisplayMode.STANDARD
+
+  override fun onStartExpirationTimeout(messageRecord: MessageRecord) {
+    startExpirationTimeout(messageRecord)
+  }
+
+  override fun hasWallpaper(): Boolean = hasWallpaper && displayMode.displayWallpaper()
+
+  override fun getColorizer(): Colorizer = colorizer
+
+  override fun getNextMessage(adapterPosition: Int): MessageRecord? {
+    return getConversationMessage(adapterPosition - 1)?.messageRecord
+  }
+
+  override fun getPreviousMessage(adapterPosition: Int): MessageRecord? {
+    return getConversationMessage(adapterPosition + 1)?.messageRecord
+  }
+
+  fun updateSearchQuery(searchQuery: String?) {
+    this.searchQuery = searchQuery
+    notifyItemRangeChanged(0, itemCount)
   }
 
   fun getLastVisibleConversationMessage(position: Int): ConversationMessage? {
@@ -117,25 +195,27 @@ class ConversationAdapterV2(
   }
 
   fun canJumpToPosition(absolutePosition: Int): Boolean {
-    // todo [cody] handle typing indicator
-    val position = absolutePosition
-
-    if (position < 0) {
+    if (absolutePosition < 0) {
       return false
     }
 
-    if (position > super.getItemCount()) {
-      Log.d(TAG, "Could not access corrected position $position as it is out of bounds.")
+    if (absolutePosition > super.getItemCount()) {
+      Log.d(TAG, "Could not access corrected position $absolutePosition as it is out of bounds.")
       return false
     }
 
-    return isRangeAvailable(position - 10, position + 5)
+    if (!isRangeAvailable(absolutePosition - 10, absolutePosition + 5)) {
+      getItem(absolutePosition)
+      return false
+    }
+
+    return true
   }
 
   fun playInlineContent(conversationMessage: ConversationMessage?) {
     if (this.inlineContent !== conversationMessage) {
       this.inlineContent = conversationMessage
-      notifyDataSetChanged()
+      notifyItemRangeChanged(0, itemCount)
     }
   }
 
@@ -156,15 +236,12 @@ class ConversationAdapterV2(
    * Momentarily highlights a mention at the requested position.
    */
   fun pulseAtPosition(position: Int) {
-    if (position >= 0 && position < itemCount) {
-      // todo [cody] adjust for typing indicator
-      val correctedPosition = position
-
-      recordToPulse = getConversationMessage(correctedPosition)
+    if (position in 0 until itemCount) {
+      recordToPulse = getConversationMessage(position)
       if (recordToPulse != null) {
         pulseRequest = ConversationAdapterBridge.PulseRequest(position, recordToPulse!!.messageRecord.isOutgoing)
       }
-      notifyItemChanged(correctedPosition)
+      notifyItemChanged(position)
     }
   }
 
@@ -174,12 +251,29 @@ class ConversationAdapterV2(
     return request
   }
 
-  fun onHasWallpaperChanged(hasChanged: Boolean) {
-    // todo [cody] implement
+  fun onHasWallpaperChanged(hasWallpaper: Boolean): Boolean {
+    return if (this.hasWallpaper != hasWallpaper) {
+      Log.d(TAG, "Resetting adapter due to wallpaper change.")
+      this.hasWallpaper = hasWallpaper
+      notifyItemRangeChanged(0, itemCount)
+      true
+    } else {
+      false
+    }
+  }
+
+  fun setMessageRequestIsAccepted(isMessageRequestAccepted: Boolean) {
+    val oldState = this.isMessageRequestAccepted
+    this.isMessageRequestAccepted = isMessageRequestAccepted
+
+    if (oldState != isMessageRequestAccepted) {
+      notifyItemRangeChanged(0, itemCount)
+    }
   }
 
   fun clearSelection() {
     _selected.clear()
+    updateSelected()
   }
 
   fun toggleSelection(multiselectPart: MultiselectPart) {
@@ -188,11 +282,34 @@ class ConversationAdapterV2(
     } else {
       _selected.add(multiselectPart)
     }
+    updateSelected()
+  }
+
+  fun removeFromSelection(expired: Set<MultiselectPart>) {
+    _selected.removeAll(expired)
+    updateSelected()
+  }
+
+  fun updateTimestamps() {
+    notifyItemRangeChanged(0, itemCount, ConversationAdapterBridge.PAYLOAD_TIMESTAMP)
+  }
+
+  fun updateNameColors() {
+    notifyItemRangeChanged(0, itemCount, ConversationAdapterBridge.PAYLOAD_NAME_COLORS)
+  }
+
+  private fun updateSelected() {
+    notifyItemRangeChanged(0, itemCount, ConversationAdapterBridge.PAYLOAD_SELECTED)
   }
 
   private inner class ConversationUpdateViewHolder(itemView: View) : ConversationViewHolder<ConversationUpdate>(itemView) {
     override fun bind(model: ConversationUpdate) {
       bindable.setEventListener(clickListener)
+
+      if (bindPayloadsIfAvailable()) {
+        return
+      }
+
       bindable.bind(
         lifecycleOwner,
         model.conversationMessage,
@@ -205,7 +322,7 @@ class ConversationAdapterV2(
         searchQuery,
         false,
         hasWallpaper && displayMode.displayWallpaper(),
-        true, // isMessageRequestAccepted,
+        isMessageRequestAccepted,
         model.conversationMessage == inlineContent,
         colorizer,
         displayMode
@@ -216,6 +333,11 @@ class ConversationAdapterV2(
   private inner class OutgoingTextOnlyViewHolder(itemView: View) : ConversationViewHolder<OutgoingTextOnly>(itemView) {
     override fun bind(model: OutgoingTextOnly) {
       bindable.setEventListener(clickListener)
+
+      if (bindPayloadsIfAvailable()) {
+        return
+      }
+
       bindable.bind(
         lifecycleOwner,
         model.conversationMessage,
@@ -228,7 +350,7 @@ class ConversationAdapterV2(
         searchQuery,
         false,
         hasWallpaper && displayMode.displayWallpaper(),
-        true, // isMessageRequestAccepted,
+        isMessageRequestAccepted,
         model.conversationMessage == inlineContent,
         colorizer,
         displayMode
@@ -239,6 +361,11 @@ class ConversationAdapterV2(
   private inner class OutgoingMediaViewHolder(itemView: View) : ConversationViewHolder<OutgoingMedia>(itemView) {
     override fun bind(model: OutgoingMedia) {
       bindable.setEventListener(clickListener)
+
+      if (bindPayloadsIfAvailable()) {
+        return
+      }
+
       bindable.bind(
         lifecycleOwner,
         model.conversationMessage,
@@ -251,7 +378,7 @@ class ConversationAdapterV2(
         searchQuery,
         false,
         hasWallpaper && displayMode.displayWallpaper(),
-        true, // isMessageRequestAccepted,
+        isMessageRequestAccepted,
         model.conversationMessage == inlineContent,
         colorizer,
         displayMode
@@ -262,6 +389,11 @@ class ConversationAdapterV2(
   private inner class IncomingTextOnlyViewHolder(itemView: View) : ConversationViewHolder<IncomingTextOnly>(itemView) {
     override fun bind(model: IncomingTextOnly) {
       bindable.setEventListener(clickListener)
+
+      if (bindPayloadsIfAvailable()) {
+        return
+      }
+
       bindable.bind(
         lifecycleOwner,
         model.conversationMessage,
@@ -274,7 +406,7 @@ class ConversationAdapterV2(
         searchQuery,
         false,
         hasWallpaper && displayMode.displayWallpaper(),
-        true, // isMessageRequestAccepted,
+        isMessageRequestAccepted,
         model.conversationMessage == inlineContent,
         colorizer,
         displayMode
@@ -285,6 +417,11 @@ class ConversationAdapterV2(
   private inner class IncomingMediaViewHolder(itemView: View) : ConversationViewHolder<IncomingMedia>(itemView) {
     override fun bind(model: IncomingMedia) {
       bindable.setEventListener(clickListener)
+
+      if (bindPayloadsIfAvailable()) {
+        return
+      }
+
       bindable.bind(
         lifecycleOwner,
         model.conversationMessage,
@@ -297,7 +434,7 @@ class ConversationAdapterV2(
         searchQuery,
         false,
         hasWallpaper && displayMode.displayWallpaper(),
-        true, // isMessageRequestAccepted,
+        isMessageRequestAccepted,
         model.conversationMessage == inlineContent,
         colorizer,
         displayMode
@@ -305,9 +442,11 @@ class ConversationAdapterV2(
     }
   }
 
-  private abstract inner class ConversationViewHolder<T>(itemView: View) : MappingViewHolder<T>(itemView), GiphyMp4Playable, Colorizable {
+  private abstract inner class ConversationViewHolder<T>(itemView: View) : MappingViewHolder<T>(itemView), Multiselectable, Colorizable {
     val bindable: BindableConversationItem
       get() = itemView as BindableConversationItem
+
+    override val root: ViewGroup = bindable.root
 
     protected val previousMessage: Optional<MessageRecord>
       get() = getConversationMessage(bindingAdapterPosition + 1)?.messageRecord.toOptional()
@@ -317,6 +456,9 @@ class ConversationAdapterV2(
 
     protected val displayMode: ConversationItemDisplayMode
       get() = condensedMode ?: ConversationItemDisplayMode.STANDARD
+
+    override val conversationMessage: ConversationMessage
+      get() = bindable.conversationMessage
 
     init {
       itemView.setOnClickListener {
@@ -330,6 +472,27 @@ class ConversationAdapterV2(
         )
         true
       }
+    }
+
+    fun bindPayloadsIfAvailable(): Boolean {
+      var payloadApplied = false
+
+      if (payload.contains(ConversationAdapterBridge.PAYLOAD_TIMESTAMP)) {
+        bindable.updateTimestamps()
+        payloadApplied = true
+      }
+
+      if (payload.contains(ConversationAdapterBridge.PAYLOAD_NAME_COLORS)) {
+        bindable.updateContactNameColor()
+        payloadApplied = true
+      }
+
+      if (payload.contains(ConversationAdapterBridge.PAYLOAD_SELECTED)) {
+        bindable.updateSelectedState()
+        payloadApplied = true
+      }
+
+      return payloadApplied
     }
 
     override fun showProjectionArea() {
@@ -360,13 +523,21 @@ class ConversationAdapterV2(
       return bindable.shouldProjectContent()
     }
 
-    override fun getColorizerProjections(coordinateRoot: ViewGroup): ProjectionList {
-      return bindable.getColorizerProjections(coordinateRoot)
-    }
+    override fun hasNonSelectableMedia(): Boolean = bindable.hasNonSelectableMedia()
+
+    override fun getColorizerProjections(coordinateRoot: ViewGroup): ProjectionList = bindable.getColorizerProjections(coordinateRoot)
+
+    override fun getTopBoundaryOfMultiselectPart(multiselectPart: MultiselectPart): Int = bindable.getTopBoundaryOfMultiselectPart(multiselectPart)
+
+    override fun getBottomBoundaryOfMultiselectPart(multiselectPart: MultiselectPart): Int = bindable.getBottomBoundaryOfMultiselectPart(multiselectPart)
+
+    override fun getHorizontalTranslationTarget(): View? = bindable.getHorizontalTranslationTarget()
+
+    override fun getMultiselectPartForLatestTouch(): MultiselectPart = bindable.getMultiselectPartForLatestTouch()
   }
 
   inner class ThreadHeaderViewHolder(itemView: View) : MappingViewHolder<ThreadHeader>(itemView) {
-    private val conversationBanner: ConversationBannerView = itemView as ConversationBannerView
+    private val conversationBanner: ConversationHeaderView = itemView as ConversationHeaderView
 
     override fun bind(model: ThreadHeader) {
       val (recipient, groupInfo, sharedGroups, messageRequestState) = model.recipientInfo

@@ -37,7 +37,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.exoplayer2.MediaItem;
+import androidx.media3.common.MediaItem;
 
 import org.signal.core.util.logging.Log;
 import org.signal.paging.PagingController;
@@ -46,13 +46,11 @@ import org.tm.archive.R;
 import org.tm.archive.conversation.colors.Colorizable;
 import org.tm.archive.conversation.colors.Colorizer;
 import org.tm.archive.conversation.mutiselect.MultiselectPart;
-import org.tm.archive.conversationlist.model.Conversation;
 import org.tm.archive.database.model.MediaMmsMessageRecord;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.giph.mp4.GiphyMp4Playable;
 import org.tm.archive.giph.mp4.GiphyMp4PlaybackPolicyEnforcer;
 import org.tm.archive.mms.GlideRequests;
-import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.CachedInflater;
 import org.tm.archive.util.DateUtils;
@@ -97,10 +95,6 @@ public class ConversationAdapter
   private static final int MESSAGE_TYPE_HEADER              = 5;
   public  static final int MESSAGE_TYPE_FOOTER              = 6;
   private static final int MESSAGE_TYPE_PLACEHOLDER         = 7;
-
-  private static final int PAYLOAD_TIMESTAMP   = 0;
-  public  static final int PAYLOAD_NAME_COLORS = 1;
-  public  static final int PAYLOAD_SELECTED    = 2;
 
   private final ItemClickListener clickListener;
   private final Context           context;
@@ -339,8 +333,10 @@ public class ConversationAdapter
 
     if (scheduledMessagesMode) {
       calendar.setTimeInMillis(((MediaMmsMessageRecord) conversationMessage.getMessageRecord()).getScheduledDate());
-    } else {
+    } else if (condensedMode == ConversationItemDisplayMode.EDIT_HISTORY) {
       calendar.setTimeInMillis(conversationMessage.getMessageRecord().getDateSent());
+    } else {
+      calendar.setTimeInMillis(conversationMessage.getConversationTimestamp());
     }
     return calendar.get(Calendar.YEAR) * 1000L + calendar.get(Calendar.DAY_OF_YEAR);
   }
@@ -357,8 +353,10 @@ public class ConversationAdapter
 
     if (scheduledMessagesMode) {
       viewHolder.setText(DateUtils.getScheduledMessagesDateHeaderString(viewHolder.itemView.getContext(), locale, ((MediaMmsMessageRecord) conversationMessage.getMessageRecord()).getScheduledDate()));
-    } else {
+    } else if (condensedMode == ConversationItemDisplayMode.EDIT_HISTORY) {
       viewHolder.setText(DateUtils.getConversationDateHeaderString(viewHolder.itemView.getContext(), locale, conversationMessage.getMessageRecord().getDateSent()));
+    } else {
+      viewHolder.setText(DateUtils.getConversationDateHeaderString(viewHolder.itemView.getContext(), locale, conversationMessage.getConversationTimestamp()));
     }
 
     if (type == HEADER_TYPE_POPOVER_DATE) {

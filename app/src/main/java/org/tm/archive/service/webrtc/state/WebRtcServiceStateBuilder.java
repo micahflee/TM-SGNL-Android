@@ -18,11 +18,13 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.ringrtc.Camera;
 import org.tm.archive.ringrtc.CameraState;
 import org.tm.archive.ringrtc.RemotePeer;
+import org.tm.archive.service.webrtc.CallLinkDisconnectReason;
 import org.tm.archive.service.webrtc.WebRtcActionProcessor;
 import org.tm.archive.webrtc.audio.SignalAudioManager;
 import org.webrtc.PeerConnection;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -340,6 +342,26 @@ public class WebRtcServiceStateBuilder {
 
     public @NonNull CallInfoStateBuilder participantLimit(@Nullable Long participantLimit) {
       toBuild.setParticipantLimit(participantLimit);
+      return this;
+    }
+
+    public @NonNull CallInfoStateBuilder setCallLinkPendingParticipants(@NonNull List<Recipient> pendingParticipants) {
+      toBuild.setPendingParticipants(toBuild.getPendingParticipants().withRecipients(pendingParticipants));
+      return this;
+    }
+
+    public @NonNull CallInfoStateBuilder setCallLinkPendingParticipantApproved(@NonNull Recipient participant) {
+      toBuild.setPendingParticipants(toBuild.getPendingParticipants().withApproval(participant));
+      return this;
+    }
+
+    public @NonNull CallInfoStateBuilder setCallLinkPendingParticipantRejected(@NonNull Recipient participant) {
+      toBuild.setPendingParticipants(toBuild.getPendingParticipants().withDenial(participant));
+      return this;
+    }
+
+    public @NonNull CallInfoStateBuilder setCallLinkDisconnectReason(@Nullable CallLinkDisconnectReason callLinkDisconnectReason) {
+      toBuild.setCallLinkDisconnectReason(callLinkDisconnectReason);
       return this;
     }
   }

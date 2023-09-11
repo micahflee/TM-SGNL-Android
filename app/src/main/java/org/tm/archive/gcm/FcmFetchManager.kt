@@ -7,17 +7,14 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import org.signal.core.util.concurrent.SignalExecutors
-import com.tm.logger.Log
 import org.signal.core.util.PendingIntentFlags.mutable
+import org.signal.core.util.concurrent.SignalExecutors
+import org.signal.core.util.logging.Log
 import org.tm.archive.MainActivity
 import org.tm.archive.R
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.jobs.ForegroundServiceUtil
 import org.tm.archive.jobs.MessageFetchJob
-import org.tm.archive.jobs.PushNotificationReceiveJob
 import org.tm.archive.messages.WebSocketDrainer
-import org.tm.archive.messages.WebSocketStrategy
 import org.tm.archive.notifications.NotificationChannels
 import org.tm.archive.notifications.NotificationIds
 import org.tm.archive.util.FeatureFlags
@@ -43,7 +40,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 object FcmFetchManager {
 
-  private val TAG = /*Log.tag(FcmFetchManager::class.java)*/"FcmFetchManager"
+  private val TAG = Log.tag(FcmFetchManager::class.java)
   private val EXECUTOR = SerialMonoLifoExecutor(SignalExecutors.UNBOUNDED)
 
   val WEBSOCKET_DRAIN_TIMEOUT = 5.minutes.inWholeMilliseconds

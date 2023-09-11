@@ -8,6 +8,8 @@ import android.content.Intent;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.tm.archive.R;
 import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.SignalDatabase;
@@ -38,16 +40,16 @@ public class TurnOffContactJoinedNotificationsActivity extends AppCompatActivity
   protected void onResume() {
     super.onResume();
 
-    new AlertDialog.Builder(this)
-                   .setMessage(R.string.TurnOffContactJoinedNotificationsActivity__turn_off_contact_joined_signal)
-                   .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                     handlePositiveAction(dialog);
-                   })
-                   .setNegativeButton(android.R.string.cancel, ((dialog, which) -> {
-                     dialog.dismiss();
-                     finish();
-                   }))
-                   .show();
+    new MaterialAlertDialogBuilder(this)
+        .setMessage(R.string.TurnOffContactJoinedNotificationsActivity__turn_off_contact_joined_signal)
+        .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+          handlePositiveAction(dialog);
+        })
+        .setNegativeButton(android.R.string.cancel, ((dialog, which) -> {
+          dialog.dismiss();
+          finish();
+        }))
+        .show();
   }
 
   private void handlePositiveAction(@NonNull DialogInterface dialog) {
@@ -55,7 +57,7 @@ public class TurnOffContactJoinedNotificationsActivity extends AppCompatActivity
       ThreadTable threadTable = SignalDatabase.threads();
 
       List<MessageTable.MarkedMessageInfo> marked = threadTable.setRead(getIntent().getLongExtra(EXTRA_THREAD_ID, -1), false);
-      MarkReadReceiver.process(this, marked);
+      MarkReadReceiver.process(marked);
 
       SignalStore.settings().setNotifyWhenContactJoinsSignal(false);
       ApplicationDependencies.getMessageNotifier().updateNotification(this);

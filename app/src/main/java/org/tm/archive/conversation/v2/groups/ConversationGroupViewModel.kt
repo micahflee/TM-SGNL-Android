@@ -3,10 +3,13 @@ package org.tm.archive.conversation.v2.groups
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.kotlin.plusAssign
+import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.BehaviorSubject
 import io.reactivex.rxjava3.subjects.Subject
 import org.signal.core.util.Result
@@ -14,13 +17,12 @@ import org.signal.core.util.concurrent.subscribeWithSubject
 import org.tm.archive.conversation.v2.ConversationRecipientRepository
 import org.tm.archive.database.GroupTable
 import org.tm.archive.database.model.GroupRecord
-import org.tm.archive.groups.GroupsV1MigrationUtil
+import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.ui.GroupChangeFailureReason
 import org.tm.archive.groups.v2.GroupBlockJoinRequestResult
 import org.tm.archive.groups.v2.GroupManagementRepository
 import org.tm.archive.profiles.spoofing.ReviewUtil
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.recipients.RecipientId
 
 /**
  * Manages group state and actions for conversations.
@@ -32,13 +34,16 @@ class ConversationGroupViewModel(
 ) : ViewModel() {
 
   private val disposables = CompositeDisposable()
-  private val _groupRecord: Subject<GroupRecord>
+  private val _groupRecord: BehaviorSubject<GroupRecord>
   private val _reviewState: Subject<ConversationGroupReviewState>
 
   private val _groupActiveState: Subject<ConversationGroupActiveState> = BehaviorSubject.create()
   private val _memberLevel: BehaviorSubject<ConversationGroupMemberLevel> = BehaviorSubject.create()
-  private val _actionableRequestingMembersCount: Subject<Int> = BehaviorSubject.create()
-  private val _gv1MigrationSuggestions: Subject<List<RecipientId>> = BehaviorSubject.create()
+
+  private var firstTimeInviteFriendsTriggered: Boolean = false
+
+  val groupRecordSnapshot: GroupRecord?
+    get() = _groupRecord.value
 
   init {
     _groupRecord = recipientRepository
@@ -66,8 +71,6 @@ class ConversationGroupViewModel(
     disposables += _groupRecord.subscribe { groupRecord ->
       _groupActiveState.onNext(ConversationGroupActiveState(groupRecord.isActive, groupRecord.isV2Group))
       _memberLevel.onNext(ConversationGroupMemberLevel(groupRecord.memberLevel(Recipient.self()), groupRecord.isAnnouncementGroup))
-      _actionableRequestingMembersCount.onNext(getActionableRequestingMembersCount(groupRecord))
-      _gv1MigrationSuggestions.onNext(getGv1MigrationSuggestions(groupRecord))
     }
   }
 
@@ -89,34 +92,43 @@ class ConversationGroupViewModel(
       .observeOn(AndroidSchedulers.mainThread())
   }
 
-  private fun getActionableRequestingMembersCount(groupRecord: GroupRecord): Int {
-    return if (groupRecord.isV2Group && groupRecord.memberLevel(Recipient.self()) == GroupTable.MemberLevel.ADMINISTRATOR) {
-      groupRecord.requireV2GroupProperties()
-        .decryptedGroup
-        .requestingMembersCount
-    } else {
-      0
-    }
-  }
-
-  private fun getGv1MigrationSuggestions(groupRecord: GroupRecord): List<RecipientId> {
-    return if (!groupRecord.isActive || !groupRecord.isV2Group || groupRecord.isPendingMember(Recipient.self())) {
-      emptyList()
-    } else {
-      groupRecord.unmigratedV1Members
-        .filterNot { groupRecord.members.contains(it) }
-        .map { Recipient.resolved(it) }
-        .filter { GroupsV1MigrationUtil.isAutoMigratable(it) }
-        .map { it.id }
-    }
-  }
-
   fun cancelJoinRequest(): Single<Result<Unit, GroupChangeFailureReason>> {
     return _groupRecord
       .firstOrError()
       .flatMap { group ->
         groupManagementRepository.cancelJoinRequest(group.id.requireV2())
       }
+      .observeOn(AndroidSchedulers.mainThread())
+  }
+
+  fun onSuggestedMembersBannerDismissed() {
+    _groupRecord
+      .firstOrError()
+      .flatMapCompletable { group ->
+        groupManagementRepository.removeUnmigratedV1Members(group.id.requireV2())
+      }
+      .subscribe()
+      .addTo(disposables)
+  }
+
+  /**
+   * Emits the group id if we are the only member of the group.
+   */
+  fun checkJustSelfInGroup(): Maybe<GroupId.V2> {
+    if (firstTimeInviteFriendsTriggered) {
+      return Maybe.empty()
+    }
+
+    firstTimeInviteFriendsTriggered = true
+
+    return _groupRecord
+      .firstOrError()
+      .flatMapMaybe { groupRecord ->
+        groupManagementRepository.isJustSelf(groupRecord.id).flatMapMaybe {
+          if (it && groupRecord.id.isV2) Maybe.just(groupRecord.id.requireV2()) else Maybe.empty()
+        }
+      }
+      .subscribeOn(Schedulers.io())
       .observeOn(AndroidSchedulers.mainThread())
   }
 

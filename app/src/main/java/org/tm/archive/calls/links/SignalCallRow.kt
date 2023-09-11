@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -35,9 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.signal.core.ui.Buttons
 import org.signal.core.ui.theme.SignalTheme
-import org.signal.ringrtc.CallLinkRootKey
 import org.tm.archive.R
-import org.tm.archive.conversation.colors.AvatarColor
 import org.tm.archive.conversation.colors.AvatarColorPair
 import org.tm.archive.database.CallLinkTable
 import org.tm.archive.recipients.RecipientId
@@ -49,20 +48,18 @@ import java.time.Instant
 @Preview
 @Composable
 private fun SignalCallRowPreview() {
-  val avatarColor = remember { AvatarColor.random() }
   val callLink = remember {
-    val credentials = CallLinkCredentials.generate()
+    val credentials = CallLinkCredentials(byteArrayOf(1, 2, 3, 4), byteArrayOf(5, 6, 7, 8))
     CallLinkTable.CallLink(
       recipientId = RecipientId.UNKNOWN,
-      roomId = CallLinkRoomId.fromCallLinkRootKey(CallLinkRootKey(credentials.linkKeyBytes)),
+      roomId = CallLinkRoomId.fromBytes(byteArrayOf(1, 3, 5, 7)),
       credentials = credentials,
       state = SignalCallLinkState(
         name = "Call Name",
         restrictions = org.signal.ringrtc.CallLinkState.Restrictions.NONE,
         expiration = Instant.MAX,
         revoked = false
-      ),
-      avatarColor = avatarColor
+      )
     )
   }
   SignalTheme(false) {
@@ -76,9 +73,17 @@ private fun SignalCallRowPreview() {
 @Composable
 fun SignalCallRow(
   callLink: CallLinkTable.CallLink,
-  onJoinClicked: () -> Unit,
+  onJoinClicked: (() -> Unit)?,
   modifier: Modifier = Modifier
 ) {
+  val callUrl = if (LocalInspectionMode.current) {
+    "https://signal.call.example.com"
+  } else {
+    remember(callLink.credentials) {
+      callLink.credentials?.let { CallLinks.url(it.linkKeyBytes) } ?: ""
+    }
+  }
+
   Row(
     modifier = modifier
       .fillMaxWidth()
@@ -116,19 +121,21 @@ fun SignalCallRow(
         text = callLink.state.name.ifEmpty { stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__signal_call) }
       )
       Text(
-        text = callLink.credentials?.let { CallLinks.url(it.linkKeyBytes) } ?: "",
+        text = callUrl,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
     }
 
-    Spacer(modifier = Modifier.width(10.dp))
+    if (onJoinClicked != null) {
+      Spacer(modifier = Modifier.width(10.dp))
 
-    Buttons.Small(
-      onClick = onJoinClicked,
-      modifier = Modifier.align(CenterVertically)
-    ) {
-      Text(text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__join))
+      Buttons.Small(
+        onClick = onJoinClicked,
+        modifier = Modifier.align(CenterVertically)
+      ) {
+        Text(text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__join))
+      }
     }
   }
 }

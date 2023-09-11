@@ -30,6 +30,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import org.signal.core.ui.BottomSheets
 import org.tm.archive.R
 import org.tm.archive.compose.ComposeBottomSheetDialogFragment
 import org.tm.archive.util.BottomSheetUtil
@@ -49,7 +50,7 @@ class WebRtcAudioOutputBottomSheet : ComposeBottomSheetDialogFragment(), DialogI
         .padding(16.dp)
         .wrapContentSize()
     ) {
-      Handle()
+      BottomSheets.Handle()
       DeviceList(audioOutputOptions = viewModel.audioRoutes.toImmutableList(), initialDeviceId = viewModel.defaultDeviceId, modifier = Modifier.fillMaxWidth(), onDeviceSelected = viewModel.onClick)
     }
   }

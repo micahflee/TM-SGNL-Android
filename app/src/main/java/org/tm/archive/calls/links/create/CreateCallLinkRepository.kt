@@ -7,7 +7,6 @@ package org.tm.archive.calls.links.create
 
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
-import org.tm.archive.conversation.colors.AvatarColor
 import org.tm.archive.database.CallLinkTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
@@ -24,7 +23,7 @@ import org.tm.archive.service.webrtc.links.SignalCallLinkManager
 class CreateCallLinkRepository(
   private val callLinkManager: SignalCallLinkManager = ApplicationDependencies.getSignalCallManager().callLinkManager
 ) {
-  fun ensureCallLinkCreated(credentials: CallLinkCredentials, avatarColor: AvatarColor): Single<EnsureCallLinkCreatedResult> {
+  fun ensureCallLinkCreated(credentials: CallLinkCredentials): Single<EnsureCallLinkCreatedResult> {
     val callLinkRecipientId = Single.fromCallable {
       SignalDatabase.recipients.getByCallLinkRoomId(credentials.roomId)
     }
@@ -41,8 +40,7 @@ class CreateCallLinkRepository(
                   recipientId = RecipientId.UNKNOWN,
                   roomId = credentials.roomId,
                   credentials = credentials,
-                  state = it.state,
-                  avatarColor = avatarColor
+                  state = it.state
                 )
               )
 

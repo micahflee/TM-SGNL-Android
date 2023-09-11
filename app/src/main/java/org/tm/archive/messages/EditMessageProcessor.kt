@@ -11,10 +11,11 @@ import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.database.model.toBodyRangeList
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
+import org.tm.archive.jobs.AttachmentDownloadJob
 import org.tm.archive.jobs.PushProcessEarlyMessagesJob
 import org.tm.archive.jobs.SendDeliveryReceiptJob
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.log
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.warn
+import org.tm.archive.messages.MessageContentProcessor.Companion.log
+import org.tm.archive.messages.MessageContentProcessor.Companion.warn
 import org.tm.archive.messages.SignalServiceProtoUtil.groupId
 import org.tm.archive.messages.SignalServiceProtoUtil.isMediaMessage
 import org.tm.archive.messages.SignalServiceProtoUtil.toPointersWithinLimit
@@ -33,6 +34,7 @@ import org.tm.archive.util.hasSharedContact
 import org.whispersystems.signalservice.api.crypto.EnvelopeMetadata
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.DataMessage
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.Envelope
 import java.util.Optional
 
 object EditMessageProcessor {
@@ -40,7 +42,7 @@ object EditMessageProcessor {
     context: Context,
     senderRecipient: Recipient,
     threadRecipient: Recipient,
-    envelope: SignalServiceProtos.Envelope,
+    envelope: Envelope,
     content: SignalServiceProtos.Content,
     metadata: EnvelopeMetadata,
     earlyMessageCacheEntry: EarlyMessageCacheEntry?
@@ -78,7 +80,7 @@ object EditMessageProcessor {
       return
     }
 
-    if (groupId != null && MessageContentProcessorV2.handleGv2PreProcessing(context, envelope.timestamp, content, metadata, groupId, message.groupV2, senderRecipient) == MessageContentProcessorV2.Gv2PreProcessResult.IGNORE) {
+    if (groupId != null && MessageContentProcessor.handleGv2PreProcessing(context, envelope.timestamp, content, metadata, groupId, message.groupV2, senderRecipient) == MessageContentProcessor.Gv2PreProcessResult.IGNORE) {
       warn(envelope.timestamp, "[handleEditMessage] Group processor indicated we should ignore this.")
       return
     }
@@ -115,7 +117,7 @@ object EditMessageProcessor {
   private fun handleEditMediaMessage(
     senderRecipientId: RecipientId,
     groupId: GroupId.V2?,
-    envelope: SignalServiceProtos.Envelope,
+    envelope: Envelope,
     metadata: EnvelopeMetadata,
     message: DataMessage,
     targetMessage: MediaMmsMessageRecord
@@ -144,7 +146,7 @@ object EditMessageProcessor {
       from = senderRecipientId,
       sentTimeMillis = message.timestamp,
       serverTimeMillis = envelope.serverTimestamp,
-      receivedTimeMillis = targetMessage.receiptTimestamp,
+      receivedTimeMillis = targetMessage.dateReceived,
       expiresIn = targetMessage.expiresIn,
       isViewOnce = message.isViewOnce,
       isUnidentified = metadata.sealedSender,
@@ -160,13 +162,22 @@ object EditMessageProcessor {
       isPushMessage = true
     )
 
-    return SignalDatabase.messages.insertEditMessageInbox(-1, mediaMessage, targetMessage).orNull()
+    val insertResult = SignalDatabase.messages.insertEditMessageInbox(-1, mediaMessage, targetMessage).orNull()
+    if (insertResult?.insertedAttachments != null) {
+      SignalDatabase.runPostSuccessfulTransaction {
+        val downloadJobs: List<AttachmentDownloadJob> = insertResult.insertedAttachments.mapNotNull { (_, attachmentId) ->
+          AttachmentDownloadJob(insertResult.messageId, attachmentId, false)
+        }
+        ApplicationDependencies.getJobManager().addAll(downloadJobs)
+      }
+    }
+    return insertResult
   }
 
   private fun handleEditTextMessage(
     senderRecipientId: RecipientId,
     groupId: GroupId.V2?,
-    envelope: SignalServiceProtos.Envelope,
+    envelope: Envelope,
     metadata: EnvelopeMetadata,
     message: DataMessage,
     targetMessage: MediaMmsMessageRecord
@@ -176,7 +187,7 @@ object EditMessageProcessor {
       metadata.sourceDeviceId,
       envelope.timestamp,
       envelope.timestamp,
-      targetMessage.receiptTimestamp,
+      targetMessage.dateReceived,
       message.body,
       Optional.ofNullable(groupId),
       targetMessage.expiresIn,

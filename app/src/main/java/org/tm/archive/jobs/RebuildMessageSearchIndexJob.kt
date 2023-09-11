@@ -4,6 +4,7 @@ import org.signal.core.util.logging.Log
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobmanager.Job
+import org.tm.archive.jobmanager.impl.DataRestoreConstraint
 import org.tm.archive.transport.RetryLaterException
 import java.lang.Exception
 import java.lang.IllegalStateException
@@ -24,6 +25,7 @@ class RebuildMessageSearchIndexJob private constructor(params: Parameters) : Bas
   private constructor() : this(
     Parameters.Builder()
       .setQueue("RebuildMessageSearchIndex")
+      .addConstraint(DataRestoreConstraint.KEY)
       .setMaxAttempts(3)
       .build()
   )

@@ -22,7 +22,6 @@ import org.tm.archive.groups.v2.processing.GroupsV2StateProcessor;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.megaphone.MegaphoneRepository;
-import org.tm.archive.messages.BackgroundMessageRetriever;
 import org.tm.archive.messages.IncomingMessageObserver;
 import org.tm.archive.net.StandardUserAgentInterceptor;
 import org.tm.archive.notifications.MessageNotifier;
@@ -43,6 +42,7 @@ import org.tm.archive.util.AppForegroundObserver;
 import org.tm.archive.util.EarlyMessageCache;
 import org.tm.archive.util.FrameRateTracker;
 import org.tm.archive.util.IasKeyStore;
+import org.tm.archive.video.exo.ExoPlayerPool;
 import org.tm.archive.video.exo.GiphyMp4Cache;
 import org.tm.archive.video.exo.SimpleExoPlayerPool;
 import org.tm.archive.webrtc.audio.AudioManagerCompat;
@@ -98,7 +98,6 @@ public class ApplicationDependencies {
   private static volatile SignalServiceMessageSender   messageSender;
   private static volatile SignalServiceMessageReceiver messageReceiver;
   private static volatile IncomingMessageObserver      incomingMessageObserver;
-  private static volatile BackgroundMessageRetriever   backgroundMessageRetriever;
   private static volatile LiveRecipientCache           recipientCache;
   private static volatile JobManager                   jobManager;
   private static volatile FrameRateTracker             frameRateTracker;
@@ -274,18 +273,6 @@ public class ApplicationDependencies {
 
   public static @NonNull SignalServiceNetworkAccess getSignalServiceNetworkAccess() {
     return provider.provideSignalServiceNetworkAccess();
-  }
-
-  public static @NonNull BackgroundMessageRetriever getBackgroundMessageRetriever() {
-    if (backgroundMessageRetriever == null) {
-      synchronized (LOCK) {
-        if (backgroundMessageRetriever == null) {
-          backgroundMessageRetriever = provider.provideBackgroundMessageRetriever();
-        }
-      }
-    }
-
-    return backgroundMessageRetriever;
   }
 
   public static @NonNull LiveRecipientCache getRecipientCache() {
@@ -621,7 +608,7 @@ public class ApplicationDependencies {
     return giphyMp4Cache;
   }
 
-  public static @NonNull SimpleExoPlayerPool getExoPlayerPool() {
+  public static @NonNull ExoPlayerPool getExoPlayerPool() {
     if (exoPlayerPool == null) {
       synchronized (LOCK) {
         if (exoPlayerPool == null) {
@@ -706,7 +693,6 @@ public class ApplicationDependencies {
     @NonNull SignalServiceMessageSender provideSignalServiceMessageSender(@NonNull SignalWebSocket signalWebSocket, @NonNull SignalServiceDataStore protocolStore, @NonNull SignalServiceConfiguration signalServiceConfiguration);
     @NonNull SignalServiceMessageReceiver provideSignalServiceMessageReceiver(@NonNull SignalServiceConfiguration signalServiceConfiguration);
     @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess();
-    @NonNull BackgroundMessageRetriever provideBackgroundMessageRetriever();
     @NonNull LiveRecipientCache provideRecipientCache();
     @NonNull JobManager provideJobManager();
     @NonNull FrameRateTracker provideFrameRateTracker();

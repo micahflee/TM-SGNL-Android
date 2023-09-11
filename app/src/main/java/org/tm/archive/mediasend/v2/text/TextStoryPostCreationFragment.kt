@@ -21,8 +21,8 @@ import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment
 import org.tm.archive.databinding.StoriesTextPostCreationFragmentBinding
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.linkpreview.LinkPreviewRepository
+import org.tm.archive.linkpreview.LinkPreviewState
 import org.tm.archive.linkpreview.LinkPreviewViewModel
-import org.tm.archive.linkpreview.LinkPreviewViewModel.LinkPreviewState
 import org.tm.archive.mediasend.CameraDisplay
 import org.tm.archive.mediasend.v2.HudCommand
 import org.tm.archive.mediasend.v2.MediaSelectionViewModel
@@ -71,7 +71,7 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
 
     _binding = StoriesTextPostCreationFragmentBinding.bind(view)
 
-    binding.storyTextPost.showCloseButton()
+    binding.storyTextPost.enableCreationMode()
 
     lifecycleDisposable.bindTo(viewLifecycleOwner)
     lifecycleDisposable += sharedViewModel.hudCommands.subscribe {
@@ -137,7 +137,7 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
       binding.send.isClickable = false
       binding.sendInProgressIndicator.visible = true
 
-      binding.storyTextPost.hideCloseButton()
+      binding.storyTextPost.disableCreationMode()
 
       val contacts = (sharedViewModel.destination.getRecipientSearchKeyList() + sharedViewModel.destination.getRecipientSearchKey())
         .filterIsInstance(ContactSearchKey::class.java)
@@ -174,7 +174,7 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
 
   override fun onResume() {
     super.onResume()
-    binding.storyTextPost.showCloseButton()
+    binding.storyTextPost.enableCreationMode()
     requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
   }
 

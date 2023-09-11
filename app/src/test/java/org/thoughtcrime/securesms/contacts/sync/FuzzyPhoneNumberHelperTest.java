@@ -3,7 +3,7 @@ package org.tm.archive.contacts.sync;
 import org.junit.Test;
 import org.tm.archive.contacts.sync.FuzzyPhoneNumberHelper.InputResult;
 import org.tm.archive.contacts.sync.FuzzyPhoneNumberHelper.OutputResult;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 
 import java.util.Arrays;
 import java.util.Collections;

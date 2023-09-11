@@ -17,7 +17,7 @@ import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.UsernameUtil
-import org.whispersystems.signalservice.api.push.ACI
+import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException
 import java.io.IOException
 

@@ -73,6 +73,7 @@ class ShareRepository(context: Context) {
     return ResolvedShareData.ExternalUri(
       uri = blobUri,
       mimeType = mimeType,
+      text = multiShareExternal.text,
       isMmsOrSmsSupported = isMmsSupported(appContext, asUriAttachment(blobUri, mimeType, size))
     )
   }
@@ -190,7 +191,7 @@ class ShareRepository(context: Context) {
         return false
       }
 
-      val sendType: MessageSendType = MessageSendType.getFirstForTransport(context, true, MessageSendType.TransportType.SMS)
+      val sendType: MessageSendType = MessageSendType.getFirstForTransport(MessageSendType.TransportType.SMS)
       val mmsConstraints = MediaConstraints.getMmsMediaConstraints(sendType.simSubscriptionId ?: -1)
       return mmsConstraints.isSatisfied(context, attachment) || mmsConstraints.canResize(attachment)
     }

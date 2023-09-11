@@ -124,7 +124,6 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
         return
       }
       //**TM_SA**//End
-
       updateNotification(context, conversationId, true)
     }
   }

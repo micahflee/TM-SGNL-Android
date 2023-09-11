@@ -3,7 +3,6 @@ package org.tm.archive.longmessage;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.text.SpannableString;
-import android.text.method.LinkMovementMethod;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.util.TypedValue;
@@ -29,6 +28,7 @@ import org.tm.archive.conversation.colors.ColorizerView;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.LinkUtil;
+import org.tm.archive.util.LongClickMovementMethod;
 import org.tm.archive.util.Projection;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.views.Stub;
@@ -131,7 +131,7 @@ public class LongMessageFragment extends FullScreenDialogFragment {
 
       bubble.setVisibility(View.VISIBLE);
       text.setText(styledBody);
-      text.setMovementMethod(LinkMovementMethod.getInstance());
+      text.setMovementMethod(LongClickMovementMethod.getInstance(getContext()));
       text.setTextSize(TypedValue.COMPLEX_UNIT_SP, SignalStore.settings().getMessageFontSize());
       if (!message.get().getMessageRecord().isOutgoing()) {
         text.setMentionBackgroundTint(ContextCompat.getColor(requireContext(), ThemeUtil.isDarkTheme(requireActivity()) ? R.color.core_grey_60 : R.color.core_grey_20));

@@ -9,17 +9,18 @@ package org.whispersystems.signalservice.api;
 
 import com.google.protobuf.ByteString;
 
-import org.signal.libsignal.protocol.IdentityKey;
 import org.signal.libsignal.protocol.IdentityKeyPair;
 import org.signal.libsignal.protocol.InvalidKeyException;
 import org.signal.libsignal.protocol.ecc.ECPublicKey;
 import org.signal.libsignal.protocol.logging.Log;
-import org.signal.libsignal.protocol.state.PreKeyRecord;
 import org.signal.libsignal.protocol.state.SignedPreKeyRecord;
 import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.whispersystems.signalservice.api.account.AccountAttributes;
 import org.whispersystems.signalservice.api.account.ChangePhoneNumberRequest;
+import org.whispersystems.signalservice.api.account.PniKeyDistributionRequest;
+import org.whispersystems.signalservice.api.account.PreKeyCollection;
+import org.whispersystems.signalservice.api.account.PreKeyUpload;
 import org.whispersystems.signalservice.api.crypto.ProfileCipher;
 import org.whispersystems.signalservice.api.crypto.ProfileCipherOutputStream;
 import org.whispersystems.signalservice.api.groupsv2.ClientZkOperations;
@@ -32,11 +33,10 @@ import org.whispersystems.signalservice.api.payments.CurrencyConversions;
 import org.whispersystems.signalservice.api.profiles.AvatarUploadParams;
 import org.whispersystems.signalservice.api.profiles.ProfileAndCredential;
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfileWrite;
-import org.whispersystems.signalservice.api.push.ACI;
-import org.whispersystems.signalservice.api.push.PNI;
+import org.whispersystems.signalservice.api.push.ServiceId.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId.PNI;
 import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.ServiceIdType;
-import org.whispersystems.signalservice.api.push.SignedPreKeyEntity;
 import org.whispersystems.signalservice.api.push.exceptions.NoContentException;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.NotFoundException;
@@ -59,7 +59,10 @@ import org.whispersystems.signalservice.internal.push.AuthCredentials;
 import org.whispersystems.signalservice.internal.push.BackupAuthCheckRequest;
 import org.whispersystems.signalservice.internal.push.BackupAuthCheckResponse;
 import org.whispersystems.signalservice.internal.push.CdsiAuthResponse;
+import org.whispersystems.signalservice.internal.push.OneTimePreKeyCounts;
 import org.whispersystems.signalservice.internal.push.ProfileAvatarData;
+import org.whispersystems.signalservice.internal.push.ProvisionMessage;
+import org.whispersystems.signalservice.internal.push.ProvisioningVersion;
 import org.whispersystems.signalservice.internal.push.PushServiceSocket;
 import org.whispersystems.signalservice.internal.push.RegistrationSessionMetadataResponse;
 import org.whispersystems.signalservice.internal.push.RemoteConfigResponse;
@@ -80,7 +83,6 @@ import org.whispersystems.signalservice.internal.websocket.DefaultResponseMapper
 import org.whispersystems.util.Base64;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -98,15 +100,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import io.reactivex.rxjava3.core.Single;
-
-import static org.whispersystems.signalservice.internal.push.ProvisioningProtos.ProvisionMessage;
-import static org.whispersystems.signalservice.internal.push.ProvisioningProtos.ProvisioningVersion;
 
 /**
  * The main interface for creating, registering, and
@@ -209,12 +207,9 @@ public class SignalServiceAccountManager {
    * @throws IOException
    */
   public void setGcmId(Optional<String> gcmRegistrationId) throws IOException {
-
     if (gcmRegistrationId.isPresent()) {
-      Log.i("lior","SignalServiceAccountManager SignalServiceAccountManager-> FCM_TM_UTILS gcmRegistrationId " + gcmRegistrationId.get());
       this.pushServiceSocket.registerGcmId(gcmRegistrationId.get());
     } else {
-      Log.i("lior"," SignalServiceAccountManager SignalServiceAccountManager-> FCM_TM_UTILS gcmRegistrationId null");
       this.pushServiceSocket.unregisterGcmId();
     }
   }
@@ -321,9 +316,9 @@ public class SignalServiceAccountManager {
     }
   }
 
-  public @Nonnull ServiceResponse<VerifyAccountResponse> registerAccount(@Nullable String sessionId, @Nullable String recoveryPassword, AccountAttributes attributes, boolean skipDeviceTransfer) {
+  public @Nonnull ServiceResponse<VerifyAccountResponse> registerAccount(@Nullable String sessionId, @Nullable String recoveryPassword, AccountAttributes attributes, PreKeyCollection aciPreKeys, PreKeyCollection pniPreKeys, String fcmToken, boolean skipDeviceTransfer) {
     try {
-      VerifyAccountResponse response = pushServiceSocket.submitRegistrationRequest(sessionId, recoveryPassword, attributes, skipDeviceTransfer);
+      VerifyAccountResponse response = pushServiceSocket.submitRegistrationRequest(sessionId, recoveryPassword, attributes, aciPreKeys, pniPreKeys, fcmToken, skipDeviceTransfer);
       return ServiceResponse.forResult(response, 200, null);
     } catch (IOException e) {
       return ServiceResponse.forUnknownError(e);
@@ -354,23 +349,19 @@ public class SignalServiceAccountManager {
    * Register an identity key, signed prekey, and list of one time prekeys
    * with the server.
    *
-   * @param identityKey The client's long-term identity keypair.
-   * @param signedPreKey The client's signed prekey.
-   * @param oneTimePreKeys The client's list of one-time prekeys.
-   *
    * @throws IOException
    */
-  public void setPreKeys(ServiceIdType serviceIdType, IdentityKey identityKey, SignedPreKeyRecord signedPreKey, List<PreKeyRecord> oneTimePreKeys)
+  public void setPreKeys(PreKeyUpload preKeyUpload)
       throws IOException
   {
-    this.pushServiceSocket.registerPreKeys(serviceIdType, identityKey, signedPreKey, oneTimePreKeys);
+    this.pushServiceSocket.registerPreKeys(preKeyUpload);
   }
 
   /**
    * @return The server's count of currently available (eg. unused) prekeys for this user.
    * @throws IOException
    */
-  public int getPreKeysCount(ServiceIdType serviceIdType) throws IOException {
+  public OneTimePreKeyCounts getPreKeyCounts(ServiceIdType serviceIdType) throws IOException {
     return this.pushServiceSocket.getAvailablePreKeys(serviceIdType);
   }
 
@@ -382,14 +373,6 @@ public class SignalServiceAccountManager {
    */
   public void setSignedPreKey(ServiceIdType serviceIdType, SignedPreKeyRecord signedPreKey) throws IOException {
     this.pushServiceSocket.setCurrentSignedPreKey(serviceIdType, signedPreKey);
-  }
-
-  /**
-   * @return The server's view of the client's current signed prekey.
-   * @throws IOException
-   */
-  public SignedPreKeyEntity getSignedPreKey(ServiceIdType serviceIdType) throws IOException {
-    return this.pushServiceSocket.getCurrentSignedPreKey(serviceIdType);
   }
 
   /**
@@ -406,6 +389,7 @@ public class SignalServiceAccountManager {
                                                            boolean requireAcis,
                                                            Optional<byte[]> token,
                                                            String mrEnclave,
+                                                           Long timeoutMs,
                                                            Consumer<byte[]> tokenSaver)
       throws IOException
   {
@@ -416,11 +400,20 @@ public class SignalServiceAccountManager {
 
     ServiceResponse<CdsiV2Service.Response> serviceResponse;
     try {
-      serviceResponse = single.blockingGet();
+      if (timeoutMs == null) {
+        serviceResponse = single
+            .blockingGet();
+      } else {
+        serviceResponse = single
+            .timeout(timeoutMs, TimeUnit.MILLISECONDS)
+            .blockingGet();
+      }
     } catch (RuntimeException e) {
       Throwable cause = e.getCause();
       if (cause instanceof InterruptedException) {
         throw new IOException("Interrupted", cause);
+      } else if (cause instanceof TimeoutException) {
+        throw new IOException("Timed out");
       } else {
         throw e;
       }
@@ -555,6 +548,21 @@ public class SignalServiceAccountManager {
     return writeStorageRecords(storageKey, manifest, inserts, deletes, false);
   }
 
+
+  /**
+   * Enables registration lock for this account.
+   */
+  public void enableRegistrationLock(MasterKey masterKey) throws IOException {
+    pushServiceSocket.setRegistrationLockV2(masterKey.deriveRegistrationLock());
+  }
+
+  /**
+   * Disables registration lock for this account.
+   */
+  public void disableRegistrationLock() throws IOException {
+    pushServiceSocket.disableRegistrationLockV2();
+  }
+
   /**
    * @return If there was a conflict, the latest {@link SignalStorageManifest}. Otherwise absent.
    */
@@ -617,17 +625,6 @@ public class SignalServiceAccountManager {
     }
   }
 
-  /*public Map<String, Object> getRemoteConfig() throws IOException {
-    RemoteConfigResponse response = this.pushServiceSocket.getRemoteConfig();
-    Map<String, Object>  out      = new HashMap<>();
-
-    for (RemoteConfigResponse.Config config : response.getConfig()) {
-      out.put(config.getName(), config.getValue() != null ? config.getValue() : config.isEnabled());
-    }
-
-    return out;
-  }*/
-
   public RemoteConfigResult getRemoteConfig() throws IOException {
     RemoteConfigResponse response = this.pushServiceSocket.getRemoteConfig();
     Map<String, Object>  out      = new HashMap<>();
@@ -664,20 +661,29 @@ public class SignalServiceAccountManager {
     Preconditions.checkArgument(pni != null, "Missing PNI!");
 
     PrimaryProvisioningCipher cipher  = new PrimaryProvisioningCipher(deviceKey);
-    ProvisionMessage.Builder  message = ProvisionMessage.newBuilder()
-                                                        .setAciIdentityKeyPublic(ByteString.copyFrom(aciIdentityKeyPair.getPublicKey().serialize()))
-                                                        .setAciIdentityKeyPrivate(ByteString.copyFrom(aciIdentityKeyPair.getPrivateKey().serialize()))
-                                                        .setPniIdentityKeyPublic(ByteString.copyFrom(pniIdentityKeyPair.getPublicKey().serialize()))
-                                                        .setPniIdentityKeyPrivate(ByteString.copyFrom(pniIdentityKeyPair.getPrivateKey().serialize()))
-                                                        .setAci(aci.toString())
-                                                        .setPni(pni.toString())
-                                                        .setNumber(e164)
-                                                        .setProfileKey(ByteString.copyFrom(profileKey.serialize()))
-                                                        .setProvisioningCode(code)
-                                                        .setProvisioningVersion(ProvisioningVersion.CURRENT_VALUE);
+    ProvisionMessage.Builder  message = new ProvisionMessage.Builder()
+                                                            .aciIdentityKeyPublic(okio.ByteString.of(aciIdentityKeyPair.getPublicKey().serialize()))
+                                                            .aciIdentityKeyPrivate(okio.ByteString.of(aciIdentityKeyPair.getPrivateKey().serialize()))
+                                                            .pniIdentityKeyPublic(okio.ByteString.of(pniIdentityKeyPair.getPublicKey().serialize()))
+                                                            .pniIdentityKeyPrivate(okio.ByteString.of(pniIdentityKeyPair.getPrivateKey().serialize()))
+                                                            .aci(aci.toString())
+                                                            .pni(pni.toStringWithoutPrefix())
+                                                            .number(e164)
+                                                            .profileKey(okio.ByteString.of(profileKey.serialize()))
+                                                            .provisioningCode(code)
+                                                            .provisioningVersion(ProvisioningVersion.CURRENT.getValue());
 
     byte[] ciphertext = cipher.encrypt(message.build());
     this.pushServiceSocket.sendProvisioningMessage(deviceIdentifier, ciphertext);
+  }
+
+  public ServiceResponse<VerifyAccountResponse> distributePniKeys(PniKeyDistributionRequest request) {
+    try {
+      VerifyAccountResponse response = this.pushServiceSocket.distributePniKeys(request);
+      return ServiceResponse.forResult(response, 200, null);
+    } catch (IOException e) {
+      return ServiceResponse.forUnknownError(e);
+    }
   }
 
   public List<DeviceInfo> getDevices() throws IOException {
@@ -733,23 +739,23 @@ public class SignalServiceAccountManager {
                                                 new ProfileCipherOutputStreamFactory(profileKey));
     }
 
-    return this.pushServiceSocket.writeProfile(new SignalServiceProfileWrite(profileKey.getProfileKeyVersion(aci.uuid()).serialize(),
+    return this.pushServiceSocket.writeProfile(new SignalServiceProfileWrite(profileKey.getProfileKeyVersion(aci.getLibSignalAci()).serialize(),
                                                                              ciphertextName,
                                                                              ciphertextAbout,
                                                                              ciphertextEmoji,
                                                                              ciphertextMobileCoinAddress,
                                                                              avatar.hasAvatar,
                                                                              avatar.keepTheSame,
-                                                                             profileKey.getCommitment(aci.uuid()).serialize(),
+                                                                             profileKey.getCommitment(aci.getLibSignalAci()).serialize(),
                                                                              visibleBadgeIds),
                                                                              profileAvatarData);
   }
 
-  public Optional<ExpiringProfileKeyCredential> resolveProfileKeyCredential(ServiceId serviceId, ProfileKey profileKey, Locale locale)
+  public Optional<ExpiringProfileKeyCredential> resolveProfileKeyCredential(ACI serviceId, ProfileKey profileKey, Locale locale)
       throws NonSuccessfulResponseCodeException, PushNetworkException
   {
     try {
-      ProfileAndCredential credential = this.pushServiceSocket.retrieveVersionedProfileAndCredential(serviceId.uuid(), profileKey, Optional.empty(), locale).get(10, TimeUnit.SECONDS);
+      ProfileAndCredential credential = this.pushServiceSocket.retrieveVersionedProfileAndCredential(serviceId, profileKey, Optional.empty(), locale).get(10, TimeUnit.SECONDS);
       return credential.getExpiringProfileKeyCredential();
     } catch (InterruptedException | TimeoutException e) {
       throw new PushNetworkException(e);

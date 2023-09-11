@@ -13,7 +13,6 @@ import org.tm.archive.database.DatabaseObserver;
 import org.tm.archive.database.PendingRetryReceiptCache;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.megaphone.MegaphoneRepository;
-import org.tm.archive.messages.BackgroundMessageRetriever;
 import org.tm.archive.messages.IncomingMessageObserver;
 import org.tm.archive.notifications.MessageNotifier;
 import org.tm.archive.payments.Payments;
@@ -75,11 +74,6 @@ public class MockApplicationDependencyProvider implements ApplicationDependencie
 
   @Override
   public @NonNull SignalServiceNetworkAccess provideSignalServiceNetworkAccess() {
-    return null;
-  }
-
-  @Override
-  public @NonNull BackgroundMessageRetriever provideBackgroundMessageRetriever() {
     return null;
   }
 

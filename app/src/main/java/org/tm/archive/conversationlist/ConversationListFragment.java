@@ -76,7 +76,6 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.FirebaseApp;
 import com.tm.androidcopysdk.MessageEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
@@ -117,7 +116,7 @@ import org.tm.archive.components.menu.SignalBottomActionBar;
 import org.tm.archive.components.menu.SignalContextMenu;
 import org.tm.archive.components.registration.PulsingFloatingActionButton;
 import org.tm.archive.components.reminder.CdsPermanentErrorReminder;
-import org.tm.archive.components.reminder.CdsTemporyErrorReminder;
+import org.tm.archive.components.reminder.CdsTemporaryErrorReminder;
 import org.tm.archive.components.reminder.DozeReminder;
 import org.tm.archive.components.reminder.ExpiredBuildReminder;
 import org.tm.archive.components.reminder.OutdatedBuildReminder;
@@ -140,7 +139,6 @@ import org.tm.archive.contacts.paged.ContactSearchMediator;
 import org.tm.archive.contacts.paged.ContactSearchState;
 import org.tm.archive.contacts.sync.CdsPermanentErrorBottomSheet;
 import org.tm.archive.contacts.sync.CdsTemporaryErrorBottomSheet;
-import org.tm.archive.conversation.ConversationFragment;
 import org.tm.archive.conversationlist.chatfilter.ConversationFilterRequest;
 import org.tm.archive.conversationlist.chatfilter.ConversationFilterSource;
 import org.tm.archive.conversationlist.chatfilter.ConversationListFilterPullView;
@@ -155,10 +153,9 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.ReminderUpdateEvent;
 import org.tm.archive.exporter.flow.SmsExportDialogs;
 import org.tm.archive.groups.SelectionLimits;
-import org.tm.archive.insights.InsightsLauncher;
 import org.tm.archive.jobs.ServiceOutageDetectionJob;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.lock.v2.CreateKbsPinActivity;
+import org.tm.archive.lock.v2.CreateSvrPinActivity;
 import org.tm.archive.main.Material3OnScrollHelperBinder;
 import org.tm.archive.main.SearchBinder;
 import org.tm.archive.mediasend.v2.MediaSelectionActivity;
@@ -232,7 +229,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   private static final int LIST_SMOOTH_SCROLL_TO_TOP_THRESHOLD = 25;
 
-  private static final String TAG = "ConversationListFragment";
+  private static final String TAG = Log.tag(ConversationListFragment.class);
 
   private static final int MAXIMUM_PINNED_CONVERSATIONS = 4;
   private static final int MAX_CHATS_ABOVE_FOLD = 7;
@@ -273,7 +270,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   private AlertDialog         mAuthenticationProgressAlertDialog;
   public static boolean mIsAuthenticationIsInProgress = false;
   //**TM_SA**// End
-
 
   public static ConversationListFragment newInstance() {
     return new ConversationListFragment();
@@ -477,9 +473,9 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     //**TM_SA**//Start
     com.tm.logger.Log.d("ConversationListFragment", "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID);
     int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
-            IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+                                            IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
     com.tm.logger.Log.d("ConversationListFragment",
-            "onCreate -> authStatus = " + authStatus + ". (0-signed, 1 -should intune auth, 2-self auth)");
+                        "onCreate -> authStatus = " + authStatus + ". (0-signed, 1 -should intune auth, 2-self auth)");
     FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
     if(MDMAuthenticator.INSTANCE.isMDM(requireContext()) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) { //if intune managed device, start MDM auth
       startIntuneAuth();
@@ -555,10 +551,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     //**TM_SA**//End
     itemAnimator.disable();
     SpoilerAnnotation.resetRevealedSpoilers();
-
-    if (Util.isDefaultSmsProvider(requireContext())) {
-      InsightsLauncher.showInsightsModal(requireContext(), requireFragmentManager());
-    }
 
     if ((!requireCallback().getSearchToolbar().resolved() || !(requireCallback().getSearchToolbar().get().getVisibility() == View.VISIBLE)) && list.getAdapter() != defaultAdapter) {
       setAdapter(defaultAdapter);
@@ -645,7 +637,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   @Override
   public void onPrepareOptionsMenu(Menu menu) {
-    menu.findItem(R.id.menu_insights).setVisible(Util.isDefaultSmsProvider(requireContext()));
     menu.findItem(R.id.menu_clear_passphrase).setVisible(!TextSecurePreferences.isPasswordDisabled(requireContext()));
 
     ConversationFilterRequest request             = viewModel.getConversationFilterRequest();
@@ -675,9 +666,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       return true;
     } else if (itemId == R.id.menu_invite) {
       handleInvite();
-      return true;
-    } else if (itemId == R.id.menu_insights) {
-      handleInsights();
       return true;
     } else if (itemId == R.id.menu_notification_profile) {
       handleNotificationProfile();
@@ -782,7 +770,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-    if (requestCode == SmsExportMegaphoneActivity.REQUEST_CODE && SignalStore.misc().getSmsExportPhase().isFullscreen()) {
+    if (requestCode == SmsExportMegaphoneActivity.REQUEST_CODE) {
       ApplicationDependencies.getMegaphoneRepository().markSeen(Megaphones.Event.SMS_EXPORT);
       if (resultCode == RESULT_CANCELED) {
         Snackbar.make(fab, R.string.ConversationActivity__you_will_be_reminded_again_soon, Snackbar.LENGTH_LONG).show();
@@ -791,7 +779,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       }
     }
 
-    if (resultCode == RESULT_OK && requestCode == CreateKbsPinActivity.REQUEST_NEW_PIN) {
+    if (resultCode == RESULT_OK && requestCode == CreateSvrPinActivity.REQUEST_NEW_PIN) {
       Snackbar.make(fab, R.string.ConfirmKbsPinFragment__pin_created, Snackbar.LENGTH_LONG).show();
       viewModel.onMegaphoneCompleted(Megaphones.Event.PINS_FOR_ALL);
     }
@@ -1072,8 +1060,22 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       requireCallback().getSearchToolbar().get();
     }
 
-    if (getContext() != null) {
-      ConversationFragment.prepare(getContext());
+    Context context = getContext();
+    if (context != null) {
+      FrameLayout parent = new FrameLayout(context);
+      parent.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
+
+      if (SignalStore.internalValues().useConversationItemV2()) {
+        CachedInflater.from(context).cacheUntilLimit(R.layout.v2_conversation_item_text_only_incoming, parent, 25);
+        CachedInflater.from(context).cacheUntilLimit(R.layout.v2_conversation_item_text_only_outgoing, parent, 25);
+      } else {
+        CachedInflater.from(context).cacheUntilLimit(R.layout.conversation_item_received_text_only, parent, 25);
+        CachedInflater.from(context).cacheUntilLimit(R.layout.conversation_item_sent_text_only, parent, 25);
+      }
+      CachedInflater.from(context).cacheUntilLimit(R.layout.conversation_item_received_multimedia, parent, 10);
+      CachedInflater.from(context).cacheUntilLimit(R.layout.conversation_item_sent_multimedia, parent, 10);
+      CachedInflater.from(context).cacheUntilLimit(R.layout.conversation_item_update, parent, 5);
+      CachedInflater.from(context).cacheUntilLimit(R.layout.cursor_adapter_header_footer_view, parent, 2);
     }
   }
 
@@ -1131,22 +1133,22 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       if (ExpiredBuildReminder.isEligible()) {
         return Optional.of(new ExpiredBuildReminder(context));
       } else if (UnauthorizedReminder.isEligible(context)) {
-        return Optional.of(new UnauthorizedReminder(context));
+        return Optional.of(new UnauthorizedReminder());
       } else if (ServiceOutageReminder.isEligible(context)) {
         ApplicationDependencies.getJobManager().add(new ServiceOutageDetectionJob());
-        return Optional.of(new ServiceOutageReminder(context));
+        return Optional.of(new ServiceOutageReminder());
       } else if (OutdatedBuildReminder.isEligible()) {
         return Optional.of(new OutdatedBuildReminder(context));
-      } else if (PushRegistrationReminder.isEligible(context)) {
+      } else if (PushRegistrationReminder.isEligible()) {
         return Optional.of((new PushRegistrationReminder(context)));
       } else if (DozeReminder.isEligible(context)) {
         return Optional.of(new DozeReminder(context));
-      } else if (CdsTemporyErrorReminder.isEligible()) {
-        return Optional.of(new CdsTemporyErrorReminder(context));
+      } else if (CdsTemporaryErrorReminder.isEligible()) {
+        return Optional.of(new CdsTemporaryErrorReminder());
       } else if (CdsPermanentErrorReminder.isEligible()) {
-        return Optional.of(new CdsPermanentErrorReminder(context));
+        return Optional.of(new CdsPermanentErrorReminder());
       } else if (UsernameOutOfSyncReminder.isEligible()) {
-        return Optional.of(new UsernameOutOfSyncReminder(context));
+        return Optional.of(new UsernameOutOfSyncReminder());
       } else {
         return Optional.<Reminder>empty();
       }
@@ -1183,7 +1185,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       List<MarkedMessageInfo> messageIds = SignalDatabase.threads().setAllThreadsRead();
 
       ApplicationDependencies.getMessageNotifier().updateNotification(context);
-      MarkReadReceiver.process(context, messageIds);
+      MarkReadReceiver.process(messageIds);
     });
   }
 
@@ -1200,7 +1202,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       ApplicationDependencies.getMessageNotifier().updateNotification(context);
       stopwatch.split("notification");
 
-      MarkReadReceiver.process(context, messageIds);
+      MarkReadReceiver.process(messageIds);
       stopwatch.split("process");
 
       return null;
@@ -1225,10 +1227,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   private void handleInvite() {
     getNavigator().goToInvite();
-  }
-
-  private void handleInsights() {
-    getNavigator().goToInsights();
   }
 
   private void handleNotificationProfile() {
@@ -1407,7 +1405,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     if (cameraFab != null) {
       ViewUtil.fadeOut(cameraFab, fadeDuration);
     }
-    if (megaphoneContainer.resolved()) {
+    if (megaphoneContainer != null && megaphoneContainer.resolved()) {
       ViewUtil.fadeOut(megaphoneContainer.get(), fadeDuration);
     }
   }
@@ -1419,7 +1417,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     if (cameraFab != null) {
       ViewUtil.fadeIn(cameraFab, fadeDuration);
     }
-    if (megaphoneContainer.resolved()) {
+    if (megaphoneContainer != null && megaphoneContainer.resolved()) {
       ViewUtil.fadeIn(megaphoneContainer.get(), fadeDuration);
     }
   }
@@ -1533,9 +1531,9 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }));
 
     if (conversation.getThreadRecord().isArchived()) {
-      items.add(new ActionItem(R.drawable.symbol_archive_android_up_24, getResources().getString(R.string.ConversationListFragment_unarchive), () -> handleArchive(id, false)));
+      items.add(new ActionItem(R.drawable.symbol_archive_up_24, getResources().getString(R.string.ConversationListFragment_unarchive), () -> handleArchive(id, false)));
     } else {
-      items.add(new ActionItem(R.drawable.symbol_archive_android_24, getResources().getString(R.string.ConversationListFragment_archive), () -> handleArchive(id, false)));
+      items.add(new ActionItem(R.drawable.symbol_archive_24, getResources().getString(R.string.ConversationListFragment_archive), () -> handleArchive(id, false)));
     }
 
     items.add(new ActionItem(R.drawable.symbol_trash_24, getResources().getString(R.string.ConversationListFragment_delete), () -> handleDelete(id)));
@@ -1636,9 +1634,9 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     if (isArchived()) {
-      items.add(new ActionItem(R.drawable.symbol_archive_android_up_24, getResources().getString(R.string.ConversationListFragment_unarchive), () -> handleArchive(selectionIds, true)));
+      items.add(new ActionItem(R.drawable.symbol_archive_up_24, getResources().getString(R.string.ConversationListFragment_unarchive), () -> handleArchive(selectionIds, true)));
     } else {
-      items.add(new ActionItem(R.drawable.symbol_archive_android_24, getResources().getString(R.string.ConversationListFragment_archive), () -> handleArchive(selectionIds, true)));
+      items.add(new ActionItem(R.drawable.symbol_archive_24, getResources().getString(R.string.ConversationListFragment_archive), () -> handleArchive(selectionIds, true)));
     }
 
     items.add(new ActionItem(R.drawable.symbol_trash_24, getResources().getString(R.string.ConversationListFragment_delete), () -> handleDelete(selectionIds)));
@@ -1667,7 +1665,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   }
 
   protected @DrawableRes int getArchiveIconRes() {
-    return R.drawable.symbol_archive_android_24;
+    return R.drawable.symbol_archive_24;
   }
 
   @WorkerThread
@@ -1707,7 +1705,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         if (unreadCount > 0) {
           List<MarkedMessageInfo> messageIds = threadTable.setRead(threadId, false);
           ApplicationDependencies.getMessageNotifier().updateNotification(context);
-          MarkReadReceiver.process(context, messageIds);
+          MarkReadReceiver.process(messageIds);
         }
 
         ConversationUtil.refreshRecipientShortcuts();
@@ -1989,6 +1987,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   }
 
   //**TM_SA**//End
+
   private class ContactSearchClickCallbacks implements ConversationListSearchAdapter.ConversationListSearchClickCallbacks {
 
     private final ContactSearchAdapter.ClickCallbacks delegate;
@@ -2042,7 +2041,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   void startMdm() {
     MDMAuthenticator.INSTANCE.startMDMAuthenticator(requireActivity(),
-            ArchiveUtil.getPhoneNumberInTestMode(requireContext()), BuildConfig.signal_teleMessage_version,  this);
+                                                    ArchiveUtil.getPhoneNumberInTestMode(requireContext()), BuildConfig.signal_teleMessage_version,  this);
   }
 
   @Override
@@ -2054,7 +2053,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
       //update app that intune signed failed: two cases. 1. try intune auth again  2. move to self auth
     }else if(reason.contains("server") || reason.contains("Authentication failed")
-            /*|| reason.contains("managerID")*/) { //try intune auth again
+      /*|| reason.contains("managerID")*/) { //try intune auth again
       PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
       com.tm.logger.Log.d("ConversationListFragment", "status auth is 1");
     }else  { //this case should pass to self-auth
@@ -2084,7 +2083,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   }
 
   //**TM_SA**//END
-
 
   public interface Callback extends Material3OnScrollHelperBinder, SearchBinder {
     @NonNull Toolbar getToolbar();

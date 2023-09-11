@@ -34,7 +34,7 @@ public final class ThreadIdDatabaseDetector extends Detector implements SourceCo
                                                                        new Implementation(ThreadIdDatabaseDetector.class, Scope.JAVA_FILE_SCOPE));
 
   private static final Set<String> EXEMPTED_CLASSES = new HashSet<>() {{
-    add("org.thoughtcrime.securesms.database.ThreadDatabase");
+    add("org.tm.archive.database.ThreadDatabase");
   }};
 
 
@@ -65,7 +65,7 @@ public final class ThreadIdDatabaseDetector extends Detector implements SourceCo
           return;
         }
 
-        boolean implementsReference = Arrays.stream(node.getInterfaces()).anyMatch(i -> "org.thoughtcrime.securesms.database.ThreadIdDatabaseReference".equals(i.getQualifiedName()));
+        boolean implementsReference = Arrays.stream(node.getInterfaces()).anyMatch(i -> "org.tm.archive.database.ThreadIdDatabaseReference".equals(i.getQualifiedName()));
         if (implementsReference) {
           return;
         }

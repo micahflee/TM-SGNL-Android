@@ -8,13 +8,12 @@ import android.os.Bundle;
 import android.text.Annotation;
 import android.text.Editable;
 import android.text.InputType;
-import android.text.Spannable;
+import android.text.Selection;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
-import android.text.style.RelativeSizeSpan;
 import android.util.AttributeSet;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -22,6 +21,7 @@ import android.view.MenuItem;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
+import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -47,7 +47,6 @@ import org.tm.archive.database.model.Mention;
 import org.tm.archive.database.model.databaseprotos.BodyRangeList;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.TextSecurePreferences;
 
 import java.util.List;
@@ -63,7 +62,6 @@ public class ComposeText extends EmojiEditText {
   private static final Pattern TIME_PATTERN = Pattern.compile("^[0-9]{1,2}:[0-9]{1,2}$");
 
   private CharSequence            hint;
-  private SpannableString         subHint;
   private MentionRendererDelegate mentionRendererDelegate;
   private SpoilerRendererDelegate spoilerRendererDelegate;
   private MentionValidatorWatcher mentionValidatorWatcher;
@@ -71,6 +69,7 @@ public class ComposeText extends EmojiEditText {
   @Nullable private InputPanel.MediaListener      mediaListener;
   @Nullable private CursorPositionChangedListener cursorPositionChangedListener;
   @Nullable private InlineQueryChangedListener    inlineQueryChangedListener;
+  @Nullable private StylingChangedListener        stylingChangedListener;
 
   public ComposeText(Context context) {
     super(context);
@@ -103,13 +102,7 @@ public class ComposeText extends EmojiEditText {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
     if (getLayout() != null && !TextUtils.isEmpty(hint)) {
-      if (!TextUtils.isEmpty(subHint)) {
-        setHintWithChecks(new SpannableStringBuilder().append(ellipsizeToWidth(hint))
-                                                      .append("\n")
-                                                      .append(ellipsizeToWidth(subHint)));
-      } else {
-        setHintWithChecks(ellipsizeToWidth(hint));
-      }
+      setHintWithChecks(ellipsizeToWidth(hint));
       super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
   }
@@ -170,25 +163,17 @@ public class ComposeText extends EmojiEditText {
                                TruncateAt.END);
   }
 
-  public void setHint(@NonNull String hint, @Nullable CharSequence subHint) {
+  public void setHint(@NonNull String hint) {
     this.hint = hint;
+    setHintWithChecks(ellipsizeToWidth(this.hint));
+  }
 
-    if (subHint != null) {
-      this.subHint = new SpannableString(subHint);
-      this.subHint.setSpan(new RelativeSizeSpan(0.5f), 0, subHint.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-    } else {
-      this.subHint = null;
+  public void setDraftText(@Nullable CharSequence draftText) {
+    setText("");
+
+    if (draftText != null) {
+      append(draftText);
     }
-
-    if (this.subHint != null) {
-      setHintWithChecks(new SpannableStringBuilder().append(ellipsizeToWidth(this.hint))
-                                                    .append("\n")
-                                                    .append(ellipsizeToWidth(this.subHint)));
-    } else {
-      setHintWithChecks(ellipsizeToWidth(this.hint));
-    }
-
-    setHintWithChecks(hint);
   }
 
   public void appendInvite(String invite) {
@@ -216,6 +201,10 @@ public class ComposeText extends EmojiEditText {
     mentionValidatorWatcher.setMentionValidator(mentionValidator);
   }
 
+  public void setStylingChangedListener(@Nullable StylingChangedListener listener) {
+    stylingChangedListener = listener;
+  }
+
   private boolean isLandscape() {
     return getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
   }
@@ -234,10 +223,7 @@ public class ComposeText extends EmojiEditText {
     }
 
     setImeOptions(imeOptions);
-    setHint(getContext().getString(messageSendType.getComposeHintRes()),
-            messageSendType.getSimName() != null
-                ? getContext().getString(R.string.conversation_activity__from_sim_name, messageSendType.getSimName())
-                : null);
+    setHint(getContext().getString(messageSendType.getComposeHintRes()));
     setInputType(inputType);
   }
 
@@ -297,7 +283,6 @@ public class ComposeText extends EmojiEditText {
     mentionValidatorWatcher = new MentionValidatorWatcher();
     addTextChangedListener(mentionValidatorWatcher);
 
-
     spoilerRendererDelegate = new SpoilerRendererDelegate(this, true);
 
     addTextChangedListener(new ComposeTextStyleWatcher());
@@ -319,54 +304,26 @@ public class ComposeText extends EmojiEditText {
         menu.add(0, R.id.edittext_monospace, largestOrder, getContext().getString(R.string.TextFormatting_monospace));
         menu.add(0, R.id.edittext_spoiler, largestOrder, getContext().getString(R.string.TextFormatting_spoiler));
 
+        Editable text = getText();
+
+        if (text != null) {
+          int    start = getSelectionStart();
+          int    end   = getSelectionEnd();
+          if (MessageStyler.hasStyling(text, start, end)) {
+            menu.add(0, R.id.edittext_clear_formatting, largestOrder, getContext().getString(R.string.TextFormatting_clear_formatting));
+          }
+        }
+
         return true;
       }
 
       @Override
       public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-        Editable text = getText();
-
-        if (text == null) {
-          return false;
+        boolean handled = handleFormatText(item.getItemId());
+        if (handled) {
+          mode.finish();
         }
-
-        if (item.getItemId() != R.id.edittext_bold &&
-                item.getItemId() != R.id.edittext_italic &&
-                item.getItemId() != R.id.edittext_strikethrough &&
-                item.getItemId() != R.id.edittext_monospace &&
-                item.getItemId() != R.id.edittext_spoiler) {
-          return false;
-        }
-
-        int start = getSelectionStart();
-        int end   = getSelectionEnd();
-
-        CharSequence    charSequence = text.subSequence(start, end);
-        SpannableString replacement  = new SpannableString(charSequence);
-        Object          style        = null;
-
-        if (item.getItemId() == R.id.edittext_bold) {
-          style = MessageStyler.boldStyle();
-        } else if (item.getItemId() == R.id.edittext_italic) {
-          style = MessageStyler.italicStyle();
-        } else if (item.getItemId() == R.id.edittext_strikethrough) {
-          style = MessageStyler.strikethroughStyle();
-        } else if (item.getItemId() == R.id.edittext_monospace) {
-          style = MessageStyler.monoStyle();
-        } else if (item.getItemId() == R.id.edittext_spoiler) {
-          style = MessageStyler.spoilerStyle(MessageStyler.COMPOSE_ID, start, charSequence.length());
-        }
-
-        if (style != null) {
-          replacement.setSpan(style, 0, charSequence.length(), MessageStyler.SPAN_FLAGS);
-        }
-
-        clearComposingText();
-
-        text.replace(start, end, replacement);
-
-        mode.finish();
-        return true;
+        return handled;
       }
 
       @Override
@@ -374,10 +331,9 @@ public class ComposeText extends EmojiEditText {
         return false;
       }
 
-        @Override
-        public void onDestroyActionMode(ActionMode mode) {}
-      });
-
+      @Override
+      public void onDestroyActionMode(ActionMode mode) {}
+    });
   }
 
   private void setHintWithChecks(@Nullable CharSequence newHint) {
@@ -555,6 +511,60 @@ public class ComposeText extends EmojiEditText {
     return TIME_PATTERN.matcher(text.subSequence(startOfToken, endOfToken)).find();
   }
 
+  public boolean isTextHighlighted() {
+    return getText() != null && getSelectionStart() < getSelectionEnd();
+  }
+
+  public boolean handleFormatText(@IdRes int id) {
+    Editable text = getText();
+
+    if (text == null) {
+      return false;
+    }
+
+    if (id != R.id.edittext_bold &&
+        id != R.id.edittext_italic &&
+        id != R.id.edittext_strikethrough &&
+        id != R.id.edittext_monospace &&
+        id != R.id.edittext_spoiler &&
+        id != R.id.edittext_clear_formatting)
+    {
+      return false;
+    }
+
+    int                           start = getSelectionStart();
+    int                           end   = getSelectionEnd();
+    BodyRangeList.BodyRange.Style style = null;
+
+    if (id == R.id.edittext_bold) {
+      style = BodyRangeList.BodyRange.Style.BOLD;
+    } else if (id == R.id.edittext_italic) {
+      style = BodyRangeList.BodyRange.Style.ITALIC;
+    } else if (id == R.id.edittext_strikethrough) {
+      style = BodyRangeList.BodyRange.Style.STRIKETHROUGH;
+    } else if (id == R.id.edittext_monospace) {
+      style = BodyRangeList.BodyRange.Style.MONOSPACE;
+    } else if (id == R.id.edittext_spoiler) {
+      style = BodyRangeList.BodyRange.Style.SPOILER;
+    }
+
+    clearComposingText();
+
+    if (style != null) {
+      MessageStyler.toggleStyle(style, text, start, end);
+    } else {
+      MessageStyler.clearStyling(text, start, end);
+    }
+
+    Selection.setSelection(getText(), end);
+
+    if (stylingChangedListener != null) {
+      stylingChangedListener.onStylingChanged();
+    }
+
+    return true;
+  }
+
   private static class CommitContentListener implements InputConnectionCompat.OnCommitContentListener {
 
     private static final String TAG = Log.tag(CommitContentListener.class);
@@ -601,4 +611,7 @@ public class ComposeText extends EmojiEditText {
     void onCursorPositionChanged(int start, int end);
   }
 
+  public interface StylingChangedListener {
+    void onStylingChanged();
+  }
 }

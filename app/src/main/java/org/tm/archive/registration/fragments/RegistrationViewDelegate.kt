@@ -70,9 +70,8 @@ object RegistrationViewDelegate {
 
         onConfirmed.run()
       }
-      setNegativeButton(R.string.RegistrationActivity_edit_number) { _, _ ->
-        onEditNumber.run()
-      }
+      setNegativeButton(R.string.RegistrationActivity_edit_number) { _, _ -> onEditNumber.run() }
+      setOnCancelListener { onEditNumber.run() }
     }.show()
   }
 }

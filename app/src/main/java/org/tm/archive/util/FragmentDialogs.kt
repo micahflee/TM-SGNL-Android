@@ -1,5 +1,6 @@
 package org.tm.archive.util
 
+import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -34,6 +35,7 @@ object FragmentDialogs {
     return displayInDialogAboveAnchor(anchorView, contentView, windowDim, onShow)
   }
 
+  @SuppressLint("AlertDialogBuilderUsage")
   fun Fragment.displayInDialogAboveAnchor(
     anchorView: View,
     contentView: View,
@@ -41,6 +43,7 @@ object FragmentDialogs {
     onShow: (DialogInterface, View) -> Unit = { _, _ -> },
     onDismiss: (DialogInterface) -> Unit = { }
   ): DialogInterface {
+    // MaterialAlertDialogBuilder adds an extra backdrop behind our view, so we use AlertDialog.Builder instead.
     val alertDialog = AlertDialog.Builder(requireContext())
       .setView(contentView)
       .create()

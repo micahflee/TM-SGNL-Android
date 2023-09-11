@@ -17,6 +17,7 @@ import org.tm.archive.R
 import org.tm.archive.components.FixedRoundedCornerBottomSheetDialogFragment
 import org.tm.archive.components.recyclerview.SmoothScrollingLinearLayoutManager
 import org.tm.archive.conversation.ConversationAdapter
+import org.tm.archive.conversation.ConversationAdapterBridge
 import org.tm.archive.conversation.ConversationBottomSheetCallback
 import org.tm.archive.conversation.ConversationItemDisplayMode
 import org.tm.archive.conversation.colors.Colorizer
@@ -117,7 +118,7 @@ class MessageQuotesBottomSheet : FixedRoundedCornerBottomSheetDialogFragment() {
 
     disposables += viewModel.getNameColorsMap().subscribe { map ->
       colorizer.onNameColorsChanged(map)
-      messageAdapter.notifyItemRangeChanged(0, messageAdapter.itemCount, ConversationAdapter.PAYLOAD_NAME_COLORS)
+      messageAdapter.notifyItemRangeChanged(0, messageAdapter.itemCount, ConversationAdapterBridge.PAYLOAD_NAME_COLORS)
     }
 
     initializeGiphyMp4(view.findViewById(R.id.video_container) as ViewGroup, list)

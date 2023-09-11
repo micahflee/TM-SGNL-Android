@@ -1,9 +1,9 @@
 package org.tm.archive.avatar.text
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.distinctUntilChanged
 import org.tm.archive.avatar.Avatar
 import org.tm.archive.avatar.Avatars
 import org.tm.archive.util.livedata.Store
@@ -12,7 +12,7 @@ class TextAvatarCreationViewModel(initialText: Avatar.Text) : ViewModel() {
 
   private val store = Store(TextAvatarCreationState(initialText))
 
-  val state: LiveData<TextAvatarCreationState> = Transformations.distinctUntilChanged(store.stateLiveData)
+  val state: LiveData<TextAvatarCreationState> = store.stateLiveData.distinctUntilChanged()
 
   fun setColor(colorPair: Avatars.ColorPair) {
     store.update { it.copy(currentAvatar = it.currentAvatar.copy(color = colorPair)) }

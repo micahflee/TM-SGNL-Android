@@ -6,12 +6,9 @@ import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
 
-/**
- * A nice interface for {@link LocalMetrics} that gives us a place to define string constants and nicer method names.
- */
 /**
  * A nice interface for {@link LocalMetrics} that gives us a place to define string constants and nicer method names.
  */

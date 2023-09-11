@@ -79,7 +79,6 @@ public class StorageAccountRestoreJob extends BaseJob {
     }
     //**TM_SA**//
 
-
     if (!manifest.isPresent()) {
       Log.w(TAG, "Manifest did not exist or was undecryptable (bad key). Not restoring. Force-pushing.");
       ApplicationDependencies.getJobManager().add(new StorageForcePushJob());

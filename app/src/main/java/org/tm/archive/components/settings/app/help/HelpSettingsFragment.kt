@@ -36,7 +36,8 @@ class HelpSettingsFragment : DSLSettingsFragment(R.string.preferences__help) {
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__version),
         summary = DSLSettingsText.from(BuildConfig.VERSION_NAME)
       )
-       //**TM_SA**//
+
+      //**TM_SA**//
       /*clickPref(
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__debug_log),
         onClick = {

@@ -34,7 +34,7 @@ public final class RecipientIdDatabaseDetector extends Detector implements Sourc
                                                                           new Implementation(RecipientIdDatabaseDetector.class, Scope.JAVA_FILE_SCOPE));
 
   private static final Set<String> EXEMPTED_CLASSES = new HashSet<>() {{
-    add("org.thoughtcrime.securesms.database.RecipientDatabase");
+    add("org.tm.archive.database.RecipientDatabase");
   }};
 
 
@@ -65,7 +65,7 @@ public final class RecipientIdDatabaseDetector extends Detector implements Sourc
           return;
         }
 
-        boolean implementsReference = Arrays.stream(node.getInterfaces()).anyMatch(i -> "org.thoughtcrime.securesms.database.RecipientIdDatabaseReference".equals(i.getQualifiedName()));
+        boolean implementsReference = Arrays.stream(node.getInterfaces()).anyMatch(i -> "org.tm.archive.database.RecipientIdDatabaseReference".equals(i.getQualifiedName()));
         if (implementsReference) {
           return;
         }

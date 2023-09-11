@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
  *  - split("mySpecialId", "enqueue-job")
  *  - split("mySpecialId", "job-prep")
  *  - split("mySpecialId", "network")
- *  - split("mySpecialId", "ui-refresh")NetworkUtil
+ *  - split("mySpecialId", "ui-refresh")
  *  - end("mySpecialId")
  *
  * These metrics are only ever included in debug logs in an aggregate fashion (i.e. p50, p90, p99) and are never automatically uploaded anywhere.

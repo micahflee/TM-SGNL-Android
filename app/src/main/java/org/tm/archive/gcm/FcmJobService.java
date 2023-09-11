@@ -12,10 +12,8 @@ import androidx.annotation.RequiresApi;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.messages.BackgroundMessageRetriever;
-import org.tm.archive.messages.WebSocketStrategy;
+import org.tm.archive.messages.WebSocketDrainer;
 import org.tm.archive.util.ServiceUtil;
-import org.tm.archive.util.TextSecurePreferences;
 
 /**
  * Pulls down messages. Used when we fail to pull down messages in {@link FcmReceiveService}.
@@ -41,15 +39,13 @@ public class FcmJobService extends JobService {
   public boolean onStartJob(JobParameters params) {
     Log.d(TAG, "onStartJob()");
 
-    if (BackgroundMessageRetriever.shouldIgnoreFetch()) {
+    if (ApplicationDependencies.getAppForegroundObserver().isForegrounded()) {
       Log.i(TAG, "App is foregrounded. No need to run.");
       return false;
     }
 
     SignalExecutors.UNBOUNDED.execute(() -> {
-      Context                    context   = getApplicationContext();
-      BackgroundMessageRetriever retriever = ApplicationDependencies.getBackgroundMessageRetriever();
-      boolean                    success   = retriever.retrieveMessages(context, new WebSocketStrategy());
+      boolean success = WebSocketDrainer.blockUntilDrainedAndProcessed();
 
       if (success) {
         Log.i(TAG, "Successfully retrieved messages.");
@@ -66,6 +62,6 @@ public class FcmJobService extends JobService {
   @Override
   public boolean onStopJob(JobParameters params) {
     Log.d(TAG, "onStopJob()");
-    return TextSecurePreferences.getNeedsMessagePull(getApplicationContext());
+    return true;
   }
 }

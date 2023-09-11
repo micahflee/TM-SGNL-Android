@@ -69,7 +69,11 @@ public abstract class AudioManagerCompat {
 
   public boolean isBluetoothConnected() {
     if (Build.VERSION.SDK_INT >= 31) {
-      final SignalAudioManager.AudioDevice audioDevice = AudioDeviceMapping.fromPlatformType(audioManager.getCommunicationDevice().getType());
+      final AudioDeviceInfo communicationDevice = audioManager.getCommunicationDevice();
+      if (communicationDevice == null) {
+        return false;
+      }
+      final SignalAudioManager.AudioDevice audioDevice = AudioDeviceMapping.fromPlatformType(communicationDevice.getType());
       return SignalAudioManager.AudioDevice.BLUETOOTH == audioDevice;
     } else {
       return isBluetoothScoOn();
@@ -130,7 +134,12 @@ public abstract class AudioManagerCompat {
 
   @RequiresApi(31)
   public boolean setCommunicationDevice(@NonNull AudioDeviceInfo device) {
-    return audioManager.setCommunicationDevice(device);
+    try {
+      return audioManager.setCommunicationDevice(device);
+    } catch (IllegalArgumentException e) {
+      Log.w(TAG, "Invalid device chosen.", e);
+      return false;
+    }
   }
 
   @RequiresApi(31)

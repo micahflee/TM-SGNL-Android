@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.notifications.NotificationChannels
+import org.tm.archive.notifications.SlowNotificationHeuristics
 import org.tm.archive.preferences.widgets.NotificationPrivacyPreference
 import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.livedata.Store
@@ -104,7 +105,8 @@ class NotificationsSettingsViewModel(private val sharedPreferences: SharedPrefer
       inChatSoundsEnabled = SignalStore.settings().isMessageNotificationsInChatSoundsEnabled,
       repeatAlerts = SignalStore.settings().messageNotificationsRepeatAlerts,
       messagePrivacy = SignalStore.settings().messageNotificationsPrivacy.toString(),
-      priority = TextSecurePreferences.getNotificationPriority(ApplicationDependencies.getApplication())
+      priority = TextSecurePreferences.getNotificationPriority(ApplicationDependencies.getApplication()),
+      troubleshootNotifications = SlowNotificationHeuristics.isPotentiallyCausedByBatteryOptimizations() && SlowNotificationHeuristics.isHavingDelayedNotifications()
     ),
     callNotificationsState = CallNotificationsState(
       notificationsEnabled = SignalStore.settings().isCallNotificationsEnabled,

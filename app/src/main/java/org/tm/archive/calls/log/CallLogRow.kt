@@ -9,6 +9,7 @@ import org.tm.archive.database.CallLinkTable
 import org.tm.archive.database.CallTable
 import org.tm.archive.database.model.databaseprotos.GroupCallUpdateDetails
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.service.webrtc.CallLinkPeekInfo
 import org.tm.archive.service.webrtc.links.CallLinkRoomId
 
 /**
@@ -25,6 +26,7 @@ sealed class CallLogRow {
     val record: CallLinkTable.CallLink,
     val recipient: Recipient,
     val searchQuery: String?,
+    val callLinkPeekInfo: CallLinkPeekInfo?,
     override val id: Id = Id.CallLink(record.roomId)
   ) : CallLogRow()
 
@@ -38,6 +40,7 @@ sealed class CallLogRow {
     val groupCallState: GroupCallState,
     val children: Set<Long>,
     val searchQuery: String?,
+    val callLinkPeekInfo: CallLinkPeekInfo?,
     override val id: Id = Id.Call(children)
   ) : CallLogRow()
 
@@ -90,7 +93,7 @@ sealed class CallLogRow {
           return FULL
         }
 
-        if (groupCallUpdateDetails.inCallUuidsList.contains(Recipient.self().requireServiceId().uuid().toString())) {
+        if (groupCallUpdateDetails.inCallUuidsList.contains(Recipient.self().requireAci().rawUuid.toString())) {
           return LOCAL_USER_JOINED
         }
 

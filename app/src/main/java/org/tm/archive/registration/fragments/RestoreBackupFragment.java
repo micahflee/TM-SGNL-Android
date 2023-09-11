@@ -27,9 +27,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
-import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
@@ -37,6 +38,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.signal.core.util.ThreadUtil;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.AppInitialization;
 import org.tm.archive.LoggingFragment;
@@ -47,6 +49,8 @@ import org.tm.archive.backup.FullBackupImporter;
 import org.tm.archive.crypto.AttachmentSecretProvider;
 import org.tm.archive.database.NoExternalStorageException;
 import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.jobmanager.impl.DataRestoreConstraint;
+import org.tm.archive.jobmanager.impl.DataRestoreConstraintObserver;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.registration.viewmodel.RegistrationViewModel;
@@ -54,7 +58,6 @@ import org.tm.archive.service.LocalBackupListener;
 import org.tm.archive.util.BackupUtil;
 import org.tm.archive.util.DateUtils;
 import org.tm.archive.util.Util;
-import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.navigation.SafeNavigation;
 import org.tm.archive.util.views.CircularProgressMaterialButton;
 
@@ -251,7 +254,7 @@ public final class RestoreBackupFragment extends LoggingFragment {
 
     prompt.addTextChangedListener(new PassphraseAsYouTypeFormatter());
 
-    new AlertDialog.Builder(context)
+    new MaterialAlertDialogBuilder(context)
                    .setTitle(R.string.RegistrationActivity_enter_backup_passphrase)
                    .setView(view)
                    .setPositiveButton(R.string.RegistrationActivity_restore, (dialog, which) -> {
@@ -281,6 +284,7 @@ public final class RestoreBackupFragment extends LoggingFragment {
       protected BackupImportResult doInBackground(Void... voids) {
         try {
           Log.i(TAG, "Starting backup restore.");
+          DataRestoreConstraint.setRestoringData(true);
 
           SQLiteDatabase database = SignalDatabase.getBackupDatabase();
 
@@ -309,6 +313,8 @@ public final class RestoreBackupFragment extends LoggingFragment {
         } catch (IOException e) {
           Log.w(TAG, e);
           return BackupImportResult.FAILURE_UNKNOWN;
+        } finally {
+          DataRestoreConstraint.setRestoringData(false);
         }
       }
 
@@ -395,7 +401,7 @@ public final class RestoreBackupFragment extends LoggingFragment {
 
   @RequiresApi(29)
   private void displayConfirmationDialog(@NonNull Context context) {
-    new AlertDialog.Builder(context)
+    new MaterialAlertDialogBuilder(context)
                    .setTitle(R.string.RestoreBackupFragment__restore_complete)
                    .setMessage(R.string.RestoreBackupFragment__to_continue_using_backups_please_choose_a_folder)
                    .setPositiveButton(R.string.RestoreBackupFragment__choose_folder, (dialog, which) -> {

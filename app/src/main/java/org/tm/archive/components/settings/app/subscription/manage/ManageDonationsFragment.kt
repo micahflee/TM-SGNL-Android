@@ -25,7 +25,6 @@ import org.tm.archive.components.settings.models.IndeterminateLoadingCircle
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.help.HelpFragment
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.recipients.Recipient
 import org.tm.archive.subscription.Subscription
 import org.tm.archive.util.Material3OnScrollHelper
 import org.tm.archive.util.SpanUtil
@@ -84,7 +83,7 @@ class ManageDonationsFragment :
   }
 
   override fun getMaterial3OnScrollHelper(toolbar: Toolbar?): Material3OnScrollHelper {
-    return object : Material3OnScrollHelper(requireActivity(), toolbar!!) {
+    return object : Material3OnScrollHelper(requireActivity(), toolbar!!, viewLifecycleOwner) {
       override val activeColorSet: ColorSet = ColorSet(R.color.transparent, R.color.signal_colorBackground)
       override val inactiveColorSet: ColorSet = ColorSet(R.color.transparent, R.color.signal_colorBackground)
     }
@@ -245,15 +244,13 @@ class ManageDonationsFragment :
 
     sectionHeaderPref(R.string.ManageDonationsFragment__other_ways_to_give)
 
-    if (Recipient.self().giftBadgesCapability == Recipient.Capability.SUPPORTED) {
-      clickPref(
-        title = DSLSettingsText.from(R.string.ManageDonationsFragment__donate_for_a_friend),
-        icon = DSLSettingsIcon.from(R.drawable.symbol_gift_24),
-        onClick = {
-          startActivity(Intent(requireContext(), GiftFlowActivity::class.java))
-        }
-      )
-    }
+    clickPref(
+      title = DSLSettingsText.from(R.string.ManageDonationsFragment__donate_for_a_friend),
+      icon = DSLSettingsIcon.from(R.drawable.symbol_gift_24),
+      onClick = {
+        startActivity(Intent(requireContext(), GiftFlowActivity::class.java))
+      }
+    )
   }
 
   private fun DSLConfiguration.presentBadges() {

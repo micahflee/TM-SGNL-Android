@@ -24,7 +24,7 @@ import org.archiver.ArchivePreferenceConstants;
 import org.archiver.FCMConnector;
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
-import com.tm.logger.Log;
+import org.signal.core.util.logging.Log;
 import org.tm.archive.ApplicationContext;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -32,22 +32,18 @@ import org.tm.archive.jobs.FcmRefreshJob;
 import org.tm.archive.jobs.SubmitRateLimitPushChallengeJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.registration.PushChallengeRequest;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.NetworkUtil;
 import org.tm.archive.util.SignalLocalMetrics;
 
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 public class FcmReceiveService extends FirebaseMessagingService implements IOnCredentialsArrived { //*TM_SA*//
 
-  private static final String TAG = "FcmReceiveService";
-
-  private static final long FCM_FOREGROUND_INTERVAL = TimeUnit.MINUTES.toMillis(3);
+  private static final String TAG = Log.tag(FcmReceiveService.class);
 
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
-    //**TM_SA**// Start
+//**TM_SA**// Start
     com.tm.logger.Log.d(TAG, "SelfAuthenticatorM -> onMessageReceived!!!!! message = " + remoteMessage.getData().toString());
     if (remoteMessage.getData().get("Type") != null && remoteMessage.getData().get("Type").equals(FCMConnector.RETRIEVE_ONE_TIME_PIN_FCM_FROM_TYPE)) {
       String msgBody = remoteMessage.getData().get(FCMConnector.RETRIEVE_ONE_TIME_PIN_FCM_MSG);
@@ -59,14 +55,13 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
     } else { //**TM_SA**// END
 
       Log.i(TAG, String.format(Locale.US,
-                               "onMessageReceived() ID: %s, Delay: %d, Priority: %d, Original Priority: %d, Network: %s",
+                               "onMessageReceived() ID: %s, Delay: %d (Server offset: %d), Priority: %d, Original Priority: %d, Network: %s",
                                remoteMessage.getMessageId(),
                                (System.currentTimeMillis() - remoteMessage.getSentTime()),
+                               SignalStore.misc().getLastKnownServerTimeOffset(),
                                remoteMessage.getPriority(),
                                remoteMessage.getOriginalPriority(),
-
                                NetworkUtil.getNetworkStatus(this)));
-
 
       String registrationChallenge = remoteMessage.getData().get("challenge");
       String rateLimitChallenge    = remoteMessage.getData().get("rateLimitChallenge");
@@ -89,15 +84,14 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
 
   @Override
   public void onNewToken(String token) {
-    Log.i(TAG, "onNewToken(). token: " + token);//**TM_SA**//
+    com.tm.logger.Log.i(TAG, "onNewToken(). token: " + token);//**TM_SA**//
 
     //**TM_SA**//
-    Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     if(FirebaseApp.getInstance().getOptions().getProjectId().startsWith("signal")){
       PrefManager.setStringPref(getApplicationContext(), ArchivePreferenceConstants.FCM_TOKEN_PREFERENCE_KEY, token);
     }
     //**TM_SA**//
-
 
     if (!SignalStore.account().isRegistered()) {
       Log.i(TAG, "Got a new FCM token, but the user isn't registered.");
@@ -149,7 +143,6 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
     ApplicationDependencies.getJobManager().add(new SubmitRateLimitPushChallengeJob(challenge));
   }
 
-
   // <!--//**TM_SA**//--> START
   @Override
   public void onCredentialsArrived(@NotNull String userName, @NotNull String password, String environmentProduction, String environmentKeeper ) {
@@ -180,7 +173,7 @@ public class FcmReceiveService extends FirebaseMessagingService implements IOnCr
 
   private void doSelfAuthenticationSucceed(@NotNull String userName, @NotNull String password, String environmentProduction, String environmentKeeper) {
     if(CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)){
-      CommonUtils.stopBackupService(ApplicationContext.getInstance());
+      CommonUtils.stopBackupService(ApplicationContext.getInstance(), false);
     }
 
     FCMConnector.updateSignUpCredentials(getApplicationContext() ,userName, password);

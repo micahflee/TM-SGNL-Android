@@ -17,7 +17,7 @@ import org.tm.archive.logsubmit.SubmitDebugLogActivity
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.util.DynamicNoActionBarTheme
 import org.tm.archive.util.DynamicTheme
-import org.whispersystems.signalservice.api.push.PNI
+import org.whispersystems.signalservice.api.push.ServiceId.PNI
 import java.util.Objects
 
 private val TAG: String = Log.tag(ChangeNumberLockActivity::class.java)

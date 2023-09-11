@@ -3,6 +3,7 @@ package org.tm.archive.conversation.v2
 import android.app.Activity
 import android.view.View
 import androidx.annotation.ColorRes
+import androidx.lifecycle.LifecycleOwner
 import org.tm.archive.R
 import org.tm.archive.util.Material3OnScrollHelper
 import org.tm.archive.wallpaper.ChatWallpaper
@@ -13,11 +14,12 @@ import org.tm.archive.wallpaper.ChatWallpaper
 class ConversationToolbarOnScrollHelper(
   activity: Activity,
   toolbarBackground: View,
-  private val wallpaperProvider: () -> ChatWallpaper?
+  private val wallpaperProvider: () -> ChatWallpaper?,
+  lifecycleOwner: LifecycleOwner
 ) : Material3OnScrollHelper(
-  activity,
-  listOf(toolbarBackground),
-  emptyList()
+  activity = activity,
+  views = listOf(toolbarBackground),
+  lifecycleOwner = lifecycleOwner
 ) {
   override val activeColorSet: ColorSet
     get() = ColorSet(getActiveToolbarColor(wallpaperProvider() != null))

@@ -18,7 +18,7 @@ object PinHashUtil {
    */
   @JvmStatic
   fun hashPin(pin: String, salt: ByteArray): PinHash {
-    return Pin.hash(normalize(pin), salt)
+    return PinHash.svr1(normalize(pin), salt)
   }
 
   /**
@@ -52,7 +52,7 @@ object PinHashUtil {
    */
   @JvmStatic
   @Throws(InvalidCiphertextException::class)
-  fun decryptKbsDataIVCipherText(pinHash: PinHash, ivc: ByteArray?): KbsData {
+  fun decryptSvrDataIVCipherText(pinHash: PinHash, ivc: ByteArray?): KbsData {
     val masterKey = HmacSIV.decrypt(pinHash.encryptionKey(), ivc)
     return KbsData(MasterKey(masterKey), pinHash.accessKey(), ivc)
   }

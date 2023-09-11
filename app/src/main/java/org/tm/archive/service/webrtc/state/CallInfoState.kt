@@ -9,9 +9,13 @@ import org.tm.archive.events.WebRtcViewModel
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.ringrtc.RemotePeer
+import org.tm.archive.service.webrtc.CallLinkDisconnectReason
+import org.tm.archive.service.webrtc.PendingParticipantCollection
 
 /**
  * General state of ongoing calls.
+ *
+ * @param pendingParticipants A list of pending users wishing to join a given call link.
  */
 data class CallInfoState(
   var callState: WebRtcViewModel.State = WebRtcViewModel.State.IDLE,
@@ -24,7 +28,9 @@ data class CallInfoState(
   @get:JvmName("getGroupCallState") var groupState: WebRtcViewModel.GroupCallState = WebRtcViewModel.GroupCallState.IDLE,
   var identityChangedRecipients: MutableSet<RecipientId> = mutableSetOf(),
   var remoteDevicesCount: OptionalLong = OptionalLong.empty(),
-  var participantLimit: Long? = null
+  var participantLimit: Long? = null,
+  var pendingParticipants: PendingParticipantCollection = PendingParticipantCollection(),
+  var callLinkDisconnectReason: CallLinkDisconnectReason? = null
 ) {
 
   val remoteCallParticipants: List<CallParticipant>

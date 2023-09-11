@@ -7,10 +7,8 @@ import com.google.protobuf.ByteString
 import com.mobilecoin.lib.exceptions.SerializationException
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveFileUtil
-import org.archiver.ArchiveSender.Companion.archiveMessageInboxMMSV2
-import org.archiver.ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage
-import org.archiver.ArchiveUtil.Companion.generateAttachmentName
-import org.archiver.ArchiveUtil.InboxArchiveTypes
+import org.archiver.ArchiveSender
+import org.archiver.ArchiveUtil
 import org.signal.core.util.Hex
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
@@ -63,10 +61,9 @@ import org.tm.archive.jobs.SendDeliveryReceiptJob
 import org.tm.archive.jobs.TrimThreadJob
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.linkpreview.LinkPreviewUtil
-import org.tm.archive.messages.MessageContentProcessor.StorageFailedException
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.debug
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.log
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.warn
+import org.tm.archive.messages.MessageContentProcessor.Companion.debug
+import org.tm.archive.messages.MessageContentProcessor.Companion.log
+import org.tm.archive.messages.MessageContentProcessor.Companion.warn
 import org.tm.archive.messages.SignalServiceProtoUtil.groupMasterKey
 import org.tm.archive.messages.SignalServiceProtoUtil.hasGroupContext
 import org.tm.archive.messages.SignalServiceProtoUtil.hasRemoteDelete
@@ -85,6 +82,7 @@ import org.tm.archive.mms.QuoteModel
 import org.tm.archive.mms.StickerSlide
 import org.tm.archive.notifications.v2.ConversationId
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.recipients.Recipient.HiddenState
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.recipients.RecipientUtil
 import org.tm.archive.sms.IncomingEncryptedMessage
@@ -98,11 +96,13 @@ import org.tm.archive.util.FileUtils
 import org.tm.archive.util.LinkUtil
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.MessageConstraintsUtil
+import org.tm.archive.util.SignalLocalMetrics
 import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.isStory
 import org.whispersystems.signalservice.api.crypto.EnvelopeMetadata
 import org.whispersystems.signalservice.api.payments.Money
 import org.whispersystems.signalservice.api.push.ServiceId
+import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import org.whispersystems.signalservice.api.util.OptionalUtil.asOptional
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.BodyRange
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos.Content
@@ -129,18 +129,20 @@ object DataMessageProcessor {
     content: Content,
     metadata: EnvelopeMetadata,
     receivedTime: Long,
-    earlyMessageCacheEntry: EarlyMessageCacheEntry?
+    earlyMessageCacheEntry: EarlyMessageCacheEntry?,
+    localMetrics: SignalLocalMetrics.MessageReceive?
   ) {
     val message: DataMessage = content.dataMessage
     val groupSecretParams = if (message.hasGroupContext) GroupSecretParams.deriveFromMasterKey(message.groupV2.groupMasterKey) else null
     val groupId: GroupId.V2? = if (groupSecretParams != null) GroupId.v2(groupSecretParams.publicParams.groupIdentifier) else null
 
-    var groupProcessResult: MessageContentProcessorV2.Gv2PreProcessResult? = null
+    var groupProcessResult: MessageContentProcessor.Gv2PreProcessResult? = null
     if (groupId != null) {
-      groupProcessResult = MessageContentProcessorV2.handleGv2PreProcessing(context, envelope.timestamp, content, metadata, groupId, message.groupV2, senderRecipient, groupSecretParams)
-      if (groupProcessResult == MessageContentProcessorV2.Gv2PreProcessResult.IGNORE) {
+      groupProcessResult = MessageContentProcessor.handleGv2PreProcessing(context, envelope.timestamp, content, metadata, groupId, message.groupV2, senderRecipient, groupSecretParams)
+      if (groupProcessResult == MessageContentProcessor.Gv2PreProcessResult.IGNORE) {
         return
       }
+      localMetrics?.onGv2Processed()
     }
 
     var messageId: MessageId? = null
@@ -156,14 +158,14 @@ object DataMessageProcessor {
       message.hasPayment() -> messageId = handlePayment(context, envelope, metadata, message, senderRecipient.id, receivedTime)
       message.hasStoryContext() -> messageId = handleStoryReply(context, envelope, metadata, message, senderRecipient, groupId, receivedTime)
       message.hasGiftBadge() -> messageId = handleGiftMessage(context, envelope, metadata, message, senderRecipient, threadRecipient.id, receivedTime)
-      message.isMediaMessage -> messageId = handleMediaMessage(context, envelope, metadata, message, senderRecipient, threadRecipient, groupId, receivedTime)
-      message.hasBody() -> messageId = handleTextMessage(context, envelope, metadata, message, senderRecipient, threadRecipient, groupId, receivedTime)
+      message.isMediaMessage -> messageId = handleMediaMessage(context, envelope, metadata, message, senderRecipient, threadRecipient, groupId, receivedTime, localMetrics)
+      message.hasBody() -> messageId = handleTextMessage(context, envelope, metadata, message, senderRecipient, threadRecipient, groupId, receivedTime, localMetrics)
       message.hasGroupCallUpdate() -> handleGroupCallUpdateMessage(envelope, message, senderRecipient.id, groupId)
     }
 
     if (groupId != null) {
       val unknownGroup = when (groupProcessResult) {
-        MessageContentProcessorV2.Gv2PreProcessResult.GROUP_UP_TO_DATE -> threadRecipient.isUnknownGroup
+        MessageContentProcessor.Gv2PreProcessResult.GROUP_UP_TO_DATE -> threadRecipient.isUnknownGroup
         else -> SignalDatabase.groups.isUnknownGroup(groupId)
       }
       if (unknownGroup) {
@@ -175,21 +177,25 @@ object DataMessageProcessor {
       handleProfileKey(envelope.timestamp, message.profileKey.toByteArray(), senderRecipient)
     }
 
+    if (groupId == null && senderRecipient.hiddenState == HiddenState.HIDDEN) {
+      SignalDatabase.recipients.markHidden(senderRecipient.id, clearProfileKey = false, showMessageRequest = true)
+    }
+
     if (metadata.sealedSender && messageId != null) {
       SignalExecutors.BOUNDED.execute { ApplicationDependencies.getJobManager().add(SendDeliveryReceiptJob(senderRecipient.id, message.timestamp, messageId)) }
     } else if (!metadata.sealedSender) {
       if (RecipientUtil.shouldHaveProfileKey(threadRecipient)) {
-        Log.w(MessageContentProcessorV2.TAG, "Received an unsealed sender message from " + senderRecipient.id + ", but they should already have our profile key. Correcting.")
+        Log.w(MessageContentProcessor.TAG, "Received an unsealed sender message from " + senderRecipient.id + ", but they should already have our profile key. Correcting.")
 
         if (groupId != null) {
-          Log.i(MessageContentProcessorV2.TAG, "Message was to a GV2 group. Ensuring our group profile keys are up to date.")
+          Log.i(MessageContentProcessor.TAG, "Message was to a GV2 group. Ensuring our group profile keys are up to date.")
           ApplicationDependencies
             .getJobManager()
             .startChain(RefreshAttributesJob(false))
             .then(GroupV2UpdateSelfProfileKeyJob.withQueueLimits(groupId))
             .enqueue()
         } else if (!threadRecipient.isGroup) {
-          Log.i(MessageContentProcessorV2.TAG, "Message was to a 1:1. Ensuring this user has our profile key.")
+          Log.i(MessageContentProcessor.TAG, "Message was to a 1:1. Ensuring this user has our profile key.")
           val profileSendJob = ProfileKeySendJob.create(SignalDatabase.threads.getOrCreateThreadIdFor(threadRecipient), true)
           if (profileSendJob != null) {
             ApplicationDependencies
@@ -201,6 +207,8 @@ object DataMessageProcessor {
         }
       }
     }
+    localMetrics?.onPostProcessComplete()
+    localMetrics?.complete(groupId != null)
   }
 
   private fun handleProfileKey(
@@ -373,7 +381,7 @@ object DataMessageProcessor {
       return null
     }
 
-    val authorServiceId: ServiceId = ServiceId.parseOrThrow(message.storyContext.authorUuid)
+    val authorServiceId: ServiceId = ServiceId.parseOrThrow(message.storyContext.authorAci)
     val sentTimestamp = message.storyContext.sentTimestamp
 
     SignalDatabase.messages.beginTransaction()
@@ -464,7 +472,7 @@ object DataMessageProcessor {
 
     val emoji: String = message.reaction.emoji
     val isRemove: Boolean = message.reaction.remove
-    val targetAuthorServiceId: ServiceId = ServiceId.parseOrThrow(message.reaction.targetAuthorUuid)
+    val targetAuthorServiceId: ServiceId = ServiceId.parseOrThrow(message.reaction.targetAuthorAci)
     val targetSentTimestamp = message.reaction.targetSentTimestamp
 
     if (targetAuthorServiceId.isUnknown) {
@@ -532,7 +540,7 @@ object DataMessageProcessor {
     val targetMessage: MessageRecord? = SignalDatabase.messages.getMessageFor(targetSentTimestamp, senderRecipientId)
 
     return if (targetMessage != null && MessageConstraintsUtil.isValidRemoteDeleteReceive(targetMessage, senderRecipientId, envelope.serverTimestamp)) {
-      SignalDatabase.messages.markAsRemoteDelete(targetMessage.id)
+      SignalDatabase.messages.markAsRemoteDelete(targetMessage)
       if (targetMessage.isStory()) {
         SignalDatabase.messages.deleteRemotelyDeletedStory(targetMessage.id)
       }
@@ -673,7 +681,7 @@ object DataMessageProcessor {
   ): MessageId? {
     log(envelope.timestamp, "Story reply.")
 
-    val authorServiceId: ServiceId = ServiceId.parseOrThrow(message.storyContext.authorUuid)
+    val authorServiceId: ServiceId = ServiceId.parseOrThrow(message.storyContext.authorAci)
     val sentTimestamp = message.storyContext.sentTimestamp
 
     SignalDatabase.messages.beginTransaction()
@@ -832,7 +840,8 @@ object DataMessageProcessor {
     senderRecipient: Recipient,
     threadRecipient: Recipient,
     groupId: GroupId.V2?,
-    receivedTime: Long
+    receivedTime: Long,
+    localMetrics: SignalLocalMetrics.MessageReceive?
   ): MessageId? {
     log(envelope.timestamp, "Media message.")
 
@@ -876,17 +885,16 @@ object DataMessageProcessor {
       if (insertResult != null) {
         SignalDatabase.messages.setTransactionSuccessful()
 
-
         //**TM_SA**// Start
         archiveInboxMedia(insertResult, attachments, groupId, mediaMessage, context, senderRecipient, threadRecipient)
         //**TM_SA**//End
-
       }
     } catch (e: MmsException) {
       throw StorageFailedException(e, metadata.sourceServiceId.toString(), metadata.sourceDeviceId)
     } finally {
       SignalDatabase.messages.endTransaction()
     }
+    localMetrics?.onInsertedMediaMessage()
 
     return if (insertResult != null) {
       SignalDatabase.runPostSuccessfulTransaction {
@@ -952,7 +960,7 @@ object DataMessageProcessor {
     if (mediaMessage.sharedContacts.isNotEmpty()) {
       archiveInboxMediaMessage(
         context,
-        InboxArchiveTypes.CONTACT,
+        ArchiveUtil.InboxArchiveTypes.CONTACT,
         senderRecipient,
         threadRecipient,
         mediaMessage,
@@ -977,7 +985,7 @@ object DataMessageProcessor {
       if (mediaMessage.linkPreviews.isEmpty()) {
         archiveInboxMediaMessage(
           context,
-          InboxArchiveTypes.MEDIA,
+          ArchiveUtil.InboxArchiveTypes.MEDIA,
           senderRecipient,
           threadRecipient,
           mediaMessage,
@@ -986,7 +994,7 @@ object DataMessageProcessor {
       } else {
         archiveInboxMediaMessage(
           context,
-          InboxArchiveTypes.HYPER_LINK,
+          ArchiveUtil.InboxArchiveTypes.HYPER_LINK,
           senderRecipient,
           threadRecipient,
           mediaMessage,
@@ -1001,7 +1009,7 @@ object DataMessageProcessor {
         val tempFileForArchiving = FileUtils
           .createPlaceHolderTempFile(
             context,
-            generateAttachmentName(
+            ArchiveUtil.generateAttachmentName(
               insertResult.messageId,
               att.attachmentId.rowId
             ) + "." + ArchiveFileUtil.getFileType(att)
@@ -1012,7 +1020,7 @@ object DataMessageProcessor {
       }
       archiveInboxMediaMessage(
         context,
-        InboxArchiveTypes.STICKER,
+        ArchiveUtil.InboxArchiveTypes.STICKER,
         senderRecipient,
         threadRecipient,
         mediaMessage,
@@ -1021,7 +1029,7 @@ object DataMessageProcessor {
     } else if (mediaMessage.mentions.isNotEmpty()) {
       archiveInboxMediaMessage(
         context,
-        InboxArchiveTypes.MENTIONS,
+        ArchiveUtil.InboxArchiveTypes.MENTIONS,
         senderRecipient,
         threadRecipient,
         mediaMessage,
@@ -1066,7 +1074,7 @@ object DataMessageProcessor {
   //**TM_SA**//Start
   private fun archiveInboxMediaMessage(
     context: Context,
-    aInboxArchiveTypes: InboxArchiveTypes,
+    aInboxArchiveTypes: ArchiveUtil.InboxArchiveTypes,
     senderRecipient: Recipient,
     threadRecipient : Recipient,
     mediaMessage: IncomingMediaMessage,
@@ -1074,26 +1082,26 @@ object DataMessageProcessor {
   ) {
     var tempFileForArchiving: File?
     var filesToSend = arrayOfNulls<File>(mediaMessage.attachments.size)
-    if (aInboxArchiveTypes === InboxArchiveTypes.MEDIA) {
+    if (aInboxArchiveTypes === ArchiveUtil.InboxArchiveTypes.MEDIA) {
       if (!attachments.isNullOrEmpty()) {
-        archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,attachments)
+        ArchiveSender.archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis, attachments)
       }
-    } else if (aInboxArchiveTypes === InboxArchiveTypes.HYPER_LINK) {
+    } else if (aInboxArchiveTypes === ArchiveUtil.InboxArchiveTypes.HYPER_LINK) {
       if (!attachments.isNullOrEmpty()) {
-        archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,attachments)
+        ArchiveSender.archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis, attachments)
       }
-    } else if (aInboxArchiveTypes === InboxArchiveTypes.STICKER) {
+    } else if (aInboxArchiveTypes === ArchiveUtil.InboxArchiveTypes.STICKER) {
       if (!attachments.isNullOrEmpty()) {
         for (i in mediaMessage.attachments.indices) {
           tempFileForArchiving =
             ArchiveFileUtil.createFileFromContentUri(context, mediaMessage.attachments[i].uri.toString())
           filesToSend[i] = tempFileForArchiving
         }
-        archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,filesToSend)
+        ArchiveSender.archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis, filesToSend)
 
-        updateArchiveSDKToSendMMSMessage(context, filesToSend[0]!!.name, true)
+        ArchiveSender.updateArchiveSDKToSendMMSMessage(context, filesToSend[0]!!.name, true)
       }
-    } else if (aInboxArchiveTypes === InboxArchiveTypes.CONTACT) {
+    } else if (aInboxArchiveTypes === ArchiveUtil.InboxArchiveTypes.CONTACT) {
       filesToSend = arrayOfNulls(mediaMessage.sharedContacts.size)
       if (mediaMessage.sharedContacts.isNotEmpty()) {
         for (i in mediaMessage.sharedContacts.indices) {
@@ -1102,9 +1110,9 @@ object DataMessageProcessor {
             mediaMessage.sharedContacts[0])
           filesToSend[i] = tempFileForArchiving
         }
-        archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,filesToSend)
+        ArchiveSender.archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis, filesToSend)
 
-        updateArchiveSDKToSendMMSMessage(context, filesToSend[0]!!.name, false)
+        ArchiveSender.updateArchiveSDKToSendMMSMessage(context, filesToSend[0]!!.name, false)
       }
     }/* else if (aInboxArchiveTypes === InboxArchiveTypes.MENTIONS) {
       archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,attachments)
@@ -1122,7 +1130,8 @@ object DataMessageProcessor {
     senderRecipient: Recipient,
     threadRecipient: Recipient,
     groupId: GroupId.V2?,
-    receivedTime: Long
+    receivedTime: Long,
+    localMetrics: SignalLocalMetrics.MessageReceive?
   ): MessageId? {
     log(envelope.timestamp, "Text message.")
 
@@ -1146,6 +1155,7 @@ object DataMessageProcessor {
     )
 
     val insertResult: InsertResult? = SignalDatabase.messages.insertMessageInbox(IncomingEncryptedMessage(textMessage, body)).orNull()
+    localMetrics?.onInsertedTextMessage()
 
     return if (insertResult != null) {
       ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(insertResult.threadId))
@@ -1191,12 +1201,12 @@ object DataMessageProcessor {
 
   fun getMentions(mentionBodyRanges: List<BodyRange>): List<Mention> {
     return mentionBodyRanges
-      .filter { it.hasMentionUuid() }
+      .filter { it.hasMentionAci() }
       .mapNotNull {
-        val serviceId = ServiceId.parseOrNull(it.mentionUuid)
+        val aci = ACI.parseOrNull(it.mentionAci)
 
-        if (serviceId != null && !serviceId.isUnknown) {
-          val id = Recipient.externalPush(serviceId).id
+        if (aci != null && !aci.isUnknown) {
+          val id = Recipient.externalPush(aci).id
           Mention(id, it.start, it.length)
         } else {
           null
@@ -1232,7 +1242,7 @@ object DataMessageProcessor {
       return null
     }
 
-    val authorId = Recipient.externalPush(ServiceId.parseOrThrow(quote.authorUuid)).id
+    val authorId = Recipient.externalPush(ServiceId.parseOrThrow(quote.authorAci)).id
     var quotedMessage = SignalDatabase.messages.getMessageFor(quote.id, authorId) as? MediaMmsMessageRecord
 
     if (quotedMessage != null && !quotedMessage.isRemoteDelete) {
@@ -1287,7 +1297,7 @@ object DataMessageProcessor {
       quote.attachmentsList.mapNotNull { PointerAttachment.forPointer(it).orNull() },
       getMentions(quote.bodyRangesList),
       QuoteModel.Type.fromProto(quote.type),
-      quote.bodyRangesList.filterNot { it.hasMentionUuid() }.toBodyRangeList()
+      quote.bodyRangesList.filterNot { it.hasMentionAci() }.toBodyRangeList()
     )
   }
 

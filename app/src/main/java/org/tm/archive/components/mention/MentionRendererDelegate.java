@@ -12,9 +12,13 @@ import androidx.annotation.NonNull;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import org.tm.archive.R;
+import org.tm.archive.components.spoiler.SpoilerAnnotation;
 import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.DrawableUtil;
+import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
+
+import java.util.List;
 
 /**
  * Encapsulates the logic for determining the type of mention rendering needed (single vs multi-line) and then
@@ -57,6 +61,12 @@ public class MentionRendererDelegate {
       if (MentionAnnotation.isMentionAnnotation(annotation)) {
         int spanStart = text.getSpanStart(annotation);
         int spanEnd   = text.getSpanEnd(annotation);
+
+        List<Annotation> spoilerAnnotations = SpoilerAnnotation.getSpoilerAnnotations(text, spanStart, spanEnd, true);
+        if (Util.hasItems(spoilerAnnotations)) {
+          continue;
+        }
+
         int startLine = layout.getLineForOffset(spanStart);
         int endLine   = layout.getLineForOffset(spanEnd);
 

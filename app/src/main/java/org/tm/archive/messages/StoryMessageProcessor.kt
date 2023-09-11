@@ -9,8 +9,8 @@ import org.tm.archive.database.model.databaseprotos.ChatColor
 import org.tm.archive.database.model.databaseprotos.StoryTextPost
 import org.tm.archive.database.model.toBodyRangeList
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.log
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.warn
+import org.tm.archive.messages.MessageContentProcessor.Companion.log
+import org.tm.archive.messages.MessageContentProcessor.Companion.warn
 import org.tm.archive.messages.SignalServiceProtoUtil.groupId
 import org.tm.archive.messages.SignalServiceProtoUtil.toPointer
 import org.tm.archive.mms.IncomingMediaMessage
@@ -21,10 +21,11 @@ import org.tm.archive.util.Base64
 import org.tm.archive.util.FeatureFlags
 import org.whispersystems.signalservice.api.crypto.EnvelopeMetadata
 import org.whispersystems.signalservice.internal.push.SignalServiceProtos
+import org.whispersystems.signalservice.internal.push.SignalServiceProtos.Envelope
 
 object StoryMessageProcessor {
 
-  fun process(envelope: SignalServiceProtos.Envelope, content: SignalServiceProtos.Content, metadata: EnvelopeMetadata, senderRecipient: Recipient, threadRecipient: Recipient) {
+  fun process(envelope: Envelope, content: SignalServiceProtos.Content, metadata: EnvelopeMetadata, senderRecipient: Recipient, threadRecipient: Recipient) {
     val storyMessage = content.storyMessage
 
     log(envelope.timestamp, "Story message.")
@@ -71,7 +72,7 @@ object StoryMessageProcessor {
           isStoryEmbed = true
         ),
         serverGuid = envelope.serverGuid,
-        messageRanges = storyMessage.bodyRangesList.filterNot { it.hasMentionUuid() }.toBodyRangeList()
+        messageRanges = storyMessage.bodyRangesList.filterNot { it.hasMentionAci() }.toBodyRangeList()
       )
 
       insertResult = SignalDatabase.messages.insertSecureDecryptedMessageInbox(mediaMessage, -1).orNull()
@@ -79,7 +80,7 @@ object StoryMessageProcessor {
         SignalDatabase.messages.setTransactionSuccessful()
       }
     } catch (e: MmsException) {
-      throw MessageContentProcessor.StorageFailedException(e, metadata.sourceServiceId.toString(), metadata.sourceDeviceId)
+      throw StorageFailedException(e, metadata.sourceServiceId.toString(), metadata.sourceDeviceId)
     } finally {
       SignalDatabase.messages.endTransaction()
     }

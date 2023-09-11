@@ -21,7 +21,7 @@ import org.signal.core.util.CursorUtil;
 import org.tm.archive.util.LRUCache;
 import org.signal.core.util.Stopwatch;
 import org.tm.archive.util.concurrent.FilteredExecutor;
-import org.whispersystems.signalservice.api.push.ACI;
+import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -160,7 +160,7 @@ public final class LiveRecipientCache {
       }
 
       if (localAci != null) {
-        selfId = recipientTable.getByServiceId(localAci).orElse(null);
+        selfId = recipientTable.getByAci(localAci).orElse(null);
       }
 
       if (selfId == null && localE164 != null) {
@@ -184,8 +184,8 @@ public final class LiveRecipientCache {
   }
 
   /** Can safely get self id. If used during early registration (backup), will return null as we don't know self yet. */
-  @Nullable
   //**TM_SA**//change to public
+  @Nullable
   public RecipientId getSelfId() {
     RecipientId selfId;
 

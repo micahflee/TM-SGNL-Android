@@ -7,12 +7,12 @@ import org.signal.storageservice.protos.groups.local.EnabledState
 import org.tm.archive.database.GroupTable
 import org.tm.archive.groups.GroupAccessControl
 import org.tm.archive.groups.GroupId
+import org.tm.archive.groups.GroupsV1MigrationUtil
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.whispersystems.signalservice.api.groupsv2.DecryptedGroupUtil
 import org.whispersystems.signalservice.api.push.DistributionId
-import java.lang.AssertionError
 import java.util.Optional
 
 class GroupRecord(
@@ -24,7 +24,6 @@ class GroupRecord(
   val avatarId: Long,
   val avatarKey: ByteArray?,
   val avatarContentType: String?,
-  val relay: String?,
   val isActive: Boolean,
   val avatarDigest: ByteArray?,
   val isMms: Boolean,
@@ -118,6 +117,28 @@ class GroupRecord(
       }
     }
 
+  val actionableRequestingMembersCount: Int by lazy {
+    if (isV2Group && memberLevel(Recipient.self()) == GroupTable.MemberLevel.ADMINISTRATOR) {
+      requireV2GroupProperties()
+        .decryptedGroup
+        .requestingMembersCount
+    } else {
+      0
+    }
+  }
+
+  val gv1MigrationSuggestions: List<RecipientId> by lazy {
+    if (!isActive || !isV2Group || isPendingMember(Recipient.self())) {
+      emptyList()
+    } else {
+      unmigratedV1Members
+        .filterNot { members.contains(it) }
+        .map { Recipient.resolved(it) }
+        .filter { GroupsV1MigrationUtil.isAutoMigratable(it) }
+        .map { it.id }
+    }
+  }
+
   fun hasAvatar(): Boolean {
     return avatarId != 0L
   }
@@ -154,7 +175,7 @@ class GroupRecord(
     if (isV2Group) {
       val serviceId = recipient.serviceId
       if (serviceId.isPresent) {
-        return DecryptedGroupUtil.findPendingByUuid(requireV2GroupProperties().decryptedGroup.pendingMembersList, serviceId.get().uuid())
+        return DecryptedGroupUtil.findPendingByServiceId(requireV2GroupProperties().decryptedGroup.pendingMembersList, serviceId.get())
           .isPresent
       }
     }

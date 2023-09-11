@@ -9,7 +9,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
-import org.whispersystems.signalservice.api.push.PNI;
+import org.whispersystems.signalservice.api.push.ServiceId.PNI;
 
 import java.io.IOException;
 

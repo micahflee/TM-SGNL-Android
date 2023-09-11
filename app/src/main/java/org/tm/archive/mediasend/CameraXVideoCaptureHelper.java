@@ -224,7 +224,7 @@ class CameraXVideoCaptureHelper implements CameraButtonView.VideoCaptureListener
         context,
         VIDEO_DEBUG_LABEL,
         VIDEO_SIZE,
-        true
+        true//**TM_SA**//
     );
   }
 

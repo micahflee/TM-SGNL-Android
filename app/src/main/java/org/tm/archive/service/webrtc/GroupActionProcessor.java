@@ -23,6 +23,7 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceStateBuilder;
 import org.webrtc.PeerConnection;
 import org.webrtc.VideoTrack;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
+import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.ArrayList;
@@ -38,8 +39,15 @@ import java.util.Set;
  * and call specific setup information that is the same for any group call state.
  */
 public class GroupActionProcessor extends DeviceAwareActionProcessor {
-  public GroupActionProcessor(@NonNull WebRtcInteractor webRtcInteractor, @NonNull String tag) {
+
+  protected MultiPeerActionProcessorFactory actionProcessorFactory;
+
+  public GroupActionProcessor(@NonNull MultiPeerActionProcessorFactory actionProcessorFactory,
+                              @NonNull WebRtcInteractor webRtcInteractor,
+                              @NonNull String tag)
+  {
     super(webRtcInteractor, tag);
+    this.actionProcessorFactory = actionProcessorFactory;
   }
 
   protected @NonNull WebRtcServiceState handleReceivedOffer(@NonNull WebRtcServiceState currentState,
@@ -84,7 +92,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
     seen.add(Recipient.self());
 
     for (GroupCall.RemoteDeviceState device : remoteDeviceStates) {
-      Recipient                   recipient         = Recipient.externalPush(ServiceId.from(device.getUserId()));
+      Recipient                   recipient         = Recipient.externalPush(ACI.from(device.getUserId()));
       CallParticipantId           callParticipantId = new CallParticipantId(device.getDemuxId(), recipient.getId());
       CallParticipant             callParticipant   = participants.get(callParticipantId);
 
@@ -295,7 +303,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
       VideoState videoState       = currentState.getVideoState();
 
       currentState = terminateGroupCall(currentState, false).builder()
-                                                            .actionProcessor(new GroupNetworkUnavailableActionProcessor(webRtcInteractor))
+                                                            .actionProcessor(actionProcessorFactory.createNetworkUnavailableActionProcessor(webRtcInteractor))
                                                             .changeVideoState()
                                                             .eglBase(videoState.getLockableEglBase())
                                                             .camera(videoState.getCamera())

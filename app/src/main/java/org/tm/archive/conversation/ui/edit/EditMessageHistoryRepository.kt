@@ -2,11 +2,13 @@ package org.tm.archive.conversation.ui.edit
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
+import org.signal.core.util.concurrent.SignalExecutors
 import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.conversation.v2.data.AttachmentHelper
 import org.tm.archive.database.DatabaseObserver
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.notifications.MarkReadReceiver
 import org.tm.archive.recipients.Recipient
 
 object EditMessageHistoryRepository {
@@ -29,12 +31,19 @@ object EditMessageHistoryRepository {
     }.subscribeOn(Schedulers.io())
   }
 
+  fun markRevisionsRead(messageId: Long) {
+    SignalExecutors.BOUNDED.execute {
+      MarkReadReceiver.process(SignalDatabase.messages.setAllEditMessageRevisionsRead(messageId))
+    }
+  }
+
   private fun getEditHistorySync(messageId: Long): List<ConversationMessage> {
     val context = ApplicationDependencies.getApplication()
     val records = SignalDatabase
       .messages
       .getMessageEditHistory(messageId)
       .toList()
+      .reversed()
 
     if (records.isEmpty()) {
       return emptyList()

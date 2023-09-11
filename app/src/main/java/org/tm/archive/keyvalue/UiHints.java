@@ -16,6 +16,12 @@ public class UiHints extends SignalStoreValues {
   private static final String HAS_SEEN_SCHEDULED_MESSAGES_INFO_ONCE  = "uihints.has_seen_scheduled_messages_info_once";
   private static final String HAS_SEEN_USERNAME_EDUCATION            = "uihints.has_seen_username_education";
   private static final String HAS_SEEN_TEXT_FORMATTING_ALERT         = "uihints.text_formatting.has_seen_alert";
+  private static final String HAS_NOT_SEEN_EDIT_MESSAGE_BETA_ALERT   = "uihints.edit_message.has_not_seen_beta_alert";
+  private static final String HAS_SEEN_SAFETY_NUMBER_NUX             = "uihints.has_seen_safety_number_nux";
+  private static final String DECLINED_NOTIFICATION_LOGS_PROMPT      = "uihints.declined_notification_logs";
+  private static final String LAST_NOTIFICATION_LOGS_PROMPT_TIME     = "uihints.last_notification_logs_prompt";
+  private static final String DISMISSED_BATTERY_SAVER_PROMPT         = "uihints.declined_battery_saver_prompt";
+  private static final String LAST_BATTERY_SAVER_PROMPT              = "uihints.last_battery_saver_prompt";
 
   UiHints(@NonNull KeyValueStore store) {
     super(store);
@@ -99,5 +105,53 @@ public class UiHints extends SignalStoreValues {
 
   public void markHasSeenTextFormattingAlert() {
     putBoolean(HAS_SEEN_TEXT_FORMATTING_ALERT, false);
+  }
+
+  public boolean hasNotSeenEditMessageBetaAlert() {
+    return getBoolean(HAS_NOT_SEEN_EDIT_MESSAGE_BETA_ALERT, true);
+  }
+
+  public void markHasSeenEditMessageBetaAlert() {
+    putBoolean(HAS_NOT_SEEN_EDIT_MESSAGE_BETA_ALERT, false);
+  }
+
+  public boolean hasSeenSafetyNumberUpdateNux() {
+    return getBoolean(HAS_SEEN_SAFETY_NUMBER_NUX, false);
+  }
+
+  public void markHasSeenSafetyNumberUpdateNux() {
+    putBoolean(HAS_SEEN_SAFETY_NUMBER_NUX, true);
+  }
+
+  public long getLastNotificationLogsPrompt() {
+    return getLong(LAST_NOTIFICATION_LOGS_PROMPT_TIME, 0);
+  }
+
+  public void setLastNotificationLogsPrompt(long timeMs) {
+    putLong(LAST_NOTIFICATION_LOGS_PROMPT_TIME, timeMs);
+  }
+
+  public void markDeclinedShareNotificationLogs() {
+    putBoolean(DECLINED_NOTIFICATION_LOGS_PROMPT, true);
+  }
+
+  public boolean hasDeclinedToShareNotificationLogs() {
+    return getBoolean(DECLINED_NOTIFICATION_LOGS_PROMPT, false);
+  }
+
+  public void markDismissedBatterySaverPrompt() {
+    putBoolean(DISMISSED_BATTERY_SAVER_PROMPT, true);
+  }
+
+  public boolean hasDismissedBatterySaverPrompt() {
+    return getBoolean(DISMISSED_BATTERY_SAVER_PROMPT, false);
+  }
+
+  public long getLastBatterySaverPrompt() {
+    return getLong(LAST_BATTERY_SAVER_PROMPT, 0);
+  }
+
+  public void setLastBatterySaverPrompt(long time) {
+    putLong(LAST_BATTERY_SAVER_PROMPT, time);
   }
 }

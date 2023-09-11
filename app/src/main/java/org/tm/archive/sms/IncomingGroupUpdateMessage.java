@@ -4,6 +4,8 @@ import com.google.protobuf.ByteString;
 
 import org.tm.archive.database.model.databaseprotos.DecryptedGroupV2Context;
 import org.tm.archive.mms.MessageGroupContext;
+import org.whispersystems.signalservice.api.push.ServiceId;
+import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 
 import java.util.Optional;
 
@@ -52,7 +54,7 @@ public final class IncomingGroupUpdateMessage extends IncomingTextMessage {
     return GroupV2UpdateMessageUtil.getChangeRevision(groupContext);
   }
 
-  public Optional<ByteString> getChangeEditor() {
+  public Optional<ServiceId> getChangeEditor() {
     return GroupV2UpdateMessageUtil.getChangeEditor(groupContext);
   }
 }

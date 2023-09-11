@@ -11,6 +11,7 @@ import org.tm.archive.database.identity.IdentityRecordList;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
+import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,13 +51,14 @@ public class SignalIdentityKeyStore implements IdentityKeyStore {
   }
 
   public void saveIdentityWithoutSideEffects(@NonNull RecipientId recipientId,
+                                             @NonNull ServiceId serviceId,
                                              IdentityKey identityKey,
                                              VerifiedStatus verifiedStatus,
                                              boolean firstUse,
                                              long timestamp,
                                              boolean nonBlockingApproval)
   {
-    baseStore.saveIdentityWithoutSideEffects(recipientId, identityKey, verifiedStatus, firstUse, timestamp, nonBlockingApproval);
+    baseStore.saveIdentityWithoutSideEffects(recipientId, serviceId, identityKey, verifiedStatus, firstUse, timestamp, nonBlockingApproval);
   }
 
   @Override

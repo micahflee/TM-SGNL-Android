@@ -2,14 +2,12 @@ package org.tm.archive.messages
 
 import android.annotation.SuppressLint
 import android.content.Context
-import org.archiver.ArchiveConstants
-import org.archiver.ArchiveSender.Companion.archiveMessageInbox
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.PushProcessEarlyMessagesJob
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.log
-import org.tm.archive.messages.MessageContentProcessorV2.Companion.warn
+import org.tm.archive.messages.MessageContentProcessor.Companion.log
+import org.tm.archive.messages.MessageContentProcessor.Companion.warn
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.EarlyMessageCacheEntry
@@ -24,7 +22,7 @@ object ReceiptMessageProcessor {
     val receiptMessage = content.receiptMessage
 
     when (receiptMessage.type) {
-      ReceiptMessage.Type.DELIVERY -> handleDeliveryReceipt(context, envelope, metadata, receiptMessage, senderRecipient.id)
+      ReceiptMessage.Type.DELIVERY -> handleDeliveryReceipt(envelope, metadata, receiptMessage, senderRecipient.id)
       ReceiptMessage.Type.READ -> handleReadReceipt(context, senderRecipient.id, envelope, metadata, receiptMessage, earlyMessageCacheEntry)
       ReceiptMessage.Type.VIEWED -> handleViewedReceipt(context, envelope, metadata, receiptMessage, senderRecipient.id, earlyMessageCacheEntry)
       else -> warn(envelope.timestamp, "Unknown recipient message type ${receiptMessage.type}")
@@ -33,15 +31,12 @@ object ReceiptMessageProcessor {
 
   @SuppressLint("DefaultLocale")
   private fun handleDeliveryReceipt(
-    context: Context, //**TM_SA**
     envelope: Envelope,
     metadata: EnvelopeMetadata,
     deliveryReceipt: ReceiptMessage,
     senderRecipientId: RecipientId
   ) {
     log(envelope.timestamp, "Processing delivery receipts. Sender: $senderRecipientId, Device: ${metadata.sourceDeviceId}, Timestamps: ${deliveryReceipt.timestampList.joinToString(", ")}")
-
-   // archiveMessageInbox(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, if (groupRecipient != null && groupRecipient.isGroup()) groupRecipient else recipientSender, textMessage, insertResult.get().messageId, groupTitle)
 
     val missingTargetTimestamps: Set<Long> = SignalDatabase.messages.incrementDeliveryReceiptCounts(deliveryReceipt.timestampList, senderRecipientId, envelope.timestamp)
 

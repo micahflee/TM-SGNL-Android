@@ -30,7 +30,6 @@ import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 import com.tm.authenticatorsdk.selfAuthenticator.api.ApiUtil;
 
-import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.archiver.ArchiveConstants;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
@@ -97,10 +96,6 @@ public final class WelcomeFragment extends LoggingFragment {
 
     viewModel = new ViewModelProvider(requireActivity()).get(RegistrationViewModel.class);
 
-    //**TM_SA**//
-//    SelfAuthenticatorConstants.Companion.setAuthenticationProcessOpened(true);
-    //**TM_SA**//
-
     if (viewModel.isReregister()) {
       if (viewModel.hasRestoreFlowBeenShown()) {
         Log.i(TAG, "We've come back to the home fragment on a restore, user must be backing out");
@@ -165,7 +160,7 @@ public final class WelcomeFragment extends LoggingFragment {
 
       if (BuildConfig.DEBUG) {
         if (CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)) {
-          CommonUtils.stopBackupService(ApplicationContext.getInstance());
+          CommonUtils.stopBackupService(ApplicationContext.getInstance(), false);
         }
 
         PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, AuthenticatorConstants.Companion.getBASE_URL().getFirst());

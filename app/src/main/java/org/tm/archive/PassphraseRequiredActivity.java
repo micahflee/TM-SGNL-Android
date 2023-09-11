@@ -19,9 +19,8 @@ import org.tm.archive.components.settings.app.changenumber.ChangeNumberLockActiv
 import org.tm.archive.crypto.MasterSecretUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.devicetransfer.olddevice.OldDeviceTransferActivity;
-import org.tm.archive.jobs.PushNotificationReceiveJob;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.lock.v2.CreateKbsPinActivity;
+import org.tm.archive.lock.v2.CreateSvrPinActivity;
 import org.tm.archive.migrations.ApplicationMigrationActivity;
 import org.tm.archive.migrations.ApplicationMigrations;
 import org.tm.archive.pin.PinRestoreActivity;
@@ -79,15 +78,6 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
 
   protected void onPreCreate() {}
   protected void onCreate(Bundle savedInstanceState, boolean ready) {}
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-
-    if (networkAccess.isCensored()) {
-      ApplicationDependencies.getJobManager().add(new PushNotificationReceiveJob());
-    }
-  }
 
   @Override
   protected void onDestroy() {
@@ -189,11 +179,11 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   }
 
   private boolean userMustCreateSignalPin() {
-    return !SignalStore.registrationValues().isRegistrationComplete() && !SignalStore.kbsValues().hasPin() && !SignalStore.kbsValues().lastPinCreateFailed() && !SignalStore.kbsValues().hasOptedOut();
+    return !SignalStore.registrationValues().isRegistrationComplete() && !SignalStore.svr().hasPin() && !SignalStore.svr().lastPinCreateFailed() && !SignalStore.svr().hasOptedOut();
   }
 
   private boolean userHasSkippedOrForgottenPin() {
-    return !SignalStore.registrationValues().isRegistrationComplete() && !SignalStore.kbsValues().hasPin() && !SignalStore.kbsValues().hasOptedOut() && SignalStore.kbsValues().isPinForgottenOrSkipped();
+    return !SignalStore.registrationValues().isRegistrationComplete() && !SignalStore.svr().hasPin() && !SignalStore.svr().hasOptedOut() && SignalStore.svr().isPinForgottenOrSkipped();
   }
 
   private boolean userMustSetProfileName() {
@@ -234,7 +224,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
       intent = getIntent();
     }
 
-    return getRoutedIntent(CreateKbsPinActivity.class, intent);
+    return getRoutedIntent(CreateSvrPinActivity.class, intent);
   }
 
   private Intent getCreateProfileNameIntent() {

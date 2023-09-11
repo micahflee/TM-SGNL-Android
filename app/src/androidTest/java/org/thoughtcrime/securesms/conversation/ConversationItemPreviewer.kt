@@ -8,6 +8,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.signal.core.util.ThreadUtil
 import org.tm.archive.attachments.PointerAttachment
+import org.tm.archive.conversation.v2.ConversationActivity
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.mms.IncomingMediaMessage
 import org.tm.archive.mms.OutgoingMessage
@@ -141,6 +142,7 @@ class ConversationItemPreviewer {
       Optional.empty(),
       1024,
       1024,
+      Optional.empty(),
       Optional.empty(),
       Optional.of("/not-there.jpg"),
       false,

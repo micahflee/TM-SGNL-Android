@@ -12,16 +12,13 @@ import org.tm.archive.crypto.MasterSecret;
 import org.tm.archive.database.AttachmentTable;
 import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.MessageTable.MmsReader;
-import org.tm.archive.database.PushTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Job;
-import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobs.AttachmentDownloadJob;
 import org.tm.archive.jobs.DirectoryRefreshJob;
 import org.tm.archive.jobs.PreKeysSyncJob;
-import org.tm.archive.jobs.PushDecryptMessageJob;
 import org.tm.archive.jobs.RefreshAttributesJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.GlideApp;
@@ -30,7 +27,6 @@ import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.FileUtils;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.VersionTracker;
-import org.whispersystems.signalservice.api.messages.SignalServiceEnvelope;
 
 import java.io.File;
 import java.util.List;
@@ -131,20 +127,20 @@ public class LegacyMigrationJob extends MigrationJob {
       PreKeysSyncJob.enqueueIfNeeded();
     }
 
-    if (lastSeenVersion < NO_DECRYPT_QUEUE_VERSION) {
-      scheduleMessagesInPushDatabase(context);
-    }
+//    if (lastSeenVersion < NO_DECRYPT_QUEUE_VERSION) {
+//      scheduleMessagesInPushDatabase(context);
+//    }
 
-    if (lastSeenVersion < PUSH_DECRYPT_SERIAL_ID_VERSION) {
-      scheduleMessagesInPushDatabase(context);
-    }
+//    if (lastSeenVersion < PUSH_DECRYPT_SERIAL_ID_VERSION) {
+//      scheduleMessagesInPushDatabase(context);
+//    }
 
-    if (lastSeenVersion < MIGRATE_SESSION_PLAINTEXT) {
-//        new TextSecureSessionStore(context, masterSecret).migrateSessions();
-//        new TextSecurePreKeyStore(context, masterSecret).migrateRecords();
-
-      scheduleMessagesInPushDatabase(context);;
-    }
+//    if (lastSeenVersion < MIGRATE_SESSION_PLAINTEXT) {
+////        new TextSecureSessionStore(context, masterSecret).migrateSessions();
+////        new TextSecurePreKeyStore(context, masterSecret).migrateRecords();
+//
+//      scheduleMessagesInPushDatabase(context);;
+//    }
 
     if (lastSeenVersion < CONTACTS_ACCOUNT_VERSION) {
       ApplicationDependencies.getJobManager().add(new DirectoryRefreshJob(false));
@@ -184,9 +180,9 @@ public class LegacyMigrationJob extends MigrationJob {
       }
     }
 
-    if (lastSeenVersion < SQLCIPHER) {
-      scheduleMessagesInPushDatabase(context);
-    }
+//    if (lastSeenVersion < SQLCIPHER) {
+//      scheduleMessagesInPushDatabase(context);
+//    }
 
     if (lastSeenVersion < SQLCIPHER_COMPLETE) {
       File file = context.getDatabasePath("messages.db");
@@ -264,17 +260,17 @@ public class LegacyMigrationJob extends MigrationJob {
     }
   }
 
-  private static void scheduleMessagesInPushDatabase(@NonNull Context context) {
-    PushTable  pushDatabase = SignalDatabase.push();
-    JobManager jobManager   = ApplicationDependencies.getJobManager();
-
-    try (PushTable.Reader pushReader = pushDatabase.readerFor(pushDatabase.getPending())) {
-      SignalServiceEnvelope envelope;
-      while ((envelope = pushReader.getNext()) != null) {
-        jobManager.add(new PushDecryptMessageJob(envelope));
-      }
-    }
-  }
+//  private static void scheduleMessagesInPushDatabase(@NonNull Context context) {
+//    PushTable  pushDatabase = SignalDatabase.push();
+//    JobManager jobManager   = ApplicationDependencies.getJobManager();
+//
+//    try (PushTable.Reader pushReader = pushDatabase.readerFor(pushDatabase.getPending())) {
+//      SignalServiceEnvelope envelope;
+//      while ((envelope = pushReader.getNext()) != null) {
+//        jobManager.add(new PushDecryptMessageJob(envelope));
+//      }
+//    }
+//  }
 
   public interface DatabaseUpgradeListener {
     void setProgress(int progress, int total);

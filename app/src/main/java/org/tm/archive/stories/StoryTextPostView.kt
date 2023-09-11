@@ -20,10 +20,11 @@ import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.database.model.databaseprotos.StoryTextPost
 import org.tm.archive.fonts.TextFont
 import org.tm.archive.linkpreview.LinkPreview
-import org.tm.archive.linkpreview.LinkPreviewViewModel
+import org.tm.archive.linkpreview.LinkPreviewState
 import org.tm.archive.mediasend.v2.text.TextStoryPostCreationState
 import org.tm.archive.mediasend.v2.text.TextStoryScale
 import org.tm.archive.mediasend.v2.text.TextStoryTextWatcher
+import org.tm.archive.util.LongClickMovementMethod
 import org.tm.archive.util.concurrent.ListenableFuture
 import org.tm.archive.util.visible
 import java.util.Locale
@@ -47,6 +48,7 @@ class StoryTextPostView @JvmOverloads constructor(
 
   init {
     TextStoryTextWatcher.install(textView)
+    disableCreationMode()
   }
 
   fun getLinkPreviewThumbnailWidth(useLargeThumbnail: Boolean): Int {
@@ -57,12 +59,14 @@ class StoryTextPostView @JvmOverloads constructor(
     return linkPreviewView.getThumbnailViewHeight(useLargeThumbnail)
   }
 
-  fun showCloseButton() {
+  fun enableCreationMode() {
     linkPreviewView.setCanClose(true)
+    textView.movementMethod = null
   }
 
-  fun hideCloseButton() {
+  fun disableCreationMode() {
     linkPreviewView.setCanClose(false)
+    textView.movementMethod = LongClickMovementMethod.getInstance(context)
   }
 
   fun setTypeface(typeface: Typeface) {
@@ -122,7 +126,7 @@ class StoryTextPostView @JvmOverloads constructor(
     postAdjustLinkPreviewTranslationY()
   }
 
-  fun bindFromStoryTextPost(storyTextPost: StoryTextPost, bodyRanges: BodyRangeList?) {
+  fun bindFromStoryTextPost(id: Long, storyTextPost: StoryTextPost, bodyRanges: BodyRangeList?) {
     visible = true
     linkPreviewView.visible = false
 
@@ -134,7 +138,7 @@ class StoryTextPostView @JvmOverloads constructor(
     } else {
       val body = SpannableString(storyTextPost.body)
       if (font == TextFont.REGULAR && bodyRanges != null) {
-        MessageStyler.style(System.currentTimeMillis(), bodyRanges, body)
+        MessageStyler.style(id, bodyRanges, body)
       }
       setText(body, false)
     }
@@ -142,7 +146,7 @@ class StoryTextPostView @JvmOverloads constructor(
     setTextColor(storyTextPost.textForegroundColor, false)
     setTextBackgroundColor(storyTextPost.textBackgroundColor)
 
-    hideCloseButton()
+    disableCreationMode()
 
     postAdjustLinkPreviewTranslationY()
   }
@@ -155,7 +159,7 @@ class StoryTextPostView @JvmOverloads constructor(
     linkPreviewView.setThumbnailDrawable(drawable, useLargeThumbnail)
   }
 
-  fun bindLinkPreviewState(linkPreviewState: LinkPreviewViewModel.LinkPreviewState, hiddenVisibility: Int, useLargeThumbnail: Boolean) {
+  fun bindLinkPreviewState(linkPreviewState: LinkPreviewState, hiddenVisibility: Int, useLargeThumbnail: Boolean) {
     linkPreviewView.bind(linkPreviewState, hiddenVisibility, useLargeThumbnail)
   }
 

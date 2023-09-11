@@ -9,7 +9,7 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mms.SentMediaQuality
 import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.livedata.Store
-import org.tm.archive.webrtc.CallBandwidthMode
+import org.tm.archive.webrtc.CallDataMode
 
 class DataAndStorageSettingsViewModel(
   private val sharedPreferences: SharedPreferences,
@@ -41,9 +41,9 @@ class DataAndStorageSettingsViewModel(
     getStateAndCopyStorageUsage()
   }
 
-  fun setCallBandwidthMode(callBandwidthMode: CallBandwidthMode) {
-    SignalStore.settings().callBandwidthMode = callBandwidthMode
-    ApplicationDependencies.getSignalCallManager().bandwidthModeUpdate()
+  fun setCallDataMode(callDataMode: CallDataMode) {
+    SignalStore.settings().callDataMode = callDataMode
+    ApplicationDependencies.getSignalCallManager().dataModeUpdate()
     getStateAndCopyStorageUsage()
   }
 
@@ -67,7 +67,7 @@ class DataAndStorageSettingsViewModel(
     roamingAutoDownloadValues = TextSecurePreferences.getRoamingMediaDownloadAllowed(
       ApplicationDependencies.getApplication()
     ),
-    callBandwidthMode = SignalStore.settings().callBandwidthMode,
+    callDataMode = SignalStore.settings().callDataMode,
     isProxyEnabled = SignalStore.proxy().isProxyEnabled,
     sentMediaQuality = SignalStore.settings().sentMediaQuality
   )

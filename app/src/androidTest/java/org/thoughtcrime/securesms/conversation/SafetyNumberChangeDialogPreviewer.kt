@@ -7,6 +7,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.tm.archive.contacts.paged.ContactSearchKey
+import org.tm.archive.conversation.v2.ConversationActivity
 import org.tm.archive.database.IdentityTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.DistributionListId

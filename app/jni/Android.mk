@@ -7,7 +7,7 @@ LOCAL_C_INCLUDES := $(JNI_DIR)/utils/
 LOCAL_CFLAGS     += -Wall
 
 LOCAL_SRC_FILES := $(JNI_DIR)/utils/org_thoughtcrime_securesms_util_FileUtils.cpp
- //**TM_SA**//Start
+#//**TM_SA**//Start
 LOCAL_SRC_FILES := $(JNI_DIR)/utils/org_tm_archive_util_FileUtils.cpp
- //**TM_SA**//End
+# //**TM_SA**//End
 include $(BUILD_SHARED_LIBRARY)
