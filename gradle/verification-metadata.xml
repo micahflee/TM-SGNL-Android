@@ -37,6 +37,7 @@ https://docs.gradle.org/current/userguide/dependency_verification.html
          <trust file = "nimbus-jose-jwt-8.2.jar" regex="true"/>
          <trust file = "display-mask-0.3.0.jar" regex="true"/>
          <trust file = "lifecycle-service-2.6.1.module" regex="true"/>
+         <trust file = "junit-bom-5.7.1.module" regex="true"/>
          <!--**TM_SA** End-->
       </trusted-artifacts>
    </configuration>
