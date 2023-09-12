@@ -4,7 +4,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt' //**TM_SA**
-    id 'com.microsoft.intune.mam' //**TM_SA**
+//    id 'com.microsoft.intune.mam' //**TM_SA**
     id 'com.google.protobuf'
     id 'androidx.navigation.safeargs'
     id 'org.jlleitschuh.gradle.ktlint'
