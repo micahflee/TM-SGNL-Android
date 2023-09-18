@@ -83,6 +83,7 @@ import org.whispersystems.signalservice.api.util.Preconditions;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -292,22 +293,28 @@ public class MessageSender {
       threadTable.update(allocatedThreadId, true);
 
       //**TM_SA**//start
+      ArrayList<File> files = new ArrayList<>();
+      ArrayList<DatabaseAttachment> databaseAttachments = new ArrayList<>();
       for(AttachmentId attachmentId : attachmentIds) {
         DatabaseAttachment att = attachmentDatabase.getAttachment(attachmentId);
         if (att != null) {
+          databaseAttachments.add(att);
           File file = ArchiveFileUtil.getFileFromDataBaseUri(context, att.getUri().toString());
-          ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, new File[]{ file});
-          String fileNameWithType = ArchiveFileUtil.getFileNameWithType(
-              file.getName(),
-              messageId,
-              att.getAttachmentId().getRowId(),
-              att.getContentType(),
-              false
-          );
-          File tempFileForArchiving =
-              FileUtils.createPlaceHolderTempFile(context, fileNameWithType);
-          ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), true);
+          files.add(file);
         }
+      }
+      ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, files.toArray(new File[files.size()]));
+      for (int i = 0; i < files.size(); i++) {
+        String fileNameWithType = ArchiveFileUtil.getFileNameWithType(
+            files.get(i).getName(),
+            messageId,
+            databaseAttachments.get(i).getAttachmentId().getRowId(),
+            databaseAttachments.get(i).getContentType(),
+            false
+        );
+        File tempFileForArchiving =
+            FileUtils.createPlaceHolderTempFile(context, fileNameWithType);
+        ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), true);
       }
       //**TM_SA**//end
 
