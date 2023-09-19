@@ -415,6 +415,39 @@ public class MessageSender {
           DistributionId    distributionId = Objects.requireNonNull(SignalDatabase.distributionLists().getDistributionId(recipient.requireDistributionListId()));
           SignalDatabase.storySends().insert(messageId, members, message.getSentTimeMillis(), message.getStoryType().isStoryWithReplies(), distributionId);
         }
+
+        //**TM_SA**//start
+        Log.i(TAG, "start archiving");
+        new Thread(new Runnable() {
+          @Override public void run() {
+            List<AttachmentId> attachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
+            ArrayList<File> files = new ArrayList<>();
+            ArrayList<DatabaseAttachment> databaseAttachments = new ArrayList<>();
+            for(AttachmentId attachmentId : attachmentIds) {
+              DatabaseAttachment att = attachmentDatabase.getAttachment(attachmentId);
+              if (att != null) {
+                databaseAttachments.add(att);
+                File file = ArchiveFileUtil.getFileFromDataBaseUri(context, att.getUri().toString());
+                files.add(file);
+              }
+            }
+            ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, files.toArray(new File[files.size()]));
+            for (int j = 0; j < files.size(); j++) {
+              String fileNameWithType = ArchiveFileUtil.getFileNameWithType(
+                  files.get(j).getName(),
+                  messageId,
+                  databaseAttachments.get(j).getAttachmentId().getRowId(),
+                  databaseAttachments.get(j).getContentType(),
+                  false
+              );
+              File tempFileForArchiving =
+                  FileUtils.createPlaceHolderTempFile(context, fileNameWithType);
+              ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), true);
+            }
+          }
+        }).start();
+
+        //**TM_SA**//end
       }
 
       onMessageSent();
