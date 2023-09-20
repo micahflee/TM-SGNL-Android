@@ -2970,7 +2970,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     threadId: Long,
     forceSms: Boolean,
     insertListener: InsertListener?,
-    preUploadResults : Collection<PreUploadResult>?/*TM_SA*/
+    preUploadResults : Collection<PreUploadResult>? = null/*TM_SA*/
   ): Long {
     return insertMessageOutbox(
       message = message,
@@ -2989,7 +2989,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     forceSms: Boolean,
     defaultReceiptStatus: Int,
     insertListener: InsertListener?,
-    preUploadResults : Collection<PreUploadResult>?/*TM_SA*/
+    preUploadResults : Collection<PreUploadResult>? = null/*TM_SA*/
   ): Long {
     var type = MessageTypes.BASE_SENDING_TYPE
     var hasSpecialType = false

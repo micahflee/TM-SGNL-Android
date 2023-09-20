@@ -594,7 +594,7 @@ object SyncMessageProcessor {
         outgoingEndSessionMessage,
         threadId,
         false,
-        null, null/*TM_SA*/
+        null
       )
 
       SignalDatabase.messages.markAsSent(messageId, true)
