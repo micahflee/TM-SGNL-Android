@@ -87,7 +87,7 @@ object DeleteDialog {
       messageRecords.forEach { message ->
         MessageSender.sendRemoteDelete(message.id)
         //**TM_SA**//
-        sendArchiveDeleteMessage(context, message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, false)
+        sendArchiveDeleteMessage(context, message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, true)
         //**TM_SA**//
       }
 
@@ -107,7 +107,7 @@ object DeleteDialog {
     override fun doInBackground(vararg params: Void?): Boolean {
       //**TM_SA**//
       for (message in messageRecords) {
-        sendArchiveDeleteMessage(context, message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, true)
+        sendArchiveDeleteMessage(context, message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, false)
       }
       //**TM_SA**//
       return messageRecords.map { record ->
