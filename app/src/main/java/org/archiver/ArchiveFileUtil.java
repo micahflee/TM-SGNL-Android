@@ -13,6 +13,8 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.webkit.MimeTypeMap;
 
+import com.tm.logger.Log;
+
 import org.jetbrains.annotations.Nullable;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.AttachmentId;
@@ -459,6 +461,8 @@ This method can parse out the real local file path from a file URI.
             stream = BlobProvider.getInstance().getStream(ApplicationDependencies.getApplication(), Uri.parse(contentUri));
         } catch (IOException e) {
             e.printStackTrace();
+            Log.e("ArchiveFileUtil", "getFileFromBlobProvider -> error getStream!!!!--------------");
+            return null;
         }
         fileName = contentUri.split("/")[contentUri.split("/").length - 1].split("\\.")[0] + "." + fileType;
 

@@ -95,7 +95,7 @@ public final class IdentityUtil {
             }
 
             try {
-              SignalDatabase.messages().insertMessageOutbox(outgoing, threadId, false, null);
+              SignalDatabase.messages().insertMessageOutbox(outgoing, threadId, false, null, null/*TM_SA*/);
             } catch (MmsException e) {
               throw new AssertionError(e);
             }
@@ -124,7 +124,7 @@ public final class IdentityUtil {
 
       Log.i(TAG, "Inserting verified outbox...");
       try {
-        SignalDatabase.messages().insertMessageOutbox(outgoing, threadId, false, null);
+        SignalDatabase.messages().insertMessageOutbox(outgoing, threadId, false, null, null/*TM_SA*/);
       } catch (MmsException e) {
         throw new AssertionError();
       }

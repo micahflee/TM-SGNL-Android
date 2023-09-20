@@ -313,7 +313,7 @@ object SyncMessageProcessor {
         messageToEdit = targetMessage.id
       )
 
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null, null)
       updateGroupReceiptStatus(sent, messageId, toRecipient.requireGroupId())
     } else {
       val outgoingTextMessage = OutgoingMessage(
@@ -326,7 +326,7 @@ object SyncMessageProcessor {
         bodyRanges = bodyRanges,
         messageToEdit = targetMessage.id
       )
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null, null)
       SignalDatabase.messages.markUnidentified(messageId, sent.isUnidentified(toRecipient.serviceId.orNull()))
     }
     SignalDatabase.threads.update(threadId, true)
@@ -384,7 +384,7 @@ object SyncMessageProcessor {
 
     SignalDatabase.messages.beginTransaction()
     try {
-      messageId = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null, null)
 
       if (toRecipient.isGroup) {
         updateGroupReceiptStatus(sent, messageId, toRecipient.requireGroupId())
@@ -494,7 +494,7 @@ object SyncMessageProcessor {
 
     SignalDatabase.messages.beginTransaction()
     try {
-      messageId = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNDELIVERED, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNDELIVERED, null, null/*TM_SA*/)
 
       if (groupId != null) {
         updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
@@ -594,7 +594,7 @@ object SyncMessageProcessor {
         outgoingEndSessionMessage,
         threadId,
         false,
-        null
+        null, null/*TM_SA*/
       )
 
       SignalDatabase.messages.markAsSent(messageId, true)
@@ -630,7 +630,7 @@ object SyncMessageProcessor {
     val recipient: Recipient = getSyncMessageDestination(sent)
     val expirationUpdateMessage: OutgoingMessage = expirationUpdateMessage(recipient, if (sideEffect) sent.timestamp - 1 else sent.timestamp, sent.message.expireTimer.seconds.inWholeMilliseconds)
     val threadId: Long = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
-    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(expirationUpdateMessage, threadId, false, null)
+    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(expirationUpdateMessage, threadId, false, null, null/*TM_SA*/)
 
     SignalDatabase.messages.markAsSent(messageId, true)
 
@@ -707,7 +707,7 @@ object SyncMessageProcessor {
 
       SignalDatabase.messages.beginTransaction()
       try {
-        messageId = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+        messageId = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null, null/*TM_SA*/)
         if (recipient.isGroup) {
           updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
         } else {
@@ -779,7 +779,7 @@ object SyncMessageProcessor {
 
     SignalDatabase.messages.beginTransaction()
     try {
-      messageId = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null, null/*TM_SA*/)
 
       if (recipient.isGroup) {
         updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
@@ -915,11 +915,11 @@ object SyncMessageProcessor {
         bodyRanges = bodyRanges
       )
 
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null, null/*TM_SA*/)
       updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
     } else {
       val outgoingTextMessage = text(threadRecipient = recipient, body = body, expiresIn = expiresInMillis, sentTimeMillis = sent.timestamp, bodyRanges = bodyRanges)
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null, null/*TM_SA*/)
       SignalDatabase.messages.markUnidentified(messageId, sent.isUnidentified(recipient.serviceId.orNull()))
     }
     SignalDatabase.threads.update(threadId, true)

@@ -262,7 +262,7 @@ class InternalConversationSettingsFragment : DSLSettingsFragment(
                 OutgoingMessage.text(splitRecipient, "Test Message ${System.currentTimeMillis()}", 0),
                 splitThreadId,
                 false,
-                null
+                null, null/*TM_SA*/
               )
               SignalDatabase.messages.markAsSent(messageId, true)
 
