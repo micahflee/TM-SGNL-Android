@@ -1340,6 +1340,8 @@ class ConversationFragment :
     )
 
     WindowUtil.setNavigationBarColor(requireActivity(), ContextCompat.getColor(requireContext(), navColor))
+    binding.conversationWallpaper.visibility = View.VISIBLE
+    binding.conversationWallpaper.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_bg_tm))
   }
 
   private fun presentChatColors(chatColors: ChatColors) {
