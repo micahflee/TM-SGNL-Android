@@ -75,6 +75,7 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
+import org.archiver.ArchiveConstants
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -1310,11 +1311,17 @@ class ConversationFragment :
     binding.toolbar.setActionItemTint(toolbarTint)
 
     val wallpaperEnabled = chatWallpaper != null
-    binding.conversationWallpaper.visible = wallpaperEnabled
-    binding.scrollToBottom.setWallpaperEnabled(wallpaperEnabled)
-    binding.scrollToMention.setWallpaperEnabled(wallpaperEnabled)
-    binding.conversationDisabledInput.setWallpaperEnabled(wallpaperEnabled)
-    inputPanel.setWallpaperEnabled(wallpaperEnabled)
+    if (ArchiveConstants.isNeedToSetTeleMessageBackgroundAsDefault) {
+      binding.conversationWallpaper.visibility = View.VISIBLE
+      binding.conversationWallpaper.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_bg_tm))
+    } else {
+      binding.conversationWallpaper.visible = wallpaperEnabled
+      binding.scrollToBottom.setWallpaperEnabled(wallpaperEnabled)
+      binding.scrollToMention.setWallpaperEnabled(wallpaperEnabled)
+      binding.conversationDisabledInput.setWallpaperEnabled(wallpaperEnabled)
+      inputPanel.setWallpaperEnabled(wallpaperEnabled)
+    }
+
 
     val stateChanged = adapter.onHasWallpaperChanged(wallpaperEnabled)
     conversationItemDecorations.hasWallpaper = wallpaperEnabled
@@ -1340,8 +1347,6 @@ class ConversationFragment :
     )
 
     WindowUtil.setNavigationBarColor(requireActivity(), ContextCompat.getColor(requireContext(), navColor))
-    binding.conversationWallpaper.visibility = View.VISIBLE
-    binding.conversationWallpaper.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_bg_tm))
   }
 
   private fun presentChatColors(chatColors: ChatColors) {
