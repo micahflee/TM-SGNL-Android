@@ -514,7 +514,7 @@ This method can parse out the real local file path from a file URI.
                 inputStream = context.getContentResolver().openInputStream(Uri.parse(contentUri));
                 ArchiveFileUtil.copyInputStreamToFile(inputStream, resultFile);
 
-            } catch (FileNotFoundException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
