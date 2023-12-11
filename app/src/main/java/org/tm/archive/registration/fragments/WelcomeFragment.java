@@ -158,17 +158,7 @@ public final class WelcomeFragment extends LoggingFragment {
       environmentAlreadySelected = true;
     } else {
 
-      if (BuildConfig.DEBUG) {
-        if (CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)) {
-          CommonUtils.stopBackupService(ApplicationContext.getInstance(), false);
-        }
 
-        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, AuthenticatorConstants.Companion.getBASE_URL().getFirst());
-        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, AuthenticatorConstants.Companion.getBASE_URL().getSecond());
-
-        CommonUtils.setUrl(ApplicationContext.getInstance(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
-        CommonUtils.startBackupService(ApplicationContext.getInstance());
-      }
       //**TM_SA**// END
 
       Permissions.with(this)

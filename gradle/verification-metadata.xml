@@ -23,7 +23,8 @@ https://docs.gradle.org/current/userguide/dependency_verification.html
          <trust file = "commons-lang3-3.12.0.jar" regex="true"/>
          <trust file = "commons-text-1.9.jar" regex="true"/>
          <trust file = "converter-gson-2.1.0.jar" regex="true"/>
-         <trust file = "log4j-1.2.17.jar" regex="true"/>
+         <trust file = "tinylog-api-2.6.2.jar" regex="true"/>
+         <trust file = "tinylog-impl-2.6.2.jar" regex="true"/>
          <trust file = "logging-interceptor-3.8.1.jar" regex="true"/>
          <trust file = "okhttp-urlconnection-3.8.1.jar" regex="true"/>
          <trust file = "retrofit-2.6.1.jar" regex="true"/>

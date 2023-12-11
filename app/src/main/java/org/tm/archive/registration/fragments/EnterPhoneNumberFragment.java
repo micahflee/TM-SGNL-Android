@@ -37,13 +37,17 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.tm.androidcopysdk.AndroidCopySDK;
+import com.tm.androidcopysdk.BackupService;
+import com.tm.androidcopysdk.CommonUtils;
 import com.tm.androidcopysdk.MessageEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
+import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
 
 import org.archive.selfAuthentication.SelfAuthenticatorConstants;
+import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveLogger;
 import org.archiver.ArchivePreferenceConstants;
 import org.archiver.ArchiveUtil;
@@ -57,6 +61,7 @@ import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.ApplicationContext;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
@@ -279,6 +284,17 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
 
     if (fcmStatus == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
       //**TM_SA**//Start
+      if (BuildConfig.DEBUG) {
+        if (CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)) {
+          CommonUtils.stopBackupService(ApplicationContext.getInstance(), false);
+        }
+
+        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, AuthenticatorConstants.Companion.getBASE_URL().getFirst());
+        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, AuthenticatorConstants.Companion.getBASE_URL().getSecond());
+
+        CommonUtils.setUrl(ApplicationContext.getInstance(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
+        CommonUtils.startBackupService(ApplicationContext.getInstance());
+      }
       ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
       PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
 
