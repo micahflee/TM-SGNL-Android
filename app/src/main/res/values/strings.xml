@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- smartling.instruction_comments_enabled = on -->
 <resources>
-    <string name="app_name" translatable="false">Signal</string>
+    <string name="app_name" translatable="false">TM SGNL</string><!--//**TM_SA**//-->
 
     <string name="install_url" translatable="false">https://signal.org/install</string>
     <string name="donate_url" translatable="false">https://signal.org/donate</string>

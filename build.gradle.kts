@@ -31,6 +31,11 @@ buildscript {
     }
     classpath("androidx.benchmark:benchmark-gradle-plugin:1.1.0-beta04")
     classpath(files("$rootDir/wire-handler/wire-handler-1.0.0.jar"))
+    //**TM_SA**//START
+    // Include the MAM build plugin and Javassist, which it depends on
+    classpath ("org.javassist:javassist:3.22.0-GA")
+    classpath (files("app/MAMSDK/com.microsoft.intune.mam.build.jar")) //gradle can't see files from 'libs' folder. check why
+    //**TM_SA**//END
   }
 }
 

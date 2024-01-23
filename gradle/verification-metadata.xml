@@ -17,6 +17,29 @@ https://docs.gradle.org/current/userguide/dependency_verification.html
          <trust file=".*-javadoc[.]jar" regex="true"/>
          <trust file=".*-sources[.]jar" regex="true"/>
          <trust file=".*[.]pom" regex="true"/>
+         <!--**TM_SA** Start-->
+         <trust file=".*[.]aar" regex="true"/> <!--**TM_SA**-->
+         <trust file = "commons-io-2.6.jar" regex="true"/>
+         <trust file = "commons-lang3-3.12.0.jar" regex="true"/>
+         <trust file = "commons-text-1.9.jar" regex="true"/>
+         <trust file = "converter-gson-2.1.0.jar" regex="true"/>
+         <trust file = "tinylog-api-2.6.2.jar" regex="true"/>
+         <trust file = "tinylog-impl-2.6.2.jar" regex="true"/>
+         <trust file = "logging-interceptor-3.8.1.jar" regex="true"/>
+         <trust file = "okhttp-urlconnection-3.8.1.jar" regex="true"/>
+         <trust file = "retrofit-2.6.1.jar" regex="true"/>
+         <trust file = "work-runtime-2.7.1.*" regex="true"/>
+         <trust file = "room-common-2.2.5.jar" regex="true"/>
+         <trust file = "javassist-3.22.0-GA.jar" regex="true"/>
+         <trust file = "accessors-smart-1.2.jar" regex="true"/>
+         <trust file = "asm-5.0.4.jar" regex="true"/>
+         <trust file = "jcip-annotations-1.0-1.jar" regex="true"/>
+         <trust file = "json-smart-2.3.jar" regex="true"/>
+         <trust file = "nimbus-jose-jwt-8.2.jar" regex="true"/>
+         <trust file = "display-mask-0.3.0.jar" regex="true"/>
+         <trust file = "lifecycle-service-2.6.1.module" regex="true"/>
+         <trust file = "junit-bom-5.7.1.module" regex="true"/>
+         <!--**TM_SA** End-->
       </trusted-artifacts>
    </configuration>
    <components>

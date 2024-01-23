@@ -23,8 +23,14 @@ plugins {
 
 apply(from = "static-ips.gradle.kts")
 
-val canonicalVersionCode = 1376
-val canonicalVersionName = "6.44.2"
+//**TM_SA**//Start - Change the version code and version name upon the current version
+val canonicalVersionCode = 1337
+val canonicalVersionName = "6.44.2.0"
+val signal_teleMessage_version = "6.44.2.0"//Change this param in Jenkins builder and delete it.
+//**TM_SA**//end
+
+/*val canonicalVersionCode = 1376
+val canonicalVersionName = "6.44.2"*/
 
 val postFixSize = 100
 val abiPostFix: Map<String, Int> = mapOf(
