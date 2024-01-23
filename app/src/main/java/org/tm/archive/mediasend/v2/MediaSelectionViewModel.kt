@@ -12,6 +12,7 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.plusAssign
@@ -75,7 +76,7 @@ class MediaSelectionViewModel(
 
   private val internalHudCommands = PublishSubject.create<HudCommand>()
 
-  val mediaErrors: PublishSubject<MediaValidator.FilterError> = PublishSubject.create()
+  val mediaErrors: BehaviorSubject<MediaValidator.FilterError> = BehaviorSubject.createDefault(MediaValidator.FilterError.None)
   val hudCommands: Observable<HudCommand> = internalHudCommands
 
   private val disposables = CompositeDisposable()
@@ -122,13 +123,17 @@ class MediaSelectionViewModel(
       addMedia(initialMedia)
     }
 
-    disposables += selectedMediaSubject.map { media ->
-      Stories.MediaTransform.getSendRequirements(media)
-    }.subscribeBy { requirements ->
-      store.update {
-        it.copy(storySendRequirements = requirements)
+    disposables += selectedMediaSubject
+      .flatMapSingle { media ->
+        Single.fromCallable {
+          Stories.MediaTransform.getSendRequirements(media)
+        }.subscribeOn(Schedulers.io())
       }
-    }
+      .subscribeBy { requirements ->
+        store.update {
+          it.copy(storySendRequirements = requirements)
+        }
+      }
   }
 
   override fun onCleared() {
@@ -421,6 +426,10 @@ class MediaSelectionViewModel(
     return store.state.selectedMedia.isNotEmpty()
   }
 
+  fun clearMediaErrors() {
+    mediaErrors.onNext(MediaValidator.FilterError.None)
+  }
+
   fun onRestoreState(context: Context, savedInstanceState: Bundle) {
     val selection: List<Media> = savedInstanceState.getParcelableArrayListCompat(STATE_SELECTION, Media::class.java) ?: emptyList()
     val focused: Media? = savedInstanceState.getParcelableCompat(STATE_FOCUSED, Media::class.java)
@@ -432,10 +441,9 @@ class MediaSelectionViewModel(
     val cameraFirstCapture: Media? = savedInstanceState.getParcelableCompat(STATE_CAMERA_FIRST_CAPTURE, Media::class.java)
     val editorCount: Int = savedInstanceState.getInt(STATE_EDITOR_COUNT, 0)
     val blobUri: Uri? = savedInstanceState.getParcelableCompat(STATE_EDITORS, Uri::class.java)
-
-    val editorStates: List<Bundle> = if (editorCount > 0 && blobUri != null) {
-      val accumulator: MutableList<Bundle> = mutableListOf<Bundle>()
-      val blobProvider: BlobProvider = BlobProvider.getInstance()
+    val blobProvider: BlobProvider = BlobProvider.getInstance()
+    val editorStates: List<Bundle> = if (editorCount > 0 && blobUri != null && blobProvider.hasStream(context, blobUri)) {
+      val accumulator: MutableList<Bundle> = mutableListOf()
       val blob: ByteArray = ByteStreams.toByteArray(blobProvider.getStream(context, blobUri))
       val parcel: Parcel = Parcel.obtain()
       parcel.unmarshall(blob, 0, blob.size)
@@ -490,12 +498,14 @@ class MediaSelectionViewModel(
           putBoolean(BUNDLE_IS_IMAGE, true)
         }
       }
+
       is VideoEditorFragment.Data -> {
         value.bundle.apply {
           putParcelable(BUNDLE_URI, key)
           putBoolean(BUNDLE_IS_IMAGE, false)
         }
       }
+
       else -> {
         throw IllegalStateException()
       }

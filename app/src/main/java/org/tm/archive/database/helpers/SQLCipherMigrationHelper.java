@@ -26,7 +26,7 @@ import org.tm.archive.jobs.UnableToStartException;
 import org.tm.archive.migrations.LegacyMigrationJob;
 import org.tm.archive.service.GenericForegroundService;
 import org.tm.archive.service.NotificationController;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.TextSecurePreferences;
 
 import java.io.IOException;
@@ -125,7 +125,7 @@ public class SQLCipherMigrationHelper {
               plaintext = legacyCipher.decryptBytes(Base64.decode(mediaKey));
             }
 
-            row.put("cd", Base64.encodeBytes(plaintext));
+            row.put("cd", Base64.encodeWithPadding(plaintext));
           }
         } catch (IOException | InvalidMessageException e) {
           Log.w(TAG, e);

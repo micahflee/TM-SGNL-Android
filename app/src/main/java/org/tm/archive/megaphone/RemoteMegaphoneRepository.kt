@@ -9,9 +9,11 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
+import org.tm.archive.badges.gifts.flow.GiftFlowActivity
 import org.tm.archive.badges.models.Badge
 import org.tm.archive.components.settings.app.subscription.InAppDonations
 import org.tm.archive.components.settings.app.subscription.donate.DonateToSignalActivity
+import org.tm.archive.components.settings.app.subscription.manage.DonationRedemptionJobWatcher
 import org.tm.archive.database.RemoteMegaphoneTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.RemoteMegaphoneRecord
@@ -55,10 +57,16 @@ object RemoteMegaphoneRepository {
     snooze.run(context, controller, remote)
   }
 
+  private val donateForFriend: Action = Action { context, controller, remote ->
+    controller.onMegaphoneNavigationRequested(Intent(context, GiftFlowActivity::class.java))
+    snooze.run(context, controller, remote)
+  }
+
   private val actions = mapOf(
     ActionId.SNOOZE.id to snooze,
     ActionId.FINISH.id to finish,
-    ActionId.DONATE.id to donate
+    ActionId.DONATE.id to donate,
+    ActionId.DONATE_FOR_FRIEND.id to donateForFriend
   )
 
   @WorkerThread
@@ -123,6 +131,7 @@ object RemoteMegaphoneRepository {
   private fun shouldShowDonateMegaphone(): Boolean {
     return VersionTracker.getDaysSinceFirstInstalled(context) >= 7 &&
       InAppDonations.hasAtLeastOnePaymentMethodAvailable() &&
+      !DonationRedemptionJobWatcher.hasPendingRedemptionJob() &&
       Recipient.self()
         .badges
         .stream()

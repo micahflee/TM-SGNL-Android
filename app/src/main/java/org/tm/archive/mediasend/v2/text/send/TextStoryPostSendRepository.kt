@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
+import org.signal.core.util.Base64
 import org.signal.core.util.ThreadUtil
 import org.signal.core.util.logging.Log
 import org.tm.archive.contacts.paged.ContactSearchKey
@@ -20,7 +21,6 @@ import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.providers.BlobProvider
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.stories.Stories
-import org.tm.archive.util.Base64
 import java.io.ByteArrayOutputStream
 
 private val TAG = Log.tag(TextStoryPostSendRepository::class.java)
@@ -96,7 +96,7 @@ class TextStoryPostSendRepository {
   }
 
   private fun serializeTextStoryState(textStoryPostCreationState: TextStoryPostCreationState): String {
-    val builder = StoryTextPost.newBuilder()
+    val builder = StoryTextPost.Builder()
 
     builder.body = textStoryPostCreationState.body.toString()
     builder.background = textStoryPostCreationState.backgroundColor.serialize()
@@ -110,6 +110,6 @@ class TextStoryPostSendRepository {
     builder.textBackgroundColor = textStoryPostCreationState.textBackgroundColor
     builder.textForegroundColor = textStoryPostCreationState.textForegroundColor
 
-    return Base64.encodeBytes(builder.build().toByteArray())
+    return Base64.encodeWithPadding(builder.build().encode())
   }
 }

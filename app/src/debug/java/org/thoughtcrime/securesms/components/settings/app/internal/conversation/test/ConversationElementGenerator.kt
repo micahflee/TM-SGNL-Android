@@ -10,7 +10,7 @@ import org.tm.archive.conversation.v2.data.ConversationElementKey
 import org.tm.archive.conversation.v2.data.IncomingTextOnly
 import org.tm.archive.conversation.v2.data.OutgoingTextOnly
 import org.tm.archive.database.MessageTypes
-import org.tm.archive.database.model.MediaMmsMessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.mms.SlideDeck
@@ -78,7 +78,7 @@ class ConversationElementGenerator {
 
     val isIncoming = random.nextBoolean()
 
-    val record = MediaMmsMessageRecord(
+    val record = MmsMessageRecord(
       messageId,
       if (isIncoming) Recipient.UNKNOWN else Recipient.self(),
       0,
@@ -86,7 +86,7 @@ class ConversationElementGenerator {
       now,
       now,
       now,
-      1,
+      true,
       1,
       testMessage,
       SlideDeck(),
@@ -97,7 +97,7 @@ class ConversationElementGenerator {
       0,
       0,
       false,
-      1,
+      true,
       null,
       emptyList(),
       emptyList(),
@@ -106,7 +106,7 @@ class ConversationElementGenerator {
       false,
       false,
       now,
-      1,
+      true,
       now,
       null,
       StoryType.NONE,
@@ -117,7 +117,8 @@ class ConversationElementGenerator {
       -1,
       null,
       null,
-      0
+      0,
+      false
     )
 
     val conversationMessage = ConversationMessageFactory.createWithUnresolvedData(

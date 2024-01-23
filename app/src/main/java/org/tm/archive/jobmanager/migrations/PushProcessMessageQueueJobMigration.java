@@ -8,11 +8,11 @@ import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.InvalidInputException;
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.JobMigration;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.internal.serialize.protos.SignalServiceContentProto;
@@ -36,7 +36,7 @@ public class PushProcessMessageQueueJobMigration extends JobMigration {
   }
 
   @Override
-  protected @NonNull JobData migrate(@NonNull JobData jobData) {
+  public @NonNull JobData migrate(@NonNull JobData jobData) {
     if ("PushProcessJob".equals(jobData.getFactoryKey())) {
       Log.i(TAG, "Found a PushProcessMessageJob to migrate.");
       try {
@@ -55,19 +55,19 @@ public class PushProcessMessageQueueJobMigration extends JobMigration {
     String suffix = "";
 
     if (data.getInt("message_state") == 0) {
-      SignalServiceContentProto proto = SignalServiceContentProto.parseFrom(Base64.decode(data.getString("message_content")));
+      SignalServiceContentProto proto = SignalServiceContentProto.ADAPTER.decode(Base64.decode(data.getString("message_content")));
 
-      if (proto != null && proto.hasContent() && proto.getContent().hasDataMessage() && proto.getContent().getDataMessage().hasGroupV2()) {
+      if (proto != null && proto.content != null && proto.content.dataMessage != null && proto.content.dataMessage.groupV2 != null) {
         Log.i(TAG, "Migrating a group message.");
 
-        GroupId   groupId   = GroupId.v2(new GroupMasterKey(proto.getContent().getDataMessage().getGroupV2().getMasterKey().toByteArray()));
+        GroupId   groupId   = GroupId.v2(new GroupMasterKey(proto.content.dataMessage.groupV2.masterKey.toByteArray()));
         Recipient recipient = Recipient.externalGroupExact(groupId);
 
         suffix = recipient.getId().toQueueKey();
-      } else if (proto != null && proto.hasMetadata() && proto.getMetadata().hasAddress()) {
+      } else if (proto != null && proto.metadata != null && proto.metadata.address != null) {
         Log.i(TAG, "Migrating an individual message.");
-        ServiceId            senderServiceId = ServiceId.parseOrThrow(proto.getMetadata().getAddress().getUuid());
-        String               senderE164      = proto.getMetadata().getAddress().getE164();
+        ServiceId            senderServiceId = ServiceId.parseOrThrow(proto.metadata.address.uuid);
+        String               senderE164      = proto.metadata.address.e164;
         SignalServiceAddress sender          = new SignalServiceAddress(senderServiceId, Optional.ofNullable(senderE164));
 
         suffix = RecipientId.from(sender).toQueueKey();

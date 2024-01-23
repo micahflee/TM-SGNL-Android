@@ -17,10 +17,14 @@ import org.signal.core.util.concurrent.subscribeWithSubject
 import org.tm.archive.conversation.v2.ConversationRecipientRepository
 import org.tm.archive.database.GroupTable
 import org.tm.archive.database.model.GroupRecord
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.ui.GroupChangeFailureReason
 import org.tm.archive.groups.v2.GroupBlockJoinRequestResult
 import org.tm.archive.groups.v2.GroupManagementRepository
+import org.tm.archive.jobs.ForceUpdateGroupV2Job
+import org.tm.archive.jobs.GroupV2UpdateSelfProfileKeyJob
+import org.tm.archive.jobs.RequestGroupV2InfoJob
 import org.tm.archive.profiles.spoofing.ReviewUtil
 import org.tm.archive.recipients.Recipient
 
@@ -130,6 +134,24 @@ class ConversationGroupViewModel(
       }
       .subscribeOn(Schedulers.io())
       .observeOn(AndroidSchedulers.mainThread())
+  }
+
+  fun updateGroupStateIfNeeded() {
+    recipientRepository
+      .conversationRecipient
+      .firstOrError()
+      .onErrorComplete()
+      .filter { it.isPushV2Group && !it.isBlocked }
+      .subscribe {
+        val groupId = it.requireGroupId().requireV2()
+        ApplicationDependencies.getJobManager()
+          .startChain(RequestGroupV2InfoJob(groupId))
+          .then(GroupV2UpdateSelfProfileKeyJob.withoutLimits(groupId))
+          .enqueue()
+
+        ForceUpdateGroupV2Job.enqueueIfNecessary(groupId)
+      }
+      .addTo(disposables)
   }
 
   class Factory(private val threadId: Long, private val recipientRepository: ConversationRecipientRepository) : ViewModelProvider.Factory {

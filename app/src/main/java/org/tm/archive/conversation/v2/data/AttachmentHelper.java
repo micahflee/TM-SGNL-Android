@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.model.MediaMmsMessageRecord;
+import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.util.Util;
 
@@ -41,11 +41,11 @@ public class AttachmentHelper {
   public @NonNull List<MessageRecord> buildUpdatedModels(@NonNull Context context, @NonNull List<MessageRecord> records) {
     return records.stream()
                   .map(record -> {
-                    if (record instanceof MediaMmsMessageRecord) {
+                    if (record instanceof MmsMessageRecord) {
                       List<DatabaseAttachment> attachments = messageIdToAttachments.get(record.getId());
 
                       if (Util.hasItems(attachments)) {
-                        return ((MediaMmsMessageRecord) record).withAttachments(context, attachments);
+                        return ((MmsMessageRecord) record).withAttachments(attachments);
                       }
                     }
 

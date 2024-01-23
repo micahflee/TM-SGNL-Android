@@ -2,46 +2,29 @@
 
 package org.tm.archive.database.model
 
-import com.google.protobuf.ByteString
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos.BodyRange
+import org.tm.archive.database.model.databaseprotos.PendingOneTimeDonation
+import org.whispersystems.signalservice.internal.push.BodyRange
+import kotlin.time.Duration.Companion.days
 
 /**
  * Collection of extensions to make working with database protos cleaner.
  */
-
-fun ByteArray.toProtoByteString(): ByteString {
-  return ByteString.copyFrom(this)
-}
-
 fun BodyRangeList.Builder.addStyle(style: BodyRangeList.BodyRange.Style, start: Int, length: Int): BodyRangeList.Builder {
-  addRanges(
-    BodyRangeList.BodyRange.newBuilder()
-      .setStyle(style)
-      .setStart(start)
-      .setLength(length)
-  )
-
+  ranges += BodyRangeList.BodyRange(style = style, start = start, length = length)
   return this
 }
 
 fun BodyRangeList.Builder.addLink(link: String, start: Int, length: Int): BodyRangeList.Builder {
-  addRanges(
-    BodyRangeList.BodyRange.newBuilder()
-      .setLink(link)
-      .setStart(start)
-      .setLength(length)
-  )
-
+  ranges += BodyRangeList.BodyRange(link = link, start = start, length = length)
   return this
 }
 
 fun BodyRangeList.Builder.addButton(label: String, action: String, start: Int, length: Int): BodyRangeList.Builder {
-  addRanges(
-    BodyRangeList.BodyRange.newBuilder()
-      .setButton(BodyRangeList.BodyRange.Button.newBuilder().setLabel(label).setAction(action))
-      .setStart(start)
-      .setLength(length)
+  ranges += BodyRangeList.BodyRange(
+    button = BodyRangeList.BodyRange.Button(label = label, action = action),
+    start = start,
+    length = length
   )
 
   return this
@@ -52,7 +35,7 @@ fun List<BodyRange>?.toBodyRangeList(): BodyRangeList? {
     return null
   }
 
-  val builder = BodyRangeList.newBuilder()
+  val builder = BodyRangeList.Builder()
 
   for (bodyRange in this) {
     var style: BodyRangeList.BodyRange.Style? = null
@@ -65,9 +48,31 @@ fun List<BodyRange>?.toBodyRangeList(): BodyRangeList? {
       else -> Unit
     }
     if (style != null) {
-      builder.addStyle(style, bodyRange.start, bodyRange.length)
+      builder.addStyle(style, bodyRange.start!!, bodyRange.length!!)
     }
   }
 
   return builder.build()
 }
+
+fun PendingOneTimeDonation?.isPending(): Boolean {
+  return this != null && this.error == null && !this.isExpired
+}
+
+fun PendingOneTimeDonation?.isLongRunning(): Boolean {
+  return isPending() && this!!.paymentMethodType == PendingOneTimeDonation.PaymentMethodType.SEPA_DEBIT
+}
+
+val PendingOneTimeDonation.isExpired: Boolean
+  get() {
+    val pendingOneTimeBankTransferTimeout = 14.days
+    val pendingOneTimeNormalTimeout = 1.days
+
+    val timeout = if (paymentMethodType == PendingOneTimeDonation.PaymentMethodType.SEPA_DEBIT) {
+      pendingOneTimeBankTransferTimeout
+    } else {
+      pendingOneTimeNormalTimeout
+    }
+
+    return (timestamp + timeout.inWholeMilliseconds) < System.currentTimeMillis()
+  }

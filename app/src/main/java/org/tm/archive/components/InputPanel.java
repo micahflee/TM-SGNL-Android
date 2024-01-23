@@ -19,7 +19,6 @@ import android.view.animation.Interpolator;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,7 +49,7 @@ import org.tm.archive.conversation.ConversationStickerSuggestionAdapter;
 import org.tm.archive.conversation.MessageStyler;
 import org.tm.archive.conversation.VoiceNoteDraftView;
 import org.tm.archive.database.DraftTable;
-import org.tm.archive.database.model.MediaMmsMessageRecord;
+import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.Quote;
@@ -141,7 +140,7 @@ public class InputPanel extends ConstraintLayout
   public void onFinishInflate() {
     super.onFinishInflate();
 
-    View quoteDismiss = findViewById(R.id.quote_dismiss);
+    View quoteDismiss = findViewById(R.id.quote_dismiss_stub);
 
     this.composeContainer       = findViewById(R.id.compose_bubble);
     this.stickerSuggestion      = findViewById(R.id.input_panel_sticker_suggestion);
@@ -424,10 +423,10 @@ public class InputPanel extends ConstraintLayout
   }
 
   private void updateEditModeThumbnail(@NonNull GlideRequests glideRequests) {
-    if (messageToEdit instanceof MediaMmsMessageRecord) {
-      MediaMmsMessageRecord mediaEditMessage = (MediaMmsMessageRecord) messageToEdit;
-      SlideDeck             slideDeck        = mediaEditMessage.getSlideDeck();
-      Slide                 imageVideoSlide  = slideDeck.getSlides().stream().filter(s -> s.hasImage() || s.hasVideo() || s.hasSticker()).findFirst().orElse(null);
+    if (messageToEdit instanceof MmsMessageRecord) {
+      MmsMessageRecord mediaEditMessage = (MmsMessageRecord) messageToEdit;
+      SlideDeck        slideDeck        = mediaEditMessage.getSlideDeck();
+      Slide            imageVideoSlide  = slideDeck.getSlides().stream().filter(s -> s.hasImage() || s.hasVideo() || s.hasSticker()).findFirst().orElse(null);
 
       if (imageVideoSlide != null && imageVideoSlide.getUri() != null) {
         editMessageThumbnail.setVisibility(VISIBLE);

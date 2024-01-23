@@ -51,7 +51,6 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.CommunicationActions;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 import java.io.IOException;
@@ -313,7 +312,7 @@ public class NewConversationActivity extends ContactSelectionActivity
   }
 
   private @Nullable ActionItem createRemoveActionItem(@NonNull Recipient recipient) {
-    if (!FeatureFlags.hideContacts() || recipient.isSelf() || recipient.isGroup()) {
+    if (recipient.isSelf() || recipient.isGroup()) {
       return null;
     }
 

@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023 Signal Messenger, LLC
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 package org.tm.archive.util;
 
 import android.content.ContentResolver;
@@ -90,20 +95,20 @@ public class MediaUtil {
     }
   }
 
-  public static @NonNull Slide getSlideForAttachment(Context context, Attachment attachment) {
+  public static @NonNull Slide getSlideForAttachment(Attachment attachment) {
     if (attachment.isSticker()) {
       return new StickerSlide(attachment);
     }
 
-    switch (getSlideTypeFromContentType(attachment.getContentType())) {
+    switch (getSlideTypeFromContentType(attachment.contentType)) {
       case GIF       : return new GifSlide(attachment);
       case IMAGE     : return new ImageSlide(attachment);
-      case VIDEO     : return new VideoSlide(context, attachment);
-      case AUDIO     : return new AudioSlide(context, attachment);
-      case MMS       : return new MmsSlide(context, attachment);
-      case LONG_TEXT : return new TextSlide(context, attachment);
-      case VIEW_ONCE : return new ViewOnceSlide(context, attachment);
-      case DOCUMENT  : return new DocumentSlide(context, attachment);
+      case VIDEO     : return new VideoSlide(attachment);
+      case AUDIO     : return new AudioSlide(attachment);
+      case MMS       : return new MmsSlide(attachment);
+      case LONG_TEXT : return new TextSlide(attachment);
+      case VIEW_ONCE : return new ViewOnceSlide(attachment);
+      case DOCUMENT  : return new DocumentSlide(attachment);
       default        : throw new AssertionError();
     }
   }
@@ -148,12 +153,10 @@ public class MediaUtil {
     if (fileExtension == null) {
       return mimeType;
     }
-    switch (fileExtension.toLowerCase()) {
-      case "m4a":
-        return safeMimeTypeOverride(mimeType, AUDIO_MP4);
-      default:
-        return mimeType;
+    if (fileExtension.toLowerCase().equals("m4a")) {
+      return safeMimeTypeOverride(mimeType, AUDIO_MP4);
     }
+    return mimeType;
   }
 
   public static @Nullable String getCorrectedMimeType(@Nullable String mimeType) {
@@ -259,31 +262,31 @@ public class MediaUtil {
   }
 
   public static boolean isGif(Attachment attachment) {
-    return isGif(attachment.getContentType());
+    return isGif(attachment.contentType);
   }
 
   public static boolean isJpeg(Attachment attachment) {
-    return isJpegType(attachment.getContentType());
+    return isJpegType(attachment.contentType);
   }
 
   public static boolean isHeic(Attachment attachment) {
-    return isHeicType(attachment.getContentType());
+    return isHeicType(attachment.contentType);
   }
 
   public static boolean isHeif(Attachment attachment) {
-    return isHeifType(attachment.getContentType());
+    return isHeifType(attachment.contentType);
   }
 
   public static boolean isImage(Attachment attachment) {
-    return isImageType(attachment.getContentType());
+    return isImageType(attachment.contentType);
   }
 
   public static boolean isAudio(Attachment attachment) {
-    return isAudioType(attachment.getContentType());
+    return isAudioType(attachment.contentType);
   }
 
   public static boolean isVideo(Attachment attachment) {
-    return isVideoType(attachment.getContentType());
+    return isVideoType(attachment.contentType);
   }
 
   public static boolean isVideo(String contentType) {
@@ -401,11 +404,7 @@ public class MediaUtil {
     } else if (uri.toString().startsWith("file://") &&
                MediaUtil.isVideo(URLConnection.guessContentTypeFromName(uri.toString()))) {
       return true;
-    } else if (PartAuthority.isAttachmentUri(uri) && MediaUtil.isVideoType(PartAuthority.getAttachmentContentType(context, uri))) {
-      return true;
-    } else {
-      return false;
-    }
+    } else return PartAuthority.isAttachmentUri(uri) && MediaUtil.isVideoType(PartAuthority.getAttachmentContentType(context, uri));
   }
 
   @WorkerThread
@@ -446,7 +445,7 @@ public class MediaUtil {
     {
       try {
         AttachmentId    attachmentId = PartAuthority.requireAttachmentId(uri);
-        MediaDataSource source       = SignalDatabase.attachments().mediaDataSourceFor(attachmentId);
+        MediaDataSource source       = SignalDatabase.attachments().mediaDataSourceFor(attachmentId, false);
         return extractFrame(source, timeUs);
       } catch (IOException e) {
         Log.w(TAG, "Failed to extract frame for URI: " + uri, e);
@@ -468,6 +467,17 @@ public class MediaUtil {
     return mediaMetadataRetriever.getFrameAtTime(timeUs);
   }
 
+  public static boolean isInstantVideoSupported(Slide slide) {
+    if (!FeatureFlags.instantVideoPlayback()) {
+      return false;
+    }
+    final Attachment attachment                        = slide.asAttachment();
+    final boolean    isIncremental                     = attachment.getIncrementalDigest() != null;
+    final boolean    hasIncrementalMacChunkSizeDefined = attachment.incrementalMacChunkSize > 0;
+    final boolean    contentTypeSupported              = isVideoType(slide.getContentType());
+    return isIncremental && contentTypeSupported && hasIncrementalMacChunkSizeDefined;
+  }
+
   public static @Nullable String getDiscreteMimeType(@NonNull String mimeType) {
     final String[] sections = mimeType.split("/", 2);
     return sections.length > 1 ? sections[0] : null;
@@ -476,7 +486,7 @@ public class MediaUtil {
   public static class ThumbnailData implements AutoCloseable {
 
     @NonNull private final Bitmap bitmap;
-             private final float  aspectRatio;
+    private final          float  aspectRatio;
 
     public ThumbnailData(@NonNull Bitmap bitmap) {
       this.bitmap      = bitmap;

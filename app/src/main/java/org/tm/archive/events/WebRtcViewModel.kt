@@ -2,6 +2,7 @@ package org.tm.archive.events
 
 import com.annimon.stream.OptionalLong
 import org.tm.archive.components.webrtc.BroadcastVideoSink
+import org.tm.archive.events.CallParticipant.Companion.HAND_LOWERED
 import org.tm.archive.events.CallParticipant.Companion.createLocal
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
@@ -106,10 +107,11 @@ class WebRtcViewModel(state: WebRtcServiceState) {
   val availableDevices: Set<SignalAudioManager.AudioDevice> = state.localDeviceState.availableDevices
   val bluetoothPermissionDenied: Boolean = state.localDeviceState.bluetoothPermissionDenied
 
-  val localParticipant: CallParticipant = createLocal(
+  val localParticipant: CallParticipant = state.callInfoState.localParticipant ?: createLocal(
     state.localDeviceState.cameraState,
     (if (state.videoState.localSink != null) state.videoState.localSink else BroadcastVideoSink())!!,
-    state.localDeviceState.isMicrophoneEnabled
+    state.localDeviceState.isMicrophoneEnabled,
+    HAND_LOWERED
   )
 
   val isCellularConnection: Boolean = when (state.localDeviceState.networkConnectionType) {

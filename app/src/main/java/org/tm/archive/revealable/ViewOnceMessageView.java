@@ -95,8 +95,8 @@ public class ViewOnceMessageView extends LinearLayout {
     }
 
     Attachment attachment = messageRecord.getSlideDeck().getThumbnailSlide().asAttachment();
-    return attachment.getTransferState() == AttachmentTable.TRANSFER_PROGRESS_FAILED ||
-           attachment.getTransferState() == AttachmentTable.TRANSFER_PROGRESS_PENDING;
+    return attachment.transferState == AttachmentTable.TRANSFER_PROGRESS_FAILED ||
+           attachment.transferState == AttachmentTable.TRANSFER_PROGRESS_PENDING;
   }
 
   public void setMessage(@NonNull MmsMessageRecord message, boolean hasWallpaper) {
@@ -119,7 +119,7 @@ public class ViewOnceMessageView extends LinearLayout {
       icon.setImageResource(0);
       showProgress = true;
     } else if (messageRecord.isOutgoing()) {
-      if (messageRecord.isRemoteViewed()) {
+      if (messageRecord.isViewed()) {
         iconColor = openedIconColor;
         text.setText(R.string.RevealableMessageView_viewed);
         icon.setImageResource(R.drawable.ic_viewed_once_24);
@@ -169,7 +169,7 @@ public class ViewOnceMessageView extends LinearLayout {
     if (messageRecord.getSlideDeck().getThumbnailSlide() == null) return false;
 
     Attachment attachment = messageRecord.getSlideDeck().getThumbnailSlide().asAttachment();
-    return attachment.getTransferState() == AttachmentTable.TRANSFER_PROGRESS_STARTED;
+    return attachment.transferState == AttachmentTable.TRANSFER_PROGRESS_STARTED;
   }
 
   private @NonNull String formatFileSize(@NonNull MmsMessageRecord messageRecord) {

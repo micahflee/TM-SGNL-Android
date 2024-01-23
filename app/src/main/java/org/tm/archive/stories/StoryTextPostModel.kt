@@ -15,12 +15,12 @@ import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.ResourceDecoder
 import com.bumptech.glide.load.engine.Resource
 import com.bumptech.glide.load.resource.SimpleResource
+import org.signal.core.util.Base64
 import org.signal.core.util.concurrent.safeBlockingGet
 import org.signal.core.util.readParcelableCompat
 import org.tm.archive.R
 import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
@@ -32,7 +32,6 @@ import org.tm.archive.fonts.TypefaceCache
 import org.tm.archive.mms.DecryptableStreamUriLoader
 import org.tm.archive.mms.GlideApp
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.util.Base64
 import org.tm.archive.util.ParcelUtil
 import java.io.IOException
 import java.security.MessageDigest
@@ -48,16 +47,16 @@ data class StoryTextPostModel(
 ) : Key, Parcelable {
 
   override fun updateDiskCacheKey(messageDigest: MessageDigest) {
-    messageDigest.update(storyTextPost.toByteArray())
+    messageDigest.update(storyTextPost.encode())
     messageDigest.update(storySentAtMillis.toString().toByteArray())
     messageDigest.update(storyAuthor.serialize().toByteArray())
-    messageDigest.update(bodyRanges?.toByteArray() ?: ByteArray(0))
+    messageDigest.update(bodyRanges?.encode() ?: ByteArray(0))
   }
 
   val text: String = storyTextPost.body
 
   fun getPlaceholder(): Drawable {
-    return if (storyTextPost.hasBackground()) {
+    return if (storyTextPost.background != null) {
       ChatColors.forChatColor(ChatColors.Id.NotSet, storyTextPost.background).chatBubbleMask
     } else {
       ColorDrawable(Color.TRANSPARENT)
@@ -65,10 +64,10 @@ data class StoryTextPostModel(
   }
 
   override fun writeToParcel(parcel: Parcel, flags: Int) {
-    ParcelUtil.writeByteArray(parcel, storyTextPost.toByteArray())
+    ParcelUtil.writeByteArray(parcel, storyTextPost.encode())
     parcel.writeLong(storySentAtMillis)
     parcel.writeParcelable(storyAuthor, flags)
-    ParcelUtil.writeByteArray(parcel, bodyRanges?.toByteArray())
+    ParcelUtil.writeByteArray(parcel, bodyRanges?.encode())
   }
 
   override fun describeContents(): Int {
@@ -78,10 +77,10 @@ data class StoryTextPostModel(
   companion object CREATOR : Parcelable.Creator<StoryTextPostModel> {
     override fun createFromParcel(parcel: Parcel): StoryTextPostModel {
       return StoryTextPostModel(
-        storyTextPost = StoryTextPost.parseFrom(ParcelUtil.readByteArray(parcel)),
+        storyTextPost = StoryTextPost.ADAPTER.decode(ParcelUtil.readByteArray(parcel)!!),
         storySentAtMillis = parcel.readLong(),
         storyAuthor = parcel.readParcelableCompat(RecipientId::class.java)!!,
-        bodyRanges = ParcelUtil.readByteArray(parcel)?.let { BodyRangeList.parseFrom(it) }
+        bodyRanges = ParcelUtil.readByteArray(parcel)?.let { BodyRangeList.ADAPTER.decode(it) }
       )
     }
 
@@ -102,7 +101,7 @@ data class StoryTextPostModel(
     @Throws(IOException::class)
     fun parseFrom(body: String, storySentAtMillis: Long, storyAuthor: RecipientId, bodyRanges: BodyRangeList?): StoryTextPostModel {
       return StoryTextPostModel(
-        storyTextPost = StoryTextPost.parseFrom(Base64.decode(body)),
+        storyTextPost = StoryTextPost.ADAPTER.decode(Base64.decode(body)),
         storySentAtMillis = storySentAtMillis,
         storyAuthor = storyAuthor,
         bodyRanges = bodyRanges
@@ -120,8 +119,8 @@ data class StoryTextPostModel(
 
     override fun decode(source: StoryTextPostModel, width: Int, height: Int, options: Options): Resource<Bitmap> {
       val message = SignalDatabase.messages.getMessageFor(source.storySentAtMillis, source.storyAuthor).run {
-        if (this is MediaMmsMessageRecord) {
-          this.withAttachments(ApplicationDependencies.getApplication(), SignalDatabase.attachments.getAttachmentsForMessage(this.id))
+        if (this is MmsMessageRecord) {
+          this.withAttachments(SignalDatabase.attachments.getAttachmentsForMessage(this.id))
         } else {
           this
         }

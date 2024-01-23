@@ -18,24 +18,22 @@ import org.signal.libsignal.protocol.ecc.ECPublicKey;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.keyvalue.CertificateType;
-import org.tm.archive.keyvalue.PhoneNumberPrivacyValues;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.TextSecurePreferences;
-import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccess;
 import org.whispersystems.signalservice.api.crypto.UnidentifiedAccessPair;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class UnidentifiedAccessUtil {
 
@@ -77,7 +75,7 @@ public class UnidentifiedAccessUtil {
 
     return accessMap;
   }
-  
+
   @WorkerThread
   public static List<Optional<UnidentifiedAccessPair>> getAccessFor(@NonNull Context context, @NonNull List<Recipient> recipients, boolean log) {
     return getAccessFor(context, recipients, false, log);
@@ -85,49 +83,41 @@ public class UnidentifiedAccessUtil {
 
   @WorkerThread
   public static List<Optional<UnidentifiedAccessPair>> getAccessFor(@NonNull Context context, @NonNull List<Recipient> recipients, boolean isForStory, boolean log) {
-    byte[] ourUnidentifiedAccessKey = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
+    final byte[] ourUnidentifiedAccessKey;
 
     if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
       ourUnidentifiedAccessKey = UNRESTRICTED_KEY;
+    } else {
+      ourUnidentifiedAccessKey = ProfileKeyUtil.getSelfProfileKey().deriveAccessKey();
     }
 
-    List<Optional<UnidentifiedAccessPair>> access = new ArrayList<>(recipients.size());
+    CertificateType certificateType                  = getUnidentifiedAccessCertificateType();
+    byte[]          ourUnidentifiedAccessCertificate = SignalStore.certificateValues().getUnidentifiedAccessCertificate(certificateType);
 
-    Map<CertificateType, Integer> typeCounts = new HashMap<>();
-
-    for (Recipient recipient : recipients) {
-      CertificateType    certificateType                  = getUnidentifiedAccessCertificateType(recipient);
-      byte[]             ourUnidentifiedAccessCertificate = SignalStore.certificateValues().getUnidentifiedAccessCertificate(certificateType);
-
-      int typeCount = Util.getOrDefault(typeCounts, certificateType, 0);
-      typeCount++;
-      typeCounts.put(certificateType, typeCount);
-
+    List<Optional<UnidentifiedAccessPair>> access = recipients.parallelStream().map(recipient -> {
+      UnidentifiedAccessPair unidentifiedAccessPair = null;
       if (ourUnidentifiedAccessCertificate != null) {
         try {
           UnidentifiedAccess theirAccess = getTargetUnidentifiedAccess(recipient, ourUnidentifiedAccessCertificate, isForStory);
           UnidentifiedAccess ourAccess   = new UnidentifiedAccess(ourUnidentifiedAccessKey, ourUnidentifiedAccessCertificate, false);
 
           if (theirAccess != null) {
-            access.add(Optional.of(new UnidentifiedAccessPair(theirAccess, ourAccess)));
-          } else {
-            access.add(Optional.empty());
+            unidentifiedAccessPair = new UnidentifiedAccessPair(theirAccess, ourAccess);
           }
         } catch (InvalidCertificateException e) {
           Log.w(TAG, "Invalid unidentified access certificate!", e);
-          access.add(Optional.empty());
         }
       } else {
         Log.w(TAG, "Missing unidentified access certificate!");
-        access.add(Optional.empty());
       }
-    }
+      return Optional.ofNullable(unidentifiedAccessPair);
+    }).collect(Collectors.toList());
 
     int unidentifiedCount = Stream.of(access).filter(Optional::isPresent).toList().size();
     int otherCount        = access.size() - unidentifiedCount;
 
     if (log) {
-      Log.i(TAG, "Unidentified: " + unidentifiedCount + ", Other: " + otherCount + ". Types: " + typeCounts);
+      Log.i(TAG, "Unidentified: " + unidentifiedCount + ", Other: " + otherCount);
     }
 
     return access;
@@ -136,7 +126,7 @@ public class UnidentifiedAccessUtil {
   public static Optional<UnidentifiedAccessPair> getAccessForSync(@NonNull Context context) {
     try {
       byte[] ourUnidentifiedAccessKey         = UnidentifiedAccess.deriveAccessKeyFrom(ProfileKeyUtil.getSelfProfileKey());
-      byte[] ourUnidentifiedAccessCertificate = getUnidentifiedAccessCertificate(Recipient.self());
+      byte[] ourUnidentifiedAccessCertificate = getUnidentifiedAccessCertificate();
 
       if (TextSecurePreferences.isUniversalUnidentifiedAccess(context)) {
         ourUnidentifiedAccessKey = UNRESTRICTED_KEY;
@@ -158,20 +148,17 @@ public class UnidentifiedAccessUtil {
     }
   }
 
-  private static @NonNull CertificateType getUnidentifiedAccessCertificateType(@NonNull Recipient recipient) {
-    PhoneNumberPrivacyValues.PhoneNumberSharingMode sendPhoneNumberTo = SignalStore.phoneNumberPrivacy().getPhoneNumberSharingMode();
-
-    switch (sendPhoneNumberTo) {
-      case EVERYONE: return CertificateType.UUID_AND_E164;
-      case CONTACTS: return recipient.isSystemContact() ? CertificateType.UUID_AND_E164 : CertificateType.UUID_ONLY;
-      case NOBODY  : return CertificateType.UUID_ONLY;
-      default      : throw new AssertionError();
+  private static @NonNull CertificateType getUnidentifiedAccessCertificateType() {
+    if (SignalStore.phoneNumberPrivacy().isPhoneNumberSharingEnabled()) {
+      return CertificateType.ACI_AND_E164;
+    } else {
+      return CertificateType.ACI_ONLY;
     }
   }
 
-  private static byte[] getUnidentifiedAccessCertificate(@NonNull Recipient recipient) {
+  private static byte[] getUnidentifiedAccessCertificate() {
     return SignalStore.certificateValues()
-                      .getUnidentifiedAccessCertificate(getUnidentifiedAccessCertificateType(recipient));
+                      .getUnidentifiedAccessCertificate(getUnidentifiedAccessCertificateType());
   }
 
   private static @Nullable UnidentifiedAccess getTargetUnidentifiedAccess(@NonNull Recipient recipient, @NonNull byte[] certificate, boolean isForStory) throws InvalidCertificateException {
@@ -188,7 +175,7 @@ public class UnidentifiedAccessUtil {
             accessKey = UNRESTRICTED_KEY;
           }
         } else {
-          accessKey = UnidentifiedAccess.deriveAccessKeyFrom(theirProfileKey);
+          accessKey = theirProfileKey.deriveAccessKey();
         }
         break;
       case DISABLED:
@@ -198,7 +185,7 @@ public class UnidentifiedAccessUtil {
         if (theirProfileKey == null) {
           accessKey = null;
         } else {
-          accessKey = UnidentifiedAccess.deriveAccessKeyFrom(theirProfileKey);
+          accessKey = theirProfileKey.deriveAccessKey();
         }
         break;
       case UNRESTRICTED:

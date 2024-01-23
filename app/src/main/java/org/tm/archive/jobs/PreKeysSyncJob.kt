@@ -146,7 +146,6 @@ class PreKeysSyncJob private constructor(parameters: Parameters) : BaseJob(param
       accountManager.setPreKeys(
         PreKeyUpload(
           serviceIdType = serviceIdType,
-          identityKey = protocolStore.identityKeyPair.publicKey,
           signedPreKey = signedPreKeyToUpload,
           oneTimeEcPreKeys = oneTimeEcPreKeysToUpload,
           lastResortKyberPreKey = lastResortKyberPreKeyToUpload,
@@ -188,7 +187,7 @@ class PreKeysSyncJob private constructor(parameters: Parameters) : BaseJob(param
     val signedPreKeyRegistered = metadataStore.isSignedPreKeyRegistered && metadataStore.activeSignedPreKeyId >= 0
     val timeSinceLastSignedPreKeyRotation = System.currentTimeMillis() - metadataStore.lastSignedPreKeyRotationTime
 
-    return if (!signedPreKeyRegistered || timeSinceLastSignedPreKeyRotation >= REFRESH_INTERVAL) {
+    return if (!signedPreKeyRegistered || timeSinceLastSignedPreKeyRotation >= REFRESH_INTERVAL || timeSinceLastSignedPreKeyRotation < 0) {
       log(serviceIdType, "Rotating signed prekey. SignedPreKeyRegistered: $signedPreKeyRegistered, TimeSinceLastRotation: $timeSinceLastSignedPreKeyRotation ms (${timeSinceLastSignedPreKeyRotation.milliseconds.toDouble(DurationUnit.DAYS)} days)")
       PreKeyUtil.generateAndStoreSignedPreKey(protocolStore, metadataStore)
     } else {
@@ -201,7 +200,7 @@ class PreKeysSyncJob private constructor(parameters: Parameters) : BaseJob(param
     val lastResortRegistered = metadataStore.lastResortKyberPreKeyId >= 0
     val timeSinceLastSignedPreKeyRotation = System.currentTimeMillis() - metadataStore.lastResortKyberPreKeyRotationTime
 
-    return if (!lastResortRegistered || timeSinceLastSignedPreKeyRotation >= REFRESH_INTERVAL) {
+    return if (!lastResortRegistered || timeSinceLastSignedPreKeyRotation >= REFRESH_INTERVAL || timeSinceLastSignedPreKeyRotation < 0) {
       log(serviceIdType, "Rotating last-resort kyber prekey. TimeSinceLastRotation: $timeSinceLastSignedPreKeyRotation ms (${timeSinceLastSignedPreKeyRotation.milliseconds.toDouble(DurationUnit.DAYS)} days)")
       PreKeyUtil.generateAndStoreLastResortKyberPreKey(protocolStore, metadataStore)
     } else {

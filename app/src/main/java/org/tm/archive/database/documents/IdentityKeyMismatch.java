@@ -19,9 +19,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.IdentityKey;
 import org.signal.libsignal.protocol.InvalidKeyException;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -51,11 +52,11 @@ public class IdentityKeyMismatch {
   }
 
   @JsonIgnore
-  public RecipientId getRecipientId(@NonNull Context context) {
+  public RecipientId getRecipientId() {
     if (!TextUtils.isEmpty(recipientId)) {
       return RecipientId.from(recipientId);
     } else {
-      return Recipient.external(context, address).getId();
+      return Recipient.external(ApplicationDependencies.getApplication(), address).getId();
     }
   }
 
@@ -83,7 +84,7 @@ public class IdentityKeyMismatch {
     public void serialize(IdentityKey value, JsonGenerator jsonGenerator, SerializerProvider serializers)
         throws IOException
     {
-      jsonGenerator.writeString(Base64.encodeBytes(value.serialize()));
+      jsonGenerator.writeString(Base64.encodeWithPadding(value.serialize()));
     }
   }
 

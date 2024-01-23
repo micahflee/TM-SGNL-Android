@@ -3,9 +3,7 @@ package org.tm.archive.megaphone;
 import androidx.annotation.VisibleForTesting;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.util.TextSecurePreferences;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;

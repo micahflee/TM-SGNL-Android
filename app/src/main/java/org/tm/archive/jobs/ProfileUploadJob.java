@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;

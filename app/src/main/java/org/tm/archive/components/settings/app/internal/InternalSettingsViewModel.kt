@@ -3,7 +3,9 @@ package org.tm.archive.components.settings.app.internal
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.reactivex.rxjava3.core.Observable
 import org.signal.ringrtc.CallManager
+import org.tm.archive.database.model.RemoteMegaphoneRecord
 import org.tm.archive.jobs.StoryOnboardingDownloadJob
 import org.tm.archive.keyvalue.InternalValues
 import org.tm.archive.keyvalue.SignalStore
@@ -19,6 +21,14 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
   init {
     repository.getEmojiVersionInfo { version ->
       store.update { it.copy(emojiVersion = version) }
+    }
+
+    val pendingOneTimeDonation: Observable<Boolean> = SignalStore.donationsValues().observablePendingOneTimeDonation
+      .distinctUntilChanged()
+      .map { it.isPresent }
+
+    store.update(pendingOneTimeDonation) { pending, state ->
+      state.copy(hasPendingOneTimeDonation = pending)
     }
   }
 
@@ -104,13 +114,26 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
     refresh()
   }
 
-  fun setUseConversationItemV2(enabled: Boolean) {
-    SignalStore.internalValues().setUseConversationItemV2(enabled)
+  fun setInternalCallingDisableLBRed(enabled: Boolean) {
+    preferenceDataStore.putBoolean(InternalValues.CALLING_DISABLE_LBRED, enabled)
+    refresh()
+  }
+
+  fun setUseConversationItemV2Media(enabled: Boolean) {
+    SignalStore.internalValues().setUseConversationItemV2Media(enabled)
     refresh()
   }
 
   fun addSampleReleaseNote() {
     repository.addSampleReleaseNote()
+  }
+
+  fun addRemoteDonateMegaphone() {
+    repository.addRemoteMegaphone(RemoteMegaphoneRecord.ActionId.DONATE)
+  }
+
+  fun addRemoteDonateFriendMegaphone() {
+    repository.addRemoteMegaphone(RemoteMegaphoneRecord.ActionId.DONATE_FOR_FRIEND)
   }
 
   fun refresh() {
@@ -129,6 +152,7 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
     callingAudioProcessingMethod = SignalStore.internalValues().callingAudioProcessingMethod(),
     callingDataMode = SignalStore.internalValues().callingDataMode(),
     callingDisableTelecom = SignalStore.internalValues().callingDisableTelecom(),
+    callingDisableLBRed = SignalStore.internalValues().callingDisableLBRed(),
     useBuiltInEmojiSet = SignalStore.internalValues().forceBuiltInEmoji(),
     emojiVersion = null,
     removeSenderKeyMinimium = SignalStore.internalValues().removeSenderKeyMinimum(),
@@ -136,7 +160,8 @@ class InternalSettingsViewModel(private val repository: InternalSettingsReposito
     disableStorageService = SignalStore.internalValues().storageServiceDisabled(),
     canClearOnboardingState = SignalStore.storyValues().hasDownloadedOnboardingStory && Stories.isFeatureEnabled(),
     pnpInitialized = SignalStore.misc().hasPniInitializedDevices(),
-    useConversationItemV2 = SignalStore.internalValues().useConversationItemV2()
+    useConversationItemV2ForMedia = SignalStore.internalValues().useConversationItemV2Media(),
+    hasPendingOneTimeDonation = SignalStore.donationsValues().getPendingOneTimeDonation() != null
   )
 
   fun onClearOnboardingState() {

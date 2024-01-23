@@ -17,7 +17,7 @@ import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
@@ -76,7 +76,7 @@ public class MultiDeviceVerifiedUpdateJob extends BaseJob {
   @Override
   public @Nullable byte[] serialize() {
     return new JsonJobData.Builder().putString(KEY_DESTINATION, destination.serialize())
-                                    .putString(KEY_IDENTITY_KEY, Base64.encodeBytes(identityKey))
+                                    .putString(KEY_IDENTITY_KEY, Base64.encodeWithPadding(identityKey))
                                     .putInt(KEY_VERIFIED_STATUS, verifiedStatus.toInt())
                                     .putLong(KEY_TIMESTAMP, timestamp)
                                     .serialize();

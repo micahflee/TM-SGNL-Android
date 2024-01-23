@@ -1,6 +1,5 @@
 package org.tm.archive
 
-import org.tm.archive.util.FeatureFlags
 import org.whispersystems.signalservice.api.account.AccountAttributes
 
 object AppCapabilities {
@@ -17,7 +16,7 @@ object AppCapabilities {
       changeNumber = true,
       stories = true,
       giftBadges = true,
-      pni = FeatureFlags.phoneNumberPrivacy(),
+      pni = true,
       paymentActivation = true
     )
   }

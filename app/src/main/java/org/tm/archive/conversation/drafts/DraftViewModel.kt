@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
+import org.signal.core.util.Base64
 import org.tm.archive.components.location.SignalPlace
 import org.tm.archive.database.DraftTable.Draft
 import org.tm.archive.database.MentionUtil
@@ -12,7 +13,6 @@ import org.tm.archive.database.model.MessageId
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.mms.QuoteId
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.util.Base64
 import org.tm.archive.util.rx.RxStore
 
 /**
@@ -62,7 +62,7 @@ class DraftViewModel @JvmOverloads constructor(
       } else if (mentionRanges == null) {
         styleBodyRanges
       } else {
-        styleBodyRanges.toBuilder().addAllRanges(mentionRanges.rangesList).build()
+        styleBodyRanges.newBuilder().apply { ranges += mentionRanges.ranges }.build()
       }
 
       saveDrafts(it.copy(textDraft = text.toTextDraft(), bodyRangesDraft = bodyRanges?.toDraft(), messageEditDraft = Draft(Draft.MESSAGE_EDIT, messageId.serialize())))
@@ -84,7 +84,7 @@ class DraftViewModel @JvmOverloads constructor(
       } else if (mentionRanges == null) {
         styleBodyRanges
       } else {
-        styleBodyRanges.toBuilder().addAllRanges(mentionRanges.rangesList).build()
+        styleBodyRanges.newBuilder().apply { ranges += mentionRanges.ranges }.build()
       }
 
       saveDrafts(it.copy(textDraft = text.toTextDraft(), bodyRangesDraft = bodyRanges?.toDraft()))
@@ -148,5 +148,5 @@ private fun String.toTextDraft(): Draft? {
 }
 
 private fun BodyRangeList.toDraft(): Draft {
-  return Draft(Draft.BODY_RANGES, Base64.encodeBytes(toByteArray()))
+  return Draft(Draft.BODY_RANGES, Base64.encodeWithPadding(encode()))
 }

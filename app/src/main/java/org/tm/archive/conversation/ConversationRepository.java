@@ -1,7 +1,6 @@
 package org.tm.archive.conversation;
 
 import android.content.Context;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
@@ -9,10 +8,7 @@ import androidx.annotation.WorkerThread;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.contacts.sync.ContactDiscovery;
-import org.tm.archive.database.DatabaseObserver;
 import org.tm.archive.database.MessageTable;
-import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadTable;
 import org.tm.archive.database.model.GroupRecord;
@@ -23,13 +19,8 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.mms.TextSlide;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
-import org.tm.archive.util.BubbleUtil;
-import org.tm.archive.util.ConversationUtil;
 import org.tm.archive.util.MessageRecordUtil;
-import org.tm.archive.util.TextSecurePreferences;
-import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.io.IOException;
@@ -40,7 +31,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 

@@ -12,6 +12,7 @@ import androidx.core.app.ShareCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.load.Options
 import io.reactivex.rxjava3.core.Single
+import org.signal.core.util.Base64
 import org.signal.core.util.DimensionUnit
 import org.signal.core.util.concurrent.SimpleTask
 import org.signal.core.util.logging.Log
@@ -19,15 +20,14 @@ import org.tm.archive.R
 import org.tm.archive.attachments.Attachment
 import org.tm.archive.components.menu.ActionItem
 import org.tm.archive.components.menu.SignalContextMenu
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.databaseprotos.StoryTextPost
 import org.tm.archive.providers.BlobProvider
 import org.tm.archive.stories.StoryTextPostModel
 import org.tm.archive.stories.landing.StoriesLandingItem
 import org.tm.archive.stories.viewer.page.StoryPost
 import org.tm.archive.stories.viewer.page.StoryViewerPageState
-import org.tm.archive.util.Base64
 import org.tm.archive.util.BitmapUtil
 import org.tm.archive.util.DeleteDialog
 import org.tm.archive.util.MediaUtil
@@ -49,7 +49,7 @@ object StoryContextMenu {
   }
 
   fun save(context: Context, messageRecord: MessageRecord) {
-    val mediaMessageRecord = messageRecord as? MediaMmsMessageRecord
+    val mediaMessageRecord = messageRecord as? MmsMessageRecord
     val uri: Uri? = mediaMessageRecord?.slideDeck?.firstSlide?.uri
     val contentType: String? = mediaMessageRecord?.slideDeck?.firstSlide?.contentType
 
@@ -92,9 +92,9 @@ object StoryContextMenu {
       .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, saveAttachment)
   }
 
-  fun share(fragment: Fragment, messageRecord: MediaMmsMessageRecord) {
+  fun share(fragment: Fragment, messageRecord: MmsMessageRecord) {
     val intent = if (messageRecord.storyType.isTextStory) {
-      val textStoryBody = StoryTextPost.parseFrom(Base64.decode(messageRecord.body)).body
+      val textStoryBody = StoryTextPost.ADAPTER.decode(Base64.decode(messageRecord.body)).body
       val linkUrl = messageRecord.linkPreviews.firstOrNull()?.url ?: ""
       val shareText = "$textStoryBody $linkUrl".trim()
 

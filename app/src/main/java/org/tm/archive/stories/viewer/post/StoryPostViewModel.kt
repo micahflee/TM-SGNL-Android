@@ -8,10 +8,10 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import org.signal.core.util.Base64
 import org.signal.core.util.logging.Log
 import org.tm.archive.database.model.databaseprotos.StoryTextPost
 import org.tm.archive.stories.viewer.page.StoryPost
-import org.tm.archive.util.Base64
 import org.tm.archive.util.rx.RxStore
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
@@ -41,18 +41,18 @@ class StoryPostViewModel(private val repository: StoryTextPostRepository) : View
           store.update { StoryPostState.None() }
         } else if (storyPostContent.isVideo()) {
           store.update {
-            val shouldSkipTransform = storyPostContent.attachment.transformProperties.shouldSkipTransform()
+            val shouldSkipTransform = storyPostContent.attachment.transformProperties?.shouldSkipTransform() == true
 
             val clipStart: Duration = if (shouldSkipTransform) {
               0L.microseconds
             } else {
-              storyPostContent.attachment.transformProperties.videoTrimStartTimeUs.microseconds
+              storyPostContent.attachment.transformProperties?.videoTrimStartTimeUs?.microseconds ?: 0L.microseconds
             }
 
             val clipEnd: Duration = if (shouldSkipTransform) {
               0L.microseconds
             } else {
-              storyPostContent.attachment.transformProperties.videoTrimEndTimeUs.microseconds
+              storyPostContent.attachment.transformProperties?.videoTrimEndTimeUs?.microseconds ?: 0L.microseconds
             }
 
             StoryPostState.VideoPost(
@@ -81,7 +81,7 @@ class StoryPostViewModel(private val repository: StoryTextPostRepository) : View
     disposables += Single.zip(typeface, repository.getRecord(recordId), ::Pair).subscribeBy(
       onSuccess = { (t, record) ->
         val text: StoryTextPost = if (record.body.isNotEmpty()) {
-          StoryTextPost.parseFrom(Base64.decode(record.body))
+          StoryTextPost.ADAPTER.decode(Base64.decode(record.body))
         } else {
           throw Exception("Text post message body is empty.")
         }

@@ -1,9 +1,9 @@
 package org.tm.archive.components.settings.conversation
 
-import android.database.Cursor
 import org.tm.archive.components.settings.conversation.preferences.ButtonStripPreference
 import org.tm.archive.components.settings.conversation.preferences.CallPreference
 import org.tm.archive.components.settings.conversation.preferences.LegacyGroupPreference
+import org.tm.archive.database.MediaTable
 import org.tm.archive.database.model.IdentityRecord
 import org.tm.archive.database.model.StoryViewState
 import org.tm.archive.groups.GroupId
@@ -18,7 +18,7 @@ data class ConversationSettingsState(
   val buttonStripState: ButtonStripPreference.State = ButtonStripPreference.State(),
   val disappearingMessagesLifespan: Int = 0,
   val canModifyBlockedState: Boolean = false,
-  val sharedMedia: Cursor? = null,
+  val sharedMedia: List<MediaTable.MediaRecord> = emptyList(),
   val sharedMediaIds: List<Long> = listOf(),
   val displayInternalRecipientDetails: Boolean = false,
   val calls: List<CallPreference.Model> = emptyList(),

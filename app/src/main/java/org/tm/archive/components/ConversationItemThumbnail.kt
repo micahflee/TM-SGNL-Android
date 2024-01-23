@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023 Signal Messenger, LLC
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 package org.tm.archive.components
 
 import android.content.Context
@@ -86,7 +91,7 @@ class ConversationItemThumbnail @JvmOverloads constructor(
     }
   }
 
-  override fun onSaveInstanceState(): Parcelable? {
+  override fun onSaveInstanceState(): Parcelable {
     val root = super.onSaveInstanceState()
     return bundleOf(
       STATE_ROOT to root,
@@ -246,10 +251,28 @@ class ConversationItemThumbnail @JvmOverloads constructor(
     state.applyState(thumbnail, album)
   }
 
-  fun setDownloadClickListener(listener: SlidesClickedListener?) {
+  fun setStartTransferClickListener(listener: SlidesClickedListener?) {
     state = state.copy(
-      thumbnailViewState = state.thumbnailViewState.copy(downloadClickListener = listener),
-      albumViewState = state.albumViewState.copy(downloadClickListener = listener)
+      thumbnailViewState = state.thumbnailViewState.copy(startTransferClickListener = listener),
+      albumViewState = state.albumViewState.copy(startTransferClickListener = listener)
+    )
+
+    state.applyState(thumbnail, album)
+  }
+
+  fun setPlayVideoClickListener(listener: SlideClickListener?) {
+    state = state.copy(
+      thumbnailViewState = state.thumbnailViewState.copy(playVideoClickListener = listener),
+      albumViewState = state.albumViewState.copy(playVideoClickListener = listener)
+    )
+
+    state.applyState(thumbnail, album)
+  }
+
+  fun setCancelTransferClickListener(listener: SlidesClickedListener?) {
+    state = state.copy(
+      thumbnailViewState = state.thumbnailViewState.copy(cancelTransferClickListener = listener),
+      albumViewState = state.albumViewState.copy(cancelTransferClickListener = listener)
     )
 
     state.applyState(thumbnail, album)

@@ -9,7 +9,6 @@ import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;

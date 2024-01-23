@@ -8,9 +8,8 @@
     android:fillViewport="true"
     tools:context=".registration.fragments.EnterPhoneNumberFragment"
     tools:viewBindingIgnore="true">
-    <!--**TM_SA** add id to constraint layout-->
+
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraint_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp">
 
@@ -58,7 +57,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/number"
-                style="@style/Widget.Signal.TextInputLayout.Registration"
+                style="@style/Widget.Signal.TextInputLayout"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

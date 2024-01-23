@@ -14,7 +14,8 @@ public class TooltipValues extends SignalStoreValues {
   private static final String GROUP_CALL_TOOLTIP_DISPLAY_COUNT = "tooltip.group_call_tooltip_display_count";
   private static final String MULTI_FORWARD_DIALOG             = "tooltip.multi.forward.dialog";
   private static final String BUBBLE_OPT_OUT                   = "tooltip.bubble.opt.out";
-
+  private static final String PROFILE_SETTINGS_QR_CODE         = "tooltip.profile_settings_qr_code";
+  private static final String CALLING_SWITCH_CAMERA            = "tooltip.calling.switch_camera";
 
   TooltipValues(@NonNull KeyValueStore store) {
     super(store);
@@ -72,5 +73,21 @@ public class TooltipValues extends SignalStoreValues {
 
   public void markBubbleOptOutTooltipSeen() {
     putBoolean(BUBBLE_OPT_OUT, true);
+  }
+
+  public boolean showProfileSettingsQrCodeTooltop() {
+    return getBoolean(PROFILE_SETTINGS_QR_CODE, true);
+  }
+
+  public void markProfileSettingsQrCodeTooltipSeen() {
+    putBoolean(PROFILE_SETTINGS_QR_CODE, false);
+  }
+
+  public boolean showCallingSwitchCameraTooltip() {
+    return getBoolean(CALLING_SWITCH_CAMERA, true);
+  }
+
+  public void markCallingSwitchCameraTooltipSeen() {
+    putBoolean(CALLING_SWITCH_CAMERA, false);
   }
 }

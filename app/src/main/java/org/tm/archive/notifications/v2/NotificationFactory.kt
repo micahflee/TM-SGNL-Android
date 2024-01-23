@@ -223,7 +223,7 @@ object NotificationFactory {
     val builder: NotificationBuilder = NotificationBuilder.create(context)
 
     builder.apply {
-      setSmallIcon(R.drawable.ic_notification)//**TM_SA**// change icon
+      setSmallIcon(R.drawable.ic_notification)
       setColor(ContextCompat.getColor(context, R.color.core_ultramarine))
       setCategory(NotificationCompat.CATEGORY_MESSAGE)
       setGroup(DefaultMessageNotifier.NOTIFICATION_GROUP)

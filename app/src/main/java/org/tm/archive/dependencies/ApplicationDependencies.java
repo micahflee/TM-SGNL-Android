@@ -10,7 +10,6 @@ import androidx.annotation.VisibleForTesting;
 import org.signal.core.util.concurrent.DeadlockDetector;
 import org.signal.libsignal.zkgroup.profiles.ClientZkProfileOperations;
 import org.signal.libsignal.zkgroup.receipts.ClientZkReceiptOperations;
-import org.tm.archive.KbsEnclave;
 import org.tm.archive.components.TypingStatusRepository;
 import org.tm.archive.components.TypingStatusSender;
 import org.tm.archive.crypto.storage.SignalServiceDataStoreImpl;
@@ -41,12 +40,10 @@ import org.tm.archive.shakereport.ShakeToReport;
 import org.tm.archive.util.AppForegroundObserver;
 import org.tm.archive.util.EarlyMessageCache;
 import org.tm.archive.util.FrameRateTracker;
-import org.tm.archive.util.IasKeyStore;
 import org.tm.archive.video.exo.ExoPlayerPool;
 import org.tm.archive.video.exo.GiphyMp4Cache;
 import org.tm.archive.video.exo.SimpleExoPlayerPool;
 import org.tm.archive.webrtc.audio.AudioManagerCompat;
-import org.whispersystems.signalservice.api.KeyBackupService;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.SignalServiceDataStore;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
@@ -63,7 +60,6 @@ import org.whispersystems.signalservice.internal.util.BlacklistingTrustManager;
 import org.whispersystems.signalservice.internal.util.Util;
 
 import java.security.KeyManagementException;
-import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.function.Supplier;
 
@@ -197,10 +193,6 @@ public class ApplicationDependencies {
     }
 
     return groupsV2Operations;
-  }
-
-  public static @NonNull KeyBackupService getKeyBackupService(@NonNull KbsEnclave enclave) {
-    return provider.provideKeyBackupService(getSignalServiceAccountManager(), IasKeyStore.getIasKeyStore(application), enclave);
   }
 
   public static @NonNull GroupsV2StateProcessor getGroupsV2StateProcessor() {
@@ -724,7 +716,6 @@ public class ApplicationDependencies {
     @NonNull ProfileService provideProfileService(@NonNull ClientZkProfileOperations profileOperations, @NonNull SignalServiceMessageReceiver signalServiceMessageReceiver, @NonNull SignalWebSocket signalWebSocket);
     @NonNull DeadlockDetector provideDeadlockDetector();
     @NonNull ClientZkReceiptOperations provideClientZkReceiptOperations(@NonNull SignalServiceConfiguration signalServiceConfiguration);
-    @NonNull KeyBackupService provideKeyBackupService(@NonNull SignalServiceAccountManager signalServiceAccountManager, @NonNull KeyStore keyStore, @NonNull KbsEnclave enclave);
     @NonNull ScheduledMessageManager provideScheduledMessageManager();
   }
 }

@@ -8,7 +8,6 @@ import org.signal.libsignal.protocol.state.SignalProtocolStore;
 import org.tm.archive.crypto.PreKeyUtil;
 import org.tm.archive.crypto.storage.PreKeyMetadataStore;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.keyvalue.SignalStore;
 

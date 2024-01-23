@@ -1,6 +1,6 @@
 package org.tm.archive.components.settings.app.usernamelinks.main
 
-import org.tm.archive.components.settings.app.usernamelinks.QrCodeData
+import org.tm.archive.components.settings.app.usernamelinks.QrCodeState
 import org.tm.archive.components.settings.app.usernamelinks.UsernameQrCodeColorScheme
 
 /**
@@ -9,10 +9,11 @@ import org.tm.archive.components.settings.app.usernamelinks.UsernameQrCodeColorS
 data class UsernameLinkSettingsState(
   val activeTab: ActiveTab,
   val username: String,
-  val usernameLink: String,
-  val qrCodeData: QrCodeData?,
+  val usernameLinkState: UsernameLinkState,
+  val qrCodeState: QrCodeState,
   val qrCodeColorScheme: UsernameQrCodeColorScheme,
   val qrScanResult: QrScanResult? = null,
+  val usernameLinkResetResult: UsernameLinkResetResult? = null,
   val indeterminateProgress: Boolean = false
 ) {
   enum class ActiveTab {

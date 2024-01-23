@@ -14,8 +14,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.signal.core.util.Base64
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.exists
+import org.signal.core.util.orNull
 import org.signal.core.util.requireLong
 import org.signal.core.util.requireNonNullString
 import org.signal.core.util.select
@@ -34,12 +36,10 @@ import org.tm.archive.database.model.databaseprotos.ThreadMergeEvent
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.notifications.profiles.NotificationProfile
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.sms.IncomingTextMessage
-import org.tm.archive.util.Base64
 import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.FeatureFlagsAccessor
 import org.tm.archive.util.Util
@@ -140,6 +140,30 @@ class RecipientTableTest_getAndPossiblyMerge {
 
     test("no match, no data", exception = java.lang.IllegalArgumentException::class.java) {
       process(null, null, null)
+    }
+
+    test("pni matches, pni+aci provided, no pni session") {
+      given(E164_A, PNI_A, null)
+      process(null, PNI_A, ACI_A)
+      expect(E164_A, PNI_A, ACI_A)
+
+      expectNoSessionSwitchoverEvent()
+    }
+
+    test("pni matches, pni+aci provided, pni session") {
+      given(E164_A, PNI_A, null, pniSession = true)
+      process(null, PNI_A, ACI_A)
+      expect(E164_A, PNI_A, ACI_A)
+
+      expectSessionSwitchoverEvent(E164_A)
+    }
+
+    test("pni matches, pni+aci provided, pni session, pni-verified") {
+      given(E164_A, PNI_A, null, pniSession = true)
+      process(null, PNI_A, ACI_A, pniVerified = true)
+      expect(E164_A, PNI_A, ACI_A)
+
+      expectNoSessionSwitchoverEvent()
     }
 
     test("no match, all fields") {
@@ -502,6 +526,18 @@ class RecipientTableTest_getAndPossiblyMerge {
       expectNoSessionSwitchoverEvent()
     }
 
+    test("steal, e164+pni+aci * pni+aci, all provided, aci sessions but not pni sessions, no SSE expected") {
+      given(E164_A, PNI_A, ACI_A, createThread = true, aciSession = true, pniSession = false)
+      given(null, PNI_B, ACI_B, createThread = false, aciSession = true, pniSession = false)
+
+      process(E164_A, PNI_B, ACI_A)
+
+      expect(E164_A, PNI_B, ACI_A)
+      expect(null, null, ACI_B)
+
+      expectNoSessionSwitchoverEvent()
+    }
+
     test("merge, e164 & pni & aci, all provided") {
       given(E164_A, null, null)
       given(null, PNI_A, null)
@@ -789,9 +825,9 @@ class RecipientTableTest_getAndPossiblyMerge {
     val smsId2: Long = SignalDatabase.messages.insertMessageInbox(smsMessage(sender = recipientIdE164, time = 1, body = "1")).get().messageId
     val smsId3: Long = SignalDatabase.messages.insertMessageInbox(smsMessage(sender = recipientIdAci, time = 2, body = "2")).get().messageId
 
-    val mmsId1: Long = SignalDatabase.messages.insertSecureDecryptedMessageInbox(mmsMessage(sender = recipientIdAci, time = 3, body = "3"), -1).get().messageId
-    val mmsId2: Long = SignalDatabase.messages.insertSecureDecryptedMessageInbox(mmsMessage(sender = recipientIdE164, time = 4, body = "4"), -1).get().messageId
-    val mmsId3: Long = SignalDatabase.messages.insertSecureDecryptedMessageInbox(mmsMessage(sender = recipientIdAci, time = 5, body = "5"), -1).get().messageId
+    val mmsId1: Long = SignalDatabase.messages.insertMessageInbox(mmsMessage(sender = recipientIdAci, time = 3, body = "3"), -1).get().messageId
+    val mmsId2: Long = SignalDatabase.messages.insertMessageInbox(mmsMessage(sender = recipientIdE164, time = 4, body = "4"), -1).get().messageId
+    val mmsId3: Long = SignalDatabase.messages.insertMessageInbox(mmsMessage(sender = recipientIdAci, time = 5, body = "5"), -1).get().messageId
 
     val threadIdAci: Long = SignalDatabase.threads.getThreadIdFor(recipientIdAci)!!
     val threadIdE164: Long = SignalDatabase.threads.getThreadIdFor(recipientIdE164)!!
@@ -911,12 +947,30 @@ class RecipientTableTest_getAndPossiblyMerge {
     MatcherAssert.assertThat("Distribution list should have updated $recipientIdE164 to $recipientIdAci", updatedList.members, Matchers.containsInAnyOrder(recipientIdAci, recipientIdAciB))
   }
 
-  private fun smsMessage(sender: RecipientId, time: Long = 0, body: String = "", groupId: Optional<GroupId> = Optional.empty()): IncomingTextMessage {
-    return IncomingTextMessage(sender, 1, time, time, time, body, groupId, 0, true, null)
+  private fun smsMessage(sender: RecipientId, time: Long = 0, body: String = "", groupId: Optional<GroupId> = Optional.empty()): IncomingMessage {
+    return IncomingMessage(
+      type = MessageType.NORMAL,
+      from = sender,
+      sentTimeMillis = time,
+      serverTimeMillis = time,
+      receivedTimeMillis = time,
+      body = body,
+      groupId = groupId.orNull(),
+      isUnidentified = true
+    )
   }
 
-  private fun mmsMessage(sender: RecipientId, time: Long = 0, body: String = "", groupId: Optional<GroupId> = Optional.empty()): IncomingMediaMessage {
-    return IncomingMediaMessage(sender, groupId, body, time, time, time, emptyList(), 0, 0, false, false, true, Optional.empty(), false, false)
+  private fun mmsMessage(sender: RecipientId, time: Long = 0, body: String = "", groupId: Optional<GroupId> = Optional.empty()): IncomingMessage {
+    return IncomingMessage(
+      type = MessageType.NORMAL,
+      from = sender,
+      groupId = groupId.orNull(),
+      body = body,
+      sentTimeMillis = time,
+      receivedTimeMillis = time,
+      serverTimeMillis = time,
+      isUnidentified = true
+    )
   }
 
   private fun identityKey(value: Byte): IdentityKey {
@@ -1228,7 +1282,7 @@ class RecipientTableTest_getAndPossiblyMerge {
       .use { cursor: Cursor ->
         if (cursor.moveToFirst()) {
           val bytes = Base64.decode(cursor.requireNonNullString(MessageTable.BODY))
-          ThreadMergeEvent.parseFrom(bytes)
+          ThreadMergeEvent.ADAPTER.decode(bytes)
         } else {
           null
         }
@@ -1246,7 +1300,7 @@ class RecipientTableTest_getAndPossiblyMerge {
       .use { cursor: Cursor ->
         if (cursor.moveToFirst()) {
           val bytes = Base64.decode(cursor.requireNonNullString(MessageTable.BODY))
-          SessionSwitchoverEvent.parseFrom(bytes)
+          SessionSwitchoverEvent.ADAPTER.decode(bytes)
         } else {
           null
         }

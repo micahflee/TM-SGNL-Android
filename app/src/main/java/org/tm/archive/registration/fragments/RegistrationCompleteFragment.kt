@@ -19,7 +19,7 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.lock.v2.CreateSvrPinActivity
 import org.tm.archive.pin.PinRestoreActivity
 import org.tm.archive.profiles.AvatarHelper
-import org.tm.archive.profiles.edit.EditProfileActivity
+import org.tm.archive.profiles.edit.CreateProfileActivity
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.registration.RegistrationUtil
 import org.tm.archive.registration.viewmodel.RegistrationViewModel
@@ -70,7 +70,7 @@ class RegistrationCompleteFragment : LoggingFragment() {
       }
 
       if (needsProfile) {
-        startIntent = chainIntents(EditProfileActivity.getIntentForUserProfile(activity), startIntent)
+        startIntent = chainIntents(CreateProfileActivity.getIntentForUserProfile(activity), startIntent)
       }
 
       activity.startActivity(startIntent)

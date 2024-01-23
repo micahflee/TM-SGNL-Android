@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import androidx.core.content.contentValuesOf
+import org.signal.core.util.Base64
 import org.signal.core.util.CursorUtil
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.delete
@@ -23,7 +24,6 @@ import org.tm.archive.database.model.StoryType
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.storage.StorageRecordUpdate
 import org.tm.archive.storage.StorageSyncHelper
-import org.tm.archive.util.Base64
 import org.whispersystems.signalservice.api.push.DistributionId
 import org.whispersystems.signalservice.api.storage.SignalStoryDistributionListRecord
 import org.whispersystems.signalservice.api.util.UuidUtil
@@ -55,7 +55,7 @@ class DistributionListTables constructor(context: Context?, databaseHelper: Sign
         contentValuesOf(
           RecipientTable.TYPE to RecipientTable.RecipientType.DISTRIBUTION_LIST.id,
           RecipientTable.DISTRIBUTION_LIST_ID to DistributionListId.MY_STORY_ID,
-          RecipientTable.STORAGE_SERVICE_ID to Base64.encodeBytes(StorageSyncHelper.generateKey()),
+          RecipientTable.STORAGE_SERVICE_ID to Base64.encodeWithPadding(StorageSyncHelper.generateKey()),
           RecipientTable.PROFILE_SHARING to 1
         )
       )
@@ -88,9 +88,9 @@ class DistributionListTables constructor(context: Context?, databaseHelper: Sign
     val CREATE_TABLE = """
       CREATE TABLE $TABLE_NAME (
         $ID INTEGER PRIMARY KEY AUTOINCREMENT,
-        $NAME TEXT UNIQUE NOT NULL,
+        $NAME TEXT NOT NULL,
         $DISTRIBUTION_ID TEXT UNIQUE NOT NULL,
-        $RECIPIENT_ID INTEGER UNIQUE REFERENCES ${RecipientTable.TABLE_NAME} (${RecipientTable.ID}),
+        $RECIPIENT_ID INTEGER UNIQUE REFERENCES ${RecipientTable.TABLE_NAME} (${RecipientTable.ID}) ON DELETE CASCADE,
         $ALLOWS_REPLIES INTEGER DEFAULT 1,
         $DELETION_TIMESTAMP INTEGER DEFAULT 0,
         $IS_UNKNOWN INTEGER DEFAULT 0,
@@ -106,7 +106,7 @@ class DistributionListTables constructor(context: Context?, databaseHelper: Sign
     val LIST_UI_PROJECTION = arrayOf(ID, NAME, RECIPIENT_ID, ALLOWS_REPLIES, IS_UNKNOWN, PRIVACY_MODE, SEARCH_NAME)
   }
 
-  private object MembershipTable {
+  object MembershipTable {
     const val TABLE_NAME = "distribution_list_member"
 
     const val ID = "_id"
@@ -118,7 +118,7 @@ class DistributionListTables constructor(context: Context?, databaseHelper: Sign
       CREATE TABLE $TABLE_NAME (
         $ID INTEGER PRIMARY KEY AUTOINCREMENT,
         $LIST_ID INTEGER NOT NULL REFERENCES ${ListTable.TABLE_NAME} (${ListTable.ID}) ON DELETE CASCADE,
-        $RECIPIENT_ID INTEGER NOT NULL REFERENCES ${RecipientTable.TABLE_NAME} (${RecipientTable.ID}),
+        $RECIPIENT_ID INTEGER NOT NULL REFERENCES ${RecipientTable.TABLE_NAME} (${RecipientTable.ID}) ON DELETE CASCADE,
         $PRIVACY_MODE INTEGER DEFAULT 0
       )
     """

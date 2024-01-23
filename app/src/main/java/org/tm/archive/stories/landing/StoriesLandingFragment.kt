@@ -39,7 +39,6 @@ import org.tm.archive.components.settings.configure
 import org.tm.archive.conversation.ConversationIntents
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.StoryViewState
 import org.tm.archive.dependencies.ApplicationDependencies
@@ -339,7 +338,7 @@ class StoriesLandingFragment : DSLSettingsFragment(layoutId = R.layout.stories_l
         }
       },
       onShareStory = {
-        StoryContextMenu.share(this@StoriesLandingFragment, it.data.primaryStory.messageRecord as MediaMmsMessageRecord)
+        StoryContextMenu.share(this@StoriesLandingFragment, it.data.primaryStory.messageRecord as MmsMessageRecord)
       },
       onSave = {
         StoryContextMenu.save(requireContext(), it.data.primaryStory.messageRecord)

@@ -40,6 +40,7 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientExporter;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
+import org.tm.archive.recipients.ui.about.AboutSheet;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.DrawableUtil;
@@ -192,7 +193,13 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
       } else if (recipient.showVerified()) {
         SpanUtil.appendCenteredImageSpan(nameBuilder, ContextUtil.requireDrawable(requireContext(), R.drawable.ic_official_28), 28, 28);
       }
+
+      SpanUtil.appendCenteredImageSpan(nameBuilder, ContextUtil.requireDrawable(requireContext(), R.drawable.symbol_chevron_right_24_color_on_secondary_container), 24, 24);
       fullName.setText(nameBuilder);
+      fullName.setOnClickListener(v -> {
+        dismiss();
+        AboutSheet.create(recipient).show(getParentFragmentManager(), null);
+      });
 
       String aboutText = recipient.getCombinedAboutAndEmoji();
       if (recipient.isReleaseNotes()) {
@@ -206,7 +213,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         about.setVisibility(View.GONE);
       }
 
-      String usernameNumberString = recipient.hasAUserSetDisplayName(requireContext()) && !recipient.isSelf()
+      String usernameNumberString = recipient.hasAUserSetDisplayName(requireContext()) && !recipient.isSelf() && recipient.shouldShowE164()
                                     ? recipient.getSmsAddress().map(PhoneNumberFormatter::prettyPrint).orElse("").trim()
                                     : "";
       usernameNumber.setText(usernameNumberString);
@@ -314,11 +321,13 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
     });
 
     viewModel.getIdentity().observe(getViewLifecycleOwner(), identityRecord -> {
-      viewSafetyNumberButton.setVisibility(View.VISIBLE);
-      viewSafetyNumberButton.setOnClickListener(view -> {
-        dismiss();
-        viewModel.onViewSafetyNumberClicked(requireActivity(), identityRecord);
-      });
+      if (identityRecord != null) {
+        viewSafetyNumberButton.setVisibility(View.VISIBLE);
+        viewSafetyNumberButton.setOnClickListener(view -> {
+          dismiss();
+          viewModel.onViewSafetyNumberClicked(requireActivity(), identityRecord);
+        });
+      }
     });
 
     avatar.setOnClickListener(view -> {

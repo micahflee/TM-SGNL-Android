@@ -3,7 +3,6 @@ package org.tm.archive.mediasend.camerax
 import android.content.Context
 import android.os.Build
 import androidx.camera.view.CameraController
-import androidx.camera.view.video.ExperimentalVideo
 import org.signal.core.util.asListContains
 import org.tm.archive.mms.MediaConstraints
 import org.tm.archive.util.FeatureFlags
@@ -12,7 +11,6 @@ import org.tm.archive.video.VideoUtil
 /**
  * Describes device capabilities
  */
-@ExperimentalVideo
 sealed class CameraXModePolicy {
 
   abstract val isVideoSupported: Boolean

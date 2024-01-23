@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023 Signal Messenger, LLC
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 package org.tm.archive.jobs;
 
 import android.content.Context;
@@ -55,7 +60,7 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.transport.UndeliverableMessageException;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.BitmapDecodingException;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ImageCompressionUtil;
@@ -68,11 +73,10 @@ import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage;
 import org.whispersystems.signalservice.api.messages.SignalServicePreview;
 import org.whispersystems.signalservice.api.messages.shared.SharedContact;
 import org.whispersystems.signalservice.api.push.ServiceId.ACI;
-import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.ProofRequiredException;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
+import org.whispersystems.signalservice.internal.push.BodyRange;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -100,10 +104,15 @@ public abstract class PushSendJob extends SendJob {
 
   @Override
   protected final void onSend() throws Exception {
-    long timeSinceSignedPreKeyRotation = System.currentTimeMillis() - SignalStore.account().aciPreKeys().getLastSignedPreKeyRotationTime();
+    long timeSinceAciSignedPreKeyRotation = System.currentTimeMillis() - SignalStore.account().aciPreKeys().getLastSignedPreKeyRotationTime();
+    long timeSincePniSignedPreKeyRotation = System.currentTimeMillis() - SignalStore.account().pniPreKeys().getLastSignedPreKeyRotationTime();
 
-    if (timeSinceSignedPreKeyRotation > PreKeysSyncJob.MAXIMUM_ALLOWED_SIGNED_PREKEY_AGE || timeSinceSignedPreKeyRotation < 0) {
-      warn(TAG, "It's been too long since rotating our signed prekey (" + timeSinceSignedPreKeyRotation + " ms)! Attempting to rotate now.");
+    if (timeSinceAciSignedPreKeyRotation > PreKeysSyncJob.MAXIMUM_ALLOWED_SIGNED_PREKEY_AGE ||
+        timeSinceAciSignedPreKeyRotation < 0 ||
+        timeSincePniSignedPreKeyRotation > PreKeysSyncJob.MAXIMUM_ALLOWED_SIGNED_PREKEY_AGE ||
+        timeSincePniSignedPreKeyRotation < 0
+    ) {
+      warn(TAG, "It's been too long since rotating our signed prekeys (ACI: " + timeSinceAciSignedPreKeyRotation + " ms, PNI: " + timeSincePniSignedPreKeyRotation + " ms)! Attempting to rotate now.");
 
       Optional<JobTracker.JobState> state = ApplicationDependencies.getJobManager().runSynchronously(PreKeysSyncJob.create(), TimeUnit.SECONDS.toMillis(30));
 
@@ -188,20 +197,31 @@ public abstract class PushSendJob extends SendJob {
 
   protected SignalServiceAttachment getAttachmentFor(Attachment attachment) {
     try {
-      if (attachment.getUri() == null || attachment.getSize() == 0) throw new IOException("Assertion failed, outgoing attachment has no data!");
+      if (attachment.getUri() == null || attachment.size == 0) throw new IOException("Assertion failed, outgoing attachment has no data!");
       InputStream is = PartAuthority.getAttachmentStream(context, attachment.getUri());
       return SignalServiceAttachment.newStreamBuilder()
                                     .withStream(is)
-                                    .withContentType(attachment.getContentType())
-                                    .withLength(attachment.getSize())
-                                    .withFileName(attachment.getFileName())
-                                    .withVoiceNote(attachment.isVoiceNote())
-                                    .withBorderless(attachment.isBorderless())
-                                    .withGif(attachment.isVideoGif())
-                                    .withWidth(attachment.getWidth())
-                                    .withHeight(attachment.getHeight())
-                                    .withCaption(attachment.getCaption())
-                                    .withListener((total, progress) -> EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress)))
+                                    .withContentType(attachment.contentType)
+                                    .withLength(attachment.size)
+                                    .withFileName(attachment.fileName)
+                                    .withVoiceNote(attachment.voiceNote)
+                                    .withBorderless(attachment.borderless)
+                                    .withGif(attachment.videoGif)
+                                    .withFaststart(attachment.transformProperties.mp4FastStart)
+                                    .withWidth(attachment.width)
+                                    .withHeight(attachment.height)
+                                    .withCaption(attachment.caption)
+                                    .withListener(new SignalServiceAttachment.ProgressListener() {
+                                      @Override
+                                      public void onAttachmentProgress(long total, long progress) {
+                                        EventBus.getDefault().postSticky(new PartProgressEvent(attachment, PartProgressEvent.Type.NETWORK, total, progress));
+                                      }
+
+                                      @Override
+                                      public boolean shouldCancel() {
+                                        return isCanceled();
+                                      }
+                                    })
                                     .build();
     } catch (IOException ioe) {
       Log.w(TAG, "Couldn't open attachment", ioe);
@@ -226,18 +246,11 @@ public abstract class PushSendJob extends SendJob {
                              .toList());
 
     return new HashSet<>(Stream.of(attachments).map(a -> {
-                                                 AttachmentUploadJob attachmentUploadJob = new AttachmentUploadJob(((DatabaseAttachment) a).getAttachmentId());
+                                                 AttachmentUploadJob attachmentUploadJob = new AttachmentUploadJob(((DatabaseAttachment) a).attachmentId);
 
-                                                 if (message.isGroup()) {
-                                                   jobManager.startChain(AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
-                                                             .then(attachmentUploadJob)
-                                                             .enqueue();
-                                                 } else {
-                                                   jobManager.startChain(AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
-                                                             .then(new ResumableUploadSpecJob())
-                                                             .then(attachmentUploadJob)
-                                                             .enqueue();
-                                                 }
+                                                 jobManager.startChain(AttachmentCompressionJob.fromAttachment((DatabaseAttachment) a, false, -1))
+                                                           .then(attachmentUploadJob)
+                                                           .enqueue();
 
                                                  return attachmentUploadJob.getId();
                                                })
@@ -249,22 +262,22 @@ public abstract class PushSendJob extends SendJob {
   }
 
   protected @Nullable SignalServiceAttachment getAttachmentPointerFor(Attachment attachment) {
-    if (TextUtils.isEmpty(attachment.getLocation())) {
+    if (TextUtils.isEmpty(attachment.remoteLocation)) {
       Log.w(TAG, "empty content id");
       return null;
     }
 
-    if (TextUtils.isEmpty(attachment.getKey())) {
+    if (TextUtils.isEmpty(attachment.remoteKey)) {
       Log.w(TAG, "empty encrypted key");
       return null;
     }
 
     try {
-      final SignalServiceAttachmentRemoteId remoteId = SignalServiceAttachmentRemoteId.from(attachment.getLocation());
-      final byte[]                          key      = Base64.decode(attachment.getKey());
+      final SignalServiceAttachmentRemoteId remoteId = SignalServiceAttachmentRemoteId.from(attachment.remoteLocation);
+      final byte[]                          key      = Base64.decode(attachment.remoteKey);
 
-      int width  = attachment.getWidth();
-      int height = attachment.getHeight();
+      int width  = attachment.width;
+      int height = attachment.height;
 
       if ((width == 0 || height == 0) && MediaUtil.hasVideoThumbnail(context, attachment.getUri())) {
         Bitmap thumbnail = MediaUtil.getVideoThumbnail(context, attachment.getUri(), 1000);
@@ -275,23 +288,24 @@ public abstract class PushSendJob extends SendJob {
         }
       }
 
-      return new SignalServiceAttachmentPointer(attachment.getCdnNumber(),
+      return new SignalServiceAttachmentPointer(attachment.cdnNumber,
                                                 remoteId,
-                                                attachment.getContentType(),
+                                                attachment.contentType,
                                                 key,
-                                                Optional.of(Util.toIntExact(attachment.getSize())),
+                                                Optional.of(Util.toIntExact(attachment.size)),
                                                 Optional.empty(),
                                                 width,
                                                 height,
-                                                Optional.ofNullable(attachment.getDigest()),
+                                                Optional.ofNullable(attachment.remoteDigest),
                                                 Optional.ofNullable(attachment.getIncrementalDigest()),
-                                                Optional.ofNullable(attachment.getFileName()),
-                                                attachment.isVoiceNote(),
-                                                attachment.isBorderless(),
-                                                attachment.isVideoGif(),
-                                                Optional.ofNullable(attachment.getCaption()),
-                                                Optional.ofNullable(attachment.getBlurHash()).map(BlurHash::getHash),
-                                                attachment.getUploadTimestamp());
+                                                attachment.incrementalMacChunkSize,
+                                                Optional.ofNullable(attachment.fileName),
+                                                attachment.voiceNote,
+                                                attachment.borderless,
+                                                attachment.videoGif,
+                                                Optional.ofNullable(attachment.caption),
+                                                Optional.ofNullable(attachment.blurHash).map(BlurHash::getHash),
+                                                attachment.uploadTimestamp);
     } catch (IOException | ArithmeticException e) {
       Log.w(TAG, e);
       return null;
@@ -333,13 +347,13 @@ public abstract class PushSendJob extends SendJob {
     String                                                quoteBody            = message.getOutgoingQuote().getText();
     RecipientId                                           quoteAuthor          = message.getOutgoingQuote().getAuthor();
     List<SignalServiceDataMessage.Mention>                quoteMentions        = getMentionsFor(message.getOutgoingQuote().getMentions());
-    List<SignalServiceProtos.BodyRange>                   bodyRanges           = getBodyRanges(message.getOutgoingQuote().getBodyRanges());
+    List<BodyRange>                                       bodyRanges           = getBodyRanges(message.getOutgoingQuote().getBodyRanges());
     QuoteModel.Type                                       quoteType            = message.getOutgoingQuote().getType();
     List<SignalServiceDataMessage.Quote.QuotedAttachment> quoteAttachments     = new LinkedList<>();
     Optional<Attachment>                                  localQuoteAttachment = message.getOutgoingQuote()
                                                                                         .getAttachments()
                                                                                         .stream()
-                                                                                        .filter(a -> !MediaUtil.isViewOnceType(a.getContentType()))
+                                                                                        .filter(a -> !MediaUtil.isViewOnceType(a.contentType))
                                                                                         .findFirst();
 
     if (localQuoteAttachment.isPresent()) {
@@ -349,13 +363,13 @@ public abstract class PushSendJob extends SendJob {
       SignalServiceAttachment     thumbnail     = null;
 
       try {
-        if (MediaUtil.isImageType(attachment.getContentType()) && attachment.getUri() != null) {
-          thumbnailData = ImageCompressionUtil.compress(context, attachment.getContentType(), new DecryptableUri(attachment.getUri()), 100, 50);
-        } else if (Build.VERSION.SDK_INT >= 23 && MediaUtil.isVideoType(attachment.getContentType()) && attachment.getUri() != null) {
+        if (MediaUtil.isImageType(attachment.contentType) && attachment.getUri() != null) {
+          thumbnailData = ImageCompressionUtil.compress(context, attachment.contentType, new DecryptableUri(attachment.getUri()), 100, 50);
+        } else if (Build.VERSION.SDK_INT >= 23 && MediaUtil.isVideoType(attachment.contentType) && attachment.getUri() != null) {
           Bitmap bitmap = MediaUtil.getVideoThumbnail(context, attachment.getUri(), 1000);
 
           if (bitmap != null) {
-            thumbnailData = ImageCompressionUtil.compress(context, attachment.getContentType(), new DecryptableUri(attachment.getUri()), 100, 50);
+            thumbnailData = ImageCompressionUtil.compress(context, attachment.contentType, new DecryptableUri(attachment.getUri()), 100, 50);
           }
         }
 
@@ -371,8 +385,8 @@ public abstract class PushSendJob extends SendJob {
           thumbnail = builder.build();
         }
 
-        quoteAttachments.add(new SignalServiceDataMessage.Quote.QuotedAttachment(attachment.isVideoGif() ? MediaUtil.IMAGE_GIF : attachment.getContentType(),
-                                                                                 attachment.getFileName(),
+        quoteAttachments.add(new SignalServiceDataMessage.Quote.QuotedAttachment(attachment.videoGif ? MediaUtil.IMAGE_GIF : attachment.contentType,
+                                                                                 attachment.fileName,
                                                                                  thumbnail));
       } catch (BitmapDecodingException e) {
         Log.w(TAG, e);
@@ -398,10 +412,10 @@ public abstract class PushSendJob extends SendJob {
     }
 
     try {
-      byte[]                  packId     = Hex.fromStringCondensed(stickerAttachment.getSticker().getPackId());
-      byte[]                  packKey    = Hex.fromStringCondensed(stickerAttachment.getSticker().getPackKey());
-      int                     stickerId  = stickerAttachment.getSticker().getStickerId();
-      StickerRecord           record     = SignalDatabase.stickers().getSticker(stickerAttachment.getSticker().getPackId(), stickerId, false);
+      byte[]                  packId     = Hex.fromStringCondensed(stickerAttachment.stickerLocator.packId);
+      byte[]                  packKey    = Hex.fromStringCondensed(stickerAttachment.stickerLocator.packKey);
+      int                     stickerId  = stickerAttachment.stickerLocator.stickerId;
+      StickerRecord           record     = SignalDatabase.stickers().getSticker(stickerAttachment.stickerLocator.packId, stickerId, false);
       String                  emoji      = record != null ? record.getEmoji() : null;
       SignalServiceAttachment attachment = getAttachmentPointerFor(stickerAttachment);
 
@@ -463,7 +477,7 @@ public abstract class PushSendJob extends SendJob {
     }
 
     try {
-      ReceiptCredentialPresentation presentation = new ReceiptCredentialPresentation(giftBadge.getRedemptionToken().toByteArray());
+      ReceiptCredentialPresentation presentation = new ReceiptCredentialPresentation(giftBadge.redemptionToken.toByteArray());
 
       return new SignalServiceDataMessage.GiftBadge(presentation);
     } catch (InvalidInputException invalidInputException) {
@@ -471,39 +485,37 @@ public abstract class PushSendJob extends SendJob {
     }
   }
 
-  protected @Nullable List<SignalServiceProtos.BodyRange> getBodyRanges(@NonNull OutgoingMessage message) {
+  protected @Nullable List<BodyRange> getBodyRanges(@NonNull OutgoingMessage message) {
     return getBodyRanges(message.getBodyRanges());
   }
 
-  protected @Nullable List<SignalServiceProtos.BodyRange> getBodyRanges(@Nullable BodyRangeList bodyRanges) {
-    if (bodyRanges == null || bodyRanges.getRangesCount() == 0) {
+  protected @Nullable List<BodyRange> getBodyRanges(@Nullable BodyRangeList bodyRanges) {
+    if (bodyRanges == null || bodyRanges.ranges.size() == 0) {
       return null;
     }
 
     return bodyRanges
-        .getRangesList()
+        .ranges
         .stream()
         .map(range -> {
-          SignalServiceProtos.BodyRange.Builder builder = SignalServiceProtos.BodyRange.newBuilder()
-                                                                                       .setStart(range.getStart())
-                                                                                       .setLength(range.getLength());
+          BodyRange.Builder builder = new BodyRange.Builder().start(range.start).length(range.length);
 
-          if (range.hasStyle()) {
-            switch (range.getStyle()) {
+          if (range.style != null) {
+            switch (range.style) {
               case BOLD:
-                builder.setStyle(SignalServiceProtos.BodyRange.Style.BOLD);
+                builder.style(BodyRange.Style.BOLD);
                 break;
               case ITALIC:
-                builder.setStyle(SignalServiceProtos.BodyRange.Style.ITALIC);
+                builder.style(BodyRange.Style.ITALIC);
                 break;
               case SPOILER:
-                builder.setStyle(SignalServiceProtos.BodyRange.Style.SPOILER);
+                builder.style(BodyRange.Style.SPOILER);
                 break;
               case STRIKETHROUGH:
-                builder.setStyle(SignalServiceProtos.BodyRange.Style.STRIKETHROUGH);
+                builder.style(BodyRange.Style.STRIKETHROUGH);
                 break;
               case MONOSPACE:
-                builder.setStyle(SignalServiceProtos.BodyRange.Style.MONOSPACE);
+                builder.style(BodyRange.Style.MONOSPACE);
                 break;
               default:
                 throw new IllegalArgumentException("Unrecognized style");

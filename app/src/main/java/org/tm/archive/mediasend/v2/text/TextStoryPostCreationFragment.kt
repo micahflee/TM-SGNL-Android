@@ -14,15 +14,16 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.contacts.paged.ContactSearchKey
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.tm.archive.databinding.StoriesTextPostCreationFragmentBinding
 import org.tm.archive.linkpreview.LinkPreview
-import org.tm.archive.linkpreview.LinkPreviewRepository
 import org.tm.archive.linkpreview.LinkPreviewState
-import org.tm.archive.linkpreview.LinkPreviewViewModel
+import org.tm.archive.linkpreview.LinkPreviewViewModelV2
 import org.tm.archive.mediasend.CameraDisplay
 import org.tm.archive.mediasend.v2.HudCommand
 import org.tm.archive.mediasend.v2.MediaSelectionViewModel
@@ -31,7 +32,7 @@ import org.tm.archive.mediasend.v2.text.send.TextStoryPostSendRepository
 import org.tm.archive.mediasend.v2.text.send.TextStoryPostSendResult
 import org.tm.archive.safety.SafetyNumberBottomSheet
 import org.tm.archive.stories.Stories
-import org.tm.archive.util.livedata.LiveDataUtil
+import org.tm.archive.util.activitySavedStateViewModel
 import org.tm.archive.util.visible
 import java.util.Optional
 
@@ -55,14 +56,9 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
     }
   )
 
-  private val linkPreviewViewModel: LinkPreviewViewModel by viewModels(
-    ownerProducer = {
-      requireActivity()
-    },
-    factoryProducer = {
-      LinkPreviewViewModel.Factory(LinkPreviewRepository(), true)
-    }
-  )
+  private val linkPreviewViewModel: LinkPreviewViewModelV2 by activitySavedStateViewModel { handle ->
+    LinkPreviewViewModelV2(handle, enablePlaceholder = true)
+  }
 
   private val lifecycleDisposable = LifecycleDisposable()
 
@@ -80,16 +76,16 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
       }
     }
 
-    viewModel.typeface.observe(viewLifecycleOwner) { typeface ->
+    lifecycleDisposable += viewModel.typeface.subscribeBy { typeface ->
       binding.storyTextPost.setTypeface(typeface)
     }
 
-    viewModel.state.observe(viewLifecycleOwner) { state ->
+    lifecycleDisposable += viewModel.state.subscribeBy { state ->
       binding.backgroundSelector.background = state.backgroundColor.chatBubbleMask
       binding.storyTextPost.bindFromCreationState(state)
 
       if (state.linkPreviewUri != null) {
-        linkPreviewViewModel.onTextChanged(requireContext(), state.linkPreviewUri, 0, state.linkPreviewUri.lastIndex)
+        linkPreviewViewModel.onTextChanged(state.linkPreviewUri, 0, state.linkPreviewUri.lastIndex)
       } else {
         linkPreviewViewModel.onSend()
       }
@@ -99,9 +95,9 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
       binding.send.isEnabled = canSend
     }
 
-    LiveDataUtil.combineLatest(viewModel.state, linkPreviewViewModel.linkPreviewState) { viewState, linkState ->
+    lifecycleDisposable += Flowable.combineLatest(viewModel.state, linkPreviewViewModel.linkPreviewState) { viewState, linkState ->
       Pair(viewState.body.isBlank(), linkState)
-    }.observe(viewLifecycleOwner) { (useLargeThumb, linkState) ->
+    }.subscribeBy { (useLargeThumb, linkState) ->
       binding.storyTextPost.bindLinkPreviewState(linkState, View.GONE, useLargeThumb)
       binding.storyTextPost.postAdjustLinkPreviewTranslationY()
     }
@@ -145,7 +141,7 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
 
       if (contacts.isEmpty()) {
         val bitmap = binding.storyTextPost.drawToBitmap()
-        viewModel.compressToBlob(bitmap).observeOn(AndroidSchedulers.mainThread()).subscribe { uri ->
+        lifecycleDisposable += viewModel.compressToBlob(bitmap).observeOn(AndroidSchedulers.mainThread()).subscribe { uri ->
           launcher.launch(
             StoriesMultiselectForwardActivity.Args(
               MultiselectForwardFragmentArgs(
@@ -246,12 +242,12 @@ class TextStoryPostCreationFragment : Fragment(R.layout.stories_text_post_creati
   }
 
   private fun getLinkPreview(): LinkPreview? {
-    val linkPreviewState: LinkPreviewState = linkPreviewViewModel.linkPreviewState.value ?: return null
+    val linkPreviewState: LinkPreviewState = linkPreviewViewModel.linkPreviewStateSnapshot
 
     return if (linkPreviewState.linkPreview.isPresent) {
       linkPreviewState.linkPreview.get()
     } else if (!linkPreviewState.activeUrlForError.isNullOrEmpty()) {
-      LinkPreview(linkPreviewState.activeUrlForError!!, linkPreviewState.activeUrlForError!!, "", 0L, Optional.empty())
+      LinkPreview(linkPreviewState.activeUrlForError, linkPreviewState.activeUrlForError, "", 0L, Optional.empty())
     } else {
       null
     }

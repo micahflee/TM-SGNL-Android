@@ -4,14 +4,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
+import org.signal.libsignal.usernames.BaseUsernameException;
+import org.signal.libsignal.usernames.Username;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
 import org.tm.archive.jobmanager.JobTracker;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.AccountValues;
 import org.tm.archive.keyvalue.SignalStore;
+import org.tm.archive.profiles.manage.UsernameRepository;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.storage.StorageSyncHelper;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
@@ -69,15 +72,7 @@ public class StorageAccountRestoreJob extends BaseJob {
     StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
     Log.i(TAG, "Retrieving manifest...");
-    //**TM_SA**//Change the next code like this
-    Optional<SignalStorageManifest> manifest = null;
-    try {
-      manifest = accountManager.getStorageManifest(storageServiceKey);
-    }catch (Exception e){
-      ApplicationDependencies.getJobManager().add(new StorageForcePushJob());
-      return;
-    }
-    //**TM_SA**//
+    Optional<SignalStorageManifest> manifest = accountManager.getStorageManifest(storageServiceKey);
 
     if (!manifest.isPresent()) {
       Log.w(TAG, "Manifest did not exist or was undecryptable (bad key). Not restoring. Force-pushing.");
@@ -114,10 +109,20 @@ public class StorageAccountRestoreJob extends BaseJob {
     Log.i(TAG, "Applying changes locally...");
     SignalDatabase.getRawDatabase().beginTransaction();
     try {
-      StorageSyncHelper.applyAccountStorageSyncUpdates(context, Recipient.self(), accountRecord, false);
+      StorageSyncHelper.applyAccountStorageSyncUpdates(context, Recipient.self().fresh(), accountRecord, false);
       SignalDatabase.getRawDatabase().setTransactionSuccessful();
     } finally {
       SignalDatabase.getRawDatabase().endTransaction();
+    }
+
+    // We will try to reclaim the username here, as early as possible, but the registration flow also enqueues a username restore job,
+    // so failing here isn't a huge deal
+    if (SignalStore.account().getUsername() != null) {
+      Log.i(TAG, "Attempting to reclaim username...");
+      UsernameRepository.UsernameReclaimResult result = UsernameRepository.reclaimUsernameIfNecessary();
+      Log.i(TAG, "Username reclaim result: " + result.name());
+    } else {
+      Log.i(TAG, "No username to reclaim.");
     }
 
     JobManager jobManager = ApplicationDependencies.getJobManager();

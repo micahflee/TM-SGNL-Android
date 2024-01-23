@@ -15,6 +15,8 @@
   <!-- Removed by excludeNonTranslatables <string name="signal_me_username_url" translatable="false">https://signal.me/#u/%1$s</string> -->
   <!-- Removed by excludeNonTranslatables <string name="username_support_url" translatable="false">https://support.signal.org/hc/articles/5389476324250</string> -->
   <!-- Removed by excludeNonTranslatables <string name="export_account_data_url" translatable="false">https://support.signal.org/hc/articles/5538911756954</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="pending_transfer_url" translatable="false">https://support.signal.org/hc/articles/360031949872#pending</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="donate_faq_url" translatable="false">https://support.signal.org/hc/articles/360031949872#donate</string> -->
 
     <string name="yes">হ্যাঁ</string>
     <string name="no">না</string>
@@ -119,11 +121,8 @@
     <string name="BlockedUsersActivity__block">ব্লক করুন</string>
 
     <!-- CreditCardFragment -->
-    <!-- Title of fragment detailing the donation amount for one-time donation, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__donation_amount_s">ডোনেশনের পরিমাণ: %1$s</string>
-    <!-- Title of fragment detailing the donation amount for monthly donation, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__donation_amount_s_per_month">ডোনেশনের পরিমাণ: %1$s/মাস</string>
-    <!-- Explanation of how to fill in the form, displayed above the credit card text fields -->
+    <!-- Title of fragment -->
+    <string name="CreditCardFragment__credit_or_debit_card">ক্রেডিট বা ডেবিট কার্ড</string>
     <!-- Explanation of how to fill in the form and a note about pii, displayed above the credit card text fields -->
     <string name="CreditCardFragment__enter_your_card_details">আপনার কার্ডের বিস্তারিত লিখুন। Signal আপনার ব্যক্তিগত তথ্য সংগ্রহ কিংবা সংরক্ষণ করে না।</string>
     <!-- Displayed as a hint in the card number text field -->
@@ -148,8 +147,18 @@
     <string name="CreditCardFragment__year_required">বছর প্রয়োজন</string>
     <!-- Error displayed under the card expiry text field when the expiry year is invalid -->
     <string name="CreditCardFragment__invalid_year">অকার্যকর বছর</string>
-    <!-- Button label to confirm credit card input and proceed with payment -->
-    <string name="CreditCardFragment__continue">চালিয়ে যান</string>
+    <!-- Button label to confirm credit card input and proceed with one-time payment -->
+    <string name="CreditCardFragment__donate_s">%1$s-কে ডোনেট করুন</string>
+    <!-- Button label to confirm credit card input and proceed with subscription payment -->
+    <string name="CreditCardFragment__donate_s_month">ডোনেট করুন %1$s/প্রতি মাসে</string>
+
+    <!-- OneTimeDonationPreference -->
+    <!-- Preference title with placeholder for amount. -->
+    <string name="OneTimeDonationPreference__one_time_s">এককালীন %1$s</string>
+    <!-- Preference subtitle when donation is pending -->
+    <string name="OneTimeDonationPreference__donation_pending">ডোনেশন অনিষ্পন্ন অবস্থায় আছে</string>
+    <!-- Preference subtitle when donation is processing -->
+    <string name="OneTimeDonationPreference__donation_processing">ডোনেশন প্রক্রিয়া করা হচ্ছে</string>
 
     <!-- BlockUnblockDialog -->
     <string name="BlockUnblockDialog_block_and_leave_s">%1$s-কে ব্লক করবেন এবং বের হয়ে যাবেন?</string>
@@ -314,8 +323,12 @@
     <string name="ConversationItem_cant_download_image_you_will_need_to_send_it_again">ছবি ডাউনলোড করা যাচ্ছে না। আপনাকে এটি আবার পাঠাতে হবে।</string>
     <!-- Dialog error message shown when user can\'t download a their own video message via a linked device due to a permanent failure (e.g., unable to decrypt) -->
     <string name="ConversationItem_cant_download_video_you_will_need_to_send_it_again">ভিডিও ডাউনলোড করা যাচ্ছে না। আপনাকে এটি আবার পাঠাতে হবে।</string>
-    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. The timestamp will go from \'11m\' to \'edited 11m\' -->
-    <string name="ConversationItem_edited_timestamp_footer">%1$s এডিট করা হয়েছে</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. The timestamp represents a message that has been edited within the last minute. -->
+    <string name="ConversationItem_edited_now_timestamp_footer">এখন এডিট করা হয়েছে</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. This is displayed when the edit has occurred between 1-59 minutes ago. -->
+    <string name="ConversationItem_edited_relative_timestamp_footer">%1$s এডিট করা হয়েছে</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. This is displayed when the edit occurred at least 1 hour ago. -->
+    <string name="ConversationItem_edited_absolute_timestamp_footer">%1$s এডিট করা হয়েছে</string>
     <!-- Displayed if the link preview in the conversation item is for a call link call -->
     <string name="ConversationItem__join_call">কলে যোগ দিন</string>
 
@@ -349,6 +362,8 @@
     <string name="ConversationActivity_transport_insecure_mms">অনিরাপদ এমএমএস</string>
     <!-- A title for the option to send an SMS with a placeholder to put the name of their SIM card -->
     <string name="ConversationActivity_transport_signal">Signal বার্তা</string>
+    <!-- The content description for button to send a message in a conversation -->
+    <string name="ConversationActivity_send_message_content_description">মেসেজ পাঠান</string>
     <string name="ConversationActivity_lets_switch_to_signal">চলুন Signal এ যোগ দেই %1$s</string>
     <string name="ConversationActivity_specify_recipient">দয়া করে একটি পরিচিতি চয়ন করুন</string>
     <string name="ConversationActivity_attachment_exceeds_size_limits">আপনি যে বার্তা প্রেরণ করছেন সংযুক্তি তার আকারের সীমা অতিক্রম করেছে।</string>
@@ -396,6 +411,8 @@
 
     <string name="ConversationActivity_error_sending_media">ছবি/ভিডিও পাঠাতে ত্রুটি</string>
 
+    <!-- Message shown when opening an MMS group conversation with SMS disabled and there are no exported messages -->
+    <string name="ConversationActivity__sms_messaging_is_no_longer_supported">Signal-এ এসএমএস ম্যাসেজিং আর সমর্থন করে না।</string>
     <!-- Message shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
     <string name="ConversationActivity__sms_messaging_is_no_longer_supported_in_signal_invite_s_to_to_signal_to_keep_the_conversation_here">Signal-এ এসএমএস ম্যাসেজিং আর সমর্থন করে না। এখানে কথোপকথন করতে %1$s-কে Signal-এ আমন্ত্রণ জানান।</string>
     <!-- Action button shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
@@ -461,7 +478,7 @@
     <string name="ConversationFragment_failed_to_open_message">বার্তা দেখাতে ব্যর্থ</string>
     <string name="ConversationFragment_you_can_swipe_to_the_right_reply">দ্রুত উত্তর দেওয়ার জন্য আপনি যে কোনও বার্তায় ডানদিকে সোয়াইপ করতে পারেন</string>
     <string name="ConversationFragment_you_can_swipe_to_the_left_reply">দ্রুত উত্তর দেওয়ার জন্য আপনি কোনও বার্তায় বাম দিকে সোয়াইপ করতে পারেন</string>
-    <string name="ConversationFragment_outgoing_view_once_media_files_are_automatically_removed">শুধু-একবার-দেখার-যোগ্য বহির্গামী মিডিয়া ফাইলগুলো প্রেরণের পরে সেগুলো স্বয়ংক্রিয়ভাবে সরিয়ে ফেলা হবে</string>
+    <string name="ConversationFragment_view_once_media_is_deleted_after_sending">\'শুধুমাত্র-একবার-দেখা-যাবে\' এমন মিডিয়া ফাইল পাঠানোর পর মুছে ফেলা হয়</string>
     <string name="ConversationFragment_you_already_viewed_this_message">আপনি ইতোমধ্যে এই ম্যাসেজটি দেখেছেন</string>
     <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">আপনি এই চ্যাটটিতে আপনার নিজের জন্য টীকা যোগ করতে পারবেন।\nআপনার অ্যাকাউন্টের সাথে সংযুক্ত কোনো ডিভাইস থাকলে, নতুন টীকাগুলো সিঙ্ক করা হবে।</string>
     <string name="ConversationFragment__d_group_members_have_the_same_name">গ্রুপের %1$d জনের একই নাম আছে।</string>
@@ -634,6 +651,8 @@
     <!-- Show percentage of completion of backup -->
     <string name="BackupsPreferenceFragment__s_so_far">এখন পর্যন্ত %1$s %%…</string>
     <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">ব্যাকআপগুলি তৈরি করতে Signal এর জন্য বাহ্যিক স্টোরেজ অনুমতি প্রয়োজন, তবে এটি স্থায়ীভাবে অস্বীকার করা হয়েছে। দয়া করে অ্যাপ্লিকেশন সেটিংস যান, \"অনুমতিগুলি\" নির্বাচন করুন এবং \"স্টোরেজ\" সক্ষম করুন।</string>
+    <!-- Title of dialog shown when picking the time to perform a chat backup -->
+    <string name="BackupsPreferenceFragment__set_backup_time">ব্যাকআপ সময় সেট করুন</string>
 
 
     <!-- CustomDefaultPreference -->
@@ -870,8 +889,10 @@
 
     <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
     <string name="PromptLogsSlowNotificationsDialog__title">আমরা লক্ষ্য করেছি যে নোটিফিকেশনে বিলম্ব হয়েছে। ডিবাগ লগ জমা দেবেন?</string>
-    <!-- Message for dialog asking user to submit logs for debugging slow notification issues -->
+    <!-- Message for dialog asking user to submit logs for debugging a crash -->
     <string name="PromptLogsSlowNotificationsDialog__message">ডিবাগ লগ আমাদের সমস্যা নির্ণয় ও সমাধান করতে সাহায্য করে এবং শনাক্তকরণের তথ্য ধারণ করে না।</string>
+    <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
+    <string name="PromptLogsSlowNotificationsDialog__title_crash">Signal একটি সমস্যার সম্মুখীন হয়েছে। ডিবাগ লগ জমা দেবেন?</string>
 
     <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
     <string name="PromptBatterySaverBottomSheet__title">ব্যাটারি অপ্টিমাইজেশনের কারণে বিজ্ঞপ্তি আসতে দেরি হতে পারে</string>
@@ -978,12 +999,15 @@
     <string name="ManageProfileFragment_profile_name">প্রোফাইল নাম</string>
     <string name="ManageProfileFragment_username">ব্যবহারকারীর নাম</string>
     <string name="ManageProfileFragment_about">সম্বন্ধে</string>
-    <string name="ManageProfileFragment_write_a_few_words_about_yourself">নিজের সম্পর্কে কিছু লিখুন</string>
-    <string name="ManageProfileFragment_your_name">আপনার নাম</string>
-    <string name="ManageProfileFragment_your_username">আপনার ব্যবহারকারি নাম</string>
     <string name="ManageProfileFragment_failed_to_set_avatar">অবতার সেট করতে ব্যর্থ</string>
     <string name="ManageProfileFragment_badges">ব্যাজ</string>
+    <!-- Text for a button that will take the user to the screen to manage their username link and QR code -->
+    <string name="ManageProfileFragment_link_setting_text">QR কোড বা লিংক</string>
     <string name="ManageProfileFragment__edit_photo">ছবি সম্পাদনা করুন</string>
+    <!-- Title of a tooltip educating the user about a button on the screen that will take them to the username share screen -->
+    <string name="ManageProfileFragment__link_tooltip_title">আপনার \'ব্যবহারকারীর নাম\' শেয়ার করুন</string>
+    <!-- Body of a tooltip educating the user about a button on the screen that will take them to the username share screen -->
+    <string name="ManageProfileFragment__link_tooltip_body">আপনার অনন্য QR কোড বা লিংক শেয়ার করে অন্যদের আপনার সাথে চ্যাট শুরু করার সুযোগ দিন।</string>
     <!-- Snackbar message after creating username -->
     <string name="ManageProfileFragment__username_created">ইউজারনেম তৈরি করা হয়েছে</string>
     <!-- Snackbar message after copying username -->
@@ -992,10 +1016,16 @@
     <string name="ManageProfileFragment__couldnt_delete_username">ইউজারনেম মুছে ফেলা যায়নি। পরবর্তীতে আবার চেষ্টা করুন।</string>
     <!-- Snackbar message after successful deletion of username -->
     <string name="ManageProfileFragment__username_deleted">ইউজারনেম মুছে ফেলা হয়েছে</string>
+    <!-- The title of a pop-up dialog asking the user to confirm deleting their username -->
+    <string name="ManageProfileFragment__delete_username_dialog_title">ব্যবহারকারীর নাম মুছে ফেলবেন?</string>
+    <!-- The body of a pop-up dialog asking the user to confirm deleting their username -->
+    <string name="ManageProfileFragment__delete_username_dialog_body">"এটি আপনার ব্যবহারকারীর নাম মুছে ফেলবে এবং আপনার QR কোড ও লিংক অকার্যকর করবে। অন্যদের দাবি করার জন্য %1$s উপলভ্য হবে। আপনি কি নিশ্চিত?"</string>
 
     <!-- UsernameOutOfSyncReminder -->
     <!-- Displayed above the conversation list when a user needs to address an issue with their username -->
-    <string name="UsernameOutOfSyncReminder__something_went_wrong">আপনার \'ব্যবহারকারীর নাম\' নিয়ে কিছু একটা সমস্যা হয়েছে, এটি আর আপনার অ্যাকাউন্টের জন্য বরাদ্দ করা নেই। আপনি আবার চেষ্টা করে এটি সেট করতে পারেন বা নতুন একটি বেছে নিতে পারেন।</string>
+    <string name="UsernameOutOfSyncReminder__username_and_link_corrupt">আপনার \'ব্যবহারকারীর নাম\' নিয়ে কিছু একটা সমস্যা হয়েছে, এটি আর আপনার অ্যাকাউন্টের জন্য বরাদ্দ করা নেই। আপনি আবার চেষ্টা করে এটি সেট করতে পারেন বা নতুন একটি বেছে নিতে পারেন।</string>
+    <!-- Displayed above the conversation list when a user needs to address an issue with their username link -->
+    <string name="UsernameOutOfSyncReminder__link_corrupt">আপনার QR কোড এবং ব্যবহারকারীর নামের লিংকে কিছু ভুল হয়েছে, এটি আর কার্যকর নয়। অন্যদের সাথে শেয়ার করার জন্য একটি নতুন লিংক তৈরি করুন।</string>
     <!-- Action text to navigate user to manually fix the issue with their username -->
     <string name="UsernameOutOfSyncReminder__fix_now">এখনই ঠিক করুন</string>
 
@@ -1253,6 +1283,10 @@
     <string name="MessageRecord_missed_voice_call">মিসড ভয়েস কল</string>
     <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
     <string name="MessageRecord_missed_video_call">মিসড ভিডিও কল</string>
+    <!-- Update message shown when receiving an incoming voice call and declined due to notification profile -->
+    <string name="MessageRecord_missed_voice_call_notification_profile">নোটিফিকেশন প্রোফাইল চালু থাকা অবস্থায় মিসড ভয়েস কল</string>
+    <!-- Update message shown when receiving an incoming video call and declined due to notification profile -->
+    <string name="MessageRecord_missed_video_call_notification_profile">নোটিফিকেশন প্রোফাইল চালু থাকা অবস্থায় মিসড ভিডিও কল</string>
     <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
     <string name="MessageRecord_you_declined_a_voice_call">আপনি একটি ভয়েস কল প্রত্যাখ্যান করেছেন</string>
     <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
@@ -1511,7 +1545,7 @@
     <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them_SMS">%1$s-কে ম্যাসেজ পাঠানোর অনুমতি দিবেন? যতক্ষণ না আপনি তাদের আনব্লক করবেন ততক্ষণ আপনি কোনো ম্যাসেজ পাবেন না।</string>
     <string name="MessageRequestBottomView_get_updates_and_news_from_s_you_wont_receive_any_updates_until_you_unblock_them">%1$s-এর কাছ থেকে আপডেট এবং খবর পেতে চান? যতক্ষণ না আপনি তাদের আনব্লক করবেন ততক্ষণ আপনি কোনো আপডেট পাবেন না।</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_this_group_and_share_your_name_and_photo">এই গ্রুপের সাথে চ্যাট চালিয়ে যাবেন এবং এর সদস্যদের সাথে আপনার নাম ও ছবি শেয়ার করবেন?</string>
-    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">\@mentions ও অ্যাডমিনের মতো নতুন ফিচার চালু করতে এই গ্রুপটিকে আপগ্রেড করুন। এই গ্রুপে যেসব সদস্য তাদের নাম ও ছবি শেয়ার করেননি তাদেরকে যোগদানের আমন্ত্রণ জানানো হবে।</string>
+    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">এই পুরনো গ্রুপটি আর ব্যবহার করা যাবে না। @mentions ও অ্যাডমিন-এর মতো নতুন ফিচার সক্রিয় করতে একটি নতুন গ্রুপ তৈরি করুন।</string>
     <string name="MessageRequestBottomView_this_legacy_group_can_no_longer_be_used">এই লিগ্যাসি গ্রুপটি অনেক বড় হওয়ায় এটি আর ব্যবহার করা যাবে না। গ্রুপের সর্বোচ্চ আকার হল %1$d।</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_s_and_share_your_name_and_photo">%1$s-এর সাথে এই চ্যাট চালিয়ে যাবেন এবং তাদের সাথে আপনার নাম ও ছবি শেয়ার করবেন?</string>
     <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">আপনি কি এই গ্রুপে যোগ দিয়ে এর সদস্যদের সাথে আপনার নাম ও ছবি শেয়ার করবেন? আপনি গ্রহণ না করা পর্যন্ত তারা জানবেন না যে আপনি তাদের মেসেজ দেখেছেন।</string>
@@ -1804,6 +1838,8 @@
     <string name="WebRtcCallView__toggle_camera">ক্যামেরা টগল করুন</string>
     <!-- Toggle content description for toggling mute state  -->
     <string name="WebRtcCallView__toggle_mute">মিউট টগল করুন</string>
+    <!-- Content description for additional actions menu button -->
+    <string name="WebRtcCallView__additional_actions">আরো কাজ</string>
     <!-- Content description for end-call button -->
     <string name="WebRtcCallView__end_call">কল শেষ করুন</string>
 
@@ -1820,10 +1856,68 @@
     <!-- A text description of the earpiece icon, used for accessibility. -->
     <string name="WebRtcAudioOutputBottomSheet__earpiece_icon_content_description">একটি ডিভাইসের ইয়ারপিসকে নির্দেশকারী একটি আইকন।</string>
 
+    <!-- A clickable button to "raise your hand" in a group call to signify you have something to say -->
+    <string name="CallOverflowPopupWindow__raise_hand">হাত তুলুন</string>
+    <!-- A description of a clickable image representing a raised hand -->
+    <string name="CallOverflowPopupWindow__raise_hand_illustration_content_description">হাত তুলুন</string>
+    <!-- A dialog prompt to confirm you want to lower your hand -->
+    <string name="CallOverflowPopupWindow__lower_your_hand">হাত নামবেন?</string>
+    <!-- A dialog button to confirm you would like to lower your hand -->
+    <string name="CallOverflowPopupWindow__lower_hand">হাত নামান</string>
+    <!-- A negative button for a dialog confirming the user wants to lower their hand (withdraw a raised hand) -->
+    <string name="CallOverflowPopupWindow__cancel">বাতিল করুন</string>
+    <!-- A notification to the user that they successfully raised their hand -->
+    <string name="CallOverflowPopupWindow__you_raised_your_hand">আপনি হাত তুলেছেন</string>
+    <!-- A button to take you to a list of participants with raised hands -->
+    <string name="CallOverflowPopupWindow__view">দেখুন</string>
+
+    <!-- A notification to the user that one or more participants in the call successfully raised their hand. In the singular case, it is a name. In the plural case, it is a name or "You" -->
+    <plurals name="CallOverflowPopupWindow__raised_a_hand">
+        <item quantity="one">%1$s হাত তুলেছেন</item>
+        <item quantity="other">%1$s + %2$d হাত তুলেছেন</item>
+    </plurals>
+
+    <!-- A badge to show how many hands are raised. The first string may be a name or "You" -->
+    <plurals name="CallRaiseHandSnackbar_raised_hands">
+        <item quantity="one">%1$s</item>
+        <item quantity="other">%1$s +%2$d</item>
+    </plurals>
+
+    <!-- An accessibility label for screen readers on a view that can be expanded -->
+    <string name="CallOverflowPopupWindow__expand_snackbar_accessibility_label">হাত উঠানোর ভিউ সম্প্রসারিত করুন</string>
+
+    <!-- AboutSheet -->
+    <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
+    <string name="AboutSheet__signal_connection">Signal কানেকশন</string>
+    <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
+    <string name="AboutSheet__s_is_in_your_system_contacts">%1$s আপনার সিস্টেমের কন্টাক্টে আছেন</string>
+    <!-- Notice in a row when user has no groups in common -->
+    <string name="AboutSheet__you_have_no_groups_in_common">আপনারা দুজনই আছেন এমন কোনো গ্রুপ নেই</string>
+    <!-- Notice when a user is not a connection to review requests carefully -->
+    <string name="AboutSheet__review_requests_carefully">তোমার অনুরোধ ভালোভাবে দেখো</string>
+    <!-- Text used when user has groups in common. Placeholder is the count -->
+    <string name="AboutSheet__d_groups_in_common">%1$d-টি একই গ্রুপ আছে</string>
+    <!-- Text displayed in title for external recipients -->
+    <string name="AboutSheet__about">পরিচিতি</string>
+    <!-- Text displayed in title for you -->
+    <string name="AboutSheet__you">আপনি</string>
+
     <!-- CallParticipantsListDialog -->
-    <plurals name="CallParticipantsListDialog_in_this_call_d_people">
-        <item quantity="one">এই কল-এ · %1$d জন</item>
-        <item quantity="other">এই কলে · %1$d জন</item>
+    <plurals name="CallParticipantsListDialog_in_this_call">
+        <item quantity="one">এই কলে (%1$d)</item>
+        <item quantity="other">এই কলে (%1$d)</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__signal_will_ring">
+        <item quantity="one">Signal (%1$d)-কে রিং করবে</item>
+        <item quantity="other">Signal (%1$d)-কে রিং করবে</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__signal_will_notify">
+        <item quantity="one">Signal (%1$d)-কে জানাবে</item>
+        <item quantity="other">Signal (%1$d)-কে জানাবে</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__raised_hands">
+        <item quantity="one">হাত তুলেছেন (%1$d)</item>
+        <item quantity="other">হাত তুলেছেন (%1$d)</item>
     </plurals>
 
     <!-- CallParticipantView -->
@@ -1936,6 +2030,12 @@
     <string name="RevealableMessageView_view_video">ভিডিও দেখুন</string>
     <string name="RevealableMessageView_viewed">দেখা হয়ে গেছে</string>
     <string name="RevealableMessageView_media">মিডিয়া</string>
+
+    <!-- ReviewBannerView -->
+    <!-- ReviewBannerView text when a name conflict has been found -->
+    <string name="ReviewBannerView__name_conflict_found">একই নাম পাওয়া গেছে</string>
+    <!-- Button label to view name conflicts -->
+    <string name="ReviewBannerView__view">দেখুন</string>
 
     <!-- Search -->
     <string name="SearchFragment_no_results">\'%1$s\' এর জন্য কোনও ফলাফল পাওয়া যায়নি</string>
@@ -2086,9 +2186,13 @@
     <!--  Displayed in the conversation list when identities have been merged. The first placeholder is a phone number, and the second is a person\'s name -->
     <string name="ThreadRecord_s_belongs_to_s">%1$s নম্বরটি %2$s-এর</string>
 
-    <!-- UpdateApkReadyListener -->
-    <string name="UpdateApkReadyListener_Signal_update">Signal আপডেট</string>
-    <string name="UpdateApkReadyListener_a_new_version_of_signal_is_available_tap_to_update">Signal এর একটি নতুন ভার্সন পাওয়া যাচ্ছে, অাপডেট করতে ট্যাপ করুন</string>
+    <!-- ApkUpdateNotifications -->
+    <string name="ApkUpdateNotifications_prompt_install_title">Signal আপডেট</string>
+    <string name="ApkUpdateNotifications_prompt_install_body">Signal-এর একটি নতুন সংস্করণ পাওয়া যাচ্ছে। আপডেট করতে ট্যাপ করুন।</string>
+    <string name="ApkUpdateNotifications_failed_general_title">Signal আপডেট করতে ব্যর্থ হয়েছে</string>
+    <string name="ApkUpdateNotifications_failed_general_body">আমরা পরে আবার চেষ্টা করবো।</string>
+    <string name="ApkUpdateNotifications_auto_update_success_title">Signal সফলভাবে আপডেট করা হয়েছে</string>
+    <string name="ApkUpdateNotifications_auto_update_success_body">আপনি স্বয়ংক্রিয়ভাবে %1$s সংস্করণে আপডেট হয়েছেন।</string>
 
     <!-- UntrustedSendDialog -->
     <string name="UntrustedSendDialog_send_message">বার্তা পাঠান?</string>
@@ -2099,6 +2203,8 @@
     <string name="UnverifiedSendDialog_send">পাঠান</string>
 
     <!-- UsernameEditFragment -->
+    <!-- Placeholder text for custom discriminator -->
+    <string name="UsernameEditFragment__00">00</string>
     <!-- Toolbar title when entering from registration -->
     <string name="UsernameEditFragment__add_a_username">একটি ইউজারনেম যোগ করুন</string>
     <!-- Instructional text at the top of the username edit screen -->
@@ -2121,6 +2227,12 @@
     <string name="UsernameEditFragment__skip">বাদ দিয়ে যান</string>
     <!-- Content description for done button -->
     <string name="UsernameEditFragment__done">শেষ</string>
+    <!-- Displayed when the chosen discriminator is not available for the given nickname -->
+    <string name="UsernameEditFragment__this_username_is_not_available_try_another_number">এই ব্যবহারকারীর নামটি পাওয়া যাচ্ছে না, আরেকটি নম্বর দিয়ে চেষ্টা করুন।</string>
+    <!-- Displayed when the chosen discriminator is too short -->
+    <string name="UsernameEditFragment__invalid_username_enter_a_minimum_of_d_digits">অকার্যকর ব্যবহারকারীর নাম, অন্তত %1$d-টি সংখ্যা লিখুন।</string>
+    <!-- Displayed when the chosen discriminator is too long -->
+    <string name="UsernameEditFragment__invalid_username_enter_a_maximum_of_d_digits">অকার্যকর ব্যবহারকারীর নাম, অন্তত %1$d-টি সংখ্যা লিখুন।</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="one">%1$d টি কন্ট্যাক্ট Signal ব্যবহার করছে!</item>
@@ -2243,6 +2355,18 @@
 
     <string name="TurnOffContactJoinedNotificationsActivity__turn_off_contact_joined_signal">কন্ট্যাক্টের Signal-এ যোগ দেওয়ার নোটিফিকেশনটি বন্ধ করবেন? আপনি Signal &gt; সেটিংস &gt; নোটিফিকেশন অপশনে গিয়ে এটি চালু করতে পারবেন।</string>
 
+    <!-- TurnOnNotificationsBottomSheet -->
+    <!-- Title for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__turn_on_notifications">নোটিফিকেশন চালু করুন</string>
+    <!-- Subtitle  for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__to_receive_notifications">নতুন মেসেজের জন্য নোটিফিকেশন পেতে:</string>
+    <!-- Sheet step 1  for sheet explaining how to turn on app notifications-->
+    <string name="TurnOnNotificationsBottomSheet__1_tap_settings_below">1. নিচের \"সেটিংস\" ট্যাপ করুন</string>
+    <!-- Sheet step 2 with placeholder which will be replaced with an image of a toggle  for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__2_s_turn_on_notifications">2. %1$s নোটিফিকেশন চালু করুন</string>
+    <!-- Label for button at the bottom of the sheet which opens system app notification settings for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__settings">সেটিংস</string>
+
     <!-- Notification Channels -->
     <string name="NotificationChannel_channel_messages">বার্তাসমূহ</string>
     <string name="NotificationChannel_calls">কল সমূহ</string>
@@ -2304,6 +2428,13 @@
         <item quantity="one">%1$d টি বস্তু</item>
         <item quantity="other">%1$d টি বস্তু</item>
     </plurals>
+    <!-- Status update label used while the device is transcoding video as a prerequisite to uploading -->
+    <string name="TransferControlView__processing">প্রক্রিয়া হচ্ছে…</string>
+    <!-- Status update label used while the device is transmitting data over the network. Will take the form of "1.0 MB/2.0 MB" -->
+    <string name="TransferControlView__download_progress">%1$1.1f MB/%2$2.1f MB</string>
+    <!-- Attachment file size label for not-yet-downloaded images and video. Will take the form of "1.0 MB" -->
+    <string name="TransferControlView__filesize">%1$1.1f MB</string>
+
 
     <!-- UnauthorizedReminder -->
     <!-- Message shown in a reminder banner when the user\'s device is no longer registered -->
@@ -2327,6 +2458,8 @@
     <string name="WebRtcCallActivity__answered_on_a_linked_device">সংযুক্ত ডিভাইসে উত্তর দেওয়া হয়েছে।</string>
     <string name="WebRtcCallActivity__declined_on_a_linked_device">সংযুক্ত ডিভাইসে অস্বীকার করা হয়েছে।</string>
     <string name="WebRtcCallActivity__busy_on_a_linked_device">সংযুক্ত ডিভাইসে ব্যাস্ত।</string>
+    <!-- Tooltip message shown first time user is in a video call after switch camera button moved -->
+    <string name="WebRtcCallActivity__flip_camera_tooltip">ফ্লিপ ক্যামেরা সরিয়ে এখানে আনা হয়েছে, এটি ব্যবহার করে দেখতে আপনার ভিডিওতে ট্যাপ করুন</string>
 
     <string name="GroupCallSafetyNumberChangeNotification__someone_has_joined_this_call_with_a_safety_number_that_has_changed">কেউ একজন এই কলে এমন একটি নিরাপত্তা নাম্বার দিয়ে যোগ দিয়েছেন যা পরিবর্তিত হয়েছে।</string>
 
@@ -2681,24 +2814,13 @@
 
     <!-- verify_display_fragment -->
     <!-- Explanation of how to verify the safety numbers. %s is replaced with the name of the other recipient -->
-    <string name="verify_display_fragment__pnp_verify_safety_numbers_explanation_with_s">%1$s-এর সাথে এন্ড-টু-এন্ড এনক্রিপশন যাচাই করতে, তার ডিভাইসের উপরে থাকা রঙিন কার্ডটি মিলিয়ে দেখুন এবং নম্বরগুলো তুলনা করুন। এগুলো যদি না মিলে তবে সোয়াইপ করুন এবং অন্য এক জোড়া নিরাপত্তা নম্বর ব্যবহার করে দেখুন। শুধুমাত্র একটি জোড়া মিলতে হবে।</string>
+    <string name="verify_display_fragment__pnp_verify_safety_numbers_explanation_with_s">%1$s-এর সাথে এন্ড-টু-এন্ড এনক্রিপশন যাচাই করতে, তাদের ডিভাইসের সাথে উপরের নম্বরগুলো তুলনা করুন। আপনি তাদের ডিভাইস থেকেও কোডটি স্ক্যান করতে পারবেন।</string>
     <string name="verify_display_fragment__tap_to_scan">স্ক্যান করতে আলতো চাপুন</string>
     <string name="verify_display_fragment__successful_match">সফল ম্যাচ</string>
     <string name="verify_display_fragment__failed_to_verify_safety_number">নিরাপত্তা নম্বর যাচাই করতে ব্যর্থ হয়েছে</string>
     <string name="verify_display_fragment__loading">লোড হচ্ছে…</string>
     <string name="verify_display_fragment__mark_as_verified">যাচাইকৃত হিসাবে চিহ্নিত করুন</string>
     <string name="verify_display_fragment__clear_verification">যাচাইকরণ সম্পূর্ণ করুন</string>
-    <!-- Banner at top of safety numbers screen explaining that we\'re updating how safety numbers work. -->
-    <string name="verify_display_fragment__safety_numbers_are_updating_banner_no_learn_more">নিরাপত্তা নম্বরগুলো আপডেট করা হচ্ছে।</string>
-
-    <!-- Title for dialog explaining for how safety numbers are transitioning to support usernames -->
-    <string name="PnpSafetyNumberEducationDialog__title">নিরাপত্তা নম্বর পরিবর্তন করুন</string>
-    <!-- Message for dialog explaining for how safety numbers are transitioning to support usernames -->
-    <string name="PnpSafetyNumberEducationDialog__body">Signal-এ আসন্ন গোপনীয়তা ফিচারগুলোকে সচল করার জন্য পরিবর্তনের সময় নিরাপত্তা নম্বরগুলো আপডেট করা হচ্ছে।\n\nনিরাপত্তা নম্বর যাচাই করতে, আপনার কন্টাক্টের ডিভাইসের সাথে থাকা রঙিন কার্ডটি মিলিয়ে দেখুন। এগুলো যদি না মিলে তবে সোয়াইপ করুন এবং অন্য এক জোড়া নিরাপত্তা নম্বর ব্যবহার করে দেখুন। শুধুমাত্র একটি জোড়া মিলতে হবে।</string>
-    <!-- Button for more information about the safety number changes. Takes user to support article -->
-    <string name="PnpSafetyNumberEducationDialog__help">সাহায্য প্রয়োজন?</string>
-    <!-- Confirmation button for educating users about new safety number changes -->
-    <string name="PnpSafetyNumberEducationDialog__confirm">বুঝতে পেরেছি</string>
 
     <!-- verity_scan_fragment -->
     <string name="verify_scan_fragment__scan_the_qr_code_on_your_contact">আপনার পরিচিতি এর ডিভাইস থেকে প্রদর্শিত কিউআর কোডটি স্ক্যান করুন।</string>
@@ -2763,7 +2885,7 @@
     <string name="HelpFragment__could_not_upload_logs">লগসমূহ আপলোড করা যায়নি</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">আমরা যাতে সমস্যাটি বুঝতে পারি সেজন্য যতটা সম্ভব বিস্তারিত বলুন।</string>
     <string-array name="HelpFragment__categories_5">
-        <item>\\-\\- অনুগ্রহ করে একটি অপশন বেছে নিন\\-\\-</item>
+        <item>অনুগ্রহ করে একটি বিকল্প বেছে নিন</item>
         <item>কিছু একটা কাজ করছে না</item>
         <item>ফিচারের জন্য অনুরোধ</item>
         <item>প্রশ্ন</item>
@@ -2777,6 +2899,8 @@
     <string name="DebugLogsPromptDialogFragment__signal_android_support_request">Signal Android বাগ সংক্রান্ত সংশোধন লগ জমা</string>
     <!-- Category to organize the support email sent -->
     <string name="DebugLogsPromptDialogFragment__slow_notifications_category">বিলম্বিত নোটিফিকেশন</string>
+    <!-- Category to organize the support email sent -->
+    <string name="DebugLogsPromptDialogFragment__crash_category">ক্র্যাশ</string>
     <!-- Action to submit logs and take user to send an e-mail -->
     <string name="DebugLogsPromptDialogFragment__submit">সাবমিট</string>
     <!-- Action to decline to submit logs -->
@@ -2902,7 +3026,6 @@
     <string name="preferences__payments">পেমেন্ট</string>
     <!-- Privacy settings payments section description -->
     <string name="preferences__payment_lock">পেমেন্ট লক</string>
-    <string name="preferences__payments_beta">পেমেন্ট (বিটা)</string>
     <string name="preferences__conversation_length_limit">চ্যাটের দৈর্ঘ্যের সীমা</string>
     <string name="preferences__keep_messages">মেসেজগুলো রাখুন</string>
     <string name="preferences__clear_message_history">ম্যাসেজের ইতিহাস মুছে ফেলুন</string>
@@ -2981,7 +3104,11 @@
     <string name="preferences_storage__six_months">৬ মাস</string>
     <string name="preferences_storage__thirty_days">৩০ দিন</string>
     <string name="preferences_storage__none">কিছুই না</string>
-    <string name="preferences_storage__s_messages">%1$s বার্তা</string>
+    <plurals name="preferences_storage__s_messages_plural">
+        <item quantity="one">%1$sটি ম্যাসেজ</item>
+        <item quantity="other">%1$sটি ম্যাসেজ</item>
+    </plurals>
+
     <string name="preferences_storage__custom">নির্বাচিত</string>
     <string name="preferences_advanced__use_system_emoji">সিস্টেম ইমোজি ব্যবহার করুন</string>
     <string name="preferences_advanced__relay_all_calls_through_the_signal_server_to_avoid_revealing_your_ip_address">আপনার যোগাযোগের আইপি ঠিকানাটি প্রকাশ না করার জন্য Signal সার্ভারের মাধ্যমে কল সমূহ রিলে করুন। সক্ষম করা কল এর মান হ্রাস পাবে|</string>
@@ -2989,6 +3116,7 @@
     <!-- Privacy settings payments section title -->
     <string name="preferences_app_protection__payments">পেমেন্ট</string>
     <string name="preferences_chats__chats">চ্যাট</string>
+    <string name="preferences_app_updates__title">অ্যাপ আপডেট সমূহ</string>
     <string name="preferences_data_and_storage__manage_storage">স্টোরেজ ব্যাবস্থাপনা</string>
     <string name="preferences_data_and_storage__use_less_data_for_calls">কলগুলির জন্য কম ডেটা ব্যবহার করুন</string>
     <string name="preferences_data_and_storage__never">কখনোই না</string>
@@ -3056,7 +3184,8 @@
     <string name="PaymentsAllActivityFragment__sent">পাঠানো হয়েছে</string>
     <string name="PaymentsAllActivityFragment__received">গৃহীত</string>
 
-    <string name="PaymentsHomeFragment__introducing_payments">পেমেন্ট উপস্থাপন করা হচ্ছে (বিটা)</string>
+    <!-- Displayed on a welcome screen for payments -->
+    <string name="PaymentsHomeFragment_introducing_payments">পেমেন্ট পরিচিতি</string>
     <string name="PaymentsHomeFragment__use_signal_to_send_and_receive">গোপনীয়তাকে গুরুত্ব দেয় এমন একটি নতুন ডিজিটাল মুদ্রা MobileCoin পাঠাতে ও গ্রহণ করতে Signal ব্যবহার করুন। শুরু করতে সক্রিয় করুন।</string>
     <string name="PaymentsHomeFragment__activate_payments">অর্থ প্রদানের উপায় সক্রিয় করুন</string>
     <string name="PaymentsHomeFragment__activating_payments">অর্থ প্রদানের উপায় সক্রিয় করা হচ্ছে</string>
@@ -3090,8 +3219,9 @@
     <string name="PaymentsHomeFragment__payments_deactivated">পেমেন্ট বন্ধ করা হয়েছে।</string>
     <string name="PaymentsHomeFragment__payment_failed">পেমেন্ট ব্যর্থ হয়েছে</string>
     <string name="PaymentsHomeFragment__details">খুঁটিনাটি</string>
-  <!-- Removed by excludeNonTranslatables <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate </string>
-    <string name="PaymentsHomeFragment__you_can_use_signal_to_send">আপনি MobileCoin পাঠাতে এবং গ্রহণ করতে Signal ব্যবহার করতে পারেন। সমস্ত পেমেন্ট MobileCoin এবং MobileCoin ওয়ালেট ব্যবহারের শর্তাবলীর উপর নির্ভর করবে। এটি একটি বিটা ফিচার তাই আপনি কিছু সমস্যার মুখোমুখি হতে পারেন এবং আপনার পেমেন্ট বা ব্যালেন্স হারিয়ে যেতে পারে যা পুনরুদ্ধার করা যাবে না। </string> -->
+  <!-- Removed by excludeNonTranslatables <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate</string> -->
+    <!-- Displayed as a description in a dialog when the user tries to activate payments -->
+    <string name="PaymentsHomeFragment__you_can_use_signal_to_send_and">আপনি MobileCoin পাঠাতে ও গ্রহণ করতে Signal ব্যবহার করতে পারেন। সকল পেমেন্ট MobileCoins ও MobileCoin ওয়ালেট ব্যবহারের শর্তাবলী মেনে সম্পাদিত হয়। আপনি কিছু কিছু সমস্যার সম্মুখীন হতে পারেন এবং আপনার হারানো পেমেন্ট বা ব্যালেন্স পুনরুদ্ধার করা যাবে না। </string>
     <string name="PaymentsHomeFragment__activate">সক্রিয় করুন</string>
     <string name="PaymentsHomeFragment__view_mobile_coin_terms">MobileCoin-এর শর্তাবলী দেখুন</string>
     <string name="PaymentsHomeFragment__payments_not_available">Signal-এ পেমেন্ট আর উপলভ্য নেই। আপনি এখনও কোনও এক্সচেঞ্জে আপনার ফান্ডগুলি ট্রান্সফার করতে পারেন তবে আপনি আর পেমেন্টগুলি প্রেরণ এবং গ্রহণ করতে বা ফান্ড যোগ করতে পারবেন না।</string>
@@ -3113,6 +3243,32 @@
     <string name="PaymentsHomeFragment__cancel">বাতিল করুন</string>
     <!-- Alert dialog button to update now -->
     <string name="PaymentsHomeFragment__update_now">আপডেট করুন</string>
+
+    <!-- GrantPermissionsFragment -->
+    <!-- Displayed as a text-only action button at the bottom start of the screen -->
+    <string name="GrantPermissionsFragment__not_now">এখন না</string>
+    <!-- Displayed as an action button at the bottom end of the screen -->
+    <string name="GrantPermissionsFragment__next">পরবর্তী</string>
+    <!-- Displayed as a title at the top of the screen -->
+    <string name="GrantPermissionsFragment__allow_permissions">অনুমতি দিন</string>
+    <!-- Displayed as a subtitle at the top of the screen -->
+    <string name="GrantPermissionsFragment__to_help_you_message_people_you_know">আপনার পরিচিত ব্যক্তিদের মেসেজ করতে সাহায্য করার জন্য, Signal এই অনুমতিগুলোর জন্য অনুরোধ করবে। </string>
+    <!-- Notifications permission row title -->
+    <string name="GrantPermissionsFragment__notifications">নোটিফিকেশন</string>
+    <!-- Notifications permission row description -->
+    <string name="GrantPermissionsFragment__get_notified_when">নতুন মেসেজ এলে নোটিফিকেশন পান।</string>
+    <!-- Contacts permission row title -->
+    <string name="GrantPermissionsFragment__contacts">পরিচিতিসমূহ</string>
+    <!-- Contacts permission row description -->
+    <string name="GrantPermissionsFragment__find_people_you_know">আপনার পরিচিত ব্যক্তিদের খুঁজে বের করুন। আপনার কন্টাক্টগুলো এনক্রিপ্ট অবস্থায় আছে এবং সেগুলো সিগন্যাল সার্ভিসে দৃশ্যমান নয়।</string>
+    <!-- Phone calls permission row title -->
+    <string name="GrantPermissionsFragment__phone_calls">ফোন কল</string>
+    <!-- Phone calls permission row description -->
+    <string name="GrantPermissionsFragment__make_registering_easier">নিবন্ধন সহজ করুন এবং কল করার কিছু বাড়তি ফিচার সক্রিয় করুন।</string>
+    <!-- Storage permission row title -->
+    <string name="GrantPermissionsFragment__storage">স্টোরেজ</string>
+    <!-- Storage permission row description -->
+    <string name="GrantPermissionsFragment__send_photos_videos_and_files">আপনার ডিভাইস থেকে ছবি, ভিডিও ও ফাইল পাঠান।</string>
 
     <!-- PaymentsSecuritySetupFragment -->
     <!-- Toolbar title -->
@@ -3859,14 +4015,16 @@
     <string name="ReviewCardDialogFragment__failed_to_remove_group_member">গ্রুপের সদস্য সরিয়ে ফেলতে ব্যর্থ হয়েছে।</string>
 
     <!-- ReviewCard -->
-    <string name="ReviewCard__member">সদস্য</string>
     <string name="ReviewCard__request">অনুরোধ</string>
     <string name="ReviewCard__your_contact">আপনার কন্টাক্ট</string>
     <string name="ReviewCard__remove_from_group">গ্রুপ থেকে সরিয়ে ফেলুন</string>
     <string name="ReviewCard__update_contact">কন্টাক্ট হালনাগাদ</string>
     <string name="ReviewCard__block">ব্লক করুন</string>
     <string name="ReviewCard__delete">মুছে ফেলুন</string>
-    <string name="ReviewCard__recently_changed">সাম্প্রতিককালে তাদের প্রোফাইল নাম %1$s থেকে %2$s তে পরিবর্তন করেছেন</string>
+    <!-- Displayed when a recent name change has occurred. First placeholder is new short name, second is previous name, third is new name. -->
+    <string name="ReviewCard__s_recently_changed">%1$s সম্প্রতি তার নাম %2$s থেকে %3$s-এ পরিবর্তন করেছেন।</string>
+    <!-- Displayed when a review user is in your system contacts. Placeholder is short name. -->
+    <string name="ReviewCard__s_is_in_your_system_contacts">%1$s আপনার সিস্টেমের কন্টাক্টে আছেন</string>
 
     <!-- CallParticipantsListUpdatePopupWindow -->
     <string name="CallParticipantsListUpdatePopupWindow__s_joined">%1$s যোগ দিয়েছেন</string>
@@ -4026,7 +4184,7 @@
     <!-- Description in save recovery phrase screen which shows up when user has non zero balance -->
     <string name="PaymentsRecoveryStartFragment__got_balance">আপনার একটি ব্যালেন্স পেয়েছেন! আপনার পুনরুদ্ধার করার বাক্যটি সেভ করার সময় হয়েছে—একটি 24-শব্দের কী আপনি আপনার ব্যালেন্স পুনরুদ্ধার করতে ব্যবহার করতে পারেন।</string>
     <!-- Description in save recovery phrase screen which shows up when user navigates from info card -->
-    <string name="PaymentsRecoveryStartFragment__time_to_save">আপনার পুনরুদ্ধার করার বাক্যটি সেভ করার সময় হয়েছে—একটি 24-শব্দের কী আপনি আপনার ব্যালেন্স পুনরুদ্ধার করতে ব্যবহার করতে পারেন। আরো জানুন</string>
+    <string name="PaymentsRecoveryStartFragment__time_to_save">আপনার পুনর্বহাল করার বাক্যটি সেভ করার সময় হয়েছে—একটি 24-শব্দের চাবি, যা আপনি আপনার ব্যালেন্স পুনরুদ্ধার করতে ব্যবহার করতে পারেন।</string>
     <string name="PaymentsRecoveryStartFragment__your_recovery_phrase_is_a">আপনার রিকভার করার বাক্যাংশটি %1$d-শব্দ বিশিষ্ট যা কেবল আপনি জানেন। আপনার ব্যালেন্স পুনরুদ্ধার করতে এই বাক্যাংশটি ব্যবহার করুন।</string>
     <string name="PaymentsRecoveryStartFragment__start">শুরু করুন</string>
     <string name="PaymentsRecoveryStartFragment__enter_manually">ম্যানুয়ালি লিখুন</string>
@@ -4512,6 +4670,13 @@
     <string name="NewConversationActivity__view_contact">কন্টাক্ট দেখুন</string>
     <!-- Error message shown when looking up a person by phone number and that phone number is not associated with a signal account -->
     <string name="NewConversationActivity__s_is_not_a_signal_user">%1$s Signal ব্যবহারকারী নন</string>
+    <!-- Error message shown when we could not get a user from the username link -->
+    <string name="NewConversationActivity__">%1$s Signal ব্যবহারকারী নন</string>
+    <!-- Error message shown in a dialog when trying to create a new group with non-signal users (e.g., unregistered or phone number only contacts) -->
+    <plurals name="CreateGroupActivity_not_signal_users">
+        <item quantity="one">%1$s Signal ব্যবহারকারী নন</item>
+        <item quantity="other">%1$s Signal ব্যবহারকারী নন</item>
+    </plurals>
 
     <!-- ContactFilterView -->
     <string name="ContactFilterView__search_name_or_number">নাম বা নাম্বার খুঁজুন</string>
@@ -4697,6 +4862,12 @@
     <string name="ManageDonationsFragment__other_ways_to_give">ডোনেশন দেয়ার অন্যান্য উপায়</string>
     <!-- Preference label to launch badge gifting -->
     <string name="ManageDonationsFragment__donate_for_a_friend">বন্ধুর জন্য ডোনেট করুন</string>
+    <!-- Dialog title shown when a donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet -->
+    <string name="ManageDonationsFragment__couldnt_confirm_donation">ডোনেশন নিশ্চিত করা যায়নি</string>
+    <!-- Dialog message shown when a monthly donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet, placeholder is money amount -->
+    <string name="ManageDonationsFragment__your_monthly_s_donation_couldnt_be_confirmed">আপনার %1$s/মাসের ডোনেশন নিশ্চিত করা যায়নি। আপনার iDEAL পেমেন্ট অনুমোদন করতে আপনার ব্যাংকিং অ্যাপ দেখুন।</string>
+    <!-- Dialog message shown when a one-time donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet, placeholder is money amount -->
+    <string name="ManageDonationsFragment__your_one_time_s_donation_couldnt_be_confirmed">আপনার এককালীন %1$s ডোনেশন নিশ্চিত করা যায়নি। আপনার iDEAL পেমেন্ট অনুমোদন করতে আপনার ব্যাংকিং অ্যাপ দেখুন।</string>
 
     <string name="Boost__enter_custom_amount">কাস্টম পরিমাণ লিখুন</string>
     <!-- Error label when the amount is smaller than what we can accept -->
@@ -4708,6 +4879,12 @@
     <!-- Displayed on "My Support" screen when user badge failed to be added to their account -->
     <string name="MySupportPreference__couldnt_add_badge_s">ব্যাজ যোগ করা যায়নি। %1$s</string>
     <string name="MySupportPreference__please_contact_support">অনুগ্রহ করে সহায়তা কেন্দ্রে যোগাযোগ করুন।</string>
+    <!-- Displayed as a subtitle on a row in the Manage Donations screen when payment for a donation is pending -->
+    <string name="MySupportPreference__payment_pending">পেমেন্ট অনিষ্পন্ন অবস্থায় আছে</string>
+    <!-- Displayed as a dialog message when clicking on a donation row that is pending. Placeholder is a formatted fiat amount -->
+    <string name="MySupportPreference__your_bank_transfer_of_s">আপনার %1$s পরিমাণ অর্থের ব্যাংক ট্রান্সফার অনিষ্পন্ন অবস্থায় আছে। ব্যাংক ট্রান্সফার সম্পন্ন হতে সাধারণত 1 কার্যদিবস প্রয়োজন হয়।  </string>
+    <!-- Displayed in the pending help dialog, used to launch user to more details about bank transfers -->
+    <string name="MySupportPreference__learn_more">আরো জানুন</string>
 
     <!-- Title of dialog telling user they need to update signal as it expired -->
     <string name="UpdateSignalExpiredDialog__title">Signal আপডেট করুন</string>
@@ -4757,12 +4934,16 @@
     <string name="Subscription__contact_support">সহায়তায় যোগাযোগ করুন</string>
     <string name="Subscription__get_a_s_badge">একটি %1$s ব্যাজ নিন</string>
 
-    <string name="SubscribeFragment__processing_payment">পেমেন্ট প্রক্রিয়া করা হচ্ছে…</string>
+    <string name="SubscribeFragment__processing_payment">ডোনেশন প্রক্রিয়া করা হচ্ছে…</string>
     <!-- Displayed in notification when user payment fails to process on Stripe -->
-    <string name="DonationsErrors__error_processing_payment">ত্রুটি প্রক্রিয়াকরণ পেমেন্ট</string>
+    <string name="DonationsErrors__error_processing_payment">ডোনেশন প্রক্রিয়াকরণে ত্রুটি দেখা দিয়েছে</string>
+    <!-- Displayed on manage donations screen as a dialog message when payment method failed -->
+    <string name="DonationsErrors__try_another_payment_method">অন্য পেমেন্ট পদ্ধতি ব্যবহার করে দেখুন বা আরো তথ্যের জন্য আপনার ব্যাঙ্কের সাথে যোগাযোগ করুন।</string>
+    <!-- Displayed on manage donations screen error dialogs as an action label -->
+    <string name="DonationsErrors__learn_more">আরো জানুন</string>
     <!-- Displayed on "My Support" screen when user subscription payment method failed. -->
-    <string name="DonationsErrors__error_processing_payment_s">ত্রুটি প্রক্রিয়াকরণ পেমেন্ট। %1$s</string>
-    <string name="DonationsErrors__your_payment">আপনার পেমেন্ট প্রক্রিয়া করা যায়নি এবং আপনাকে চার্জ করা হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="DonationsErrors__error_processing_payment_s">ডোনেশন প্রক্রিয়াকরণে ত্রুটি দেখা দিয়েছে। %1$s</string>
+    <string name="DonationsErrors__your_payment">আপনার ডোনেশন প্রক্রিয়া করা যায়নি এবং আপনার কাছ থেকে কোনো অর্থ কেটে নেওয়া হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
     <string name="DonationsErrors__still_processing">এখনও প্রক্রিয়া করা হচ্ছে</string>
     <string name="DonationsErrors__couldnt_add_badge">ব্যাজ যোগ করা যায়নি</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
@@ -4772,9 +4953,9 @@
     <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
     <string name="DonationsErrors__donation_failed">ডোনেশন সফল হয়নি</string>
     <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
-    <string name="DonationsErrors__your_payment_was_processed_but">আপনার পেমেন্ট প্রক্রিয়া করা হয়েছে কিন্তু Signal আপনার ডোনেশনের ম্যাসেজ পাঠাতে পারেনি। অনুগ্রহ করে সহায়তা কেন্দ্রে যোগাযোগ করুন।</string>
+    <string name="DonationsErrors__your_payment_was_processed_but">আপনার ডোনেশন প্রক্রিয়া করা হয়েছে, কিন্তু Signal আপনার ডোনেশনের মেসেজ পাঠাতে পারেনি। অনুগ্রহ করে সহায়তা কেন্দ্রে যোগাযোগ করুন।</string>
     <string name="DonationsErrors__your_badge_could_not">আপনার ব্যাজটি আপনার অ্যাকাউন্টে যোগ করা যায়নি, তবে আপনাকে চার্জ করা হতে পারে। অনুগ্রহ করে সহায়তা কেন্দ্রে যোগাযোগ করুন।</string>
-    <string name="DonationsErrors__your_payment_is_still">আপনার পেমেন্ট এখনও প্রক্রিয়া করা হচ্ছে। আপনার সংযোগের উপর নির্ভর করে এটি কয়েক মিনিট সময় নিতে পারে।</string>
+    <string name="DonationsErrors__your_payment_is_still">আপনার ডোনেশন এখনো প্রক্রিয়া করা হচ্ছে। আপনার সংযোগের উপর ভিত্তি করে এতে কয়েক মিনিট সময় লাগতে পারে।</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">সাবস্ক্রিপশন বাতিল করতে ব্যর্থ হয়েছে</string>
     <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">সাবস্ক্রিপশন বাতিল করার জন্য ইন্টারনেট সংযোগ প্রয়োজন।</string>
     <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">আপনার ডিভাইস Google Pay সমর্থন করে না, তাই আপনি ব্যাজ অর্জন করতে সাবস্ক্রাইব করতে পারবেন না। আপনি এখনও আমাদের ওয়েবসাইটে ডোনেশন দিয়ে Signal-কে সমর্থন করতে পারেন।</string>
@@ -4786,6 +4967,8 @@
     <string name="DonationsErrors__this_user_cant_receive_donations_until">এই ব্যবহারকারী Signal আপগ্রেড না করা পর্যন্ত ডোনেশন গ্রহণ করতে পারবেন না।</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
     <string name="DonationsErrors__your_donation_could_not_be_sent">নেটওয়ার্ক ত্রুটির কারণে আপনার ডোনেশন পাঠানো যায়নি। আপনার নেটওয়ার্ক সংযোগ ঠিক আছে কি না দেখুন এবং আবার চেষ্টা করুন।</string>
+    <!-- Displayed as a dialog message when the user encounters an error during an iDEAL donation -->
+    <string name="DonationsErrors__your_ideal_couldnt_be_processed">আপনার iDEAL ডোনেশন প্রক্রিয়া করা যায়নি। আরেকটি পেমেন্ট পদ্ধতি ব্যবহার করে দেখুন বা আরো তথ্যের জন্য আপনার ব্যাংকের সাথে যোগাযোগ করুন।</string>
 
     <!-- Gift message view title -->
     <string name="GiftMessageView__donation_on_behalf_of_s">%1$s-এর পক্ষ থেকে ডোনেশন</string>
@@ -4803,6 +4986,8 @@
 
     <!-- Stripe decline code generic_failure -->
     <string name="DeclineCode__try_another_payment_method_or_contact_your_bank">অন্য পেমেন্ট পদ্ধতি ব্যবহার করে দেখুন বা আরো তথ্যের জন্য আপনার ব্যাঙ্কের সাথে যোগাযোগ করুন।</string>
+    <!-- PayPal decline code for payment declined -->
+    <string name="DeclineCode__try_another_payment_method_or_contact_your_bank_for_more_information_if_this_was_a_paypal">অন্য পেমেন্ট পদ্ধতি ব্যবহার করে দেখুন বা আরো তথ্যের জন্য আপনার ব্যাংকের সাথে যোগাযোগ করুন। যদি এটি একটি PayPal লেনদেন হয়ে থাকে তবে PayPal-এর সাথে যোগাযোগ করুন।</string>
     <!-- Stripe decline code verify on Google Pay and try again -->
     <string name="DeclineCode__verify_your_payment_method_is_up_to_date_in_google_pay_and_try_again">Google Pay-তে আপনার পেমেন্ট পদ্ধতি আপ টু ডেট আছে কিনা তা যাচাই করে আবার চেষ্টা করুন।</string>
     <!-- Stripe decline code learn more action label -->
@@ -4828,7 +5013,7 @@
     <!-- Stripe decline code incorrect expiration year -->
     <string name="DeclineCode__the_expiration_year">আপনার অর্থপ্রদানের পদ্ধতিতে মেয়াদ শেষ হওয়ার বছরটি ভুল। Google Pay-তে আপডেট করে আবার চেষ্টা করুন।</string>
     <!-- Stripe decline code issuer not available -->
-    <string name="DeclineCode__try_completing_the_payment_again">পেমেন্ট সম্পন্ন করার জন্য আবার চেষ্টা করুন বা আরো তথ্যের জন্য আপনার ব্যাঙ্কের সাথে যোগাযোগ করুন।</string>
+    <string name="DeclineCode__try_completing_the_payment_again">ডোনেশন সম্পন্ন করার জন্য আবার চেষ্টা করুন বা আরো তথ্যের জন্য আপনার ব্যাংকের সাথে যোগাযোগ করুন।</string>
     <!-- Stripe decline code processing error -->
     <string name="DeclineCode__try_again">আবার চেষ্টা করুন বা আরো তথ্য জানতে জন্য আপনার ব্যাঙ্কের সাথে যোগাযোগ করুন।</string>
 
@@ -4847,6 +5032,18 @@
     <string name="DeclineCode__the_expiration_year_on_your_card_is_incorrect">আপনার কার্ডের মেয়াদোত্তীর্ণের বছর সঠিক নয়। আপনার কার্ডের বিবরণ সঠিক কি না তা যাচাই করুন এবং আবার চেষ্টা করুন।</string>
     <!-- Stripe decline code incorrect_number and invalid_number for credit cards displayed in a notification or dialog -->
     <string name="DeclineCode__your_card_number_is_incorrect_verify_your_card_details">আপনার কার্ডের নম্বরটি সঠিক নয়। আপনার কার্ডের বিবরণ সঠিক কি না তা যাচাই করুন এবং আবার চেষ্টা করুন।</string>
+
+    <!-- Stripe Failure Codes for failed bank transfers -->
+    <!-- Failure code text for insufficient funds, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__the_bank_account_provided">প্রদত্ত ব্যাংক অ্যাকাউন্টে এই ক্রয়টি সম্পন্ন করার জন্য পর্যাপ্ত অর্থ নেই, আবার চেষ্টা করুন বা আরো তথ্যের জন্য আপনার ব্যাংকের সাথে যোগাযোগ করুন।</string>
+    <!-- Failure code text for revoked authorization of payment, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__this_payment_was_revoked">এই পেমেন্টটি অ্যাকাউন্ট হোল্ডার কর্তৃক বাতিল করা হয়েছে এবং প্রক্রিয়া করা যায়নি। আপনার কাছ থেকে অর্থ কেটে নেওয়া হয়নি।</string>
+    <!-- Failure code text for a payment lacking an authorized mandate or incorrect mandate, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__an_error_occurred_while_processing_this_payment">এই ডোনেশনটি প্রক্রিয়া করার সময় একটি ত্রুটি ঘটেছে, অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <!-- Failure code text for a closed account, deceased recipient, or one with blocked direct debits, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__the_bank_details_provided_could_not_be_processed">প্রদত্ত ব্যাংক বিবরণ প্রক্রিয়া করা যায়নি, আরো তথ্যের জন্য আপনার ব্যাংকের সাথে যোগাযোগ করুন।</string>
+    <!-- Failure code text for a non-existent bank branch, invalid account holder, invalid iban, generic failure, or unknown bank failure, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__verify_your_bank_details_are_correct">আপনার কার্ডের বিবরণ সঠিক কি না তা যাচাই করুন এবং আবার চেষ্টা করুন। সমস্যা চলতে থাকলে, আপনার ব্যাংকের সাথে যোগাযোগ করুন।</string>
 
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">আপনার প্রোফাইলের নাম দিন</string>
@@ -4883,6 +5080,12 @@
     <string name="AddAllowedMembers__add_people_and_groups_you_want_notifications_and_calls_from_when_this_profile_is_on">প্রোফাইল চালু থাকা অবস্থায় আপনি যে সমস্ত ব্যক্তি ও গ্ৰুপের নোটিফিকেশন পেতে চান এবং কল করতে চান তাদের যোগ করুন</string>
     <!-- Button text that launches the contact picker to select from -->
     <string name="AddAllowedMembers__add_people_or_groups">ব্যক্তি অথবা গ্ৰুপ যোগ করুন</string>
+    <!-- Title for exceptions section of add people to notification profile screen in create flow -->
+    <string name="AddAllowedMembers__exceptions">প্রত্যাশা</string>
+    <!-- List preference to toggle that allows calls through the notification profile during create flow -->
+    <string name="AddAllowedMembers__allow_all_calls">সকল কল অনুমোদন করুন</string>
+    <!-- List preference to toggle that allows mentions through the notification profile during create flow -->
+    <string name="AddAllowedMembers__notify_for_all_mentions">সকল উল্লেখ অবহিত করুন</string>
 
     <!-- Call to action button on contact picker for adding to profile -->
     <string name="SelectRecipientsFragment__add">যোগ করুন</string>
@@ -4988,6 +5191,10 @@
 
     <!-- Displayed in a toast when we fail to open the ringtone picker -->
     <string name="NotificationSettingsFragment__failed_to_open_picker">পিকার খুলতে ব্যর্থ হয়েছে।</string>
+    <!-- Banner title when notification permission is disabled -->
+    <string name="NotificationSettingsFragment__to_enable_notifications">নোটিফিকেশন চালু করতে, Signal-এর সেগুলো প্রদর্শন করার অনুমতি প্রয়োজন।</string>
+    <!-- Banner action when notification permission is disabled -->
+    <string name="NotificationSettingsFragment__turn_on">চালু করুন</string>
 
     <!-- Description shown for the Signal Release Notes channel -->
     <string name="ReleaseNotes__signal_release_notes_and_news">Signal রিলিজ নোট &amp; নিউজ</string>
@@ -5000,10 +5207,10 @@
     <string name="DonationReceiptListFragment__recurring">পুনরাবৃত্ত</string>
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">এক-কালীন</string>
+    <!-- Donation receipts gift tab -->
+    <string name="DonationReceiptListFragment__for_a_friend">বন্ধুর জন্য</string>
     <!-- Donation receipts gift tab label -->
     <string name="DonationReceiptListFragment__donation_for_a_friend">বন্ধুর জন্য ডোনেশন</string>
-    <!-- Donation receipts boost row label -->
-    <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
     <string name="DonationReceiptDetailsFragment__donation_type">ডোনেশনের ধরণ</string>
     <!-- Donation receipts date paid heading -->
@@ -5492,7 +5699,10 @@
     <!-- Message of safety number changes bottom sheet when not showing individual records and user has seen review screen -->
     <string name="SafetyNumberBottomSheetFragment__all_connections_have_been_reviewed">সকল কানেকশন রিভিউ করা হয়েছে, চালিয়ে যেতে সেন্ডে ট্যাপ করুন।</string>
     <!-- Message of safety number changes bottom sheet when not showing individual records -->
-    <string name="SafetyNumberBottomSheetFragment__you_have_d_connections">আপনার %1$dটি কানেকশন আছে, যারা সম্ভবত Signal পুনরায় ইনস্টল করেছেন বা ডিভাইস পরিবর্তন করেছেন৷ তাদের সাথে আপনার স্টোরি শেয়ার করার আগে তাদের নিরাপত্তা নম্বরগুলো রিভিউ করুন বা আপনার স্টোরি দেখা থেকে তাদের বাদ দিন।</string>
+    <plurals name="SafetyNumberBottomSheetFragment__you_have_d_connections_plural">
+        <item quantity="one">%1$d-টি কানেকশন হয়তো Signal পুনরায় ইনস্টল করেছেন বা ডিভাইস পরিবর্তন করেছেন। আপনি তার নিরাপত্তা নম্বর পর্যালোচনা করতে পারেন বা পাঠানো চালিয়ে যেতে পারেন।</item>
+        <item quantity="other">%1$d-টি কানেকশন হয়তো Signal পুনরায় ইনস্টল করেছেন বা ডিভাইস পরিবর্তন করেছেন। আপনি তাদের নিরাপত্তা নম্বর পর্যালোচনা করতে পারেন বা পাঠানো চালিয়ে যেতে পারেন।</item>
+    </plurals>
     <!-- Menu action to launch safety number verification screen -->
     <string name="SafetyNumberBottomSheetFragment__verify_safety_number">নিরাপত্তা নাম্বার যাচাই করুন</string>
     <!-- Menu action to remove user from story -->
@@ -5735,6 +5945,23 @@
     <string name="DonateToSignalFragment__continue">চালিয়ে যান</string>
     <!-- Description below title -->
     <string name="DonateToSignalFragment__private_messaging">ব্যক্তিগত ম্যাসেজিং, আপনাদের অর্থেই চালিত। নেই কোনো বিজ্ঞাপন, নেই কোনো ট্র্যাকিং, নেই কোনো আপোস। Signal-কে সমর্থন করতে এখনই ডোনেট করুন।</string>
+    <!-- Dialog title when a user tries to donate while they already have a pending donation. -->
+    <string name="DonateToSignalFragment__you_have_a_donation_pending">আপনার একটি জমা না হওয়া ডোনেশন রয়েছে</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending monthly donation. -->
+    <string name="DonateToSignalFragment__bank_transfers_usually_take_1_business_day_to_process_monthly">ব্যাংক ট্রান্সফার প্রক্রিয়া করতে সাধারণত 1 কার্যদিবস প্রয়োজন হয়। অনুগ্রহ করে আপনার সাবস্ক্রিপশন আপডেট করার আগে এই পেমেন্টটি সম্পন্ন হওয়ার আগ পর্যন্ত অপেক্ষা করুন।</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending one time donation. -->
+    <string name="DonateToSignalFragment__bank_transfers_usually_take_1_business_day_to_process_onetime">ব্যাংক ট্রান্সফার প্রক্রিয়া করতে সাধারণত 1 কার্যদিবস প্রয়োজন হয়। অনুগ্রহ করে আরেকটি ডোনেশন পাঠানোর আগে এই পেমেন্টটি সম্পন্ন হওয়ার আগ পর্যন্ত অপেক্ষা করুন।</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending monthly donation. -->
+    <string name="DonateToSignalFragment__your_payment_is_still_being_processed_monthly">আপনার ডোনেশন এখনো প্রক্রিয়া করা হচ্ছে। আপনার সংযোগের উপর ভিত্তি করে এতে কয়েক মিনিট সময় লাগতে পারে। অনুগ্রহ করে আপনার সাবস্ক্রিপশন আপডেট করার আগে এই পেমেন্টটি সম্পন্ন হওয়ার আগ পর্যন্ত অপেক্ষা করুন।</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending one time donation. -->
+    <string name="DonateToSignalFragment__your_payment_is_still_being_processed_onetime">আপনার ডোনেশন এখনো প্রক্রিয়া করা হচ্ছে। আপনার সংযোগের উপর ভিত্তি করে এতে কয়েক মিনিট সময় লাগতে পারে। অনুগ্রহ করে আরেকটি ডোনেশন পাঠানোর আগে এই পেমেন্টটি সম্পন্ন হওয়ার আগ পর্যন্ত অপেক্ষা করুন।</string>
+    <!-- Dialog body when a user opens the manage donations main screen and they have a pending iDEAL donation -->
+    <string name="DonateToSignalFragment__your_ideal_payment_is_still_processing">আপনার iDEAL ডোনেশন এখনো প্রক্রিয়াধীন আছে। আরেকটি ডোনেশন করার আগে আপনার পেমেন্ট অনুমোদন করার জন্য আপনার ব্যাংকিং অ্যাপ দেখুন।</string>
+    <!-- Dialog title shown when a user tries to donate an amount higher than is allowed for a given payment method. -->
+    <string name="DonateToSignal__donation_amount_too_high">ডোনেশনের পরিমাণ খুব বেশি</string>
+    <!-- Dialog body shown when a user tries to donate an amount higher than is allowed for a given payment method, place holder is the maximum -->
+    <string name="DonateToSignalFragment__you_can_send_up_to_s_via_bank_transfer">আপনি ব্যাংক ট্রান্সফারের মাধ্যমে %1$s পর্যন্ত পাঠাতে পারবেন। একটি ভিন্ন পরিমাণ পাঠানোর চেষ্টা করুন বা একটি ভিন্ন পেমেন্ট পদ্ধতি ব্যবহার করে দেখুন।</string>
+
     <!-- Donation pill toggle monthly text -->
     <string name="DonationPillToggle__monthly">মাসিক</string>
     <!-- Donation pill toggle one-time text -->
@@ -5752,10 +5979,144 @@
         <item quantity="one">%2$d দিনের জন্য একটি %1$s ব্যাজ নিন</item>
         <item quantity="other">%2$d দিনের জন্য একটি %1$s ব্যাজ নিন</item>
     </plurals>
+    <!-- Button label for paying with a bank transfer -->
+    <string name="GatewaySelectorBottomSheet__bank_transfer">ব্যাংক ট্রান্সফার</string>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">ক্রেডিট বা ডেবিট কার্ড</string>
     <!-- Sheet summary when giving donating for a friend -->
     <string name="GatewaySelectorBottomSheet__donate_for_a_friend">বন্ধুর জন্য ডোনেট করুন</string>
+    <!-- Button label for paying with iDEAL -->
+    <string name="GatewaySelectorBottomSheet__ideal">iDEAL</string>
+
+    <!-- Dialog title for launching external intent -->
+    <string name="ExternalNavigationHelper__leave_signal_to_confirm_payment">ডোনেশন নিশ্চিত করতে Signal থেকে বেরিয়ে যাবেন?</string>
+    <string name="ExternalNavigationHelper__once_this_payment_is_confirmed">নিশ্চিত হয়ে গেলে, আপনার ডোনেশন প্রক্রিয়াকরণ শেষ করতে Signal-এ ফিরে যান।</string>
+
+    <!-- IdealBank -->
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__abn_amro">ABN AMRO</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__asn_bank">ASN Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__bunq">bunq</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__ing">ING</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__knab">Knab</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__n26">N26</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__rabobank">Rabobank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__regiobank">RegioBank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__revolut">Revolut</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__sns_bank">SNS Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__triodos_bank">Triodos Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__van_lanschot">Van Lanschot Kempen</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__yoursafe">Yoursafe</string>
+
+    <!-- BankTransferMandateFragment -->
+    <!-- Title of screen displaying the bank transfer mandate -->
+    <string name="BankTransferMandateFragment__bank_transfer">ব্যাংক ট্রান্সফার</string>
+    <!-- Subtitle of screen displaying the bank transfer mandate, placeholder is \'Learn more\' -->
+    <string name="BankTransferMandateFragment__stripe_processes_donations">Stripe Signal-এ পাঠানো ডোনেশন প্রক্রিয়া করে। Signal আপনার ব্যক্তিগত তথ্য সংগ্রহ কিংবা সংরক্ষণ করে না। %1$s</string>
+    <!-- Subtitle learn more of screen displaying bank transfer mandate -->
+    <string name="BankTransferMandateFragment__learn_more">আরো জানুন</string>
+    <!-- Button label to continue with transfer -->
+    <string name="BankTransferMandateFragment__agree">একমত</string>
+    <!-- Button label to read more of the bank mandate that is currently off screen -->
+    <string name="BankTransferMandateFragment__read_more">আরও পড়ুন</string>
+    <!-- Text displayed when mandate load fails -->
+    <string name="BankTransferMandateFragment__failed_to_load_mandate">অনুরোধ লোড করা যায়নি</string>
+
+    <!-- BankTransferDetailsFragment -->
+    <!-- Subtext explaining how email is used. Placeholder is \'Learn more\' -->
+    <string name="BankTransferDetailsFragment__enter_your_bank_details">আপনার ব্যাংকের বিবরণ ও ইমেইল লিখুন। আপনার ডোনেশন সম্পর্কে আপডেট পাঠাতে Stripe এই ইমেইলটি ব্যবহার করে। %1$s</string>
+    <!-- Subtext learn more link text -->
+    <string name="BankTransferDetailsFragment__learn_more">আরো জানুন</string>
+    <!-- Text field label for name on bank account -->
+    <string name="BankTransferDetailsFragment__name_on_bank_account">ব্যাংক অ্যাকাউন্টের নাম</string>
+    <!-- Text field label for IBAN -->
+    <string name="BankTransferDetailsFragment__iban">IBAN</string>
+    <!-- Text field label for email -->
+    <string name="BankTransferDetailsFragment__email">ইমেইল</string>
+    <!-- Text label for button to show user how to find their IBAN -->
+    <string name="BankTransferDetailsFragment__find_account_info">অ্যাকাউন্টের তথ্য দেখুন</string>
+    <!-- Donate button label for monthly subscription -->
+    <string name="BankTransferDetailsFragment__donate_s_month">ডোনেট করুন %1$s/প্রতি মাসে</string>
+    <!-- Donate button label for one-time -->
+    <string name="BankTransferDetailsFragment__donate_s">%1$s-কে ডোনেট করুন</string>
+    <!-- Error label for IBAN field when number is too short -->
+    <string name="BankTransferDetailsFragment__iban_is_too_short">IBAN অনেক ছোট</string>
+    <!-- Error label for IBAN field when number is too long -->
+    <string name="BankTransferDetailsFragment__iban_is_too_long">IBAN অনেক বড়</string>
+    <!-- Error label for IBAN field when country is not supported -->
+    <string name="BankTransferDetailsFragment__iban_country_code_is_not_supported">IBAN কান্ট্রি কোডটি সমর্থিত নয়</string>
+    <!-- Error label for IBAN field when number is invalid -->
+    <string name="BankTransferDetailsFragment__invalid_iban">অকার্যকর IBAN</string>
+    <!-- Error label for name field when name is not at least two characters long -->
+    <string name="BankTransferDetailsFragment__minimum_2_characters">অন্তত 2 ক্যারেক্টার</string>
+    <!-- Error label for email field when email is not valid -->
+    <string name="BankTransferDetailsFragment__invalid_email_address">অকার্যকর ইমেইল ঠিকানা</string>
+
+    <!-- IdealTransferDetailsFragment -->
+    <!-- Title of the screen, displayed in the toolbar -->
+    <string name="IdealTransferDetailsFragment__ideal">iDEAL</string>
+    <!-- Subtitle of the screen, displayed below the toolbar. Placeholder is for \'learn more\' -->
+    <string name="IdealTransferDetailsFragment__enter_your_bank">আপনার ব্যাংকের নাম, আপনার নাম ও ইমেইল লিখুন। আপনার ডোনেশন সম্পর্কে আপডেট পাঠাতে Stripe এই ইমেইলটি ব্যবহার করে। %1$s</string>
+    <!-- Subtitle of the screen, displayed below the toolbar. Placeholder is for \'learn more\' -->
+    <string name="IdealTransferDetailsFragment__enter_your_bank_details_one_time">আপনার ব্যাংকের তথ্য লিখুন। Signal আপনার ব্যক্তিগত তথ্য সংগ্রহ কিংবা সংরক্ষণ করে না। %1$s</string>
+    <!-- Subtitle learn-more button displayed inline with the subtitle text -->
+    <string name="IdealTransferDetailsFragment__learn_more">আরো জানুন</string>
+    <!-- Hint label for text entry box for name on bank account -->
+    <string name="IdealTransferDetailsFragment__name_on_bank_account">ব্যাংক অ্যাকাউন্টের নাম</string>
+    <!-- Hint label for text entry box for email -->
+    <string name="IdealTransferDetailsFragment__email">ইমেইল</string>
+    <!-- Default label for bank selection -->
+    <string name="IdealTransferDetailsFragment__choose_your_bank">আপনার ব্যাংক বেছে নিন</string>
+
+    <!-- IdealTransferDetailsBankSelectionDialogFragment -->
+    <!-- Title of the screen, displayed in the toolbar -->
+    <string name="IdealTransferDetailsBankSelectionDialogFragment__choose_your_bank">আপনার ব্যাংক বেছে নিন</string>
+
+    <!-- Title of bottom sheet for finding account information -->
+    <string name="FindAccountInfoSheet__find_your_account_information">আপনার অ্যাকাউন্টের তথ্য দেখুন</string>
+    <!-- Body of bottom sheet for finding account information -->
+    <string name="FindAccountInfoSheet__look_for_your_iban_at">আপনার ব্যাংক স্টেটমেন্টের উপরে আপনার IBAN নম্বরটি দেখুন। IBAN-এ 34টি পর্যন্ত অক্ষর থাকে। আপনি যে নামটি লিখছেন তা আপনার ব্যাংক অ্যাকাউন্টে থাকা আপনার পুরো নামের সাথে মিলতে হবে। আরো তথ্য জানতে আপনার ব্যাংকের সাথে যোগাযোগ করুন।</string>
+
+    <!-- Title of donation pending sheet displayed after making a bank transfer -->
+    <string name="DonationPendingBottomSheet__donation_pending">ডোনেশন অনিষ্পন্ন অবস্থায় আছে</string>
+    <!-- Top text block of donation pending sheet displayed after subscribing via a bank transfer. Placeholder is the badge name. -->
+    <string name="DonationPendingBottomSheet__your_monthly_donation_is_pending">আপনার মাসিক ডোনেশন অনিষ্পন্ন অবস্থায় আছে। আপনার ডোনেশন পাওয়া গেলে আপনি আপনার প্রোফাইলে %1$s ব্যাজ প্রদর্শন করতে সক্ষম হবেন।</string>
+    <!-- Top text block of donation pending sheet displayed after one-time donation via a bank transfer. Placeholder is the badge name. -->
+    <string name="DonationPendingBottomSheet__your_one_time_donation_is_pending">আপনার এককালীন ডোনেশন অনিষ্পন্ন অবস্থায় আছে। আপনার ডোনেশন পাওয়া গেলে আপনি আপনার প্রোফাইলে %1$s ব্যাজ প্রদর্শন করতে সক্ষম হবেন।</string>
+    <!-- Bottom text block of donation pending sheet displayed after donating via a bank transfer. Placeholder is for learn more. -->
+    <string name="DonationPendingBottomSheet__bank_transfers_usually_take">ব্যাংক ট্রান্সফার প্রক্রিয়া করতে সাধারণত 1 কার্যদিবস প্রয়োজন হয়। %1$s</string>
+    <!-- Learn more text for donation pending sheet displayed after donating via a bank transfer. -->
+    <string name="DonationPendingBottomSheet__learn_more">আরো জানুন</string>
+    <!-- Confirmation button for donation pending sheet displayed after donating via a bank transfer. -->
+    <string name="DonationPendingBottomSheet__done">সম্পন্ন হয়েছে</string>
+
+    <!-- Title of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__donation_couldnt_be_processed">ডোনেশন প্রক্রিয়া করা যায়নি</string>
+    <!-- Text block of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__were_having_trouble">আপনার ব্যাংক ট্রান্সফার প্রক্রিয়া করতে আমাদের সমস্যা হচ্ছে। আপনার কাছ থেকে অর্থ কেটে নেওয়া হয়নি। আরেকটি পেমেন্ট পদ্ধতি ব্যবহার করে দেখুন বা আরো তথ্যের জন্য আপনার ব্যাংকের সাথে যোগাযোগ করুন।</string>
+    <!-- Button label for retry button of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__try_again">আবারো চেষ্টা করুন</string>
+    <!-- Button label for not now button of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__not_now">এখন না</string>
+
+    <!-- Title of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed -->
+    <string name="DonationCompletedBottomSheet__donation_complete">অনুদান সম্পন্ন হয়েছে</string>
+    <!-- Text block of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed -->
+    <string name="DonationCompleteBottomSheet__your_bank_transfer_was_received">আপনার ব্যাংক ট্রান্সফার গৃহীত হয়েছে। আপনি আপনার সমর্থন প্রদর্শন করতে আপনার প্রোফাইলে এই ব্যাজটি প্রদর্শন করতে পারবেন।</string>
+    <!-- Button text of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed to dismiss sheet -->
+    <string name="DonationCompleteBottomSheet__done">সম্পন্ন হয়েছে</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">বাতিল করা হচ্ছে…</string>
@@ -5895,6 +6256,8 @@
     <string name="CallLogAdapter__outgoing">আউটগোয়িং কল</string>
     <!-- Displayed for missed calls -->
     <string name="CallLogAdapter__missed">মিসড কল</string>
+    <!-- Displayed for missed calls declined by notification profile -->
+    <string name="CallLogAdapter__missed_notification_profile">নোটিফিকেশন প্রোফাইল চালু থাকা অবস্থায় মিস হয়েছে</string>
     <!-- Displayed on Group Call button if user is not in the call -->
     <string name="CallLogAdapter__join">যোগ দিন</string>
     <!-- Displayed on Group Call button if user is in the call -->
@@ -5969,6 +6332,8 @@
     <string name="CallLogFragment__no_calls">কোনো কল করা হয়নি।</string>
     <!-- Shown during empty state -->
     <string name="CallLogFragment__get_started_by_calling_a_friend">একজন বন্ধুকে কল দিয়ে শুরু করুন।</string>
+    <!-- Displayed as a message in a dialog when deleting multiple items -->
+    <string name="CallLogFragment__call_links_youve_created">আপনার তৈরি করা কলের লিংকগুলো যাদের কাছে আছে তাদের জন্য আর কাজ করবে না।</string>
 
     <!-- New call activity -->
     <!-- Activity title in title bar -->
@@ -6000,6 +6365,8 @@
     <string name="CallPreference__group_call">গ্রুপ কল</string>
     <!-- Missed group call in call info -->
     <string name="CallPreference__missed_group_call">মিসড গ্রুপ কল</string>
+    <!-- Missed group call while notification profile on in call info -->
+    <string name="CallPreference__missed_group_call_notification_profile">নোটিফিকেশন প্রোফাইল চালু থাকা অবস্থায় মিসড গ্রুপ কল</string>
     <!-- Incoming group call in call info -->
     <string name="CallPreference__incoming_group_call">ইনকামিং গ্রুপ কল</string>
     <!-- Outgoing group call in call info -->
@@ -6030,8 +6397,10 @@
     <string name="CreateCallLinkBottomSheetDialogFragment__signal_call">Signal কল</string>
     <!-- Displayed on a small button to allow user to instantly join call -->
     <string name="CreateCallLinkBottomSheetDialogFragment__join">যোগ দিন</string>
-    <!-- Option to open a full screen dialog to enter a call name -->
+    <!-- Option to open a full screen dialog to add a call name -->
     <string name="CreateCallLinkBottomSheetDialogFragment__add_call_name">কলের নাম যোগ করুন</string>
+    <!-- Option to open a full screen dialog to edit a call name -->
+    <string name="CreateCallLinkBottomSheetDialogFragment__edit_call_name">কলের নাম এডিট করুন</string>
     <!-- Toggle to require approval for all members before joining -->
     <string name="CreateCallLinkBottomSheetDialogFragment__approve_all_members">সকল সদস্যকে অনুমোদন দিন</string>
     <!-- Row label to share the link via Signal -->
@@ -6046,6 +6415,12 @@
     <string name="CreateCallLinkBottomSheetDialogFragment__failed_to_open_share_sheet">কল লিংক শেয়ার করতে সক্ষম নয়।</string>
     <!-- Displayed when we copy the call link to the clipboard -->
     <string name="CreateCallLinkBottomSheetDialogFragment__copied_to_clipboard">ক্লিপবোর্ডে কপি করা হয়েছে</string>
+
+    <!-- CallLinkIncomingRequestSheet -->
+    <!-- Displayed as line item in sheet for approving or denying a single user -->
+    <string name="CallLinkIncomingRequestSheet__approve_entry">প্রবেশাধিকার অনুমোদন করুন</string>
+    <!-- Displayed as line item in sheet for approving or denying a single user -->
+    <string name="CallLinkIncomingRequestSheet__deny_entry">প্রবেশাধিকার প্রত্যাখ্যান করুন</string>
 
     <!-- EditCallLinkNameDialogFragment -->
     <!-- App bar title for editing a call name -->
@@ -6066,9 +6441,9 @@
     <!-- Title shown at top of bottom sheet dialog for displaying a message\'s edit history -->
     <string name="EditMessageHistoryDialog_title">এডিট করার ইতিহাস</string>
     <!-- Title of dialog shown alerting user that edit message is in beta only -->
-    <string name="SendingEditMessageBetaOnlyDialog_title">শুধুমাত্র Signal বিটা</string>
+    <string name="SendingEditMessageBetaOnlyDialog_title">মেসেজ এডিট করুন</string>
     <!-- Body of dialog shown alerting user that edit message is in beta only and only sent to beta users. -->
-    <string name="SendingEditMessageBetaOnlyDialog_body">ম্যাসেজ এডিট করা শুধুমাত্র Signal বিটা ব্যবহারকারীদের ক্ষেত্রে প্রযোজ্য। আপনি যদি কোনো ম্যাসেজ এডিট করেন, তবে এটি শুধুমাত্র Signal বিটার সর্বশেষ সংস্করণ ব্যবহারকারীদের কাছে দৃশ্যমান হবে।</string>
+    <string name="SendingEditMessageBetaOnlyDialog_body">আপনি যদি কোনো মেসেজ এডিট করেন, তবে এটি শুধুমাত্র Signal-এর সর্বশেষ সংস্করণটি ব্যবহারকারীদের কাছে দৃশ্যমান হবে। আপনি যে একটি মেসেজ এডিট করেছেন তারা তা দেখতে পাবেন।</string>
     <!-- Button to cancel sending edit message as it is beta only -->
     <string name="SendingEditMessageBetaOnlyDialog_cancel">বাতিল করুন</string>
     <!-- Button to continue sending edit message despite it being beta only -->
@@ -6103,6 +6478,16 @@
     <string name="UsernameLinkSettings_username_copied_toast">ইউজারনেম কপি করা হয়েছে</string>
     <!-- Content of a toast that will show after the username link is copied to the clipboard -->
     <string name="UsernameLinkSettings_link_copied_toast">লিংক কপি করা হয়েছে</string>
+    <!-- Content of a text field that is shown when the user has not yet set a username link -->
+    <string name="UsernameLinkSettings_link_not_set_label">লিংক সেট করা হয়নি</string>
+    <!-- Content of a text field that is shown when the user is actively resetting the username link and waiting for the operation to finish -->
+    <string name="UsernameLinkSettings_resetting_link_label">লিংক রিসেট করা হচ্ছে…</string>
+    <!-- Title of a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_title">QR কোড রিসেট করবেন?</string>
+    <!-- Body of a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_body">আপনার QR কোড রিসেট করলে আপনার বিদ্যমান QR কোড ও লিংক আর কাজ করবে না।</string>
+    <!-- Label for the confirmation button on a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_confirm_button">রিসেট করুন</string>
     <!-- Button label for a button that will reset your username and give you a new link -->
     <string name="UsernameLinkSettings_reset_button_label">রিসেট</string>
     <!-- Button label for a button that indicates that the user is done changing the current setting -->
@@ -6119,8 +6504,21 @@
     <string name="UsernameLinkSettings_qr_result_invalid">QR কোডটি কার্যকর ছিলো না।</string>
     <!-- Body of a dialog that is displayed when the username we looked up could not be found. -->
     <string name="UsernameLinkSettings_qr_result_not_found">%1$s ব্যবহারকারীর নাম সহ একজন ব্যবহারকারী খুঁজে পাওয়া যায়নি।</string>
+    <!-- Body of a dialog that is displayed when the username we looked up could not be found and we also could not parse the username. -->
+    <string name="UsernameLinkSettings_qr_result_not_found_no_username">এই ব্যবহারকারীকে খুঁজে পাওয়া যায়নি।</string>
     <!-- Body of a dialog that is displayed when we experienced a network error when looking up a username. -->
     <string name="UsernameLinkSettings_qr_result_network_error">একটি নেটওয়ার্ক ত্রুটির সম্মুখীন হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because you had no internet. -->
+    <string name="UsernameLinkSettings_reset_link_result_network_unavailable">আপনার নেটওয়ার্ক অ্যাক্সেস নেই। আপনার লিংক রিসেট করা হয়নি। পরে আবার চেষ্টা করুন।</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because of a transient network issue. -->
+    <string name="UsernameLinkSettings_reset_link_result_network_error">আপনার লিংক রিসেট চেষ্টা করার সময় নেটওয়ার্কে একটি ত্রুটি ঘটেছে। পরে আবার চেষ্টা করুন।</string>
+
+    <!-- Explanatory text at the top of a bottom sheet describing how username links work -->
+    <string name="UsernameLinkShareBottomSheet_title">এই লিঙ্কটি রয়েছে এমন যে কেউ আপনার ব্যবহারকারীর নাম দেখতে পারবেন এবং আপনার সাথে চ্যাটিং শুরু করতে পারবেন। শুধুমাত্র আপনি আস্থা রাখতে পারেন এমন ব্যক্তিদের সাথে এটি শেযার করুন।</string>
+    <!-- A button label for a button that, when pressed, will copy your username link to the clipboard -->
+    <string name="UsernameLinkShareBottomSheet_copy_link">লিংক কপি করুন</string>
+    <!-- A button label for a button that, when pressed, will open a share sheet for sharing your username link -->
+    <string name="UsernameLinkShareBottomSheet_share">শেয়ার করুন</string>
 
     <!-- PendingParticipantsView -->
     <!-- Displayed in the popup card when a remote user attempts to join a call link -->
@@ -6141,8 +6539,32 @@
     </plurals>
     <!-- Content description for rejecting a user -->
     <string name="PendingParticipantsBottomSheet__reject">বাতিল</string>
-    <!-- Content desccription for confirming a user -->
+    <!-- Content description for confirming a user -->
     <string name="PendingParticipantsBottomSheet__approve">অনুমোদন</string>
+
+    <!-- Title of a megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls -->
+    <string name="GrantFullScreenIntentPermission_megaphone_title">পূর্ণ স্ক্রীন নোটিফিকেশন চালু করবেন?</string>
+    <!-- Body of a megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls -->
+    <string name="GrantFullScreenIntentPermission_megaphone_body">আপনার কন্টাক্ট ও গ্রুপ থেকে আর কোনো কল মিস করবেন না।</string>
+    <!-- Button on the megaphone megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls that starts the fix process -->
+    <string name="GrantFullScreenIntentPermission_megaphone_turn_on">চালু করুন</string>
+    <!-- Title of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_title">পূর্ণ স্ক্রীন নোটিফিকেশন চালু করুন</string>
+    <!-- Subtitle of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_subtitle">আপনার কন্টাক্ট ও গ্রুপ থেকে কল নোটিফিকেশন পেতে:</string>
+    <!-- Step 2 of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications, it indicates the name of the setting that needs to be re-enabled -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_step2">2. %1$s পূর্ণ স্ক্রীন নোটিফিকেশনের অনুমোদন দিন</string>
+
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, title for dialog -->
+    <string name="MonthlyDonationCanceled__title">মাসিক ডোনেশন বাতিল করা হয়েছে</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, body for dialog. First placeholder is a payment related error message. Second placeholder is \'learn more\' -->
+    <string name="MonthlyDonationCanceled__message">আপনার পুনরাবৃত্ত মাসিক ডোনেশন বাতিল করা হয়েছে। %1$s\n\nআপনার প্রোফাইলে আর ব্যাজ দেখা যাবে না। %2$s</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, learn more used in placeholder for body for dialog. -->
+    <string name="MonthlyDonationCanceled__learn_more">আরো জানুন</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, primary button to renew subscription with new data -->
+    <string name="MonthlyDonationCanceled__renew_button">সাবস্ক্রিপশন নবায়ন করুন</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, second button to dismiss the dialog entirely -->
+    <string name="MonthlyDonationCanceled__not_now_button">এখন না</string>
 
     <!-- EOF -->
 </resources>

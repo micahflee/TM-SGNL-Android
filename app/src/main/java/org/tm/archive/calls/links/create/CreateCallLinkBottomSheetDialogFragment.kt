@@ -92,6 +92,7 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
       Text(
         text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__create_call_link),
         style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.onSurface,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth()
       )
@@ -106,7 +107,13 @@ class CreateCallLinkBottomSheetDialogFragment : ComposeBottomSheetDialogFragment
       Spacer(modifier = Modifier.height(12.dp))
 
       Rows.TextRow(
-        text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__add_call_name),
+        text = stringResource(
+          id = if (callLink.state.name.isEmpty()) {
+            R.string.CreateCallLinkBottomSheetDialogFragment__add_call_name
+          } else {
+            R.string.CreateCallLinkBottomSheetDialogFragment__edit_call_name
+          }
+        ),
         onClick = this@CreateCallLinkBottomSheetDialogFragment::onAddACallNameClicked
       )
 

@@ -1,12 +1,12 @@
 package org.tm.archive.database.model
 
+import org.signal.core.util.Base64
 import org.signal.core.util.StringSerializer
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
-import org.tm.archive.util.Base64
 
 object BodyRangeListSerializer : StringSerializer<BodyRangeList> {
-  override fun serialize(data: BodyRangeList): String = Base64.encodeBytes(data.toByteArray())
-  override fun deserialize(data: String): BodyRangeList = BodyRangeList.parseFrom(Base64.decode(data))
+  override fun serialize(data: BodyRangeList): String = Base64.encodeWithPadding(data.encode())
+  override fun deserialize(data: String): BodyRangeList = BodyRangeList.ADAPTER.decode(Base64.decode(data))
 }
 
 fun BodyRangeList.serialize(): String {

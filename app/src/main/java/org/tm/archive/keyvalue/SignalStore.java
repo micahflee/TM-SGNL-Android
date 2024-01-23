@@ -43,6 +43,8 @@ public final class SignalStore {
   private final NotificationProfileValues notificationProfileValues;
   private final ReleaseChannelValues      releaseChannelValues;
   private final StoryValues               storyValues;
+  private final ApkUpdateValues           apkUpdate;
+  private final BackupValues              backupValues;
 
   private final PlainTextSharedPrefsDataStore plainTextValues;
 
@@ -87,6 +89,8 @@ public final class SignalStore {
     this.notificationProfileValues = new NotificationProfileValues(store);
     this.releaseChannelValues      = new ReleaseChannelValues(store);
     this.storyValues               = new StoryValues(store);
+    this.apkUpdate                 = new ApkUpdateValues(store);
+    this.backupValues              = new BackupValues(store);
     this.plainTextValues           = new PlainTextSharedPrefsDataStore(ApplicationDependencies.getApplication());
   }
 
@@ -264,6 +268,14 @@ public final class SignalStore {
     return getInstance().storyValues;
   }
 
+  public static @NonNull ApkUpdateValues apkUpdate() {
+    return getInstance().apkUpdate;
+  }
+
+  public static @NonNull BackupValues backup() {
+    return getInstance().backupValues;
+  }
+
   public static @NonNull GroupsV2AuthorizationSignalStoreCache groupsV2AciAuthorizationCache() {
     return GroupsV2AuthorizationSignalStoreCache.createAciCache(getStore());
   }
@@ -294,5 +306,10 @@ public final class SignalStore {
   @VisibleForTesting
   public static void inject(@NonNull KeyValueStore store) {
     instance = new SignalStore(store);
+  }
+
+  public static void clearAllDataForBackupRestore() {
+    releaseChannelValues().clearReleaseChannelRecipientId();
+    account().clearRegistrationButKeepCredentials();
   }
 }

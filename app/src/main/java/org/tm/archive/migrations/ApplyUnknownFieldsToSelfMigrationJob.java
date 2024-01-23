@@ -3,8 +3,6 @@ package org.tm.archive.migrations;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.SignalDatabase;
@@ -16,6 +14,8 @@ import org.tm.archive.storage.StorageSyncHelper;
 import org.whispersystems.signalservice.api.storage.SignalAccountRecord;
 import org.whispersystems.signalservice.api.storage.StorageId;
 import org.whispersystems.signalservice.internal.storage.protos.AccountRecord;
+
+import java.io.IOException;
 
 /**
  * Check for unknown fields stored on self and attempt to apply them.
@@ -69,12 +69,12 @@ public class ApplyUnknownFieldsToSelfMigrationJob extends MigrationJob {
 
     try {
       StorageId           storageId           = StorageId.forAccount(self.getStorageServiceId());
-      AccountRecord       accountRecord       = AccountRecord.parseFrom(settings.getSyncExtras().getStorageProto());
+      AccountRecord       accountRecord       = AccountRecord.ADAPTER.decode(settings.getSyncExtras().getStorageProto());
       SignalAccountRecord signalAccountRecord = new SignalAccountRecord(storageId, accountRecord);
 
       Log.d(TAG, "Applying potentially now known unknowns");
       StorageSyncHelper.applyAccountStorageSyncUpdates(context, self, signalAccountRecord, false);
-    } catch (InvalidProtocolBufferException e) {
+    } catch (IOException e) {
       Log.w(TAG, e);
     }
   }

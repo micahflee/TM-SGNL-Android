@@ -28,7 +28,6 @@ import androidx.core.app.NotificationCompat;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.firebase.FirebaseApp;
 
 import org.signal.core.util.PendingIntentFlags;
 import org.signal.core.util.logging.Log;
@@ -36,7 +35,6 @@ import org.tm.archive.PlayServicesProblemActivity;
 import org.tm.archive.R;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.gcm.FcmUtil;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -104,7 +102,6 @@ public class FcmRefreshJob extends BaseJob {
 
         ApplicationDependencies.getSignalServiceAccountManager().setGcmId(token);
         SignalStore.account().setFcmToken(token.get());
-        com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());//**TM_SA**//
       } else {
         throw new RetryLaterException(new IOException("Failed to retrieve a token."));
       }

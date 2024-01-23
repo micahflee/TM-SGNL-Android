@@ -2,7 +2,6 @@ package org.tm.archive.components.settings.app.usernamelinks.colorpicker
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -65,12 +65,14 @@ class UsernameLinkQrColorPickerFragment : ComposeFragment() {
           .padding(contentPadding)
           .fillMaxWidth()
           .fillMaxHeight(),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
       ) {
         QrCodeBadge(
           data = state.qrCodeData,
           colorScheme = state.selectedColorScheme,
-          username = state.username
+          username = state.username,
+          modifier = Modifier.padding(horizontal = 58.dp, vertical = 24.dp)
         )
 
         ColorPicker(
@@ -102,7 +104,11 @@ class UsernameLinkQrColorPickerFragment : ComposeFragment() {
       },
       navigationIcon = {
         IconButton(onClick = onBackClicked) {
-          Image(painter = painterResource(R.drawable.symbol_arrow_left_24), contentDescription = null)
+          Icon(
+            painter = painterResource(R.drawable.symbol_arrow_left_24),
+            tint = MaterialTheme.colorScheme.onSurface,
+            contentDescription = null
+          )
         }
       }
     )
@@ -160,7 +166,7 @@ class UsernameLinkQrColorPickerFragment : ComposeFragment() {
 
   @Preview
   @Composable
-  private fun ColorPickerItemPreview() {
+  private fun PreviewColorPickerItem() {
     SignalTheme(isDarkMode = false) {
       Surface {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -173,7 +179,7 @@ class UsernameLinkQrColorPickerFragment : ComposeFragment() {
 
   @Preview
   @Composable
-  private fun ColorPickerPreview() {
+  private fun PreviewColorPicker() {
     SignalTheme(isDarkMode = false) {
       Surface {
         ColorPicker(

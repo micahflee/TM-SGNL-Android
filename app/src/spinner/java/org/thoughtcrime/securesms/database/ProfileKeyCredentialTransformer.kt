@@ -1,13 +1,13 @@
 package org.tm.archive.database
 
 import android.database.Cursor
+import org.signal.core.util.Base64
 import org.signal.core.util.Hex
 import org.signal.core.util.requireString
 import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential
 import org.signal.spinner.ColumnTransformer
 import org.signal.spinner.DefaultColumnTransformer
 import org.tm.archive.database.model.databaseprotos.ExpiringProfileKeyCredentialColumnData
-import org.tm.archive.util.Base64
 import org.tm.archive.util.toLocalDateTime
 import java.security.MessageDigest
 
@@ -19,7 +19,7 @@ object ProfileKeyCredentialTransformer : ColumnTransformer {
   override fun transform(tableName: String?, columnName: String, cursor: Cursor): String? {
     val columnDataString = cursor.requireString(RecipientTable.EXPIRING_PROFILE_KEY_CREDENTIAL) ?: return DefaultColumnTransformer.transform(tableName, columnName, cursor)
     val columnDataBytes = Base64.decode(columnDataString)
-    val columnData = ExpiringProfileKeyCredentialColumnData.parseFrom(columnDataBytes)
+    val columnData = ExpiringProfileKeyCredentialColumnData.ADAPTER.decode(columnDataBytes)
     val credential = ExpiringProfileKeyCredential(columnData.expiringProfileKeyCredential.toByteArray())
 
     return """
@@ -27,7 +27,7 @@ object ProfileKeyCredentialTransformer : ColumnTransformer {
       Expires:    ${credential.expirationTime.toLocalDateTime()}
       
       Matching Profile Key: 
-        ${Base64.encodeBytes(columnData.profileKey.toByteArray())}
+        ${Base64.encodeWithPadding(columnData.profileKey.toByteArray())}
     """.trimIndent().replace("\n", "<br>")
   }
 }

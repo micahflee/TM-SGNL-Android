@@ -68,7 +68,7 @@ public final class MessageRequestRepository {
       onGroupInfoLoaded.accept(groupRecord.map(record -> {
         if (record.isV2Group()) {
           DecryptedGroup decryptedGroup = record.requireV2GroupProperties().getDecryptedGroup();
-          return new GroupInfo(decryptedGroup.getMembersCount(), decryptedGroup.getPendingMembersCount(), decryptedGroup.getDescription());
+          return new GroupInfo(decryptedGroup.members.size(), decryptedGroup.pendingMembers.size(), decryptedGroup.description);
         } else {
           return new GroupInfo(record.getMembers().size(), 0, "");
         }
@@ -85,7 +85,7 @@ public final class MessageRequestRepository {
     if (groupRecord.isPresent()) {
       if (groupRecord.get().isV2Group()) {
         DecryptedGroup decryptedGroup = groupRecord.get().requireV2GroupProperties().getDecryptedGroup();
-        groupInfo = new GroupInfo(decryptedGroup.getMembersCount(), decryptedGroup.getPendingMembersCount(), decryptedGroup.getDescription());
+        groupInfo = new GroupInfo(decryptedGroup.members.size(), decryptedGroup.pendingMembers.size(), decryptedGroup.description);
       } else {
         groupInfo = new GroupInfo(groupRecord.get().getMembers().size(), 0, "");
       }
@@ -126,21 +126,17 @@ public final class MessageRequestRepository {
       }
     } else if (!RecipientUtil.isLegacyProfileSharingAccepted(recipient) && isLegacyThread(recipient)) {
       if (recipient.isGroup()) {
-        return MessageRequestState.LEGACY_GROUP_V1;
+        return MessageRequestState.DEPRECATED_GROUP_V1;
       } else {
         return MessageRequestState.LEGACY_INDIVIDUAL;
       }
     } else if (recipient.isPushV1Group()) {
       if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
-        if (recipient.getParticipantIds().size() > FeatureFlags.groupLimits().getHardLimit()) {
-          return MessageRequestState.DEPRECATED_GROUP_V1_TOO_LARGE;
-        } else {
-          return MessageRequestState.DEPRECATED_GROUP_V1;
-        }
+        return MessageRequestState.DEPRECATED_GROUP_V1;
       } else if (!recipient.isActiveGroup()) {
         return MessageRequestState.NONE;
       } else {
-        return MessageRequestState.GROUP_V1;
+        return MessageRequestState.DEPRECATED_GROUP_V1;
       }
     } else {
       if (RecipientUtil.isMessageRequestAccepted(context, threadId)) {
@@ -373,10 +369,8 @@ public final class MessageRequestRepository {
 
   @WorkerThread
   private boolean isLegacyThread(@NonNull Recipient recipient) {
-    Context context  = ApplicationDependencies.getApplication();
-    Long    threadId = SignalDatabase.threads().getThreadIdFor(recipient.getId());
+    Long threadId = SignalDatabase.threads().getThreadIdFor(recipient.getId());
 
-    return threadId != null &&
-        (RecipientUtil.hasSentMessageInThread(threadId) || RecipientUtil.isPreMessageRequestThread(threadId));
+    return threadId != null && RecipientUtil.hasSentMessageInThread(threadId);
   }
 }

@@ -45,6 +45,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -62,6 +64,24 @@ public class FullBackupImporter extends FullBackupBase {
 
   @SuppressWarnings("unused")
   private static final String TAG = Log.tag(FullBackupImporter.class);
+
+  public static boolean validatePassphrase(@NonNull Context context,
+                                           @NonNull Uri uri,
+                                           @NonNull String passphrase)
+      throws IOException
+  {
+
+    try (InputStream is = getInputStream(context, uri)) {
+      BackupRecordInputStream inputStream = new BackupRecordInputStream(is, passphrase);
+      return inputStream.validateFrame();
+    } catch (InvalidAlgorithmParameterException e) {
+      Log.w(TAG, "Invalid algorithm parameter exception in backup passphrase validation.", e);
+      return false;
+    } catch (InvalidKeyException e) {
+      Log.w(TAG, "Invalid key exception in backup passphrase validation.", e);
+      return false;
+    }
+  }
 
   public static void importFile(@NonNull Context context, @NonNull AttachmentSecret attachmentSecret,
                                 @NonNull SQLiteDatabase db, @NonNull Uri uri, @NonNull String passphrase)
@@ -135,11 +155,9 @@ public class FullBackupImporter extends FullBackupBase {
   }
 
   private static void processVersion(@NonNull SQLiteDatabase db, DatabaseVersion version) throws IOException {
-    //**TM_SA**//s
-    /*if (version.version == null || version.version > db.getVersion()) {
+    if (version.version == null || version.version > db.getVersion()) {
       throw new DatabaseDowngradeException(db.getVersion(), version.version != null ? version.version : -1);
-    }*/
-    //**TM_SA**//e
+    }
 
     db.setVersion(version.version);
   }
@@ -176,26 +194,33 @@ public class FullBackupImporter extends FullBackupBase {
   private static void processAttachment(@NonNull Context context, @NonNull AttachmentSecret attachmentSecret, @NonNull SQLiteDatabase db, @NonNull Attachment attachment, BackupRecordInputStream inputStream)
       throws IOException
   {
-    File                       dataFile = AttachmentTable.newFile(context);
-    Pair<byte[], OutputStream> output   = ModernEncryptingPartOutputStream.createFor(attachmentSecret, dataFile, false);
+    File                       dataFile      = AttachmentTable.newFile(context);
+    Pair<byte[], OutputStream> output        = ModernEncryptingPartOutputStream.createFor(attachmentSecret, dataFile, false);
+    boolean                    isLegacyTable = SqlUtil.tableExists(db, "part");
+
+    String dataFileColumnName   = isLegacyTable ? "_data" : AttachmentTable.DATA_FILE;
+    String dataRandomColumnName = isLegacyTable ? "data_random" : AttachmentTable.DATA_RANDOM;
+    String idColumnName         = isLegacyTable ? "_id" : AttachmentTable.ID;
+    String tableName            = isLegacyTable ? "part" : AttachmentTable.TABLE_NAME;
 
     ContentValues contentValues = new ContentValues();
 
     try {
       inputStream.readAttachmentTo(output.second, attachment.length);
 
-      contentValues.put(AttachmentTable.DATA, dataFile.getAbsolutePath());
-      contentValues.put(AttachmentTable.DATA_RANDOM, output.first);
+      contentValues.put(dataFileColumnName, dataFile.getAbsolutePath());
+      contentValues.put(dataRandomColumnName, output.first);
     } catch (BackupRecordInputStream.BadMacException e) {
       Log.w(TAG, "Bad MAC for attachment " + attachment.attachmentId + "! Can't restore it.", e);
       dataFile.delete();
-      contentValues.put(AttachmentTable.DATA, (String) null);
-      contentValues.put(AttachmentTable.DATA_RANDOM, (String) null);
+      contentValues.put(dataFileColumnName, (String) null);
+      contentValues.put(dataRandomColumnName, (String) null);
     }
 
-    db.update(AttachmentTable.TABLE_NAME, contentValues,
-              AttachmentTable.ROW_ID + " = ? AND " + AttachmentTable.UNIQUE_ID + " = ?",
-              new String[] {String.valueOf(attachment.rowId), String.valueOf(attachment.attachmentId)});
+    db.update(tableName,
+              contentValues,
+              idColumnName + " = ?",
+              SqlUtil.buildArgs(attachment.rowId));
   }
 
   private static void processSticker(@NonNull Context context, @NonNull AttachmentSecret attachmentSecret, @NonNull SQLiteDatabase db, @NonNull Sticker sticker, BackupRecordInputStream inputStream)

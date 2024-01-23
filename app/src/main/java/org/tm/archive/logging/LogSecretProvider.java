@@ -6,7 +6,7 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.crypto.KeyStoreHelper;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.TextSecurePreferences;
 
 import java.io.IOException;
@@ -49,7 +49,7 @@ public class LogSecretProvider {
       KeyStoreHelper.SealedData encryptedSecret = KeyStoreHelper.seal(secret);
       TextSecurePreferences.setLogEncryptedSecret(context, encryptedSecret.serialize());
     } else {
-      TextSecurePreferences.setLogUnencryptedSecret(context, Base64.encodeBytes(secret));
+      TextSecurePreferences.setLogUnencryptedSecret(context, Base64.encodeWithPadding(secret));
     }
 
     return secret;

@@ -47,9 +47,11 @@ import org.tm.archive.components.ViewBinderDelegate
 import org.tm.archive.components.mention.MentionAnnotation
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
+import org.tm.archive.database.DatabaseObserver
 import org.tm.archive.database.MediaTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.databinding.FragmentMediaPreviewV2Binding
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.mediapreview.caption.ExpandingCaptionView
 import org.tm.archive.mediapreview.mediarail.CenterDecoration
 import org.tm.archive.mediapreview.mediarail.MediaRailAdapter
@@ -89,6 +91,7 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
   private lateinit var fullscreenHelper: FullscreenHelper
 
   private var individualItemWidth: Int = 0
+  private var dbChangeObserver: DatabaseObserver.Observer? = null
 
   override fun onAttach(context: Context) {
     super.onAttach(context)
@@ -114,7 +117,19 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     lifecycleDisposable +=
       viewModel
         .state
-        .distinctUntilChanged()
+        .distinctUntilChanged { t1, t2 ->
+          // this is all fields except for [isInSharedAnimation], which is explicitly excluded.
+          (
+            t1.mediaRecords == t2.mediaRecords &&
+              t1.loadState == t2.loadState &&
+              t1.position == t2.position &&
+              t1.showThread == t2.showThread &&
+              t1.allMediaInAlbumRail == t2.allMediaInAlbumRail &&
+              t1.leftIsRecent == t2.leftIsRecent &&
+              t1.albums == t2.albums &&
+              t1.messageBodies == t2.messageBodies
+            )
+        }
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe {
           bindCurrentState(it)
@@ -131,7 +146,12 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     }
     viewModel.initialize(args.showThread, args.allMediaInRail, args.leftIsRecent)
     val sorting = MediaTable.Sorting.deserialize(args.sorting.ordinal)
-    viewModel.fetchAttachments(requireContext(), PartAuthority.requireAttachmentId(args.initialMediaUri), args.threadId, sorting)
+    val startingAttachmentId = PartAuthority.requireAttachmentId(args.initialMediaUri)
+    val threadId = args.threadId
+    viewModel.fetchAttachments(requireContext(), startingAttachmentId, threadId, sorting)
+    val dbObserver = DatabaseObserver.Observer { viewModel.fetchAttachments(requireContext(), startingAttachmentId, threadId, sorting, true) }
+    ApplicationDependencies.getDatabaseObserver().registerAttachmentObserver(dbObserver)
+    this.dbChangeObserver = dbObserver
   }
 
   @SuppressLint("RestrictedApi")
@@ -311,7 +331,7 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
   }
 
   private fun bindMediaPreviewPlaybackControls(currentItem: MediaTable.MediaRecord, currentFragment: MediaPreviewFragment?) {
-    val mediaType: MediaPreviewPlayerControlView.MediaMode = if (currentItem.attachment?.isVideoGif == true) {
+    val mediaType: MediaPreviewPlayerControlView.MediaMode = if (currentItem.attachment?.videoGif == true) {
       MediaPreviewPlayerControlView.MediaMode.IMAGE
     } else {
       MediaPreviewPlayerControlView.MediaMode.fromString(currentItem.contentType)
@@ -485,6 +505,15 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     }
   }
 
+  override fun onDestroy() {
+    super.onDestroy()
+    val observer = dbChangeObserver
+    if (observer != null) {
+      ApplicationDependencies.getDatabaseObserver().unregisterObserver(observer)
+      dbChangeObserver = null
+    }
+  }
+
   override fun unableToPlayMedia() {
     Toast.makeText(requireContext(), R.string.MediaPreviewActivity_unable_to_play_media, Toast.LENGTH_LONG).show()
     requireActivity().finish()
@@ -596,7 +625,7 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     }.show()
   }
 
-  fun canRemotelyDelete(attachment: DatabaseAttachment): Boolean {
+  private fun canRemotelyDelete(attachment: DatabaseAttachment): Boolean {
     val mmsId = attachment.mmsId
     val attachmentCount = SignalDatabase.attachments.getAttachmentsForMessage(mmsId).size
     return attachmentCount <= 1 && MessageConstraintsUtil.isValidRemoteDeleteSend(listOf(SignalDatabase.messages.getMessageRecord(mmsId)), System.currentTimeMillis())

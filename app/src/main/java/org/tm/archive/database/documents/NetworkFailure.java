@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.tm.archive.ApplicationContext;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 
@@ -30,11 +32,11 @@ public class NetworkFailure {
   public NetworkFailure() {}
 
   @JsonIgnore
-  public RecipientId getRecipientId(@NonNull Context context) {
+  public RecipientId getRecipientId() {
     if (!TextUtils.isEmpty(recipientId)) {
       return RecipientId.from(recipientId);
     } else {
-      return Recipient.external(context, address).getId();
+      return Recipient.external(ApplicationDependencies.getApplication(), address).getId();
     }
   }
 

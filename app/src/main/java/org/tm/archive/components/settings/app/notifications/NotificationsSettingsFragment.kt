@@ -31,8 +31,11 @@ import org.tm.archive.components.settings.PreferenceViewHolder
 import org.tm.archive.components.settings.RadioListPreference
 import org.tm.archive.components.settings.RadioListPreferenceViewHolder
 import org.tm.archive.components.settings.configure
+import org.tm.archive.components.settings.models.Banner
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.notifications.NotificationChannels
+import org.tm.archive.notifications.TurnOnNotificationsBottomSheet
+import org.tm.archive.util.BottomSheetUtil
 import org.tm.archive.util.RingtoneUtil
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
@@ -62,6 +65,11 @@ class NotificationsSettingsFragment : DSLSettingsFragment(R.string.preferences__
 
   private lateinit var viewModel: NotificationsSettingsViewModel
 
+  override fun onResume() {
+    super.onResume()
+    viewModel.refresh()
+  }
+
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     if (requestCode == MESSAGE_SOUND_SELECT && resultCode == Activity.RESULT_OK && data != null) {
       val uri: Uri? = data.getParcelableExtraCompat(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
@@ -78,6 +86,8 @@ class NotificationsSettingsFragment : DSLSettingsFragment(R.string.preferences__
       LayoutFactory(::LedColorPreferenceViewHolder, R.layout.dsl_preference_item)
     )
 
+    Banner.register(adapter)
+
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
     val factory = NotificationsSettingsViewModel.Factory(sharedPreferences)
 
@@ -90,10 +100,23 @@ class NotificationsSettingsFragment : DSLSettingsFragment(R.string.preferences__
 
   private fun getConfiguration(state: NotificationsSettingsState): DSLConfiguration {
     return configure {
+      if (!state.messageNotificationsState.canEnableNotifications) {
+        customPref(
+          Banner.Model(
+            textId = R.string.NotificationSettingsFragment__to_enable_notifications,
+            actionId = R.string.NotificationSettingsFragment__turn_on,
+            onClick = {
+              TurnOnNotificationsBottomSheet.turnOnSystemNotificationsFragment(requireContext()).show(childFragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG)
+            }
+          )
+        )
+      }
+
       sectionHeaderPref(R.string.NotificationsSettingsFragment__messages)
 
       switchPref(
         title = DSLSettingsText.from(R.string.preferences__notifications),
+        isEnabled = state.messageNotificationsState.canEnableNotifications,
         isChecked = state.messageNotificationsState.notificationsEnabled,
         onClick = {
           viewModel.setMessageNotificationsEnabled(!state.messageNotificationsState.notificationsEnabled)
@@ -223,6 +246,7 @@ class NotificationsSettingsFragment : DSLSettingsFragment(R.string.preferences__
 
       switchPref(
         title = DSLSettingsText.from(R.string.preferences__notifications),
+        isEnabled = state.callNotificationsState.canEnableNotifications,
         isChecked = state.callNotificationsState.notificationsEnabled,
         onClick = {
           viewModel.setCallNotificationsEnabled(!state.callNotificationsState.notificationsEnabled)

@@ -97,6 +97,7 @@ public class SubmitDebugLogRepository {
       add(new LogSectionSenderKey());
     }
     add(new LogSectionRemappedRecords());
+    add(new LogSectionAnr());
     add(new LogSectionLogcat());
     add(new LogSectionLoggerHeader());
   }};
@@ -116,7 +117,7 @@ public class SubmitDebugLogRepository {
   public void buildAndSubmitLog(@NonNull Callback<Optional<String>> callback) {
     SignalExecutors.UNBOUNDED.execute(() -> {
       Log.blockUntilAllWritesFinished();
-      LogDatabase.getInstance(context).trimToSize();
+      LogDatabase.getInstance(context).logs().trimToSize();
       callback.onResult(submitLogInternal(System.currentTimeMillis(), getPrefixLogLinesInternal(), Tracer.getInstance().serialize()));
     });
   }
@@ -140,7 +141,7 @@ public class SubmitDebugLogRepository {
         outputStream.putNextEntry(new ZipEntry("log.txt"));
         outputStream.write(prefixLines.toString().getBytes(StandardCharsets.UTF_8));
 
-        try (LogDatabase.Reader reader = LogDatabase.getInstance(context).getAllBeforeTime(untilTime)) {
+        try (LogDatabase.LogTable.Reader reader = LogDatabase.getInstance(context).logs().getAllBeforeTime(untilTime)) {
           while (reader.hasNext()) {
             outputStream.write(reader.next().getBytes());
             outputStream.write("\n".getBytes());
@@ -193,7 +194,7 @@ public class SubmitDebugLogRepository {
 
       stopwatch.split("front-matter");
 
-      try (LogDatabase.Reader reader = LogDatabase.getInstance(context).getAllBeforeTime(untilTime)) {
+      try (LogDatabase.LogTable.Reader reader = LogDatabase.getInstance(context).logs().getAllBeforeTime(untilTime)) {
         while (reader.hasNext()) {
           gzipOutput.write(reader.next().getBytes());
           gzipOutput.write("\n".getBytes());

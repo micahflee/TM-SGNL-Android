@@ -9,8 +9,8 @@ import org.tm.archive.database.MessageTable;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.databaseprotos.DeviceLastResetTime;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.impl.DecryptionsDrainedConstraint;
 import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.Recipient;
@@ -23,6 +23,8 @@ import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -146,26 +148,28 @@ public class AutomaticSessionResetJob extends BaseJob {
   }
 
   private long getLastResetTime(@NonNull DeviceLastResetTime resetTimes, int deviceId) {
-    for (DeviceLastResetTime.Pair pair : resetTimes.getResetTimeList()) {
-      if (pair.getDeviceId() == deviceId) {
-        return pair.getLastResetTime();
+    for (DeviceLastResetTime.Pair pair : resetTimes.resetTime) {
+      if (pair.deviceId == deviceId) {
+        return pair.lastResetTime;
       }
     }
     return 0;
   }
 
   private @NonNull DeviceLastResetTime setLastResetTime(@NonNull DeviceLastResetTime resetTimes, int deviceId, long time) {
-    DeviceLastResetTime.Builder builder = DeviceLastResetTime.newBuilder();
+    DeviceLastResetTime.Builder builder = new DeviceLastResetTime.Builder();
 
-    for (DeviceLastResetTime.Pair pair : resetTimes.getResetTimeList()) {
-      if (pair.getDeviceId() != deviceId) {
-        builder.addResetTime(pair);
+    List<DeviceLastResetTime.Pair> newResetTimes = new ArrayList<>(resetTimes.resetTime.size());
+    for (DeviceLastResetTime.Pair pair : resetTimes.resetTime) {
+      if (pair.deviceId != deviceId) {
+        newResetTimes.add(pair);
       }
     }
 
-    builder.addResetTime(DeviceLastResetTime.Pair.newBuilder().setDeviceId(deviceId).setLastResetTime(time));
 
-    return builder.build();
+    newResetTimes.add(new DeviceLastResetTime.Pair.Builder().deviceId(deviceId).lastResetTime(time).build());
+
+    return builder.resetTime(newResetTimes).build();
   }
 
   public static final class Factory implements Job.Factory<AutomaticSessionResetJob> {

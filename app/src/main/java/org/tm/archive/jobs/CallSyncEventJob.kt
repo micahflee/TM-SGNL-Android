@@ -14,7 +14,7 @@ import org.tm.archive.recipients.RecipientId
 import org.tm.archive.ringrtc.RemotePeer
 import org.tm.archive.service.webrtc.CallEventSyncMessageUtil
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos
+import org.whispersystems.signalservice.internal.push.SyncMessage
 import java.util.Optional
 import java.util.concurrent.TimeUnit
 
@@ -41,6 +41,21 @@ class CallSyncEventJob private constructor(
             callId = callId,
             direction = CallTable.Direction.serialize(if (isIncoming) CallTable.Direction.INCOMING else CallTable.Direction.OUTGOING),
             event = CallTable.Event.serialize(CallTable.Event.ACCEPTED)
+          )
+        )
+      )
+    }
+
+    @JvmStatic
+    fun createForNotAccepted(conversationRecipientId: RecipientId, callId: Long, isIncoming: Boolean): CallSyncEventJob {
+      return CallSyncEventJob(
+        getParameters(),
+        listOf(
+          CallSyncEventJobRecord(
+            recipientId = conversationRecipientId.toLong(),
+            callId = callId,
+            direction = CallTable.Direction.serialize(if (isIncoming) CallTable.Direction.INCOMING else CallTable.Direction.OUTGOING),
+            event = CallTable.Event.serialize(CallTable.Event.NOT_ACCEPTED)
           )
         )
       )
@@ -120,9 +135,16 @@ class CallSyncEventJob private constructor(
     }
   }
 
-  private fun createSyncMessage(syncTimestamp: Long, callSyncEvent: CallSyncEventJobRecord, callType: CallTable.Type): SignalServiceProtos.SyncMessage.CallEvent {
+  private fun createSyncMessage(syncTimestamp: Long, callSyncEvent: CallSyncEventJobRecord, callType: CallTable.Type): SyncMessage.CallEvent {
     return when (callSyncEvent.deserializeEvent()) {
       CallTable.Event.ACCEPTED -> CallEventSyncMessageUtil.createAcceptedSyncMessage(
+        remotePeer = RemotePeer(callSyncEvent.deserializeRecipientId(), CallId(callSyncEvent.callId)),
+        timestamp = syncTimestamp,
+        isOutgoing = callSyncEvent.deserializeDirection() == CallTable.Direction.OUTGOING,
+        isVideoCall = callType != CallTable.Type.AUDIO_CALL
+      )
+
+      CallTable.Event.NOT_ACCEPTED -> CallEventSyncMessageUtil.createNotAcceptedSyncMessage(
         remotePeer = RemotePeer(callSyncEvent.deserializeRecipientId(), CallId(callSyncEvent.callId)),
         timestamp = syncTimestamp,
         isOutgoing = callSyncEvent.deserializeDirection() == CallTable.Direction.OUTGOING,

@@ -29,7 +29,6 @@ import org.tm.archive.conversation.colors.RecyclerViewColorizer
 import org.tm.archive.conversation.mutiselect.MultiselectPart
 import org.tm.archive.conversation.mutiselect.MultiselectPart.Attachments
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.giph.mp4.GiphyMp4ItemDecoration
@@ -93,8 +92,7 @@ class ScheduledMessagesBottomSheet : FixedRoundedCornerBottomSheetDialogFragment
     val colorizer = Colorizer()
 
     messageAdapter = ConversationAdapter(requireContext(), viewLifecycleOwner, GlideApp.with(this), Locale.getDefault(), ConversationAdapterListener(), conversationRecipient.hasWallpaper(), colorizer).apply {
-      setCondensedMode(ConversationItemDisplayMode.CONDENSED)
-      setScheduledMessagesMode(true)
+      setCondensedMode(ConversationItemDisplayMode.Condensed(scheduleMessageMode = true))
     }
 
     val list: RecyclerView = view.findViewById<RecyclerView>(R.id.scheduled_list).apply {
@@ -168,7 +166,7 @@ class ScheduledMessagesBottomSheet : FixedRoundedCornerBottomSheetDialogFragment
   }
 
   private fun handleRescheduleMessage(messageRecord: MessageRecord) {
-    ScheduleMessageTimePickerBottomSheet.showReschedule(childFragmentManager, messageRecord.id, (messageRecord as MediaMmsMessageRecord).scheduledDate)
+    ScheduleMessageTimePickerBottomSheet.showReschedule(childFragmentManager, messageRecord.id, (messageRecord as MmsMessageRecord).scheduledDate)
   }
 
   private fun handleSendMessageNow(messageRecord: MessageRecord) {

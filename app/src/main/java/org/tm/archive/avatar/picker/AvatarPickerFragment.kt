@@ -30,6 +30,7 @@ import org.tm.archive.components.recyclerview.GridDividerDecoration
 import org.tm.archive.groups.ParcelableGroupId
 import org.tm.archive.mediasend.AvatarSelectionActivity
 import org.tm.archive.mediasend.Media
+import org.tm.archive.permissions.PermissionCompat
 import org.tm.archive.permissions.Permissions
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.MappingAdapter
@@ -238,7 +239,7 @@ class AvatarPickerFragment : Fragment(R.layout.avatar_picker_fragment) {
   @Suppress("DEPRECATION")
   private fun openGallery() {
     Permissions.with(this)
-      .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+      .request(*PermissionCompat.forImages())
       .ifNecessary()
       .onAllGranted {
         val intent = AvatarSelectionActivity.getIntentForGallery(requireContext())

@@ -61,7 +61,6 @@ class VerifyAccountRepository(private val context: Application) {
       if (fcmToken == null) {
         return@fromCallable accountManager.createRegistrationSession(null, mcc, mnc)
       } else {
-        com.tm.logger.Log.d("VerifyAccountRepository", "requestValidSession -> fcmToken $fcmToken")//**TM_SA**//
         return@fromCallable createSessionAndBlockForPushChallenge(accountManager, fcmToken, mcc, mnc)
       }
     }
@@ -73,9 +72,6 @@ class VerifyAccountRepository(private val context: Application) {
     val eventBus = EventBus.getDefault()
     eventBus.register(subscriber)
 
-    com.tm.logger.Log.d("VerifyAccountRepository",
-      "createSessionAndBlockForPushChallenge -> fcmToken: $fcmToken"
-    )//**TM_SA**//
     val response: ServiceResponse<RegistrationSessionMetadataResponse> = accountManager.createRegistrationSession(fcmToken, mcc, mnc)
 
     if (!response.result.isPresent) {

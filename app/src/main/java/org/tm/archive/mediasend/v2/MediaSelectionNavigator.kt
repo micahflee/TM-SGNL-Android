@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import org.tm.archive.R
+import org.tm.archive.permissions.PermissionCompat
 import org.tm.archive.permissions.Permissions
 import org.tm.archive.util.navigation.safeNavigate
 
@@ -46,7 +47,7 @@ class MediaSelectionNavigator(
       onGranted: () -> Unit
     ) {
       Permissions.with(this)
-        .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+        .request(*PermissionCompat.forImagesAndVideos())
         .ifNecessary()
         .withPermanentDenialDialog(getString(R.string.AttachmentKeyboard_Signal_needs_permission_to_show_your_photos_and_videos))
         .onAllGranted(onGranted)

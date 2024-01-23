@@ -11,13 +11,14 @@ import androidx.annotation.WorkerThread;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.mobilecoin.lib.exceptions.SerializationException;
 
 import org.signal.core.util.CursorExtensionsKt;
+import org.signal.core.util.CursorUtil;
 import org.signal.core.util.SQLiteDatabaseExtensionsKt;
+import org.signal.core.util.SqlUtil;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.database.model.MediaMmsMessageRecord;
+import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.databaseprotos.CryptoValue;
@@ -31,13 +32,12 @@ import org.tm.archive.payments.Payment;
 import org.tm.archive.payments.State;
 import org.tm.archive.payments.proto.PaymentMetaData;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.Base64;
-import org.signal.core.util.CursorUtil;
-import org.signal.core.util.SqlUtil;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.whispersystems.signalservice.api.payments.Money;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -230,8 +230,8 @@ public final class PaymentTable extends DatabaseTable implements RecipientIdData
     values.put(NOTE, note);
     values.put(DIRECTION, direction.serialize());
     values.put(STATE, state.serialize());
-    values.put(AMOUNT, CryptoValueUtil.moneyToCryptoValue(amount).toByteArray());
-    values.put(FEE, CryptoValueUtil.moneyToCryptoValue(fee).toByteArray());
+    values.put(AMOUNT, CryptoValueUtil.moneyToCryptoValue(amount).encode());
+    values.put(FEE, CryptoValueUtil.moneyToCryptoValue(fee).encode());
     if (transaction != null) {
       values.put(TRANSACTION, transaction);
     } else {
@@ -239,15 +239,15 @@ public final class PaymentTable extends DatabaseTable implements RecipientIdData
     }
     if (receipt != null) {
       values.put(RECEIPT, receipt);
-      values.put(PUBLIC_KEY, Base64.encodeBytes(PaymentMetaDataUtil.receiptPublic(PaymentMetaDataUtil.fromReceipt(receipt))));
+      values.put(PUBLIC_KEY, Base64.encodeWithPadding(PaymentMetaDataUtil.receiptPublic(PaymentMetaDataUtil.fromReceipt(receipt))));
     } else {
       values.putNull(RECEIPT);
       values.putNull(PUBLIC_KEY);
     }
     if (metaData != null) {
-      values.put(META_DATA, metaData.toByteArray());
+      values.put(META_DATA, metaData.encode());
     } else {
-      values.put(META_DATA, PaymentMetaDataUtil.fromReceiptAndTransaction(receipt, transaction).toByteArray());
+      values.put(META_DATA, PaymentMetaDataUtil.fromReceiptAndTransaction(receipt, transaction).encode());
     }
     values.put(SEEN, seen ? 1 : 0);
 
@@ -417,6 +417,16 @@ public final class PaymentTable extends DatabaseTable implements RecipientIdData
     return payments;
   }
 
+  public @NonNull List<UUID> getSubmittedIncomingPayments() {
+    return CursorExtensionsKt.readToList(
+        SQLiteDatabaseExtensionsKt.select(getReadableDatabase(), PAYMENT_UUID)
+                                  .from(TABLE_NAME)
+                                  .where(DIRECTION + " = ? AND " + STATE + " = ?", Direction.RECEIVED.serialize(), State.SUBMITTED.serialize())
+                                  .run(),
+        c -> UuidUtil.parseOrNull(CursorUtil.requireString(c, PAYMENT_UUID))
+    );
+  }
+
   @AnyThread
   public @NonNull LiveData<List<PaymentTransaction>> getAllLive() {
     return LiveDataUtil.mapAsync(changeSignal, change -> getAll());
@@ -426,8 +436,8 @@ public final class PaymentTable extends DatabaseTable implements RecipientIdData
   public @NonNull MessageRecord updateMessageWithPayment(@NonNull MessageRecord record) {
     if (record.isPaymentNotification()) {
       Payment payment = getPayment(UuidUtil.parseOrThrow(record.getBody()));
-      if (payment != null && record instanceof MediaMmsMessageRecord) {
-        return ((MediaMmsMessageRecord) record).withPayment(payment);
+      if (payment != null && record instanceof MmsMessageRecord) {
+        return ((MmsMessageRecord) record).withPayment(payment);
       } else {
         throw new AssertionError("Payment not found for message");
       }
@@ -458,12 +468,12 @@ public final class PaymentTable extends DatabaseTable implements RecipientIdData
     values.put(TRANSACTION, transaction);
     values.put(RECEIPT, receipt);
     try {
-      values.put(PUBLIC_KEY, Base64.encodeBytes(PaymentMetaDataUtil.receiptPublic(PaymentMetaDataUtil.fromReceipt(receipt))));
-      values.put(META_DATA, PaymentMetaDataUtil.fromReceiptAndTransaction(receipt, transaction).toByteArray());
+      values.put(PUBLIC_KEY, Base64.encodeWithPadding(PaymentMetaDataUtil.receiptPublic(PaymentMetaDataUtil.fromReceipt(receipt))));
+      values.put(META_DATA, PaymentMetaDataUtil.fromReceiptAndTransaction(receipt, transaction).encode());
     } catch (SerializationException e) {
       throw new IllegalArgumentException(e);
     }
-    values.put(FEE, CryptoValueUtil.moneyToCryptoValue(fee).toByteArray());
+    values.put(FEE, CryptoValueUtil.moneyToCryptoValue(fee).encode());
 
     database.beginTransaction();
     try {
@@ -516,7 +526,7 @@ public final class PaymentTable extends DatabaseTable implements RecipientIdData
     values.put(STATE, state.serialize());
 
     if (amount != null) {
-      values.put(AMOUNT, CryptoValueUtil.moneyToCryptoValue(amount).toByteArray());
+      values.put(AMOUNT, CryptoValueUtil.moneyToCryptoValue(amount).encode());
     }
 
     if (state == State.FAILED) {
@@ -613,9 +623,9 @@ public final class PaymentTable extends DatabaseTable implements RecipientIdData
 
   private static @NonNull Money getMoneyValue(@NonNull byte[] blob) {
     try {
-      CryptoValue cryptoValue = CryptoValue.parseFrom(blob);
+      CryptoValue cryptoValue = CryptoValue.ADAPTER.decode(blob);
       return CryptoValueUtil.cryptoValueToMoney(cryptoValue);
-    } catch (InvalidProtocolBufferException e) {
+    } catch (IOException e) {
       throw new AssertionError(e);
     }
   }

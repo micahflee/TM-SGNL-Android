@@ -7,9 +7,12 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.concurrent.LifecycleDisposable
+import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLConfiguration
 import org.tm.archive.components.settings.DSLSettingsFragment
+import org.tm.archive.components.settings.DSLSettingsIcon
+import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.app.notifications.profiles.models.NotificationProfileAddMembers
 import org.tm.archive.components.settings.app.notifications.profiles.models.NotificationProfileRecipient
 import org.tm.archive.components.settings.configure
@@ -93,11 +96,41 @@ class AddAllowedMembersFragment : DSLSettingsFragment(layoutId = R.layout.fragme
           )
         )
       }
+
+      sectionHeaderPref(R.string.AddAllowedMembers__exceptions)
+
+      switchPref(
+        title = DSLSettingsText.from(R.string.AddAllowedMembers__allow_all_calls),
+        icon = DSLSettingsIcon.from(R.drawable.symbol_phone_24),
+        isChecked = profile.allowAllCalls,
+        onClick = {
+          lifecycleDisposable += viewModel.toggleAllowAllCalls()
+            .subscribeBy(
+              onError = { Log.w(TAG, "Error updating profile", it) }
+            )
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from(R.string.AddAllowedMembers__notify_for_all_mentions),
+        icon = DSLSettingsIcon.from(R.drawable.symbol_at_24),
+        isChecked = profile.allowAllMentions,
+        onClick = {
+          lifecycleDisposable += viewModel.toggleAllowAllMentions()
+            .subscribeBy(
+              onError = { Log.w(TAG, "Error updating profile", it) }
+            )
+        }
+      )
     }
   }
 
   private fun undoRemove(id: RecipientId) {
     lifecycleDisposable += viewModel.addMember(id)
       .subscribe()
+  }
+
+  companion object {
+    private val TAG = Log.tag(AddAllowedMembersFragment::class.java)
   }
 }

@@ -25,22 +25,19 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.GroupRecord;
 import org.tm.archive.database.model.IdentityRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.mms.IncomingMessage;
 import org.tm.archive.mms.MmsException;
 import org.tm.archive.mms.OutgoingMessage;
 import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.sms.IncomingIdentityDefaultMessage;
-import org.tm.archive.sms.IncomingIdentityUpdateMessage;
-import org.tm.archive.sms.IncomingIdentityVerifiedMessage;
-import org.tm.archive.sms.IncomingTextMessage;
 import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.concurrent.SettableFuture;
 import org.whispersystems.signalservice.api.SignalSessionLock;
 import org.whispersystems.signalservice.api.messages.multidevice.VerifiedMessage;
 import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
+import org.whispersystems.signalservice.internal.push.Verified;
 
 import java.util.List;
 import java.util.Optional;
@@ -76,12 +73,14 @@ public final class IdentityUtil {
         if (groupRecord.getMembers().contains(recipient.getId()) && groupRecord.isActive() && !groupRecord.isMms()) {
 
           if (remote) {
-            IncomingTextMessage incoming = new IncomingTextMessage(recipient.getId(), 1, time, -1, time, null, Optional.of(groupRecord.getId()), 0, false, null);
+            IncomingMessage incoming = verified ? IncomingMessage.identityVerified(recipient.getId(), time, groupRecord.getId())
+                                                : IncomingMessage.identityDefault(recipient.getId(), time, groupRecord.getId());
 
-            if (verified) incoming = new IncomingIdentityVerifiedMessage(incoming);
-            else          incoming = new IncomingIdentityDefaultMessage(incoming);
-
-            smsDatabase.insertMessageInbox(incoming);
+            try {
+              smsDatabase.insertMessageInbox(incoming);
+            } catch (MmsException e) {
+              throw new AssertionError(e);
+            }
           } else {
             RecipientId recipientId    = SignalDatabase.recipients().getOrInsertFromGroupId(groupRecord.getId());
             Recipient   groupRecipient = Recipient.resolved(recipientId);
@@ -95,7 +94,7 @@ public final class IdentityUtil {
             }
 
             try {
-              SignalDatabase.messages().insertMessageOutbox(outgoing, threadId, false, null, null/*TM_SA*/);
+              SignalDatabase.messages().insertMessageOutbox(outgoing, threadId, false, null);
             } catch (MmsException e) {
               throw new AssertionError(e);
             }
@@ -106,12 +105,14 @@ public final class IdentityUtil {
     }
 
     if (remote) {
-      IncomingTextMessage incoming = new IncomingTextMessage(recipient.getId(), 1, time, -1, time, null, Optional.empty(), 0, false, null);
+      IncomingMessage incoming = verified ? IncomingMessage.identityVerified(recipient.getId(), time, null)
+                                          : IncomingMessage.identityDefault(recipient.getId(), time, null);
 
-      if (verified) incoming = new IncomingIdentityVerifiedMessage(incoming);
-      else          incoming = new IncomingIdentityDefaultMessage(incoming);
-
-      smsDatabase.insertMessageInbox(incoming);
+      try {
+        smsDatabase.insertMessageInbox(incoming);
+      } catch (MmsException e) {
+        throw new AssertionError(e);
+      }
     } else {
       OutgoingMessage outgoing;
       if (verified) {
@@ -124,7 +125,7 @@ public final class IdentityUtil {
 
       Log.i(TAG, "Inserting verified outbox...");
       try {
-        SignalDatabase.messages().insertMessageOutbox(outgoing, threadId, false, null, null/*TM_SA*/);
+        SignalDatabase.messages().insertMessageOutbox(outgoing, threadId, false, null);
       } catch (MmsException e) {
         throw new AssertionError();
       }
@@ -144,21 +145,25 @@ public final class IdentityUtil {
 
       while ((groupRecord = reader.getNext()) != null) {
         if (groupRecord.getMembers().contains(recipientId) && groupRecord.isActive()) {
-          IncomingTextMessage           incoming    = new IncomingTextMessage(recipientId, 1, time, time, time, null, Optional.of(groupRecord.getId()), 0, false, null);
-          IncomingIdentityUpdateMessage groupUpdate = new IncomingIdentityUpdateMessage(incoming);
-
+          IncomingMessage groupUpdate = IncomingMessage.identityUpdate(recipientId, time, groupRecord.getId());
           smsDatabase.insertMessageInbox(groupUpdate);
         }
       }
+    } catch (MmsException e) {
+      throw new AssertionError(e);
     }
 
-    IncomingTextMessage           incoming         = new IncomingTextMessage(recipientId, 1, time, -1, time, null, Optional.empty(), 0, false, null);
-    IncomingIdentityUpdateMessage individualUpdate = new IncomingIdentityUpdateMessage(incoming);
-    Optional<InsertResult>        insertResult     = smsDatabase.insertMessageInbox(individualUpdate);
+    try {
+      IncomingMessage        individualUpdate = IncomingMessage.identityUpdate(recipientId, time, null);
+      Optional<InsertResult> insertResult     = smsDatabase.insertMessageInbox(individualUpdate);
 
-    if (insertResult.isPresent()) {
-      ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(insertResult.get().getThreadId()));
+      if (insertResult.isPresent()) {
+        ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(insertResult.get().getThreadId()));
+      }
+    } catch (MmsException e) {
+      throw new AssertionError(e);
     }
+
   }
 
   public static void saveIdentity(String user, IdentityKey identityKey) {
@@ -177,12 +182,12 @@ public final class IdentityUtil {
     }
   }
 
-  public static void processVerifiedMessage(Context context, SignalServiceProtos.Verified verified) throws InvalidKeyException {
-    SignalServiceAddress          destination = new SignalServiceAddress(ServiceId.parseOrThrow(verified.getDestinationAci()));
-    IdentityKey                   identityKey = new IdentityKey(verified.getIdentityKey().toByteArray(), 0);
+  public static void processVerifiedMessage(Context context, Verified verified) throws InvalidKeyException {
+    SignalServiceAddress          destination = new SignalServiceAddress(ServiceId.parseOrThrow(verified.destinationAci));
+    IdentityKey                   identityKey = new IdentityKey(verified.identityKey.toByteArray(), 0);
     VerifiedMessage.VerifiedState state;
 
-    switch (verified.getState()) {
+    switch (verified.state) {
       case DEFAULT:
         state = VerifiedMessage.VerifiedState.DEFAULT;
         break;

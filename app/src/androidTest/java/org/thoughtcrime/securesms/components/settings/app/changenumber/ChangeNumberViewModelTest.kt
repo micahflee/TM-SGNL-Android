@@ -50,7 +50,6 @@ class ChangeNumberViewModelTest {
 
   @Before
   fun setUp() {
-    ApplicationDependencies.getSignalServiceAccountManager().setSoTimeoutMillis(1000)
     ThreadUtil.runOnMainSync {
       viewModel = ChangeNumberViewModel(
         localNumber = harness.self.requireE164(),
@@ -231,8 +230,6 @@ class ChangeNumberViewModelTest {
     lateinit var changeNumberRequest: ChangePhoneNumberRequest
     lateinit var setPreKeysRequest: PreKeyState
 
-    MockProvider.mockGetRegistrationLockStringFlow()
-
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
       Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },
       Put("/v1/verification/session/${MockProvider.sessionMetadataJson.id}/code") { MockResponse().success(MockProvider.sessionMetadataJson) },
@@ -318,8 +315,6 @@ class ChangeNumberViewModelTest {
 
     lateinit var changeNumberRequest: ChangePhoneNumberRequest
     lateinit var setPreKeysRequest: PreKeyState
-
-    MockProvider.mockGetRegistrationLockStringFlow()
 
     InstrumentationApplicationDependencyProvider.addMockWebRequestHandlers(
       Post("/v1/verification/session") { MockResponse().success(MockProvider.sessionMetadataJson.copy(verified = false)) },

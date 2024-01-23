@@ -3,6 +3,7 @@ package org.tm.archive.jobs
 import androidx.annotation.WorkerThread
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
+import okio.ByteString.Companion.toByteString
 import org.signal.core.util.concurrent.safeBlockingGet
 import org.signal.core.util.logging.Log
 import org.signal.core.util.orNull
@@ -15,7 +16,6 @@ import org.signal.libsignal.protocol.util.KeyHelper
 import org.signal.libsignal.protocol.util.Medium
 import org.tm.archive.components.settings.app.changenumber.ChangeNumberRepository
 import org.tm.archive.crypto.PreKeyUtil
-import org.tm.archive.database.model.toProtoByteString
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobmanager.Job
 import org.tm.archive.jobmanager.impl.NetworkConstraint
@@ -23,7 +23,6 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.registration.VerifyResponse
 import org.tm.archive.registration.VerifyResponseWithoutKbs
-import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.TextSecurePreferences
 import org.whispersystems.signalservice.api.account.PniKeyDistributionRequest
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
@@ -31,7 +30,7 @@ import org.whispersystems.signalservice.api.push.SignedPreKeyEntity
 import org.whispersystems.signalservice.internal.ServiceResponse
 import org.whispersystems.signalservice.internal.push.KyberPreKeyEntity
 import org.whispersystems.signalservice.internal.push.OutgoingPushMessage
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos
+import org.whispersystems.signalservice.internal.push.SyncMessage
 import org.whispersystems.signalservice.internal.push.VerifyAccountResponse
 import org.whispersystems.signalservice.internal.push.exceptions.MismatchedDevicesException
 import java.io.IOException
@@ -50,7 +49,7 @@ class PnpInitializeDevicesJob private constructor(parameters: Parameters) : Base
 
     @JvmStatic
     fun enqueueIfNecessary() {
-      if (SignalStore.misc().hasPniInitializedDevices() || !SignalStore.account().isRegistered || SignalStore.account().aci == null || Recipient.self().pnpCapability != Recipient.Capability.SUPPORTED || !FeatureFlags.phoneNumberPrivacy()) {
+      if (SignalStore.misc().hasPniInitializedDevices() || !SignalStore.account().isRegistered || SignalStore.account().aci == null || Recipient.self().pnpCapability != Recipient.Capability.SUPPORTED) {
         return
       }
 
@@ -74,10 +73,6 @@ class PnpInitializeDevicesJob private constructor(parameters: Parameters) : Base
   public override fun onRun() {
     if (Recipient.self().pnpCapability != Recipient.Capability.SUPPORTED) {
       throw IllegalStateException("This should only be run if you have the capability!")
-    }
-
-    if (!FeatureFlags.phoneNumberPrivacy()) {
-      throw IllegalStateException("This should only be running if PNP is enabled!")
     }
 
     if (!SignalStore.account().isRegistered || SignalStore.account().aci == null) {
@@ -212,13 +207,13 @@ class PnpInitializeDevicesJob private constructor(parameters: Parameters) : Base
 
         // Device Messages
         if (deviceId != primaryDeviceId) {
-          val pniChangeNumber = SignalServiceProtos.SyncMessage.PniChangeNumber.newBuilder()
-            .setIdentityKeyPair(pniIdentity.serialize().toProtoByteString())
-            .setSignedPreKey(signedPreKeyRecord.serialize().toProtoByteString())
-            .setLastResortKyberPreKey(lastResortKyberPreKeyRecord.serialize().toProtoByteString())
-            .setRegistrationId(pniRegistrationId)
-            .setNewE164(newE164)
-            .build()
+          val pniChangeNumber = SyncMessage.PniChangeNumber(
+            identityKeyPair = pniIdentity.serialize().toByteString(),
+            signedPreKey = signedPreKeyRecord.serialize().toByteString(),
+            lastResortKyberPreKey = lastResortKyberPreKeyRecord.serialize().toByteString(),
+            registrationId = pniRegistrationId,
+            newE164 = newE164
+          )
 
           deviceMessages += messageSender.getEncryptedSyncPniInitializeDeviceMessage(deviceId, pniChangeNumber)
         }

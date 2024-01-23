@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.tm.archive.components.settings.app.usernamelinks.main
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.View
@@ -8,38 +11,46 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ShareCompat
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.CoroutineScope
@@ -50,31 +61,57 @@ import org.signal.core.util.concurrent.LifecycleDisposable
 import org.tm.archive.R
 import org.tm.archive.components.settings.app.usernamelinks.main.UsernameLinkSettingsState.ActiveTab
 import org.tm.archive.compose.ComposeFragment
-import org.tm.archive.compose.ScreenshotController
 import org.tm.archive.providers.BlobProvider
 import java.io.ByteArrayOutputStream
+import java.util.UUID
 
-@OptIn(
-  ExperimentalMaterial3Api::class,
-  ExperimentalPermissionsApi::class
-)
+@OptIn(ExperimentalPermissionsApi::class)
 class UsernameLinkSettingsFragment : ComposeFragment() {
 
   private val viewModel: UsernameLinkSettingsViewModel by viewModels()
   private val disposables: LifecycleDisposable = LifecycleDisposable()
 
-  private val screenshotController = ScreenshotController()
+  override fun onStart() {
+    super.onStart()
+    setFragmentResultListener(UsernameLinkShareBottomSheet.REQUEST_KEY) { key, bundle ->
+      if (bundle.getBoolean(UsernameLinkShareBottomSheet.KEY_COPY)) {
+        viewModel.onLinkCopied()
+      }
+    }
+  }
 
+  @OptIn(ExperimentalMaterial3Api::class)
   @Composable
   override fun FragmentContent() {
     val state by viewModel.state
     val snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
     val scope: CoroutineScope = rememberCoroutineScope()
     val navController: NavController by remember { mutableStateOf(findNavController()) }
+    var showResetDialog: Boolean by remember { mutableStateOf(false) }
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val cameraPermissionState: PermissionState = rememberPermissionState(permission = android.Manifest.permission.CAMERA)
+    val linkCopiedEvent: UUID? by viewModel.linkCopiedEvent
+
+    val linkCopiedString = stringResource(R.string.UsernameLinkSettings_link_copied_toast)
+
+    LaunchedEffect(linkCopiedEvent) {
+      if (linkCopiedEvent != null) {
+        snackbarHostState.showSnackbar(linkCopiedString)
+      }
+    }
 
     Scaffold(
       snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-      topBar = { TopAppBarContent(state.activeTab) }
+      topBar = {
+        TopAppBarContent(
+          activeTab = state.activeTab,
+          scrollBehavior = scrollBehavior,
+          onCodeTabSelected = { viewModel.onTabSelected(ActiveTab.Code) },
+          onScanTabSelected = { viewModel.onTabSelected(ActiveTab.Scan) },
+          cameraPermissionState = cameraPermissionState
+        )
+      },
+      modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { contentPadding ->
 
       if (state.indeterminateProgress) {
@@ -93,9 +130,10 @@ class UsernameLinkSettingsFragment : ComposeFragment() {
           modifier = Modifier.padding(contentPadding),
           navController = navController,
           onShareBadge = {
-            shareQrBadge(it)
+            shareQrBadge(viewModel.generateQrCodeImage())
           },
-          screenshotController = screenshotController
+          onResetClicked = { showResetDialog = true },
+          onLinkResultHandled = { viewModel.onUsernameLinkResetResultHandled() }
         )
       }
 
@@ -114,6 +152,16 @@ class UsernameLinkSettingsFragment : ComposeFragment() {
         )
       }
     }
+
+    if (showResetDialog) {
+      ResetDialog(
+        onConfirm = {
+          viewModel.onUsernameLinkReset()
+          showResetDialog = false
+        },
+        onDismiss = { showResetDialog = false }
+      )
+    }
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -125,41 +173,57 @@ class UsernameLinkSettingsFragment : ComposeFragment() {
     viewModel.onResume()
   }
 
+  @OptIn(ExperimentalMaterial3Api::class)
   @Composable
-  private fun TopAppBarContent(activeTab: ActiveTab) {
-    val cameraPermissionState: PermissionState = rememberPermissionState(permission = android.Manifest.permission.CAMERA)
-
-    Box(
+  private fun TopAppBarContent(
+    activeTab: ActiveTab,
+    scrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+    onCodeTabSelected: () -> Unit = {},
+    onScanTabSelected: () -> Unit = {},
+    cameraPermissionState: PermissionState = previewPermissionState()
+  ) {
+    CenterAlignedTopAppBar(
       modifier = Modifier
-        .fillMaxWidth()
-        .height(64.dp)
-    ) {
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .fillMaxHeight(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        TabButton(
-          label = stringResource(R.string.UsernameLinkSettings_code_tab_name),
-          active = activeTab == ActiveTab.Code,
-          onClick = { viewModel.onTabSelected(ActiveTab.Code) },
-          modifier = Modifier.padding(end = 8.dp)
-        )
-        TabButton(
-          label = stringResource(R.string.UsernameLinkSettings_scan_tab_name),
-          active = activeTab == ActiveTab.Scan,
-          onClick = {
-            if (cameraPermissionState.status.isGranted) {
-              viewModel.onTabSelected(ActiveTab.Scan)
-            } else {
-              cameraPermissionState.launchPermissionRequest()
-            }
-          }
-        )
-      }
-    }
+        .fillMaxWidth(),
+      title = {
+        Row(
+          modifier = Modifier
+            .fillMaxWidth(),
+          horizontalArrangement = Arrangement.Center,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          TabButton(
+            label = stringResource(R.string.UsernameLinkSettings_code_tab_name),
+            active = activeTab == ActiveTab.Code,
+            onClick = onCodeTabSelected,
+            modifier = Modifier.padding(end = 8.dp)
+          )
+          TabButton(
+            label = stringResource(R.string.UsernameLinkSettings_scan_tab_name),
+            active = activeTab == ActiveTab.Scan,
+            onClick = {
+              if (cameraPermissionState.status.isGranted) {
+                onScanTabSelected()
+              } else {
+                cameraPermissionState.launchPermissionRequest()
+              }
+            },
+            modifier = Modifier.padding(end = 8.dp)
+          )
+        }
+      },
+      navigationIcon = {
+        IconButton(
+          onClick = { requireActivity().onBackPressed() }
+        ) {
+          Icon(
+            painter = painterResource(R.drawable.symbol_x_24),
+            contentDescription = stringResource(android.R.string.cancel)
+          )
+        }
+      },
+      scrollBehavior = scrollBehavior
+    )
   }
 
   @Composable
@@ -172,7 +236,7 @@ class UsernameLinkSettingsFragment : ComposeFragment() {
         contentColor = MaterialTheme.colorScheme.onSurface
       )
     }
-    Buttons.MediumTonal(
+    Buttons.Small(
       onClick = onClick,
       modifier = modifier.defaultMinSize(minWidth = 100.dp),
       shape = RoundedCornerShape(12.dp),
@@ -182,23 +246,58 @@ class UsernameLinkSettingsFragment : ComposeFragment() {
     }
   }
 
+  @Composable
+  private fun ResetDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    Dialogs.SimpleAlertDialog(
+      title = stringResource(id = R.string.UsernameLinkSettings_reset_link_dialog_title),
+      body = stringResource(id = R.string.UsernameLinkSettings_reset_link_dialog_body),
+      confirm = stringResource(id = R.string.UsernameLinkSettings_reset_link_dialog_confirm_button),
+      dismiss = stringResource(id = android.R.string.cancel),
+      onConfirm = onConfirm,
+      onDismiss = onDismiss
+    )
+  }
+
   @Preview
   @Composable
-  private fun AppBarPreview() {
-    SignalTheme(isDarkMode = false) {
+  private fun PreviewAppBar() {
+    SignalTheme {
       Surface {
         TopAppBarContent(activeTab = ActiveTab.Code)
       }
     }
   }
 
-  @Preview
+  @Preview(name = "Light Theme", uiMode = Configuration.UI_MODE_NIGHT_NO)
+  @Preview(name = "Dark Theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
   @Composable
-  fun PreviewAll() {
+  private fun PreviewAll() {
     FragmentContent()
   }
 
-  private fun shareQrBadge(badge: Bitmap) {
+  @Preview
+  @Composable
+  private fun PreviewResetDialog() {
+    SignalTheme {
+      Surface {
+        ResetDialog(onConfirm = {}, onDismiss = {})
+      }
+    }
+  }
+
+  private fun previewPermissionState(): PermissionState {
+    return object : PermissionState {
+      override val permission: String = ""
+      override val status: PermissionStatus = PermissionStatus.Granted
+      override fun launchPermissionRequest() = Unit
+    }
+  }
+
+  private fun shareQrBadge(badge: Bitmap?) {
+    if (badge == null) {
+      return
+    }
+
     try {
       ByteArrayOutputStream().use { byteArrayOutputStream ->
         badge.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)

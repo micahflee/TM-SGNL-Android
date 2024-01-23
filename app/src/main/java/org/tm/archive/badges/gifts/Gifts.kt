@@ -1,13 +1,13 @@
 package org.tm.archive.badges.gifts
 
 import android.content.Context
+import org.signal.core.util.Base64
 import org.signal.libsignal.zkgroup.InvalidInputException
 import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation
 import org.tm.archive.R
 import org.tm.archive.database.model.databaseprotos.GiftBadge
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.util.Base64
 import java.lang.Integer.min
 import java.util.concurrent.TimeUnit
 
@@ -32,7 +32,7 @@ object Gifts {
   ): OutgoingMessage {
     return OutgoingMessage(
       threadRecipient = recipient,
-      body = Base64.encodeBytes(giftBadge.toByteArray()),
+      body = Base64.encodeWithPadding(giftBadge.encode()),
       isSecure = true,
       sentTimeMillis = sentTimestamp,
       expiresIn = expiresIn,

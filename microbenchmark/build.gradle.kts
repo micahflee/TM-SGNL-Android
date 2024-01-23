@@ -51,6 +51,8 @@ android {
 dependencies {
   lintChecks(project(":lintchecks"))
 
+  implementation(project(":core-util"))
+
   // Base dependencies
   androidTestImplementation(testLibs.junit.junit)
   androidTestImplementation(benchmarkLibs.androidx.test.ext.junit)
@@ -59,5 +61,4 @@ dependencies {
   // Dependencies of modules being tested
   androidTestImplementation(project(":libsignal-service"))
   androidTestImplementation(libs.libsignal.android)
-  androidTestImplementation(libs.google.protobuf.javalite)
 }

@@ -6,6 +6,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.schedulers.Schedulers
+import org.signal.core.util.Base64
 import org.signal.core.util.StreamUtil
 import org.signal.core.util.concurrent.MaybeCompat
 import org.signal.core.util.concurrent.SignalExecutors
@@ -23,10 +24,10 @@ import org.tm.archive.database.MessageTypes
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.ThreadTable
 import org.tm.archive.database.adjustBodyRanges
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.Mention
 import org.tm.archive.database.model.MessageId
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyboard.KeyboardUtil
@@ -41,7 +42,6 @@ import org.tm.archive.mms.SlideFactory
 import org.tm.archive.mms.StickerSlide
 import org.tm.archive.providers.BlobProvider
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.util.Base64
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.concurrent.SerialMonoLifoExecutor
 import org.tm.archive.util.hasTextSlide
@@ -191,7 +191,7 @@ class DraftRepository(
     var updatedText: Spannable? = null
 
     if (textDraft != null && bodyRangesDraft != null) {
-      val bodyRanges: BodyRangeList = BodyRangeList.parseFrom(Base64.decodeOrThrow(bodyRangesDraft.value))
+      val bodyRanges: BodyRangeList = BodyRangeList.ADAPTER.decode(Base64.decodeOrThrow(bodyRangesDraft.value))
       val mentions: List<Mention> = MentionUtil.bodyRangeListToMentions(bodyRanges)
 
       val updated = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, textDraft.value, mentions)
@@ -207,8 +207,8 @@ class DraftRepository(
   private fun loadDraftQuoteInternal(serialized: String): ConversationMessage? {
     val quoteId: QuoteId = QuoteId.deserialize(context, serialized) ?: return null
     val messageRecord: MessageRecord = SignalDatabase.messages.getMessageFor(quoteId.id, quoteId.author)?.let {
-      if (it is MediaMmsMessageRecord) {
-        it.withAttachments(context, SignalDatabase.attachments.getAttachmentsForMessage(it.id))
+      if (it is MmsMessageRecord) {
+        it.withAttachments(SignalDatabase.attachments.getAttachmentsForMessage(it.id))
       } else {
         it
       }

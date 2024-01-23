@@ -32,7 +32,7 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.lock.v2.SvrConstants;
 import org.tm.archive.lock.v2.PinKeyboardType;
 import org.tm.archive.profiles.AvatarHelper;
-import org.tm.archive.profiles.edit.EditProfileActivity;
+import org.tm.archive.profiles.edit.CreateProfileActivity;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.registration.RegistrationUtil;
 import org.tm.archive.registration.fragments.RegistrationViewDelegate;
@@ -238,7 +238,7 @@ public class PinRestoreEntryFragment extends LoggingFragment {
 
     if (Recipient.self().getProfileName().isEmpty() || !AvatarHelper.hasAvatar(activity, Recipient.self().getId())) {
       final Intent main    = MainActivity.clearTop(activity);
-      final Intent profile = EditProfileActivity.getIntentForUserProfile(activity);
+      final Intent profile = CreateProfileActivity.getIntentForUserProfile(activity);
 
       profile.putExtra("next_intent", main);
       startActivity(profile);

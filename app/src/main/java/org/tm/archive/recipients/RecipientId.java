@@ -12,13 +12,13 @@ import com.annimon.stream.Stream;
 
 import org.signal.core.util.DatabaseId;
 import org.signal.core.util.LongSerializer;
+import org.signal.core.util.logging.Log;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.util.DelimiterUtil;
 import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
-import org.whispersystems.signalservice.api.util.UuidUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,13 +27,14 @@ import java.util.regex.Pattern;
 
 public class RecipientId implements Parcelable, Comparable<RecipientId>, DatabaseId {
 
-  private static final long UNKNOWN_ID = -1;
-  private static final char DELIMITER  = ',';
+  private static final String TAG        = "RecipientId";
+  private static final long   UNKNOWN_ID = -1;
+  private static final char   DELIMITER  = ',';
 
   public static final RecipientId UNKNOWN = RecipientId.from(UNKNOWN_ID);
   public static final LongSerializer<RecipientId> SERIALIZER = new Serializer();
 
-  public final long id; //*TM_SA*//public
+  private final long id;
 
   public static RecipientId from(long id) {
     if (id == 0) {
@@ -73,6 +74,7 @@ public class RecipientId implements Parcelable, Comparable<RecipientId>, Databas
   public static @NonNull RecipientId from(@NonNull GroupId groupId) {
     RecipientId recipientId = RecipientIdCache.INSTANCE.get(groupId);
     if (recipientId == null) {
+      Log.d(TAG, "RecipientId cache miss for " + groupId);
       recipientId = SignalDatabase.recipients().getOrInsertFromPossiblyMigratedGroupId(groupId);
       if (groupId.isV2()) {
         RecipientIdCache.INSTANCE.put(groupId, recipientId);
@@ -87,8 +89,9 @@ public class RecipientId implements Parcelable, Comparable<RecipientId>, Databas
    */
   @AnyThread
   public static @NonNull RecipientId fromSidOrE164(@NonNull String identifier) {
-    if (UuidUtil.isUuid(identifier)) {
-      return from(ServiceId.parseOrThrow(identifier));
+    ServiceId serviceId = ServiceId.parseOrNull(identifier);
+    if (serviceId != null) {
+      return from(serviceId);
     } else {
       return from(null, identifier);
     }

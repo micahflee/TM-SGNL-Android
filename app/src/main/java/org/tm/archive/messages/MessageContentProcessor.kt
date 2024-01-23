@@ -1,8 +1,6 @@
 package org.tm.archive.messages
 
 import android.content.Context
-import org.archiver.ArchiveConstants
-import org.archiver.ArchiveSender
 import org.signal.core.util.logging.Log
 import org.signal.core.util.orNull
 import org.signal.core.util.toOptional
@@ -10,6 +8,7 @@ import org.signal.libsignal.protocol.SignalProtocolAddress
 import org.signal.libsignal.protocol.ecc.ECPublicKey
 import org.signal.libsignal.protocol.message.DecryptionErrorMessage
 import org.signal.libsignal.zkgroup.groups.GroupSecretParams
+import org.tm.archive.database.MessageType
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.GroupRecord
 import org.tm.archive.database.model.MessageLogEntry
@@ -21,8 +20,6 @@ import org.tm.archive.groups.GroupChangeBusyException
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.GroupManager
 import org.tm.archive.groups.GroupNotAMemberException
-import org.tm.archive.groups.GroupsV1MigratedCache
-import org.tm.archive.groups.GroupsV1MigrationUtil
 import org.tm.archive.groups.v2.processing.GroupsV2StateProcessor
 import org.tm.archive.jobs.AutomaticSessionResetJob
 import org.tm.archive.jobs.NullMessageSendJob
@@ -39,11 +36,10 @@ import org.tm.archive.messages.SignalServiceProtoUtil.isMediaMessage
 import org.tm.archive.messages.SignalServiceProtoUtil.isValid
 import org.tm.archive.messages.SignalServiceProtoUtil.signedGroupChange
 import org.tm.archive.messages.SignalServiceProtoUtil.toDecryptionErrorMessage
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.notifications.v2.ConversationId
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.sms.IncomingEncryptedMessage
-import org.tm.archive.sms.IncomingTextMessage
 import org.tm.archive.util.EarlyMessageCacheEntry
 import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.SignalLocalMetrics
@@ -53,10 +49,11 @@ import org.whispersystems.signalservice.api.crypto.EnvelopeMetadata
 import org.whispersystems.signalservice.api.push.DistributionId
 import org.whispersystems.signalservice.api.push.ServiceId
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos.Content
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos.Envelope
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos.TypingMessage
+import org.whispersystems.signalservice.internal.push.CallMessage
+import org.whispersystems.signalservice.internal.push.Content
+import org.whispersystems.signalservice.internal.push.Envelope
+import org.whispersystems.signalservice.internal.push.GroupContextV2
+import org.whispersystems.signalservice.internal.push.TypingMessage
 import java.io.IOException
 import java.util.Optional
 
@@ -125,18 +122,18 @@ open class MessageContentProcessor(private val context: Context) {
 
     @Throws(BadGroupIdException::class)
     private fun getMessageDestination(content: Content, sender: Recipient): Recipient {
-      return if (content.hasStoryMessage() && content.storyMessage.group.isValid) {
-        getGroupRecipient(content.storyMessage.group, sender)
+      return if (content.storyMessage != null && content.storyMessage!!.group.isValid) {
+        getGroupRecipient(content.storyMessage?.group, sender)
       } else if (content.dataMessage.hasGroupContext) {
-        getGroupRecipient(content.dataMessage.groupV2, sender)
-      } else if (content.editMessage.dataMessage.hasGroupContext) {
-        getGroupRecipient(content.editMessage.dataMessage.groupV2, sender)
+        getGroupRecipient(content.dataMessage?.groupV2, sender)
+      } else if (content.editMessage?.dataMessage.hasGroupContext) {
+        getGroupRecipient(content.editMessage?.dataMessage?.groupV2, sender)
       } else {
         sender
       }
     }
 
-    private fun getGroupRecipient(groupContextV2: SignalServiceProtos.GroupContextV2?, senderRecipient: Recipient): Recipient {
+    private fun getGroupRecipient(groupContextV2: GroupContextV2?, senderRecipient: Recipient): Recipient {
       return if (groupContextV2 != null) {
         Recipient.externalPossiblyMigratedGroup(GroupId.v2(groupContextV2.groupMasterKey))
       } else {
@@ -146,8 +143,8 @@ open class MessageContentProcessor(private val context: Context) {
 
     @Throws(BadGroupIdException::class)
     private fun shouldIgnore(content: Content, senderRecipient: Recipient, threadRecipient: Recipient): Boolean {
-      if (content.hasDataMessage()) {
-        val message = content.dataMessage
+      if (content.dataMessage != null) {
+        val message = content.dataMessage!!
         return if (threadRecipient.isGroup && threadRecipient.isBlocked) {
           true
         } else if (threadRecipient.isGroup) {
@@ -155,7 +152,7 @@ open class MessageContentProcessor(private val context: Context) {
             return senderRecipient.isBlocked
           }
 
-          val isTextMessage = message.hasBody()
+          val isTextMessage = message.body != null
           val isMediaMessage = message.isMediaMessage
           val isExpireMessage = message.isExpirationUpdate
           val isGv2Update = message.hasSignedGroupChange
@@ -166,15 +163,15 @@ open class MessageContentProcessor(private val context: Context) {
         } else {
           senderRecipient.isBlocked
         }
-      } else if (content.hasCallMessage()) {
+      } else if (content.callMessage != null) {
         return senderRecipient.isBlocked
-      } else if (content.hasTypingMessage()) {
+      } else if (content.typingMessage != null) {
         if (senderRecipient.isBlocked) {
           return true
         }
 
-        if (content.typingMessage.hasGroupId()) {
-          val groupId: GroupId = GroupId.push(content.typingMessage.groupId)
+        if (content.typingMessage!!.groupId != null) {
+          val groupId: GroupId = GroupId.push(content.typingMessage!!.groupId!!)
           val groupRecipient = Recipient.externalPossiblyMigratedGroup(groupId)
           return if (groupRecipient.isBlocked || !groupRecipient.isActiveGroup) {
             true
@@ -183,7 +180,7 @@ open class MessageContentProcessor(private val context: Context) {
             groupRecord.isPresent && groupRecord.get().isAnnouncementGroup && !groupRecord.get().admins.contains(senderRecipient)
           }
         }
-      } else if (content.hasStoryMessage()) {
+      } else if (content.storyMessage != null) {
         return if (threadRecipient.isGroup && threadRecipient.isBlocked) {
           true
         } else {
@@ -229,14 +226,10 @@ open class MessageContentProcessor(private val context: Context) {
       content: Content,
       metadata: EnvelopeMetadata,
       groupId: GroupId.V2,
-      groupV2: SignalServiceProtos.GroupContextV2,
+      groupV2: GroupContextV2,
       senderRecipient: Recipient,
       groupSecretParams: GroupSecretParams? = null
     ): Gv2PreProcessResult {
-      val v1Group = GroupsV1MigratedCache.getV1GroupByV2Id(groupId)
-      if (v1Group != null) {
-        GroupsV1MigrationUtil.performLocalMigration(context, v1Group.id.requireV1())
-      }
       val preUpdateGroupRecord = SignalDatabase.groups.getGroup(groupId)
       val groupUpdateResult = updateGv2GroupFromServerOrP2PChange(context, timestamp, groupV2, preUpdateGroupRecord, groupSecretParams)
       if (groupUpdateResult == null) {
@@ -256,12 +249,12 @@ open class MessageContentProcessor(private val context: Context) {
       }
 
       if (groupRecord.isPresent && groupRecord.get().isAnnouncementGroup && !groupRecord.get().admins.contains(senderRecipient)) {
-        if (content.hasDataMessage()) {
-          if (content.dataMessage.hasDisallowedAnnouncementOnlyContent) {
+        if (content.dataMessage != null) {
+          if (content.dataMessage!!.hasDisallowedAnnouncementOnlyContent) {
             Log.w(TAG, "Ignoring message from ${senderRecipient.id} because it has disallowed content, and they're not an admin in an announcement-only group.")
             return Gv2PreProcessResult.IGNORE
           }
-        } else if (content.hasTypingMessage()) {
+        } else if (content.typingMessage != null) {
           Log.w(TAG, "Ignoring typing indicator from ${senderRecipient.id} because they're not an admin in an announcement-only group.")
           return Gv2PreProcessResult.IGNORE
         }
@@ -277,37 +270,38 @@ open class MessageContentProcessor(private val context: Context) {
     fun updateGv2GroupFromServerOrP2PChange(
       context: Context,
       timestamp: Long,
-      groupV2: SignalServiceProtos.GroupContextV2,
+      groupV2: GroupContextV2,
       localRecord: Optional<GroupRecord>,
       groupSecretParams: GroupSecretParams? = null
     ): GroupsV2StateProcessor.GroupUpdateResult? {
       return try {
         val signedGroupChange: ByteArray? = if (groupV2.hasSignedGroupChange) groupV2.signedGroupChange else null
         val updatedTimestamp = if (signedGroupChange != null) timestamp else timestamp - 1
-        GroupManager.updateGroupFromServer(context, groupV2.groupMasterKey, localRecord, groupSecretParams, groupV2.revision, updatedTimestamp, signedGroupChange)
+        if (groupV2.revision != null) {
+          GroupManager.updateGroupFromServer(context, groupV2.groupMasterKey, localRecord, groupSecretParams, groupV2.revision!!, updatedTimestamp, signedGroupChange)
+        } else {
+          warn(timestamp, "Ignore group update message without a revision")
+          null
+        }
       } catch (e: GroupNotAMemberException) {
         warn(timestamp, "Ignoring message for a group we're not in")
         null
       }
     }
 
-    private fun insertErrorMessage(context: Context, sender: Recipient, senderDevice: Int, timestamp: Long, groupId: Optional<GroupId>, marker: (Long) -> Unit) {
-      val textMessage = IncomingTextMessage(
-        sender.id,
-        senderDevice,
-        timestamp,
-        -1,
-        System.currentTimeMillis(),
-        "",
-        groupId,
-        0,
-        false,
-        null
+    private fun insertErrorMessage(context: Context, sender: Recipient, timestamp: Long, groupId: Optional<GroupId>, marker: (Long) -> Unit) {
+      val textMessage = IncomingMessage(
+        type = MessageType.NORMAL,
+        from = sender.id,
+        sentTimeMillis = timestamp,
+        serverTimeMillis = -1,
+        receivedTimeMillis = System.currentTimeMillis(),
+        groupId = groupId.orNull()
       )
 
       SignalDatabase
         .messages
-        .insertMessageInbox(IncomingEncryptedMessage(textMessage, ""))
+        .insertMessageInbox(textMessage)
         .ifPresent {
           marker(it.messageId)
           ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(it.threadId))
@@ -333,11 +327,11 @@ open class MessageContentProcessor(private val context: Context) {
 
     val earlyCacheEntries: List<EarlyMessageCacheEntry>? = ApplicationDependencies
       .getEarlyMessageCache()
-      .retrieve(senderRecipient.id, envelope.timestamp)
+      .retrieve(senderRecipient.id, envelope.timestamp!!)
       .orNull()
 
     if (!processingEarlyContent && earlyCacheEntries != null) {
-      log(envelope.timestamp, "Found " + earlyCacheEntries.size + " dependent item(s) that were retrieved earlier. Processing.")
+      log(envelope.timestamp!!, "Found " + earlyCacheEntries.size + " dependent item(s) that were retrieved earlier. Processing.")
       for (entry in earlyCacheEntries) {
         handleMessage(senderRecipient, entry.envelope, entry.content, entry.metadata, entry.serverDeliveredTimestamp, processingEarlyContent = true, localMetric = null)
       }
@@ -370,21 +364,21 @@ open class MessageContentProcessor(private val context: Context) {
 
       MessageState.INVALID_VERSION -> {
         warn(timestamp, "Handling invalid version.")
-        insertErrorMessage(context, sender, exceptionMetadata.senderDevice, timestamp, exceptionMetadata.groupId.toOptional()) { messageId ->
+        insertErrorMessage(context, sender, timestamp, exceptionMetadata.groupId.toOptional()) { messageId ->
           SignalDatabase.messages.markAsInvalidVersionKeyExchange(messageId)
         }
       }
 
       MessageState.LEGACY_MESSAGE -> {
         warn(timestamp, "Handling legacy message.")
-        insertErrorMessage(context, sender, exceptionMetadata.senderDevice, timestamp, exceptionMetadata.groupId.toOptional()) { messageId ->
+        insertErrorMessage(context, sender, timestamp, exceptionMetadata.groupId.toOptional()) { messageId ->
           SignalDatabase.messages.markAsLegacyVersion(messageId)
         }
       }
 
       MessageState.UNSUPPORTED_DATA_MESSAGE -> {
         warn(timestamp, "Handling unsupported data message.")
-        insertErrorMessage(context, sender, exceptionMetadata.senderDevice, timestamp, exceptionMetadata.groupId.toOptional()) { messageId ->
+        insertErrorMessage(context, sender, timestamp, exceptionMetadata.groupId.toOptional()) { messageId ->
           SignalDatabase.messages.markAsUnsupportedProtocolVersion(messageId)
         }
       }
@@ -413,17 +407,17 @@ open class MessageContentProcessor(private val context: Context) {
     val threadRecipient = getMessageDestination(content, senderRecipient)
 
     if (shouldIgnore(content, senderRecipient, threadRecipient)) {
-      log(envelope.timestamp, "Ignoring message.")
+      log(envelope.timestamp!!, "Ignoring message.")
       return
     }
 
-    val pending: PendingRetryReceiptModel? = ApplicationDependencies.getPendingRetryReceiptCache().get(senderRecipient.id, envelope.timestamp)
-    val receivedTime: Long = handlePendingRetry(pending, envelope.timestamp, threadRecipient)
+    val pending: PendingRetryReceiptModel? = ApplicationDependencies.getPendingRetryReceiptCache().get(senderRecipient.id, envelope.timestamp!!)
+    val receivedTime: Long = handlePendingRetry(pending, envelope.timestamp!!, threadRecipient)
 
-    log(envelope.timestamp, "Beginning message processing. Sender: " + formatSender(senderRecipient.id, metadata.sourceServiceId, metadata.sourceDeviceId))
+    log(envelope.timestamp!!, "Beginning message processing. Sender: " + formatSender(senderRecipient.id, metadata.sourceServiceId, metadata.sourceDeviceId))
     localMetric?.onPreProcessComplete()
     when {
-      content.hasDataMessage() -> {
+      content.dataMessage != null -> {
         DataMessageProcessor.process(
           context,
           senderRecipient,
@@ -435,17 +429,9 @@ open class MessageContentProcessor(private val context: Context) {
           if (processingEarlyContent) null else EarlyMessageCacheEntry(envelope, content, metadata, serverDeliveredTimestamp),
           localMetric
         )
-
-        //**TM_SA**// Start
-        if(content.dataMessage.attachmentsCount == 0 && content.dataMessage.body.isNotEmpty()) {
-          ArchiveSender.archiveMessageInboxV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient , content.dataMessage.body, envelope.timestamp)
-        }else{
-          com.tm.logger.Log.d(TAG, "handleMessage -> content.dataMessage.attachmentsCount == 0 && content.dataMessage.body.isNotEmpty()   =   false")
-        }
-        //**TM_SA**//End
       }
 
-      content.hasSyncMessage() -> {
+      content.syncMessage != null -> {
         TextSecurePreferences.setMultiDevice(context, true)
 
         SyncMessageProcessor.process(
@@ -458,21 +444,20 @@ open class MessageContentProcessor(private val context: Context) {
         )
       }
 
-      content.hasCallMessage() -> {
-        log(envelope.timestamp, "Got call message...")
+      content.callMessage != null -> {
+        log(envelope.timestamp!!, "Got call message...")
 
-        val message: SignalServiceProtos.CallMessage = content.callMessage
-        val destinationDeviceId: Int? = if (message.hasDestinationDeviceId()) message.destinationDeviceId else null
+        val message: CallMessage = content.callMessage!!
 
-        if (destinationDeviceId != null && destinationDeviceId != SignalStore.account().deviceId) {
-          log(envelope.timestamp, "Ignoring call message that is not for this device! intended: $destinationDeviceId, this: ${SignalStore.account().deviceId}")
+        if (message.destinationDeviceId != null && message.destinationDeviceId != SignalStore.account().deviceId) {
+          log(envelope.timestamp!!, "Ignoring call message that is not for this device! intended: ${message.destinationDeviceId}, this: ${SignalStore.account().deviceId}")
           return
         }
 
         CallMessageProcessor.process(senderRecipient, envelope, content, metadata, serverDeliveredTimestamp)
       }
 
-      content.hasReceiptMessage() -> {
+      content.receiptMessage != null -> {
         ReceiptMessageProcessor.process(
           context,
           senderRecipient,
@@ -483,11 +468,11 @@ open class MessageContentProcessor(private val context: Context) {
         )
       }
 
-      content.hasTypingMessage() -> {
-        handleTypingMessage(envelope, metadata, content.typingMessage, senderRecipient)
+      content.typingMessage != null -> {
+        handleTypingMessage(envelope, metadata, content.typingMessage!!, senderRecipient)
       }
 
-      content.hasStoryMessage() -> {
+      content.storyMessage != null -> {
         StoryMessageProcessor.process(
           envelope,
           content,
@@ -497,11 +482,11 @@ open class MessageContentProcessor(private val context: Context) {
         )
       }
 
-      content.hasDecryptionErrorMessage() -> {
+      content.decryptionErrorMessage != null -> {
         handleRetryReceipt(envelope, metadata, content.decryptionErrorMessage!!.toDecryptionErrorMessage(metadata), senderRecipient)
       }
 
-      content.hasEditMessage() -> {
+      content.editMessage != null -> {
         EditMessageProcessor.process(
           context,
           senderRecipient,
@@ -513,17 +498,17 @@ open class MessageContentProcessor(private val context: Context) {
         )
       }
 
-      content.hasSenderKeyDistributionMessage() || content.hasPniSignatureMessage() -> {
+      content.senderKeyDistributionMessage != null || content.pniSignatureMessage != null -> {
         // Already handled, here in order to prevent unrecognized message log
       }
 
       else -> {
-        warn(envelope.timestamp, "Got unrecognized message!")
+        warn(envelope.timestamp!!, "Got unrecognized message!")
       }
     }
 
     if (pending != null) {
-      warn(envelope.timestamp, "Pending retry was processed. Deleting.")
+      warn(envelope.timestamp!!, "Pending retry was processed. Deleting.")
       ApplicationDependencies.getPendingRetryReceiptCache().delete(pending)
     }
   }
@@ -539,10 +524,10 @@ open class MessageContentProcessor(private val context: Context) {
       return
     }
 
-    val threadId: Long = if (typingMessage.hasGroupId()) {
-      val groupId = GroupId.push(typingMessage.groupId)
+    val threadId: Long = if (typingMessage.groupId != null) {
+      val groupId = GroupId.push(typingMessage.groupId!!)
       if (!SignalDatabase.groups.isCurrentMember(groupId, senderRecipient.id)) {
-        warn(envelope.timestamp, "Seen typing indicator for non-member " + senderRecipient.id)
+        warn(envelope.timestamp!!, "Seen typing indicator for non-member " + senderRecipient.id)
         return
       }
 
@@ -553,7 +538,7 @@ open class MessageContentProcessor(private val context: Context) {
     }
 
     if (threadId <= 0) {
-      warn(envelope.timestamp, "Couldn't find a matching thread for a typing message.")
+      warn(envelope.timestamp!!, "Couldn't find a matching thread for a typing message.")
       return
     }
 
@@ -568,19 +553,19 @@ open class MessageContentProcessor(private val context: Context) {
 
   private fun handleRetryReceipt(envelope: Envelope, metadata: EnvelopeMetadata, decryptionErrorMessage: DecryptionErrorMessage, senderRecipient: Recipient) {
     if (!FeatureFlags.retryReceipts()) {
-      warn(envelope.timestamp, "[RetryReceipt] Feature flag disabled, skipping retry receipt.")
+      warn(envelope.timestamp!!, "[RetryReceipt] Feature flag disabled, skipping retry receipt.")
       return
     }
 
     if (decryptionErrorMessage.deviceId != SignalStore.account().deviceId) {
-      log(envelope.timestamp, "[RetryReceipt] Received a DecryptionErrorMessage targeting a linked device. Ignoring.")
+      log(envelope.timestamp!!, "[RetryReceipt] Received a DecryptionErrorMessage targeting a linked device. Ignoring.")
       return
     }
 
     val sentTimestamp = decryptionErrorMessage.timestamp
-    warn(envelope.timestamp, "[RetryReceipt] Received a retry receipt from ${formatSender(senderRecipient.id, metadata.sourceServiceId, metadata.sourceDeviceId)} for message with timestamp $sentTimestamp.")
+    warn(envelope.timestamp!!, "[RetryReceipt] Received a retry receipt from ${formatSender(senderRecipient.id, metadata.sourceServiceId, metadata.sourceDeviceId)} for message with timestamp $sentTimestamp.")
     if (!senderRecipient.hasServiceId()) {
-      warn(envelope.timestamp, "[RetryReceipt] Requester ${senderRecipient.id} somehow has no UUID! timestamp: $sentTimestamp")
+      warn(envelope.timestamp!!, "[RetryReceipt] Requester ${senderRecipient.id} somehow has no UUID! timestamp: $sentTimestamp")
       return
     }
 
@@ -603,18 +588,18 @@ open class MessageContentProcessor(private val context: Context) {
     val relatedMessage = findRetryReceiptRelatedMessage(messageLogEntry, sentTimestamp)
 
     if (relatedMessage == null) {
-      warn(envelope.timestamp, "[RetryReceipt-SK] The related message could not be found! There shouldn't be any sender key resends where we can't find the related message. Skipping.")
+      warn(envelope.timestamp!!, "[RetryReceipt-SK] The related message could not be found! There shouldn't be any sender key resends where we can't find the related message. Skipping.")
       return
     }
 
     val threadRecipient = SignalDatabase.threads.getRecipientForThreadId(relatedMessage.threadId)
     if (threadRecipient == null) {
-      warn(envelope.timestamp, "[RetryReceipt-SK] Could not find a thread recipient! Skipping.")
+      warn(envelope.timestamp!!, "[RetryReceipt-SK] Could not find a thread recipient! Skipping.")
       return
     }
 
     if (!threadRecipient.isPushV2Group && !threadRecipient.isDistributionList) {
-      warn(envelope.timestamp, "[RetryReceipt-SK] Thread recipient is not a V2 group or distribution list! Skipping.")
+      warn(envelope.timestamp!!, "[RetryReceipt-SK] Thread recipient is not a V2 group or distribution list! Skipping.")
       return
     }
 
@@ -638,7 +623,7 @@ open class MessageContentProcessor(private val context: Context) {
     SignalDatabase.senderKeyShared.delete(distributionId, setOf(requesterAddress))
 
     if (messageLogEntry != null) {
-      warn(envelope.timestamp, "[RetryReceipt-SK] Found MSL entry for ${requester.id} ($requesterAddress) with timestamp $sentTimestamp. Scheduling a resend.")
+      warn(envelope.timestamp!!, "[RetryReceipt-SK] Found MSL entry for ${requester.id} ($requesterAddress) with timestamp $sentTimestamp. Scheduling a resend.")
       ApplicationDependencies.getJobManager().add(
         ResendMessageJob(
           messageLogEntry.recipientId,
@@ -651,7 +636,7 @@ open class MessageContentProcessor(private val context: Context) {
         )
       )
     } else {
-      warn(envelope.timestamp, "[RetryReceipt-SK] Unable to find MSL entry for ${requester.id} ($requesterAddress) with timestamp $sentTimestamp for ${if (groupId != null) "group $groupId" else "distribution list"}. Scheduling a job to send them the SenderKeyDistributionMessage. Membership will be checked there.")
+      warn(envelope.timestamp!!, "[RetryReceipt-SK] Unable to find MSL entry for ${requester.id} ($requesterAddress) with timestamp $sentTimestamp for ${if (groupId != null) "group $groupId" else "distribution list"}. Scheduling a job to send them the SenderKeyDistributionMessage. Membership will be checked there.")
       ApplicationDependencies.getJobManager().add(SenderKeyDistributionSendJob(requester.id, threadRecipient.id))
     }
   }
@@ -663,13 +648,13 @@ open class MessageContentProcessor(private val context: Context) {
     if (decryptionErrorMessage.ratchetKey.isPresent &&
       ratchetKeyMatches(requester, metadata.sourceDeviceId, decryptionErrorMessage.ratchetKey.get())
     ) {
-      warn(envelope.timestamp, "[RetryReceipt-I] Ratchet key matches. Archiving the session.")
+      warn(envelope.timestamp!!, "[RetryReceipt-I] Ratchet key matches. Archiving the session.")
       ApplicationDependencies.getProtocolStore().aci().sessions().archiveSession(requester.requireServiceId(), metadata.sourceDeviceId)
       archivedSession = true
     }
 
     if (messageLogEntry != null) {
-      warn(envelope.timestamp, "[RetryReceipt-I] Found an entry in the MSL. Resending.")
+      warn(envelope.timestamp!!, "[RetryReceipt-I] Found an entry in the MSL. Resending.")
       ApplicationDependencies.getJobManager().add(
         ResendMessageJob(
           messageLogEntry.recipientId,
@@ -682,10 +667,10 @@ open class MessageContentProcessor(private val context: Context) {
         )
       )
     } else if (archivedSession) {
-      warn(envelope.timestamp, "[RetryReceipt-I] Could not find an entry in the MSL, but we archived the session, so we're sending a null message to complete the reset.")
+      warn(envelope.timestamp!!, "[RetryReceipt-I] Could not find an entry in the MSL, but we archived the session, so we're sending a null message to complete the reset.")
       ApplicationDependencies.getJobManager().add(NullMessageSendJob(requester.id))
     } else {
-      warn(envelope.timestamp, "[RetryReceipt-I] Could not find an entry in the MSL. Skipping.")
+      warn(envelope.timestamp!!, "[RetryReceipt-I] Could not find an entry in the MSL. Skipping.")
     }
   }
 

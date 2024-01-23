@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023 Signal Messenger, LLC
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 package org.tm.archive.components;
 
 import android.content.Context;
@@ -12,10 +17,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.tm.archive.R;
+import org.tm.archive.components.transfercontrols.TransferControlView;
 import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.mms.Slide;
 import org.tm.archive.mms.SlideClickListener;
 import org.tm.archive.mms.SlidesClickedListener;
+import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.views.Stub;
 
 import java.util.List;
@@ -23,14 +30,16 @@ import java.util.List;
 public class AlbumThumbnailView extends FrameLayout {
 
   private @Nullable SlideClickListener    thumbnailClickListener;
-  private @Nullable SlidesClickedListener downloadClickListener;
+  private @Nullable SlidesClickedListener startTransferClickListener;
+  private @Nullable SlidesClickedListener cancelTransferClickListener;
+  private @Nullable SlideClickListener    playVideoClickListener;
 
   private int currentSizeClass;
 
   private final int[] corners = new int[4];
 
-  private ViewGroup                 albumCellContainer;
-  private Stub<TransferControlView> transferControls;
+  private final ViewGroup                 albumCellContainer;
+  private final Stub<TransferControlView> transferControlsStub;
 
   private final SlideClickListener defaultThumbnailClickListener = (v, slide) -> {
     if (thumbnailClickListener != null) {
@@ -42,19 +51,18 @@ public class AlbumThumbnailView extends FrameLayout {
 
   public AlbumThumbnailView(@NonNull Context context) {
     super(context);
-    initialize();
+    inflate(getContext(), R.layout.album_thumbnail_view, this);
+
+    albumCellContainer    = findViewById(R.id.album_cell_container);
+    transferControlsStub  = new Stub<>(findViewById(R.id.album_transfer_controls_stub));
   }
 
   public AlbumThumbnailView(@NonNull Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
-    initialize();
-  }
-
-  private void initialize() {
     inflate(getContext(), R.layout.album_thumbnail_view, this);
 
-    albumCellContainer = findViewById(R.id.album_cell_container);
-    transferControls   = new Stub<>(findViewById(R.id.album_transfer_controls_stub));
+    albumCellContainer    = findViewById(R.id.album_cell_container);
+    transferControlsStub  = new Stub<>(findViewById(R.id.album_transfer_controls_stub));
   }
 
   public void setSlides(@NonNull GlideRequests glideRequests, @NonNull List<Slide> slides, boolean showControls) {
@@ -63,16 +71,23 @@ public class AlbumThumbnailView extends FrameLayout {
     }
 
     if (showControls) {
-      transferControls.get().setShowDownloadText(true);
-      transferControls.get().setSlides(slides);
-      transferControls.get().setDownloadClickListener(v -> {
-        if (downloadClickListener != null) {
-          downloadClickListener.onClick(v, slides);
-        }
-      });
+      transferControlsStub.get().setShowSecondaryText(true);
+      transferControlsStub.get().setTransferClickListener(
+          v -> {
+            if (startTransferClickListener != null) {
+              startTransferClickListener.onClick(v, slides);
+            }
+          });
+      transferControlsStub.get().setCancelClickListener(
+          v -> {
+            if (cancelTransferClickListener != null) {
+              cancelTransferClickListener.onClick(v, slides);
+            }
+          });
+      transferControlsStub.get().setSlides(slides);
     } else {
-      if (transferControls.resolved()) {
-        transferControls.get().setVisibility(GONE);
+      if (transferControlsStub.resolved()) {
+        transferControlsStub.get().setVisibility(GONE);
       }
     }
 
@@ -85,6 +100,7 @@ public class AlbumThumbnailView extends FrameLayout {
 
     showSlides(glideRequests, slides);
     applyCorners();
+    forceLayout();
   }
 
   public void setCellBackgroundColor(@ColorInt int color) {
@@ -101,9 +117,18 @@ public class AlbumThumbnailView extends FrameLayout {
     thumbnailClickListener = listener;
   }
 
-  public void setDownloadClickListener(@Nullable SlidesClickedListener listener) {
-    downloadClickListener = listener;
+  public void setStartTransferClickListener(SlidesClickedListener listener) {
+    this.startTransferClickListener = listener;
   }
+
+  public void setCancelTransferClickListener(SlidesClickedListener listener) {
+    this.cancelTransferClickListener = listener;
+  }
+
+  public void setPlayVideoClickListener(SlideClickListener listener) {
+    this.playVideoClickListener = listener;
+  }
+
 
   public void setRadii(int topLeft, int topRight, int bottomRight, int bottomLeft) {
     corners[0] = topLeft;
@@ -117,22 +142,45 @@ public class AlbumThumbnailView extends FrameLayout {
   private void inflateLayout(int sizeClass) {
     albumCellContainer.removeAllViews();
 
+    int resId;
     switch (sizeClass) {
       case 2:
-        inflate(getContext(), R.layout.album_thumbnail_2, albumCellContainer);
+        resId = R.layout.album_thumbnail_2;
         break;
       case 3:
-        inflate(getContext(), R.layout.album_thumbnail_3, albumCellContainer);
+        resId = R.layout.album_thumbnail_3;
         break;
       case 4:
-        inflate(getContext(), R.layout.album_thumbnail_4, albumCellContainer);
+        resId = R.layout.album_thumbnail_4;
         break;
       case 5:
-        inflate(getContext(), R.layout.album_thumbnail_5, albumCellContainer);
+        resId = R.layout.album_thumbnail_5;
         break;
       default:
-        inflate(getContext(), R.layout.album_thumbnail_many, albumCellContainer);
+        resId = R.layout.album_thumbnail_many;
         break;
+    }
+
+    inflate(getContext(), resId, albumCellContainer);
+    if (transferControlsStub.resolved()) {
+      int size;
+      switch (sizeClass) {
+        case 2:
+          size = R.dimen.album_2_total_height;
+          break;
+        case 3:
+          size = R.dimen.album_3_total_height;
+          break;
+        case 4:
+          size = R.dimen.album_4_total_height;
+          break;
+        default:
+          size = R.dimen.album_5_total_height;
+          break;
+      }
+      ViewGroup.LayoutParams params = transferControlsStub.get().getLayoutParams();
+      params.height = getContext().getResources().getDimensionPixelSize(size);
+      transferControlsStub.get().setLayoutParams(params);
     }
   }
 
@@ -214,19 +262,20 @@ public class AlbumThumbnailView extends FrameLayout {
   }
 
   private void showSlides(@NonNull GlideRequests glideRequests, @NonNull List<Slide> slides) {
-    setSlide(glideRequests, slides.get(0), R.id.album_cell_1);
-    setSlide(glideRequests, slides.get(1), R.id.album_cell_2);
+    boolean showControls = TransferControlView.containsPlayableSlides(slides);
+    setSlide(glideRequests, slides.get(0), R.id.album_cell_1, showControls);
+    setSlide(glideRequests, slides.get(1), R.id.album_cell_2, showControls);
 
     if (slides.size() >= 3) {
-      setSlide(glideRequests, slides.get(2), R.id.album_cell_3);
+      setSlide(glideRequests, slides.get(2), R.id.album_cell_3, showControls);
     }
 
     if (slides.size() >= 4) {
-      setSlide(glideRequests, slides.get(3), R.id.album_cell_4);
+      setSlide(glideRequests, slides.get(3), R.id.album_cell_4, showControls);
     }
 
     if (slides.size() >= 5) {
-      setSlide(glideRequests, slides.get(4), R.id.album_cell_5);
+      setSlide(glideRequests, slides.get(4), R.id.album_cell_5, showControls && slides.size() == 5);
     }
 
     if (slides.size() > 5) {
@@ -235,11 +284,17 @@ public class AlbumThumbnailView extends FrameLayout {
     }
   }
 
-  private void setSlide(@NonNull GlideRequests glideRequests, @NonNull Slide slide, @IdRes int id) {
+  private void setSlide(@NonNull GlideRequests glideRequests, @NonNull Slide slide, @IdRes int id, boolean showControls) {
     ThumbnailView cell = findViewById(id);
-    cell.setImageResource(glideRequests, slide, false, false);
+    cell.showSecondaryText(false);
     cell.setThumbnailClickListener(defaultThumbnailClickListener);
+    cell.setStartTransferClickListener(startTransferClickListener);
+    cell.setCancelTransferClickListener(cancelTransferClickListener);
+    if (MediaUtil.isInstantVideoSupported(slide)) {
+      cell.setPlayVideoClickListener(playVideoClickListener);
+    }
     cell.setOnLongClickListener(defaultLongClickListener);
+    cell.setImageResource(glideRequests, slide, showControls, false);
   }
 
   private int sizeClass(int size) {

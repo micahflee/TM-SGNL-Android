@@ -3,8 +3,7 @@ package org.tm.archive.conversation.v2.data;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.database.SignalDatabase;
-import org.tm.archive.database.model.MediaMmsMessageRecord;
-import org.tm.archive.database.model.MessageId;
+import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.ReactionRecord;
 import org.tm.archive.util.Util;
@@ -18,11 +17,11 @@ import java.util.stream.Collectors;
 
 public class ReactionHelper {
 
-  private Collection<MessageId>                messageIds           = new LinkedList<>();
-  private Map<MessageId, List<ReactionRecord>> messageIdToReactions = new HashMap<>();
+  private Collection<Long>                messageIds           = new LinkedList<>();
+  private Map<Long, List<ReactionRecord>> messageIdToReactions = new HashMap<>();
 
   public void add(MessageRecord record) {
-    messageIds.add(new MessageId(record.getId()));
+    messageIds.add(record.getId());
   }
 
   public void addAll(List<MessageRecord> records) {
@@ -38,8 +37,7 @@ public class ReactionHelper {
   public @NonNull List<MessageRecord> buildUpdatedModels(@NonNull List<MessageRecord> records) {
     return records.stream()
                   .map(record -> {
-                    MessageId            messageId = new MessageId(record.getId());
-                    List<ReactionRecord> reactions = messageIdToReactions.get(messageId);
+                    List<ReactionRecord> reactions = messageIdToReactions.get(record.getId());
 
                     return recordWithReactions(record, reactions);
                   })
@@ -48,8 +46,8 @@ public class ReactionHelper {
 
   public static @NonNull MessageRecord recordWithReactions(@NonNull MessageRecord record, List<ReactionRecord> reactions) {
     if (Util.hasItems(reactions)) {
-      if (record instanceof MediaMmsMessageRecord) {
-        return ((MediaMmsMessageRecord) record).withReactions(reactions);
+      if (record instanceof MmsMessageRecord) {
+        return ((MmsMessageRecord) record).withReactions(reactions);
       } else {
         throw new IllegalStateException("We have reactions for an unsupported record type: " + record.getClass().getName());
       }

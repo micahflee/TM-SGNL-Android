@@ -14,7 +14,6 @@ import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.safety.SafetyNumberBottomSheet
@@ -91,7 +90,7 @@ class MyStoriesFragment : DSLSettingsFragment(
                   }
                 },
                 onShareClick = {
-                  StoryContextMenu.share(this@MyStoriesFragment, it.distributionStory.messageRecord as MediaMmsMessageRecord)
+                  StoryContextMenu.share(this@MyStoriesFragment, it.distributionStory.messageRecord as MmsMessageRecord)
                 },
                 onInfoClick = { model, preview ->
                   openStoryViewer(model, preview, true)

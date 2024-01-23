@@ -5,7 +5,6 @@
 
 package org.tm.archive.conversation.v2.keyboard
 
-import android.Manifest
 import android.os.Bundle
 import android.view.View
 import androidx.core.os.bundleOf
@@ -23,6 +22,7 @@ import org.tm.archive.conversation.AttachmentKeyboardButton
 import org.tm.archive.conversation.v2.ConversationViewModel
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mediasend.Media
+import org.tm.archive.permissions.PermissionCompat
 import org.tm.archive.permissions.Permissions
 import org.tm.archive.recipients.Recipient
 import java.util.function.Predicate
@@ -93,7 +93,7 @@ class AttachmentKeyboardFragment : LoggingFragment(R.layout.attachment_keyboard_
 
   override fun onAttachmentPermissionsRequested() {
     Permissions.with(requireParentFragment())
-      .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+      .request(*PermissionCompat.forImagesAndVideos())
       .onAllGranted { viewModel.refreshRecentMedia() }
       .withPermanentDenialDialog(getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
       .execute()

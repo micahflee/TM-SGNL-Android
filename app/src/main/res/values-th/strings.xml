@@ -15,6 +15,8 @@
   <!-- Removed by excludeNonTranslatables <string name="signal_me_username_url" translatable="false">https://signal.me/#u/%1$s</string> -->
   <!-- Removed by excludeNonTranslatables <string name="username_support_url" translatable="false">https://support.signal.org/hc/articles/5389476324250</string> -->
   <!-- Removed by excludeNonTranslatables <string name="export_account_data_url" translatable="false">https://support.signal.org/hc/articles/5538911756954</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="pending_transfer_url" translatable="false">https://support.signal.org/hc/articles/360031949872#pending</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="donate_faq_url" translatable="false">https://support.signal.org/hc/articles/360031949872#donate</string> -->
 
     <string name="yes">ใช่</string>
     <string name="no">ไม่</string>
@@ -119,11 +121,8 @@
     <string name="BlockedUsersActivity__block">บล็อก</string>
 
     <!-- CreditCardFragment -->
-    <!-- Title of fragment detailing the donation amount for one-time donation, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__donation_amount_s">จำนวนที่ต้องการบริจาค: %1$s</string>
-    <!-- Title of fragment detailing the donation amount for monthly donation, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__donation_amount_s_per_month">จำนวนที่ต้องการบริจาค: %1$s/เดือน</string>
-    <!-- Explanation of how to fill in the form, displayed above the credit card text fields -->
+    <!-- Title of fragment -->
+    <string name="CreditCardFragment__credit_or_debit_card">บัตรเครดิตหรือบัตรเดบิต</string>
     <!-- Explanation of how to fill in the form and a note about pii, displayed above the credit card text fields -->
     <string name="CreditCardFragment__enter_your_card_details">ป้อนรายละเอียดบัตรของคุณ Signal ไม่รวบรวมหรือจัดเก็บข้อมูลส่วนบุคคลของคุณ</string>
     <!-- Displayed as a hint in the card number text field -->
@@ -148,8 +147,18 @@
     <string name="CreditCardFragment__year_required">ต้องระบุปี</string>
     <!-- Error displayed under the card expiry text field when the expiry year is invalid -->
     <string name="CreditCardFragment__invalid_year">ปีไม่ถูกต้อง</string>
-    <!-- Button label to confirm credit card input and proceed with payment -->
-    <string name="CreditCardFragment__continue">ดำเนินการต่อ</string>
+    <!-- Button label to confirm credit card input and proceed with one-time payment -->
+    <string name="CreditCardFragment__donate_s">บริจาค %1$s</string>
+    <!-- Button label to confirm credit card input and proceed with subscription payment -->
+    <string name="CreditCardFragment__donate_s_month">บริจาค %1$s/เดือน</string>
+
+    <!-- OneTimeDonationPreference -->
+    <!-- Preference title with placeholder for amount. -->
+    <string name="OneTimeDonationPreference__one_time_s">ครั้งเดียว %1$s</string>
+    <!-- Preference subtitle when donation is pending -->
+    <string name="OneTimeDonationPreference__donation_pending">การบริจาคอยู่ในสถานะรออนุมัติ</string>
+    <!-- Preference subtitle when donation is processing -->
+    <string name="OneTimeDonationPreference__donation_processing">การบริจาคอยู่ในขั้นตอนดำเนินการ</string>
 
     <!-- BlockUnblockDialog -->
     <string name="BlockUnblockDialog_block_and_leave_s">บล็อกและออกจาก %1$s หรือไม่</string>
@@ -313,8 +322,12 @@
     <string name="ConversationItem_cant_download_image_you_will_need_to_send_it_again">ไม่สามารถดาวน์โหลดรูปภาพได้ คุณจะต้องส่งใหม่อีกครั้ง</string>
     <!-- Dialog error message shown when user can\'t download a their own video message via a linked device due to a permanent failure (e.g., unable to decrypt) -->
     <string name="ConversationItem_cant_download_video_you_will_need_to_send_it_again">ไม่สามารถดาวน์โหลดวิดีโอได้ คุณจะต้องส่งใหม่อีกครั้ง</string>
-    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. The timestamp will go from \'11m\' to \'edited 11m\' -->
-    <string name="ConversationItem_edited_timestamp_footer">แก้ไข %1$s</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. The timestamp represents a message that has been edited within the last minute. -->
+    <string name="ConversationItem_edited_now_timestamp_footer">แก้ไข เมื่อสักครู่</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. This is displayed when the edit has occurred between 1-59 minutes ago. -->
+    <string name="ConversationItem_edited_relative_timestamp_footer">แก้ไข %1$s</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. This is displayed when the edit occurred at least 1 hour ago. -->
+    <string name="ConversationItem_edited_absolute_timestamp_footer">แก้ไข %1$s</string>
     <!-- Displayed if the link preview in the conversation item is for a call link call -->
     <string name="ConversationItem__join_call">เข้าร่วมการโทร</string>
 
@@ -346,6 +359,8 @@
     <string name="ConversationActivity_transport_insecure_mms">MMS ที่ไม่ปลอดภัย</string>
     <!-- A title for the option to send an SMS with a placeholder to put the name of their SIM card -->
     <string name="ConversationActivity_transport_signal">ข้อความ Signal</string>
+    <!-- The content description for button to send a message in a conversation -->
+    <string name="ConversationActivity_send_message_content_description">ส่งข้อความ</string>
     <string name="ConversationActivity_lets_switch_to_signal">เปลี่ยนมาใช้ Signal กันเถอะ %1$s</string>
     <string name="ConversationActivity_specify_recipient">โปรดเลือกผู้ติดต่อ</string>
     <string name="ConversationActivity_attachment_exceeds_size_limits">แฟ้มแนบมีขนาดใหญ่เกินกำหนดสำหรับชนิดของข้อความที่คุณกำลังจะส่ง</string>
@@ -393,6 +408,8 @@
 
     <string name="ConversationActivity_error_sending_media">เกิดข้อผิดพลาดในการส่งสื่อ</string>
 
+    <!-- Message shown when opening an MMS group conversation with SMS disabled and there are no exported messages -->
+    <string name="ConversationActivity__sms_messaging_is_no_longer_supported">Signal ไม่รองรับการส่งข้อความ SMS อีกต่อไป</string>
     <!-- Message shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
     <string name="ConversationActivity__sms_messaging_is_no_longer_supported_in_signal_invite_s_to_to_signal_to_keep_the_conversation_here">Signal ไม่รองรับการส่งข้อความ SMS อีกต่อไป ชวน %1$s มาใช้ Signal เพื่อการติดต่อสื่อสารที่ไม่ขาดตอน</string>
     <!-- Action button shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
@@ -452,7 +469,7 @@
     <string name="ConversationFragment_failed_to_open_message">การเปิดข้อความล้มเหลว</string>
     <string name="ConversationFragment_you_can_swipe_to_the_right_reply">คุณสามารถปัดด้านขวาเพื่อตอบข้อความอย่างรวดเร็ว</string>
     <string name="ConversationFragment_you_can_swipe_to_the_left_reply">คุณสามารถปัดด้านซ้ายเพื่อตอบข้อความอย่างรวดเร็ว</string>
-    <string name="ConversationFragment_outgoing_view_once_media_files_are_automatically_removed">ไฟล์สื่อแบบที่ดูได้ครั้งเดียวขาออกจะถูกลบอัตโนมัติหลังจากส่งแล้ว</string>
+    <string name="ConversationFragment_view_once_media_is_deleted_after_sending">ไฟล์สื่อแบบที่ดูได้ครั้งเดียวจะถูกลบหลังการส่ง</string>
     <string name="ConversationFragment_you_already_viewed_this_message">คุณเปิดดูข้อความนี้แล้ว</string>
     <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">คุณสามารถเพิ่มบันทึกถึงตัวเองได้ในแชทนี้\nและหากบัญชีของคุณมีอุปกรณ์ที่เชื่อมโยงอยู่ บันทึกใหม่ก็จะถูกซิงค์ด้วยเช่นกัน</string>
     <string name="ConversationFragment__d_group_members_have_the_same_name">สมาชิกกลุ่ม %1$d คนมีชื่อเหมือนกัน</string>
@@ -618,6 +635,8 @@
     <!-- Show percentage of completion of backup -->
     <string name="BackupsPreferenceFragment__s_so_far">%1$s%% ในตอนนี้…</string>
     <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">เพื่อที่จะสำรองข้อมูล Signal ต้องได้รับอนุญาตให้เข้าถึงที่เก็บข้อมูลภายนอก แต่คำขอนั้นถูกปฏิเสธอย่างถาวร กรุณาไปที่เมนูตั้งค่าแอป เลือก \"การอนุญาต\" และเปิดใช้งาน \"ที่เก็บข้อมูล\"</string>
+    <!-- Title of dialog shown when picking the time to perform a chat backup -->
+    <string name="BackupsPreferenceFragment__set_backup_time">ตั้งเวลาสำรองข้อมูล</string>
 
 
     <!-- CustomDefaultPreference -->
@@ -840,8 +859,10 @@
 
     <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
     <string name="PromptLogsSlowNotificationsDialog__title">เราสังเกตว่าการแจ้งเตือนดูล่าช้ากว่าปกติ คุณต้องการส่งบันทึกดีบักหรือไม่</string>
-    <!-- Message for dialog asking user to submit logs for debugging slow notification issues -->
+    <!-- Message for dialog asking user to submit logs for debugging a crash -->
     <string name="PromptLogsSlowNotificationsDialog__message">บันทึกดีบักจะช่วยให้เราสามารถตรวจสอบและแก้ไขปัญหาได้ โดยที่ในบันทึกจะไม่มีข้อมูลที่ใช้ระบุตัวตน</string>
+    <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
+    <string name="PromptLogsSlowNotificationsDialog__title_crash">พบปัญหาในการใช้งาน Signal คุณต้องการส่งบันทึกดีบักหรือไม่</string>
 
     <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
     <string name="PromptBatterySaverBottomSheet__title">การแจ้งเตือนอาจล่าช้าเนื่องจากการเพิ่มประสิทธิภาพแบตเตอรี่</string>
@@ -944,12 +965,15 @@
     <string name="ManageProfileFragment_profile_name">ชื่อโปรไฟล์</string>
     <string name="ManageProfileFragment_username">ชื่อผู้ใช้</string>
     <string name="ManageProfileFragment_about">เกี่ยวกับ</string>
-    <string name="ManageProfileFragment_write_a_few_words_about_yourself">เขียนอะไรบางอย่างเกี่ยวกับตัวคุณ</string>
-    <string name="ManageProfileFragment_your_name">ชื่อของคุณ</string>
-    <string name="ManageProfileFragment_your_username">ชื่อผู้ใช้ของคุณ</string>
     <string name="ManageProfileFragment_failed_to_set_avatar">ล้มเหลวในการสร้างภาพประจำตัว</string>
     <string name="ManageProfileFragment_badges">โล่</string>
+    <!-- Text for a button that will take the user to the screen to manage their username link and QR code -->
+    <string name="ManageProfileFragment_link_setting_text">คิวอาร์โค้ดหรือลิงก์</string>
     <string name="ManageProfileFragment__edit_photo">แก้ไขรูปภาพ</string>
+    <!-- Title of a tooltip educating the user about a button on the screen that will take them to the username share screen -->
+    <string name="ManageProfileFragment__link_tooltip_title">แชร์ชื่อผู้ใช้ของคุณ</string>
+    <!-- Body of a tooltip educating the user about a button on the screen that will take them to the username share screen -->
+    <string name="ManageProfileFragment__link_tooltip_body">แชร์คิวอาร์โค้ดหรือลิงก์เฉพาะเพื่อให้ผู้ติดต่อเริ่มแชทกับคุณได้</string>
     <!-- Snackbar message after creating username -->
     <string name="ManageProfileFragment__username_created">สร้างชื่อผู้ใช้แล้ว</string>
     <!-- Snackbar message after copying username -->
@@ -958,10 +982,16 @@
     <string name="ManageProfileFragment__couldnt_delete_username">ไม่สามารถลบชื่อผู้ใช้ได้ โปรดลองอีกครั้งในภายหลัง</string>
     <!-- Snackbar message after successful deletion of username -->
     <string name="ManageProfileFragment__username_deleted">ลบชื่อผู้ใช้แล้ว</string>
+    <!-- The title of a pop-up dialog asking the user to confirm deleting their username -->
+    <string name="ManageProfileFragment__delete_username_dialog_title">ลบชื่อผู้ใช้หรือไม่</string>
+    <!-- The body of a pop-up dialog asking the user to confirm deleting their username -->
+    <string name="ManageProfileFragment__delete_username_dialog_body">"การดำเนินการนี้จะลบชื่อผู้ใช้ของคุณ รวมทั้งยกเลิกคิวอาร์โค้ดและลิงก์เดิมของคุณ โดยผู้ใช้คนอื่นจะสามารถนำชื่อ %1$s ไปใช้ได้ ต้องการดำเนินการต่อหรือไม่"</string>
 
     <!-- UsernameOutOfSyncReminder -->
     <!-- Displayed above the conversation list when a user needs to address an issue with their username -->
-    <string name="UsernameOutOfSyncReminder__something_went_wrong">เกิดข้อผิดพลาดเกี่ยวกับชื่อผู้ใช้ ไม่สามารถใช้ชื่อผู้ใช้นี้กับบัญชีของคุณได้อีกต่อไป โปรดลองใหม่ด้วยการใส่ชื่อผู้ใช้อีกครั้งหรือตั้งชื่อผู้ใช้ใหม่</string>
+    <string name="UsernameOutOfSyncReminder__username_and_link_corrupt">เกิดข้อผิดพลาดเกี่ยวกับชื่อผู้ใช้ ไม่สามารถใช้ชื่อผู้ใช้นี้กับบัญชีของคุณได้อีกต่อไป โปรดลองใหม่ด้วยการใส่ชื่อผู้ใช้อีกครั้งหรือตั้งชื่อผู้ใช้ใหม่</string>
+    <!-- Displayed above the conversation list when a user needs to address an issue with their username link -->
+    <string name="UsernameOutOfSyncReminder__link_corrupt">เกิดข้อผิดพลาดเกี่ยวกับคิวอาร์โค้ดและลิงก์ชื่อผู้ใช้ของคุณ จึงไม่สามารถใช้ลิงก์นี้ได้อีกต่อไป โปรดสร้างลิงก์ใหม่เพื่อใช้สำหรับแชร์กับผู้ติดต่อ</string>
     <!-- Action text to navigate user to manually fix the issue with their username -->
     <string name="UsernameOutOfSyncReminder__fix_now">แก้ไขตอนนี้</string>
 
@@ -1209,6 +1239,10 @@
     <string name="MessageRecord_missed_voice_call">การโทรด้วยเสียงที่ไม่ได้รับ</string>
     <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
     <string name="MessageRecord_missed_video_call">วิดีโอคอลที่ไม่ได้รับ</string>
+    <!-- Update message shown when receiving an incoming voice call and declined due to notification profile -->
+    <string name="MessageRecord_missed_voice_call_notification_profile">สายโทรเสียงที่ไม่ได้รับระหว่างใช้โปรไฟล์การแจ้งเตือน</string>
+    <!-- Update message shown when receiving an incoming video call and declined due to notification profile -->
+    <string name="MessageRecord_missed_video_call_notification_profile">วิดีโอคอลที่ไม่ได้รับระหว่างใช้โปรไฟล์การแจ้งเตือน</string>
     <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
     <string name="MessageRecord_you_declined_a_voice_call">คุณปฏิเสธการโทรด้วยเสียง</string>
     <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
@@ -1457,7 +1491,7 @@
     <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them_SMS">อนุญาตให้ %1$s ส่งข้อความหาคุณหรือไม่ คุณจะไม่ได้รับข้อความจนกว่าจะเลิกบล็อกผู้ใช้รายนี้</string>
     <string name="MessageRequestBottomView_get_updates_and_news_from_s_you_wont_receive_any_updates_until_you_unblock_them">รับข้อมูลอัปเดตและข่าวสารจาก %1$s หรือไม่ คุณจะไม่ได้รับข้อมูลใดๆ จนกว่าจะเลิกบล็อกผู้ใช้คนนี้</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_this_group_and_share_your_name_and_photo">ต้องการแชทกับกลุ่มนี้ต่อไปและแชร์ชื่อกับรูปภาพให้สมาชิกในกลุ่มเห็นหรือไม่</string>
-    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">ปรับรุ่นกลุ่มนี้เพื่อเปิดใช้ความสามารถใหม่ เช่น @กล่าวถึง และระบบผู้ดูแล สมาชิกที่ไม่ได้เปิดเผยชื่อหรือรูปภาพในกลุ่มนี้จะได้รับคำเชิญให้เข้าร่วม</string>
+    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">กลุ่มแบบเก่ากลุ่มนี้ไม่สามารถใช้งานได้แล้ว คุณสามารถสร้างกลุ่มใหม่เพื่อเข้าถึงหลากหลายฟีเจอร์ใหม่ ไม่ว่าจะเป็น @การกล่าวถึง และผู้ดูแล</string>
     <string name="MessageRequestBottomView_this_legacy_group_can_no_longer_be_used">กลุ่มแบบเก่านี้ไม่สามารถใช้งานได้อีกต่อไป เนื่องจากมีขนาดใหญ่เกินไป ขนาดที่ใหญ่ที่สุดของกลุ่มคือ %1$d</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_s_and_share_your_name_and_photo">ต้องการแชทกับ %1$s ต่อไปและแชร์ชื่อกับรูปภาพให้ผู้ใช้คนนี้เห็นหรือไม่</string>
     <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">เข้าร่วมกลุ่มนี้และเปิดเผยชื่อและรูปถ่ายของคุณให้สมาชิกในกลุ่มเห็นหรือไม่? พวกเขาจะไม่รู้ว่าคุณเห็นข้อความของพวกเขาจนกว่าคุณจะตอบรับ</string>
@@ -1733,6 +1767,8 @@
     <string name="WebRtcCallView__toggle_camera">เปิดปิดกล้อง</string>
     <!-- Toggle content description for toggling mute state  -->
     <string name="WebRtcCallView__toggle_mute">เปิดปิดการแจ้งเตือน</string>
+    <!-- Content description for additional actions menu button -->
+    <string name="WebRtcCallView__additional_actions">ตัวเลือกเพิ่มเติม</string>
     <!-- Content description for end-call button -->
     <string name="WebRtcCallView__end_call">วางสาย</string>
 
@@ -1749,9 +1785,62 @@
     <!-- A text description of the earpiece icon, used for accessibility. -->
     <string name="WebRtcAudioOutputBottomSheet__earpiece_icon_content_description">ไอคอนรูปลำโพงของอุปกรณ์</string>
 
+    <!-- A clickable button to "raise your hand" in a group call to signify you have something to say -->
+    <string name="CallOverflowPopupWindow__raise_hand">ยกมือ</string>
+    <!-- A description of a clickable image representing a raised hand -->
+    <string name="CallOverflowPopupWindow__raise_hand_illustration_content_description">ยกมือ</string>
+    <!-- A dialog prompt to confirm you want to lower your hand -->
+    <string name="CallOverflowPopupWindow__lower_your_hand">เอามือลงหรือไม่</string>
+    <!-- A dialog button to confirm you would like to lower your hand -->
+    <string name="CallOverflowPopupWindow__lower_hand">เอามือลง</string>
+    <!-- A negative button for a dialog confirming the user wants to lower their hand (withdraw a raised hand) -->
+    <string name="CallOverflowPopupWindow__cancel">ยกเลิก</string>
+    <!-- A notification to the user that they successfully raised their hand -->
+    <string name="CallOverflowPopupWindow__you_raised_your_hand">คุณยกมือ</string>
+    <!-- A button to take you to a list of participants with raised hands -->
+    <string name="CallOverflowPopupWindow__view">ดู</string>
+
+    <!-- A notification to the user that one or more participants in the call successfully raised their hand. In the singular case, it is a name. In the plural case, it is a name or "You" -->
+    <plurals name="CallOverflowPopupWindow__raised_a_hand">
+        <item quantity="other">%1$s + %2$d ยกมือ</item>
+    </plurals>
+
+    <!-- A badge to show how many hands are raised. The first string may be a name or "You" -->
+    <plurals name="CallRaiseHandSnackbar_raised_hands">
+        <item quantity="other">%1$s +%2$d</item>
+    </plurals>
+
+    <!-- An accessibility label for screen readers on a view that can be expanded -->
+    <string name="CallOverflowPopupWindow__expand_snackbar_accessibility_label">ขยายดูหน้ารวมสมาชิกที่ยกมือ</string>
+
+    <!-- AboutSheet -->
+    <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
+    <string name="AboutSheet__signal_connection">เครือข่าย Signal</string>
+    <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
+    <string name="AboutSheet__s_is_in_your_system_contacts">%1$s อยู่ในรายชื่อผู้ติดต่อของระบบคุณ</string>
+    <!-- Notice in a row when user has no groups in common -->
+    <string name="AboutSheet__you_have_no_groups_in_common">คุณไม่มีกลุ่มร่วมกัน</string>
+    <!-- Notice when a user is not a connection to review requests carefully -->
+    <string name="AboutSheet__review_requests_carefully">พิจารณาคำขออย่างระวัง</string>
+    <!-- Text used when user has groups in common. Placeholder is the count -->
+    <string name="AboutSheet__d_groups_in_common">มี %1$d กลุ่มร่วมกัน</string>
+    <!-- Text displayed in title for external recipients -->
+    <string name="AboutSheet__about">เกี่ยวกับ</string>
+    <!-- Text displayed in title for you -->
+    <string name="AboutSheet__you">คุณ</string>
+
     <!-- CallParticipantsListDialog -->
-    <plurals name="CallParticipantsListDialog_in_this_call_d_people">
-        <item quantity="other">มีผู้เข้าร่วมการโทร %1$d คน</item>
+    <plurals name="CallParticipantsListDialog_in_this_call">
+        <item quantity="other">ในสายนี้ (%1$d)</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__signal_will_ring">
+        <item quantity="other">Signal จะส่งเสียงเรียกสาย (%1$d)</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__signal_will_notify">
+        <item quantity="other">Signal จะส่งการแจ้งเตือน (%1$d)</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__raised_hands">
+        <item quantity="other">ยกมือ (%1$d)</item>
     </plurals>
 
     <!-- CallParticipantView -->
@@ -1863,6 +1952,12 @@
     <string name="RevealableMessageView_view_video">ดูวิดีโอ</string>
     <string name="RevealableMessageView_viewed">ดูแล้ว</string>
     <string name="RevealableMessageView_media">สื่อ</string>
+
+    <!-- ReviewBannerView -->
+    <!-- ReviewBannerView text when a name conflict has been found -->
+    <string name="ReviewBannerView__name_conflict_found">พบชื่อซ้ำ</string>
+    <!-- Button label to view name conflicts -->
+    <string name="ReviewBannerView__view">ดู</string>
 
     <!-- Search -->
     <string name="SearchFragment_no_results">ไม่พบข้อมูลเกี่ยวกับ \'%1$s\'</string>
@@ -2013,9 +2108,13 @@
     <!--  Displayed in the conversation list when identities have been merged. The first placeholder is a phone number, and the second is a person\'s name -->
     <string name="ThreadRecord_s_belongs_to_s">%1$s เป็นหมายเลขโทรศัพท์ของ %2$s</string>
 
-    <!-- UpdateApkReadyListener -->
-    <string name="UpdateApkReadyListener_Signal_update">ปรับรุ่น Signal</string>
-    <string name="UpdateApkReadyListener_a_new_version_of_signal_is_available_tap_to_update">Signal รุ่นใหม่มาแล้ว แตะเพื่อปรับรุ่น</string>
+    <!-- ApkUpdateNotifications -->
+    <string name="ApkUpdateNotifications_prompt_install_title">ปรับรุ่น Signal</string>
+    <string name="ApkUpdateNotifications_prompt_install_body">Signal เวอร์ชันใหม่พร้อมให้บริการแล้ว แตะเพื่ออัปเดต</string>
+    <string name="ApkUpdateNotifications_failed_general_title">อัปเดต Signal ไม่สำเร็จ</string>
+    <string name="ApkUpdateNotifications_failed_general_body">เราจะลองใหม่อีกครั้งในภายหลัง</string>
+    <string name="ApkUpdateNotifications_auto_update_success_title">อัปเดต Signal เรียบร้อยแล้ว</string>
+    <string name="ApkUpdateNotifications_auto_update_success_body">ได้รับการอัปเดตอัตโนมัติเป็นเวอร์ชัน %1$s เรียบร้อยแล้ว</string>
 
     <!-- UntrustedSendDialog -->
     <string name="UntrustedSendDialog_send_message">ส่งข้อความหรือไม่?</string>
@@ -2026,6 +2125,8 @@
     <string name="UnverifiedSendDialog_send">ส่ง</string>
 
     <!-- UsernameEditFragment -->
+    <!-- Placeholder text for custom discriminator -->
+    <string name="UsernameEditFragment__00">00</string>
     <!-- Toolbar title when entering from registration -->
     <string name="UsernameEditFragment__add_a_username">เพิ่มชื่อผู้ใช้</string>
     <!-- Instructional text at the top of the username edit screen -->
@@ -2048,6 +2149,12 @@
     <string name="UsernameEditFragment__skip">ข้าม</string>
     <!-- Content description for done button -->
     <string name="UsernameEditFragment__done">เสร็จสิ้น</string>
+    <!-- Displayed when the chosen discriminator is not available for the given nickname -->
+    <string name="UsernameEditFragment__this_username_is_not_available_try_another_number">ไม่สามารถใช้ชื่อผู้ใช้นี้ได้ ลองกรอกตัวเลขอื่น</string>
+    <!-- Displayed when the chosen discriminator is too short -->
+    <string name="UsernameEditFragment__invalid_username_enter_a_minimum_of_d_digits">ชื่อผู้ใช้ไม่ถูกต้อง ต้องกรอกตัวเลขอย่างน้อย %1$d หลัก</string>
+    <!-- Displayed when the chosen discriminator is too long -->
+    <string name="UsernameEditFragment__invalid_username_enter_a_maximum_of_d_digits">ชื่อผู้ใช้ไม่ถูกต้อง ต้องกรอกตัวเลขไม่เกิน %1$d หลัก</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="other">มีผู้ติดต่อ %1$d คนใช้งาน Signal!</item>
@@ -2167,6 +2274,18 @@
 
     <string name="TurnOffContactJoinedNotificationsActivity__turn_off_contact_joined_signal">ปิดการแจ้งเตือนเมื่อผู้ติดต่อได้เข้าร่วม Signal? คุณสามารถเปิดมันได้อีกครั้งในSignal &gt; Settings &gt; Notifications.</string>
 
+    <!-- TurnOnNotificationsBottomSheet -->
+    <!-- Title for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__turn_on_notifications">เปิดการแจ้งเตือน</string>
+    <!-- Subtitle  for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__to_receive_notifications">วิธีเปิดใช้งานเพื่อรับการแจ้งเตือนข้อความใหม่:</string>
+    <!-- Sheet step 1  for sheet explaining how to turn on app notifications-->
+    <string name="TurnOnNotificationsBottomSheet__1_tap_settings_below">1. แตะ “การตั้งค่า” ด้านล่างนี้</string>
+    <!-- Sheet step 2 with placeholder which will be replaced with an image of a toggle  for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__2_s_turn_on_notifications">2. เปิดใช้งานการแจ้งเตือน %1$s</string>
+    <!-- Label for button at the bottom of the sheet which opens system app notification settings for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__settings">การตั้งค่า</string>
+
     <!-- Notification Channels -->
     <string name="NotificationChannel_channel_messages">ข้อความ</string>
     <string name="NotificationChannel_calls">การโทร</string>
@@ -2227,6 +2346,13 @@
     <plurals name="TransferControlView_n_items">
         <item quantity="other">%1$d รายการ</item>
     </plurals>
+    <!-- Status update label used while the device is transcoding video as a prerequisite to uploading -->
+    <string name="TransferControlView__processing">กำลังดำเนินการ…</string>
+    <!-- Status update label used while the device is transmitting data over the network. Will take the form of "1.0 MB/2.0 MB" -->
+    <string name="TransferControlView__download_progress">%1$1.1f MB/%2$2.1f MB</string>
+    <!-- Attachment file size label for not-yet-downloaded images and video. Will take the form of "1.0 MB" -->
+    <string name="TransferControlView__filesize">%1$1.1f MB</string>
+
 
     <!-- UnauthorizedReminder -->
     <!-- Message shown in a reminder banner when the user\'s device is no longer registered -->
@@ -2250,6 +2376,8 @@
     <string name="WebRtcCallActivity__answered_on_a_linked_device">มีการรับสายบนอุปกรณ์ที่เชื่อมโยงอยู่</string>
     <string name="WebRtcCallActivity__declined_on_a_linked_device">ถูกปฏิเสธสายบนอุปกรณ์ที่เชื่อมโยงอยู่</string>
     <string name="WebRtcCallActivity__busy_on_a_linked_device">ติดสายบนอุปกรณ์ที่เชื่อมโยงอยู่</string>
+    <!-- Tooltip message shown first time user is in a video call after switch camera button moved -->
+    <string name="WebRtcCallActivity__flip_camera_tooltip">ปุ่มพลิกหน้ากล้องย้ายมาอยู่ที่นี่ แตะที่วิดีโอของคุณเพื่อลองใช้งาน</string>
 
     <string name="GroupCallSafetyNumberChangeNotification__someone_has_joined_this_call_with_a_safety_number_that_has_changed">มีคนเข้าร่วมสายนี้ด้วยหมายเลขความปลอดภัยที่เปลี่ยนไป</string>
 
@@ -2594,24 +2722,13 @@
 
     <!-- verify_display_fragment -->
     <!-- Explanation of how to verify the safety numbers. %s is replaced with the name of the other recipient -->
-    <string name="verify_display_fragment__pnp_verify_safety_numbers_explanation_with_s">เพื่อยืนยันว่าการติดต่อสื่อสารกับ %1$s ถูกเข้ารหัสตั้งแต่ต้นทางถึงปลายทาง ให้ตรวจสอบแถบสีด้านบนนี้กับแถบสีบนอุปกรณ์ของคนคนนั้น พร้อมเปรียบเทียบหมายเลขที่แสดงว่าตรงกันหรือไม่ หากข้อมูลไม่ตรงกัน ให้ปัดหน้าจอ แล้วลองจับคู่หมายเลขความปลอดภัยใหม่ การตรวจสอบหมายเลขความปลอดภัยให้ตรงกันได้หนึ่งคู่นั้นเพียงพอแล้ว</string>
+    <string name="verify_display_fragment__pnp_verify_safety_numbers_explanation_with_s">เพื่อยืนยันว่าการติดต่อสื่อสารกับ %1$s ถูกเข้ารหัสตั้งแต่ต้นทางถึงปลายทาง ให้เปรียบเทียบหมายเลขด้านบนนี้กับหมายเลขบนอุปกรณ์ของคนคนนั้นว่าตรงกันหรือไม่ นอกจากนี้ คุณยังสามารถสแกนรหัสจากบนอุปกรณ์ของผู้ติดต่อได้อีกด้วย</string>
     <string name="verify_display_fragment__tap_to_scan">แตะเพื่อสแกน</string>
     <string name="verify_display_fragment__successful_match">จับคู่สำเร็จ</string>
     <string name="verify_display_fragment__failed_to_verify_safety_number">การตรวจยืนยันหมายเลขความปลอดภัยล้มเหลว</string>
     <string name="verify_display_fragment__loading">กำลังโหลด…</string>
     <string name="verify_display_fragment__mark_as_verified">ทำเครื่องหมายว่าตรวจยืนยันแล้ว</string>
     <string name="verify_display_fragment__clear_verification">ล้างการตรวจยืนยัน</string>
-    <!-- Banner at top of safety numbers screen explaining that we\'re updating how safety numbers work. -->
-    <string name="verify_display_fragment__safety_numbers_are_updating_banner_no_learn_more">กำลังอัปเดตหมายเลขความปลอดภัย</string>
-
-    <!-- Title for dialog explaining for how safety numbers are transitioning to support usernames -->
-    <string name="PnpSafetyNumberEducationDialog__title">การเปลี่ยนแปลงเกี่ยวกับหมายเลขความปลอดภัย</string>
-    <!-- Message for dialog explaining for how safety numbers are transitioning to support usernames -->
-    <string name="PnpSafetyNumberEducationDialog__body">กำลังอัปเดตหมายเลขความปลอดภัยเพื่อให้พร้อมรองรับการใช้งานฟีเจอร์ด้านความเป็นส่วนตัวใหม่ๆ ของ Signal\n\nเพื่อยืนยันหมายเลขความปลอดภัย ให้ตรวจสอบแถบสีบนอุปกรณ์ของคุณกับแถบสีบนอุปกรณ์ของผู้ติดต่อว่าตรงกันหรือไม่ หากข้อมูลไม่ตรงกัน ให้ปัดหน้าจอ แล้วลองจับคู่หมายเลขความปลอดภัยใหม่ การตรวจสอบหมายเลขความปลอดภัยให้ตรงกันได้หนึ่งคู่นั้นเพียงพอแล้ว</string>
-    <!-- Button for more information about the safety number changes. Takes user to support article -->
-    <string name="PnpSafetyNumberEducationDialog__help">ต้องการความช่วยเหลือหรือไม่?</string>
-    <!-- Confirmation button for educating users about new safety number changes -->
-    <string name="PnpSafetyNumberEducationDialog__confirm">เข้าใจแล้ว</string>
 
     <!-- verity_scan_fragment -->
     <string name="verify_scan_fragment__scan_the_qr_code_on_your_contact">สแกนรหัส QR บนอุปกรณ์ของผู้ติดต่อของคุณ</string>
@@ -2676,7 +2793,7 @@
     <string name="HelpFragment__could_not_upload_logs">ไม่สามารถอัปโหลดปูม</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">กรุณาอธิบายละเอียดที่สุดเท่าที่จะทำได้ เพื่อช่วยให้เราเข้าใจปัญหา</string>
     <string-array name="HelpFragment__categories_5">
-        <item>\\-\\- กรุณาเลือกหนึ่งรายการ \\-\\-</item>
+        <item>กรุณาเลือกหนึ่งรายการ</item>
         <item>มีบางอย่างไม่ทำงาน</item>
         <item>คำขอฟีเจอร์</item>
         <item>คำถาม</item>
@@ -2690,6 +2807,8 @@
     <string name="DebugLogsPromptDialogFragment__signal_android_support_request">การส่งรายงานบันทึกดีบักสำหรับ Signal Android</string>
     <!-- Category to organize the support email sent -->
     <string name="DebugLogsPromptDialogFragment__slow_notifications_category">การแจ้งเตือนล่าช้า</string>
+    <!-- Category to organize the support email sent -->
+    <string name="DebugLogsPromptDialogFragment__crash_category">หยุดทำงาน</string>
     <!-- Action to submit logs and take user to send an e-mail -->
     <string name="DebugLogsPromptDialogFragment__submit">ส่ง</string>
     <!-- Action to decline to submit logs -->
@@ -2814,7 +2933,6 @@
     <string name="preferences__payments">การจ่ายเงิน</string>
     <!-- Privacy settings payments section description -->
     <string name="preferences__payment_lock">การล็อกการชำระเงิน</string>
-    <string name="preferences__payments_beta">การชำระเงิน (รุ่นทดสอบ)</string>
     <string name="preferences__conversation_length_limit">จำกัดจำนวนข้อความในแชทสูงสุด</string>
     <string name="preferences__keep_messages">เก็บข้อความ</string>
     <string name="preferences__clear_message_history">ล้างประวัติการส่งข้อความ</string>
@@ -2892,7 +3010,10 @@
     <string name="preferences_storage__six_months">6 เดือน</string>
     <string name="preferences_storage__thirty_days">30 วัน</string>
     <string name="preferences_storage__none">ไม่มี</string>
-    <string name="preferences_storage__s_messages">%1$s ข้อความ</string>
+    <plurals name="preferences_storage__s_messages_plural">
+        <item quantity="other">%1$s ข้อความ</item>
+    </plurals>
+
     <string name="preferences_storage__custom">ค่ากำหนดเอง</string>
     <string name="preferences_advanced__use_system_emoji">ใช้อีโมจิของระบบ</string>
     <string name="preferences_advanced__relay_all_calls_through_the_signal_server_to_avoid_revealing_your_ip_address">ส่งต่อสายทั้งหมดผ่านเซิร์ฟเวอร์ Signal เพื่อหลีกเลี่ยงการเปิดเผยที่อยู่ IP ของคนที่คุณติดต่อด้วย การเปิดใช้งานจะลดคุณภาพการโทรลง</string>
@@ -2900,6 +3021,7 @@
     <!-- Privacy settings payments section title -->
     <string name="preferences_app_protection__payments">การจ่ายเงิน</string>
     <string name="preferences_chats__chats">แชท</string>
+    <string name="preferences_app_updates__title">การปรับรุ่นแอป</string>
     <string name="preferences_data_and_storage__manage_storage">จัดการพื้นที่จัดเก็บ</string>
     <string name="preferences_data_and_storage__use_less_data_for_calls">ใช้ข้อมูลน้อยลงสำหรับการโทร</string>
     <string name="preferences_data_and_storage__never">ไม่เลย</string>
@@ -2967,7 +3089,8 @@
     <string name="PaymentsAllActivityFragment__sent">ส่งแล้ว</string>
     <string name="PaymentsAllActivityFragment__received">ได้รับแล้ว</string>
 
-    <string name="PaymentsHomeFragment__introducing_payments">แนะนำการชำระเงิน (รุ่นทดสอบ)</string>
+    <!-- Displayed on a welcome screen for payments -->
+    <string name="PaymentsHomeFragment_introducing_payments">ขอแนะนำการชำระเงิน</string>
     <string name="PaymentsHomeFragment__use_signal_to_send_and_receive">ใช้ Signal เพื่อส่งและรับ MobileCoin ซึ่งเป็นสกุลเงินดิจิทัลใหม่ที่เน้นความเป็นส่วนตัว เปิดใช้งานเพื่อเริ่มต้น</string>
     <string name="PaymentsHomeFragment__activate_payments">ใช้การชำระเงิน</string>
     <string name="PaymentsHomeFragment__activating_payments">กำลังเปิดใช้การชำระเงิน…</string>
@@ -3001,8 +3124,9 @@
     <string name="PaymentsHomeFragment__payments_deactivated">การชำระเงินถูกปิดใช้งานแล้ว</string>
     <string name="PaymentsHomeFragment__payment_failed">การชำระเงินล้มเหลว</string>
     <string name="PaymentsHomeFragment__details">รายละเอียด</string>
-  <!-- Removed by excludeNonTranslatables <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate </string>
-    <string name="PaymentsHomeFragment__you_can_use_signal_to_send">คุณสามารถใช้ Signal เพื่อส่งและรับ MobileCoin การชำระเงินทั้งหมดอยู่ภายใต้เงื่อนไขการใช้งานสำหรับ MobileCoins และ MobileCoin Wallet นี่คือคุณสมบัติเบตา ดังนั้นคุณอาจพบปัญหาบางประการ และการชำระเงินหรือยอดคงเหลืออาจสูญหายไปโดยกู้คืนมาไม่ได้ </string> -->
+  <!-- Removed by excludeNonTranslatables <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate</string> -->
+    <!-- Displayed as a description in a dialog when the user tries to activate payments -->
+    <string name="PaymentsHomeFragment__you_can_use_signal_to_send_and">คุณสามารถใช้ Signal เพื่อส่งและรับ MobileCoin การชำระเงินทั้งหมดอยู่ภายใต้เงื่อนไขการใช้งานสำหรับ MobileCoin และ MobileCoin Wallet คุณอาจพบปัญหาบางประการ และการชำระเงินหรือยอดคงเหลืออาจสูญหายไปโดยกู้คืนมาไม่ได้ </string>
     <string name="PaymentsHomeFragment__activate">เปิดใช้</string>
     <string name="PaymentsHomeFragment__view_mobile_coin_terms">ดูเงื่อนไข MobileCoin</string>
     <string name="PaymentsHomeFragment__payments_not_available">ไม่สามารถชำระเงินใน Signal ได้อีกต่อไป คุณยังสามารถโอนเงินไปยังตลาดหลักทรัพย์ได้ แต่คุณจะไม่สามารถส่งและรับการชำระเงินหรือเพิ่มเงินได้อีก</string>
@@ -3024,6 +3148,32 @@
     <string name="PaymentsHomeFragment__cancel">ยกเลิก</string>
     <!-- Alert dialog button to update now -->
     <string name="PaymentsHomeFragment__update_now">ปรับปรุงเดี๋ยวนี้</string>
+
+    <!-- GrantPermissionsFragment -->
+    <!-- Displayed as a text-only action button at the bottom start of the screen -->
+    <string name="GrantPermissionsFragment__not_now">ไว้ทีหลัง</string>
+    <!-- Displayed as an action button at the bottom end of the screen -->
+    <string name="GrantPermissionsFragment__next">ดำเนินการต่อ</string>
+    <!-- Displayed as a title at the top of the screen -->
+    <string name="GrantPermissionsFragment__allow_permissions">การอนุญาตสิทธิ์</string>
+    <!-- Displayed as a subtitle at the top of the screen -->
+    <string name="GrantPermissionsFragment__to_help_you_message_people_you_know">เพื่อให้คุณสามารถส่งข้อความหาผู้ติดต่อที่รู้จัก Signal จะขอสิทธิ์การเข้าถึงต่อไปนี้ </string>
+    <!-- Notifications permission row title -->
+    <string name="GrantPermissionsFragment__notifications">การแจ้งเตือน</string>
+    <!-- Notifications permission row description -->
+    <string name="GrantPermissionsFragment__get_notified_when">ได้รับแจ้งเตือนเมื่อมีข้อความใหม่</string>
+    <!-- Contacts permission row title -->
+    <string name="GrantPermissionsFragment__contacts">ผู้ติดต่อ</string>
+    <!-- Contacts permission row description -->
+    <string name="GrantPermissionsFragment__find_people_you_know">ค้นหาคนที่คุณรู้จัก โดยรายชื่อผู้ติดต่อของคุณจะได้รับการเข้ารหัสและไม่ถูกเปิดเผยต่อบริการของ Signal</string>
+    <!-- Phone calls permission row title -->
+    <string name="GrantPermissionsFragment__phone_calls">การโทร</string>
+    <!-- Phone calls permission row description -->
+    <string name="GrantPermissionsFragment__make_registering_easier">ช่วยให้การลงทะเบียนง่ายขึ้น พร้อมเข้าถึงฟีเจอร์การโทรอื่นๆ เพิ่มเติม</string>
+    <!-- Storage permission row title -->
+    <string name="GrantPermissionsFragment__storage">พื้นที่จัดเก็บ</string>
+    <!-- Storage permission row description -->
+    <string name="GrantPermissionsFragment__send_photos_videos_and_files">ส่งรูปภาพ วิดีโอ และไฟล์ต่างๆ จากอุปกรณ์ของคุณ</string>
 
     <!-- PaymentsSecuritySetupFragment -->
     <!-- Toolbar title -->
@@ -3759,14 +3909,16 @@
     <string name="ReviewCardDialogFragment__failed_to_remove_group_member">ลบสมาชิกออกจากกลุ่มไม่สำเร็จ</string>
 
     <!-- ReviewCard -->
-    <string name="ReviewCard__member">สมาชิก</string>
     <string name="ReviewCard__request">คำขอ</string>
     <string name="ReviewCard__your_contact">ผู้ติดต่อของคุณ</string>
     <string name="ReviewCard__remove_from_group">ลบจากกลุ่ม</string>
     <string name="ReviewCard__update_contact">ปรับปรุงผู้ติดต่อ</string>
     <string name="ReviewCard__block">บล็อก</string>
     <string name="ReviewCard__delete">ลบ</string>
-    <string name="ReviewCard__recently_changed">เพิ่งพึ่งเปลี่ยนชื่อโปรไฟล์ของเธอจาก %1$s เป็น %2$s</string>
+    <!-- Displayed when a recent name change has occurred. First placeholder is new short name, second is previous name, third is new name. -->
+    <string name="ReviewCard__s_recently_changed">%1$s เพิ่งเปลี่ยนชื่อโปรไฟล์จาก %2$s เป็น %3$s</string>
+    <!-- Displayed when a review user is in your system contacts. Placeholder is short name. -->
+    <string name="ReviewCard__s_is_in_your_system_contacts">%1$s อยู่ในรายชื่อผู้ติดต่อของระบบคุณ</string>
 
     <!-- CallParticipantsListUpdatePopupWindow -->
     <string name="CallParticipantsListUpdatePopupWindow__s_joined">%1$s ได้เข้าร่วมกลุ่ม</string>
@@ -3924,7 +4076,7 @@
     <!-- Description in save recovery phrase screen which shows up when user has non zero balance -->
     <string name="PaymentsRecoveryStartFragment__got_balance">คุณมียอดเงินคงเหลือ! ได้เวลาบันทึกวลีกู้คืนของคุณ ซึ่งคือรหัส 24 คำที่สามารถใช้เพื่อกู้คืนยอดเงินคงเหลือของคุณได้</string>
     <!-- Description in save recovery phrase screen which shows up when user navigates from info card -->
-    <string name="PaymentsRecoveryStartFragment__time_to_save">ได้เวลาบันทึกวลีกู้คืนของคุณ ซึ่งคือรหัส 24 คำที่สามารถใช้เพื่อกู้คืนยอดเงินคงเหลือของคุณได้ เรียนรู้เพิ่มเติม</string>
+    <string name="PaymentsRecoveryStartFragment__time_to_save">ได้เวลาบันทึกวลีกู้คืนแล้ว นี่คือรหัส 24 คำที่สามารถใช้เพื่อกู้คืนยอดเงินคงเหลือของคุณ</string>
     <string name="PaymentsRecoveryStartFragment__your_recovery_phrase_is_a">วลีกู้คืนของคุณคือวลี %1$d คำที่เฉพาะเจาะจงกับคุณและไม่ซ้ำใคร ใช้วลีนี้เพื่อกู้คืนยอดคงเหลือของคุณ</string>
     <string name="PaymentsRecoveryStartFragment__start">เริ่ม</string>
     <string name="PaymentsRecoveryStartFragment__enter_manually">ใส่ด้วยมือ</string>
@@ -4408,6 +4560,12 @@
     <string name="NewConversationActivity__view_contact">ดูผู้ติดต่อ</string>
     <!-- Error message shown when looking up a person by phone number and that phone number is not associated with a signal account -->
     <string name="NewConversationActivity__s_is_not_a_signal_user">%1$s ไม่ได้เป็นผู้ใช้ Signal</string>
+    <!-- Error message shown when we could not get a user from the username link -->
+    <string name="NewConversationActivity__">%1$s ไม่ได้เป็นผู้ใช้ Signal</string>
+    <!-- Error message shown in a dialog when trying to create a new group with non-signal users (e.g., unregistered or phone number only contacts) -->
+    <plurals name="CreateGroupActivity_not_signal_users">
+        <item quantity="other">%1$s ไม่ได้เป็นผู้ใช้ Signal</item>
+    </plurals>
 
     <!-- ContactFilterView -->
     <string name="ContactFilterView__search_name_or_number">ค้นหาชื่อหรือหมายเลข</string>
@@ -4589,6 +4747,12 @@
     <string name="ManageDonationsFragment__other_ways_to_give">วิธีอื่นๆ ในการมอบ</string>
     <!-- Preference label to launch badge gifting -->
     <string name="ManageDonationsFragment__donate_for_a_friend">บริจาคในนามของเพื่อน</string>
+    <!-- Dialog title shown when a donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet -->
+    <string name="ManageDonationsFragment__couldnt_confirm_donation">ไม่สามารถยืนยันการบริจาคได้</string>
+    <!-- Dialog message shown when a monthly donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet, placeholder is money amount -->
+    <string name="ManageDonationsFragment__your_monthly_s_donation_couldnt_be_confirmed">ไม่สามารถยืนยันการบริจาคจำนวน %1$s/เดือนของคุณได้ โปรดตรวจสอบแอปธนาคารของคุณเพื่ออนุมัติการชำระเงินผ่าน iDEAL</string>
+    <!-- Dialog message shown when a one-time donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet, placeholder is money amount -->
+    <string name="ManageDonationsFragment__your_one_time_s_donation_couldnt_be_confirmed">ไม่สามารถยืนยันการบริจาคครั้งเดียวจำนวน %1$s ของคุณได้ โปรดตรวจสอบแอปธนาคารของคุณเพื่ออนุมัติการชำระเงินผ่าน iDEAL</string>
 
     <string name="Boost__enter_custom_amount">กรอกจำนวนเอง</string>
     <!-- Error label when the amount is smaller than what we can accept -->
@@ -4600,6 +4764,12 @@
     <!-- Displayed on "My Support" screen when user badge failed to be added to their account -->
     <string name="MySupportPreference__couldnt_add_badge_s">เพิ่มโล่ไม่ได้ %1$s</string>
     <string name="MySupportPreference__please_contact_support">กรุณาฝ่ายสนับสนุน</string>
+    <!-- Displayed as a subtitle on a row in the Manage Donations screen when payment for a donation is pending -->
+    <string name="MySupportPreference__payment_pending">กำลังรออนุมัติการชำระเงิน</string>
+    <!-- Displayed as a dialog message when clicking on a donation row that is pending. Placeholder is a formatted fiat amount -->
+    <string name="MySupportPreference__your_bank_transfer_of_s">กำลังรออนุมัติการโอนเงินผ่านระบบธนาคารจำนวน %1$s การโอนเงินผ่านระบบธนาคารมักใช้เวลาดำเนินการประมาณ 1 วันทำการ  </string>
+    <!-- Displayed in the pending help dialog, used to launch user to more details about bank transfers -->
+    <string name="MySupportPreference__learn_more">เรียนรู้เพิ่มเติม</string>
 
     <!-- Title of dialog telling user they need to update signal as it expired -->
     <string name="UpdateSignalExpiredDialog__title">ปรับรุ่น Signal</string>
@@ -4649,12 +4819,16 @@
     <string name="Subscription__contact_support">ติดต่อการสนับสนุน</string>
     <string name="Subscription__get_a_s_badge">รับโล่ %1$s</string>
 
-    <string name="SubscribeFragment__processing_payment">กำลังประมวลผลการชำระเงิน…</string>
+    <string name="SubscribeFragment__processing_payment">กำลังดำเนินการบริจาค…</string>
     <!-- Displayed in notification when user payment fails to process on Stripe -->
-    <string name="DonationsErrors__error_processing_payment">การดำเนินการชำระเงินมีข้อผิดพลาด</string>
+    <string name="DonationsErrors__error_processing_payment">การดำเนินการบริจาคมีข้อผิดพลาด</string>
+    <!-- Displayed on manage donations screen as a dialog message when payment method failed -->
+    <string name="DonationsErrors__try_another_payment_method">ลองวิธีการชำระอื่น หรือติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม</string>
+    <!-- Displayed on manage donations screen error dialogs as an action label -->
+    <string name="DonationsErrors__learn_more">เรียนรู้เพิ่มเติม</string>
     <!-- Displayed on "My Support" screen when user subscription payment method failed. -->
-    <string name="DonationsErrors__error_processing_payment_s">การดำเนินการชำระเงินมีข้อผิดพลาด %1$s</string>
-    <string name="DonationsErrors__your_payment">ไม่สามารถดำเนินการชำระเงินของคุณได้ และคุณยังไม่ได้ถูกเรียกเก็บเงิน กรุณาลองใหม่อีกครั้ง</string>
+    <string name="DonationsErrors__error_processing_payment_s">การดำเนินการบริจาคมีข้อผิดพลาด %1$s</string>
+    <string name="DonationsErrors__your_payment">ไม่สามารถดำเนินการบริจาคของคุณได้ และคุณยังไม่ได้ถูกเรียกเก็บเงิน กรุณาลองใหม่อีกครั้ง</string>
     <string name="DonationsErrors__still_processing">ยังดำเนินการอยู่</string>
     <string name="DonationsErrors__couldnt_add_badge">เพิ่มโล่ไม่ได้</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
@@ -4664,9 +4838,9 @@
     <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
     <string name="DonationsErrors__donation_failed">บริจาคไม่สำเร็จ</string>
     <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
-    <string name="DonationsErrors__your_payment_was_processed_but">ดำเนินการชำระเงินแล้ว แต่ Signal ไม่สามารถส่งข้อความแจ้งการบริจาคของคุณได้ กรุณาติดต่อฝ่ายสนับสนุน</string>
+    <string name="DonationsErrors__your_payment_was_processed_but">ดำเนินการบริจาคแล้ว แต่ Signal ไม่สามารถส่งข้อความแจ้งการบริจาคของคุณได้ กรุณาติดต่อฝ่ายสนับสนุน</string>
     <string name="DonationsErrors__your_badge_could_not">ไม่สามารถเพิ่มโล่ไปยังบัญชีของคุณได้ แต่คุณอาจจะถูกเรียกเก็บเงินแล้ว กรุณาติดต่อฝ่ายสนับสนุน</string>
-    <string name="DonationsErrors__your_payment_is_still">การชำระเงินของคุณยังคงดำเนินการอยู่ อาจจะใช้เวลาสักครู่ ขึ้นอยู่กับการสัญญาณอินเทอร์เน็ตของคุณ</string>
+    <string name="DonationsErrors__your_payment_is_still">การบริจาคของคุณยังอยู่ระหว่างดำเนินการ ขั้นตอนนี้อาจใช้เวลาสักครู่ โดยขึ้นอยู่กับสัญญาณอินเทอร์เน็ตของคุณ</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">ยกเลิกการเป็นสมาชิกไม่สำเร็จ</string>
     <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">คุณต้องเชื่อมต่ออินเทอร์เน็ตจึงจะยกเลิกการเป็นสมาชิกได้</string>
     <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">อุปกรณ์ของคุณไม่รองรับ Google Pay คุณจึงไม่สามารถสมัครเพื่อรับโล่ได้ แต่คุณสามารถสนับสนุน Signal ได้ด้วยการบริจาคบนเว็บไซต์ของเรา</string>
@@ -4678,6 +4852,8 @@
     <string name="DonationsErrors__this_user_cant_receive_donations_until">ผู้ใช้คนนี้ไม่สามารถรับการบริจาคในนามได้จนกว่าจะอัปเกรด Signal</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
     <string name="DonationsErrors__your_donation_could_not_be_sent">ไม่สามารถส่งการบริจาคได้เนื่องจากข้อผิดพลาดของเครือข่าย ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</string>
+    <!-- Displayed as a dialog message when the user encounters an error during an iDEAL donation -->
+    <string name="DonationsErrors__your_ideal_couldnt_be_processed">ไม่สามารถดำเนินการบริจาคผ่าน iDEAL ของคุณได้ ลองชำระเงินด้วยวิธีอื่น หรือติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม</string>
 
     <!-- Gift message view title -->
     <string name="GiftMessageView__donation_on_behalf_of_s">การบริจาคในนามของ %1$s</string>
@@ -4695,6 +4871,8 @@
 
     <!-- Stripe decline code generic_failure -->
     <string name="DeclineCode__try_another_payment_method_or_contact_your_bank">ลองวิธีการชำระอื่น หรือติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม</string>
+    <!-- PayPal decline code for payment declined -->
+    <string name="DeclineCode__try_another_payment_method_or_contact_your_bank_for_more_information_if_this_was_a_paypal">ลองชำระเงินด้วยวิธีอื่น หรือติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม และหากคุณทำธุรกรรมผ่าน PayPal กรุณาติดต่อ PayPal โดยตรง</string>
     <!-- Stripe decline code verify on Google Pay and try again -->
     <string name="DeclineCode__verify_your_payment_method_is_up_to_date_in_google_pay_and_try_again">ตรวจยืนยันวิธีการชำระเงินว่ามีการอัปเดตแล้วใน Google Pay แล้วลองอีกครั้ง</string>
     <!-- Stripe decline code learn more action label -->
@@ -4720,7 +4898,7 @@
     <!-- Stripe decline code incorrect expiration year -->
     <string name="DeclineCode__the_expiration_year">ปีหมดอายุของวิธีการชำระเงินของคุณไม่ถูกต้อง อัปเดตใน Google Pay แล้วลองอีกครั้ง</string>
     <!-- Stripe decline code issuer not available -->
-    <string name="DeclineCode__try_completing_the_payment_again">ลองทำการชำระเงินให้เรียบร้อยอีกครั้ง หรือติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม</string>
+    <string name="DeclineCode__try_completing_the_payment_again">ลองดำเนินการบริจาคให้เรียบร้อยอีกครั้ง หรือติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม</string>
     <!-- Stripe decline code processing error -->
     <string name="DeclineCode__try_again">ลองอีกครั้งหรือติดต่อธนาคารเพพื่อขอข้อมูลเพิ่มเติม</string>
 
@@ -4739,6 +4917,18 @@
     <string name="DeclineCode__the_expiration_year_on_your_card_is_incorrect">ปีที่หมดอายุบนบัตรไม่ถูกต้อง ตรวจยืนยันว่ารายละเอียดบัตรของคุณถูกต้อง แล้วลองอีกครั้ง</string>
     <!-- Stripe decline code incorrect_number and invalid_number for credit cards displayed in a notification or dialog -->
     <string name="DeclineCode__your_card_number_is_incorrect_verify_your_card_details">หมายเลขบัตรไม่ถูกต้อง ตรวจยืนยันว่ารายละเอียดบัตรของคุณถูกต้อง แล้วลองอีกครั้ง</string>
+
+    <!-- Stripe Failure Codes for failed bank transfers -->
+    <!-- Failure code text for insufficient funds, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__the_bank_account_provided">บัญชีที่ระบุมีวงเงินไม่เพียงพอสำหรับธุรกรรมนี้ โปรดลองอีกครั้งหรือติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม</string>
+    <!-- Failure code text for revoked authorization of payment, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__this_payment_was_revoked">การบริจาคนี้ถูกเจ้าของบัญชียกเลิกและไม่สามารถดำเนินการได้ คุณยังไม่ถูกเรียกเก็บเงินในกรณีนี้</string>
+    <!-- Failure code text for a payment lacking an authorized mandate or incorrect mandate, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__an_error_occurred_while_processing_this_payment">เกิดข้อผิดพลาดขณะดำเนินการบริจาคนี้ โปรดลองอีกครั้ง</string>
+    <!-- Failure code text for a closed account, deceased recipient, or one with blocked direct debits, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__the_bank_details_provided_could_not_be_processed">ไม่สามารถดำเนินการชำระเงินตามข้อมูลธนาคารที่ระบุได้ โปรดติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม</string>
+    <!-- Failure code text for a non-existent bank branch, invalid account holder, invalid iban, generic failure, or unknown bank failure, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__verify_your_bank_details_are_correct">ตรวจยืนยันว่าข้อมูลธนาคารที่คุณระบุนั้นถูกต้อง แล้วลองอีกครั้ง โปรดติดต่อธนาคารหากคุณยังพบปัญหาอยู่</string>
 
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">ตั้งชื่อโปรไฟล์ของคุณ</string>
@@ -4775,6 +4965,12 @@
     <string name="AddAllowedMembers__add_people_and_groups_you_want_notifications_and_calls_from_when_this_profile_is_on">เพิ่มคนและกลุ่มที่คุณต้องการการแจ้งเตือนและการโทรเมื่อโปรไฟล์นี้มีการใช้งาน</string>
     <!-- Button text that launches the contact picker to select from -->
     <string name="AddAllowedMembers__add_people_or_groups">เพิ่มคนหรือกลุ่ม</string>
+    <!-- Title for exceptions section of add people to notification profile screen in create flow -->
+    <string name="AddAllowedMembers__exceptions">ข้อยกเว้น</string>
+    <!-- List preference to toggle that allows calls through the notification profile during create flow -->
+    <string name="AddAllowedMembers__allow_all_calls">อนุญาตการโทรทั้งหมด</string>
+    <!-- List preference to toggle that allows mentions through the notification profile during create flow -->
+    <string name="AddAllowedMembers__notify_for_all_mentions">แจ้งเตือนการกล่าวถึงทั้งหมด</string>
 
     <!-- Call to action button on contact picker for adding to profile -->
     <string name="SelectRecipientsFragment__add">เพิ่ม</string>
@@ -4880,6 +5076,10 @@
 
     <!-- Displayed in a toast when we fail to open the ringtone picker -->
     <string name="NotificationSettingsFragment__failed_to_open_picker">การเปิดตัวเลือกล้มเหลว</string>
+    <!-- Banner title when notification permission is disabled -->
+    <string name="NotificationSettingsFragment__to_enable_notifications">เปิดใช้งานโดยอนุญาตให้ Signal ได้รับสิทธิ์การเข้าถึงเพื่อแสดงการแจ้งเตือน</string>
+    <!-- Banner action when notification permission is disabled -->
+    <string name="NotificationSettingsFragment__turn_on">เปิดใช้งาน</string>
 
     <!-- Description shown for the Signal Release Notes channel -->
     <string name="ReleaseNotes__signal_release_notes_and_news">บันทึกการเปลี่ยนแปลง Signal &amp; ข่าว</string>
@@ -4892,10 +5092,10 @@
     <string name="DonationReceiptListFragment__recurring">การเกิดซ้ำ</string>
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">ครั้งเดียว</string>
+    <!-- Donation receipts gift tab -->
+    <string name="DonationReceiptListFragment__for_a_friend">ในนามของเพื่อน</string>
     <!-- Donation receipts gift tab label -->
     <string name="DonationReceiptListFragment__donation_for_a_friend">การบริจาคในนามของเพื่อน</string>
-    <!-- Donation receipts boost row label -->
-    <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
     <string name="DonationReceiptDetailsFragment__donation_type">ประเภทการบริจาค</string>
     <!-- Donation receipts date paid heading -->
@@ -5367,7 +5567,9 @@
     <!-- Message of safety number changes bottom sheet when not showing individual records and user has seen review screen -->
     <string name="SafetyNumberBottomSheetFragment__all_connections_have_been_reviewed">ตรวจสอบผู้ติดต่อทั้งหมดแล้ว แตะส่งเพื่อดำเนินการต่อ</string>
     <!-- Message of safety number changes bottom sheet when not showing individual records -->
-    <string name="SafetyNumberBottomSheetFragment__you_have_d_connections">คุณมีเครือข่าย %1$d คน ที่อาจติดตั้ง Signal ใหม่หรือเปลี่ยนอุปกรณ์ ก่อนที่จะแชร์สตอรี่กับเครือข่ายคนดังกล่าว ลองตรวจสอบหมายเลขความปลอดภัยหรือลบเครือข่ายคนนั้นออกจากสตอรี่ของคุณ</string>
+    <plurals name="SafetyNumberBottomSheetFragment__you_have_d_connections_plural">
+        <item quantity="other">เครือข่าย %1$d คนอาจติดตั้ง Signal ใหม่หรือเปลี่ยนอุปกรณ์ คุณสามารถลองตรวจสอบหมายเลขความปลอดภัยของเครือข่ายก่อนหรือยืนยันการส่ง</item>
+    </plurals>
     <!-- Menu action to launch safety number verification screen -->
     <string name="SafetyNumberBottomSheetFragment__verify_safety_number">ตรวจยืนยันหมายเลขความปลอดภัย</string>
     <!-- Menu action to remove user from story -->
@@ -5607,6 +5809,23 @@
     <string name="DonateToSignalFragment__continue">ดำเนินการต่อ</string>
     <!-- Description below title -->
     <string name="DonateToSignalFragment__private_messaging">ส่งข้อความอย่างเป็นส่วนตัว เป็นไปได้ด้วยทุนสนับสนุนจากคุณ ไม่มีโฆษณา ไม่มีการติดตาม ไม่มีทางเปลี่ยนแปลง บริจาควันนี้เพื่อร่วมสนับสนุน Signal</string>
+    <!-- Dialog title when a user tries to donate while they already have a pending donation. -->
+    <string name="DonateToSignalFragment__you_have_a_donation_pending">คุณยังมีการบริจาคที่รออนุมัติอยู่</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending monthly donation. -->
+    <string name="DonateToSignalFragment__bank_transfers_usually_take_1_business_day_to_process_monthly">การโอนเงินผ่านระบบธนาคารมักใช้เวลาดำเนินการประมาณ 1 วันทำการ โปรดรอให้การชำระเงินนี้สำเร็จก่อน แล้วจึงค่อยอัปเดตการบริจาครายเดือนของคุณ</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending one time donation. -->
+    <string name="DonateToSignalFragment__bank_transfers_usually_take_1_business_day_to_process_onetime">การโอนเงินผ่านระบบธนาคารมักใช้เวลาดำเนินการประมาณ 1 วันทำการ โปรดรอให้การชำระเงินนี้สำเร็จก่อน แล้วจึงค่อยบริจาคอีกครั้ง</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending monthly donation. -->
+    <string name="DonateToSignalFragment__your_payment_is_still_being_processed_monthly">การบริจาคของคุณยังอยู่ระหว่างดำเนินการ ขั้นตอนนี้อาจใช้เวลาสักครู่ โดยขึ้นอยู่กับสัญญาณอินเทอร์เน็ตของคุณ โปรดรอให้การชำระเงินนี้สำเร็จก่อน แล้วจึงค่อยอัปเดตการบริจาครายเดือนของคุณ</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending one time donation. -->
+    <string name="DonateToSignalFragment__your_payment_is_still_being_processed_onetime">การบริจาคของคุณยังอยู่ระหว่างดำเนินการ ขั้นตอนนี้อาจใช้เวลาสักครู่ โดยขึ้นอยู่กับสัญญาณอินเทอร์เน็ตของคุณ โปรดรอให้การชำระเงินนี้สำเร็จก่อน แล้วจึงค่อยบริจาคอีกครั้ง</string>
+    <!-- Dialog body when a user opens the manage donations main screen and they have a pending iDEAL donation -->
+    <string name="DonateToSignalFragment__your_ideal_payment_is_still_processing">การบริจาคผ่าน iDEAL ของคุณยังอยู่ระหว่างดำเนินการ โปรดตรวจสอบแอปธนาคารของคุณเพื่ออนุมัติการชำระเงิน แล้วจึงค่อยบริจาคอีกครั้ง</string>
+    <!-- Dialog title shown when a user tries to donate an amount higher than is allowed for a given payment method. -->
+    <string name="DonateToSignal__donation_amount_too_high">ยอดบริจาคสูงเกินไป</string>
+    <!-- Dialog body shown when a user tries to donate an amount higher than is allowed for a given payment method, place holder is the maximum -->
+    <string name="DonateToSignalFragment__you_can_send_up_to_s_via_bank_transfer">คุณสามารถบริจาคด้วยการโอนเงินผ่านระบบธนาคารได้สูงสุด %1$s กรุณาระบุยอดบริจาคใหม่หรือลองชำระเงินด้วยวิธีอื่น</string>
+
     <!-- Donation pill toggle monthly text -->
     <string name="DonationPillToggle__monthly">รายเดือน</string>
     <!-- Donation pill toggle one-time text -->
@@ -5623,10 +5842,144 @@
     <plurals name="GatewaySelectorBottomSheet__get_a_s_badge_for_d_days">
         <item quantity="other">รับโล่ %1$s เป็นเวลา %2$d วัน</item>
     </plurals>
+    <!-- Button label for paying with a bank transfer -->
+    <string name="GatewaySelectorBottomSheet__bank_transfer">โอนเงินผ่านระบบธนาคาร</string>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">บัตรเครดิตหรือบัตรเดบิต</string>
     <!-- Sheet summary when giving donating for a friend -->
     <string name="GatewaySelectorBottomSheet__donate_for_a_friend">บริจาคในนามของเพื่อน</string>
+    <!-- Button label for paying with iDEAL -->
+    <string name="GatewaySelectorBottomSheet__ideal">iDEAL</string>
+
+    <!-- Dialog title for launching external intent -->
+    <string name="ExternalNavigationHelper__leave_signal_to_confirm_payment">ออกจากแอป Signal เพื่อยืนยันการบริจาคหรือไม่</string>
+    <string name="ExternalNavigationHelper__once_this_payment_is_confirmed">เมื่อยืนยันเรียบร้อยแล้ว โปรดเปิดแอป Signal อีกครั้งเพื่อดำเนินการบริจาคของคุณให้เสร็จสิ้น</string>
+
+    <!-- IdealBank -->
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__abn_amro">ABN AMRO</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__asn_bank">ASN Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__bunq">bunq</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__ing">ING</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__knab">Knab</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__n26">N26</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__rabobank">Rabobank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__regiobank">RegioBank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__revolut">Revolut</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__sns_bank">SNS Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__triodos_bank">Triodos Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__van_lanschot">Van Lanschot Kempen</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__yoursafe">Yoursafe</string>
+
+    <!-- BankTransferMandateFragment -->
+    <!-- Title of screen displaying the bank transfer mandate -->
+    <string name="BankTransferMandateFragment__bank_transfer">โอนเงินผ่านระบบธนาคาร</string>
+    <!-- Subtitle of screen displaying the bank transfer mandate, placeholder is \'Learn more\' -->
+    <string name="BankTransferMandateFragment__stripe_processes_donations">Stripe เป็นผู้ดำเนินงานการรับเงินบริจาคของ Signal โดย Signal จะไม่รวบรวมหรือจัดเก็บข้อมูลส่วนบุคคลของคุณ %1$s</string>
+    <!-- Subtitle learn more of screen displaying bank transfer mandate -->
+    <string name="BankTransferMandateFragment__learn_more">เรียนรู้เพิ่มเติม</string>
+    <!-- Button label to continue with transfer -->
+    <string name="BankTransferMandateFragment__agree">ยอมรับ</string>
+    <!-- Button label to read more of the bank mandate that is currently off screen -->
+    <string name="BankTransferMandateFragment__read_more">อ่านเพิ่มเติม</string>
+    <!-- Text displayed when mandate load fails -->
+    <string name="BankTransferMandateFragment__failed_to_load_mandate">โหลดคำขอไม่สำเร็จ</string>
+
+    <!-- BankTransferDetailsFragment -->
+    <!-- Subtext explaining how email is used. Placeholder is \'Learn more\' -->
+    <string name="BankTransferDetailsFragment__enter_your_bank_details">โปรดกรอกข้อมูลธนาคารและอีเมลของคุณ โดย Stripe จะส่งข้อมูลอัปเดตเกี่ยวกับการบริจาคของคุณไปยังอีเมลนี้ %1$s</string>
+    <!-- Subtext learn more link text -->
+    <string name="BankTransferDetailsFragment__learn_more">เรียนรู้เพิ่มเติม</string>
+    <!-- Text field label for name on bank account -->
+    <string name="BankTransferDetailsFragment__name_on_bank_account">ชื่อบัญชีธนาคาร</string>
+    <!-- Text field label for IBAN -->
+    <string name="BankTransferDetailsFragment__iban">หมายเลข IBAN</string>
+    <!-- Text field label for email -->
+    <string name="BankTransferDetailsFragment__email">อีเมล</string>
+    <!-- Text label for button to show user how to find their IBAN -->
+    <string name="BankTransferDetailsFragment__find_account_info">ค้นหาข้อมูลบัญชี</string>
+    <!-- Donate button label for monthly subscription -->
+    <string name="BankTransferDetailsFragment__donate_s_month">บริจาค %1$s/เดือน</string>
+    <!-- Donate button label for one-time -->
+    <string name="BankTransferDetailsFragment__donate_s">บริจาค %1$s</string>
+    <!-- Error label for IBAN field when number is too short -->
+    <string name="BankTransferDetailsFragment__iban_is_too_short">หมายเลข IBAN สั้นเกินไป</string>
+    <!-- Error label for IBAN field when number is too long -->
+    <string name="BankTransferDetailsFragment__iban_is_too_long">หมายเลข IBAN ยาวเกินไป</string>
+    <!-- Error label for IBAN field when country is not supported -->
+    <string name="BankTransferDetailsFragment__iban_country_code_is_not_supported">ไม่รองรับรหัสประเทศของหมายเลข IBAN ที่ระบุ</string>
+    <!-- Error label for IBAN field when number is invalid -->
+    <string name="BankTransferDetailsFragment__invalid_iban">หมายเลข IBAN ไม่ถูกต้อง</string>
+    <!-- Error label for name field when name is not at least two characters long -->
+    <string name="BankTransferDetailsFragment__minimum_2_characters">ต้องมีอักขระ 2 ตัวขึ้นไป</string>
+    <!-- Error label for email field when email is not valid -->
+    <string name="BankTransferDetailsFragment__invalid_email_address">อีเมลไม่ถูกต้อง</string>
+
+    <!-- IdealTransferDetailsFragment -->
+    <!-- Title of the screen, displayed in the toolbar -->
+    <string name="IdealTransferDetailsFragment__ideal">iDEAL</string>
+    <!-- Subtitle of the screen, displayed below the toolbar. Placeholder is for \'learn more\' -->
+    <string name="IdealTransferDetailsFragment__enter_your_bank">โปรดกรอกข้อมูลธนาคาร ชื่อ และอีเมลของคุณ Stripe จะส่งข้อมูลอัปเดตเกี่ยวกับการบริจาคของคุณไปยังอีเมลนี้ %1$s</string>
+    <!-- Subtitle of the screen, displayed below the toolbar. Placeholder is for \'learn more\' -->
+    <string name="IdealTransferDetailsFragment__enter_your_bank_details_one_time">โปรดกรอกข้อมูลธนาคารของคุณ โดย Signal จะไม่รวบรวมหรือจัดเก็บข้อมูลส่วนบุคคลของคุณ %1$s</string>
+    <!-- Subtitle learn-more button displayed inline with the subtitle text -->
+    <string name="IdealTransferDetailsFragment__learn_more">เรียนรู้เพิ่มเติม</string>
+    <!-- Hint label for text entry box for name on bank account -->
+    <string name="IdealTransferDetailsFragment__name_on_bank_account">ชื่อบัญชีธนาคาร</string>
+    <!-- Hint label for text entry box for email -->
+    <string name="IdealTransferDetailsFragment__email">อีเมล</string>
+    <!-- Default label for bank selection -->
+    <string name="IdealTransferDetailsFragment__choose_your_bank">เลือกธนาคาร</string>
+
+    <!-- IdealTransferDetailsBankSelectionDialogFragment -->
+    <!-- Title of the screen, displayed in the toolbar -->
+    <string name="IdealTransferDetailsBankSelectionDialogFragment__choose_your_bank">เลือกธนาคาร</string>
+
+    <!-- Title of bottom sheet for finding account information -->
+    <string name="FindAccountInfoSheet__find_your_account_information">ค้นหาข้อมูลบัญชีของคุณ</string>
+    <!-- Body of bottom sheet for finding account information -->
+    <string name="FindAccountInfoSheet__look_for_your_iban_at">ตรวจสอบหมายเลข IBAN ซึ่งจะระบุอยู่ที่ด้านบนของรายการเดินบัญชี (Bank Statement) โดยหมายเลข IBAN จะมีอักขระไม่เกิน 34 ตัว ชื่อที่กรอกควรตรงกับชื่อเต็มของคุณตามที่ระบุในบัญชีธนาคาร โปรดติดต่อธนาคารของคุณสำหรับข้อมูลเพิ่มเติม</string>
+
+    <!-- Title of donation pending sheet displayed after making a bank transfer -->
+    <string name="DonationPendingBottomSheet__donation_pending">การบริจาคอยู่ในสถานะรออนุมัติ</string>
+    <!-- Top text block of donation pending sheet displayed after subscribing via a bank transfer. Placeholder is the badge name. -->
+    <string name="DonationPendingBottomSheet__your_monthly_donation_is_pending">กำลังรออนุมัติการบริจาครายเดือนของคุณ คุณจะแสดงโล่ %1$s บนโปรไฟล์ได้เมื่อเราได้รับการบริจาคเรียบร้อยแล้ว</string>
+    <!-- Top text block of donation pending sheet displayed after one-time donation via a bank transfer. Placeholder is the badge name. -->
+    <string name="DonationPendingBottomSheet__your_one_time_donation_is_pending">กำลังรออนุมัติการบริจาคแบบครั้งเดียวของคุณ คุณจะแสดงโล่ %1$s บนโปรไฟล์ได้เมื่อเราได้รับการบริจาคเรียบร้อยแล้ว</string>
+    <!-- Bottom text block of donation pending sheet displayed after donating via a bank transfer. Placeholder is for learn more. -->
+    <string name="DonationPendingBottomSheet__bank_transfers_usually_take">การโอนเงินผ่านระบบธนาคารมักใช้เวลาดำเนินการประมาณ 1 วันทำการ %1$s</string>
+    <!-- Learn more text for donation pending sheet displayed after donating via a bank transfer. -->
+    <string name="DonationPendingBottomSheet__learn_more">เรียนรู้เพิ่มเติม</string>
+    <!-- Confirmation button for donation pending sheet displayed after donating via a bank transfer. -->
+    <string name="DonationPendingBottomSheet__done">เสร็จสิ้น</string>
+
+    <!-- Title of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__donation_couldnt_be_processed">ไม่สามารถดำเนินการบริจาคได้</string>
+    <!-- Text block of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__were_having_trouble">เราประสบปัญหาในการดำเนินการโอนเงินผ่านระบบธนาคารของคุณ โดยคุณยังไม่ถูกเรียกเก็บเงินในกรณีนี้ ลองชำระเงินด้วยวิธีอื่น หรือติดต่อธนาคารเพื่อขอข้อมูลเพิ่มเติม</string>
+    <!-- Button label for retry button of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__try_again">ลองอีกครั้ง</string>
+    <!-- Button label for not now button of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__not_now">ไว้ทีหลัง</string>
+
+    <!-- Title of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed -->
+    <string name="DonationCompletedBottomSheet__donation_complete">บริจาคสำเร็จแล้ว</string>
+    <!-- Text block of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed -->
+    <string name="DonationCompleteBottomSheet__your_bank_transfer_was_received">เราได้รับเงินบริจาคที่โอนเงินผ่านระบบธนาคารของคุณแล้ว เลือกแสดงโล่นี้บนโปรไฟล์เพื่อให้ทุกคนทราบถึงการสนับสนุนของคุณ</string>
+    <!-- Button text of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed to dismiss sheet -->
+    <string name="DonationCompleteBottomSheet__done">เสร็จสิ้น</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">กำลังยกเลิก…</string>
@@ -5765,6 +6118,8 @@
     <string name="CallLogAdapter__outgoing">โทรออก</string>
     <!-- Displayed for missed calls -->
     <string name="CallLogAdapter__missed">ไม่ได้รับ</string>
+    <!-- Displayed for missed calls declined by notification profile -->
+    <string name="CallLogAdapter__missed_notification_profile">สายที่ไม่ได้รับระหว่างใช้โปรไฟล์การแจ้งเตือน</string>
     <!-- Displayed on Group Call button if user is not in the call -->
     <string name="CallLogAdapter__join">เข้าร่วม</string>
     <!-- Displayed on Group Call button if user is in the call -->
@@ -5836,6 +6191,8 @@
     <string name="CallLogFragment__no_calls">ไม่มีการโทร</string>
     <!-- Shown during empty state -->
     <string name="CallLogFragment__get_started_by_calling_a_friend">เริ่มต้นด้วยการโทรหาเพื่อนของคุณ</string>
+    <!-- Displayed as a message in a dialog when deleting multiple items -->
+    <string name="CallLogFragment__call_links_youve_created">ผู้ติดต่อที่มีลิงก์การโทรที่คุณสร้างจะไม่สามารถใช้ลิงก์ดังกล่าวได้อีกต่อไป</string>
 
     <!-- New call activity -->
     <!-- Activity title in title bar -->
@@ -5867,6 +6224,8 @@
     <string name="CallPreference__group_call">โทรกลุ่ม</string>
     <!-- Missed group call in call info -->
     <string name="CallPreference__missed_group_call">สายโทรกลุ่มที่ไม่ได้รับ</string>
+    <!-- Missed group call while notification profile on in call info -->
+    <string name="CallPreference__missed_group_call_notification_profile">สายโทรกลุ่มที่ไม่ได้รับระหว่างใช้โปรไฟล์การแจ้งเตือน</string>
     <!-- Incoming group call in call info -->
     <string name="CallPreference__incoming_group_call">สายโทรกลุ่มขาเข้า</string>
     <!-- Outgoing group call in call info -->
@@ -5897,8 +6256,10 @@
     <string name="CreateCallLinkBottomSheetDialogFragment__signal_call">สาย Signal</string>
     <!-- Displayed on a small button to allow user to instantly join call -->
     <string name="CreateCallLinkBottomSheetDialogFragment__join">เข้าร่วม</string>
-    <!-- Option to open a full screen dialog to enter a call name -->
+    <!-- Option to open a full screen dialog to add a call name -->
     <string name="CreateCallLinkBottomSheetDialogFragment__add_call_name">เพิ่มชื่อการโทร</string>
+    <!-- Option to open a full screen dialog to edit a call name -->
+    <string name="CreateCallLinkBottomSheetDialogFragment__edit_call_name">แก้ไขชื่อการโทร</string>
     <!-- Toggle to require approval for all members before joining -->
     <string name="CreateCallLinkBottomSheetDialogFragment__approve_all_members">อนุมัติสำหรับสมาชิกทุกคน</string>
     <!-- Row label to share the link via Signal -->
@@ -5913,6 +6274,12 @@
     <string name="CreateCallLinkBottomSheetDialogFragment__failed_to_open_share_sheet">ไม่สามารถแชร์ลิงก์การโทร</string>
     <!-- Displayed when we copy the call link to the clipboard -->
     <string name="CreateCallLinkBottomSheetDialogFragment__copied_to_clipboard">คัดลอกไปยังคลิปบอร์ดแล้ว</string>
+
+    <!-- CallLinkIncomingRequestSheet -->
+    <!-- Displayed as line item in sheet for approving or denying a single user -->
+    <string name="CallLinkIncomingRequestSheet__approve_entry">อนุมัติให้เข้าร่วม</string>
+    <!-- Displayed as line item in sheet for approving or denying a single user -->
+    <string name="CallLinkIncomingRequestSheet__deny_entry">ปฏิเสธการเข้าร่วม</string>
 
     <!-- EditCallLinkNameDialogFragment -->
     <!-- App bar title for editing a call name -->
@@ -5933,9 +6300,9 @@
     <!-- Title shown at top of bottom sheet dialog for displaying a message\'s edit history -->
     <string name="EditMessageHistoryDialog_title">ประวัติการแก้ไข</string>
     <!-- Title of dialog shown alerting user that edit message is in beta only -->
-    <string name="SendingEditMessageBetaOnlyDialog_title">สำหรับ Signal รุ่นเบต้าเท่านั้น</string>
+    <string name="SendingEditMessageBetaOnlyDialog_title">แก้ไขข้อความ</string>
     <!-- Body of dialog shown alerting user that edit message is in beta only and only sent to beta users. -->
-    <string name="SendingEditMessageBetaOnlyDialog_body">ฟีเจอร์แก้ไขข้อความมีให้บริการเฉพาะในผู้ใช้ Signal รุ่นเบต้าเท่านั้น และผู้ใช้ Signal รุ่นเบต้าเวอร์ชันล่าสุดเท่านั้นที่จะเห็นข้อความที่แก้ไขแล้ว</string>
+    <string name="SendingEditMessageBetaOnlyDialog_body">ผู้ติดต่อต้องใช้ Signal เวอร์ชันล่าสุดจึงจะสามารถเห็นข้อความที่คุณแก้ไขแล้ว และคนคนนั้นจะเห็นว่าคุณแก้ไขข้อความ</string>
     <!-- Button to cancel sending edit message as it is beta only -->
     <string name="SendingEditMessageBetaOnlyDialog_cancel">ยกเลิก</string>
     <!-- Button to continue sending edit message despite it being beta only -->
@@ -5970,6 +6337,16 @@
     <string name="UsernameLinkSettings_username_copied_toast">คัดลอกชื่อผู้ใช้แล้ว</string>
     <!-- Content of a toast that will show after the username link is copied to the clipboard -->
     <string name="UsernameLinkSettings_link_copied_toast">คัดลอกลิงก์แล้ว</string>
+    <!-- Content of a text field that is shown when the user has not yet set a username link -->
+    <string name="UsernameLinkSettings_link_not_set_label">ยังไม่ได้ตั้งค่าลิงก์</string>
+    <!-- Content of a text field that is shown when the user is actively resetting the username link and waiting for the operation to finish -->
+    <string name="UsernameLinkSettings_resetting_link_label">กำลังรีเซ็ตลิงก์…</string>
+    <!-- Title of a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_title">รีเซ็ตคิวอาร์โค้ดใช่หรือไม่</string>
+    <!-- Body of a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_body">หากคุณรีเซ็ตคิวอาร์โค้ด คิวอาร์โค้ดและลิงก์ที่มีอยู่เดิมของคุณจะใช้งานไม่ได้อีกต่อไป</string>
+    <!-- Label for the confirmation button on a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_confirm_button">รีเซ็ต</string>
     <!-- Button label for a button that will reset your username and give you a new link -->
     <string name="UsernameLinkSettings_reset_button_label">รีเซ็ต</string>
     <!-- Button label for a button that indicates that the user is done changing the current setting -->
@@ -5986,8 +6363,21 @@
     <string name="UsernameLinkSettings_qr_result_invalid">คิวอาร์โค้ดไม่ถูกต้อง</string>
     <!-- Body of a dialog that is displayed when the username we looked up could not be found. -->
     <string name="UsernameLinkSettings_qr_result_not_found">ไม่พบชื่อผู้ใช้ %1$s</string>
+    <!-- Body of a dialog that is displayed when the username we looked up could not be found and we also could not parse the username. -->
+    <string name="UsernameLinkSettings_qr_result_not_found_no_username">ไม่พบผู้ใช้คนนี้</string>
     <!-- Body of a dialog that is displayed when we experienced a network error when looking up a username. -->
     <string name="UsernameLinkSettings_qr_result_network_error">พบข้อผิดพลาดของเครือข่าย โปรดลองอีกครั้ง</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because you had no internet. -->
+    <string name="UsernameLinkSettings_reset_link_result_network_unavailable">คุณไม่ได้เชื่อมต่ออินเทอร์เน็ต ไม่สามารถรีเซ็ตลิงก์ของคุณได้ โปรดลองอีกครั้งในภายหลัง</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because of a transient network issue. -->
+    <string name="UsernameLinkSettings_reset_link_result_network_error">เกิดข้อผิดพลาดด้านเครือข่ายขณะพยายามรีเซ็ตลิงก์ของคุณโปรดลองอีกครั้งในภายหลัง</string>
+
+    <!-- Explanatory text at the top of a bottom sheet describing how username links work -->
+    <string name="UsernameLinkShareBottomSheet_title">ทุกคนที่มีลิงก์นี้จะสามารถมองเห็นชื่อผู้ใช้ของคุณและเริ่มแชทกับคุณได้ เราขอแนะนำให้แชร์ลิงก์นี้กับคนที่คุณไว้วางใจเท่านั้น</string>
+    <!-- A button label for a button that, when pressed, will copy your username link to the clipboard -->
+    <string name="UsernameLinkShareBottomSheet_copy_link">คัดลอกลิงก์</string>
+    <!-- A button label for a button that, when pressed, will open a share sheet for sharing your username link -->
+    <string name="UsernameLinkShareBottomSheet_share">แบ่งปัน</string>
 
     <!-- PendingParticipantsView -->
     <!-- Displayed in the popup card when a remote user attempts to join a call link -->
@@ -6006,8 +6396,32 @@
     </plurals>
     <!-- Content description for rejecting a user -->
     <string name="PendingParticipantsBottomSheet__reject">ปฏิเสธ</string>
-    <!-- Content desccription for confirming a user -->
+    <!-- Content description for confirming a user -->
     <string name="PendingParticipantsBottomSheet__approve">อนุมัติ</string>
+
+    <!-- Title of a megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls -->
+    <string name="GrantFullScreenIntentPermission_megaphone_title">เปิดการแจ้งเตือนแบบเต็มหน้าจอหรือไม่</string>
+    <!-- Body of a megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls -->
+    <string name="GrantFullScreenIntentPermission_megaphone_body">ไม่พลาดการโทรจากผู้ติดต่อและกลุ่มของคุณอีกต่อไป</string>
+    <!-- Button on the megaphone megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls that starts the fix process -->
+    <string name="GrantFullScreenIntentPermission_megaphone_turn_on">เปิดใช้งาน</string>
+    <!-- Title of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_title">เปิดการแจ้งเตือนแบบเต็มหน้าจอ</string>
+    <!-- Subtitle of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_subtitle">วิธีเปิดใช้งานเพื่อรับการแจ้งเตือนการโทรจากผู้ติดต่อและกลุ่มของคุณ:</string>
+    <!-- Step 2 of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications, it indicates the name of the setting that needs to be re-enabled -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_step2">2. %1$s อนุญาตสิทธิ์การแจ้งเตือนแบบเต็มหน้าจอ</string>
+
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, title for dialog -->
+    <string name="MonthlyDonationCanceled__title">ยกเลิกการบริจาครายเดือนแล้ว</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, body for dialog. First placeholder is a payment related error message. Second placeholder is \'learn more\' -->
+    <string name="MonthlyDonationCanceled__message">การบริจาครายเดือนของคุณถูกยกเลิก %1$s\n\nโล่ของคุณจะไม่แสดงบนโปรไฟล์อีกต่อไป %2$s</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, learn more used in placeholder for body for dialog. -->
+    <string name="MonthlyDonationCanceled__learn_more">เรียนรู้เพิ่มเติม</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, primary button to renew subscription with new data -->
+    <string name="MonthlyDonationCanceled__renew_button">ต่ออายุการเป็นสมาชิก</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, second button to dismiss the dialog entirely -->
+    <string name="MonthlyDonationCanceled__not_now_button">ไว้ทีหลัง</string>
 
     <!-- EOF -->
 </resources>

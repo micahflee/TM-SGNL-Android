@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatDelegate;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
-import org.tm.archive.keyvalue.SettingsValues;
 import org.tm.archive.keyvalue.SettingsValues.Theme;
 import org.tm.archive.keyvalue.SignalStore;
 

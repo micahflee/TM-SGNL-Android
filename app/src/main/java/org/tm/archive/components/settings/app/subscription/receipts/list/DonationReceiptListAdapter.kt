@@ -2,6 +2,7 @@ package org.tm.archive.components.settings.app.subscription.receipts.list
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import org.tm.archive.R
 import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.SectionHeaderPreference
@@ -32,6 +33,11 @@ class DonationReceiptListAdapter(onModelClick: (DonationReceiptListItem.Model) -
   }
 
   override fun onBindHeaderViewHolder(viewHolder: SectionHeaderPreferenceViewHolder?, position: Int, type: Int) {
+    viewHolder?.itemView?.run {
+      val color = ContextCompat.getColor(context, R.color.signal_colorBackground)
+      setBackgroundColor(color)
+    }
+
     viewHolder?.bind(SectionHeaderPreference(DSLSettingsText.from(getHeaderId(position).toString())))
   }
 }

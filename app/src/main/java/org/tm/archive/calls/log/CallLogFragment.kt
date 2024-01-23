@@ -17,6 +17,7 @@ import androidx.core.app.SharedElementCallback
 import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.transition.TransitionInflater
@@ -42,6 +43,7 @@ import org.tm.archive.components.menu.ActionItem
 import org.tm.archive.components.settings.app.AppSettingsActivity
 import org.tm.archive.components.settings.app.notifications.manual.NotificationProfileSelectionFragment
 import org.tm.archive.components.settings.conversation.ConversationSettingsActivity
+import org.tm.archive.conversation.ConversationUpdateTick
 import org.tm.archive.conversation.SignalBottomActionBarController
 import org.tm.archive.conversationlist.ConversationFilterBehavior
 import org.tm.archive.conversationlist.chatfilter.ConversationFilterSource
@@ -57,6 +59,7 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.stories.tabs.ConversationListTab
 import org.tm.archive.stories.tabs.ConversationListTabsViewModel
 import org.tm.archive.util.CommunicationActions
+import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.doAfterNextLayout
 import org.tm.archive.util.fragments.requireListener
@@ -74,11 +77,13 @@ class CallLogFragment : Fragment(R.layout.call_log_fragment), CallLogAdapter.Cal
     private val TAG = Log.tag(CallLogFragment::class.java)
   }
 
-  private val viewModel: CallLogViewModel by viewModels()
+  private val viewModel: CallLogViewModel by activityViewModels()
   private val binding: CallLogFragmentBinding by ViewBinderDelegate(CallLogFragmentBinding::bind)
   private val disposables = LifecycleDisposable()
   private val callLogContextMenu = CallLogContextMenu(this, this)
   private val callLogActionMode = CallLogActionMode(CallLogActionModeCallback())
+  private val conversationUpdateTick: ConversationUpdateTick = ConversationUpdateTick(this::onTimestampTick)
+  private var callLogAdapter: CallLogAdapter? = null
 
   private lateinit var signalBottomActionBarController: SignalBottomActionBarController
 
@@ -113,20 +118,22 @@ class CallLogFragment : Fragment(R.layout.call_log_fragment), CallLogAdapter.Cal
     requireActivity().addMenuProvider(menuProvider, viewLifecycleOwner)
     initializeSharedElementTransition()
 
-    val adapter = CallLogAdapter(this)
+    viewLifecycleOwner.lifecycle.addObserver(conversationUpdateTick)
+
+    val callLogAdapter = CallLogAdapter(this)
     disposables.bindTo(viewLifecycleOwner)
-    adapter.setPagingController(viewModel.controller)
+    callLogAdapter.setPagingController(viewModel.controller)
 
     val scrollToPositionDelegate = ScrollToPositionDelegate(
       recyclerView = binding.recycler,
-      canJumpToPosition = { adapter.isAvailableAround(it) }
+      canJumpToPosition = { callLogAdapter.isAvailableAround(it) }
     )
 
     disposables += scrollToPositionDelegate
     disposables += Flowables.combineLatest(viewModel.data, viewModel.selected)
       .observeOn(AndroidSchedulers.mainThread())
       .subscribe { (data, selected) ->
-        val filteredCount = adapter.submitCallRows(
+        val filteredCount = callLogAdapter.submitCallRows(
           data,
           selected,
           scrollToPositionDelegate::notifyListCommitted
@@ -145,7 +152,8 @@ class CallLogFragment : Fragment(R.layout.call_log_fragment), CallLogAdapter.Cal
         }
       }
 
-    binding.recycler.adapter = adapter
+    binding.recycler.adapter = callLogAdapter
+    this.callLogAdapter = callLogAdapter
 
     requireListener<Material3OnScrollHelperBinder>().bindScrollHelper(binding.recycler)
     binding.fab.setOnClickListener {
@@ -198,6 +206,10 @@ class CallLogFragment : Fragment(R.layout.call_log_fragment), CallLogAdapter.Cal
     viewModel.markAllCallEventsRead()
   }
 
+  private fun onTimestampTick() {
+    callLogAdapter?.onTimestampTick()
+  }
+
   private fun initializeSharedElementTransition() {
     ViewCompat.setTransitionName(binding.fab, "new_convo_fab")
     ViewCompat.setTransitionName(binding.fabSharedElementTarget, "camera_fab")
@@ -230,6 +242,13 @@ class CallLogFragment : Fragment(R.layout.call_log_fragment), CallLogAdapter.Cal
     val count = callLogActionMode.getCount()
     MaterialAlertDialogBuilder(requireContext())
       .setTitle(resources.getQuantityString(R.plurals.CallLogFragment__delete_d_calls, count, count))
+      .setMessage(
+        if (FeatureFlags.adHocCalling()) {
+          getString(R.string.CallLogFragment__call_links_youve_created)
+        } else {
+          null
+        }
+      )
       .setPositiveButton(R.string.CallLogFragment__delete) { _, _ ->
         performDeletion(count, viewModel.stageSelectionDeletion())
         callLogActionMode.end()
@@ -303,6 +322,12 @@ class CallLogFragment : Fragment(R.layout.call_log_fragment), CallLogAdapter.Cal
       val progress = 1 - verticalOffset.toFloat() / -layout.height
       binding.pullView.onUserDrag(progress)
     }
+
+    if (viewModel.filterSnapshot != CallLogFilter.ALL) {
+      binding.root.doAfterNextLayout {
+        binding.pullView.openImmediate()
+      }
+    }
   }
 
   override fun onCreateACallLinkClicked() {
@@ -363,6 +388,13 @@ class CallLogFragment : Fragment(R.layout.call_log_fragment), CallLogAdapter.Cal
   override fun deleteCall(call: CallLogRow) {
     MaterialAlertDialogBuilder(requireContext())
       .setTitle(resources.getQuantityString(R.plurals.CallLogFragment__delete_d_calls, 1, 1))
+      .setMessage(
+        if (FeatureFlags.adHocCalling()) {
+          getString(R.string.CallLogFragment__call_links_youve_created)
+        } else {
+          null
+        }
+      )
       .setPositiveButton(R.string.CallLogFragment__delete) { _, _ ->
         performDeletion(1, viewModel.stageCallDeletion(call))
       }

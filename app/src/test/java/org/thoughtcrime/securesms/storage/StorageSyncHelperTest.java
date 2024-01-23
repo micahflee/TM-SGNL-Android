@@ -13,7 +13,6 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.storage.StorageSyncHelper.IdDifferenceResult;
 import org.tm.archive.util.FeatureFlags;
-import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 import org.whispersystems.signalservice.api.storage.SignalAccountRecord;
 import org.whispersystems.signalservice.api.storage.SignalContactRecord;

@@ -50,7 +50,6 @@ import org.tm.archive.crypto.AttachmentSecretProvider;
 import org.tm.archive.database.NoExternalStorageException;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.jobmanager.impl.DataRestoreConstraint;
-import org.tm.archive.jobmanager.impl.DataRestoreConstraintObserver;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.notifications.NotificationChannels;
 import org.tm.archive.registration.viewmodel.RegistrationViewModel;
@@ -289,6 +288,11 @@ public final class RestoreBackupFragment extends LoggingFragment {
           SQLiteDatabase database = SignalDatabase.getBackupDatabase();
 
           BackupPassphrase.set(context, passphrase);
+
+          if (!FullBackupImporter.validatePassphrase(context, backup.getUri(), passphrase)) {
+            return BackupImportResult.FAILURE_UNKNOWN;
+          }
+
           FullBackupImporter.importFile(context,
                                         AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret(),
                                         database,

@@ -1,6 +1,6 @@
 package org.tm.archive.keyvalue;
 
 public enum CertificateType {
-  UUID_AND_E164,
-  UUID_ONLY
+  ACI_AND_E164,
+  ACI_ONLY
 }

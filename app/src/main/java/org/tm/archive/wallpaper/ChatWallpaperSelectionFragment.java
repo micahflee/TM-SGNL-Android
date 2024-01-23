@@ -18,6 +18,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.tm.archive.R;
+import org.tm.archive.permissions.PermissionCompat;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.wallpaper.crop.WallpaperImageSelectionActivity;
 
@@ -76,7 +77,7 @@ public class ChatWallpaperSelectionFragment extends Fragment {
 
   private void askForPermissionIfNeededAndLaunchPhotoSelection() {
     Permissions.with(this)
-               .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+               .request(PermissionCompat.forImages())
                .ifNecessary()
                .onAllGranted(() -> {
                  startActivityForResult(WallpaperImageSelectionActivity.getIntent(requireContext(), viewModel.getRecipientId()), CHOOSE_WALLPAPER);

@@ -8,6 +8,7 @@ import org.tm.archive.badges.models.Badge
 import org.tm.archive.conversation.colors.AvatarColor
 import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.database.RecipientTable.MentionSetting
+import org.tm.archive.database.RecipientTable.PhoneNumberSharingState
 import org.tm.archive.database.RecipientTable.RegisteredState
 import org.tm.archive.database.RecipientTable.UnidentifiedAccessMode
 import org.tm.archive.database.RecipientTable.VibrateState
@@ -79,7 +80,8 @@ class RecipientDetails private constructor(
   @JvmField val isReleaseChannel: Boolean,
   @JvmField val needsPniSignature: Boolean,
   @JvmField val callLinkRoomId: CallLinkRoomId?,
-  @JvmField val groupRecord: Optional<GroupRecord>
+  @JvmField val groupRecord: Optional<GroupRecord>,
+  @JvmField val phoneNumberSharing: PhoneNumberSharingState
 ) {
 
   @VisibleForTesting
@@ -143,7 +145,8 @@ class RecipientDetails private constructor(
     isReleaseChannel = isReleaseChannel,
     needsPniSignature = record.needsPniSignature,
     callLinkRoomId = record.callLinkRoomId,
-    groupRecord = groupRecord
+    groupRecord = groupRecord,
+    phoneNumberSharing = record.phoneNumberSharing
   )
 
   companion object {
@@ -271,7 +274,8 @@ class RecipientDetails private constructor(
         needsPniSignature = false,
         isActiveGroup = false,
         callLinkRoomId = null,
-        groupRecord = Optional.empty()
+        groupRecord = Optional.empty(),
+        phoneNumberSharing = PhoneNumberSharingState.UNKNOWN
       )
     }
   }

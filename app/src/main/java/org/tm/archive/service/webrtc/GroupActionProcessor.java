@@ -24,7 +24,6 @@ import org.webrtc.PeerConnection;
 import org.webrtc.VideoTrack;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 import org.whispersystems.signalservice.api.push.ServiceId.ACI;
-import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -109,6 +108,8 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
         videoSink = new BroadcastVideoSink();
       }
 
+      long handRaisedTimestamp = callParticipant != null ? callParticipant.getHandRaisedTimestamp() : CallParticipant.HAND_LOWERED;
+
       builder.putParticipant(callParticipantId,
                              CallParticipant.createRemote(callParticipantId,
                                                           recipient,
@@ -117,6 +118,7 @@ public class GroupActionProcessor extends DeviceAwareActionProcessor {
                                                           device.getForwardingVideo() == null || device.getForwardingVideo(),
                                                           Boolean.FALSE.equals(device.getAudioMuted()),
                                                           Boolean.FALSE.equals(device.getVideoMuted()),
+                                                          handRaisedTimestamp,
                                                           device.getSpeakerTime(),
                                                           device.getMediaKeysReceived(),
                                                           device.getAddedTime(),

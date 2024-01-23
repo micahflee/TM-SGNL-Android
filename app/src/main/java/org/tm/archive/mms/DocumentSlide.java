@@ -12,7 +12,7 @@ import org.tm.archive.util.StorageUtil;
 
 public class DocumentSlide extends Slide {
 
-  public DocumentSlide(@NonNull Context context, @NonNull Attachment attachment) {
+  public DocumentSlide(@NonNull Attachment attachment) {
     super(attachment);
   }
 

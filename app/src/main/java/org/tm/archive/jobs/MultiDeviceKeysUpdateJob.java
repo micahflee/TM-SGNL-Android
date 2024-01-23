@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
@@ -74,7 +73,7 @@ public class MultiDeviceKeysUpdateJob extends BaseJob {
     SignalServiceMessageSender messageSender     = ApplicationDependencies.getSignalServiceMessageSender();
     StorageKey                 storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
-    messageSender.sendSyncMessage(SignalServiceSyncMessage.forKeys(new KeysMessage(Optional.ofNullable(storageServiceKey))),
+    messageSender.sendSyncMessage(SignalServiceSyncMessage.forKeys(new KeysMessage(Optional.ofNullable(storageServiceKey), Optional.of(SignalStore.svr().getOrCreateMasterKey()))),
                                   UnidentifiedAccessUtil.getAccessForSync(context));
   }
 

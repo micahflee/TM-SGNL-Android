@@ -41,7 +41,6 @@ import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.ReactionRecord;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
@@ -716,7 +715,7 @@ public final class ConversationReactionOverlay extends FrameLayout {
       items.add(new ActionItem(R.drawable.symbol_reply_24, getResources().getString(R.string.conversation_selection__menu_reply), () -> handleActionItemClicked(Action.REPLY)));
     }
 
-    if (FeatureFlags.editMessageSending() && menuState.shouldShowEditAction()) {
+    if (menuState.shouldShowEditAction()) {
       items.add(new ActionItem(R.drawable.symbol_edit_24, getResources().getString(R.string.conversation_selection__menu_edit), () -> handleActionItemClicked(Action.EDIT)));
     }
 

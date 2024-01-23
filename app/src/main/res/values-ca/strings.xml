@@ -15,6 +15,8 @@
   <!-- Removed by excludeNonTranslatables <string name="signal_me_username_url" translatable="false">https://signal.me/#u/%1$s</string> -->
   <!-- Removed by excludeNonTranslatables <string name="username_support_url" translatable="false">https://support.signal.org/hc/articles/5389476324250</string> -->
   <!-- Removed by excludeNonTranslatables <string name="export_account_data_url" translatable="false">https://support.signal.org/hc/articles/5538911756954</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="pending_transfer_url" translatable="false">https://support.signal.org/hc/articles/360031949872#pending</string> -->
+  <!-- Removed by excludeNonTranslatables <string name="donate_faq_url" translatable="false">https://support.signal.org/hc/articles/360031949872#donate</string> -->
 
     <string name="yes">Sí</string>
     <string name="no">No</string>
@@ -119,11 +121,8 @@
     <string name="BlockedUsersActivity__block">Bloquejar</string>
 
     <!-- CreditCardFragment -->
-    <!-- Title of fragment detailing the donation amount for one-time donation, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__donation_amount_s">Import de la donació: %1$s</string>
-    <!-- Title of fragment detailing the donation amount for monthly donation, displayed above the credit card text fields -->
-    <string name="CreditCardFragment__donation_amount_s_per_month">Import de la donació: %1$s/mes</string>
-    <!-- Explanation of how to fill in the form, displayed above the credit card text fields -->
+    <!-- Title of fragment -->
+    <string name="CreditCardFragment__credit_or_debit_card">Targeta de crèdit o dèbit</string>
     <!-- Explanation of how to fill in the form and a note about pii, displayed above the credit card text fields -->
     <string name="CreditCardFragment__enter_your_card_details">Introdueix la informació de la teva targeta. Signal no recopila ni emmagatzema la teva informació personal.</string>
     <!-- Displayed as a hint in the card number text field -->
@@ -148,8 +147,18 @@
     <string name="CreditCardFragment__year_required">Has d\'introduir l\'any</string>
     <!-- Error displayed under the card expiry text field when the expiry year is invalid -->
     <string name="CreditCardFragment__invalid_year">Any no vàlid</string>
-    <!-- Button label to confirm credit card input and proceed with payment -->
-    <string name="CreditCardFragment__continue">Continuar</string>
+    <!-- Button label to confirm credit card input and proceed with one-time payment -->
+    <string name="CreditCardFragment__donate_s">Fer donació de %1$s</string>
+    <!-- Button label to confirm credit card input and proceed with subscription payment -->
+    <string name="CreditCardFragment__donate_s_month">Fer donació de %1$s/mes</string>
+
+    <!-- OneTimeDonationPreference -->
+    <!-- Preference title with placeholder for amount. -->
+    <string name="OneTimeDonationPreference__one_time_s">Pagament únic de %1$s</string>
+    <!-- Preference subtitle when donation is pending -->
+    <string name="OneTimeDonationPreference__donation_pending">Donació pendent</string>
+    <!-- Preference subtitle when donation is processing -->
+    <string name="OneTimeDonationPreference__donation_processing">Donació en tràmit</string>
 
     <!-- BlockUnblockDialog -->
     <string name="BlockUnblockDialog_block_and_leave_s">Vols bloquejar i abandonar %1$s?</string>
@@ -314,8 +323,12 @@
     <string name="ConversationItem_cant_download_image_you_will_need_to_send_it_again">No es pot descarregar la imatge. Hauràs de tornar-la a enviar.</string>
     <!-- Dialog error message shown when user can\'t download a their own video message via a linked device due to a permanent failure (e.g., unable to decrypt) -->
     <string name="ConversationItem_cant_download_video_you_will_need_to_send_it_again">No es pot descarregar el vídeo. Hauràs de tornar-lo a enviar.</string>
-    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. The timestamp will go from \'11m\' to \'edited 11m\' -->
-    <string name="ConversationItem_edited_timestamp_footer">Editat fa %1$s</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. The timestamp represents a message that has been edited within the last minute. -->
+    <string name="ConversationItem_edited_now_timestamp_footer">Editat ara</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. This is displayed when the edit has occurred between 1-59 minutes ago. -->
+    <string name="ConversationItem_edited_relative_timestamp_footer">Editat fa %1$s</string>
+    <!-- Display as the timestamp footer in a message bubble in a conversation when a message has been edited. This is displayed when the edit occurred at least 1 hour ago. -->
+    <string name="ConversationItem_edited_absolute_timestamp_footer">Editat fa %1$s</string>
     <!-- Displayed if the link preview in the conversation item is for a call link call -->
     <string name="ConversationItem__join_call">Unir-me a la trucada</string>
 
@@ -349,6 +362,8 @@
     <string name="ConversationActivity_transport_insecure_mms">MMS no segur</string>
     <!-- A title for the option to send an SMS with a placeholder to put the name of their SIM card -->
     <string name="ConversationActivity_transport_signal">Missatge del Signal</string>
+    <!-- The content description for button to send a message in a conversation -->
+    <string name="ConversationActivity_send_message_content_description">Envia el missatge</string>
     <string name="ConversationActivity_lets_switch_to_signal">Canviem al Signal, %1$s</string>
     <string name="ConversationActivity_specify_recipient">Trieu un contacte</string>
     <string name="ConversationActivity_attachment_exceeds_size_limits">El fitxer adjunt excedeix la mida màxima per a aquest tipus de missatges.</string>
@@ -396,6 +411,8 @@
 
     <string name="ConversationActivity_error_sending_media">Error en enviar contingut</string>
 
+    <!-- Message shown when opening an MMS group conversation with SMS disabled and there are no exported messages -->
+    <string name="ConversationActivity__sms_messaging_is_no_longer_supported">Els missatges SMS ja no són compatibles amb Signal.</string>
     <!-- Message shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
     <string name="ConversationActivity__sms_messaging_is_no_longer_supported_in_signal_invite_s_to_to_signal_to_keep_the_conversation_here">Els missatges SMS ja no són compatibles amb Signal. Convida %1$s a Signal per mantenir la conversa aquí.</string>
     <!-- Action button shown when opening an SMS conversation with SMS disabled and there are no exported messages -->
@@ -461,7 +478,7 @@
     <string name="ConversationFragment_failed_to_open_message">Ha fallat obrir el missatge.</string>
     <string name="ConversationFragment_you_can_swipe_to_the_right_reply">Podeu lliscar cap a la dreta en qualsevol missatge per respondre ràpidament.</string>
     <string name="ConversationFragment_you_can_swipe_to_the_left_reply">Podeu lliscar cap a l’esquerra en qualsevol missatge per respondre ràpidament.</string>
-    <string name="ConversationFragment_outgoing_view_once_media_files_are_automatically_removed">Els fitxers multimèdia d\'una sola visualització se suprimeixen automàticament un cop enviats.</string>
+    <string name="ConversationFragment_view_once_media_is_deleted_after_sending">Els arxius multimèdia d\'una sola visualització s\'eliminen un cop han estat enviats</string>
     <string name="ConversationFragment_you_already_viewed_this_message">Ja has vist aquest missatge</string>
     <string name="ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation">Pots afegir notes per a tu mateix en aquest xat. Si hi ha algun dispositiu enllaçat, s\'hi sincronitzaran les notes noves.</string>
     <string name="ConversationFragment__d_group_members_have_the_same_name">%1$d membres del grup tenen el mateix nom.</string>
@@ -634,6 +651,8 @@
     <!-- Show percentage of completion of backup -->
     <string name="BackupsPreferenceFragment__s_so_far">%1$s%% fins ara…</string>
     <string name="BackupsPreferenceFragment_signal_requires_external_storage_permission_in_order_to_create_backups">El Signal necessita el permís de l\'emmagatzematge extern per tal de crear còpies de seguretat. Si us plau, continueu cap al menú de configuració de l\'aplicació, seleccioneu Permisos i activeu-hi l\'emmagatzematge.</string>
+    <!-- Title of dialog shown when picking the time to perform a chat backup -->
+    <string name="BackupsPreferenceFragment__set_backup_time">Establir hora per la còpia de seguretat</string>
 
 
     <!-- CustomDefaultPreference -->
@@ -870,8 +889,10 @@
 
     <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
     <string name="PromptLogsSlowNotificationsDialog__title">Hem observat que les notificacions es retarden. Vols enviar un registre de depuració?</string>
-    <!-- Message for dialog asking user to submit logs for debugging slow notification issues -->
+    <!-- Message for dialog asking user to submit logs for debugging a crash -->
     <string name="PromptLogsSlowNotificationsDialog__message">Els registres de depuració ens ajuden a diagnosticar i solucionar el problema i no contenen informació que pugui identificar-te.</string>
+    <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
+    <string name="PromptLogsSlowNotificationsDialog__title_crash">Hi ha hagut un problema a Signal. Vols enviar un registre de depuració?</string>
 
     <!-- Title for dialog asking user to submit logs for debugging slow notification issues -->
     <string name="PromptBatterySaverBottomSheet__title">Les notificacions poden retardar-se a causa dels processos d\'optimització de la bateria</string>
@@ -978,12 +999,15 @@
     <string name="ManageProfileFragment_profile_name">Nom del perfil</string>
     <string name="ManageProfileFragment_username">Nom d\'usuari</string>
     <string name="ManageProfileFragment_about">Quant a</string>
-    <string name="ManageProfileFragment_write_a_few_words_about_yourself">Escriviu alguna cosa sobre vosaltres.</string>
-    <string name="ManageProfileFragment_your_name">El nom</string>
-    <string name="ManageProfileFragment_your_username">El nom d\'usuari</string>
     <string name="ManageProfileFragment_failed_to_set_avatar">Ha fallat establir l\'avatar.</string>
     <string name="ManageProfileFragment_badges">Insígnies</string>
+    <!-- Text for a button that will take the user to the screen to manage their username link and QR code -->
+    <string name="ManageProfileFragment_link_setting_text">Codi QR o enllaç</string>
     <string name="ManageProfileFragment__edit_photo">Edita la fotografia</string>
+    <!-- Title of a tooltip educating the user about a button on the screen that will take them to the username share screen -->
+    <string name="ManageProfileFragment__link_tooltip_title">Comparteix el teu àlies</string>
+    <!-- Body of a tooltip educating the user about a button on the screen that will take them to the username share screen -->
+    <string name="ManageProfileFragment__link_tooltip_body">Deixa que altres persones comencin un xat amb tu compartint el teu codi QR o enllaç únic.</string>
     <!-- Snackbar message after creating username -->
     <string name="ManageProfileFragment__username_created">S\'ha creat el nom d\'usuari</string>
     <!-- Snackbar message after copying username -->
@@ -992,10 +1016,16 @@
     <string name="ManageProfileFragment__couldnt_delete_username">No s\'ha pogut eliminar l\'àlies. Torna-ho a provar més tard.</string>
     <!-- Snackbar message after successful deletion of username -->
     <string name="ManageProfileFragment__username_deleted">Àlies eliminat</string>
+    <!-- The title of a pop-up dialog asking the user to confirm deleting their username -->
+    <string name="ManageProfileFragment__delete_username_dialog_title">Eliminar nom d\'usuari?</string>
+    <!-- The body of a pop-up dialog asking the user to confirm deleting their username -->
+    <string name="ManageProfileFragment__delete_username_dialog_body">"Això eliminarà el teu nom d\'usuari i desactivarà el teu codi QR i enllaç. %1$s estarà disponible perquè altres puguin utilitzar-lo. Segur que vols fer això?"</string>
 
     <!-- UsernameOutOfSyncReminder -->
     <!-- Displayed above the conversation list when a user needs to address an issue with their username -->
-    <string name="UsernameOutOfSyncReminder__something_went_wrong">S\'ha produït un error amb el teu àlies, ja no està assignat al teu compte. Pots provar de configurar-lo de nou o triar-ne un de diferent.</string>
+    <string name="UsernameOutOfSyncReminder__username_and_link_corrupt">S\'ha produït un error amb el teu àlies, ja no està assignat al teu compte. Pots provar de configurar-lo de nou o triar-ne un de diferent.</string>
+    <!-- Displayed above the conversation list when a user needs to address an issue with their username link -->
+    <string name="UsernameOutOfSyncReminder__link_corrupt">S\'ha produït un error amb el codi QR i enllaç del teu nom d\'usuari, ja no és vàlid. Crea un nou enllaç per compartir. Crea un nou enllaç per compartir.</string>
     <!-- Action text to navigate user to manually fix the issue with their username -->
     <string name="UsernameOutOfSyncReminder__fix_now">Reparar-ho ara</string>
 
@@ -1253,6 +1283,10 @@
     <string name="MessageRecord_missed_voice_call">Trucada perduda</string>
     <!-- Update message shown when receiving an incoming 1:1 video call and not answered -->
     <string name="MessageRecord_missed_video_call">Videotrucada perduda</string>
+    <!-- Update message shown when receiving an incoming voice call and declined due to notification profile -->
+    <string name="MessageRecord_missed_voice_call_notification_profile">Trucada de veu perduda mentre els ajustos de notificació estaven activats</string>
+    <!-- Update message shown when receiving an incoming video call and declined due to notification profile -->
+    <string name="MessageRecord_missed_video_call_notification_profile">Videotrucada perduda mentre els ajustos de notificació estaven activats</string>
     <!-- Update message shown when receiving an incoming 1:1 voice/audio call and explicitly declined -->
     <string name="MessageRecord_you_declined_a_voice_call">Has rebutjat una trucada</string>
     <!-- Update message shown when receiving an incoming 1:1 video call and explicitly declined -->
@@ -1511,7 +1545,7 @@
     <string name="MessageRequestBottomView_do_you_want_to_let_s_message_you_wont_receive_any_messages_until_you_unblock_them_SMS">Vols permetre que %1$s t\'enviï missatges? No en rebràs cap missatge fins que no el desbloquegis.</string>
     <string name="MessageRequestBottomView_get_updates_and_news_from_s_you_wont_receive_any_updates_until_you_unblock_them">Vols rebre actualitzacions i notícies de %1$s? No en rebràs cap actualització fins que no les desbloquegis.</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_this_group_and_share_your_name_and_photo">Vols continuar el xat amb aquest grup i compartir-hi el nom i la fotografia?</string>
-    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">Actualitzeu aquest grup i activeu-ne les funcions noves com ara les @mencions i els administradors. Els membres que no hi han compartit el nom o la fotografia es convidaran a afegir-s\'hi.</string>
+    <string name="MessageRequestBottomView_upgrade_this_group_to_activate_new_features">Aquest és un grup antic i ja no pot utilitzar-se. Crea un grup nou per activar les noves funcions com ara les @mencions i els admins.</string>
     <string name="MessageRequestBottomView_this_legacy_group_can_no_longer_be_used">Aquest grup de llegat ja no es pot usar perquè és massa gros. La mida màxima d\'un grup és %1$d.</string>
     <string name="MessageRequestBottomView_continue_your_conversation_with_s_and_share_your_name_and_photo">Vols continuar el xat amb %1$s i compartir-hi el nom i la fotografia?</string>
     <string name="MessageRequestBottomView_do_you_want_to_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Voleu afegir-vos a aquest grup i compartir el nom i la fotografia amb els seus membres? No sabran que heu vist els seus missatges fins que no ho accepteu.</string>
@@ -1804,6 +1838,8 @@
     <string name="WebRtcCallView__toggle_camera">Canviar càmera</string>
     <!-- Toggle content description for toggling mute state  -->
     <string name="WebRtcCallView__toggle_mute">Activa o desactiva silenci</string>
+    <!-- Content description for additional actions menu button -->
+    <string name="WebRtcCallView__additional_actions">Accions addicionals</string>
     <!-- Content description for end-call button -->
     <string name="WebRtcCallView__end_call">Penja</string>
 
@@ -1820,10 +1856,68 @@
     <!-- A text description of the earpiece icon, used for accessibility. -->
     <string name="WebRtcAudioOutputBottomSheet__earpiece_icon_content_description">Icona representant auricular d\'un dispositiu.</string>
 
+    <!-- A clickable button to "raise your hand" in a group call to signify you have something to say -->
+    <string name="CallOverflowPopupWindow__raise_hand">Aixecar la mà</string>
+    <!-- A description of a clickable image representing a raised hand -->
+    <string name="CallOverflowPopupWindow__raise_hand_illustration_content_description">Aixecar la mà</string>
+    <!-- A dialog prompt to confirm you want to lower your hand -->
+    <string name="CallOverflowPopupWindow__lower_your_hand">Baixar la mà?</string>
+    <!-- A dialog button to confirm you would like to lower your hand -->
+    <string name="CallOverflowPopupWindow__lower_hand">Baixar la mà</string>
+    <!-- A negative button for a dialog confirming the user wants to lower their hand (withdraw a raised hand) -->
+    <string name="CallOverflowPopupWindow__cancel">Cancel·lar</string>
+    <!-- A notification to the user that they successfully raised their hand -->
+    <string name="CallOverflowPopupWindow__you_raised_your_hand">Has aixecat la mà</string>
+    <!-- A button to take you to a list of participants with raised hands -->
+    <string name="CallOverflowPopupWindow__view">Vista</string>
+
+    <!-- A notification to the user that one or more participants in the call successfully raised their hand. In the singular case, it is a name. In the plural case, it is a name or "You" -->
+    <plurals name="CallOverflowPopupWindow__raised_a_hand">
+        <item quantity="one">%1$s ha aixecat la mà</item>
+        <item quantity="other">%1$s + %2$d han aixecat la mà</item>
+    </plurals>
+
+    <!-- A badge to show how many hands are raised. The first string may be a name or "You" -->
+    <plurals name="CallRaiseHandSnackbar_raised_hands">
+        <item quantity="one">%1$s</item>
+        <item quantity="other">%1$s +%2$d</item>
+    </plurals>
+
+    <!-- An accessibility label for screen readers on a view that can be expanded -->
+    <string name="CallOverflowPopupWindow__expand_snackbar_accessibility_label">Ampliar la vista de mà aixecada</string>
+
+    <!-- AboutSheet -->
+    <!-- Displayed in a sheet row and allows user to open signal connection explanation on tap -->
+    <string name="AboutSheet__signal_connection">Connexió de Signal</string>
+    <!-- Explains that the given user (placeholder is short name) is in the users system contact -->
+    <string name="AboutSheet__s_is_in_your_system_contacts">%1$s és als contactes del teu sistema</string>
+    <!-- Notice in a row when user has no groups in common -->
+    <string name="AboutSheet__you_have_no_groups_in_common">No teniu cap grup en comú</string>
+    <!-- Notice when a user is not a connection to review requests carefully -->
+    <string name="AboutSheet__review_requests_carefully">Reviseu les sol·licituds amb atenció.</string>
+    <!-- Text used when user has groups in common. Placeholder is the count -->
+    <string name="AboutSheet__d_groups_in_common">%1$d grups en comú</string>
+    <!-- Text displayed in title for external recipients -->
+    <string name="AboutSheet__about">Detalls</string>
+    <!-- Text displayed in title for you -->
+    <string name="AboutSheet__you">Vós</string>
+
     <!-- CallParticipantsListDialog -->
-    <plurals name="CallParticipantsListDialog_in_this_call_d_people">
-        <item quantity="one">En aquesta trucada · %1$d persona</item>
-        <item quantity="other">En aquesta trucada · %1$d persones</item>
+    <plurals name="CallParticipantsListDialog_in_this_call">
+        <item quantity="one">En aquesta trucada (%1$d)</item>
+        <item quantity="other">En aquesta trucada (%1$d)</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__signal_will_ring">
+        <item quantity="one">Signal trucarà a (%1$d)</item>
+        <item quantity="other">Signal trucarà a (%1$d)</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__signal_will_notify">
+        <item quantity="one">Signal notificarà a (%1$d)</item>
+        <item quantity="other">Signal notificarà a (%1$d)</item>
+    </plurals>
+    <plurals name="CallParticipantsListDialog__raised_hands">
+        <item quantity="one">Mà aixecada (%1$d)</item>
+        <item quantity="other">Mans aixecades (%1$d)</item>
     </plurals>
 
     <!-- CallParticipantView -->
@@ -1936,6 +2030,12 @@
     <string name="RevealableMessageView_view_video">Mostra el vídeo</string>
     <string name="RevealableMessageView_viewed">Vista</string>
     <string name="RevealableMessageView_media">Contingut</string>
+
+    <!-- ReviewBannerView -->
+    <!-- ReviewBannerView text when a name conflict has been found -->
+    <string name="ReviewBannerView__name_conflict_found">S\'ha trobat un conflicte en el nom</string>
+    <!-- Button label to view name conflicts -->
+    <string name="ReviewBannerView__view">Vista</string>
 
     <!-- Search -->
     <string name="SearchFragment_no_results">No s\'ha trobat cap resultat per a «%1$s»</string>
@@ -2086,9 +2186,13 @@
     <!--  Displayed in the conversation list when identities have been merged. The first placeholder is a phone number, and the second is a person\'s name -->
     <string name="ThreadRecord_s_belongs_to_s">%1$s pertany a %2$s</string>
 
-    <!-- UpdateApkReadyListener -->
-    <string name="UpdateApkReadyListener_Signal_update">Actualització del Signal</string>
-    <string name="UpdateApkReadyListener_a_new_version_of_signal_is_available_tap_to_update">Hi ha disponible una versió nova del Signal. Toqueu per actualitzar-lo</string>
+    <!-- ApkUpdateNotifications -->
+    <string name="ApkUpdateNotifications_prompt_install_title">Actualització del Signal</string>
+    <string name="ApkUpdateNotifications_prompt_install_body">Hi ha disponible una nova versió de Signal. Toca per actualitzar-lo.</string>
+    <string name="ApkUpdateNotifications_failed_general_title">No s\'ha pogut actualitzar Signal</string>
+    <string name="ApkUpdateNotifications_failed_general_body">Ho tornarem a provar més tard.</string>
+    <string name="ApkUpdateNotifications_auto_update_success_title">Signal s\'ha actualitzat correctament</string>
+    <string name="ApkUpdateNotifications_auto_update_success_body">S\'ha actualitzat automàticament a la versió %1$s.</string>
 
     <!-- UntrustedSendDialog -->
     <string name="UntrustedSendDialog_send_message">Voleu enviar el missatge?</string>
@@ -2099,6 +2203,8 @@
     <string name="UnverifiedSendDialog_send">Envia</string>
 
     <!-- UsernameEditFragment -->
+    <!-- Placeholder text for custom discriminator -->
+    <string name="UsernameEditFragment__00">00</string>
     <!-- Toolbar title when entering from registration -->
     <string name="UsernameEditFragment__add_a_username">Afegeix un nom d\'usuari</string>
     <!-- Instructional text at the top of the username edit screen -->
@@ -2121,6 +2227,12 @@
     <string name="UsernameEditFragment__skip">Omet</string>
     <!-- Content description for done button -->
     <string name="UsernameEditFragment__done">Fet</string>
+    <!-- Displayed when the chosen discriminator is not available for the given nickname -->
+    <string name="UsernameEditFragment__this_username_is_not_available_try_another_number">Aquest nom d\'usuari no està disponible, prova un altre número.</string>
+    <!-- Displayed when the chosen discriminator is too short -->
+    <string name="UsernameEditFragment__invalid_username_enter_a_minimum_of_d_digits">Nom d\'usuari no vàlid, introdueix %1$d dígits com a mínim.</string>
+    <!-- Displayed when the chosen discriminator is too long -->
+    <string name="UsernameEditFragment__invalid_username_enter_a_maximum_of_d_digits">Nom d\'usuari no vàlid, introdueix %1$d dígits com a màxim.</string>
 
     <plurals name="UserNotificationMigrationJob_d_contacts_are_on_signal">
         <item quantity="one">%1$d contacte és al Signal!</item>
@@ -2243,6 +2355,18 @@
 
     <string name="TurnOffContactJoinedNotificationsActivity__turn_off_contact_joined_signal">Voleu desactivar les notificacions de contactes afegits al Signal? Les podeu tornar a activar a Signal &gt; Configuració &gt; Notificacions.</string>
 
+    <!-- TurnOnNotificationsBottomSheet -->
+    <!-- Title for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__turn_on_notifications">Activar les notificacions</string>
+    <!-- Subtitle  for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__to_receive_notifications">Per rebre notificacions de missatges nous:</string>
+    <!-- Sheet step 1  for sheet explaining how to turn on app notifications-->
+    <string name="TurnOnNotificationsBottomSheet__1_tap_settings_below">1. Toca \"Ajustos\" més avall</string>
+    <!-- Sheet step 2 with placeholder which will be replaced with an image of a toggle  for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__2_s_turn_on_notifications">2. %1$s Activar les notificacions</string>
+    <!-- Label for button at the bottom of the sheet which opens system app notification settings for sheet explaining how to turn on app notifications -->
+    <string name="TurnOnNotificationsBottomSheet__settings">Ajustos</string>
+
     <!-- Notification Channels -->
     <string name="NotificationChannel_channel_messages">Missatges</string>
     <string name="NotificationChannel_calls">Trucades</string>
@@ -2304,6 +2428,13 @@
         <item quantity="one">%1$d element</item>
         <item quantity="other">%1$d elements</item>
     </plurals>
+    <!-- Status update label used while the device is transcoding video as a prerequisite to uploading -->
+    <string name="TransferControlView__processing">Processant…</string>
+    <!-- Status update label used while the device is transmitting data over the network. Will take the form of "1.0 MB/2.0 MB" -->
+    <string name="TransferControlView__download_progress">%1$1.1f MB/%2$2.1f MB</string>
+    <!-- Attachment file size label for not-yet-downloaded images and video. Will take the form of "1.0 MB" -->
+    <string name="TransferControlView__filesize">%1$1.1f MB</string>
+
 
     <!-- UnauthorizedReminder -->
     <!-- Message shown in a reminder banner when the user\'s device is no longer registered -->
@@ -2327,6 +2458,8 @@
     <string name="WebRtcCallActivity__answered_on_a_linked_device">S\'ha respost en un dispositiu enllaçat.</string>
     <string name="WebRtcCallActivity__declined_on_a_linked_device">S\'ha rebutjat en un dispositiu enllaçat.</string>
     <string name="WebRtcCallActivity__busy_on_a_linked_device">Ocupat/da en un dispositiu enllaçat</string>
+    <!-- Tooltip message shown first time user is in a video call after switch camera button moved -->
+    <string name="WebRtcCallActivity__flip_camera_tooltip">El botó per canviar de càmera s\'ha mogut aquí, toca el teu vídeo per provar-lo</string>
 
     <string name="GroupCallSafetyNumberChangeNotification__someone_has_joined_this_call_with_a_safety_number_that_has_changed">Algú s\'ha afegit a aquesta trucada amb un número de seguretat que ha canviat.</string>
 
@@ -2681,24 +2814,13 @@
 
     <!-- verify_display_fragment -->
     <!-- Explanation of how to verify the safety numbers. %s is replaced with the name of the other recipient -->
-    <string name="verify_display_fragment__pnp_verify_safety_numbers_explanation_with_s">Per verificar el xifrat amb %1$s, tria més a dalt la carta de color que coincideixi amb la del dispositiu d\'aquella persona i compara les xifres. Si aquests no coincideixen, desplaça\'t i prova un altre parell de números de seguretat. Només cal que coincideixin un parell.</string>
+    <string name="verify_display_fragment__pnp_verify_safety_numbers_explanation_with_s">Per verificar el xifrat amb %1$s, compara les xifres de dalt amb les del dispositiu d\'aquella persona. També pots escanejar el codi del seu dispositiu.</string>
     <string name="verify_display_fragment__tap_to_scan">Feu un toc per escanejar</string>
     <string name="verify_display_fragment__successful_match">Coincidència correcta</string>
     <string name="verify_display_fragment__failed_to_verify_safety_number">Ha fallat verificar el número de seguretat.</string>
     <string name="verify_display_fragment__loading">Es carrega…</string>
     <string name="verify_display_fragment__mark_as_verified">Marca com a verificat</string>
     <string name="verify_display_fragment__clear_verification">Neteja la verificació</string>
-    <!-- Banner at top of safety numbers screen explaining that we\'re updating how safety numbers work. -->
-    <string name="verify_display_fragment__safety_numbers_are_updating_banner_no_learn_more">Els números de seguretat s\'estan actualitzant.</string>
-
-    <!-- Title for dialog explaining for how safety numbers are transitioning to support usernames -->
-    <string name="PnpSafetyNumberEducationDialog__title">Canvis als números de seguretat</string>
-    <!-- Message for dialog explaining for how safety numbers are transitioning to support usernames -->
-    <string name="PnpSafetyNumberEducationDialog__body">S\'estan actualitzant els números de seguretat durant un període de transició per habilitar les pròximes funcions de privacitat de Signal.\n\nPer a verificar els números de seguretat, fes que la teva carta de color coincideixi amb la del dispositiu del teu contacte. Si aquests no coincideixen, desplaça\'t i prova un altre parell de números de seguretat. Només cal que coincideixin un parell.</string>
-    <!-- Button for more information about the safety number changes. Takes user to support article -->
-    <string name="PnpSafetyNumberEducationDialog__help">Us cal ajuda?</string>
-    <!-- Confirmation button for educating users about new safety number changes -->
-    <string name="PnpSafetyNumberEducationDialog__confirm">Entesos</string>
 
     <!-- verity_scan_fragment -->
     <string name="verify_scan_fragment__scan_the_qr_code_on_your_contact">Escanegeu el codi QR del dispositiu del contacte.</string>
@@ -2763,7 +2885,7 @@
     <string name="HelpFragment__could_not_upload_logs">No s\'han pogut carregar els registres.</string>
     <string name="HelpFragment__please_be_as_descriptive_as_possible">Si us plau, expliqueu-ho de la manera més descriptiva possible per ajudar-nos a entendre el problema.</string>
     <string-array name="HelpFragment__categories_5">
-        <item>\\-\\- Si us plau, selecciona una opció \\-\\-</item>
+        <item>Si us plau, selecciona una opció</item>
         <item>Alguna cosa no funciona</item>
         <item>Sol·licitud de funció</item>
         <item>Pregunta</item>
@@ -2777,6 +2899,8 @@
     <string name="DebugLogsPromptDialogFragment__signal_android_support_request">Enviar registre de depuració de Signal per a Android</string>
     <!-- Category to organize the support email sent -->
     <string name="DebugLogsPromptDialogFragment__slow_notifications_category">Notificacions lentes</string>
+    <!-- Category to organize the support email sent -->
+    <string name="DebugLogsPromptDialogFragment__crash_category">Ha deixat de funcionar</string>
     <!-- Action to submit logs and take user to send an e-mail -->
     <string name="DebugLogsPromptDialogFragment__submit">Envia</string>
     <!-- Action to decline to submit logs -->
@@ -2902,7 +3026,6 @@
     <string name="preferences__payments">Pagaments</string>
     <!-- Privacy settings payments section description -->
     <string name="preferences__payment_lock">Bloqueig de pagament</string>
-    <string name="preferences__payments_beta">Pagaments (beta)</string>
     <string name="preferences__conversation_length_limit">Límit de la mida del xat</string>
     <string name="preferences__keep_messages">Mantén els missatges</string>
     <string name="preferences__clear_message_history">Neteja l\'historial dels missatges</string>
@@ -2981,7 +3104,11 @@
     <string name="preferences_storage__six_months">6 mesos</string>
     <string name="preferences_storage__thirty_days">30 dies</string>
     <string name="preferences_storage__none">Cap</string>
-    <string name="preferences_storage__s_messages">%1$s missatges</string>
+    <plurals name="preferences_storage__s_messages_plural">
+        <item quantity="one">%1$s missatge</item>
+        <item quantity="other">%1$s missatges</item>
+    </plurals>
+
     <string name="preferences_storage__custom">Personalitzat</string>
     <string name="preferences_advanced__use_system_emoji">Usa els emoji del sistema</string>
     <string name="preferences_advanced__relay_all_calls_through_the_signal_server_to_avoid_revealing_your_ip_address">Retransmet totes les trucades a través del servidor del Signal per evitar revelar l\'adreça IP al contacte. Activar-ho reduirà la qualitat de la trucada.</string>
@@ -2989,6 +3116,7 @@
     <!-- Privacy settings payments section title -->
     <string name="preferences_app_protection__payments">Pagaments</string>
     <string name="preferences_chats__chats">Xats</string>
+    <string name="preferences_app_updates__title">Actualitzacions de l\'aplicació</string>
     <string name="preferences_data_and_storage__manage_storage">Gestioneu l\'emmagatzematge</string>
     <string name="preferences_data_and_storage__use_less_data_for_calls">Usa menys dades per a les trucades</string>
     <string name="preferences_data_and_storage__never">Mai</string>
@@ -3056,7 +3184,8 @@
     <string name="PaymentsAllActivityFragment__sent">Enviat</string>
     <string name="PaymentsAllActivityFragment__received">Rebut</string>
 
-    <string name="PaymentsHomeFragment__introducing_payments">S\'introdueixen els pagaments (beta)</string>
+    <!-- Displayed on a welcome screen for payments -->
+    <string name="PaymentsHomeFragment_introducing_payments">Presentem els Pagaments</string>
     <string name="PaymentsHomeFragment__use_signal_to_send_and_receive">Utilitza Signal per enviar i rebre MobileCoin, una nova moneda digital amb la privacitat com a prioritat. Activa-ho per començar.</string>
     <string name="PaymentsHomeFragment__activate_payments">Activa els pagaments</string>
     <string name="PaymentsHomeFragment__activating_payments">S\'activen els pagaments…</string>
@@ -3090,8 +3219,9 @@
     <string name="PaymentsHomeFragment__payments_deactivated">Pagaments desactivats</string>
     <string name="PaymentsHomeFragment__payment_failed">Ha fallat el pagament.</string>
     <string name="PaymentsHomeFragment__details">Detalls</string>
-  <!-- Removed by excludeNonTranslatables <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate </string>
-    <string name="PaymentsHomeFragment__you_can_use_signal_to_send">Podeu usar el Signal per enviar i rebre MobileCoin. Tots els pagaments estan subjectes a les Condicions d\'ús de MobileCoins i MobileCoin Wallet. Aquesta és una funció beta, de manera que és possible que tingueu problemes i que no es puguin recuperar pagaments o saldos que poguéssiu perdre. </string> -->
+  <!-- Removed by excludeNonTranslatables <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate</string> -->
+    <!-- Displayed as a description in a dialog when the user tries to activate payments -->
+    <string name="PaymentsHomeFragment__you_can_use_signal_to_send_and">Pots fer servir Signal per enviar i rebre MobileCoin. Tots els pagaments estan subjectes a les Condicions d\'ús de MobileCoins i MobileCoin Wallet. És possible que tinguis algun problema, i els pagaments o fons que perdis no podran ser recuperats. </string>
     <string name="PaymentsHomeFragment__activate">Activa\'ls</string>
     <string name="PaymentsHomeFragment__view_mobile_coin_terms">Vegeu els termes de MobileCoin</string>
     <string name="PaymentsHomeFragment__payments_not_available">Els pagaments al Signal ja no estan disponibles. Encara podeu transferir fons a un intercanvi, però ja no podeu enviar ni rebre pagaments ni afegir-hi fons.</string>
@@ -3113,6 +3243,32 @@
     <string name="PaymentsHomeFragment__cancel">Cancel·la</string>
     <!-- Alert dialog button to update now -->
     <string name="PaymentsHomeFragment__update_now">Actualitza-la ara</string>
+
+    <!-- GrantPermissionsFragment -->
+    <!-- Displayed as a text-only action button at the bottom start of the screen -->
+    <string name="GrantPermissionsFragment__not_now">Ara no</string>
+    <!-- Displayed as an action button at the bottom end of the screen -->
+    <string name="GrantPermissionsFragment__next">Següent</string>
+    <!-- Displayed as a title at the top of the screen -->
+    <string name="GrantPermissionsFragment__allow_permissions">Permisos</string>
+    <!-- Displayed as a subtitle at the top of the screen -->
+    <string name="GrantPermissionsFragment__to_help_you_message_people_you_know">Per ajudar-te a enviar missatges a persones que coneixes, Signal sol·licitarà aquests permisos. </string>
+    <!-- Notifications permission row title -->
+    <string name="GrantPermissionsFragment__notifications">Notificacions</string>
+    <!-- Notifications permission row description -->
+    <string name="GrantPermissionsFragment__get_notified_when">Rep una notificació quan arribin missatges nous.</string>
+    <!-- Contacts permission row title -->
+    <string name="GrantPermissionsFragment__contacts">Contactes</string>
+    <!-- Contacts permission row description -->
+    <string name="GrantPermissionsFragment__find_people_you_know">Troba gent que coneixes. Els teus contactes estan xifrats i no són visibles per al servei de Signal.</string>
+    <!-- Phone calls permission row title -->
+    <string name="GrantPermissionsFragment__phone_calls">Trucades de telèfon</string>
+    <!-- Phone calls permission row description -->
+    <string name="GrantPermissionsFragment__make_registering_easier">Facilita el registre i activa funcions addicionals de trucada.</string>
+    <!-- Storage permission row title -->
+    <string name="GrantPermissionsFragment__storage">Emmagatzematge</string>
+    <!-- Storage permission row description -->
+    <string name="GrantPermissionsFragment__send_photos_videos_and_files">Envia fotos, vídeos i arxius des del teu dispositiu.</string>
 
     <!-- PaymentsSecuritySetupFragment -->
     <!-- Toolbar title -->
@@ -3859,14 +4015,16 @@
     <string name="ReviewCardDialogFragment__failed_to_remove_group_member">No s\'ha pogut esborrar el membre del grup.</string>
 
     <!-- ReviewCard -->
-    <string name="ReviewCard__member">Membre</string>
     <string name="ReviewCard__request">Sol·licitud</string>
     <string name="ReviewCard__your_contact">Contacte</string>
     <string name="ReviewCard__remove_from_group">Esborrar del grup</string>
     <string name="ReviewCard__update_contact">Actualitza el contacte</string>
     <string name="ReviewCard__block">Bloquejar</string>
     <string name="ReviewCard__delete">Esborrar</string>
-    <string name="ReviewCard__recently_changed">Recentment han canviat el nom del perfil de %1$s a %2$s.</string>
+    <!-- Displayed when a recent name change has occurred. First placeholder is new short name, second is previous name, third is new name. -->
+    <string name="ReviewCard__s_recently_changed">%1$s ha canviat recentment el nom del perfil de %2$s a %3$s</string>
+    <!-- Displayed when a review user is in your system contacts. Placeholder is short name. -->
+    <string name="ReviewCard__s_is_in_your_system_contacts">%1$s és als contactes del teu sistema</string>
 
     <!-- CallParticipantsListUpdatePopupWindow -->
     <string name="CallParticipantsListUpdatePopupWindow__s_joined">%1$s s\'hi ha afegit.</string>
@@ -4026,7 +4184,7 @@
     <!-- Description in save recovery phrase screen which shows up when user has non zero balance -->
     <string name="PaymentsRecoveryStartFragment__got_balance">Tens saldo! És hora de desar la teva frase de recuperació: una clau de 24 paraules que podràs utilitzar per restaurar el teu saldo.</string>
     <!-- Description in save recovery phrase screen which shows up when user navigates from info card -->
-    <string name="PaymentsRecoveryStartFragment__time_to_save">És hora de desar la teva frase de recuperació: una clau de 24 paraules que podràs utilitzar per restaurar el teu saldo. Més informació</string>
+    <string name="PaymentsRecoveryStartFragment__time_to_save">És hora de desar la teva frase de recuperació: una clau de 24 paraules que podràs utilitzar per restaurar el teu saldo.</string>
     <string name="PaymentsRecoveryStartFragment__your_recovery_phrase_is_a">La vostra frase de recuperació és una frase de %1$d paraules exclusiva. Useu aquesta frase per restablir el saldo.</string>
     <string name="PaymentsRecoveryStartFragment__start">Inicia</string>
     <string name="PaymentsRecoveryStartFragment__enter_manually">Introducció manual</string>
@@ -4512,6 +4670,13 @@
     <string name="NewConversationActivity__view_contact">Veure contacte</string>
     <!-- Error message shown when looking up a person by phone number and that phone number is not associated with a signal account -->
     <string name="NewConversationActivity__s_is_not_a_signal_user">%1$s no fa servir Signal.</string>
+    <!-- Error message shown when we could not get a user from the username link -->
+    <string name="NewConversationActivity__">%1$s no fa servir Signal.</string>
+    <!-- Error message shown in a dialog when trying to create a new group with non-signal users (e.g., unregistered or phone number only contacts) -->
+    <plurals name="CreateGroupActivity_not_signal_users">
+        <item quantity="one">%1$s no fa servir Signal</item>
+        <item quantity="other">%1$s no fan servir Signal</item>
+    </plurals>
 
     <!-- ContactFilterView -->
     <string name="ContactFilterView__search_name_or_number">Cerqueu un nom o un número</string>
@@ -4697,6 +4862,12 @@
     <string name="ManageDonationsFragment__other_ways_to_give">Altres maneres de fer-hi una donació</string>
     <!-- Preference label to launch badge gifting -->
     <string name="ManageDonationsFragment__donate_for_a_friend">Fer una donació per un amic</string>
+    <!-- Dialog title shown when a donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet -->
+    <string name="ManageDonationsFragment__couldnt_confirm_donation">No s\'ha pogut confirmar la donació</string>
+    <!-- Dialog message shown when a monthly donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet, placeholder is money amount -->
+    <string name="ManageDonationsFragment__your_monthly_s_donation_couldnt_be_confirmed">No s\'ha pogut confirmar la teva donació mensual de %1$s. Comprova la teva app bancària per aprovar el teu pagament a través d\'iDEAL.</string>
+    <!-- Dialog message shown when a one-time donation requires verifying/confirmation outside of the app and the user hasn\'t done that yet, placeholder is money amount -->
+    <string name="ManageDonationsFragment__your_one_time_s_donation_couldnt_be_confirmed">No s\'ha pogut confirmar la teva donació única de %1$s. Comprova la teva app bancària per aprovar el teu pagament a través d\'iDEAL.</string>
 
     <string name="Boost__enter_custom_amount">Introdueix la quantitat personalitzada</string>
     <!-- Error label when the amount is smaller than what we can accept -->
@@ -4708,6 +4879,12 @@
     <!-- Displayed on "My Support" screen when user badge failed to be added to their account -->
     <string name="MySupportPreference__couldnt_add_badge_s">No s\'ha pogut afegir la insígnia. %1$s</string>
     <string name="MySupportPreference__please_contact_support">Poseu-vos en contacte amb l\'assistència.</string>
+    <!-- Displayed as a subtitle on a row in the Manage Donations screen when payment for a donation is pending -->
+    <string name="MySupportPreference__payment_pending">Pagament pendent</string>
+    <!-- Displayed as a dialog message when clicking on a donation row that is pending. Placeholder is a formatted fiat amount -->
+    <string name="MySupportPreference__your_bank_transfer_of_s">La teva transferència bancària de %1$s està pendent. Les transferències bancàries solen trigar 1 dia laborable a completar-se.  </string>
+    <!-- Displayed in the pending help dialog, used to launch user to more details about bank transfers -->
+    <string name="MySupportPreference__learn_more">Més informació</string>
 
     <!-- Title of dialog telling user they need to update signal as it expired -->
     <string name="UpdateSignalExpiredDialog__title">Actualitza el Signal</string>
@@ -4757,12 +4934,16 @@
     <string name="Subscription__contact_support">Contacteu amb l\'Assistència</string>
     <string name="Subscription__get_a_s_badge">Obtenir una insígnia %1$s</string>
 
-    <string name="SubscribeFragment__processing_payment">Es processa el pagament…</string>
+    <string name="SubscribeFragment__processing_payment">S\'està processant la donació…</string>
     <!-- Displayed in notification when user payment fails to process on Stripe -->
-    <string name="DonationsErrors__error_processing_payment">S\'ha produït un error en processar el pagament.</string>
+    <string name="DonationsErrors__error_processing_payment">S\'ha produït un error en processar la donació</string>
+    <!-- Displayed on manage donations screen as a dialog message when payment method failed -->
+    <string name="DonationsErrors__try_another_payment_method">Proveu un altre mètode de pagament o poseu-vos en contacte amb el banc per obtenir-ne més informació.</string>
+    <!-- Displayed on manage donations screen error dialogs as an action label -->
+    <string name="DonationsErrors__learn_more">Més informació</string>
     <!-- Displayed on "My Support" screen when user subscription payment method failed. -->
-    <string name="DonationsErrors__error_processing_payment_s">S\'ha produït un error en processar el pagament. %1$s</string>
-    <string name="DonationsErrors__your_payment">El pagament no s\'ha pogut processar i no se t\'ha cobrat. Si us plau, torna-ho a provar.</string>
+    <string name="DonationsErrors__error_processing_payment_s">S\'ha produït un error en processar la donació. %1$s</string>
+    <string name="DonationsErrors__your_payment">No s\'ha pogut processar la teva donació i no se t\'ha cobrat. Si us plau, torna-ho a provar. Si us plau, torna-ho a provar.</string>
     <string name="DonationsErrors__still_processing">Encara en procés</string>
     <string name="DonationsErrors__couldnt_add_badge">No s\'ha pogut afegir la insígnia.</string>
     <!-- Displayed when badge credential couldn\'t be verified -->
@@ -4772,9 +4953,9 @@
     <!-- Displayed as title when some generic error happens during sending donation on behalf of another user -->
     <string name="DonationsErrors__donation_failed">Donació fallida</string>
     <!-- Displayed as message when some generic error happens during sending donation on behalf of another user -->
-    <string name="DonationsErrors__your_payment_was_processed_but">El teu pagament ha estat processat, però Signal no ha pogut enviar el teu missatge de donació. Posa\'t en contacte amb el servei tècnic.</string>
+    <string name="DonationsErrors__your_payment_was_processed_but">La teva donació ha estat processada, però Signal no ha pogut enviar el teu missatge de donació. Posa\'t en contacte amb el servei d\'assistència.</string>
     <string name="DonationsErrors__your_badge_could_not">La insígnia no s\'ha pogut afegir al compte, però és possible que se t\'hagi cobrat. Posa\'t en contacte amb el servei d\'assistència.</string>
-    <string name="DonationsErrors__your_payment_is_still">El pagament encara s\'està processant. Això pot trigar uns quants minuts segons la connexió.</string>
+    <string name="DonationsErrors__your_payment_is_still">La teva donació encara s\'està processant. Això pot trigar uns quants minuts segons la teva connexió.</string>
     <string name="DonationsErrors__failed_to_cancel_subscription">No s\'ha pogut cancel·lar la subscripció.</string>
     <string name="DonationsErrors__subscription_cancellation_requires_an_internet_connection">La cancel·lació de la subscripció requereix una connexió a Internet.</string>
     <string name="ViewBadgeBottomSheetDialogFragment__your_device_doesn_t_support_google_pay_so_you_can_t_subscribe_to_earn_a_badge_you_can_still_support_signal_by_making_a_donation_on_our_website">El teu dispositiu no és compatible amb Google Pay, de manera que no t\'hi pots subscriure per guanyar una insígnia. Pots donar suport al Signal fent una donació al nostre lloc web.</string>
@@ -4786,6 +4967,8 @@
     <string name="DonationsErrors__this_user_cant_receive_donations_until">Aquesta persona no pot rebre donacions fins que no actualitzi Signal.</string>
     <!-- Displayed as a dialog message when the user\'s profile could not be fetched, likely due to lack of internet -->
     <string name="DonationsErrors__your_donation_could_not_be_sent">No s\'ha pogut enviar la teva donació a causa d\'un error de la xarxa. Comprova la connexió i torna-ho a provar.</string>
+    <!-- Displayed as a dialog message when the user encounters an error during an iDEAL donation -->
+    <string name="DonationsErrors__your_ideal_couldnt_be_processed">No s\'ha pogut processar la donació a través d\'iDEAL. Prova un altre mètode de pagament o posa\'t en contacte amb el banc per obtenir-ne més informació.</string>
 
     <!-- Gift message view title -->
     <string name="GiftMessageView__donation_on_behalf_of_s">Donació en nom de %1$s</string>
@@ -4803,6 +4986,8 @@
 
     <!-- Stripe decline code generic_failure -->
     <string name="DeclineCode__try_another_payment_method_or_contact_your_bank">Proveu un altre mètode de pagament o poseu-vos en contacte amb el banc per obtenir-ne més informació.</string>
+    <!-- PayPal decline code for payment declined -->
+    <string name="DeclineCode__try_another_payment_method_or_contact_your_bank_for_more_information_if_this_was_a_paypal">Prova un altre mètode de pagament o posa\'t en contacte amb el banc per obtenir-ne més informació. Si aquesta transacció va fer-se a través de PayPal, posa\'t en contacte amb PayPal.</string>
     <!-- Stripe decline code verify on Google Pay and try again -->
     <string name="DeclineCode__verify_your_payment_method_is_up_to_date_in_google_pay_and_try_again">Verifiqueu que la forma de pagament estigui actualitzada a Google Pay i torneu-ho a provar.</string>
     <!-- Stripe decline code learn more action label -->
@@ -4828,7 +5013,7 @@
     <!-- Stripe decline code incorrect expiration year -->
     <string name="DeclineCode__the_expiration_year">L\'any de venciment del mètode de pagament és incorrecte. Actualitzeu-lo a Google Pay i torneu-lo a provar.</string>
     <!-- Stripe decline code issuer not available -->
-    <string name="DeclineCode__try_completing_the_payment_again">Proveu de tornar a completar el pagament o poseu-vos en contacte amb el banc per obtenir-ne més informació.</string>
+    <string name="DeclineCode__try_completing_the_payment_again">Prova de tornar a completar el pagament o posa\'t en contacte amb el teu banc per obtenir-ne més informació.</string>
     <!-- Stripe decline code processing error -->
     <string name="DeclineCode__try_again">Torneu-ho a provar o contacteu amb el banc per obtenir-ne més informació.</string>
 
@@ -4847,6 +5032,18 @@
     <string name="DeclineCode__the_expiration_year_on_your_card_is_incorrect">L\'any de venciment de la teva targeta no és correcte. Verifica que les dades de la teva targeta siguin correctes i torna-ho a provar.</string>
     <!-- Stripe decline code incorrect_number and invalid_number for credit cards displayed in a notification or dialog -->
     <string name="DeclineCode__your_card_number_is_incorrect_verify_your_card_details">El teu número de targeta no és correcte. Verifica que les dades de la teva targeta siguin correctes i torna-ho a provar.</string>
+
+    <!-- Stripe Failure Codes for failed bank transfers -->
+    <!-- Failure code text for insufficient funds, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__the_bank_account_provided">El compte bancari proporcionat no té fons suficients per completar aquesta compra. Torna-ho a provar o posa\'t en contacte amb el teu banc per obtenir més informació.</string>
+    <!-- Failure code text for revoked authorization of payment, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__this_payment_was_revoked">El titular del compte ha revocat aquesta donació i no s\'ha pogut processar. No se t\'ha efectuat el càrrec.</string>
+    <!-- Failure code text for a payment lacking an authorized mandate or incorrect mandate, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__an_error_occurred_while_processing_this_payment">Hi ha hagut un error en processar aquesta donació, torna-ho a provar.</string>
+    <!-- Failure code text for a closed account, deceased recipient, or one with blocked direct debits, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__the_bank_details_provided_could_not_be_processed">Les dades bancàries proporcionades no s\'han pogut processar; posa\'t en contacte amb el teu banc per obtenir més informació.</string>
+    <!-- Failure code text for a non-existent bank branch, invalid account holder, invalid iban, generic failure, or unknown bank failure, displayed in a dialog or notification -->
+    <string name="StripeFailureCode__verify_your_bank_details_are_correct">Verifica que les dades del teu banc siguin correctes i torna-ho a provar. Si el problema continua, posa\'t en contacte amb el teu banc.</string>
 
     <!-- Title of create notification profile screen -->
     <string name="EditNotificationProfileFragment__name_your_profile">Nom del perfil</string>
@@ -4883,6 +5080,12 @@
     <string name="AddAllowedMembers__add_people_and_groups_you_want_notifications_and_calls_from_when_this_profile_is_on">Afegiu persones i grups dels quals rebre notificacions i trucades quan aquest perfil estigui activat.</string>
     <!-- Button text that launches the contact picker to select from -->
     <string name="AddAllowedMembers__add_people_or_groups">Afegeix persones o grups</string>
+    <!-- Title for exceptions section of add people to notification profile screen in create flow -->
+    <string name="AddAllowedMembers__exceptions">Excepcions</string>
+    <!-- List preference to toggle that allows calls through the notification profile during create flow -->
+    <string name="AddAllowedMembers__allow_all_calls">Permet totes les trucades</string>
+    <!-- List preference to toggle that allows mentions through the notification profile during create flow -->
+    <string name="AddAllowedMembers__notify_for_all_mentions">Notifica totes les mencions</string>
 
     <!-- Call to action button on contact picker for adding to profile -->
     <string name="SelectRecipientsFragment__add">Afegeix</string>
@@ -4988,6 +5191,10 @@
 
     <!-- Displayed in a toast when we fail to open the ringtone picker -->
     <string name="NotificationSettingsFragment__failed_to_open_picker">Ha fallat obrir el selector.</string>
+    <!-- Banner title when notification permission is disabled -->
+    <string name="NotificationSettingsFragment__to_enable_notifications">Per activar les notificacions, Signal necessita permís per mostrar-les.</string>
+    <!-- Banner action when notification permission is disabled -->
+    <string name="NotificationSettingsFragment__turn_on">Activar</string>
 
     <!-- Description shown for the Signal Release Notes channel -->
     <string name="ReleaseNotes__signal_release_notes_and_news">Notes de la versió del Signal i Notícies</string>
@@ -5000,10 +5207,10 @@
     <string name="DonationReceiptListFragment__recurring">Recurrent</string>
     <!-- Donation receipts one-time tab label -->
     <string name="DonationReceiptListFragment__one_time">Única</string>
+    <!-- Donation receipts gift tab -->
+    <string name="DonationReceiptListFragment__for_a_friend">En nom d\'un amic</string>
     <!-- Donation receipts gift tab label -->
     <string name="DonationReceiptListFragment__donation_for_a_friend">Fer una donació per un amic</string>
-    <!-- Donation receipts boost row label -->
-    <!-- Donation receipts details title -->
     <!-- Donation receipts donation type heading -->
     <string name="DonationReceiptDetailsFragment__donation_type">Tipus de donació</string>
     <!-- Donation receipts date paid heading -->
@@ -5492,7 +5699,10 @@
     <!-- Message of safety number changes bottom sheet when not showing individual records and user has seen review screen -->
     <string name="SafetyNumberBottomSheetFragment__all_connections_have_been_reviewed">S\'han revisat tots els contactes, toca enviar per a continuar.</string>
     <!-- Message of safety number changes bottom sheet when not showing individual records -->
-    <string name="SafetyNumberBottomSheetFragment__you_have_d_connections">Tens %1$d contactes que pot ser que hagin reinstal·lat Signal o canviat de dispositiu. Abans de compartir la teva història amb ells, revisa els seus números de seguretat o pensa si vols eliminar-los de la teva història.</string>
+    <plurals name="SafetyNumberBottomSheetFragment__you_have_d_connections_plural">
+        <item quantity="one">Pot ser que %1$d contacte hagi reinstal·lat Signal o canviat de dispositiu. Pots revisar el seu número de seguretat o continuar i enviar.</item>
+        <item quantity="other">Pot ser que %1$d contactes hagin reinstal·lat Signal o canviat de dispositiu. Pots revisar els seus números de seguretat o continuar i enviar.</item>
+    </plurals>
     <!-- Menu action to launch safety number verification screen -->
     <string name="SafetyNumberBottomSheetFragment__verify_safety_number">Verifica el número de seguretat</string>
     <!-- Menu action to remove user from story -->
@@ -5735,6 +5945,23 @@
     <string name="DonateToSignalFragment__continue">Continuar</string>
     <!-- Description below title -->
     <string name="DonateToSignalFragment__private_messaging">Missatgeria privada, finançada per tu. Sense anuncis, ni rastrejadors, ni compromís. Fes ja una donació per ajudar a Signal.</string>
+    <!-- Dialog title when a user tries to donate while they already have a pending donation. -->
+    <string name="DonateToSignalFragment__you_have_a_donation_pending">Tens una donació pendent</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending monthly donation. -->
+    <string name="DonateToSignalFragment__bank_transfers_usually_take_1_business_day_to_process_monthly">Les transferències bancàries solen trigar 1 dia laborable a processar-se. Espera fins que es completi el pagament abans d\'actualitzar la teva subscripció.</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending one time donation. -->
+    <string name="DonateToSignalFragment__bank_transfers_usually_take_1_business_day_to_process_onetime">Les transferències bancàries solen trigar 1 dia laborable a processar-se. Espera fins que es completi aquest pagament abans de fer una altra donació.</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending monthly donation. -->
+    <string name="DonateToSignalFragment__your_payment_is_still_being_processed_monthly">La teva donació encara s\'està processant. Això pot trigar uns quants minuts segons la teva connexió. Espera fins que es completi el pagament abans d\'actualitzar la teva subscripció.</string>
+    <!-- Dialog body when a user tries to donate while they already have a pending one time donation. -->
+    <string name="DonateToSignalFragment__your_payment_is_still_being_processed_onetime">La teva donació encara s\'està processant. Això pot trigar uns quants minuts segons la teva connexió. Espera fins que es completi aquest pagament abans de fer una altra donació.</string>
+    <!-- Dialog body when a user opens the manage donations main screen and they have a pending iDEAL donation -->
+    <string name="DonateToSignalFragment__your_ideal_payment_is_still_processing">La teva donació a través d\'iDEAL encara s\'està processant. Comprova la teva app bancària per aprovar el teu pagament abans de fer una altra donació.</string>
+    <!-- Dialog title shown when a user tries to donate an amount higher than is allowed for a given payment method. -->
+    <string name="DonateToSignal__donation_amount_too_high">L\'import de la donació és massa elevat</string>
+    <!-- Dialog body shown when a user tries to donate an amount higher than is allowed for a given payment method, place holder is the maximum -->
+    <string name="DonateToSignalFragment__you_can_send_up_to_s_via_bank_transfer">Pots enviar fins a %1$s mitjançant transferència bancària. Prova una quantitat o una forma de pagament diferents.</string>
+
     <!-- Donation pill toggle monthly text -->
     <string name="DonationPillToggle__monthly">Mensual</string>
     <!-- Donation pill toggle one-time text -->
@@ -5752,10 +5979,144 @@
         <item quantity="one">Aconsegueix una insígnia %1$s durant %2$d dia</item>
         <item quantity="other">Aconsegueix una insígnia %1$s durant %2$d dies</item>
     </plurals>
+    <!-- Button label for paying with a bank transfer -->
+    <string name="GatewaySelectorBottomSheet__bank_transfer">Transferència bancària</string>
     <!-- Button label for paying with a credit card -->
     <string name="GatewaySelectorBottomSheet__credit_or_debit_card">Targeta de crèdit o dèbit</string>
     <!-- Sheet summary when giving donating for a friend -->
     <string name="GatewaySelectorBottomSheet__donate_for_a_friend">Fer una donació per un amic</string>
+    <!-- Button label for paying with iDEAL -->
+    <string name="GatewaySelectorBottomSheet__ideal">iDEAL</string>
+
+    <!-- Dialog title for launching external intent -->
+    <string name="ExternalNavigationHelper__leave_signal_to_confirm_payment">Vols sortir de Signal per confirmar la donació?</string>
+    <string name="ExternalNavigationHelper__once_this_payment_is_confirmed">Un cop confirmada, torna a Signal per acabar de processar la teva donació.</string>
+
+    <!-- IdealBank -->
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__abn_amro">ABN AMRO</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__asn_bank">ASN Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__bunq">bunq</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__ing">ING</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__knab">Knab</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__n26">N26</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__rabobank">Rabobank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__regiobank">RegioBank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__revolut">Revolut</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__sns_bank">SNS Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__triodos_bank">Triodos Bank</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__van_lanschot">Van Lanschot Kempen</string>
+    <!-- iDEAL bank name -->
+    <string name="IdealBank__yoursafe">Yoursafe</string>
+
+    <!-- BankTransferMandateFragment -->
+    <!-- Title of screen displaying the bank transfer mandate -->
+    <string name="BankTransferMandateFragment__bank_transfer">Transferència bancària</string>
+    <!-- Subtitle of screen displaying the bank transfer mandate, placeholder is \'Learn more\' -->
+    <string name="BankTransferMandateFragment__stripe_processes_donations">Stripe processa les donacions fetes a Signal. Signal no recopila ni emmagatzema la teva informació personal. %1$s</string>
+    <!-- Subtitle learn more of screen displaying bank transfer mandate -->
+    <string name="BankTransferMandateFragment__learn_more">Més informació</string>
+    <!-- Button label to continue with transfer -->
+    <string name="BankTransferMandateFragment__agree">Acceptar</string>
+    <!-- Button label to read more of the bank mandate that is currently off screen -->
+    <string name="BankTransferMandateFragment__read_more">Llegiu-ne més.</string>
+    <!-- Text displayed when mandate load fails -->
+    <string name="BankTransferMandateFragment__failed_to_load_mandate">No s\'ha pogut carregar el mandat</string>
+
+    <!-- BankTransferDetailsFragment -->
+    <!-- Subtext explaining how email is used. Placeholder is \'Learn more\' -->
+    <string name="BankTransferDetailsFragment__enter_your_bank_details">Introdueix la teva informació bancària i correu electrònic. Stripe utilitza aquest correu electrònic per enviar-te actualitzacions sobre la teva donació. %1$s</string>
+    <!-- Subtext learn more link text -->
+    <string name="BankTransferDetailsFragment__learn_more">Més informació</string>
+    <!-- Text field label for name on bank account -->
+    <string name="BankTransferDetailsFragment__name_on_bank_account">Nom al compte bancari</string>
+    <!-- Text field label for IBAN -->
+    <string name="BankTransferDetailsFragment__iban">IBAN</string>
+    <!-- Text field label for email -->
+    <string name="BankTransferDetailsFragment__email">Adreça electrònica</string>
+    <!-- Text label for button to show user how to find their IBAN -->
+    <string name="BankTransferDetailsFragment__find_account_info">Cercar informació del compte</string>
+    <!-- Donate button label for monthly subscription -->
+    <string name="BankTransferDetailsFragment__donate_s_month">Fer donació de %1$s/mes</string>
+    <!-- Donate button label for one-time -->
+    <string name="BankTransferDetailsFragment__donate_s">Fer donació de %1$s</string>
+    <!-- Error label for IBAN field when number is too short -->
+    <string name="BankTransferDetailsFragment__iban_is_too_short">L\'IBAN és massa curt</string>
+    <!-- Error label for IBAN field when number is too long -->
+    <string name="BankTransferDetailsFragment__iban_is_too_long">L\'IBAN és massa llarg</string>
+    <!-- Error label for IBAN field when country is not supported -->
+    <string name="BankTransferDetailsFragment__iban_country_code_is_not_supported">El codi de país de l\'IBAN no és compatible</string>
+    <!-- Error label for IBAN field when number is invalid -->
+    <string name="BankTransferDetailsFragment__invalid_iban">IBAN no vàlid</string>
+    <!-- Error label for name field when name is not at least two characters long -->
+    <string name="BankTransferDetailsFragment__minimum_2_characters">Mínim 2 caràcters</string>
+    <!-- Error label for email field when email is not valid -->
+    <string name="BankTransferDetailsFragment__invalid_email_address">Adreça de correu electrònic no vàlida</string>
+
+    <!-- IdealTransferDetailsFragment -->
+    <!-- Title of the screen, displayed in the toolbar -->
+    <string name="IdealTransferDetailsFragment__ideal">iDEAL</string>
+    <!-- Subtitle of the screen, displayed below the toolbar. Placeholder is for \'learn more\' -->
+    <string name="IdealTransferDetailsFragment__enter_your_bank">Introdueix el teu banc, nom i correu electrònic. Stripe utilitza aquest correu electrònic per enviar-te actualitzacions sobre la teva donació. %1$s</string>
+    <!-- Subtitle of the screen, displayed below the toolbar. Placeholder is for \'learn more\' -->
+    <string name="IdealTransferDetailsFragment__enter_your_bank_details_one_time">Introdueix els teus detalls bancaris. Signal no recopila ni emmagatzema la teva informació personal. %1$s</string>
+    <!-- Subtitle learn-more button displayed inline with the subtitle text -->
+    <string name="IdealTransferDetailsFragment__learn_more">Més informació</string>
+    <!-- Hint label for text entry box for name on bank account -->
+    <string name="IdealTransferDetailsFragment__name_on_bank_account">Nom al compte bancari</string>
+    <!-- Hint label for text entry box for email -->
+    <string name="IdealTransferDetailsFragment__email">Adreça electrònica</string>
+    <!-- Default label for bank selection -->
+    <string name="IdealTransferDetailsFragment__choose_your_bank">Tria el teu banc</string>
+
+    <!-- IdealTransferDetailsBankSelectionDialogFragment -->
+    <!-- Title of the screen, displayed in the toolbar -->
+    <string name="IdealTransferDetailsBankSelectionDialogFragment__choose_your_bank">Tria el teu banc</string>
+
+    <!-- Title of bottom sheet for finding account information -->
+    <string name="FindAccountInfoSheet__find_your_account_information">Cercar informació del teu compte</string>
+    <!-- Body of bottom sheet for finding account information -->
+    <string name="FindAccountInfoSheet__look_for_your_iban_at">Cerca el teu IBAN a la part superior de l\'extracte bancari. Els IBAN contenen fins a 34 caràcters. El nom que introdueixis hauria de coincidir amb el teu nom complet al teu compte bancari. Contacta amb el teu banc per obtenir més informació.</string>
+
+    <!-- Title of donation pending sheet displayed after making a bank transfer -->
+    <string name="DonationPendingBottomSheet__donation_pending">Donació pendent</string>
+    <!-- Top text block of donation pending sheet displayed after subscribing via a bank transfer. Placeholder is the badge name. -->
+    <string name="DonationPendingBottomSheet__your_monthly_donation_is_pending">La teva donació mensual està pendent. Podràs mostrar la insígnia %1$s al teu perfil quan rebem la teva donació.</string>
+    <!-- Top text block of donation pending sheet displayed after one-time donation via a bank transfer. Placeholder is the badge name. -->
+    <string name="DonationPendingBottomSheet__your_one_time_donation_is_pending">La teva donació única està pendent. Podràs mostrar la insígnia %1$s al teu perfil quan rebem la teva donació.</string>
+    <!-- Bottom text block of donation pending sheet displayed after donating via a bank transfer. Placeholder is for learn more. -->
+    <string name="DonationPendingBottomSheet__bank_transfers_usually_take">Les transferències bancàries solen trigar 1 dia laborable a processar-se. %1$s</string>
+    <!-- Learn more text for donation pending sheet displayed after donating via a bank transfer. -->
+    <string name="DonationPendingBottomSheet__learn_more">Més informació</string>
+    <!-- Confirmation button for donation pending sheet displayed after donating via a bank transfer. -->
+    <string name="DonationPendingBottomSheet__done">Fet</string>
+
+    <!-- Title of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__donation_couldnt_be_processed">No s\'ha pogut processar la donació</string>
+    <!-- Text block of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__were_having_trouble">Estem tenint problemes per processar la teva transferència bancària. No se t\'ha efectuat el càrrec. Prova un altre mètode de pagament o posa\'t en contacte amb el banc per obtenir-ne més informació.</string>
+    <!-- Button label for retry button of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__try_again">Torna a provar-ho</string>
+    <!-- Button label for not now button of donation error sheet displayed after making a bank transfer that fails -->
+    <string name="DonationErrorBottomSheet__not_now">Ara no</string>
+
+    <!-- Title of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed -->
+    <string name="DonationCompletedBottomSheet__donation_complete">Donació completada</string>
+    <!-- Text block of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed -->
+    <string name="DonationCompleteBottomSheet__your_bank_transfer_was_received">S\'ha rebut la teva transferència bancària. Pots optar per mostrar aquesta insígnia al teu perfil per mostrar el teu suport.</string>
+    <!-- Button text of \'Donation Complete\' sheet displayed after a bank transfer completes and the badge is redeemed to dismiss sheet -->
+    <string name="DonationCompleteBottomSheet__done">Fet</string>
 
     <!-- StripePaymentInProgressFragment -->
     <string name="StripePaymentInProgressFragment__cancelling">Cancel·lant…</string>
@@ -5895,6 +6256,8 @@
     <string name="CallLogAdapter__outgoing">Sortint</string>
     <!-- Displayed for missed calls -->
     <string name="CallLogAdapter__missed">Perduda</string>
+    <!-- Displayed for missed calls declined by notification profile -->
+    <string name="CallLogAdapter__missed_notification_profile">Perduda mentre els ajustos de notificació estaven activats</string>
     <!-- Displayed on Group Call button if user is not in the call -->
     <string name="CallLogAdapter__join">Unir-me</string>
     <!-- Displayed on Group Call button if user is in the call -->
@@ -5969,6 +6332,8 @@
     <string name="CallLogFragment__no_calls">Sense trucades.</string>
     <!-- Shown during empty state -->
     <string name="CallLogFragment__get_started_by_calling_a_friend">Comença trucant a algú.</string>
+    <!-- Displayed as a message in a dialog when deleting multiple items -->
+    <string name="CallLogFragment__call_links_youve_created">Els enllaços de trucada que hagis creat ja no funcionaran per a les persones que els tinguin.</string>
 
     <!-- New call activity -->
     <!-- Activity title in title bar -->
@@ -6000,6 +6365,8 @@
     <string name="CallPreference__group_call">Trucada de grup</string>
     <!-- Missed group call in call info -->
     <string name="CallPreference__missed_group_call">Trucada grupal perduda</string>
+    <!-- Missed group call while notification profile on in call info -->
+    <string name="CallPreference__missed_group_call_notification_profile">Trucada de grup perduda mentre els ajustos de notificació estaven activats</string>
     <!-- Incoming group call in call info -->
     <string name="CallPreference__incoming_group_call">Trucada grupal entrant</string>
     <!-- Outgoing group call in call info -->
@@ -6030,8 +6397,10 @@
     <string name="CreateCallLinkBottomSheetDialogFragment__signal_call">Trucada de Signal</string>
     <!-- Displayed on a small button to allow user to instantly join call -->
     <string name="CreateCallLinkBottomSheetDialogFragment__join">Unir-me</string>
-    <!-- Option to open a full screen dialog to enter a call name -->
+    <!-- Option to open a full screen dialog to add a call name -->
     <string name="CreateCallLinkBottomSheetDialogFragment__add_call_name">Afegir nom de trucada</string>
+    <!-- Option to open a full screen dialog to edit a call name -->
+    <string name="CreateCallLinkBottomSheetDialogFragment__edit_call_name">Editar nom de trucada</string>
     <!-- Toggle to require approval for all members before joining -->
     <string name="CreateCallLinkBottomSheetDialogFragment__approve_all_members">Aprovar tots els membres</string>
     <!-- Row label to share the link via Signal -->
@@ -6046,6 +6415,12 @@
     <string name="CreateCallLinkBottomSheetDialogFragment__failed_to_open_share_sheet">No es pot compartir l\'enllaç de trucada.</string>
     <!-- Displayed when we copy the call link to the clipboard -->
     <string name="CreateCallLinkBottomSheetDialogFragment__copied_to_clipboard">Copiat al portapapers</string>
+
+    <!-- CallLinkIncomingRequestSheet -->
+    <!-- Displayed as line item in sheet for approving or denying a single user -->
+    <string name="CallLinkIncomingRequestSheet__approve_entry">Aprovar l\'entrada</string>
+    <!-- Displayed as line item in sheet for approving or denying a single user -->
+    <string name="CallLinkIncomingRequestSheet__deny_entry">Denegar l\'entrada</string>
 
     <!-- EditCallLinkNameDialogFragment -->
     <!-- App bar title for editing a call name -->
@@ -6066,9 +6441,9 @@
     <!-- Title shown at top of bottom sheet dialog for displaying a message\'s edit history -->
     <string name="EditMessageHistoryDialog_title">Historial d\'edicions</string>
     <!-- Title of dialog shown alerting user that edit message is in beta only -->
-    <string name="SendingEditMessageBetaOnlyDialog_title">Només per a la versió beta de Signal</string>
+    <string name="SendingEditMessageBetaOnlyDialog_title">Editar missatge</string>
     <!-- Body of dialog shown alerting user that edit message is in beta only and only sent to beta users. -->
-    <string name="SendingEditMessageBetaOnlyDialog_body">La funció d\'edició de missatges només està disponible per a les persones que tinguin la versió beta de Signal. Si edites un missatge, només serà visible per a aquelles persones que tinguin la darrera versió de Signal beta.</string>
+    <string name="SendingEditMessageBetaOnlyDialog_body">Si edites un missatge, només serà visible per a aquelles persones que tinguin les darreres versions de Signal. Podran veure que has editat un missatge.</string>
     <!-- Button to cancel sending edit message as it is beta only -->
     <string name="SendingEditMessageBetaOnlyDialog_cancel">Cancel·lar</string>
     <!-- Button to continue sending edit message despite it being beta only -->
@@ -6103,6 +6478,16 @@
     <string name="UsernameLinkSettings_username_copied_toast">S\'ha copiat el nom d\'usuari</string>
     <!-- Content of a toast that will show after the username link is copied to the clipboard -->
     <string name="UsernameLinkSettings_link_copied_toast">Enllaç copiat</string>
+    <!-- Content of a text field that is shown when the user has not yet set a username link -->
+    <string name="UsernameLinkSettings_link_not_set_label">Enllaç no establert</string>
+    <!-- Content of a text field that is shown when the user is actively resetting the username link and waiting for the operation to finish -->
+    <string name="UsernameLinkSettings_resetting_link_label">Restablint l\'enllaç…</string>
+    <!-- Title of a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_title">Restablir codi QR?</string>
+    <!-- Body of a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_body">Si restableixes el teu codi QR, el teu codi QR actual i l\'enllaç deixaran de funcionar.</string>
+    <!-- Label for the confirmation button on a dialog prompting the user to confirm whether they would like to reset their username link and QR code -->
+    <string name="UsernameLinkSettings_reset_link_dialog_confirm_button">Restableix</string>
     <!-- Button label for a button that will reset your username and give you a new link -->
     <string name="UsernameLinkSettings_reset_button_label">Restableix</string>
     <!-- Button label for a button that indicates that the user is done changing the current setting -->
@@ -6119,8 +6504,21 @@
     <string name="UsernameLinkSettings_qr_result_invalid">El codi QR no era vàlid.</string>
     <!-- Body of a dialog that is displayed when the username we looked up could not be found. -->
     <string name="UsernameLinkSettings_qr_result_not_found">No s\'ha pogut trobar l\'usuari amb l\'àlies %1$s.</string>
+    <!-- Body of a dialog that is displayed when the username we looked up could not be found and we also could not parse the username. -->
+    <string name="UsernameLinkSettings_qr_result_not_found_no_username">No s\'ha pogut trobar aquest usuari.</string>
     <!-- Body of a dialog that is displayed when we experienced a network error when looking up a username. -->
     <string name="UsernameLinkSettings_qr_result_network_error">Ha fallat la xarxa. Si us plau, torna-ho a provar.</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because you had no internet. -->
+    <string name="UsernameLinkSettings_reset_link_result_network_unavailable">No tens accés a la xarxa. El teu enllaç no s\'ha restablert. Torna-ho a provar més tard.</string>
+    <!-- Body of a dialog that is displayed when we failed to reset your username link because of a transient network issue. -->
+    <string name="UsernameLinkSettings_reset_link_result_network_error">S\'ha produït un error de xarxa en intentar restablir l\'enllaç. Torna-ho a provar més tard.</string>
+
+    <!-- Explanatory text at the top of a bottom sheet describing how username links work -->
+    <string name="UsernameLinkShareBottomSheet_title">Qualsevol persona amb aquest enllaç pot veure el teu àlies i començar un xat amb tu. Comparteix-lo només amb persones de confiança.</string>
+    <!-- A button label for a button that, when pressed, will copy your username link to the clipboard -->
+    <string name="UsernameLinkShareBottomSheet_copy_link">Copiar enllaç</string>
+    <!-- A button label for a button that, when pressed, will open a share sheet for sharing your username link -->
+    <string name="UsernameLinkShareBottomSheet_share">Comparteix</string>
 
     <!-- PendingParticipantsView -->
     <!-- Displayed in the popup card when a remote user attempts to join a call link -->
@@ -6141,8 +6539,32 @@
     </plurals>
     <!-- Content description for rejecting a user -->
     <string name="PendingParticipantsBottomSheet__reject">Rebutja</string>
-    <!-- Content desccription for confirming a user -->
+    <!-- Content description for confirming a user -->
     <string name="PendingParticipantsBottomSheet__approve">Aprova-la</string>
+
+    <!-- Title of a megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls -->
+    <string name="GrantFullScreenIntentPermission_megaphone_title">Activar les notificacions de pantalla completa?</string>
+    <!-- Body of a megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls -->
+    <string name="GrantFullScreenIntentPermission_megaphone_body">No et perdis mai cap trucada dels teus contactes i grups.</string>
+    <!-- Button on the megaphone megaphone shown at the bottom of the chat list when a user has disable the system setting for showing full screen notifications used showing incoming calls that starts the fix process -->
+    <string name="GrantFullScreenIntentPermission_megaphone_turn_on">Activar</string>
+    <!-- Title of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_title">Activar les notificacions de pantalla completa</string>
+    <!-- Subtitle of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_subtitle">Per rebre notificacions de trucades dels teus contactes i grups:</string>
+    <!-- Step 2 of bottom sheet shown after tapping "Turn on" from the megaphone to re-enable full screen notifications for incoming call notifications, it indicates the name of the setting that needs to be re-enabled -->
+    <string name="GrantFullScreenIntentPermission_bottomsheet_step2">2. %1$s Activa les notificacions de pantalla completa</string>
+
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, title for dialog -->
+    <string name="MonthlyDonationCanceled__title">Donació mensual cancel·lada</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, body for dialog. First placeholder is a payment related error message. Second placeholder is \'learn more\' -->
+    <string name="MonthlyDonationCanceled__message">La teva donació mensual recurrent s\'ha cancel·lat. %1$s\n\nLa teva insígnia ja no serà visible al teu perfil. %2$s</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, learn more used in placeholder for body for dialog. -->
+    <string name="MonthlyDonationCanceled__learn_more">Més informació</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, primary button to renew subscription with new data -->
+    <string name="MonthlyDonationCanceled__renew_button">Renova la subscripció</string>
+    <!-- Bottom sheet dialog shown when a monthly donation fails to renew, second button to dismiss the dialog entirely -->
+    <string name="MonthlyDonationCanceled__not_now_button">Ara no</string>
 
     <!-- EOF -->
 </resources>

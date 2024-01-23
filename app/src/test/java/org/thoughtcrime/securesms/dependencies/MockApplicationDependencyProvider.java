@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import org.signal.core.util.concurrent.DeadlockDetector;
 import org.signal.libsignal.zkgroup.profiles.ClientZkProfileOperations;
 import org.signal.libsignal.zkgroup.receipts.ClientZkReceiptOperations;
-import org.tm.archive.KbsEnclave;
 import org.tm.archive.components.TypingStatusRepository;
 import org.tm.archive.components.TypingStatusSender;
 import org.tm.archive.crypto.storage.SignalServiceDataStoreImpl;
@@ -33,7 +32,6 @@ import org.tm.archive.util.FrameRateTracker;
 import org.tm.archive.video.exo.GiphyMp4Cache;
 import org.tm.archive.video.exo.SimpleExoPlayerPool;
 import org.tm.archive.webrtc.audio.AudioManagerCompat;
-import org.whispersystems.signalservice.api.KeyBackupService;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.SignalServiceDataStore;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
@@ -45,7 +43,6 @@ import org.whispersystems.signalservice.api.services.DonationsService;
 import org.whispersystems.signalservice.api.services.ProfileService;
 import org.whispersystems.signalservice.internal.configuration.SignalServiceConfiguration;
 
-import java.security.KeyStore;
 import java.util.function.Supplier;
 
 import static org.mockito.Mockito.mock;
@@ -228,11 +225,6 @@ public class MockApplicationDependencyProvider implements ApplicationDependencie
 
   @Override
   public @NonNull ClientZkReceiptOperations provideClientZkReceiptOperations(@NonNull SignalServiceConfiguration signalServiceConfiguration) {
-    return null;
-  }
-
-  @Override
-  public @NonNull KeyBackupService provideKeyBackupService(@NonNull SignalServiceAccountManager signalServiceAccountManager, @NonNull KeyStore keyStore, @NonNull KbsEnclave enclave) {
     return null;
   }
 

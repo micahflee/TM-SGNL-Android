@@ -9,7 +9,6 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.StickerTable.StickerPackRecordReader;
 import org.tm.archive.database.model.StickerPackRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;

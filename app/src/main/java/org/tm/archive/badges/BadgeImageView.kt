@@ -8,6 +8,7 @@ import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import org.tm.archive.R
 import org.tm.archive.badges.glide.BadgeSpriteTransformation
 import org.tm.archive.badges.models.Badge
+import org.tm.archive.components.settings.app.subscription.BadgeImageSize
 import org.tm.archive.database.model.databaseprotos.GiftBadge
 import org.tm.archive.glide.GiftBadgeModel
 import org.tm.archive.mms.GlideApp
@@ -29,6 +30,10 @@ class BadgeImageView @JvmOverloads constructor(
     }
 
     isClickable = false
+  }
+
+  constructor(context: Context, badgeImageSize: BadgeImageSize) : this(context) {
+    badgeSize = badgeImageSize.sizeCode
   }
 
   override fun setOnClickListener(l: OnClickListener?) {

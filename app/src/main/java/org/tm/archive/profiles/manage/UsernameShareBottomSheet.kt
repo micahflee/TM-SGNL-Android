@@ -8,6 +8,7 @@ import androidx.core.app.ShareCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
+import org.signal.core.util.Base64
 import org.signal.core.util.DimensionUnit
 import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.libsignal.usernames.Username
@@ -20,7 +21,6 @@ import org.tm.archive.components.settings.configure
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.FragmentResultContract
 import org.tm.archive.util.Util
-import org.whispersystems.util.Base64UrlSafe
 
 /**
  * Allows the user to either share their username directly or to copy it to their clipboard.
@@ -38,6 +38,10 @@ class UsernameShareBottomSheet : DSLSettingsBottomSheetFragment() {
     ShareButton.register(adapter)
 
     lifecycleDisposable += Recipient.observable(Recipient.self().id).subscribe {
+      if (context == null) {
+        return@subscribe
+      }
+
       adapter.submitList(getConfiguration(it).toMappingModelList())
     }
   }
@@ -71,7 +75,7 @@ class UsernameShareBottomSheet : DSLSettingsBottomSheetFragment() {
 
       customPref(
         CopyButton.Model(
-          text = getString(R.string.signal_me_username_url, Base64UrlSafe.encodeBytesWithoutPadding(Username.hash(username))),
+          text = getString(R.string.signal_me_username_url, Base64.encodeUrlSafeWithoutPadding(Username.hash(username))),
           onClick = {
             copyToClipboard(it)
           }
@@ -82,7 +86,7 @@ class UsernameShareBottomSheet : DSLSettingsBottomSheetFragment() {
 
       customPref(
         ShareButton.Model(
-          text = getString(R.string.signal_me_username_url, Base64UrlSafe.encodeBytesWithoutPadding(Username.hash(username))),
+          text = getString(R.string.signal_me_username_url, Base64.encodeUrlSafeWithoutPadding(Username.hash(username))),
           onClick = {
             openShareSheet(it.text)
           }

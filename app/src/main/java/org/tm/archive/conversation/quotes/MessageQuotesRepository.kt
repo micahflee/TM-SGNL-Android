@@ -10,9 +10,9 @@ import org.tm.archive.conversation.v2.data.AttachmentHelper
 import org.tm.archive.conversation.v2.data.ReactionHelper
 import org.tm.archive.database.DatabaseObserver
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MessageId
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.Quote
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.util.getQuote
@@ -74,7 +74,7 @@ class MessageQuotesRepository {
       .map { replyRecord ->
         val replyQuote: Quote? = replyRecord.getQuote()
         if (replyQuote != null && replyQuote.id == originalRecord!!.dateSent) {
-          (replyRecord as MediaMmsMessageRecord).withoutQuote()
+          (replyRecord as MmsMessageRecord).withoutQuote()
         } else {
           replyRecord
         }

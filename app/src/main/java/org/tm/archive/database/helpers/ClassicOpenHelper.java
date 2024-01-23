@@ -44,7 +44,7 @@ import org.tm.archive.groups.GroupId;
 import org.tm.archive.migrations.LegacyMigrationJob;
 import org.tm.archive.permissions.Permissions;
 import org.tm.archive.phonenumbers.NumberUtil;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.DelimiterUtil;
 import org.tm.archive.util.JsonUtils;
 import org.tm.archive.util.MediaUtil;
@@ -379,8 +379,8 @@ public class ClassicOpenHelper extends SQLiteOpenHelper {
 
               if (identityKey != null) {
                 MasterCipher masterCipher = new MasterCipher(masterSecret);
-                String identityKeyString  = Base64.encodeBytes(identityKey.serialize());
-                String macString          = Base64.encodeBytes(masterCipher.getMacFor(recipientId +
+                String identityKeyString  = Base64.encodeWithPadding(identityKey.serialize());
+                String macString          = Base64.encodeWithPadding(masterCipher.getMacFor(recipientId +
                                                                                           identityKeyString));
 
                 db.execSQL("REPLACE INTO identities (recipient, key, mac) VALUES (?, ?, ?)",

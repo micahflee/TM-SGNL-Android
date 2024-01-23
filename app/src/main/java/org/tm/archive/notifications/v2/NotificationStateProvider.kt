@@ -7,11 +7,10 @@ import org.tm.archive.database.MessageTable
 import org.tm.archive.database.NoSuchMessageException
 import org.tm.archive.database.RecipientTable
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MessageId
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.ReactionRecord
-import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.notifications.profiles.NotificationProfile
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.isStoryReaction
@@ -52,10 +51,10 @@ object NotificationStateProvider {
               SignalDatabase.messages.hasGroupReplyOrReactionInStory(it)
             }
 
-            if (record is MediaMmsMessageRecord) {
+            if (record is MmsMessageRecord) {
               val attachments = SignalDatabase.attachments.getAttachmentsForMessage(record.id)
               if (attachments.isNotEmpty()) {
-                record = record.withAttachments(ApplicationDependencies.getApplication(), attachments)
+                record = record.withAttachments(attachments)
               }
             }
 

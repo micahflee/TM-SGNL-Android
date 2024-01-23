@@ -17,7 +17,6 @@
 package org.tm.archive.sms;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -27,10 +26,6 @@ import androidx.annotation.WorkerThread;
 
 import com.annimon.stream.Stream;
 
-import org.archiver.ArchiveConstants;
-import org.archiver.ArchiveFileUtil;
-import org.archiver.ArchiveSender;
-import org.archiver.ArchiveUtil;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
@@ -64,29 +59,23 @@ import org.tm.archive.jobs.PushGroupSendJob;
 import org.tm.archive.jobs.IndividualSendJob;
 import org.tm.archive.jobs.ReactionSendJob;
 import org.tm.archive.jobs.RemoteDeleteSendJob;
-import org.tm.archive.jobs.ResumableUploadSpecJob;
 import org.tm.archive.jobs.SmsSendJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mediasend.Media;
 import org.tm.archive.mms.MmsException;
 import org.tm.archive.mms.OutgoingMessage;
-import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.service.ExpiringMessageManager;
-import org.tm.archive.util.FileUtils;
 import org.tm.archive.util.ParcelUtil;
 import org.tm.archive.util.SignalLocalMetrics;
 import org.tm.archive.util.TextSecurePreferences;
 import org.whispersystems.signalservice.api.push.DistributionId;
 import org.whispersystems.signalservice.api.util.Preconditions;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -131,7 +120,7 @@ public class MessageSender {
 
       for (OutgoingMessage message : messages) {
         long allocatedThreadId = threadTable.getOrCreateValidThreadId(message.getThreadRecipient(), -1L, message.getDistributionType());
-        long messageId         = database.insertMessageOutbox(message.stripAttachments(), allocatedThreadId, false, insertListener, null);
+        long messageId         = database.insertMessageOutbox(message.stripAttachments(), allocatedThreadId, false, insertListener);
 
         messageIds.add(messageId);
         threads.add(allocatedThreadId);
@@ -241,8 +230,7 @@ public class MessageSender {
 
       long      allocatedThreadId = threadTable.getOrCreateValidThreadId(message.getThreadRecipient(), threadId, message.getDistributionType());
       Recipient recipient         = message.getThreadRecipient();
-      long      messageId         = database.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId), allocatedThreadId, sendType != SendType.SIGNAL, insertListener, null/*TM_SA*/);
-
+      long      messageId         = database.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId), allocatedThreadId, sendType != SendType.SIGNAL, insertListener);
 
       if (message.getThreadRecipient().isGroup() && message.getAttachments().isEmpty() && message.getLinkPreviews().isEmpty() && message.getSharedContacts().isEmpty()) {
         SignalLocalMetrics.GroupMessageSend.onInsertedIntoDatabase(messageId, metricId);
@@ -251,9 +239,6 @@ public class MessageSender {
       }
 
       sendMessageInternal(context, recipient, sendType, messageId, Collections.emptyList(), message.getScheduledDate() > 0);
-
-
-
       onMessageSent();
       threadTable.update(allocatedThreadId, true);
 
@@ -283,7 +268,7 @@ public class MessageSender {
       long      messageId         = mmsDatabase.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId),
                                                                     allocatedThreadId,
                                                                     false,
-                                                                    insertListener, preUploadResults/*TM_SA*/);
+                                                                    insertListener);
 
       List<AttachmentId> attachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
       List<String>       jobIds        = Stream.of(preUploadResults).map(PreUploadResult::getJobIds).flatMap(Stream::of).toList();
@@ -293,7 +278,6 @@ public class MessageSender {
       sendMessageInternal(context, recipient, SendType.SIGNAL, messageId, jobIds, false);
       onMessageSent();
       threadTable.update(allocatedThreadId, true);
-
 
       return allocatedThreadId;
     } catch (MmsException e) {
@@ -328,7 +312,7 @@ public class MessageSender {
         long primaryMessageId = mmsDatabase.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, primaryMessage.getThreadRecipient(), primaryMessage, primaryThreadId),
                                                                 primaryThreadId,
                                                                 false,
-                                                                null, preUploadResults/*TM_SA*/);
+                                                                null);
 
         attachmentDatabase.updateMessageId(preUploadAttachmentIds, primaryMessageId, primaryMessage.getStoryType().isStory());
         if (primaryMessage.getStoryType() != StoryType.NONE) {
@@ -355,11 +339,12 @@ public class MessageSender {
           long               allocatedThreadId = threadTable.getOrCreateThreadIdFor(secondaryMessage.getThreadRecipient(), secondaryMessage.getDistributionType());
           long               messageId         = mmsDatabase.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, secondaryMessage.getThreadRecipient(), secondaryMessage, allocatedThreadId),
                                                                                  allocatedThreadId,
-                                                                                 false, null, preUploadResults/*TM_SA*/);
+                                                                                 false,
+                                                                                 null);
           List<AttachmentId> attachmentIds     = new ArrayList<>(preUploadAttachmentIds.size());
 
           for (int i = 0; i < preUploadAttachments.size(); i++) {
-            AttachmentId attachmentId = attachmentDatabase.insertAttachmentForPreUpload(preUploadAttachments.get(i)).getAttachmentId();
+            AttachmentId attachmentId = attachmentDatabase.insertAttachmentForPreUpload(preUploadAttachments.get(i)).attachmentId;
             attachmentCopies.get(i).add(attachmentId);
             attachmentIds.add(attachmentId);
           }
@@ -391,39 +376,6 @@ public class MessageSender {
           DistributionId    distributionId = Objects.requireNonNull(SignalDatabase.distributionLists().getDistributionId(recipient.requireDistributionListId()));
           SignalDatabase.storySends().insert(messageId, members, message.getSentTimeMillis(), message.getStoryType().isStoryWithReplies(), distributionId);
         }
-
-        //**TM_SA**//start
-        /*Log.i(TAG, "start archiving");
-        new Thread(new Runnable() {
-          @Override public void run() {
-            List<AttachmentId> attachmentIds = Stream.of(preUploadResults).map(PreUploadResult::getAttachmentId).toList();
-            ArrayList<File> files = new ArrayList<>();
-            ArrayList<DatabaseAttachment> databaseAttachments = new ArrayList<>();
-            for(AttachmentId attachmentId : attachmentIds) {
-              DatabaseAttachment att = attachmentDatabase.getAttachment(attachmentId);
-              if (att != null) {
-                databaseAttachments.add(att);
-                File file = ArchiveFileUtil.getFileFromDataBaseUri(context, att.getUri().toString());
-                files.add(file);
-              }
-            }
-            ArchiveSender.Companion.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, files.toArray(new File[files.size()]));
-            for (int j = 0; j < files.size(); j++) {
-              String fileNameWithType = ArchiveFileUtil.getFileNameWithType(
-                  files.get(j).getName(),
-                  messageId,
-                  databaseAttachments.get(j).getAttachmentId().getRowId(),
-                  databaseAttachments.get(j).getContentType(),
-                  false
-              );
-              File tempFileForArchiving =
-                  FileUtils.createPlaceHolderTempFile(context, fileNameWithType);
-              ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.getName(), true);
-            }
-          }
-        }).start();
-*/
-        //**TM_SA**//end
       }
 
       onMessageSent();
@@ -465,17 +417,15 @@ public class MessageSender {
       AttachmentTable    attachmentDatabase = SignalDatabase.attachments();
       DatabaseAttachment databaseAttachment = attachmentDatabase.insertAttachmentForPreUpload(attachment);
 
-      Job compressionJob         = AttachmentCompressionJob.fromAttachment(databaseAttachment, false, -1);
-      Job resumableUploadSpecJob = new ResumableUploadSpecJob();
-      Job uploadJob              = new AttachmentUploadJob(databaseAttachment.getAttachmentId());
+      Job compressionJob = AttachmentCompressionJob.fromAttachment(databaseAttachment, false, -1);
+      Job uploadJob      = new AttachmentUploadJob(databaseAttachment.attachmentId);
 
       ApplicationDependencies.getJobManager()
                              .startChain(compressionJob)
-                             .then(resumableUploadSpecJob)
                              .then(uploadJob)
                              .enqueue();
 
-      return new PreUploadResult(media, databaseAttachment.getAttachmentId(), Arrays.asList(compressionJob.getId(), resumableUploadSpecJob.getId(), uploadJob.getId()));
+      return new PreUploadResult(media, databaseAttachment.attachmentId, Arrays.asList(compressionJob.getId(), uploadJob.getId()));
     } catch (MmsException e) {
       Log.w(TAG, "preUploadPushAttachment() - Failed to upload!", e);
       return null;
@@ -695,7 +645,7 @@ public class MessageSender {
                                                              .toList();
 
       List<AttachmentMarkUploadedJob> fakeUploadJobs = Stream.of(attachments)
-                                                             .map(a -> new AttachmentMarkUploadedJob(messageId, ((DatabaseAttachment) a).getAttachmentId()))
+                                                             .map(a -> new AttachmentMarkUploadedJob(messageId, ((DatabaseAttachment) a).attachmentId))
                                                              .toList();
 
       ApplicationDependencies.getJobManager().startChain(compressionJobs)
@@ -773,7 +723,7 @@ public class MessageSender {
 
     @Override
     public @NonNull String toString() {
-      return "{ID: " + attachmentId.getRowId() + ", URI: " + media.getUri() + ", Jobs: " + jobIds.stream().map(j -> "JOB::" + j).collect(Collectors.toList()) + "}";
+      return "{ID: " + attachmentId.id + ", URI: " + media.getUri() + ", Jobs: " + jobIds.stream().map(j -> "JOB::" + j).collect(Collectors.toList()) + "}";
     }
   }
 

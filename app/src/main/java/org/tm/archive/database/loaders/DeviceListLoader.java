@@ -18,7 +18,7 @@ import org.signal.libsignal.protocol.util.ByteUtil;
 import org.tm.archive.devicelist.Device;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.AsyncLoader;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.messages.multidevice.DeviceInfo;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;

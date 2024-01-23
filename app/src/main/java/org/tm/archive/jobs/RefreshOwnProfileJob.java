@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.signal.core.util.Base64;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.usernames.BaseUsernameException;
 import org.signal.libsignal.usernames.Username;
@@ -19,11 +20,13 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.AccountValues;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.profiles.ProfileName;
+import org.tm.archive.profiles.manage.UsernameRepository;
 import org.tm.archive.recipients.Recipient;
+import org.tm.archive.storage.StorageSyncHelper;
 import org.tm.archive.subscription.Subscriber;
-import org.tm.archive.util.Base64;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.ProfileUtil;
 import org.tm.archive.util.TextSecurePreferences;
@@ -32,15 +35,17 @@ import org.whispersystems.signalservice.api.crypto.InvalidCiphertextException;
 import org.whispersystems.signalservice.api.crypto.ProfileCipher;
 import org.whispersystems.signalservice.api.profiles.ProfileAndCredential;
 import org.whispersystems.signalservice.api.profiles.SignalServiceProfile;
+import org.whispersystems.signalservice.api.push.UsernameLinkComponents;
+import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException;
 import org.whispersystems.signalservice.api.subscriptions.ActiveSubscription;
 import org.whispersystems.signalservice.api.util.ExpiringProfileCredentialUtil;
 import org.whispersystems.signalservice.internal.ServiceResponse;
 import org.whispersystems.signalservice.internal.push.ReserveUsernameResponse;
 import org.whispersystems.signalservice.internal.push.WhoAmIResponse;
-import org.whispersystems.util.Base64UrlSafe;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -143,6 +148,7 @@ public class RefreshOwnProfileJob extends BaseJob {
     setProfileCapabilities(profile.getCapabilities());
     setProfileBadges(profile.getBadges());
     ensureUnidentifiedAccessCorrect(profile.getUnidentifiedAccess(), profile.isUnrestrictedUnidentifiedAccess());
+    ensurePhoneNumberSharingIsCorrect(profile.getPhoneNumberSharing());
 
     profileAndCredential.getExpiringProfileKeyCredential()
                         .ifPresent(expiringProfileKeyCredential -> setExpiringProfileKeyCredential(self, ProfileKeyUtil.getSelfProfileKey(), expiringProfileKeyCredential));
@@ -251,57 +257,99 @@ public class RefreshOwnProfileJob extends BaseJob {
     }
   }
 
-  static void checkUsernameIsInSync() throws IOException {
-    if (TextUtils.isEmpty(SignalDatabase.recipients().getUsername(Recipient.self().getId()))) {
-      Log.i(TAG, "No local username. Clearing username from server.");
-      ApplicationDependencies.getSignalServiceAccountManager().deleteUsername();
-    } else {
-      Log.i(TAG, "Local user has a username, attempting username synchronization.");
-      performLocalRemoteComparison();
+  /**
+   * Checks to make sure that our phone number sharing setting matches what's on our profile. If there's a mismatch, we first sync with storage service
+   * (to limit race conditions between devices) and then upload our profile.
+   */
+  private void ensurePhoneNumberSharingIsCorrect(@Nullable String phoneNumberSharingCiphertext) {
+    if (phoneNumberSharingCiphertext == null) {
+      Log.w(TAG, "No phone number sharing is set remotely! Syncing with storage service, then uploading our profile.");
+      syncWithStorageServiceThenUploadProfile();
+      return;
+    }
+
+    ProfileKey    profileKey = ProfileKeyUtil.getSelfProfileKey();
+    ProfileCipher cipher     = new ProfileCipher(profileKey);
+
+    try {
+      RecipientTable.PhoneNumberSharingState remotePhoneNumberSharing = cipher.decryptBoolean(Base64.decode(phoneNumberSharingCiphertext))
+                                                                              .map(value -> value ? RecipientTable.PhoneNumberSharingState.ENABLED : RecipientTable.PhoneNumberSharingState.DISABLED)
+                                                                              .orElse(RecipientTable.PhoneNumberSharingState.UNKNOWN);
+
+      if (remotePhoneNumberSharing == RecipientTable.PhoneNumberSharingState.UNKNOWN || remotePhoneNumberSharing.getEnabled() != SignalStore.phoneNumberPrivacy().isPhoneNumberSharingEnabled()) {
+        Log.w(TAG, "Phone number sharing setting did not match! Syncing with storage service, then uploading our profile.");
+        syncWithStorageServiceThenUploadProfile();
+      }
+    } catch (IOException e) {
+      Log.w(TAG, "Failed to decode phone number sharing! Syncing with storage service, then uploading our profile.", e);
+      syncWithStorageServiceThenUploadProfile();
+    } catch (InvalidCiphertextException e) {
+      Log.w(TAG, "Failed to decrypt phone number sharing! Syncing with storage service, then uploading our profile.", e);
+      syncWithStorageServiceThenUploadProfile();
     }
   }
 
-  private static void performLocalRemoteComparison() {
-    try {
-      String  localUsername    = SignalDatabase.recipients().getUsername(Recipient.self().getId());
-      boolean hasLocalUsername = !TextUtils.isEmpty(localUsername);
+  private void syncWithStorageServiceThenUploadProfile() {
+    ApplicationDependencies.getJobManager()
+                           .startChain(new StorageSyncJob())
+                           .then(new ProfileUploadJob())
+                           .enqueue();
+  }
 
-      if (!hasLocalUsername) {
-        return;
-      }
+  private static void checkUsernameIsInSync() {
+    boolean validated = false;
+
+    try {
+      String localUsername = SignalStore.account().getUsername();
 
       WhoAmIResponse whoAmIResponse     = ApplicationDependencies.getSignalServiceAccountManager().getWhoAmI();
-      boolean        hasServerUsername  = !TextUtils.isEmpty(whoAmIResponse.getUsernameHash());
-      String         serverUsernameHash = whoAmIResponse.getUsernameHash();
-      String         localUsernameHash  = Base64UrlSafe.encodeBytesWithoutPadding(Username.hash(localUsername));
+      String         remoteUsernameHash = whoAmIResponse.getUsernameHash();
+      String         localUsernameHash  = localUsername != null ? Base64.encodeUrlSafeWithoutPadding(new Username(localUsername).getHash()) : null;
 
-      if (!hasServerUsername) {
-        Log.w(TAG, "No remote username is set.");
+      if (TextUtils.isEmpty(localUsernameHash) && TextUtils.isEmpty(remoteUsernameHash)) {
+        Log.d(TAG, "Local and remote username hash are both empty. Considering validated.");
+        UsernameRepository.onUsernameConsistencyValidated();
+      } else if (!Objects.equals(localUsernameHash, remoteUsernameHash)) {
+        Log.w(TAG, "Local username hash does not match server username hash. Local hash: " + (TextUtils.isEmpty(localUsername) ? "empty" : "present") + ", Remote hash: " + (TextUtils.isEmpty(remoteUsernameHash) ? "empty" : "present"));
+        UsernameRepository.onUsernameMismatchDetected();
+        return;
+      } else {
+        Log.d(TAG, "Username validated.");
       }
-
-      if (!Objects.equals(localUsernameHash, serverUsernameHash)) {
-        Log.w(TAG, "Local username hash does not match server username hash.");
-      }
-
-      if (!hasServerUsername || !Objects.equals(localUsernameHash, serverUsernameHash)) {
-        Log.i(TAG, "Attempting to resynchronize username.");
-        tryToReserveAndConfirmLocalUsername(localUsername, localUsernameHash);
-      }
-    } catch (IOException | BaseUsernameException e) {
-      Log.w(TAG, "Failed perform synchronization check", e);
-    }
-  }
-
-  private static void tryToReserveAndConfirmLocalUsername(@NonNull String localUsername, @NonNull String localUsernameHash) {
-    try {
-      ReserveUsernameResponse response = ApplicationDependencies.getSignalServiceAccountManager()
-                                                                .reserveUsername(Collections.singletonList(localUsernameHash));
-
-      ApplicationDependencies.getSignalServiceAccountManager()
-                             .confirmUsername(localUsername, response);
     } catch (IOException e) {
-      Log.d(TAG, "Failed to synchronize username.", e);
-      SignalStore.phoneNumberPrivacy().markUsernameOutOfSync();
+      Log.w(TAG, "Failed perform synchronization check during username phase.", e);
+    } catch (BaseUsernameException e) {
+      Log.w(TAG, "Our local username data is invalid!", e);
+      UsernameRepository.onUsernameMismatchDetected();
+      return;
+    }
+
+    try {
+      UsernameLinkComponents localUsernameLink = SignalStore.account().getUsernameLink();
+
+      if (localUsernameLink != null) {
+        byte[]                remoteEncryptedUsername = ApplicationDependencies.getSignalServiceAccountManager().getEncryptedUsernameFromLinkServerId(localUsernameLink.getServerId());
+        Username.UsernameLink combinedLink            = new Username.UsernameLink(localUsernameLink.getEntropy(), remoteEncryptedUsername);
+        Username              remoteUsername          = Username.fromLink(combinedLink);
+
+        if (!remoteUsername.getUsername().equals(SignalStore.account().getUsername())) {
+          Log.w(TAG, "The remote username decrypted ok, but the decrypted username did not match our local username!");
+          UsernameRepository.onUsernameLinkMismatchDetected();
+        } else {
+          Log.d(TAG, "Username link validated.");
+        }
+
+        validated = true;
+      }
+    } catch (IOException e) {
+      Log.w(TAG, "Failed perform synchronization check during the username link phase.", e);
+    } catch (BaseUsernameException e) {
+      Log.w(TAG, "Failed to decrypt username link using the remote encrypted username and our local entropy!", e);
+      UsernameRepository.onUsernameLinkMismatchDetected();
+    }
+
+    if (validated) {
+      UsernameRepository.onUsernameConsistencyValidated();
     }
   }
 

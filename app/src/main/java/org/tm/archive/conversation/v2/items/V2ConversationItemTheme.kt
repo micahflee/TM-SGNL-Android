@@ -11,6 +11,7 @@ import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import org.tm.archive.R
 import org.tm.archive.conversation.ConversationMessage
+import org.tm.archive.conversation.v2.items.V2ConversationItemUtils.isThumbnailAtBottomOfBubble
 import org.tm.archive.util.hasNoBubble
 
 /**
@@ -31,20 +32,17 @@ class V2ConversationItemTheme(
   }
 
   @ColorInt
-  fun getFooterIconColor(
+  fun getFooterForegroundColor(
     conversationMessage: ConversationMessage
   ): Int {
-    return getColor(
-      conversationMessage,
-      conversationContext.getColorizer()::getOutgoingFooterIconColor,
-      conversationContext.getColorizer()::getIncomingFooterIconColor
-    )
-  }
+    if (conversationMessage.messageRecord.isThumbnailAtBottomOfBubble(context)) {
+      return ContextCompat.getColor(context, R.color.signal_colorOnCustom)
+    }
 
-  @ColorInt
-  fun getFooterTextColor(
-    conversationMessage: ConversationMessage
-  ): Int {
+    if (conversationMessage.messageRecord.isOutgoing && conversationMessage.messageRecord.hasNoBubble(context) && !conversationContext.hasWallpaper()) {
+      return conversationContext.getColorizer().getIncomingFooterTextColor(context, conversationContext.hasWallpaper())
+    }
+
     return getColor(
       conversationMessage,
       conversationContext.getColorizer()::getOutgoingFooterTextColor,

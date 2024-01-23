@@ -10,7 +10,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.signal.storageservice.protos.groups.local.DecryptedGroup
-import org.signal.storageservice.protos.groups.local.DecryptedPendingMember
 import org.tm.archive.contacts.sync.ContactDiscovery
 import org.tm.archive.database.CallTable
 import org.tm.archive.database.MediaTable
@@ -31,7 +30,6 @@ import org.tm.archive.recipients.RecipientId
 import org.tm.archive.recipients.RecipientUtil
 import org.tm.archive.util.FeatureFlags
 import java.io.IOException
-import java.util.Optional
 
 private val TAG = Log.tag(ConversationSettingsRepository::class.java)
 
@@ -57,11 +55,11 @@ class ConversationSettingsRepository(
   }
 
   @WorkerThread
-  fun getThreadMedia(threadId: Long): Optional<Cursor> {
-    return if (threadId <= 0) {
-      Optional.empty()
+  fun getThreadMedia(threadId: Long, limit: Int): Cursor? {
+    return if (threadId > 0) {
+      SignalDatabase.media.getGalleryMediaForThread(threadId, MediaTable.Sorting.Newest, limit)
     } else {
-      Optional.of(SignalDatabase.media.getGalleryMediaForThread(threadId, MediaTable.Sorting.Newest))
+      null
     }
   }
 
@@ -152,9 +150,9 @@ class ConversationSettingsRepository(
       consumer(
         if (groupRecord.isV2Group) {
           val decryptedGroup: DecryptedGroup = groupRecord.requireV2GroupProperties().decryptedGroup
-          val pendingMembers: List<RecipientId> = decryptedGroup.pendingMembersList
-            .map(DecryptedPendingMember::getServiceIdBytes)
-            .map(GroupProtoUtil::serviceIdBinaryToRecipientId)
+          val pendingMembers: List<RecipientId> = decryptedGroup.pendingMembers
+            .map { m -> m.serviceIdBytes }
+            .map { s -> GroupProtoUtil.serviceIdBinaryToRecipientId(s) }
 
           val members = mutableListOf<RecipientId>()
 

@@ -2,15 +2,16 @@ package org.tm.archive.payments;
 
 import androidx.annotation.NonNull;
 
-import com.google.protobuf.ByteString;
-
 import org.tm.archive.payments.proto.MobileCoinLedger;
 import org.whispersystems.signalservice.api.payments.Money;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
+
+import okio.ByteString;
 
 public final class MobileCoinLedgerWrapper {
 
@@ -18,11 +19,11 @@ public final class MobileCoinLedgerWrapper {
   private final Balance          balance;
 
   public MobileCoinLedgerWrapper(@NonNull MobileCoinLedger ledger) {
-    Money.MobileCoin fullAmount         = Money.picoMobileCoin(ledger.getBalance());
-    Money.MobileCoin transferableAmount = Money.picoMobileCoin(ledger.getTransferableBalance());
+    Money.MobileCoin fullAmount         = ledger.balance.size() > 0 ? Money.picoMobileCoin(new BigInteger(ledger.balance.toByteArray())) : Money.picoMobileCoin(ledger.deprecatedBalance);
+    Money.MobileCoin transferableAmount = ledger.transferableBalance.size() > 0 ? Money.picoMobileCoin(new BigInteger(ledger.transferableBalance.toByteArray())) : Money.picoMobileCoin(ledger.deprecatedTransferableBalance);
 
     this.ledger  = ledger;
-    this.balance = new Balance(fullAmount, transferableAmount, ledger.getAsOfTimeStamp());
+    this.balance = new Balance(fullAmount, transferableAmount, ledger.asOfTimeStamp);
   }
 
   public @NonNull Balance getBalance() {
@@ -30,13 +31,13 @@ public final class MobileCoinLedgerWrapper {
   }
 
   public byte[] serialize() {
-    return ledger.toByteArray();
+    return ledger.encode();
   }
 
   public @NonNull List<OwnedTxo> getAllTxos() {
-    List<OwnedTxo> txoList = new ArrayList<>(ledger.getSpentTxosCount() + ledger.getUnspentTxosCount());
-    addAllMapped(txoList, ledger.getSpentTxosList());
-    addAllMapped(txoList, ledger.getUnspentTxosList());
+    List<OwnedTxo> txoList = new ArrayList<>(ledger.spentTxos.size() + ledger.unspentTxos.size());
+    addAllMapped(txoList, ledger.spentTxos);
+    addAllMapped(txoList, ledger.unspentTxos);
     return txoList;
   }
 
@@ -54,35 +55,35 @@ public final class MobileCoinLedgerWrapper {
     }
 
     public @NonNull Money.MobileCoin getValue() {
-      return Money.picoMobileCoin(ownedTXO.getAmount());
+      return ownedTXO.amount.size() > 0 ? Money.picoMobileCoin(new BigInteger(ownedTXO.amount.toByteArray())) : Money.picoMobileCoin(ownedTXO.deprecatedAmount);
     }
 
     public @NonNull ByteString getKeyImage() {
-      return ownedTXO.getKeyImage();
+      return ownedTXO.keyImage;
     }
 
     public @NonNull ByteString getPublicKey() {
-      return ownedTXO.getPublicKey();
+      return ownedTXO.publicKey;
     }
 
     public long getReceivedInBlock() {
-      return ownedTXO.getReceivedInBlock().getBlockNumber();
+      return ownedTXO.receivedInBlock != null ? ownedTXO.receivedInBlock.blockNumber : 0;
     }
 
     public @Nullable Long getSpentInBlock() {
-      return nullIfZero(ownedTXO.getSpentInBlock().getBlockNumber());
+      return ownedTXO.spentInBlock != null ? nullIfZero(ownedTXO.spentInBlock.blockNumber) : null;
     }
 
     public boolean isSpent() {
-      return ownedTXO.getSpentInBlock().getBlockNumber() != 0;
+      return ownedTXO.spentInBlock != null && ownedTXO.spentInBlock.blockNumber != 0;
     }
 
     public @Nullable Long getReceivedInBlockTimestamp() {
-      return nullIfZero(ownedTXO.getReceivedInBlock().getTimestamp());
+      return ownedTXO.receivedInBlock != null ? nullIfZero(ownedTXO.receivedInBlock.timestamp) : null;
     }
 
     public @Nullable Long getSpentInBlockTimestamp() {
-      return nullIfZero(ownedTXO.getSpentInBlock().getTimestamp());
+      return ownedTXO.spentInBlock != null ? nullIfZero(ownedTXO.spentInBlock.timestamp) : null;
     }
 
     private @Nullable Long nullIfZero(long value) {

@@ -17,8 +17,6 @@ import org.tm.archive.util.BitmapUtil;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.MemoryFileDescriptor;
-import org.whispersystems.signalservice.api.crypto.AttachmentCipherOutputStream;
-import org.whispersystems.signalservice.internal.crypto.PaddingInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,7 +75,7 @@ public abstract class MediaConstraints {
 
   public boolean isSatisfied(@NonNull Context context, @NonNull Attachment attachment) {
     try {
-      long size = attachment.getSize();
+      long size = attachment.size;
       if (size > getMaxAttachmentSize()) {
         return false;
       }

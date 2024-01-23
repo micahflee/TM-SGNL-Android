@@ -18,7 +18,6 @@
       android:indeterminate="true"
       android:padding="10dp" />
 
-  <!--//**TM_SA**// Change to ic_launcher_foreground_new-->
   <ImageView
       android:id="@+id/watermark"
       android:layout_width="wrap_content"
@@ -27,6 +26,6 @@
       android:layout_centerHorizontal="true"
       android:layout_marginBottom="20dp"
       android:contentDescription="@string/PassphrasePromptActivity_watermark_content_description"
-      app:srcCompat="@drawable/ic_launcher_foreground_new" />
+      app:srcCompat="@drawable/ic_launcher_foreground" />
 
 </RelativeLayout>

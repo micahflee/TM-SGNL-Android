@@ -21,7 +21,7 @@ import org.tm.archive.R;
 import org.tm.archive.databinding.OnboardingMegaphoneCardBinding;
 import org.tm.archive.groups.ui.creategroup.CreateGroupActivity;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.profiles.manage.ManageProfileActivity;
+import org.tm.archive.profiles.manage.EditProfileActivity;
 import org.tm.archive.wallpaper.ChatWallpaperActivity;
 
 import java.util.ArrayList;
@@ -300,7 +300,7 @@ public class OnboardingMegaphoneView extends FrameLayout {
 
     @Override
     void onActionClicked(@NonNull MegaphoneActionController controller) {
-      controller.onMegaphoneNavigationRequested(ManageProfileActivity.getIntentForAvatarEdit(controller.getMegaphoneActivity()));
+      controller.onMegaphoneNavigationRequested(EditProfileActivity.getIntentForAvatarEdit(controller.getMegaphoneActivity()));
       SignalStore.onboarding().setShowAddPhoto(false);
     }
 

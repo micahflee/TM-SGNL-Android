@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
@@ -17,20 +15,20 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.tm.androidcopysdk.utils.PrefManager;
 
-import org.archiver.ArchivePreferenceConstants;
 import org.signal.core.util.concurrent.LifecycleDisposable;
+import org.signal.core.util.logging.Log;
+import org.signal.donations.StripeApi;
 import org.tm.archive.components.DebugLogsPromptDialogFragment;
 import org.tm.archive.components.PromptBatterySaverDialogFragment;
+import org.tm.archive.components.settings.app.AppSettingsActivity;
 import org.tm.archive.components.voice.VoiceNoteMediaController;
 import org.tm.archive.components.voice.VoiceNoteMediaControllerOwner;
 import org.tm.archive.conversationlist.RelinkDevicesReminderBottomSheetFragment;
-import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.devicetransfer.olddevice.OldDeviceExitActivity;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.net.DeviceTransferBlockingInterceptor;
-import org.tm.archive.notifications.SlowNotificationsViewModel;
+import org.tm.archive.notifications.VitalsViewModel;
 import org.tm.archive.stories.tabs.ConversationListTabRepository;
 import org.tm.archive.stories.tabs.ConversationListTabsViewModel;
 import org.tm.archive.util.AppStartup;
@@ -50,7 +48,7 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
 
   private VoiceNoteMediaController      mediaController;
   private ConversationListTabsViewModel conversationListTabsViewModel;
-  private SlowNotificationsViewModel    slowNotificationsViewModel;
+  private VitalsViewModel               vitalsViewModel;
 
   private final LifecycleDisposable lifecycleDisposable = new LifecycleDisposable();
 
@@ -94,35 +92,34 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     ConversationListTabRepository         repository = new ConversationListTabRepository();
     ConversationListTabsViewModel.Factory factory    = new ConversationListTabsViewModel.Factory(repository);
 
-    handleGroupLinkInIntent(getIntent());
-    handleProxyInIntent(getIntent());
-    handleSignalMeIntent(getIntent());
-    handleCallLinkInIntent(getIntent());
+    handleDeeplinkIntent(getIntent());
 
     CachedInflater.from(this).clear();
 
     conversationListTabsViewModel = new ViewModelProvider(this, factory).get(ConversationListTabsViewModel.class);
     updateTabVisibility();
 
-    slowNotificationsViewModel = new ViewModelProvider(this).get(SlowNotificationsViewModel.class);
+    vitalsViewModel = new ViewModelProvider(this).get(VitalsViewModel.class);
 
     lifecycleDisposable.add(
-        slowNotificationsViewModel
-            .getSlowNotificationState()
-            .subscribe(this::presentSlowNotificationState)
+        vitalsViewModel
+            .getVitalsState()
+            .subscribe(this::presentVitalsState)
     );
   }
 
   @SuppressLint("NewApi")
-  private void presentSlowNotificationState(SlowNotificationsViewModel.State slowNotificationState) {
-    switch (slowNotificationState) {
+  private void presentVitalsState(VitalsViewModel.State state) {
+    switch (state) {
       case NONE:
         break;
       case PROMPT_BATTERY_SAVER_DIALOG:
         PromptBatterySaverDialogFragment.show(getSupportFragmentManager());
         break;
-      case PROMPT_DEBUGLOGS:
-        DebugLogsPromptDialogFragment.show(this, getSupportFragmentManager());
+      case PROMPT_DEBUGLOGS_FOR_NOTIFICATIONS:
+        DebugLogsPromptDialogFragment.show(this, DebugLogsPromptDialogFragment.Purpose.NOTIFICATIONS);
+      case PROMPT_DEBUGLOGS_FOR_CRASH:
+        DebugLogsPromptDialogFragment.show(this, DebugLogsPromptDialogFragment.Purpose.CRASH);
         break;
     }
   }
@@ -137,10 +134,7 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
   @Override
   protected void onNewIntent(Intent intent) {
     super.onNewIntent(intent);
-    handleGroupLinkInIntent(intent);
-    handleProxyInIntent(intent);
-    handleSignalMeIntent(intent);
-    handleCallLinkInIntent(intent);
+    handleDeeplinkIntent(intent);
   }
 
   @Override
@@ -173,34 +167,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
 
     updateTabVisibility();
 
-    slowNotificationsViewModel.checkSlowNotificationHeuristics();
-    //**TM_SA**// start
-    notifyMessageIfNeeded();
+    vitalsViewModel.checkSlowNotificationHeuristics();
   }
-
-  private void notifyMessageIfNeeded() {
-    boolean isAlreadyRestarted = PrefManager.getBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, false);
-
-    if(!isAlreadyRestarted){
-      PrefManager.setBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, true);
-
-      final Handler handler = new Handler(Looper.getMainLooper());
-      handler.postDelayed(new Runnable() {
-        @Override
-        public void run() {
-          notifyMessage();
-        }
-      }, 4000);
-    }
-  }
-
-  public synchronized void notifyMessage(){
-    synchronized (ApplicationDependencies.getIncomingMessageObserver()) {
-      ApplicationDependencies.getIncomingMessageObserver().notifyAll();
-    }
-  }
-
-  //**TM_SA**// End
 
   @Override
   protected void onStop() {
@@ -232,6 +200,14 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     return navigator;
   }
 
+  private void handleDeeplinkIntent(Intent intent) {
+    handleGroupLinkInIntent(intent);
+    handleProxyInIntent(intent);
+    handleSignalMeIntent(intent);
+    handleCallLinkInIntent(intent);
+    handleDonateReturnIntent(intent);
+  }
+
   private void handleGroupLinkInIntent(Intent intent) {
     Uri data = intent.getData();
     if (data != null) {
@@ -257,6 +233,13 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     Uri data = intent.getData();
     if (data != null) {
       CommunicationActions.handlePotentialCallLinkUrl(this, data.toString());
+    }
+  }
+
+  private void handleDonateReturnIntent(Intent intent) {
+    Uri data = intent.getData();
+    if (data != null && data.toString().startsWith(StripeApi.RETURN_URL_IDEAL)) {
+      startActivity(AppSettingsActivity.manageSubscriptions(this));
     }
   }
 

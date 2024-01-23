@@ -109,14 +109,23 @@ class FullSignalAudioManagerApi31(context: Context, eventListener: EventListener
       val volume: Float = androidAudioManager.ringVolumeWithMinimum()
       soundPool.play(disconnectedSoundId, volume, volume, 0, 0, 1.0f)
     }
-    state = State.UNINITIALIZED
     androidAudioManager.unregisterAudioDeviceCallback(deviceCallback)
-    androidAudioManager.clearCommunicationDevice()
-    setSpeakerphoneOn(savedIsSpeakerPhoneOn)
-    setMicrophoneMute(savedIsMicrophoneMute)
-    androidAudioManager.mode = savedAudioMode
+    if (state == State.UNINITIALIZED && userSelectedAudioDevice != null) {
+      Log.d(
+        TAG,
+        "Stopping audio manager after selecting audio device but never initializing. " +
+          "This indicates a service spun up solely to set audio device. " +
+          "Therefore skipping audio device reset."
+      )
+    } else {
+      androidAudioManager.clearCommunicationDevice()
+      setSpeakerphoneOn(savedIsSpeakerPhoneOn)
+      setMicrophoneMute(savedIsMicrophoneMute)
+      androidAudioManager.mode = savedAudioMode
+    }
     androidAudioManager.abandonCallAudioFocus()
     Log.d(TAG, "Abandoned audio focus for VOICE_CALL streams")
+    state = State.UNINITIALIZED
 
     Log.d(TAG, "Stopped")
   }
@@ -172,12 +181,12 @@ class FullSignalAudioManagerApi31(context: Context, eventListener: EventListener
       if (result) {
         eventListener?.onAudioDeviceChanged(AudioDeviceMapping.fromPlatformType(candidate.type), availableCommunicationDevices.map { AudioDeviceMapping.fromPlatformType(it.type) }.toSet())
       } else {
-        Log.w(TAG, "Failed to set ${candidate.id} as communication device.")
+        Log.w(TAG, "Failed to set ${candidate.id} of type ${candidate.type}as communication device.")
       }
     } else {
       val searchOrder: List<AudioDevice> = listOf(AudioDevice.BLUETOOTH, AudioDevice.WIRED_HEADSET, defaultAudioDevice, AudioDevice.EARPIECE, AudioDevice.SPEAKER_PHONE, AudioDevice.NONE).distinct()
       for (deviceType in searchOrder) {
-        candidate = availableCommunicationDevices.find { AudioDeviceMapping.fromPlatformType(it.type) == deviceType }
+        candidate = availableCommunicationDevices.filterNot { it.productName.contains(" Watch", true) }.find { AudioDeviceMapping.fromPlatformType(it.type) == deviceType }
         if (candidate != null) {
           break
         }

@@ -6,7 +6,6 @@ import androidx.annotation.Nullable;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.net.NotPushRegisteredException;

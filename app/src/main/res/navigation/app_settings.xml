@@ -12,7 +12,7 @@
         tools:layout="@layout/dsl_settings_fragment">
         <action
             android:id="@+id/action_appSettingsFragment_to_usernameLinkSettingsFragment"
-            app:destination="@id/usernameLinkSettingsFragment"
+            app:destination="@id/username_link_settings"
             app:enterAnim="@anim/fragment_open_enter"
             app:exitAnim="@anim/fragment_open_exit"
             app:popEnterAnim="@anim/fragment_close_enter"
@@ -78,17 +78,6 @@
             app:exitAnim="@anim/fragment_open_exit"
             app:popEnterAnim="@anim/fragment_close_enter"
             app:popExitAnim="@anim/fragment_close_exit" />
-
-        <!--//**TM_SA**//-->
-        <action
-            android:id="@+id/action_appSettingsFragment_to_tmAboutSettings"
-            app:destination="@id/tmAboutSettings"
-            app:enterAnim="@anim/fragment_open_enter"
-            app:exitAnim="@anim/fragment_open_exit"
-            app:popEnterAnim="@anim/fragment_close_enter"
-            app:popExitAnim="@anim/fragment_close_exit" />
-        <!--//**TM_SA**//-->
-
         <action
             android:id="@+id/action_appSettingsFragment_to_dataAndStorageSettingsFragment"
             app:destination="@id/dataAndStorageSettingsFragment"
@@ -113,6 +102,13 @@
         <action
             android:id="@+id/action_appSettingsFragment_to_inviteActivity"
             app:destination="@id/inviteActivity"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" />
+        <action
+            android:id="@+id/action_appSettingsFragment_to_appUpdatesSettingsFragment"
+            app:destination="@id/appUpdatesFragment"
             app:enterAnim="@anim/fragment_open_enter"
             app:exitAnim="@anim/fragment_open_exit"
             app:popEnterAnim="@anim/fragment_close_enter"
@@ -148,7 +144,7 @@
 
     <activity
         android:id="@+id/manageProfileActivity"
-        android:name="org.tm.archive.profiles.manage.ManageProfileActivity"
+        android:name="org.tm.archive.profiles.manage.EditProfileActivity"
         android:label="manage_profile_activity" />
 
     <!-- region Account Settings and subpages -->
@@ -200,14 +196,6 @@
         android:id="@+id/advancedPinSettingsFragment"
         android:name="org.tm.archive.components.settings.app.wrapped.WrappedAdvancedPinPreferenceFragment"
         android:label="advanced_pin_settings_fragment" />
-
-    <!--//**TM_SA**//-->
-    <fragment
-        android:id="@+id/tmAboutSettings"
-        android:name="org.tm.archive.components.settings.app.about.AboutPreferenceFragment"
-        android:label="about_settings_fragment"
-        />
-    <!--//**TM_SA**//-->
 
     <fragment
         android:id="@+id/deleteAccountFragment"
@@ -585,6 +573,16 @@
         app:popUpTo="@id/app_settings"
         app:popUpToInclusive="true" />
 
+    <action
+        android:id="@+id/action_direct_to_usernameLinkSettings"
+        app:destination="@id/username_link_settings"
+        app:enterAnim="@anim/fragment_open_enter"
+        app:exitAnim="@anim/fragment_open_exit"
+        app:popEnterAnim="@anim/fragment_close_enter"
+        app:popExitAnim="@anim/fragment_close_exit"
+        app:popUpTo="@id/app_settings"
+        app:popUpToInclusive="true" />
+
     <!-- endregion -->
 
     <!-- Internal Settings -->
@@ -608,7 +606,26 @@
         <action
             android:id="@+id/action_internalSettingsFragment_to_internalConversationSpringboardFragment"
             app:destination="@id/internalConversationSpringboardFragment" />
+        <action
+            android:id="@+id/action_internalSettingsFragment_to_oneTimeDonationConfigurationFragment"
+            app:destination="@id/oneTimeDonationConfigurationFragment" />
+        <action
+            android:id="@+id/action_internalSettingsFragment_to_terminalDonationConfigurationFragment"
+            app:destination="@id/terminalDonationConfigurationFragment" />
+        <action
+            android:id="@+id/action_internalSettingsFragment_to_internalBackupPlaygroundFragment"
+            app:destination="@id/internalBackupPlaygroundFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/terminalDonationConfigurationFragment"
+        android:name="org.tm.archive.components.settings.app.internal.InternalTerminalDonationConfigurationFragment"
+        android:label="terminal_donation_configuration_fragment" />
+
+    <fragment
+        android:id="@+id/oneTimeDonationConfigurationFragment"
+        android:name="org.tm.archive.components.settings.app.internal.InternalPendingOneTimeDonationConfigurationFragment"
+        android:label="one_time_donation_configuration_fragment" />
 
     <fragment
         android:id="@+id/donorErrorConfigurationFragment"
@@ -645,7 +662,19 @@
         android:name="org.tm.archive.components.settings.app.internal.conversation.test.InternalConversationTestFragment"
         android:label="internal_conversation_test_fragment" />
 
+    <fragment
+        android:id="@+id/internalBackupPlaygroundFragment"
+        android:name="org.tm.archive.components.settings.app.internal.backup.InternalBackupPlaygroundFragment"
+        android:label="internal_backup_playground_fragment" />
+
     <!-- endregion -->
+
+    <!-- App updates -->
+
+    <fragment
+        android:id="@+id/appUpdatesFragment"
+        android:name="org.tm.archive.components.settings.app.updates.AppUpdatesSettingsFragment"
+        android:label="app_update_fragment" />
 
     <!-- Subscriptions -->
     <fragment
@@ -892,23 +921,8 @@
 
     </fragment>
 
-    <fragment
-        android:id="@+id/usernameLinkSettingsFragment"
-        android:name="org.tm.archive.components.settings.app.usernamelinks.main.UsernameLinkSettingsFragment">
 
-        <action
-            android:id="@+id/action_usernameLinkSettingsFragment_to_usernameLinkQrColorPickerFragment"
-            app:destination="@id/usernameLinkQrColorPickerFragment"
-            app:enterAnim="@anim/fragment_open_enter"
-            app:exitAnim="@anim/fragment_open_exit"
-            app:popEnterAnim="@anim/fragment_close_enter"
-            app:popExitAnim="@anim/fragment_close_exit" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/usernameLinkQrColorPickerFragment"
-        android:name="org.tm.archive.components.settings.app.usernamelinks.colorpicker.UsernameLinkQrColorPickerFragment" />
-
+    <include app:graph="@navigation/username_link_settings" />
     <include app:graph="@navigation/story_privacy_settings" />
 
 </navigation>

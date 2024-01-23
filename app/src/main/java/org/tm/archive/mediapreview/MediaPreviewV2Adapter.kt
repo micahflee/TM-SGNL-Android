@@ -3,12 +3,14 @@ package org.tm.archive.mediapreview
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import org.signal.core.util.logging.Log
 import org.tm.archive.attachments.Attachment
 import org.tm.archive.mediasend.Media
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.adapter.StableIdGenerator
 
 class MediaPreviewV2Adapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
+  private val TAG = Log.tag(MediaPreviewV2Adapter::class.java)
   private var items: List<Attachment> = listOf()
   private val stableIdGenerator = StableIdGenerator<Attachment>()
   private val currentIdSet: HashSet<Long> = HashSet()
@@ -29,8 +31,8 @@ class MediaPreviewV2Adapter(fragment: Fragment) : FragmentStateAdapter(fragment)
       MediaPreviewFragment.DATA_URI to attachment.uri,
       MediaPreviewFragment.DATA_CONTENT_TYPE to contentType,
       MediaPreviewFragment.DATA_SIZE to attachment.size,
-      MediaPreviewFragment.AUTO_PLAY to attachment.isVideoGif,
-      MediaPreviewFragment.VIDEO_GIF to attachment.isVideoGif
+      MediaPreviewFragment.AUTO_PLAY to attachment.videoGif,
+      MediaPreviewFragment.VIDEO_GIF to attachment.videoGif
     )
     val fragment = if (MediaUtil.isVideo(contentType)) {
       VideoMediaPreviewFragment()

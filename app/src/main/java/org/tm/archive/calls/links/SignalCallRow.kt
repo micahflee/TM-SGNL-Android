@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -118,7 +119,8 @@ fun SignalCallRow(
         .align(CenterVertically)
     ) {
       Text(
-        text = callLink.state.name.ifEmpty { stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__signal_call) }
+        text = callLink.state.name.ifEmpty { stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__signal_call) },
+        color = MaterialTheme.colorScheme.onSurface
       )
       Text(
         text = callUrl,
@@ -132,6 +134,10 @@ fun SignalCallRow(
 
       Buttons.Small(
         onClick = onJoinClicked,
+        colors = ButtonDefaults.buttonColors(
+          containerColor = MaterialTheme.colorScheme.primaryContainer,
+          contentColor = MaterialTheme.colorScheme.onSurface
+        ),
         modifier = Modifier.align(CenterVertically)
       ) {
         Text(text = stringResource(id = R.string.CreateCallLinkBottomSheetDialogFragment__join))

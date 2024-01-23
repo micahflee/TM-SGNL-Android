@@ -16,7 +16,6 @@ import org.tm.archive.database.PendingRetryReceiptCache;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.PendingRetryReceiptModel;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.util.FeatureFlags;
 
 import java.util.concurrent.TimeUnit;
 

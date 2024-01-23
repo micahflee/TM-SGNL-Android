@@ -7,7 +7,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.events.ReminderUpdateEvent;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.transport.RetryLaterException;

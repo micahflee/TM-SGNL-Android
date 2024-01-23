@@ -25,11 +25,12 @@ public final class InternalValues extends SignalStoreValues {
   public static final String CALLING_AUDIO_PROCESSING_METHOD      = "internal.calling_audio_processing_method";
   public static final String CALLING_DATA_MODE                    = "internal.calling_bandwidth_mode";
   public static final String CALLING_DISABLE_TELECOM              = "internal.calling_disable_telecom";
+  public static final String CALLING_DISABLE_LBRED                = "internal.calling_disable_lbred";
   public static final String SHAKE_TO_REPORT                      = "internal.shake_to_report";
   public static final String DISABLE_STORAGE_SERVICE              = "internal.disable_storage_service";
   public static final String FORCE_WEBSOCKET_MODE                 = "internal.force_websocket_mode";
   public static final String LAST_SCROLL_POSITION                 = "internal.last_scroll_position";
-  public static final String CONVERSATION_ITEM_V2                 = "internal.conversation_item_v2";
+  public static final String CONVERSATION_ITEM_V2_MEDIA           = "internal.conversation_item_v2_media";
 
   InternalValues(KeyValueStore store) {
     super(store);
@@ -173,6 +174,17 @@ public final class InternalValues extends SignalStoreValues {
   }
 
   /**
+   * Whether or not LBRed for Opus is manually disabled.
+   */
+  public synchronized boolean callingDisableLBRed() {
+    if (FeatureFlags.internalUser()) {
+      return getBoolean(CALLING_DISABLE_LBRED, false);
+    } else {
+      return true;
+    }
+  }
+
+  /**
    * Whether or not the system is forced to be in 'websocket mode', where FCM is ignored and we use a foreground service to keep the app alive.
    */
   public boolean isWebsocketModeForced() {
@@ -191,11 +203,11 @@ public final class InternalValues extends SignalStoreValues {
     return getInteger(LAST_SCROLL_POSITION, 0);
   }
 
-  public void setUseConversationItemV2(boolean useConversationFragmentV2) {
-    putBoolean(CONVERSATION_ITEM_V2, useConversationFragmentV2);
+  public void setUseConversationItemV2Media(boolean useConversationFragmentV2Media) {
+    putBoolean(CONVERSATION_ITEM_V2_MEDIA, useConversationFragmentV2Media);
   }
 
-  public boolean useConversationItemV2() {
-    return FeatureFlags.internalUser() && getBoolean(CONVERSATION_ITEM_V2, false);
+  public boolean useConversationItemV2Media() {
+    return FeatureFlags.internalUser() && getBoolean(CONVERSATION_ITEM_V2_MEDIA, false);
   }
 }

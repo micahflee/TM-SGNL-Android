@@ -16,7 +16,7 @@ import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -113,7 +113,7 @@ public final class ReviewUtil {
 
   private static @NonNull ProfileChangeDetails getProfileChangeDetails(@NonNull MessageRecord messageRecord) {
     try {
-      return ProfileChangeDetails.parseFrom(Base64.decode(messageRecord.getBody()));
+      return ProfileChangeDetails.ADAPTER.decode(Base64.decode(messageRecord.getBody()));
     } catch (IOException e) {
       throw new IllegalArgumentException(e);
     }

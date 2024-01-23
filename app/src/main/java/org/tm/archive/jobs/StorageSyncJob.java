@@ -9,6 +9,7 @@ import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
+import org.signal.core.util.Stopwatch;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.InvalidKeyException;
 import org.tm.archive.crypto.UnidentifiedAccessUtil;
@@ -34,7 +35,6 @@ import org.tm.archive.storage.StorageSyncModels;
 import org.tm.archive.storage.StorageSyncValidations;
 import org.tm.archive.storage.StoryDistributionListRecordProcessor;
 import org.tm.archive.transport.RetryLaterException;
-import org.signal.core.util.Stopwatch;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
@@ -52,7 +52,7 @@ import org.whispersystems.signalservice.api.storage.SignalStorageRecord;
 import org.whispersystems.signalservice.api.storage.SignalStoryDistributionListRecord;
 import org.whispersystems.signalservice.api.storage.StorageId;
 import org.whispersystems.signalservice.api.storage.StorageKey;
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
+import org.whispersystems.signalservice.internal.push.SyncMessage;
 import org.whispersystems.signalservice.internal.storage.protos.ManifestRecord;
 
 import java.io.IOException;
@@ -209,7 +209,7 @@ public class StorageSyncJob extends BaseJob {
       } else {
         Log.w(TAG, "Failed to decrypt remote storage! Requesting new keys from primary.", e);
         SignalStore.storageService().clearStorageKeyFromPrimary();
-        ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forRequest(RequestMessage.forType(SignalServiceProtos.SyncMessage.Request.Type.KEYS)), UnidentifiedAccessUtil.getAccessForSync(context));
+        ApplicationDependencies.getSignalServiceMessageSender().sendSyncMessage(SignalServiceSyncMessage.forRequest(RequestMessage.forType(SyncMessage.Request.Type.KEYS)), UnidentifiedAccessUtil.getAccessForSync(context));
       }
     }
   }
@@ -231,16 +231,7 @@ public class StorageSyncJob extends BaseJob {
     final StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
     final SignalStorageManifest localManifest  = SignalStore.storageService().getManifest();
-
-    //**TM_SA**//Start change the following code like that:
-    SignalStorageManifest remoteManifest = null;
-    try {
-      remoteManifest = accountManager.getStorageManifestIfDifferentVersion(storageServiceKey, localManifest.getVersion())
-                                     .orElse(localManifest);
-    }catch (Exception e){
-      remoteManifest = localManifest;
-    }
-    //**TM_SA**//End
+    final SignalStorageManifest remoteManifest = accountManager.getStorageManifestIfDifferentVersion(storageServiceKey, localManifest.getVersion()).orElse(localManifest);
 
     stopwatch.split("remote-manifest");
 
@@ -340,9 +331,9 @@ public class StorageSyncJob extends BaseJob {
         Log.i(TAG, "Removed " + removedUnregistered + " recipients from storage service that have been unregistered for longer than 30 days.");
       }
 
-      List<StorageId>           localStorageIds = getAllLocalStorageIds(self).stream().filter(it -> !it.isUnknown()).collect(Collectors.toList());
+      List<StorageId>           localStorageIds = getAllLocalStorageIds(self);
       IdDifferenceResult        idDifference    = StorageSyncHelper.findIdDifference(remoteManifest.getStorageIds(), localStorageIds);
-      List<SignalStorageRecord> remoteInserts   = buildLocalStorageRecords(context, self, idDifference.getLocalOnlyIds());
+      List<SignalStorageRecord> remoteInserts   = buildLocalStorageRecords(context, self, idDifference.getLocalOnlyIds().stream().filter(it -> !it.isUnknown()).collect(Collectors.toList()));
       List<byte[]>              remoteDeletes   = Stream.of(idDifference.getRemoteOnlyIds()).map(StorageId::getRaw).toList();
 
       Log.i(TAG, "ID Difference :: " + idDifference);
@@ -363,14 +354,7 @@ public class StorageSyncJob extends BaseJob {
 
       StorageSyncValidations.validate(remoteWriteOperation, remoteManifest, needsForcePush, self);
 
-      //**TM_SA**//Start change the code like that:
-      Optional<SignalStorageManifest> conflict = null;
-      try {
-        conflict = accountManager.writeStorageRecords(storageServiceKey, remoteWriteOperation.getManifest(), remoteWriteOperation.getInserts(), remoteWriteOperation.getDeletes());
-      }catch (Exception e){
-        conflict = Optional.empty();
-      }
-      //**TM_SA**//End
+      Optional<SignalStorageManifest> conflict = accountManager.writeStorageRecords(storageServiceKey, remoteWriteOperation.getManifest(), remoteWriteOperation.getInserts(), remoteWriteOperation.getDeletes());
 
       if (conflict.isPresent()) {
         Log.w(TAG, "Hit a conflict when trying to resolve the conflict! Retrying.");
@@ -428,7 +412,7 @@ public class StorageSyncJob extends BaseJob {
     new GroupV2RecordProcessor(context).process(records.gv2, StorageSyncHelper.KEY_GENERATOR);
     new AccountRecordProcessor(context, freshSelf()).process(records.account, StorageSyncHelper.KEY_GENERATOR);
 
-    if (getKnownTypes().contains(ManifestRecord.Identifier.Type.STORY_DISTRIBUTION_LIST_VALUE)) {
+    if (getKnownTypes().contains(ManifestRecord.Identifier.Type.STORY_DISTRIBUTION_LIST.getValue())) {
       new StoryDistributionListRecordProcessor().process(records.storyDistributionLists, StorageSyncHelper.KEY_GENERATOR);
     }
   }
@@ -450,10 +434,15 @@ public class StorageSyncJob extends BaseJob {
     List<SignalStorageRecord> records = new ArrayList<>(ids.size());
 
     for (StorageId id : ids) {
-      switch (id.getType()) {
-        case ManifestRecord.Identifier.Type.CONTACT_VALUE:
-        case ManifestRecord.Identifier.Type.GROUPV1_VALUE:
-        case ManifestRecord.Identifier.Type.GROUPV2_VALUE:
+      ManifestRecord.Identifier.Type type = ManifestRecord.Identifier.Type.fromValue(id.getType());
+      if (type == null) {
+        type = ManifestRecord.Identifier.Type.UNKNOWN;
+      }
+
+      switch (type) {
+        case CONTACT:
+        case GROUPV1:
+        case GROUPV2:
           RecipientRecord settings = recipientTable.getByStorageId(id.getRaw());
           if (settings != null) {
             if (settings.getRecipientType() == RecipientTable.RecipientType.GV2 && settings.getSyncExtras().getGroupMasterKey() == null) {
@@ -465,13 +454,13 @@ public class StorageSyncJob extends BaseJob {
             throw new MissingRecipientModelError("Missing local recipient model! Type: " + id.getType());
           }
           break;
-        case ManifestRecord.Identifier.Type.ACCOUNT_VALUE:
+        case ACCOUNT:
           if (!Arrays.equals(self.getStorageServiceId(), id.getRaw())) {
             throw new AssertionError("Local storage ID doesn't match self!");
           }
           records.add(StorageSyncHelper.buildAccountRecord(context, self));
           break;
-        case ManifestRecord.Identifier.Type.STORY_DISTRIBUTION_LIST_VALUE:
+        case STORY_DISTRIBUTION_LIST:
           RecipientRecord record = recipientTable.getByStorageId(id.getRaw());
           if (record != null) {
             if (record.getDistributionListId() != null) {
@@ -504,8 +493,8 @@ public class StorageSyncJob extends BaseJob {
 
   private static List<Integer> getKnownTypes() {
     return Arrays.stream(ManifestRecord.Identifier.Type.values())
-                 .filter(it -> !it.equals(ManifestRecord.Identifier.Type.UNKNOWN) && !it.equals(ManifestRecord.Identifier.Type.UNRECOGNIZED))
-                 .map(it -> it.getNumber())
+                 .filter(it -> !it.equals(ManifestRecord.Identifier.Type.UNKNOWN))
+                 .map(ManifestRecord.Identifier.Type::getValue)
                  .collect(Collectors.toList());
   }
 

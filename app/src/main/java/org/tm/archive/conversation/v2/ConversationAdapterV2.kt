@@ -36,9 +36,13 @@ import org.tm.archive.conversation.v2.data.OutgoingMedia
 import org.tm.archive.conversation.v2.data.OutgoingTextOnly
 import org.tm.archive.conversation.v2.data.ThreadHeader
 import org.tm.archive.conversation.v2.items.V2ConversationContext
-import org.tm.archive.conversation.v2.items.V2TextOnlyViewHolder
+import org.tm.archive.conversation.v2.items.V2ConversationItemMediaViewHolder
+import org.tm.archive.conversation.v2.items.V2ConversationItemTextOnlyViewHolder
+import org.tm.archive.conversation.v2.items.V2Payload
 import org.tm.archive.conversation.v2.items.bridge
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.databinding.V2ConversationItemMediaIncomingBinding
+import org.tm.archive.databinding.V2ConversationItemMediaOutgoingBinding
 import org.tm.archive.databinding.V2ConversationItemTextOnlyIncomingBinding
 import org.tm.archive.databinding.V2ConversationItemTextOnlyOutgoingBinding
 import org.tm.archive.giph.mp4.GiphyMp4PlaybackPolicyEnforcer
@@ -49,7 +53,6 @@ import org.tm.archive.mms.GlideRequests
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.CachedInflater
-import org.tm.archive.util.HtmlUtil
 import org.tm.archive.util.Projection
 import org.tm.archive.util.ProjectionList
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
@@ -75,7 +78,7 @@ class ConversationAdapterV2(
   override val selectedItems: Set<MultiselectPart>
     get() = _selected.toSet()
 
-  override var searchQuery: String? = null
+  override var searchQuery: String = ""
   private var inlineContent: ConversationMessage? = null
 
   private var recordToPulse: ConversationMessage? = null
@@ -85,6 +88,10 @@ class ConversationAdapterV2(
 
   override var isMessageRequestAccepted: Boolean = false
 
+  override var isParentInScroll: Boolean = false
+
+  private val onScrollStateChangedListener = OnScrollStateChangedListener()
+
   init {
     registerFactory(ThreadHeader::class.java, ::ThreadHeaderViewHolder, R.layout.conversation_item_thread_header)
 
@@ -93,36 +100,36 @@ class ConversationAdapterV2(
       ConversationUpdateViewHolder(view)
     }
 
-    registerFactory(OutgoingMedia::class.java) { parent ->
-      val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_sent_multimedia, parent, false)
-      OutgoingMediaViewHolder(view)
-    }
-
-    registerFactory(IncomingMedia::class.java) { parent ->
-      val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_received_multimedia, parent, false)
-      IncomingMediaViewHolder(view)
-    }
-
-    if (SignalStore.internalValues().useConversationItemV2()) {
-      registerFactory(OutgoingTextOnly::class.java) { parent ->
-        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_text_only_outgoing, parent, false)
-        V2TextOnlyViewHolder(V2ConversationItemTextOnlyOutgoingBinding.bind(view).bridge(), this)
+    if (SignalStore.internalValues().useConversationItemV2Media()) {
+      registerFactory(OutgoingMedia::class.java) { parent ->
+        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_media_outgoing, parent, false)
+        V2ConversationItemMediaViewHolder(V2ConversationItemMediaOutgoingBinding.bind(view).bridge(), this)
       }
 
-      registerFactory(IncomingTextOnly::class.java) { parent ->
-        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_text_only_incoming, parent, false)
-        V2TextOnlyViewHolder(V2ConversationItemTextOnlyIncomingBinding.bind(view).bridge(), this)
+      registerFactory(IncomingMedia::class.java) { parent ->
+        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_media_incoming, parent, false)
+        V2ConversationItemMediaViewHolder(V2ConversationItemMediaIncomingBinding.bind(view).bridge(), this)
       }
     } else {
-      registerFactory(OutgoingTextOnly::class.java) { parent ->
-        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_sent_text_only, parent, false)
-        OutgoingTextOnlyViewHolder(view)
+      registerFactory(OutgoingMedia::class.java) { parent ->
+        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_sent_multimedia, parent, false)
+        OutgoingMediaViewHolder(view)
       }
 
-      registerFactory(IncomingTextOnly::class.java) { parent ->
-        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_received_text_only, parent, false)
-        IncomingTextOnlyViewHolder(view)
+      registerFactory(IncomingMedia::class.java) { parent ->
+        val view = CachedInflater.from(parent.context).inflate<View>(R.layout.conversation_item_received_multimedia, parent, false)
+        IncomingMediaViewHolder(view)
       }
+    }
+
+    registerFactory(OutgoingTextOnly::class.java) { parent ->
+      val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_text_only_outgoing, parent, false)
+      V2ConversationItemTextOnlyViewHolder(V2ConversationItemTextOnlyOutgoingBinding.bind(view).bridge(), this)
+    }
+
+    registerFactory(IncomingTextOnly::class.java) { parent ->
+      val view = CachedInflater.from(parent.context).inflate<View>(R.layout.v2_conversation_item_text_only_incoming, parent, false)
+      V2ConversationItemTextOnlyViewHolder(V2ConversationItemTextOnlyIncomingBinding.bind(view).bridge(), this)
     }
   }
 
@@ -145,6 +152,8 @@ class ConversationAdapterV2(
         recyclerView.recycledViewPool.setMaxRecycledViews(type, count)
       }
     }
+
+    recyclerView.addOnScrollListener(onScrollStateChangedListener)
   }
 
   override fun onViewRecycled(holder: MappingViewHolder<*>) {
@@ -159,10 +168,12 @@ class ConversationAdapterV2(
       .children
       .filterIsInstance<Unbindable>()
       .forEach { it.unbind() }
+
+    recyclerView.removeOnScrollListener(onScrollStateChangedListener)
   }
 
   override val displayMode: ConversationItemDisplayMode
-    get() = condensedMode ?: ConversationItemDisplayMode.STANDARD
+    get() = condensedMode ?: ConversationItemDisplayMode.Standard
 
   override fun onStartExpirationTimeout(messageRecord: MessageRecord) {
     startExpirationTimeout(messageRecord)
@@ -180,9 +191,13 @@ class ConversationAdapterV2(
     return getConversationMessage(adapterPosition + 1)?.messageRecord
   }
 
-  fun updateSearchQuery(searchQuery: String?) {
+  fun updateSearchQuery(searchQuery: String) {
+    val oldQuery = this.searchQuery
     this.searchQuery = searchQuery
-    notifyItemRangeChanged(0, itemCount)
+
+    if (oldQuery != this.searchQuery) {
+      notifyItemRangeChanged(0, itemCount, V2Payload.SEARCH_QUERY_UPDATED)
+    }
   }
 
   fun getLastVisibleConversationMessage(position: Int): ConversationMessage? {
@@ -215,7 +230,7 @@ class ConversationAdapterV2(
   fun playInlineContent(conversationMessage: ConversationMessage?) {
     if (this.inlineContent !== conversationMessage) {
       this.inlineContent = conversationMessage
-      notifyItemRangeChanged(0, itemCount)
+      notifyItemRangeChanged(0, itemCount, V2Payload.PLAY_INLINE_CONTENT)
     }
   }
 
@@ -255,7 +270,7 @@ class ConversationAdapterV2(
     return if (this.hasWallpaper != hasWallpaper) {
       Log.d(TAG, "Resetting adapter due to wallpaper change.")
       this.hasWallpaper = hasWallpaper
-      notifyItemRangeChanged(0, itemCount)
+      notifyItemRangeChanged(0, itemCount, V2Payload.WALLPAPER)
       true
     } else {
       false
@@ -267,7 +282,7 @@ class ConversationAdapterV2(
     this.isMessageRequestAccepted = isMessageRequestAccepted
 
     if (oldState != isMessageRequestAccepted) {
-      notifyItemRangeChanged(0, itemCount)
+      notifyItemRangeChanged(0, itemCount, V2Payload.MESSAGE_REQUEST_STATE)
     }
   }
 
@@ -455,7 +470,7 @@ class ConversationAdapterV2(
       get() = getConversationMessage(bindingAdapterPosition - 1)?.messageRecord.toOptional()
 
     protected val displayMode: ConversationItemDisplayMode
-      get() = condensedMode ?: ConversationItemDisplayMode.STANDARD
+      get() = condensedMode ?: ConversationItemDisplayMode.Standard
 
     override val conversationMessage: ConversationMessage
       get() = bindable.conversationMessage
@@ -476,6 +491,11 @@ class ConversationAdapterV2(
 
     fun bindPayloadsIfAvailable(): Boolean {
       var payloadApplied = false
+
+      bindable.setParentScrolling(isParentInScroll)
+      if (payload.contains(ConversationAdapterBridge.PAYLOAD_PARENT_SCROLLING)) {
+        payloadApplied = true
+      }
 
       if (payload.contains(ConversationAdapterBridge.PAYLOAD_TIMESTAMP)) {
         bindable.updateTimestamps()
@@ -551,20 +571,20 @@ class ConversationAdapterV2(
       if (recipient.isGroup) {
         if (groupInfo.pendingMemberCount > 0) {
           val invited = context.resources.getQuantityString(R.plurals.MessageRequestProfileView_invited, groupInfo.pendingMemberCount, groupInfo.pendingMemberCount)
-          conversationBanner.setSubtitle(context.resources.getQuantityString(R.plurals.MessageRequestProfileView_members_and_invited, groupInfo.fullMemberCount, groupInfo.fullMemberCount, invited))
+          conversationBanner.setSubtitle(context.resources.getQuantityString(R.plurals.MessageRequestProfileView_members_and_invited, groupInfo.fullMemberCount, groupInfo.fullMemberCount, invited), R.drawable.symbol_group_light_20)
         } else if (groupInfo.fullMemberCount > 0) {
-          conversationBanner.setSubtitle(context.resources.getQuantityString(R.plurals.MessageRequestProfileView_members, groupInfo.fullMemberCount, groupInfo.fullMemberCount))
+          conversationBanner.setSubtitle(context.resources.getQuantityString(R.plurals.MessageRequestProfileView_members, groupInfo.fullMemberCount, groupInfo.fullMemberCount), R.drawable.symbol_group_light_20)
         } else {
-          conversationBanner.setSubtitle(null)
+          conversationBanner.hideSubtitle()
         }
       } else if (isSelf) {
-        conversationBanner.setSubtitle(context.getString(R.string.ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation))
+        conversationBanner.setSubtitle(context.getString(R.string.ConversationFragment__you_can_add_notes_for_yourself_in_this_conversation), R.drawable.symbol_person_light_24)
       } else {
-        val subtitle: String? = recipient.e164.map { e164: String? -> PhoneNumberFormatter.prettyPrint(e164!!) }.orElse(null)
+        val subtitle: String? = recipient.takeIf { it.shouldShowE164() }?.e164?.map { e164: String? -> PhoneNumberFormatter.prettyPrint(e164!!) }?.orElse(null)
         if (subtitle == null || subtitle == title) {
           conversationBanner.hideSubtitle()
         } else {
-          conversationBanner.setSubtitle(subtitle)
+          conversationBanner.setSubtitle(subtitle, R.drawable.symbol_phone_light_20)
         }
       }
 
@@ -588,21 +608,30 @@ class ConversationAdapterV2(
         }
       } else {
         val description: String = when (sharedGroups.size) {
-          1 -> context.getString(R.string.MessageRequestProfileView_member_of_one_group, HtmlUtil.bold(sharedGroups[0]))
-          2 -> context.getString(R.string.MessageRequestProfileView_member_of_two_groups, HtmlUtil.bold(sharedGroups[0]), HtmlUtil.bold(sharedGroups[1]))
-          3 -> context.getString(R.string.MessageRequestProfileView_member_of_many_groups, HtmlUtil.bold(sharedGroups[0]), HtmlUtil.bold(sharedGroups[1]), HtmlUtil.bold(sharedGroups[2]))
+          1 -> context.getString(R.string.MessageRequestProfileView_member_of_one_group, sharedGroups[0])
+          2 -> context.getString(R.string.MessageRequestProfileView_member_of_two_groups, sharedGroups[0], sharedGroups[1])
+          3 -> context.getString(R.string.MessageRequestProfileView_member_of_many_groups, sharedGroups[0], sharedGroups[1], sharedGroups[2])
           else -> {
             val others: Int = sharedGroups.size - 2
             context.getString(
               R.string.MessageRequestProfileView_member_of_many_groups,
-              HtmlUtil.bold(sharedGroups[0]),
-              HtmlUtil.bold(sharedGroups[1]),
+              sharedGroups[0],
+              sharedGroups[1],
               context.resources.getQuantityString(R.plurals.MessageRequestProfileView_member_of_d_additional_groups, others, others)
             )
           }
         }
-        conversationBanner.setDescription(HtmlCompat.fromHtml(description, 0))
-        conversationBanner.showDescription()
+        conversationBanner.setDescription(HtmlCompat.fromHtml(description, 0), R.drawable.symbol_group_light_20)
+      }
+    }
+  }
+
+  private inner class OnScrollStateChangedListener : RecyclerView.OnScrollListener() {
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      val oldState = isParentInScroll
+      isParentInScroll = newState != RecyclerView.SCROLL_STATE_IDLE
+      if (isParentInScroll != oldState) {
+        notifyItemRangeChanged(0, itemCount, ConversationAdapterBridge.PAYLOAD_PARENT_SCROLLING)
       }
     }
   }

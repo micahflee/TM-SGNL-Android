@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.text.TextUtils;
 
 import androidx.annotation.AnyThread;
-import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
@@ -29,6 +28,7 @@ import org.tm.archive.conversation.colors.ChatColors;
 import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.database.RecipientTable;
 import org.tm.archive.database.RecipientTable.MentionSetting;
+import org.tm.archive.database.RecipientTable.PhoneNumberSharingState;
 import org.tm.archive.database.RecipientTable.RegisteredState;
 import org.tm.archive.database.RecipientTable.UnidentifiedAccessMode;
 import org.tm.archive.database.RecipientTable.VibrateState;
@@ -48,18 +48,17 @@ import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.service.webrtc.links.CallLinkRoomId;
 import org.tm.archive.util.AvatarUtil;
 import org.tm.archive.util.FeatureFlags;
+import org.tm.archive.util.UsernameUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.wallpaper.ChatWallpaper;
+import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.ServiceId.ACI;
 import org.whispersystems.signalservice.api.push.ServiceId.PNI;
-import org.whispersystems.signalservice.api.push.ServiceId;
 import org.whispersystems.signalservice.api.push.SignalServiceAddress;
 import org.whispersystems.signalservice.api.util.OptionalUtil;
 import org.whispersystems.signalservice.api.util.Preconditions;
 import org.whispersystems.signalservice.api.util.UuidUtil;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,7 +74,6 @@ import java.util.stream.Collectors;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
-import static org.tm.archive.database.RecipientTable.InsightsBannerTier;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class Recipient {
@@ -132,7 +130,7 @@ public class Recipient {
   private final String                       about;
   private final String                       aboutEmoji;
   private final ProfileName                  systemProfileName;
-  public final String                       systemContactName;//**TM_SA**//public
+  private final String                       systemContactName;
   private final Optional<Extras>             extras;
   private final boolean                      hasGroupsInCommon;
   private final List<Badge>                  badges;
@@ -140,6 +138,7 @@ public class Recipient {
   private final boolean                      needsPniSignature;
   private final CallLinkRoomId               callLinkRoomId;
   private final Optional<GroupRecord>        groupRecord;
+  private final PhoneNumberSharingState      phoneNumberSharing;
 
   /**
    * Returns a {@link LiveRecipient}, which contains a {@link Recipient} that may or may not be
@@ -324,7 +323,14 @@ public class Recipient {
    */
   @WorkerThread
   public static @NonNull Recipient externalPossiblyMigratedGroup(@NonNull GroupId groupId) {
-    return Recipient.resolved(RecipientId.from(groupId));
+    RecipientId id = RecipientId.from(groupId);
+    try {
+      return Recipient.resolved(id);
+    } catch (RecipientTable.MissingRecipientException ex) {
+      Log.w(TAG, "Could not find recipient (" + id + ") for group " + groupId + ". Clearing RecipientId cache and trying again.", ex);
+      RecipientId.clearCache();
+      return Recipient.resolved(SignalDatabase.recipients().getOrInsertFromPossiblyMigratedGroupId(groupId));
+    }
   }
 
   /**
@@ -343,13 +349,16 @@ public class Recipient {
     RecipientTable db = SignalDatabase.recipients();
     RecipientId    id = null;
 
-    if (UuidUtil.isUuid(identifier)) {
-      ServiceId serviceId = ServiceId.parseOrThrow(identifier);
+    ServiceId serviceId = ServiceId.parseOrNull(identifier);
+
+    if (serviceId != null) {
       id = db.getOrInsertFromServiceId(serviceId);
     } else if (GroupId.isEncodedGroup(identifier)) {
       id = db.getOrInsertFromGroupId(GroupId.parseOrThrow(identifier));
     } else if (NumberUtil.isValidEmail(identifier)) {
       id = db.getOrInsertFromEmail(identifier);
+    } else if (UsernameUtil.isValidUsernameForSearch(identifier)) {
+      throw new IllegalArgumentException("Creating a recipient based on username alone is not supported!");
     } else {
       String e164 = PhoneNumberFormatter.get(context).format(identifier);
       id = db.getOrInsertFromE164(e164);
@@ -419,6 +428,7 @@ public class Recipient {
     this.isActiveGroup                = false;
     this.callLinkRoomId               = null;
     this.groupRecord                  = Optional.empty();
+    this.phoneNumberSharing           = PhoneNumberSharingState.UNKNOWN;
   }
 
   public Recipient(@NonNull RecipientId id, @NonNull RecipientDetails details, boolean resolved) {
@@ -474,6 +484,7 @@ public class Recipient {
     this.isActiveGroup                = details.isActiveGroup;
     this.callLinkRoomId               = details.callLinkRoomId;
     this.groupRecord                  = details.groupRecord;
+    this.phoneNumberSharing           = details.phoneNumberSharing;
   }
 
   public @NonNull RecipientId getId() {
@@ -662,7 +673,7 @@ public class Recipient {
 
   public @NonNull Optional<String> getUsername() {
     if (FeatureFlags.usernames()) {
-      return Optional.ofNullable(username);
+      return OptionalUtil.absentIfEmpty(username);
     } else {
       return Optional.empty();
     }
@@ -670,6 +681,13 @@ public class Recipient {
 
   public @NonNull Optional<String> getE164() {
     return Optional.ofNullable(e164);
+  }
+
+  /**
+   * Whether or not we should show this user's e164 in the interface.
+   */
+  public boolean shouldShowE164() {
+    return hasE164() && (isSystemContact() || getPhoneNumberSharing() != PhoneNumberSharingState.DISABLED);
   }
 
   public @NonNull Optional<String> getEmail() {
@@ -1192,7 +1210,7 @@ public class Recipient {
    * Forces retrieving a fresh copy of the recipient, regardless of its state.
    */
   public @NonNull Recipient fresh() {
-    return live().resolve();
+    return live().refresh().resolve();
   }
 
   public @NonNull LiveRecipient live() {
@@ -1221,6 +1239,10 @@ public class Recipient {
 
   public @NonNull CallLinkRoomId requireCallLinkRoomId() {
     return Objects.requireNonNull(callLinkRoomId);
+  }
+
+  public PhoneNumberSharingState getPhoneNumberSharing() {
+    return phoneNumberSharing;
   }
 
   @Override
@@ -1310,15 +1332,15 @@ public class Recipient {
     }
 
     public boolean manuallyShownAvatar() {
-      return recipientExtras.getManuallyShownAvatar();
+      return recipientExtras.manuallyShownAvatar;
     }
 
     public boolean hideStory() {
-      return recipientExtras.getHideStory();
+      return recipientExtras.hideStory;
     }
 
     public boolean hasViewedStory() {
-      return recipientExtras.getLastStoryView() > 0L;
+      return recipientExtras.lastStoryView > 0L;
     }
 
     @Override
@@ -1379,7 +1401,8 @@ public class Recipient {
            hasGroupsInCommon == other.hasGroupsInCommon &&
            Objects.equals(badges, other.badges) &&
            isActiveGroup == other.isActiveGroup &&
-           Objects.equals(callLinkRoomId, other.callLinkRoomId);
+           Objects.equals(callLinkRoomId, other.callLinkRoomId) &&
+           phoneNumberSharing == other.phoneNumberSharing;
   }
 
   private static boolean allContentsAreTheSame(@NonNull List<Recipient> a, @NonNull List<Recipient> b) {

@@ -70,7 +70,7 @@ public class SignalBaseIdentityKeyStore {
   public @NonNull SaveResult saveIdentity(SignalProtocolAddress address, IdentityKey identityKey, boolean nonBlockingApproval) {
     try (SignalSessionLock.Lock unused = ReentrantSessionLock.INSTANCE.acquire()) {
       IdentityStoreRecord identityRecord   = cache.get(address.getName());
-      RecipientId         recipientId      = RecipientId.fromSidOrE164(address.getName());
+      RecipientId         recipientId      = RecipientId.from(ServiceId.fromLibSignal(address.getServiceId()));
 
       if (identityRecord == null) {
         Log.i(TAG, "Saving new identity for " + address);
@@ -264,7 +264,7 @@ public class SignalBaseIdentityKeyStore {
 
     Cache(@NonNull IdentityTable identityDatabase) {
       this.identityDatabase = identityDatabase;
-      this.cache            = new LRUCache<>(200);
+      this.cache            = new LRUCache<>(1000);
     }
 
     public @Nullable IdentityStoreRecord get(@NonNull String addressName) {

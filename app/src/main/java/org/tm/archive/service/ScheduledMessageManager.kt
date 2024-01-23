@@ -10,7 +10,7 @@ import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.logging.Log
 import org.tm.archive.conversation.ConversationIntents
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.model.MediaMmsMessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.IndividualSendJob
 import org.tm.archive.jobs.PushGroupSendJob
@@ -37,7 +37,7 @@ class ScheduledMessageManager(
   @Suppress("UsePropertyAccessSyntax")
   @WorkerThread
   override fun getNextClosestEvent(): Event? {
-    val oldestMessage: MediaMmsMessageRecord? = messagesTable.getOldestScheduledSendTimestamp() as? MediaMmsMessageRecord
+    val oldestMessage: MmsMessageRecord? = messagesTable.getOldestScheduledSendTimestamp() as? MmsMessageRecord
 
     if (oldestMessage == null) {
       cancelAlarm(application, ScheduledMessagesAlarm::class.java)

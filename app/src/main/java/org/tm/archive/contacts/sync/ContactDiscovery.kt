@@ -15,6 +15,7 @@ import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.SyncSystemContactLinksJob
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.notifications.NotificationChannels
 import org.tm.archive.notifications.v2.ConversationId
 import org.tm.archive.permissions.Permissions
@@ -23,7 +24,6 @@ import org.tm.archive.profiles.ProfileName
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.registration.RegistrationUtil
-import org.tm.archive.sms.IncomingJoinedMessage
 import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.TextSecurePreferences
@@ -57,9 +57,13 @@ object ContactDiscovery {
     }
 
     if (!SignalStore.registrationValues().isRegistrationComplete) {
-      Log.w(TAG, "Registration is not yet complete. Skipping, but running a routine to possibly mark it complete.")
-      RegistrationUtil.maybeMarkRegistrationComplete()
-      return
+      if (SignalStore.account().isRegistered && SignalStore.svr().lastPinCreateFailed()) {
+        Log.w(TAG, "Registration isn't complete, but only because PIN creation failed. Allowing CDS to continue.")
+      } else {
+        Log.w(TAG, "Registration is not yet complete. Skipping, but running a routine to possibly mark it complete.")
+        RegistrationUtil.maybeMarkRegistrationComplete()
+        return
+      }
     }
 
     refreshRecipients(
@@ -69,7 +73,8 @@ object ContactDiscovery {
         ContactDiscoveryRefreshV2.refreshAll(context, useCompat = FeatureFlags.cdsCompatMode())
       },
       removeSystemContactLinksIfMissing = true,
-      notifyOfNewUsers = notifyOfNewUsers
+      notifyOfNewUsers = notifyOfNewUsers,
+      forceFullSystemContactSync = true
     )
 
     StorageSyncHelper.scheduleSyncForDataChange()
@@ -136,7 +141,8 @@ object ContactDiscovery {
     descriptor: String,
     refresh: () -> RefreshResult,
     removeSystemContactLinksIfMissing: Boolean,
-    notifyOfNewUsers: Boolean
+    notifyOfNewUsers: Boolean,
+    forceFullSystemContactSync: Boolean = false
   ): RefreshResult {
     val stopwatch = Stopwatch(descriptor)
 
@@ -149,7 +155,7 @@ object ContactDiscovery {
     if (hasContactsPermissions(context)) {
       ApplicationDependencies.getJobManager().add(SyncSystemContactLinksJob())
 
-      val useFullSync = removeSystemContactLinksIfMissing && result.registeredIds.size > FULL_SYSTEM_CONTACT_SYNC_THRESHOLD
+      val useFullSync = forceFullSystemContactSync || (removeSystemContactLinksIfMissing && result.registeredIds.size > FULL_SYSTEM_CONTACT_SYNC_THRESHOLD)
       syncRecipientsWithSystemContacts(
         context = context,
         rewrites = result.rewrites,
@@ -193,14 +199,14 @@ object ContactDiscovery {
 
     Recipient.resolvedList(newUserIds)
       .filter { !it.isSelf && it.hasAUserSetDisplayName(context) && !hasSession(it.id) }
-      .map { IncomingJoinedMessage(it.id) }
+      .map { IncomingMessage.contactJoined(it.id, System.currentTimeMillis()) }
       .map { SignalDatabase.messages.insertMessageInbox(it) }
       .filter { it.isPresent }
       .map { it.get() }
       .forEach { result ->
         val hour = Calendar.getInstance()[Calendar.HOUR_OF_DAY]
         if (hour in 9..22) {
-          ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(result.threadId), true)
+          ApplicationDependencies.getMessageNotifier().updateNotification(context, ConversationId.forConversation(result.threadId))
         } else {
           Log.i(TAG, "Not notifying of a new user due to the time of day. (Hour: $hour)")
         }

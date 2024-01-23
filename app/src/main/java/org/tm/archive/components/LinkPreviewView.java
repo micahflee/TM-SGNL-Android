@@ -163,10 +163,10 @@ public class LinkPreviewView extends FrameLayout {
   }
 
   public void setLinkPreview(@NonNull GlideRequests glideRequests, @NonNull LinkPreview linkPreview, boolean showThumbnail) {
-    setLinkPreview(glideRequests, linkPreview, showThumbnail, true);
+    setLinkPreview(glideRequests, linkPreview, showThumbnail, true, false);
   }
 
-  public void setLinkPreview(@NonNull GlideRequests glideRequests, @NonNull LinkPreview linkPreview, boolean showThumbnail, boolean showDescription) {
+  public void setLinkPreview(@NonNull GlideRequests glideRequests, @NonNull LinkPreview linkPreview, boolean showThumbnail, boolean showDescription, boolean scheduleMessageMode) {
     spinner.setVisibility(GONE);
     noPreview.setVisibility(GONE);
 
@@ -216,8 +216,8 @@ public class LinkPreviewView extends FrameLayout {
     if (showThumbnail && linkPreview.getThumbnail().isPresent()) {
       thumbnail.setVisibility(VISIBLE);
       thumbnailState.applyState(thumbnail);
-      thumbnail.get().setImageResource(glideRequests, new ImageSlide(linkPreview.getThumbnail().get()), type == TYPE_CONVERSATION, false);
-      thumbnail.get().showDownloadText(false);
+      thumbnail.get().setImageResource(glideRequests, new ImageSlide(linkPreview.getThumbnail().get()), type == TYPE_CONVERSATION && !scheduleMessageMode, false);
+      thumbnail.get().showSecondaryText(false);
     } else if (callLinkRootKey != null) {
       thumbnail.setVisibility(VISIBLE);
       thumbnailState.applyState(thumbnail);
@@ -228,7 +228,7 @@ public class LinkPreviewView extends FrameLayout {
                    .asDrawable(getContext(),
                                AvatarColorHash.forCallLink(callLinkRootKey.getKeyBytes()))
       );
-      thumbnail.get().showDownloadText(false);
+      thumbnail.get().showSecondaryText(false);
     } else {
       thumbnail.setVisibility(GONE);
     }

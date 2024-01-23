@@ -37,7 +37,6 @@ import org.tm.archive.util.ViewUtil;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * LinearLayout that, when a view container, will report back when it thinks a soft keyboard

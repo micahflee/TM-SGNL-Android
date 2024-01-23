@@ -5,7 +5,6 @@ package org.tm.archive.util
 import android.content.Context
 import org.tm.archive.R
 import org.tm.archive.database.MessageTypes
-import org.tm.archive.database.model.MediaMmsMessageRecord
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.Quote
@@ -19,9 +18,12 @@ const val MAX_BODY_DISPLAY_LENGTH = 1000
 fun MessageRecord.isMediaMessage(): Boolean {
   return isMms &&
     !isMmsNotification &&
-    (this as MediaMmsMessageRecord).containsMediaSlide() &&
+    (this as MmsMessageRecord).containsMediaSlide() &&
     slideDeck.stickerSlide == null
 }
+
+fun MessageRecord.hasNonTextSlide(): Boolean =
+  isMms && (this as MmsMessageRecord).slideDeck.slides.any { slide -> slide !is TextSlide }
 
 fun MessageRecord.hasSticker(): Boolean =
   isMms && (this as MmsMessageRecord).slideDeck.stickerSlide != null
@@ -54,7 +56,7 @@ fun MessageRecord.isBorderless(context: Context): Boolean {
 }
 
 fun MessageRecord.hasNoBubble(context: Context): Boolean =
-  hasSticker() || isBorderless(context) || (isTextOnly(context) && isJumbomoji(context) && (messageRanges?.rangesList?.isEmpty() ?: true))
+  hasSticker() || isBorderless(context) || (isTextOnly(context) && isJumbomoji(context) && (messageRanges?.ranges?.isEmpty() ?: true))
 
 fun MessageRecord.hasOnlyThumbnail(context: Context): Boolean {
   return hasThumbnail() &&
@@ -142,7 +144,7 @@ fun MessageRecord.isTextOnly(context: Context): Boolean {
 }
 
 fun MessageRecord.isScheduled(): Boolean {
-  return (this as? MediaMmsMessageRecord)?.scheduledDate?.let { it != -1L } ?: false
+  return (this as? MmsMessageRecord)?.scheduledDate?.let { it != -1L } ?: false
 }
 
 /**
@@ -153,7 +155,7 @@ fun MessageRecord.getRecordQuoteType(): QuoteModel.Type {
 }
 
 fun MessageRecord.isEditMessage(): Boolean {
-  return this is MediaMmsMessageRecord && isEditMessage
+  return this is MmsMessageRecord && isEditMessage
 }
 
 /**

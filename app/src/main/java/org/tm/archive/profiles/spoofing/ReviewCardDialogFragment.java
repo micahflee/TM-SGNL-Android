@@ -22,6 +22,8 @@ import org.tm.archive.groups.BadGroupIdException;
 import org.tm.archive.groups.GroupId;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment;
+import org.tm.archive.stories.settings.my.SignalConnectionsBottomSheetDialogFragment;
+import org.tm.archive.util.BottomSheetUtil;
 
 public class ReviewCardDialogFragment extends FullScreenDialogFragment {
 
@@ -201,6 +203,11 @@ public class ReviewCardDialogFragment extends FullScreenDialogFragment {
         default:
           viewModel.act(card, action);
       }
+    }
+
+    @Override
+    public void onSignalConnectionClicked() {
+      new SignalConnectionsBottomSheetDialogFragment().show(getParentFragmentManager(), BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG);
     }
   }
 }

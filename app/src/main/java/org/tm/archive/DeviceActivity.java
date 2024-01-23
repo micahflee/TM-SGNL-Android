@@ -5,13 +5,11 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.text.TextUtils;
 import android.transition.TransitionInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -32,7 +30,7 @@ import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.permissions.Permissions;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.DynamicLanguage;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
@@ -197,7 +195,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
           ProfileKey      profileKey         = ProfileKeyUtil.getSelfProfileKey();
 
           TextSecurePreferences.setMultiDevice(DeviceActivity.this, true);
-          accountManager.addDevice(ephemeralId, publicKey, aciIdentityKeyPair, pniIdentityKeyPair, profileKey, verificationCode);
+          accountManager.addDevice(ephemeralId, publicKey, aciIdentityKeyPair, pniIdentityKeyPair, profileKey, SignalStore.svr().getOrCreateMasterKey(), verificationCode);
 
           return SUCCESS;
         } catch (NotFoundException e) {

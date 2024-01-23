@@ -27,7 +27,6 @@ import org.tm.archive.contacts.avatars.GeneratedContactPhoto
 import org.tm.archive.database.model.DistributionListPrivacyMode
 import org.tm.archive.database.model.StoryViewState
 import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.phonenumbers.PhoneNumberFormatter
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
@@ -437,8 +436,7 @@ open class ContactSearchAdapter(
         number.text = recipient.combinedAboutAndEmoji
         number.visible = true
       } else if (displayOptions.displaySecondaryInformation == DisplaySecondaryInformation.ALWAYS && recipient.hasE164()) {
-        number.text = PhoneNumberFormatter.prettyPrint(recipient.requireE164())
-        number.visible = true
+        number.visible = false
       } else {
         super.bindNumberField(model)
       }

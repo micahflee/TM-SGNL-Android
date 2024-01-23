@@ -9,8 +9,9 @@ import org.junit.runner.RunWith
 import org.signal.core.util.ThreadUtil
 import org.tm.archive.attachments.PointerAttachment
 import org.tm.archive.conversation.v2.ConversationActivity
+import org.tm.archive.database.MessageType
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.profiles.ProfileName
 import org.tm.archive.recipients.Recipient
@@ -64,7 +65,8 @@ class ConversationItemPreviewer {
       attachment()
     }
 
-    val message = IncomingMediaMessage(
+    val message = IncomingMessage(
+      type = MessageType.NORMAL,
       from = other.id,
       body = body,
       sentTimeMillis = System.currentTimeMillis(),
@@ -73,7 +75,7 @@ class ConversationItemPreviewer {
       attachments = PointerAttachment.forPointers(Optional.of(attachments))
     )
 
-    SignalDatabase.messages.insertSecureDecryptedMessageInbox(message, SignalDatabase.threads.getOrCreateThreadIdFor(other)).get()
+    SignalDatabase.messages.insertMessageInbox(message, SignalDatabase.threads.getOrCreateThreadIdFor(other)).get()
 
     ThreadUtil.sleep(1)
   }
@@ -83,7 +85,8 @@ class ConversationItemPreviewer {
       attachment()
     }
 
-    val message = IncomingMediaMessage(
+    val message = IncomingMessage(
+      type = MessageType.NORMAL,
       from = other.id,
       body = body,
       sentTimeMillis = System.currentTimeMillis(),
@@ -92,7 +95,7 @@ class ConversationItemPreviewer {
       attachments = PointerAttachment.forPointers(Optional.of(attachments))
     )
 
-    val insert = SignalDatabase.messages.insertSecureDecryptedMessageInbox(message, SignalDatabase.threads.getOrCreateThreadIdFor(other)).get()
+    val insert = SignalDatabase.messages.insertMessageInbox(message, SignalDatabase.threads.getOrCreateThreadIdFor(other)).get()
 
     SignalDatabase.attachments.getAttachmentsForMessage(insert.messageId).forEachIndexed { index, attachment ->
 //      if (index != 1) {
@@ -144,6 +147,7 @@ class ConversationItemPreviewer {
       1024,
       Optional.empty(),
       Optional.empty(),
+      0,
       Optional.of("/not-there.jpg"),
       false,
       false,

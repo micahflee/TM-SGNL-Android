@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023 Signal Messenger, LLC
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 package org.tm.archive.components
 
 import android.graphics.Color
@@ -29,7 +34,11 @@ data class ConversationItemThumbnailState(
     @IgnoredOnParcel
     private val clickListener: SlideClickListener? = null,
     @IgnoredOnParcel
-    private val downloadClickListener: SlidesClickedListener? = null,
+    private val startTransferClickListener: SlidesClickedListener? = null,
+    @IgnoredOnParcel
+    private val cancelTransferClickListener: SlidesClickedListener? = null,
+    @IgnoredOnParcel
+    private val playVideoClickListener: SlideClickListener? = null,
     @IgnoredOnParcel
     private val longClickListener: OnLongClickListener? = null,
     private val visibility: Int = View.GONE,
@@ -54,7 +63,9 @@ data class ConversationItemThumbnailState(
       thumbnailView.get().isClickable = clickable
       thumbnailView.get().setRadii(cornerTopLeft, cornerTopRight, cornerBottomRight, cornerBottomLeft)
       thumbnailView.get().setThumbnailClickListener(clickListener)
-      thumbnailView.get().setDownloadClickListener(downloadClickListener)
+      thumbnailView.get().setStartTransferClickListener(startTransferClickListener)
+      thumbnailView.get().setCancelTransferClickListener(cancelTransferClickListener)
+      thumbnailView.get().setPlayVideoClickListener(playVideoClickListener)
       thumbnailView.get().setOnLongClickListener(longClickListener)
       thumbnailView.get().setBounds(minWidth, maxWidth, minHeight, maxHeight)
     }
@@ -67,7 +78,11 @@ data class ConversationItemThumbnailState(
     @IgnoredOnParcel
     private val clickListener: SlideClickListener? = null,
     @IgnoredOnParcel
-    private val downloadClickListener: SlidesClickedListener? = null,
+    private val startTransferClickListener: SlidesClickedListener? = null,
+    @IgnoredOnParcel
+    private val cancelTransferClickListener: SlidesClickedListener? = null,
+    @IgnoredOnParcel
+    private val playVideoClickListener: SlideClickListener? = null,
     @IgnoredOnParcel
     private val longClickListener: OnLongClickListener? = null,
     private val visibility: Int = View.GONE,
@@ -88,7 +103,9 @@ data class ConversationItemThumbnailState(
       albumView.get().isClickable = clickable
       albumView.get().setRadii(cornerTopLeft, cornerTopRight, cornerBottomRight, cornerBottomLeft)
       albumView.get().setThumbnailClickListener(clickListener)
-      albumView.get().setDownloadClickListener(downloadClickListener)
+      albumView.get().setStartTransferClickListener(startTransferClickListener)
+      albumView.get().setCancelTransferClickListener(cancelTransferClickListener)
+      albumView.get().setPlayVideoClickListener(playVideoClickListener)
       albumView.get().setOnLongClickListener(longClickListener)
       albumView.get().setCellBackgroundColor(cellBackgroundColor)
     }

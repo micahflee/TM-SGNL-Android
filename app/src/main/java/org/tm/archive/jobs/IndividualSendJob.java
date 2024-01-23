@@ -19,9 +19,9 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobManager;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.MmsException;
@@ -33,7 +33,6 @@ import org.tm.archive.service.ExpiringMessageManager;
 import org.tm.archive.transport.InsecureFallbackApprovalException;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.transport.UndeliverableMessageException;
-import org.tm.archive.util.ConversationUtil;
 import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender;
 import org.whispersystems.signalservice.api.SignalServiceMessageSender.IndividualSendEvents;
@@ -51,8 +50,8 @@ import org.whispersystems.signalservice.api.push.exceptions.ProofRequiredExcepti
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
 import org.whispersystems.signalservice.api.push.exceptions.UnregisteredUserException;
 import org.whispersystems.signalservice.api.util.UuidUtil;
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos.BodyRange;
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos.DataMessage;
+import org.whispersystems.signalservice.internal.push.BodyRange;
+import org.whispersystems.signalservice.internal.push.DataMessage;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -166,6 +165,9 @@ public class IndividualSendJob extends PushSendJob {
       database.markAsSent(messageId, true);
       markAttachmentsUploaded(messageId, message);
       database.markUnidentified(messageId, unidentified);
+
+      // For scheduled messages, which may not have updated the thread with it's snippet yet
+      SignalDatabase.threads().updateSilently(threadId, false);
 
       if (recipient.isSelf()) {
         SignalDatabase.messages().incrementDeliveryReceiptCount(message.getSentTimeMillis(), recipient.getId(), System.currentTimeMillis());

@@ -1,26 +1,26 @@
 package org.tm.archive.messages
 
-import com.google.protobuf.InvalidProtocolBufferException
+import org.signal.core.util.Base64
 import org.tm.archive.database.model.databaseprotos.StoryTextPost
 import org.tm.archive.mms.OutgoingMessage
-import org.tm.archive.util.Base64
 import org.whispersystems.signalservice.api.messages.SignalServicePreview
 import org.whispersystems.signalservice.api.messages.SignalServiceTextAttachment
+import java.io.IOException
 import java.util.Optional
 import kotlin.math.roundToInt
 
 object StorySendUtil {
   @JvmStatic
-  @Throws(InvalidProtocolBufferException::class)
+  @Throws(IOException::class)
   fun deserializeBodyToStoryTextAttachment(message: OutgoingMessage, getPreviewsFor: (OutgoingMessage) -> List<SignalServicePreview>): SignalServiceTextAttachment {
-    val storyTextPost = StoryTextPost.parseFrom(Base64.decode(message.body))
+    val storyTextPost = StoryTextPost.ADAPTER.decode(Base64.decode(message.body))
     val preview = if (message.linkPreviews.isEmpty()) {
       Optional.empty()
     } else {
       Optional.of(getPreviewsFor(message)[0])
     }
 
-    return if (storyTextPost.background.hasLinearGradient()) {
+    return if (storyTextPost.background!!.linearGradient != null) {
       SignalServiceTextAttachment.forGradientBackground(
         Optional.ofNullable(storyTextPost.body),
         Optional.ofNullable(getStyle(storyTextPost.style)),
@@ -28,9 +28,9 @@ object StorySendUtil {
         Optional.of(storyTextPost.textBackgroundColor),
         preview,
         SignalServiceTextAttachment.Gradient(
-          Optional.of(storyTextPost.background.linearGradient.rotation.roundToInt()),
-          ArrayList(storyTextPost.background.linearGradient.colorsList),
-          ArrayList(storyTextPost.background.linearGradient.positionsList)
+          Optional.of(storyTextPost.background.linearGradient!!.rotation.roundToInt()),
+          ArrayList(storyTextPost.background.linearGradient.colors),
+          ArrayList(storyTextPost.background.linearGradient.positions)
         )
       )
     } else {
@@ -40,7 +40,7 @@ object StorySendUtil {
         Optional.of(storyTextPost.textForegroundColor),
         Optional.of(storyTextPost.textBackgroundColor),
         preview,
-        storyTextPost.background.singleColor.color
+        storyTextPost.background.singleColor!!.color
       )
     }
   }

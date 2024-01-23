@@ -49,10 +49,6 @@ public abstract class DatabaseTable {
 
   protected void notifyConversationListeners(Set<Long> threadIds) {
     ApplicationDependencies.getDatabaseObserver().notifyConversationListeners(threadIds);
-
-    for (long threadId : threadIds) {
-      notifyConversationListeners(threadId);
-    }
   }
 
   protected void notifyConversationListeners(long threadId) {
@@ -83,11 +79,11 @@ public abstract class DatabaseTable {
     this.databaseHelper = databaseHelper;
   }
 
-  protected SQLiteDatabase getReadableDatabase() {
+  public SQLiteDatabase getReadableDatabase() {
     return databaseHelper.getSignalReadableDatabase();
   }
 
-  protected SQLiteDatabase getWritableDatabase() {
+  public SQLiteDatabase getWritableDatabase() {
     return databaseHelper.getSignalWritableDatabase();
   }
 }

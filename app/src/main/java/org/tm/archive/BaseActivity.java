@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.View;
-import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -18,7 +17,6 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.util.AppStartup;
 import org.tm.archive.util.ConfigurationUtil;
-import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.WindowUtil;
 import org.tm.archive.util.dynamiclanguage.DynamicLanguageContextWrapper;
 

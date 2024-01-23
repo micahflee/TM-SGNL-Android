@@ -53,14 +53,14 @@ fun QrCode(
   }
 }
 
-private fun DrawScope.drawQr(
+fun DrawScope.drawQr(
   data: QrCodeData,
   foregroundColor: Color,
   backgroundColor: Color,
   deadzonePercent: Float,
-  logo: ImageBitmap
+  logo: ImageBitmap?
 ) {
-  val deadzonePaddingPercent = 0.07f
+  val deadzonePaddingPercent = 0.045f
 
   // We want an even number of dots on either side of the deadzone
   val deadzoneRadius: Int = (data.height * (deadzonePercent + deadzonePaddingPercent)).toInt().let { candidateDeadzoneHeight ->
@@ -120,12 +120,14 @@ private fun DrawScope.drawQr(
   // Logo
   val logoWidthPx = (((deadzonePercent - deadzonePaddingPercent) * 0.6f) * size.width).toInt()
   val logoOffsetPx = ((size.width - logoWidthPx) / 2).toInt()
-  drawImage(
-    image = logo,
-    dstOffset = IntOffset(logoOffsetPx, logoOffsetPx),
-    dstSize = IntSize(logoWidthPx, logoWidthPx),
-    colorFilter = ColorFilter.tint(foregroundColor)
-  )
+  if (logo != null) {
+    drawImage(
+      image = logo,
+      dstOffset = IntOffset(logoOffsetPx, logoOffsetPx),
+      dstSize = IntSize(logoWidthPx, logoWidthPx),
+      colorFilter = ColorFilter.tint(foregroundColor)
+    )
+  }
 }
 
 @Preview

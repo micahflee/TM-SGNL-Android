@@ -8,14 +8,12 @@ import android.os.HandlerThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import org.signal.core.util.Hex;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.DeadlockDetector;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.libsignal.zkgroup.profiles.ClientZkProfileOperations;
 import org.signal.libsignal.zkgroup.receipts.ClientZkReceiptOperations;
 import org.tm.archive.BuildConfig;
-import org.tm.archive.KbsEnclave;
 import org.tm.archive.components.TypingStatusRepository;
 import org.tm.archive.components.TypingStatusSender;
 import org.tm.archive.crypto.ReentrantSessionLock;
@@ -74,7 +72,6 @@ import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.video.exo.GiphyMp4Cache;
 import org.tm.archive.video.exo.SimpleExoPlayerPool;
 import org.tm.archive.webrtc.audio.AudioManagerCompat;
-import org.whispersystems.signalservice.api.KeyBackupService;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.api.SignalServiceDataStore;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
@@ -94,7 +91,6 @@ import org.whispersystems.signalservice.api.websocket.WebSocketFactory;
 import org.whispersystems.signalservice.internal.configuration.SignalServiceConfiguration;
 import org.whispersystems.signalservice.internal.websocket.WebSocketConnection;
 
-import java.security.KeyStore;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -392,15 +388,6 @@ public class ApplicationDependencyProvider implements ApplicationDependencies.Pr
   @Override
   public @NonNull ClientZkReceiptOperations provideClientZkReceiptOperations(@NonNull SignalServiceConfiguration signalServiceConfiguration) {
     return provideClientZkOperations(signalServiceConfiguration).getReceiptOperations();
-  }
-
-  @Override
-  public @NonNull KeyBackupService provideKeyBackupService(@NonNull SignalServiceAccountManager signalServiceAccountManager, @NonNull KeyStore keyStore, @NonNull KbsEnclave enclave) {
-    return signalServiceAccountManager.getKeyBackupService(keyStore,
-                                                           enclave.getEnclaveName(),
-                                                           Hex.fromStringOrThrow(enclave.getServiceId()),
-                                                           enclave.getMrEnclave(),
-                                                           10);
   }
 
   @NonNull WebSocketFactory provideWebSocketFactory(@NonNull Supplier<SignalServiceConfiguration> signalServiceConfigurationSupplier, @NonNull SignalWebSocketHealthMonitor healthMonitor) {

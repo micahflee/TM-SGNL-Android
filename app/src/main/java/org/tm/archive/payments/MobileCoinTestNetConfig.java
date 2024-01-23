@@ -8,7 +8,7 @@ import com.mobilecoin.lib.ClientConfig;
 import com.mobilecoin.lib.exceptions.AttestationException;
 
 import org.tm.archive.R;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.whispersystems.signalservice.api.SignalServiceAccountManager;
 import org.whispersystems.signalservice.internal.push.AuthCredentials;
 
@@ -36,7 +36,7 @@ final class MobileCoinTestNetConfig extends MobileCoinConfig {
 
   @Override
   @NonNull Uri getFogUri() {
-    return Uri.parse("fog://service.fog.mob.staging.namda.net");
+    return Uri.parse("fog://fog.test.mobilecoin.com");
   }
 
   @Override

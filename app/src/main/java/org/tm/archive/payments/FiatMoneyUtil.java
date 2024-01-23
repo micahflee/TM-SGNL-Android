@@ -1,5 +1,4 @@
 package org.tm.archive.payments;
-
 import android.content.res.Resources;
 
 import androidx.annotation.NonNull;

@@ -1,9 +1,14 @@
 package org.tm.archive.util;
 
+import android.database.sqlite.SQLiteDatabaseCorruptException;
+
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.ExceptionUtil;
 import org.signal.core.util.logging.Log;
+import org.tm.archive.database.LogDatabase;
+import org.tm.archive.database.SearchTable;
+import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.keyvalue.SignalStore;
 
@@ -35,11 +40,26 @@ public class SignalUncaughtExceptionHandler implements Thread.UncaughtExceptionH
       return;
     }
 
+    if (e instanceof SQLiteDatabaseCorruptException) {
+      if (e.getMessage().indexOf("message_fts") >= 0) {
+        Log.w(TAG, "FTS corrupted! Resetting FTS index.");
+        SignalDatabase.messageSearch().fullyResetTables();
+      } else {
+        Log.w(TAG, "Some non-FTS related corruption?");
+      }
+    }
+
     if (e instanceof OnErrorNotImplementedException && e.getCause() != null) {
       e = e.getCause();
     }
 
+    String exceptionName = e.getClass().getCanonicalName();
+    if (exceptionName == null) {
+      exceptionName = e.getClass().getName();
+    }
+
     Log.e(TAG, "", e, true);
+    LogDatabase.getInstance(ApplicationDependencies.getApplication()).crashes().saveCrash(System.currentTimeMillis(), exceptionName, e.getMessage(), ExceptionUtil.convertThrowableToString(e));
     SignalStore.blockUntilAllWritesFinished();
     Log.blockUntilAllWritesFinished();
     ApplicationDependencies.getJobManager().flush();

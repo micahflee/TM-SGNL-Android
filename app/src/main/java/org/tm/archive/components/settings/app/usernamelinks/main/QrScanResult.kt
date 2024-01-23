@@ -8,7 +8,7 @@ import org.tm.archive.recipients.Recipient
 sealed class QrScanResult {
   class Success(val recipient: Recipient) : QrScanResult()
 
-  class NotFound(val username: String) : QrScanResult()
+  class NotFound(val username: String?) : QrScanResult()
 
   object InvalidData : QrScanResult()
 

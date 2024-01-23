@@ -7,8 +7,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import com.google.protobuf.ByteString;
-
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.Attachment;
 import org.tm.archive.attachments.UriAttachment;
@@ -26,7 +24,7 @@ import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.MessageSender;
 import org.tm.archive.util.MediaUtil;
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos.GroupContext;
+import org.whispersystems.signalservice.internal.push.GroupContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -37,6 +35,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import okio.ByteString;
 
 final class GroupManagerV1 {
 
@@ -159,13 +159,13 @@ final class GroupManagerV1 {
       }
     }
 
-    GroupContext.Builder groupContextBuilder = GroupContext.newBuilder()
-                                                           .setId(ByteString.copyFrom(groupId.getDecodedId()))
-                                                           .setType(GroupContext.Type.UPDATE)
-                                                           .addAllMembersE164(e164Members)
-                                                           .addAllMembers(uuidMembers);
+    GroupContext.Builder groupContextBuilder = new GroupContext.Builder()
+                                                               .id(ByteString.of(groupId.getDecodedId()))
+                                                               .type(GroupContext.Type.UPDATE)
+                                                               .membersE164(e164Members)
+                                                               .members(uuidMembers);
 
-    if (groupName != null) groupContextBuilder.setName(groupName);
+    if (groupName != null) groupContextBuilder.name(groupName);
 
     GroupContext groupContext = groupContextBuilder.build();
 

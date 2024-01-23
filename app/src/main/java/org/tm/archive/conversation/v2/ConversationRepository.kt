@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.text.SpannableStringBuilder
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.bumptech.glide.request.target.CustomTarget
@@ -470,7 +471,7 @@ class ConversationRepository(
         }
       }
       .filterNot(Util::isEmpty)
-      .joinToString("\n")
+      .joinTo(buffer = SpannableStringBuilder(), separator = "\n")
   }
 
   fun getRecipientContactPhotoBitmap(context: Context, glideRequests: GlideRequests, recipient: Recipient): Single<ShortcutInfoCompat> {
@@ -508,7 +509,7 @@ class ConversationRepository(
       val slideDeck = SlideDeck()
 
       if (contact.avatarAttachment != null) {
-        slideDeck.addSlide(MediaUtil.getSlideForAttachment(context, contact.avatarAttachment))
+        slideDeck.addSlide(MediaUtil.getSlideForAttachment(contact.avatarAttachment))
       }
 
       slideDeck to body
@@ -517,7 +518,7 @@ class ConversationRepository(
       val slideDeck = SlideDeck()
 
       linkPreview.thumbnail.ifPresent {
-        slideDeck.addSlide(MediaUtil.getSlideForAttachment(context, it))
+        slideDeck.addSlide(MediaUtil.getSlideForAttachment(it))
       }
 
       slideDeck to conversationMessage.getDisplayBody(context)
@@ -531,7 +532,7 @@ class ConversationRepository(
       if (messageRecord.isViewOnceMessage()) {
         val attachment = TombstoneAttachment(MediaUtil.VIEW_ONCE, true)
         slideDeck = SlideDeck()
-        slideDeck.addSlide(MediaUtil.getSlideForAttachment(context, attachment))
+        slideDeck.addSlide(MediaUtil.getSlideForAttachment(attachment))
       }
 
       slideDeck to conversationMessage.getDisplayBody(context)
@@ -559,13 +560,9 @@ class ConversationRepository(
     }
   }
 
-  fun startExpirationTimeout(messageRecord: MessageRecord) {
-    SignalExecutors.BOUNDED_IO.execute {
-      val now = System.currentTimeMillis()
-
-      SignalDatabase.messages.markExpireStarted(messageRecord.id, now)
-      ApplicationDependencies.getExpiringMessageManager().scheduleDeletion(messageRecord.id, messageRecord.isMms, now, messageRecord.expiresIn)
-    }
+  fun startExpirationTimeout(expirationInfos: List<MessageTable.ExpirationInfo>) {
+    SignalDatabase.messages.markExpireStarted(expirationInfos.map { it.id to it.expireStarted })
+    ApplicationDependencies.getExpiringMessageManager().scheduleDeletion(expirationInfos)
   }
 
   fun markLastSeen(threadId: Long) {

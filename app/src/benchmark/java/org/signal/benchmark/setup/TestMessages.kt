@@ -2,9 +2,10 @@ package org.signal.benchmark.setup
 
 import org.tm.archive.attachments.PointerAttachment
 import org.tm.archive.database.AttachmentTable
+import org.tm.archive.database.MessageType
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.TestDbUtils
-import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.mms.QuoteModel
 import org.tm.archive.recipients.Recipient
@@ -65,7 +66,8 @@ object TestMessages {
     return insert
   }
   fun insertIncomingTextMessage(other: Recipient, body: String, timestamp: Long? = null) {
-    val message = IncomingMediaMessage(
+    val message = IncomingMessage(
+      type = MessageType.NORMAL,
       from = other.id,
       body = body,
       sentTimeMillis = timestamp ?: System.currentTimeMillis(),
@@ -73,10 +75,11 @@ object TestMessages {
       receivedTimeMillis = timestamp ?: System.currentTimeMillis()
     )
 
-    SignalDatabase.messages.insertSecureDecryptedMessageInbox(message, SignalDatabase.threads.getOrCreateThreadIdFor(other)).get().messageId
+    SignalDatabase.messages.insertMessageInbox(message, SignalDatabase.threads.getOrCreateThreadIdFor(other)).get().messageId
   }
   fun insertIncomingQuoteTextMessage(other: Recipient, body: String, quote: QuoteModel, timestamp: Long?) {
-    val message = IncomingMediaMessage(
+    val message = IncomingMessage(
+      type = MessageType.NORMAL,
       from = other.id,
       body = body,
       sentTimeMillis = timestamp ?: System.currentTimeMillis(),
@@ -90,28 +93,30 @@ object TestMessages {
     val attachments: List<SignalServiceAttachmentPointer> = (0 until attachmentCount).map {
       imageAttachment()
     }
-    val message = IncomingMediaMessage(
+    val message = IncomingMessage(
+      type = MessageType.NORMAL,
       from = other.id,
       sentTimeMillis = timestamp ?: System.currentTimeMillis(),
       serverTimeMillis = timestamp ?: System.currentTimeMillis(),
       receivedTimeMillis = timestamp ?: System.currentTimeMillis(),
       attachments = PointerAttachment.forPointers(Optional.of(attachments))
     )
-    return insertIncomingMediaMessage(recipient = other, message = message, failed = failed)
+    return insertIncomingMessage(recipient = other, message = message, failed = failed)
   }
 
   fun insertIncomingVoiceMessage(other: Recipient, timestamp: Long? = null): Long {
-    val message = IncomingMediaMessage(
+    val message = IncomingMessage(
+      type = MessageType.NORMAL,
       from = other.id,
       sentTimeMillis = timestamp ?: System.currentTimeMillis(),
       serverTimeMillis = timestamp ?: System.currentTimeMillis(),
       receivedTimeMillis = timestamp ?: System.currentTimeMillis(),
       attachments = PointerAttachment.forPointers(Optional.of(Collections.singletonList(voiceAttachment()) as List<SignalServiceAttachment>))
     )
-    return insertIncomingMediaMessage(recipient = other, message = message, failed = false)
+    return insertIncomingMessage(recipient = other, message = message, failed = false)
   }
 
-  private fun insertIncomingMediaMessage(recipient: Recipient, message: IncomingMediaMessage, failed: Boolean = false): Long {
+  private fun insertIncomingMessage(recipient: Recipient, message: IncomingMessage, failed: Boolean = false): Long {
     val id = insertIncomingMessage(recipient = recipient, message = message)
     if (failed) {
       setMessageMediaFailed(id)
@@ -122,8 +127,8 @@ object TestMessages {
     return id
   }
 
-  private fun insertIncomingMessage(recipient: Recipient, message: IncomingMediaMessage): Long {
-    return SignalDatabase.messages.insertSecureDecryptedMessageInbox(message, SignalDatabase.threads.getOrCreateThreadIdFor(recipient)).get().messageId
+  private fun insertIncomingMessage(recipient: Recipient, message: IncomingMessage): Long {
+    return SignalDatabase.messages.insertMessageInbox(message, SignalDatabase.threads.getOrCreateThreadIdFor(recipient)).get().messageId
   }
 
   private fun setMessageMediaFailed(messageId: Long) {
@@ -149,6 +154,7 @@ object TestMessages {
       1024,
       Optional.empty(),
       Optional.empty(),
+      0,
       Optional.of("/not-there.jpg"),
       false,
       false,
@@ -171,6 +177,7 @@ object TestMessages {
       1024,
       Optional.empty(),
       Optional.empty(),
+      0,
       Optional.of("/not-there.aac"),
       true,
       false,

@@ -5,8 +5,7 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.database.model.databaseprotos.GroupCallUpdateDetails;
-import org.tm.archive.util.Base64;
-import org.tm.archive.util.Util;
+import org.signal.core.util.Base64;
 
 import java.io.IOException;
 import java.util.List;
@@ -19,14 +18,14 @@ public final class GroupCallUpdateDetailsUtil {
   }
 
   public static @NonNull GroupCallUpdateDetails parse(@Nullable String body) {
-    GroupCallUpdateDetails groupCallUpdateDetails = GroupCallUpdateDetails.getDefaultInstance();
+    GroupCallUpdateDetails groupCallUpdateDetails = new GroupCallUpdateDetails();
 
     if (body == null) {
       return groupCallUpdateDetails;
     }
 
     try {
-      groupCallUpdateDetails = GroupCallUpdateDetails.parseFrom(Base64.decode(body));
+      groupCallUpdateDetails = GroupCallUpdateDetails.ADAPTER.decode(Base64.decode(body));
     } catch (IOException e) {
       Log.w(TAG, "Group call update details could not be read", e);
     }
@@ -35,14 +34,10 @@ public final class GroupCallUpdateDetailsUtil {
   }
 
   public static @NonNull String createUpdatedBody(@NonNull GroupCallUpdateDetails groupCallUpdateDetails, @NonNull List<String> inCallUuids, boolean isCallFull) {
-    GroupCallUpdateDetails.Builder builder = groupCallUpdateDetails.toBuilder()
-                                                                   .setIsCallFull(isCallFull)
-                                                                   .clearInCallUuids();
+    GroupCallUpdateDetails.Builder builder = groupCallUpdateDetails.newBuilder()
+                                                                   .isCallFull(isCallFull)
+                                                                   .inCallUuids(inCallUuids);
 
-    if (Util.hasItems(inCallUuids)) {
-      builder.addAllInCallUuids(inCallUuids);
-    }
-
-    return Base64.encodeBytes(builder.build().toByteArray());
+    return Base64.encodeWithPadding(builder.build().encode());
   }
 }

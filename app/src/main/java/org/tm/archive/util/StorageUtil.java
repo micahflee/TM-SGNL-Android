@@ -17,6 +17,7 @@ import org.tm.archive.BuildConfig;
 import org.tm.archive.R;
 import org.tm.archive.database.NoExternalStorageException;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.permissions.PermissionCompat;
 import org.tm.archive.permissions.Permissions;
 
 import java.io.File;
@@ -82,10 +83,6 @@ public class StorageUtil {
     }
   }
 
-  public static File getBackupCacheDirectory(Context context) {
-    return context.getExternalCacheDir();
-  }
-
   private static File getSignalStorageDir() throws NoExternalStorageException {
     final File storage = Environment.getExternalStorageDirectory();
 
@@ -108,17 +105,13 @@ public class StorageUtil {
     return storage.canWrite();
   }
 
-  public static File getLegacyBackupDirectory() throws NoExternalStorageException {
-    return getSignalStorageDir();
-  }
-
   public static boolean canWriteToMediaStore() {
     return Build.VERSION.SDK_INT > 28 ||
            Permissions.hasAll(ApplicationDependencies.getApplication(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
   }
 
   public static boolean canReadFromMediaStore() {
-    return Permissions.hasAll(ApplicationDependencies.getApplication(), Manifest.permission.READ_EXTERNAL_STORAGE);
+    return Permissions.hasAny(ApplicationDependencies.getApplication(), PermissionCompat.forImagesAndVideos());
   }
 
   public static @NonNull Uri getVideoUri() {

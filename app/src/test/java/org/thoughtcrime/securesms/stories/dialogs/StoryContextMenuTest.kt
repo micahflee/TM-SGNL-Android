@@ -16,6 +16,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.signal.core.util.Base64
 import org.signal.core.util.getParcelableExtraCompat
 import org.tm.archive.attachments.AttachmentId
 import org.tm.archive.database.FakeMessageRecords
@@ -26,7 +27,6 @@ import org.tm.archive.mms.ImageSlide
 import org.tm.archive.mms.PartAuthority
 import org.tm.archive.mms.SlideDeck
 import org.tm.archive.util.MediaUtil
-import org.whispersystems.util.Base64
 import java.util.Optional
 
 @RunWith(RobolectricTestRunner::class)
@@ -42,7 +42,7 @@ class StoryContextMenuTest {
   @Test
   fun `Given a story with an attachment, when I share, then I expect the correct stream, type, and flag`() {
     // GIVEN
-    val attachmentId = AttachmentId(1, 2)
+    val attachmentId = AttachmentId(1)
     val storyRecord = FakeMessageRecords.buildMediaMmsMessageRecord(
       storyType = StoryType.STORY_WITH_REPLIES,
       slideDeck = SlideDeck().apply {
@@ -74,7 +74,7 @@ class StoryContextMenuTest {
     val expected = "Hello"
     val storyRecord = FakeMessageRecords.buildMediaMmsMessageRecord(
       storyType = StoryType.TEXT_STORY_WITH_REPLIES,
-      body = Base64.encodeBytes(StoryTextPost.newBuilder().setBody(expected).build().toByteArray())
+      body = Base64.encodeWithPadding(StoryTextPost.Builder().body(expected).build().encode())
     )
 
     // WHEN
@@ -93,7 +93,7 @@ class StoryContextMenuTest {
     val expected = "https://www.signal.org"
     val storyRecord = FakeMessageRecords.buildMediaMmsMessageRecord(
       storyType = StoryType.TEXT_STORY_WITH_REPLIES,
-      body = Base64.encodeBytes(StoryTextPost.newBuilder().build().toByteArray()),
+      body = Base64.encodeWithPadding(StoryTextPost.Builder().build().encode()),
       linkPreviews = listOf(LinkPreview(expected, "", "", 0L, Optional.empty()))
     )
 
@@ -115,7 +115,7 @@ class StoryContextMenuTest {
     val expected = "$text $url"
     val storyRecord = FakeMessageRecords.buildMediaMmsMessageRecord(
       storyType = StoryType.TEXT_STORY_WITH_REPLIES,
-      body = Base64.encodeBytes(StoryTextPost.newBuilder().setBody(text).build().toByteArray()),
+      body = Base64.encodeWithPadding(StoryTextPost.Builder().body(text).build().encode()),
       linkPreviews = listOf(LinkPreview(url, "", "", 0L, Optional.empty()))
     )
 

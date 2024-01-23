@@ -9,6 +9,7 @@ import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.database.IdentityTable.VerifiedStatus
 import org.tm.archive.database.RecipientTable
 import org.tm.archive.database.RecipientTable.MentionSetting
+import org.tm.archive.database.RecipientTable.PhoneNumberSharingState
 import org.tm.archive.database.RecipientTable.RegisteredState
 import org.tm.archive.database.RecipientTable.UnidentifiedAccessMode
 import org.tm.archive.database.RecipientTable.VibrateState
@@ -76,7 +77,8 @@ data class RecipientRecord(
   @get:JvmName("needsPniSignature")
   val needsPniSignature: Boolean,
   val hiddenState: Recipient.HiddenState,
-  val callLinkRoomId: CallLinkRoomId?
+  val callLinkRoomId: CallLinkRoomId?,
+  val phoneNumberSharing: PhoneNumberSharingState
 ) {
 
   fun e164Only(): Boolean {

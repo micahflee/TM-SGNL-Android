@@ -9,6 +9,7 @@ import org.signal.core.util.logging.Log
 import org.signal.ringrtc.CallException
 import org.signal.ringrtc.GroupCall
 import org.signal.ringrtc.PeekInfo
+import org.tm.archive.components.webrtc.CallLinkProfileKeySender
 import org.tm.archive.database.CallLinkTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.events.CallParticipant
@@ -45,6 +46,9 @@ class CallLinkConnectedActionProcessor(
 
     val callLinkRoomId: CallLinkRoomId = superState.callInfoState.callRecipient.requireCallLinkRoomId()
     val callLink: CallLinkTable.CallLink = SignalDatabase.callLinks.getCallLinkByRoomId(callLinkRoomId) ?: return superState
+    val joinedParticipants: Set<Recipient> = peekInfo.joinedMembers.map { Recipient.externalPush(ServiceId.ACI.from(it)) }.toSet()
+
+    CallLinkProfileKeySender.onRecipientsUpdated(joinedParticipants)
 
     if (callLink.credentials?.adminPassBytes == null) {
       Log.i(tag, "User is not an admin.")
@@ -57,6 +61,21 @@ class CallLinkConnectedActionProcessor(
     return superState.builder()
       .changeCallInfoState()
       .setCallLinkPendingParticipants(pendingParticipants)
+      .build()
+  }
+
+  override fun handleGroupCallEnded(currentState: WebRtcServiceState, groupCallHash: Int, groupCallEndReason: GroupCall.GroupCallEndReason): WebRtcServiceState {
+    val serviceState = super.handleGroupCallEnded(currentState, groupCallHash, groupCallEndReason)
+
+    val callLinkDisconnectReason = when (groupCallEndReason) {
+      GroupCall.GroupCallEndReason.DENIED_REQUEST_TO_JOIN_CALL -> CallLinkDisconnectReason.DeniedRequestToJoinCall()
+      GroupCall.GroupCallEndReason.REMOVED_FROM_CALL -> CallLinkDisconnectReason.RemovedFromCall()
+      else -> null
+    }
+
+    return serviceState.builder()
+      .changeCallInfoState()
+      .setCallLinkDisconnectReason(callLinkDisconnectReason)
       .build()
   }
 

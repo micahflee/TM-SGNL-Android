@@ -7,21 +7,12 @@ package org.tm.archive.providers
 
 import android.content.ContentUris
 import android.content.ContentValues
-import android.content.Context
 import android.content.Intent
 import android.content.UriMatcher
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
-import android.os.Handler
-import android.os.HandlerThread
-import android.os.MemoryFile
 import android.os.ParcelFileDescriptor
-import android.os.ProxyFileDescriptorCallback
-import androidx.annotation.RequiresApi
-import org.signal.core.util.StreamUtil
-import org.signal.core.util.ThreadUtil
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.tm.archive.BuildConfig
@@ -33,10 +24,6 @@ import org.tm.archive.service.KeyCachingService
 import org.tm.archive.util.AvatarUtil
 import org.tm.archive.util.DrawableUtil
 import org.tm.archive.util.MediaUtil
-import org.tm.archive.util.MemoryFileUtil
-import org.tm.archive.util.ServiceUtil
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -58,38 +45,42 @@ class AvatarProvider : BaseContentProvider() {
       addURI(CONTENT_AUTHORITY, "avatar/#", AVATAR)
     }
 
+    private const val VERBOSE = false
+
     @JvmStatic
     fun getContentUri(recipientId: RecipientId): Uri {
+      if (VERBOSE) Log.d(TAG, "getContentUri: $recipientId")
       return ContentUris.withAppendedId(CONTENT_URI, recipientId.toLong())
     }
   }
 
   override fun onCreate(): Boolean {
-    Log.i(TAG, "onCreate called")
+    if (VERBOSE) Log.i(TAG, "onCreate called")
     return true
   }
 
   @Throws(FileNotFoundException::class)
   override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? {
-    Log.i(TAG, "openFile() called!")
+    if (VERBOSE) Log.i(TAG, "openFile() called!")
 
     if (KeyCachingService.isLocked(context)) {
       Log.w(TAG, "masterSecret was null, abandoning.")
       return null
     }
 
+    if (SignalDatabase.instance == null) {
+      Log.w(TAG, "SignalDatabase unavailable")
+      return null
+    }
+
     if (uriMatcher.match(uri) == AVATAR) {
-      Log.i(TAG, "Loading avatar.")
+      if (VERBOSE) Log.i(TAG, "Loading avatar.")
       try {
         val recipient = getRecipientId(uri)?.let { Recipient.resolved(it) } ?: return null
-        return if (Build.VERSION.SDK_INT >= 26) {
-          getParcelStreamProxyForAvatar(recipient)
-        } else {
-          getParcelStreamForAvatar(recipient)
-        }
+        return getParcelFileDescriptorForAvatar(recipient)
       } catch (ioe: IOException) {
         Log.w(TAG, ioe)
-        throw FileNotFoundException("Error opening file")
+        throw FileNotFoundException("Error opening file: " + ioe.message)
       }
     }
 
@@ -98,7 +89,7 @@ class AvatarProvider : BaseContentProvider() {
   }
 
   override fun query(uri: Uri, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? {
-    Log.i(TAG, "query() called: $uri")
+    if (VERBOSE) Log.i(TAG, "query() called: $uri")
 
     if (SignalDatabase.instance == null) {
       Log.w(TAG, "SignalDatabase unavailable")
@@ -122,7 +113,7 @@ class AvatarProvider : BaseContentProvider() {
   }
 
   override fun getType(uri: Uri): String? {
-    Log.i(TAG, "getType() called: $uri")
+    if (VERBOSE) Log.i(TAG, "getType() called: $uri")
 
     if (SignalDatabase.instance == null) {
       Log.w(TAG, "SignalDatabase unavailable")
@@ -139,18 +130,18 @@ class AvatarProvider : BaseContentProvider() {
   }
 
   override fun insert(uri: Uri, values: ContentValues?): Uri? {
-    Log.i(TAG, "insert() called")
+    if (VERBOSE) Log.i(TAG, "insert() called")
     return null
   }
 
   override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int {
-    Log.i(TAG, "delete() called")
+    if (VERBOSE) Log.i(TAG, "delete() called")
     context?.applicationContext?.revokeUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     return 0
   }
 
   override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<out String>?): Int {
-    Log.i(TAG, "update() called")
+    if (VERBOSE) Log.i(TAG, "update() called")
     return 0
   }
 
@@ -170,82 +161,21 @@ class AvatarProvider : BaseContentProvider() {
     return recipientId
   }
 
-  @RequiresApi(26)
-  private fun getParcelStreamProxyForAvatar(recipient: Recipient): ParcelFileDescriptor {
-    val storageManager = requireNotNull(ServiceUtil.getStorageManager(context!!))
-    val handlerThread = SignalExecutors.getAndStartHandlerThread("avatarservice-proxy", ThreadUtil.PRIORITY_IMPORTANT_BACKGROUND_THREAD)
-    val handler = Handler(handlerThread.looper)
+  private fun getParcelFileDescriptorForAvatar(recipient: Recipient): ParcelFileDescriptor {
+    val pipe: Array<ParcelFileDescriptor> = ParcelFileDescriptor.createPipe()
 
-    val parcelFileDescriptor = storageManager.openProxyFileDescriptor(
-      ParcelFileDescriptor.MODE_READ_ONLY,
-      ProxyCallback(context!!.applicationContext, recipient, handlerThread),
-      handler
-    )
+    SignalExecutors.UNBOUNDED.execute {
+      ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]).use { output ->
+        if (VERBOSE) Log.i(TAG, "Writing to pipe:${recipient.id}")
 
-    Log.i(TAG, "${recipient.id}:createdProxy")
-    return parcelFileDescriptor
-  }
-
-  private fun getParcelStreamForAvatar(recipient: Recipient): ParcelFileDescriptor {
-    val outputStream = ByteArrayOutputStream()
-    AvatarUtil.getBitmapForNotification(context!!, recipient, DrawableUtil.SHORTCUT_INFO_WRAPPED_SIZE).apply {
-      compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-    }
-
-    val memoryFile = MemoryFile("${recipient.id}-imf", outputStream.size())
-
-    val memoryFileOutputStream = memoryFile.outputStream
-    StreamUtil.copy(ByteArrayInputStream(outputStream.toByteArray()), memoryFileOutputStream)
-    StreamUtil.close(memoryFileOutputStream)
-
-    return MemoryFileUtil.getParcelFileDescriptor(memoryFile)
-  }
-
-  @RequiresApi(26)
-  private class ProxyCallback(
-    private val context: Context,
-    private val recipient: Recipient,
-    private val handlerThread: HandlerThread
-  ) : ProxyFileDescriptorCallback() {
-
-    private var memoryFile: MemoryFile? = null
-
-    override fun onGetSize(): Long {
-      Log.i(TAG, "${recipient.id}:onGetSize:${Thread.currentThread().name}:${hashCode()}")
-      ensureResourceLoaded()
-      return memoryFile!!.length().toLong()
-    }
-
-    override fun onRead(offset: Long, size: Int, data: ByteArray?): Int {
-      ensureResourceLoaded()
-      val memoryFileSnapshot = memoryFile
-      return memoryFileSnapshot!!.readBytes(data, offset.toInt(), 0, size.coerceAtMost((memoryFileSnapshot.length() - offset).toInt()))
-    }
-
-    override fun onRelease() {
-      Log.i(TAG, "${recipient.id}:onRelease")
-      memoryFile = null
-      handlerThread.quitSafely()
-    }
-
-    private fun ensureResourceLoaded() {
-      if (memoryFile != null) {
-        return
+        AvatarUtil.getBitmapForNotification(context!!, recipient, DrawableUtil.SHORTCUT_INFO_WRAPPED_SIZE).apply {
+          compress(Bitmap.CompressFormat.PNG, 100, output)
+        }
+        output.flush()
+        if (VERBOSE) Log.i(TAG, "Writing to pipe done:${recipient.id}")
       }
-
-      Log.i(TAG, "Reading ${recipient.id} icon into RAM.")
-
-      val outputStream = ByteArrayOutputStream()
-      val avatarBitmap = AvatarUtil.getBitmapForNotification(context, recipient, DrawableUtil.SHORTCUT_INFO_WRAPPED_SIZE)
-      avatarBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-
-      Log.i(TAG, "Writing ${recipient.id} icon to MemoryFile")
-
-      memoryFile = MemoryFile("${recipient.id}-imf", outputStream.size())
-
-      val memoryFileOutputStream = memoryFile!!.outputStream
-      StreamUtil.copy(ByteArrayInputStream(outputStream.toByteArray()), memoryFileOutputStream)
-      StreamUtil.close(memoryFileOutputStream)
     }
+
+    return pipe[0]
   }
 }

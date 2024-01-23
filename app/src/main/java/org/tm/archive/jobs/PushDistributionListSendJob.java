@@ -19,10 +19,10 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.database.documents.NetworkFailure;
 import org.tm.archive.database.model.MessageId;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.JobLogger;
 import org.tm.archive.jobmanager.JobManager;
+import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.messages.GroupSendUtil;
 import org.tm.archive.messages.StorySendUtil;
@@ -40,7 +40,7 @@ import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
 import org.whispersystems.signalservice.api.messages.SignalServiceStoryMessage;
 import org.whispersystems.signalservice.api.messages.SignalServiceStoryMessageRecipient;
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException;
-import org.whispersystems.signalservice.internal.push.SignalServiceProtos;
+import org.whispersystems.signalservice.internal.push.BodyRange;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -106,7 +106,7 @@ public final class PushDistributionListSendJob extends PushSendJob {
 
       if (!message.getStoryType().isTextStory()) {
         DatabaseAttachment storyAttachment = (DatabaseAttachment) message.getAttachments().get(0);
-        SignalDatabase.attachments().updateAttachmentCaption(storyAttachment.getAttachmentId(), message.getBody());
+        SignalDatabase.attachments().updateAttachmentCaption(storyAttachment.attachmentId, message.getBody());
       }
 
       Set<String> attachmentUploadIds = enqueueCompressingAndUploadAttachmentsChains(jobManager, message);
@@ -169,9 +169,9 @@ public final class PushDistributionListSendJob extends PushSendJob {
       if (Util.hasItems(filterRecipientIds)) {
         targets = new ArrayList<>(filterRecipientIds.size() + existingNetworkFailures.size());
         targets.addAll(filterRecipientIds.stream().map(Recipient::resolved).collect(Collectors.toList()));
-        targets.addAll(existingNetworkFailures.stream().map(nf -> nf.getRecipientId(context)).distinct().map(Recipient::resolved).collect(Collectors.toList()));
+        targets.addAll(existingNetworkFailures.stream().map(NetworkFailure::getRecipientId).distinct().map(Recipient::resolved).collect(Collectors.toList()));
       } else if (!existingNetworkFailures.isEmpty()) {
-        targets = Stream.of(existingNetworkFailures).map(nf -> nf.getRecipientId(context)).distinct().map(Recipient::resolved).toList();
+        targets = Stream.of(existingNetworkFailures).map(NetworkFailure::getRecipientId).distinct().map(Recipient::resolved).toList();
       } else {
         Stories.SendData data = Stories.getRecipientsToSendTo(messageId, message.getSentTimeMillis(), message.getStoryType().isStoryWithReplies());
         targets = data.getTargets();
@@ -202,8 +202,8 @@ public final class PushDistributionListSendJob extends PushSendJob {
       rotateSenderCertificateIfNecessary();
 
       List<Attachment>                    attachments        = Stream.of(message.getAttachments()).filterNot(Attachment::isSticker).toList();
-      List<SignalServiceAttachment>       attachmentPointers = getAttachmentPointersFor(attachments);
-      List<SignalServiceProtos.BodyRange> bodyRanges         = getBodyRanges(message);
+      List<SignalServiceAttachment> attachmentPointers = getAttachmentPointersFor(attachments);
+      List<BodyRange>               bodyRanges         = getBodyRanges(message);
       boolean                             isRecipientUpdate  = Stream.of(SignalDatabase.groupReceipts().getGroupReceiptInfo(messageId))
                                                                      .anyMatch(info -> info.getStatus() > GroupReceiptTable.STATUS_UNDELIVERED);
 

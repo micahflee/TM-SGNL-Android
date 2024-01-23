@@ -13,9 +13,9 @@ import okio.ByteString
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import org.signal.core.util.Base64
 import org.signal.core.util.logging.Log
 import org.tm.archive.BuildConfig
-import org.tm.archive.KbsEnclave
 import org.tm.archive.push.SignalServiceNetworkAccess
 import org.tm.archive.push.SignalServiceTrustStore
 import org.tm.archive.recipients.LiveRecipientCache
@@ -23,32 +23,25 @@ import org.tm.archive.testing.Get
 import org.tm.archive.testing.Verb
 import org.tm.archive.testing.runSync
 import org.tm.archive.testing.success
-import org.tm.archive.util.Base64
-import org.whispersystems.signalservice.api.KeyBackupService
-import org.whispersystems.signalservice.api.SignalServiceAccountManager
 import org.whispersystems.signalservice.api.push.TrustStore
 import org.whispersystems.signalservice.internal.configuration.SignalCdnUrl
 import org.whispersystems.signalservice.internal.configuration.SignalCdsiUrl
-import org.whispersystems.signalservice.internal.configuration.SignalKeyBackupServiceUrl
 import org.whispersystems.signalservice.internal.configuration.SignalServiceConfiguration
 import org.whispersystems.signalservice.internal.configuration.SignalServiceUrl
 import org.whispersystems.signalservice.internal.configuration.SignalStorageUrl
 import org.whispersystems.signalservice.internal.configuration.SignalSvr2Url
-import java.security.KeyStore
 import java.util.Optional
 
 /**
  * Dependency provider used for instrumentation tests (aka androidTests).
  *
- * Handles setting up a mock web server for API calls, and provides mockable versions of [SignalServiceNetworkAccess] and
- * [KeyBackupService].
+ * Handles setting up a mock web server for API calls, and provides mockable versions of [SignalServiceNetworkAccess].
  */
 class InstrumentationApplicationDependencyProvider(application: Application, default: ApplicationDependencyProvider) : ApplicationDependencies.Provider by default {
 
   private val serviceTrustStore: TrustStore
   private val uncensoredConfiguration: SignalServiceConfiguration
   private val serviceNetworkAccessMock: SignalServiceNetworkAccess
-  private val keyBackupService: KeyBackupService
   private val recipientCache: LiveRecipientCache
 
   init {
@@ -80,7 +73,6 @@ class InstrumentationApplicationDependencyProvider(application: Application, def
         0 to arrayOf(SignalCdnUrl(baseUrl, "localhost", serviceTrustStore, ConnectionSpec.CLEARTEXT)),
         2 to arrayOf(SignalCdnUrl(baseUrl, "localhost", serviceTrustStore, ConnectionSpec.CLEARTEXT))
       ),
-      signalKeyBackupServiceUrls = arrayOf(SignalKeyBackupServiceUrl(baseUrl, "localhost", serviceTrustStore, ConnectionSpec.CLEARTEXT)),
       signalStorageUrls = arrayOf(SignalStorageUrl(baseUrl, "localhost", serviceTrustStore, ConnectionSpec.CLEARTEXT)),
       signalCdsiUrls = arrayOf(SignalCdsiUrl(baseUrl, "localhost", serviceTrustStore, ConnectionSpec.CLEARTEXT)),
       signalSvr2Urls = arrayOf(SignalSvr2Url(baseUrl, serviceTrustStore, "localhost", ConnectionSpec.CLEARTEXT)),
@@ -88,7 +80,8 @@ class InstrumentationApplicationDependencyProvider(application: Application, def
       dns = Optional.of(SignalServiceNetworkAccess.DNS),
       signalProxy = Optional.empty(),
       zkGroupServerPublicParams = Base64.decode(BuildConfig.ZKGROUP_SERVER_PUBLIC_PARAMS),
-      genericServerPublicParams = Base64.decode(BuildConfig.GENERIC_SERVER_PUBLIC_PARAMS)
+      genericServerPublicParams = Base64.decode(BuildConfig.GENERIC_SERVER_PUBLIC_PARAMS),
+      backupServerPublicParams = Base64.decode(BuildConfig.BACKUP_SERVER_PUBLIC_PARAMS)
     )
 
     serviceNetworkAccessMock = mock {
@@ -97,17 +90,11 @@ class InstrumentationApplicationDependencyProvider(application: Application, def
       on { uncensoredConfiguration } doReturn uncensoredConfiguration
     }
 
-    keyBackupService = mock()
-
     recipientCache = LiveRecipientCache(application) { r -> r.run() }
   }
 
   override fun provideSignalServiceNetworkAccess(): SignalServiceNetworkAccess {
     return serviceNetworkAccessMock
-  }
-
-  override fun provideKeyBackupService(signalServiceAccountManager: SignalServiceAccountManager, keyStore: KeyStore, enclave: KbsEnclave): KeyBackupService {
-    return keyBackupService
   }
 
   override fun provideRecipientCache(): LiveRecipientCache {

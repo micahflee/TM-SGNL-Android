@@ -10,7 +10,6 @@ import org.tm.archive.components.menu.SignalContextMenu
 import org.tm.archive.util.DateUtils
 import org.tm.archive.util.toLocalDateTime
 import org.tm.archive.util.toMillis
-import java.util.Locale
 
 class ScheduleMessageContextMenu {
 
@@ -24,7 +23,7 @@ class ScheduleMessageContextMenu {
       val scheduledTimes = getNextScheduleTimes(currentTime)
       val actionItems = scheduledTimes.map {
         if (it > 0) {
-          ActionItem(getIconForTime(it), DateUtils.getScheduledMessageDateString(anchor.context, Locale.getDefault(), it)) {
+          ActionItem(getIconForTime(it), DateUtils.getScheduledMessageDateString(anchor.context, it)) {
             action(it)
           }
         } else {

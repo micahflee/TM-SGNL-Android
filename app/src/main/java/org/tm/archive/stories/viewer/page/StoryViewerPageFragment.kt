@@ -57,7 +57,7 @@ import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardBottomSh
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
 import org.tm.archive.database.AttachmentTable
-import org.tm.archive.database.model.MediaMmsMessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.mediapreview.MediaPreviewFragment
 import org.tm.archive.mediapreview.VideoControlsDelegate
@@ -760,7 +760,7 @@ class StoryViewerPageFragment :
   }
 
   private fun presentSlate(post: StoryPost) {
-    storySlate.setBackground((post.conversationMessage.messageRecord as? MediaMmsMessageRecord)?.slideDeck?.thumbnailSlide?.placeholderBlur)
+    storySlate.setBackground((post.conversationMessage.messageRecord as? MmsMessageRecord)?.slideDeck?.thumbnailSlide?.placeholderBlur)
 
     if (post.conversationMessage.messageRecord.isOutgoing) {
       storySlate.moveToState(StorySlateView.State.HIDDEN, post.id)
@@ -908,7 +908,7 @@ class StoryViewerPageFragment :
   }
 
   private fun presentDate(date: TextView, storyPost: StoryPost) {
-    val formattedDate = DateUtils.getBriefRelativeTimeSpanString(context, Locale.getDefault(), storyPost.dateInMilliseconds)
+    val formattedDate = DateUtils.getBriefRelativeTimeSpanString(requireContext(), Locale.getDefault(), storyPost.dateInMilliseconds)
     if (date.text != formattedDate) {
       date.text = formattedDate
     }
@@ -1084,7 +1084,7 @@ class StoryViewerPageFragment :
         }
       },
       onShare = {
-        StoryContextMenu.share(this, it.conversationMessage.messageRecord as MediaMmsMessageRecord)
+        StoryContextMenu.share(this, it.conversationMessage.messageRecord as MmsMessageRecord)
       },
       onSave = {
         StoryContextMenu.save(requireContext(), it.conversationMessage.messageRecord)

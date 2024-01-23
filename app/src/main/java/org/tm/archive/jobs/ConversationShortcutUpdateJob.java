@@ -8,7 +8,6 @@ import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.database.ThreadTable;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.transport.RetryLaterException;
@@ -40,6 +39,7 @@ public class ConversationShortcutUpdateJob extends BaseJob {
                        .setQueue("ConversationShortcutUpdateJob")
                        .setLifespan(TimeUnit.MINUTES.toMillis(15))
                        .setMaxInstancesForFactory(1)
+                       .setPriority(Parameters.PRIORITY_LOW)
                        .build());
   }
 

@@ -26,7 +26,6 @@ import org.tm.archive.util.livedata.LiveDataUtil;
 import org.tm.archive.util.livedata.Store;
 import org.whispersystems.signalservice.api.payments.FormatterOptions;
 import org.whispersystems.signalservice.api.payments.Money;
-import org.whispersystems.signalservice.api.util.OptionalUtil;
 
 import java.io.IOException;
 import java.math.BigDecimal;

@@ -7,7 +7,7 @@ import org.tm.archive.blurhash.BlurHash
 import org.tm.archive.contactshare.Contact
 import org.tm.archive.database.documents.IdentityKeyMismatch
 import org.tm.archive.database.documents.NetworkFailure
-import org.tm.archive.database.model.MediaMmsMessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.ParentStoryId
 import org.tm.archive.database.model.Quote
 import org.tm.archive.database.model.ReactionRecord
@@ -27,7 +27,7 @@ import org.tm.archive.util.MediaUtil
 object FakeMessageRecords {
 
   fun buildDatabaseAttachment(
-    attachmentId: AttachmentId = AttachmentId(1, 1),
+    attachmentId: AttachmentId = AttachmentId(1),
     mmsId: Long = 1,
     hasData: Boolean = true,
     hasThumbnail: Boolean = true,
@@ -41,6 +41,7 @@ object FakeMessageRecords {
     relay: String = "",
     digest: ByteArray = byteArrayOf(),
     incrementalDigest: ByteArray = byteArrayOf(),
+    incrementalMacChunkSize: Int = 0,
     fastPreflightId: String = "",
     voiceNote: Boolean = false,
     borderless: Boolean = false,
@@ -68,9 +69,9 @@ object FakeMessageRecords {
       cdnNumber,
       location,
       key,
-      relay,
       digest,
       incrementalDigest,
+      incrementalMacChunkSize,
       fastPreflightId,
       voiceNote,
       borderless,
@@ -112,7 +113,7 @@ object FakeMessageRecords {
     dateSent: Long = 200,
     dateReceived: Long = 400,
     dateServer: Long = 300,
-    deliveryReceiptCount: Int = 0,
+    hasDeliveryReceipt: Boolean = false,
     threadId: Long = 1,
     body: String = "body",
     slideDeck: SlideDeck = SlideDeck(),
@@ -124,7 +125,7 @@ object FakeMessageRecords {
     expiresIn: Long = -1,
     expireStarted: Long = -1,
     viewOnce: Boolean = false,
-    readReceiptCount: Int = 0,
+    hasReadReceipt: Boolean = false,
     quote: Quote? = null,
     contacts: List<Contact> = emptyList(),
     linkPreviews: List<LinkPreview> = emptyList(),
@@ -133,7 +134,7 @@ object FakeMessageRecords {
     remoteDelete: Boolean = false,
     mentionsSelf: Boolean = false,
     notifiedTimestamp: Long = 350,
-    viewedReceiptCount: Int = 0,
+    viewed: Boolean = false,
     receiptTimestamp: Long = 0,
     messageRanges: BodyRangeList? = null,
     storyType: StoryType = StoryType.NONE,
@@ -141,8 +142,8 @@ object FakeMessageRecords {
     giftBadge: GiftBadge? = null,
     payment: Payment? = null,
     call: CallTable.Call? = null
-  ): MediaMmsMessageRecord {
-    return MediaMmsMessageRecord(
+  ): MmsMessageRecord {
+    return MmsMessageRecord(
       id,
       conversationRecipient,
       recipientDeviceId,
@@ -150,7 +151,7 @@ object FakeMessageRecords {
       dateSent,
       dateReceived,
       dateServer,
-      deliveryReceiptCount,
+      hasDeliveryReceipt,
       threadId,
       body,
       slideDeck,
@@ -161,7 +162,7 @@ object FakeMessageRecords {
       expiresIn,
       expireStarted,
       viewOnce,
-      readReceiptCount,
+      hasReadReceipt,
       quote,
       contacts,
       linkPreviews,
@@ -170,7 +171,7 @@ object FakeMessageRecords {
       remoteDelete,
       mentionsSelf,
       notifiedTimestamp,
-      viewedReceiptCount,
+      viewed,
       receiptTimestamp,
       messageRanges,
       storyType,
@@ -181,7 +182,8 @@ object FakeMessageRecords {
       -1,
       null,
       null,
-      0
+      0,
+      false
     )
   }
 }

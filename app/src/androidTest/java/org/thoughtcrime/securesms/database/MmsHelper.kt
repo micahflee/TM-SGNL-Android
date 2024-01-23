@@ -3,7 +3,7 @@ package org.tm.archive.database
 import org.tm.archive.database.model.ParentStoryId
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.database.model.databaseprotos.GiftBadge
-import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.Recipient
 import java.util.Optional
@@ -55,9 +55,9 @@ object MmsHelper {
   }
 
   fun insert(
-    message: IncomingMediaMessage,
+    message: IncomingMessage,
     threadId: Long
   ): Optional<MessageTable.InsertResult> {
-    return SignalDatabase.messages.insertSecureDecryptedMessageInbox(message, threadId)
+    return SignalDatabase.messages.insertMessageInbox(message, threadId)
   }
 }

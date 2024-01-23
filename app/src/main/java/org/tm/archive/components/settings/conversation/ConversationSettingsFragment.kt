@@ -72,13 +72,13 @@ import org.tm.archive.groups.ui.invitesandrequests.ManagePendingAndRequestingMem
 import org.tm.archive.groups.ui.managegroup.dialogs.GroupDescriptionDialog
 import org.tm.archive.groups.ui.managegroup.dialogs.GroupInviteSentDialog
 import org.tm.archive.groups.ui.managegroup.dialogs.GroupsLearnMoreBottomSheetDialogFragment
-import org.tm.archive.groups.ui.migration.GroupsV1MigrationInitiationBottomSheetDialogFragment
 import org.tm.archive.mediaoverview.MediaOverviewActivity
 import org.tm.archive.mediapreview.MediaIntentFactory
-import org.tm.archive.profiles.edit.EditProfileActivity
+import org.tm.archive.profiles.edit.CreateProfileActivity
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientExporter
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.recipients.ui.about.AboutSheet
 import org.tm.archive.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment
 import org.tm.archive.stories.Stories
 import org.tm.archive.stories.StoryViewerArgs
@@ -199,7 +199,7 @@ class ConversationSettingsFragment : DSLSettingsFragment(
       val args = ConversationSettingsFragmentArgs.fromBundle(requireArguments())
       val groupId = args.groupId as ParcelableGroupId
 
-      startActivity(EditProfileActivity.getIntentForGroupProfile(requireActivity(), requireNotNull(ParcelableGroupId.get(groupId))))
+      startActivity(CreateProfileActivity.getIntentForGroupProfile(requireActivity(), requireNotNull(ParcelableGroupId.get(groupId))))
       true
     } else {
       super.onOptionsItemSelected(item)
@@ -279,7 +279,6 @@ class ConversationSettingsFragment : DSLSettingsFragment(
         is ConversationSettingsEvent.ShowAddMembersToGroupError -> showAddMembersToGroupError(event)
         is ConversationSettingsEvent.ShowGroupInvitesSentDialog -> showGroupInvitesSentDialog(event)
         is ConversationSettingsEvent.ShowMembersAdded -> showMembersAdded(event)
-        is ConversationSettingsEvent.InitiateGroupMigration -> GroupsV1MigrationInitiationBottomSheetDialogFragment.showForInitiation(parentFragmentManager, event.recipientId)
       }
     }
   }
@@ -323,7 +322,11 @@ class ConversationSettingsFragment : DSLSettingsFragment(
       )
 
       state.withRecipientSettingsState {
-        customPref(BioTextPreference.RecipientModel(recipient = state.recipient))
+        customPref(
+          BioTextPreference.RecipientModel(recipient = state.recipient, onHeadlineClickListener = {
+            AboutSheet.create(state.recipient).show(parentFragmentManager, null)
+          })
+        )
       }
 
       state.withGroupSettingsState { groupState ->
@@ -351,7 +354,7 @@ class ConversationSettingsFragment : DSLSettingsFragment(
               descriptionShouldLinkify = groupState.groupDescriptionShouldLinkify,
               canEditGroupAttributes = groupState.canEditGroupAttributes,
               onEditGroupDescription = {
-                startActivity(EditProfileActivity.getIntentForGroupProfile(requireActivity(), groupState.groupId))
+                startActivity(CreateProfileActivity.getIntentForGroupProfile(requireActivity(), groupState.groupId))
               },
               onViewGroupDescription = {
                 GroupDescriptionDialog.show(childFragmentManager, groupState.groupId, null, groupState.groupDescriptionShouldLinkify)
@@ -363,7 +366,6 @@ class ConversationSettingsFragment : DSLSettingsFragment(
             LegacyGroupPreference.Model(
               state = groupState.legacyGroupState,
               onLearnMoreClick = { GroupsLearnMoreBottomSheetDialogFragment.show(parentFragmentManager) },
-              onUpgradeClick = { viewModel.initiateGroupUpgrade() },
               onMmsWarningClick = { startActivity(Intent(requireContext(), InviteActivity::class.java)) }
             )
           )
@@ -555,7 +557,7 @@ class ConversationSettingsFragment : DSLSettingsFragment(
         }
       }
 
-      if (state.sharedMedia != null && state.sharedMedia.count > 0) {
+      if (state.sharedMedia.isNotEmpty()) {
         dividerPref()
 
         sectionHeaderPref(R.string.recipient_preference_activity__shared_media)
@@ -563,7 +565,7 @@ class ConversationSettingsFragment : DSLSettingsFragment(
         @Suppress("DEPRECATION")
         customPref(
           SharedMediaPreference.Model(
-            mediaCursor = state.sharedMedia,
+            mediaRecords = state.sharedMedia,
             mediaIds = state.sharedMediaIds,
             onMediaRecordClick = { view, mediaRecord, isLtr ->
               view.transitionName = "thumb"

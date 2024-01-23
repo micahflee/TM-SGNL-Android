@@ -1,7 +1,6 @@
 package org.tm.archive.components;
 
 
-import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;

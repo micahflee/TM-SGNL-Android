@@ -1,6 +1,5 @@
 package org.tm.archive.mediasend;
 
-import android.annotation.TargetApi;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;

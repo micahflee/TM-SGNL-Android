@@ -11,7 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.LinearLayout;
+import android.widget.EditText;
 import android.widget.ScrollView;
 
 import androidx.annotation.NonNull;
@@ -19,7 +19,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -32,37 +31,13 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.FirebaseApp;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.tm.androidcopysdk.AndroidCopySDK;
-import com.tm.androidcopysdk.BackupService;
-import com.tm.androidcopysdk.CommonUtils;
-import com.tm.androidcopysdk.MessageEvent;
-import com.tm.androidcopysdk.utils.PrefManager;
-import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
-import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
-import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
-import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
 
-import org.archive.selfAuthentication.SelfAuthenticatorConstants;
-import org.archiver.ArchiveConstants;
-import org.archiver.ArchiveLogger;
-import org.archiver.ArchivePreferenceConstants;
-import org.archiver.ArchiveUtil;
-import org.archiver.FCMConnector;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-import org.intune.IntuneAuthManager;
-import org.jetbrains.annotations.NotNull;
-import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.ApplicationContext;
-import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
@@ -92,9 +67,7 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
 import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
 
-public final class EnterPhoneNumberFragment extends LoggingFragment
-    implements RegistrationNumberInputController.Callbacks, IAuthenticationStatus, IMDMAuthenticator
-{ //*TM_SA*//
+public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks {
 
   private static final String TAG = Log.tag(EnterPhoneNumberFragment.class);
 
@@ -105,29 +78,12 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
   private ScrollView                     scrollView;
   private RegistrationViewModel          viewModel;
 
-  //**TM_SA**// START
-  private Context mContext;
-  private boolean     progressBarShown;
-
-  public static boolean          mIsLoginAuthenticationInProgress = false;
-  private       ConstraintLayout constraintLayout;
-  private       View             progressBarCustomView;
-  String mobileNumber;
-  //**TM_SA**// END
-
   private final LifecycleDisposable disposables = new LifecycleDisposable();
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setHasOptionsMenu(true);
-
-    // <!--//**TM_SA**//--> START
-    mContext = getActivity();
-    if(!EventBus.getDefault().isRegistered(this)) {
-      EventBus.getDefault().register(this);
-    }
-    // <!--//**TM_SA**//--> END
   }
 
   @Override
@@ -146,9 +102,6 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
     cancel      = view.findViewById(R.id.cancel_button);
     scrollView  = view.findViewById(R.id.scroll_view);
     register    = view.findViewById(R.id.registerButton);
-    constraintLayout = view.findViewById(R.id.constraint_layout);  //**TM_SA**//
-
-    initProgressBar();  //**TM_SA**//
 
     RegistrationNumberInputController controller = new RegistrationNumberInputController(requireContext(),
                                                                                          this,
@@ -191,52 +144,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
       viewModel.setAutoShowSmsConfirmDialog(false);
       ThreadUtil.runOnMainDelayed(() -> handleRegister(requireContext()), 250);
     }
-
-    constraintLayout.addView(progressBarCustomView);//**TM_SA**//
   }
-
-  //**TM_SA**// START
-  @Override public void onDestroy() {
-    super.onDestroy();
-    if(EventBus.getDefault().isRegistered(this)) {
-      EventBus.getDefault().unregister(this);
-    }
-  }
-  //**TM_SA**// END
-
-  //**TM_SA**// START
-  private void initProgressBar(){
-    progressBarShown = false;
-
-    progressBarCustomView = LayoutInflater.from(getContext()).inflate(R.layout.progress_bar_layout_with_background, null, false);
-    LinearLayout.LayoutParams backgroundLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-    progressBarCustomView.setLayoutParams(backgroundLayoutParams);
-    progressBarCustomView.setVisibility(View.GONE);
-  }
-
-
-  private void hideProgressBar(){
-    getActivity().runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        progressBarCustomView.setVisibility(View.GONE);
-        progressBarShown = false;
-        com.tm.logger.Log.d(TAG, "Registration progress hidden");
-      }
-    });
-  }
-
-  private void showProgressBar(){
-    getActivity().runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        progressBarCustomView.setVisibility(View.VISIBLE);
-        progressBarShown = true;
-        com.tm.logger.Log.d(TAG, "Registration progress shown");
-      }
-    });
-  }
-  //**TM_SA**// END
 
   private void showKeyboard(View viewToFocus) {
     viewToFocus.requestFocus();
@@ -283,43 +191,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
     PlayServicesUtil.PlayServicesStatus fcmStatus = PlayServicesUtil.getPlayServicesStatus(context);
 
     if (fcmStatus == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
-      //**TM_SA**//Start
-      if (BuildConfig.DEBUG) {
-        if (CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)) {
-          CommonUtils.stopBackupService(ApplicationContext.getInstance(), false);
-        }
-
-        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, AuthenticatorConstants.Companion.getBASE_URL().getFirst());
-        PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, AuthenticatorConstants.Companion.getBASE_URL().getSecond());
-
-        CommonUtils.setUrl(ApplicationContext.getInstance(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
-        CommonUtils.startBackupService(ApplicationContext.getInstance());
-      }
-      ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
-      PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
-
-      AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
-      mIsLoginAuthenticationInProgress = true;
-//      startAutoAuthentication(requireContext(), e164number);
-      mobileNumber = e164number;
-      int authStatus = PrefManager.getIntPref(requireContext(),
-                                              IntuneAuthManager.MDM_Auth_Status_String, IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
-
-      FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
-      boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false);
-      if(!isAlreadyDoneSelfAuthentication/* && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()*/) {
-        if (MDMAuthenticator.INSTANCE.isMDM(context) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) {// mdm auth skip this fragment and work on EnterSmsCodeFragment
-          startMdm();
-          //confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
-        } else {
-          startAutoAuthentication(requireContext(), e164number); //start self auth
-        }
-      } else {
-        confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
-      }
-//      confirmNumberPrompt(context, e164number, () -> onE164EnteredSuccessfully(context, true));
-      //**TM_SA**//End
-
+      confirmNumberPrompt(context, e164number, () -> onE164EnteredSuccessfully(context, true));
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
       confirmNumberPrompt(context, e164number, () -> handlePromptForNoPlayServices(context));
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.NEEDS_UPDATE) {
@@ -331,80 +203,15 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
     }
   }
 
-  //**TM_SA**//START
-  protected void startMdm() {
-    Log.d(TAG, "startMdm");
-    MDMAuthenticator.INSTANCE.startMDMAuthenticator(requireActivity(), mobileNumber, BuildConfig.signal_teleMessage_version, this);
-  }
-
-
-  @Override
-  public void failureMDMAuth(String reason) {
-    final String onCancel = "onCancel", server = "server";
-    com.tm.logger.Log.d(TAG, "failureMDMAuth, reason: " + reason);
-    if(reason.equals(onCancel)) {
-      IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
-    } //update app that intune signed failed: two cases. 1. try intune auth again  2. move to self auth
-    else if(reason.contains(server) || reason.contains("Authentication failed")
-      /*|| reason.contains("managerID")*/) { //try intune auth again
-      PrefManager.setIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
-      com.tm.logger.Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
-      requireActivity().runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          confirmNumberPrompt(requireContext(), mobileNumber, () -> handleRequestVerification(requireContext(), true));
-        }
-      });
-    }else  { //this case should pass to self-auth
-      PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
-      com.tm.logger.Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
-      requireActivity().runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          confirmNumberPrompt(requireContext(), mobileNumber, () -> handleRequestVerification(requireContext(), true));
-        }
-      });
-    }
-
-  }
-
-  @Override
-  public void successMDMAuth() {
-    com.tm.logger.Log.d(TAG, "successMDMAuth");
-    startIntuneAutoAuthentication(mobileNumber);
-  }
-
-  /**
-   * intune
-   *
-   * @param e164number
-   */
-  private void startIntuneAutoAuthentication(String e164number) {
-    com.tm.logger.Log.d(TAG, "startAutoAuthentication");
-    SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
-    IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
-  }
-
-  private void startAutoAuthentication(Context context, String e164number) {
-    com.tm.logger.Log.i(TAG , "startAutoAuthentication");
-    com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
-    SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
-    SelfAuthenticatorManager.INSTANCE.startAuthentication(context, this);
-    if (!progressBarShown) {
-      showProgressBar();
-    }
-  }
-  //**TM_SA**//END
-
   private void onE164EnteredSuccessfully(@NonNull Context context, boolean fcmSupported) {
     enterInProgressUiState();
-
+    Log.d(TAG, "E164 entered successfully.");
     Disposable disposable = viewModel.canEnterSkipSmsFlow()
                                      .observeOn(AndroidSchedulers.mainThread())
                                      .onErrorReturnItem(false)
                                      .subscribe(canEnter -> {
                                        if (canEnter) {
-                                         Log.i(TAG, "Enter skip flow");
+                                         Log.i(TAG, "Entering skip flow.");
                                          SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), EnterPhoneNumberFragmentDirections.actionReRegisterWithPinFragment());
                                        } else {
                                          Log.i(TAG, "Unable to collect necessary data to enter skip flow, returning to normal");
@@ -646,6 +453,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
   }
 
   private void handlePromptForNoPlayServices(@NonNull Context context) {
+    Log.d(TAG, "Device does not have Play Services, showing consent dialog.");
     new MaterialAlertDialogBuilder(context)
         .setTitle(R.string.RegistrationActivity_missing_google_play_services)
         .setMessage(R.string.RegistrationActivity_this_device_is_missing_google_play_services)
@@ -663,99 +471,31 @@ public final class EnterPhoneNumberFragment extends LoggingFragment
     disposables.add(
         viewModel.canEnterSkipSmsFlow()
                  .observeOn(AndroidSchedulers.mainThread())
-                 .subscribe(canSkipSms -> showConfirmNumberDialogIfTranslated(context,
-                                                                              viewModel.hasUserSkippedReRegisterFlow() ? R.string.RegistrationActivity_additional_verification_required
-                                                                                                                       : R.string.RegistrationActivity_phone_number_verification_dialog_title,
-                                                                              canSkipSms ? null
-                                                                                         : R.string.RegistrationActivity_a_verification_code_will_be_sent_to_this_number,
-                                                                              e164number,
-                                                                              () -> {
-                                                                                ViewUtil.hideKeyboard(context, number.getEditText());
-                                                                                onConfirmed.run();
-                                                                              },
-                                                                              () -> {
-                                                                                exitInProgressUiState();
-                                                                                ViewUtil.focusAndMoveCursorToEndAndOpenKeyboard(this.number.getEditText());
-                                                                              }))
+                 .subscribe(canSkipSms -> {
+                   Log.d(TAG, "Showing confirm number dialog. canSkipSms = " + canSkipSms + " hasUserSkipped = " + viewModel.hasUserSkippedReRegisterFlow());
+                   final EditText editText = this.number.getEditText();
+                   showConfirmNumberDialogIfTranslated(context,
+                                                       viewModel.hasUserSkippedReRegisterFlow() ? R.string.RegistrationActivity_additional_verification_required
+                                                                                                : R.string.RegistrationActivity_phone_number_verification_dialog_title,
+                                                       canSkipSms ? null
+                                                                  : R.string.RegistrationActivity_a_verification_code_will_be_sent_to_this_number,
+                                                       e164number,
+                                                       () -> {
+                                                         Log.d(TAG, "User confirmed number.");
+                                                         if (editText != null) {
+                                                           ViewUtil.hideKeyboard(context, editText);
+                                                         }
+                                                         onConfirmed.run();
+                                                       },
+                                                       () -> {
+                                                         Log.d(TAG, "User canceled confirm number, returning to edit number.");
+                                                         exitInProgressUiState();
+                                                         if (editText != null) {
+                                                           ViewUtil.focusAndMoveCursorToEndAndOpenKeyboard(editText);
+                                                         }
+                                                       });
+                            }
+                 )
     );
   }
-
-  //**TM_SA**//START
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void onMessageEvent(MessageEvent event) {
-    com.tm.logger.Log.d(TAG,"onMessageEvent -> SelfAuthenticator and Intune authenticator");
-    if (event.message != null) {
-      com.tm.logger.Log.d(TAG, "event.message = " + event.message);
-    } else {
-      com.tm.logger.Log.d(TAG, "event.message = null, return;");
-      return;
-    }
-    boolean authSucceed = event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed());
-    boolean authFailed = event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed());
-
-
-    //check if listener is valid
-    if (authSucceed || authFailed) {
-      int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
-                                              IntuneAuthManager.MdmAuthStatus.ALREADY_SIGN.ordinal());
-      if (MDMAuthenticator.INSTANCE.isMDM(requireContext()) &&
-          authStatus!= IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal()) {// for managed device,
-        //this is managed device. if successful, user is signed and finish auth. if failure, move to self auth for regular flow.
-        if (authSucceed) {
-          PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,
-                                 IntuneAuthManager.MdmAuthStatus.ALREADY_SIGN.ordinal()); //update app that intune signed successfully
-          updatedSelfAuthenticatorDonePreference();//update that signed successfully
-          com.tm.logger.Log.d(TAG, "status auth is ALREADY_SIGN");
-        } else {
-          PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal()); //update app that auth should pass to self auth
-          com.tm.logger.Log.d(TAG, "status auth is START_SELF_AUTH");
-        }
-      } else {
-
-        if (progressBarShown) {
-          hideProgressBar();
-        }
-
-        com.tm.logger.Log.d(TAG, "event.message 2  = " + event.message);
-        if (authSucceed) {
-          updatedSelfAuthenticatorDonePreference();
-          com.tm.logger.Log.d(TAG, "SelfAuthenticationSucceed ");
-
-        } else {
-          //I Removed this because we just show that after 48 hours.
-          //SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
-          com.tm.logger.Log.d(TAG, "getSelfAuthenticationFailure = " + event.message);
-        }
-
-      }
-      final NumberViewState number = viewModel.getNumber();
-      final String e164number = number.getE164Number();
-      confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
-      com.tm.logger.Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
-      com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
-      FCMConnector.initOfficialSignalFirebaseAccount(mContext);
-      com.tm.logger.Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
-    }
-  }
-
-  public void updatedSelfAuthenticatorDonePreference() {
-    com.tm.logger.Log.d("SelfAuthenticator", "updatedSelfAuthenticatorDonePreference ");
-    /*SharedPreferences        preferences = ApplicationContext.getInstance().getSharedPreferences(SelfAuthenticatorManager.SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor      = preferences.edit();
-    editor.putBoolean("isAlreadyDoneSelfAuthentication", true);
-    editor.apply();*/
-    PrefManager.setBooleanPref(requireContext(), "isAlreadyDoneSelfAuthentication", true);
-  }
-
-
-  @Override
-  public void authenticationProcessMessage(@NotNull String message) {
-    com.tm.logger.Log.d(TAG, "authenticationProcessMessage = " + message);
-    if (!message.isEmpty()) {
-      mIsLoginAuthenticationInProgress = false;
-      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
-    }
-  }
-  //**TM_SA**//End
-
 }

@@ -12,7 +12,7 @@ import org.signal.core.util.logging.Log
 import org.tm.archive.BuildConfig
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobmanager.JobTracker
-import org.tm.archive.jobs.NewRegistrationUsernameSyncJob
+import org.tm.archive.jobs.ReclaimUsernameAndLinkJob
 import org.tm.archive.jobs.RefreshAttributesJob
 import org.tm.archive.jobs.ResetSvrGuessCountJob
 import org.tm.archive.jobs.StorageAccountRestoreJob
@@ -29,7 +29,6 @@ import org.whispersystems.signalservice.api.kbs.MasterKey
 import org.whispersystems.signalservice.api.svr.SecureValueRecovery
 import org.whispersystems.signalservice.api.svr.SecureValueRecovery.BackupResponse
 import org.whispersystems.signalservice.api.svr.SecureValueRecovery.RestoreResponse
-import org.whispersystems.signalservice.api.svr.SecureValueRecoveryV1
 import org.whispersystems.signalservice.internal.push.AuthCredentials
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -40,11 +39,14 @@ object SvrRepository {
 
   val TAG = Log.tag(SvrRepository::class.java)
 
+  private val svr2Deprecated: SecureValueRecovery = ApplicationDependencies.getSignalServiceAccountManager().getSecureValueRecoveryV2(BuildConfig.SVR2_MRENCLAVE_DEPRECATED)
   private val svr2: SecureValueRecovery = ApplicationDependencies.getSignalServiceAccountManager().getSecureValueRecoveryV2(BuildConfig.SVR2_MRENCLAVE)
-  private val svr1: SecureValueRecovery = SecureValueRecoveryV1(ApplicationDependencies.getKeyBackupService(BuildConfig.KBS_ENCLAVE))
 
-  /** An ordered list of SVR implementations. They should be in priority order, with the most important one listed first. */
-  private val implementations: List<SecureValueRecovery> = listOf(svr2, svr1)
+  /** An ordered list of SVR implementations to read from. They should be in priority order, with the most important one listed first. */
+  private val readImplementations: List<SecureValueRecovery> = listOf(svr2, svr2Deprecated)
+
+  /** An ordered list of SVR implementations to write to. They should be in priority order, with the most important one listed first. */
+  private val writeImplementations: List<SecureValueRecovery> = listOf(svr2)
 
   /**
    * A lock that ensures that only one thread at a time is altering the various pieces of SVR state.
@@ -73,7 +75,7 @@ object SvrRepository {
 
       val operations: List<Pair<SecureValueRecovery, () -> RestoreResponse>> = listOf(
         svr2 to { restoreMasterKeyPreRegistration(svr2, credentials.svr2, userPin) },
-        svr1 to { restoreMasterKeyPreRegistration(svr1, credentials.svr1, userPin) }
+        svr2Deprecated to { restoreMasterKeyPreRegistration(svr2Deprecated, credentials.svr2, userPin) }
       )
 
       for ((implementation, operation) in operations) {
@@ -125,7 +127,7 @@ object SvrRepository {
     val stopwatch = Stopwatch("pin-submission")
 
     operationLock.withLock {
-      for (implementation in implementations) {
+      for (implementation in readImplementations) {
         when (val response: RestoreResponse = implementation.restoreDataPostRegistration(userPin)) {
           is RestoreResponse.Success -> {
             Log.i(TAG, "[restoreMasterKeyPostRegistration] Successfully restored master key. $implementation", true)
@@ -150,7 +152,7 @@ object SvrRepository {
             ApplicationDependencies
               .getJobManager()
               .startChain(StorageSyncJob())
-              .then(NewRegistrationUsernameSyncJob())
+              .then(ReclaimUsernameAndLinkJob())
               .enqueueAndBlockUntilCompletion(TimeUnit.SECONDS.toMillis(10))
             stopwatch.split("contact-restore")
 
@@ -190,7 +192,7 @@ object SvrRepository {
   }
 
   /**
-   * Sets the user's PIN the one specified, updating local stores as necessary.
+   * Sets the user's PIN to the one specified, updating local stores as necessary.
    * The resulting Single will not throw an error in any expected case, only if there's a runtime exception.
    */
   @WorkerThread
@@ -199,7 +201,7 @@ object SvrRepository {
     return operationLock.withLock {
       val masterKey: MasterKey = SignalStore.svr().getOrCreateMasterKey()
 
-      val responses: List<BackupResponse> = implementations
+      val responses: List<BackupResponse> = writeImplementations
         .filter { it != svr2 || FeatureFlags.svr2() }
         .map { it.setPin(userPin, masterKey) }
         .map { it.execute() }

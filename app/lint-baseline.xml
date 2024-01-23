@@ -19,12 +19,10 @@
         message="Expected resource of type styleable"
         errorLine1="                drawables.getColor(1, 0xff000000);"
         errorLine2="                                   ~">
-        <!--//**TM_SA**//Start-->
         <location
             file="src/main/java/org/tm/archive/contacts/ContactSelectionListAdapter.java"
             line="187"
-            column="36"/>
-        <!--//**TM_SA**//End-->
+            column="36"/><!--TM_SA change package name-->
     </issue>
 
     <issue

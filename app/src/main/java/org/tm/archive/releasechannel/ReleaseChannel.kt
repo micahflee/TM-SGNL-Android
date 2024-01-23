@@ -2,10 +2,11 @@ package org.tm.archive.releasechannel
 
 import org.tm.archive.attachments.PointerAttachment
 import org.tm.archive.database.MessageTable
+import org.tm.archive.database.MessageType
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
-import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.MediaUtil
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment
@@ -45,6 +46,7 @@ object ReleaseChannel {
         mediaHeight,
         Optional.empty(),
         Optional.empty(),
+        0,
         Optional.of(media),
         false,
         false,
@@ -59,7 +61,8 @@ object ReleaseChannel {
       Optional.empty()
     }
 
-    val message = IncomingMediaMessage(
+    val message = IncomingMessage(
+      type = MessageType.NORMAL,
       from = recipientId,
       sentTimeMillis = System.currentTimeMillis(),
       serverTimeMillis = System.currentTimeMillis(),
@@ -71,6 +74,6 @@ object ReleaseChannel {
       storyType = storyType
     )
 
-    return SignalDatabase.messages.insertSecureDecryptedMessageInbox(message, threadId).orElse(null)
+    return SignalDatabase.messages.insertMessageInbox(message, threadId).orElse(null)
   }
 }

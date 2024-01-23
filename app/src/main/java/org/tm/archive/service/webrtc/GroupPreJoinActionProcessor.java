@@ -21,7 +21,6 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceStateBuilder;
 import org.tm.archive.util.NetworkUtil;
 import org.whispersystems.signalservice.api.messages.calls.OfferMessage;
 import org.whispersystems.signalservice.api.push.ServiceId.ACI;
-import org.whispersystems.signalservice.api.push.ServiceId;
 
 import java.util.List;
 
@@ -138,6 +137,7 @@ public class GroupPreJoinActionProcessor extends GroupActionProcessor {
                                                                      true,
                                                                      true,
                                                                      true,
+                                                                     CallParticipant.HAND_LOWERED,
                                                                      0,
                                                                      false,
                                                                      0,

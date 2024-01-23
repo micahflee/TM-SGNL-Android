@@ -46,21 +46,15 @@ public class WebRtcData {
    */
   public static class OfferMetadata {
     private final @Nullable byte[]            opaque;
-    private final @Nullable String            sdp;
     private final @NonNull  OfferMessage.Type offerType;
 
-    public OfferMetadata(@Nullable byte[] opaque, @Nullable String sdp, @NonNull OfferMessage.Type offerType) {
+    public OfferMetadata(@Nullable byte[] opaque, @NonNull OfferMessage.Type offerType) {
       this.opaque    = opaque;
-      this.sdp       = sdp;
       this.offerType = offerType;
     }
 
     @Nullable byte[] getOpaque() {
       return opaque;
-    }
-
-    @Nullable String getSdp() {
-      return sdp;
     }
 
     @NonNull OfferMessage.Type getOfferType() {
@@ -75,13 +69,11 @@ public class WebRtcData {
     private final @NonNull byte[]  remoteIdentityKey;
     private final          long    serverReceivedTimestamp;
     private final          long    serverDeliveredTimestamp;
-    private final          boolean isMultiRing;
 
-    public ReceivedOfferMetadata(@NonNull byte[] remoteIdentityKey, long serverReceivedTimestamp, long serverDeliveredTimestamp, boolean isMultiRing) {
+    public ReceivedOfferMetadata(@NonNull byte[] remoteIdentityKey, long serverReceivedTimestamp, long serverDeliveredTimestamp) {
       this.remoteIdentityKey        = remoteIdentityKey;
       this.serverReceivedTimestamp  = serverReceivedTimestamp;
       this.serverDeliveredTimestamp = serverDeliveredTimestamp;
-      this.isMultiRing              = isMultiRing;
     }
 
     @NonNull byte[] getRemoteIdentityKey() {
@@ -95,10 +87,6 @@ public class WebRtcData {
     long getServerDeliveredTimestamp() {
       return serverDeliveredTimestamp;
     }
-
-    boolean isMultiRing() {
-      return isMultiRing;
-    }
   }
 
   /**
@@ -106,19 +94,13 @@ public class WebRtcData {
    */
   public static class AnswerMetadata {
     private final @Nullable byte[] opaque;
-    private final @Nullable String sdp;
 
-    public AnswerMetadata(@Nullable byte[] opaque, @Nullable String sdp) {
+    public AnswerMetadata(@Nullable byte[] opaque) {
       this.opaque = opaque;
-      this.sdp    = sdp;
     }
 
     @Nullable byte[] getOpaque() {
       return opaque;
-    }
-
-    @Nullable String getSdp() {
-      return sdp;
     }
   }
 
@@ -127,19 +109,13 @@ public class WebRtcData {
    */
   public static class ReceivedAnswerMetadata {
     private final @NonNull byte[]  remoteIdentityKey;
-    private final          boolean isMultiRing;
 
-    public ReceivedAnswerMetadata(@NonNull byte[] remoteIdentityKey, boolean isMultiRing) {
+    public ReceivedAnswerMetadata(@NonNull byte[] remoteIdentityKey) {
       this.remoteIdentityKey = remoteIdentityKey;
-      this.isMultiRing       = isMultiRing;
     }
 
     @NonNull byte[] getRemoteIdentityKey() {
       return remoteIdentityKey;
-    }
-
-    boolean isMultiRing() {
-      return isMultiRing;
     }
   }
 
@@ -148,16 +124,14 @@ public class WebRtcData {
    */
   public static class HangupMetadata {
     private final @NonNull HangupMessage.Type type;
-    private final          boolean            isLegacy;
     private final          int                deviceId;
 
     static @NonNull HangupMetadata fromType(@NonNull HangupMessage.Type type) {
-      return new HangupMetadata(type, true, 0);
+      return new HangupMetadata(type, 0);
     }
 
-    public HangupMetadata(@NonNull HangupMessage.Type type, boolean isLegacy, int deviceId) {
+    public HangupMetadata(@NonNull HangupMessage.Type type, int deviceId) {
       this.type     = type;
-      this.isLegacy = isLegacy;
       this.deviceId = deviceId;
     }
 
@@ -174,10 +148,6 @@ public class WebRtcData {
         case NEED_PERMISSION: return CallManager.HangupType.NEED_PERMISSION;
         default:              throw new IllegalArgumentException("Unexpected hangup type: " + type);
       }
-    }
-
-    boolean isLegacy() {
-      return isLegacy;
     }
 
     int getDeviceId() {

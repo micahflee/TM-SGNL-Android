@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.dependencies.ApplicationDependencies;
-import org.tm.archive.jobmanager.JsonJobData;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
 import org.tm.archive.keyvalue.CertificateType;
@@ -67,9 +66,9 @@ public final class RotateCertificateJob extends BaseJob {
         byte[] certificate;
 
         switch (certificateType) {
-          case UUID_AND_E164: certificate = accountManager.getSenderCertificate(); break;
-          case UUID_ONLY    : certificate = accountManager.getSenderCertificateForPhoneNumberPrivacy(); break;
-          default           : throw new AssertionError();
+          case ACI_AND_E164: certificate = accountManager.getSenderCertificate(); break;
+          case ACI_ONLY    : certificate = accountManager.getSenderCertificateForPhoneNumberPrivacy(); break;
+          default          : throw new AssertionError();
         }
 
         Log.i(TAG, String.format("Successfully got %s certificate", certificateType));

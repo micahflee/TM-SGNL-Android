@@ -6,6 +6,7 @@ import androidx.annotation.CheckResult
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
+import org.signal.core.util.Base64
 import org.signal.core.util.BreakIteratorCompat
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
@@ -26,7 +27,6 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.sms.MessageSender
 import org.tm.archive.stories.Stories
-import org.tm.archive.util.Base64
 
 /**
  * Open for testing.
@@ -90,7 +90,7 @@ open class StoryViewerPageRepository(context: Context, private val storyViewStat
           content = getContent(record as MmsMessageRecord),
           conversationMessage = ConversationMessage.ConversationMessageFactory.createWithUnresolvedData(context, record, recipient),
           allowsReplies = record.storyType.isStoryWithReplies,
-          hasSelfViewed = storyViewStateCache.getOrPut(record.id, if (record.isOutgoing) true else viewedCount > 0)
+          hasSelfViewed = storyViewStateCache.getOrPut(record.id, if (record.isOutgoing) true else record.isViewed())
         )
 
         emitter.onNext(story)
@@ -226,7 +226,7 @@ open class StoryViewerPageRepository(context: Context, private val storyViewStat
   private fun getTextStoryLength(body: String): Int {
     return if (canParseToTextStory(body)) {
       val breakIteratorCompat = BreakIteratorCompat.getInstance()
-      breakIteratorCompat.setText(StoryTextPost.parseFrom(Base64.decode(body)).body)
+      breakIteratorCompat.setText(StoryTextPost.ADAPTER.decode(Base64.decode(body)).body)
       breakIteratorCompat.countBreaks()
     } else {
       0
@@ -236,7 +236,7 @@ open class StoryViewerPageRepository(context: Context, private val storyViewStat
   private fun canParseToTextStory(body: String): Boolean {
     return if (body.isNotEmpty()) {
       try {
-        StoryTextPost.parseFrom(Base64.decode(body))
+        StoryTextPost.ADAPTER.decode(Base64.decode(body))
         return true
       } catch (e: Exception) {
         false

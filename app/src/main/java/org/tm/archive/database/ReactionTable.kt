@@ -22,10 +22,10 @@ class ReactionTable(context: Context, databaseHelper: SignalDatabase) : Database
 
     private const val ID = "_id"
     const val MESSAGE_ID = "message_id"
-    private const val AUTHOR_ID = "author_id"
-    private const val EMOJI = "emoji"
-    private const val DATE_SENT = "date_sent"
-    private const val DATE_RECEIVED = "date_received"
+    const val AUTHOR_ID = "author_id"
+    const val EMOJI = "emoji"
+    const val DATE_SENT = "date_sent"
+    const val DATE_RECEIVED = "date_received"
 
     @JvmField
     val CREATE_TABLE = """
@@ -70,22 +70,20 @@ class ReactionTable(context: Context, databaseHelper: SignalDatabase) : Database
     return reactions
   }
 
-  fun getReactionsForMessages(messageIds: Collection<MessageId>): Map<MessageId, List<ReactionRecord>> {
+  fun getReactionsForMessages(messageIds: Collection<Long>): Map<Long, List<ReactionRecord>> {
     if (messageIds.isEmpty()) {
       return emptyMap()
     }
 
-    val messageIdToReactions: MutableMap<MessageId, MutableList<ReactionRecord>> = mutableMapOf()
+    val messageIdToReactions: MutableMap<Long, MutableList<ReactionRecord>> = mutableMapOf()
 
-    val args: List<Array<String>> = messageIds.map { SqlUtil.buildArgs(it.id) }
+    val args: List<Array<String>> = messageIds.map { SqlUtil.buildArgs(it) }
 
     for (query: SqlUtil.Query in SqlUtil.buildCustomCollectionQuery("$MESSAGE_ID = ?", args)) {
       readableDatabase.query(TABLE_NAME, null, query.where, query.whereArgs, null, null, null).use { cursor ->
         while (cursor.moveToNext()) {
           val reaction: ReactionRecord = readReaction(cursor)
-          val messageId = MessageId(
-            id = CursorUtil.requireLong(cursor, MESSAGE_ID)
-          )
+          val messageId = CursorUtil.requireLong(cursor, MESSAGE_ID)
 
           var reactionsList: MutableList<ReactionRecord>? = messageIdToReactions[messageId]
 

@@ -6,12 +6,12 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.signal.core.util.Base64
 import org.signal.core.util.update
 import org.tm.archive.database.RecipientTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.util.Base64
 import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.FeatureFlagsAccessor
 import org.whispersystems.signalservice.api.push.ServiceId.ACI
@@ -38,15 +38,21 @@ class ContactRecordProcessorTest {
     val originalId = SignalDatabase.recipients.getAndPossiblyMerge(ACI_A, PNI_A, E164_A)
     setStorageId(originalId, STORAGE_ID_A)
 
-    val remote1 = buildRecord(STORAGE_ID_B) {
-      setAci(ACI_A.toString())
-      setUnregisteredAtTimestamp(100)
-    }
+    val remote1 = buildRecord(
+      STORAGE_ID_B,
+      ContactRecord(
+        aci = ACI_A.toString(),
+        unregisteredAtTimestamp = 100
+      )
+    )
 
-    val remote2 = buildRecord(STORAGE_ID_C) {
-      setPni(PNI_A.toString())
-      setE164(E164_A)
-    }
+    val remote2 = buildRecord(
+      STORAGE_ID_C,
+      ContactRecord(
+        pni = PNI_A.toString(),
+        e164 = E164_A
+      )
+    )
 
     // WHEN
     val subject = ContactRecordProcessor()
@@ -69,16 +75,22 @@ class ContactRecordProcessorTest {
     val originalId = SignalDatabase.recipients.getAndPossiblyMerge(ACI_A, PNI_A, E164_A)
     setStorageId(originalId, STORAGE_ID_A)
 
-    val remote1 = buildRecord(STORAGE_ID_B) {
-      setAci(ACI_A.toString())
-      setUnregisteredAtTimestamp(0)
-    }
+    val remote1 = buildRecord(
+      STORAGE_ID_B,
+      ContactRecord(
+        aci = ACI_A.toString(),
+        unregisteredAtTimestamp = 0
+      )
+    )
 
-    val remote2 = buildRecord(STORAGE_ID_C) {
-      setAci(PNI_A.toString())
-      setPni(PNI_A.toString())
-      setE164(E164_A)
-    }
+    val remote2 = buildRecord(
+      STORAGE_ID_C,
+      ContactRecord(
+        aci = PNI_A.toString(),
+        pni = PNI_A.toString(),
+        e164 = E164_A
+      )
+    )
 
     // WHEN
     val subject = ContactRecordProcessor()
@@ -94,14 +106,14 @@ class ContactRecordProcessorTest {
     assertEquals(byAci, byE164)
   }
 
-  private fun buildRecord(id: StorageId, applyParams: ContactRecord.Builder.() -> ContactRecord.Builder): SignalContactRecord {
-    return SignalContactRecord(id, ContactRecord.getDefaultInstance().toBuilder().applyParams().build())
+  private fun buildRecord(id: StorageId, record: ContactRecord): SignalContactRecord {
+    return SignalContactRecord(id, record)
   }
 
   private fun setStorageId(recipientId: RecipientId, storageId: StorageId) {
     SignalDatabase.rawDatabase
       .update(RecipientTable.TABLE_NAME)
-      .values(RecipientTable.STORAGE_SERVICE_ID to Base64.encodeBytes(storageId.raw))
+      .values(RecipientTable.STORAGE_SERVICE_ID to Base64.encodeWithPadding(storageId.raw))
       .where("${RecipientTable.ID} = ?", recipientId)
       .run()
   }

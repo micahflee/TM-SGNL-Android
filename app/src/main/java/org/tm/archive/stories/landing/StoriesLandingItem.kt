@@ -16,7 +16,7 @@ import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.avatar.view.AvatarView
 import org.tm.archive.badges.BadgeImageView
-import org.tm.archive.database.model.MediaMmsMessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.mms.DecryptableStreamUriLoader
 import org.tm.archive.mms.GlideApp
 import org.tm.archive.recipients.Recipient
@@ -92,8 +92,8 @@ object StoriesLandingItem {
     }
 
     private fun hasThumbChange(newItem: Model): Boolean {
-      val oldRecord = data.primaryStory.messageRecord as? MediaMmsMessageRecord ?: return false
-      val newRecord = newItem.data.primaryStory.messageRecord as? MediaMmsMessageRecord ?: return false
+      val oldRecord = data.primaryStory.messageRecord as? MmsMessageRecord ?: return false
+      val newRecord = newItem.data.primaryStory.messageRecord as? MmsMessageRecord ?: return false
 
       val oldThumb = oldRecord.slideDeck.thumbnailSlide?.uri
       val newThumb = newRecord.slideDeck.thumbnailSlide?.uri
@@ -150,7 +150,7 @@ object StoriesLandingItem {
         badgeView.setBadgeFromRecipient(model.data.storyRecipient)
       }
 
-      val record = model.data.primaryStory.messageRecord as MediaMmsMessageRecord
+      val record = model.data.primaryStory.messageRecord as MmsMessageRecord
 
       avatarView.setStoryRingFromState(model.data.storyViewState)
 
@@ -188,7 +188,7 @@ object StoriesLandingItem {
       }
 
       if (model.data.secondaryStory != null) {
-        val secondaryRecord = model.data.secondaryStory.messageRecord as MediaMmsMessageRecord
+        val secondaryRecord = model.data.secondaryStory.messageRecord as MmsMessageRecord
         val secondaryThumb = secondaryRecord.slideDeck.thumbnailSlide?.uri
         storyOutline.setBackgroundColor(ContextCompat.getColor(context, R.color.signal_background_primary))
 

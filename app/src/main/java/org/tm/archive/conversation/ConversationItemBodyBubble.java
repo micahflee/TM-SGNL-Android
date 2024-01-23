@@ -30,19 +30,33 @@ public class ConversationItemBodyBubble extends LinearLayout {
   private Projection             quoteViewProjection;
   private Projection             videoPlayerProjection;
 
+  private final BodyBubbleLayoutTransition bodyBubbleLayoutTransition = new BodyBubbleLayoutTransition();
+
   public ConversationItemBodyBubble(Context context) {
     super(context);
-    setLayoutTransition(new BodyBubbleLayoutTransition());
+    init();
   }
 
   public ConversationItemBodyBubble(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
-    setLayoutTransition(new BodyBubbleLayoutTransition());
+    init();
   }
 
   public ConversationItemBodyBubble(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
-    setLayoutTransition(new BodyBubbleLayoutTransition());
+    init();
+  }
+
+  private void init() {
+    setLayoutTransition(bodyBubbleLayoutTransition);
+  }
+
+  public void setParentScrolling(boolean isParentScrolling) {
+    if (isParentScrolling) {
+      setLayoutTransition(null);
+    } else {
+      setLayoutTransition(bodyBubbleLayoutTransition);
+    }
   }
 
   public void setOutliners(@NonNull List<Outliner> outliners) {

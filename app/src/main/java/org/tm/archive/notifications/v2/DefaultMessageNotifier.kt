@@ -10,9 +10,7 @@ import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
-import com.tm.androidcopysdk.utils.PrefManager
 import me.leolin.shortcutbadger.ShortcutBadger
-import org.selfAuthentication.SelfAuthenticatorManager
 import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
@@ -104,7 +102,7 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
   }
 
   override fun updateNotification(context: Context) {
-    updateNotification(context, null, false, 0, BubbleState.HIDDEN)
+    updateNotification(context, null, BubbleState.HIDDEN)
   }
 
   override fun updateNotification(context: Context, conversationId: ConversationId) {
@@ -112,39 +110,17 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
       Log.i(TAG, "Scheduling delayed notification...")
       executor.enqueue(context, conversationId)
     } else {
-      //**TM_SA**//Start
-      val isAlreadyDoneSelfAuthentication =
-        PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
-      com.tm.logger.Log.d(
-        "SelfAuthenticatorProcess",
-        "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication"
-      )
-
-      if(!isAlreadyDoneSelfAuthentication && SelfAuthenticatorManager.isAppValidationTimePassed(context)){
-        return
-      }
-      //**TM_SA**//End
-      updateNotification(context, conversationId, true)
+      updateNotification(context, conversationId, BubbleState.HIDDEN)
     }
   }
 
-  override fun updateNotification(context: Context, conversationId: ConversationId, defaultBubbleState: BubbleState) {
-    updateNotification(context, conversationId, false, 0, defaultBubbleState)
+  override fun forceBubbleNotification(context: Context, conversationId: ConversationId) {
+    updateNotification(context, conversationId, BubbleState.SHOWN)
   }
 
-  override fun updateNotification(context: Context, conversationId: ConversationId, signal: Boolean) {
-    updateNotification(context, conversationId, signal, 0, BubbleState.HIDDEN)
-  }
-
-  /**
-   * @param signal is no longer used
-   * @param reminderCount is not longer used
-   */
-  override fun updateNotification(
+  private fun updateNotification(
     context: Context,
     conversationId: ConversationId?,
-    signal: Boolean,
-    reminderCount: Int,
     defaultBubbleState: BubbleState
   ) {
     NotificationChannels.getInstance().ensureCustomChannelConsistency()
@@ -252,10 +228,6 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
         Log.e(TAG, "Notifications should be showing but are not for ${notShown.size} threads")
       }
     }
-  }
-
-  override fun clearReminder(context: Context) {
-    // Intentionally left blank
   }
 
   override fun addStickyThread(conversationId: ConversationId, earliestTimestamp: Long) {
@@ -423,8 +395,8 @@ private class CancelableExecutor {
       }
       if (!canceled.get()) {
         Log.i(TAG, "Not canceled, notifying...")
-        ApplicationDependencies.getMessageNotifier().updateNotification(context, thread, true)
         ApplicationDependencies.getMessageNotifier().cancelDelayedNotifications()
+        ApplicationDependencies.getMessageNotifier().updateNotification(context, thread)
       } else {
         Log.w(TAG, "Canceled, not notifying...")
       }

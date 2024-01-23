@@ -6,8 +6,10 @@ import org.signal.donations.StripeApi
 import org.tm.archive.BuildConfig
 
 object Environment {
-  const val IS_STAGING: Boolean = BuildConfig.BUILD_ENVIRONMENT_TYPE == "Staging"
+  const val IS_STAGING: Boolean = BuildConfig.BUILD_ENVIRONMENT_TYPE == "Staging" || BuildConfig.BUILD_ENVIRONMENT_TYPE == "Pnp"
   const val IS_PNP: Boolean = BuildConfig.BUILD_ENVIRONMENT_TYPE == "Pnp"
+  const val IS_NIGHTLY: Boolean = BuildConfig.BUILD_DISTRIBUTION_TYPE == "nightly"
+  const val IS_WEBSITE: Boolean = BuildConfig.BUILD_DISTRIBUTION_TYPE == "website"
 
   object Donations {
     @JvmStatic

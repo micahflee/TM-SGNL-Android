@@ -24,7 +24,7 @@ import org.tm.archive.lock.v2.CreateSvrPinActivity;
 import org.tm.archive.migrations.ApplicationMigrationActivity;
 import org.tm.archive.migrations.ApplicationMigrations;
 import org.tm.archive.pin.PinRestoreActivity;
-import org.tm.archive.profiles.edit.EditProfileActivity;
+import org.tm.archive.profiles.edit.CreateProfileActivity;
 import org.tm.archive.push.SignalServiceNetworkAccess;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.registration.RegistrationNavigationActivity;
@@ -228,7 +228,7 @@ public abstract class PassphraseRequiredActivity extends BaseActivity implements
   }
 
   private Intent getCreateProfileNameIntent() {
-    Intent intent = EditProfileActivity.getIntentForUserProfile(this);
+    Intent intent = CreateProfileActivity.getIntentForUserProfile(this);
     return getRoutedIntent(intent, getIntent());
   }
 

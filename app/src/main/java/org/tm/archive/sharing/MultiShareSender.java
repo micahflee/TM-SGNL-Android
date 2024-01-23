@@ -46,7 +46,7 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.sms.MessageSender;
 import org.tm.archive.sms.MessageSender.SendType;
 import org.tm.archive.stories.Stories;
-import org.tm.archive.util.Base64;
+import org.signal.core.util.Base64;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.MessageUtil;
 import org.tm.archive.util.Util;
@@ -329,15 +329,15 @@ public final class MultiShareSender {
                                                                                 : thumbnail.getUri() == null
                                                                                   ? null
                                                                                   : new ImageSlide(context,
-                                                                                                 thumbnail.getUri(),
-                                                                                                 thumbnail.getContentType(),
-                                                                                                 thumbnail.getSize(),
-                                                                                                 thumbnail.getWidth(),
-                                                                                                 thumbnail.getHeight(),
-                                                                                                 thumbnail.isBorderless(),
-                                                                                                 thumbnail.getCaption(),
-                                                                                                 thumbnail.getBlurHash(),
-                                                                                                 thumbnail.getTransformProperties()).asAttachment()
+                                                                                                   thumbnail.getUri(),
+                                                                                                   thumbnail.contentType,
+                                                                                                   thumbnail.size,
+                                                                                                   thumbnail.width,
+                                                                                                   thumbnail.height,
+                                                                                                   thumbnail.borderless,
+                                                                                                   thumbnail.caption,
+                                                                                                   thumbnail.blurHash,
+                                                                                                   thumbnail.transformProperties).asAttachment()
           )
       ));
     }
@@ -345,17 +345,17 @@ public final class MultiShareSender {
 
   private static Slide ensureDefaultQuality(@NonNull Context context, @NonNull ImageSlide imageSlide) {
     Attachment attachment = imageSlide.asAttachment();
-    if (attachment.getTransformProperties().getSentMediaQuality() == SentMediaQuality.HIGH.getCode()) {
+    if (attachment.transformProperties.sentMediaQuality == SentMediaQuality.HIGH.getCode()) {
       return new ImageSlide(
           context,
           attachment.getUri(),
-          attachment.getContentType(),
-          attachment.getSize(),
-          attachment.getWidth(),
-          attachment.getHeight(),
-          attachment.isBorderless(),
-          attachment.getCaption(),
-          attachment.getBlurHash(),
+          attachment.contentType,
+          attachment.size,
+          attachment.width,
+          attachment.height,
+          attachment.borderless,
+          attachment.caption,
+          attachment.blurHash,
           AttachmentTable.TransformProperties.empty()
       );
     } else {
@@ -390,14 +390,14 @@ public final class MultiShareSender {
   {
     return OutgoingMessage.textStoryMessage(
         recipient,
-        Base64.encodeBytes(StoryTextPost.newBuilder()
-                                        .setBody(getBodyForTextStory(multiShareArgs.getDraftText(), multiShareArgs.getLinkPreview()))
-                                        .setStyle(StoryTextPost.Style.DEFAULT)
-                                        .setBackground(background.serialize())
-                                        .setTextBackgroundColor(0)
-                                        .setTextForegroundColor(Color.WHITE)
-                                        .build()
-                                        .toByteArray()),
+        Base64.encodeWithPadding(new StoryTextPost.Builder()
+                                            .body(getBodyForTextStory(multiShareArgs.getDraftText(), multiShareArgs.getLinkPreview()))
+                                            .style(StoryTextPost.Style.DEFAULT)
+                                            .background(background.serialize())
+                                            .textBackgroundColor(0)
+                                            .textForegroundColor(Color.WHITE)
+                                            .build()
+                                            .encode()),
         sentTimestamp,
         storyType.toTextStoryType(),
         buildLinkPreviews(context, multiShareArgs.getLinkPreview()),
