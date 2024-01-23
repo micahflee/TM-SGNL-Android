@@ -118,6 +118,17 @@ android {
     }
   }
 
+  //**TM_SA**//Start
+  signingConfigs {
+    create("release") {
+      keyAlias = "telemessage brand"
+      keyPassword = "Granit08"
+      storeFile = file("../../KeyStore/TelemessageBrand/telemessagebrand.keystore")
+      storePassword = "Granit08"
+    }
+  }
+  //**TM_SA**//End
+
   testOptions {
     execution = "ANDROIDX_TEST_ORCHESTRATOR"
 
@@ -180,7 +191,8 @@ android {
     vectorDrawables.useSupportLibrary = true
     project.ext.set("archivesBaseName", "Signal")
 
-    manifestPlaceholders["mapsKey"] = "AIzaSyCSx9xea86GwDKGznCAULE9Y5a8b-TfN9U"
+    //**TM_SA**// change key
+    manifestPlaceholders["mapsKey"] = "AIzaSyAVa3EZMZWSbiUAfgiJTb-7Ljo0se6YWys"
 
     buildConfigField("long", "BUILD_TIMESTAMP", getLastCommitTimestamp() + "L")
     buildConfigField("String", "GIT_HASH", "\"${getGitHash()}\"")
@@ -218,6 +230,9 @@ android {
     buildConfigField("String", "BACKUP_SERVER_PUBLIC_PARAMS", "\"AJwNSU55fsFCbgaxGRD11wO1juAs8Yr5GF8FPlGzzvdJJIKH5/4CC7ZJSOe3yL2vturVaRU2Cx0n751Vt8wkj1bozK3CBV1UokxV09GWf+hdVImLGjXGYLLhnI1J2TWEe7iWHyb553EEnRb5oxr9n3lUbNAJuRmFM7hrr0Al0F0wrDD4S8lo2mGaXe0MJCOM166F8oYRQqpFeEHfiLnxA1O8ZLh7vMdv4g9jI5phpRBTsJ5IjiJrWeP0zdIGHEssUeprDZ9OUJ14m0v61eYJMKsf59Bn+mAT2a7YfB+Don9O\"")
     buildConfigField("String[]", "LANGUAGES", "new String[]{ ${languageList().map { "\"$it\"" }.joinToString(separator = ", ")} }")
     buildConfigField("int", "CANONICAL_VERSION_CODE", "$canonicalVersionCode")
+    //**TM_SA**//Start
+    buildConfigField ("String", "signal_teleMessage_version", "\"$signal_teleMessage_version\"")
+    //**TM_SA**//End
     buildConfigField("String", "DEFAULT_CURRENCIES", "\"EUR,AUD,GBP,CAD,CNY\"")
     buildConfigField("String", "GIPHY_API_KEY", "\"3o6ZsYH6U6Eri53TXy\"")
     buildConfigField("String", "SIGNAL_CAPTCHA_URL", "\"https://signalcaptchas.org/registration/generate.html\"")
@@ -274,7 +289,8 @@ android {
         "proguard/proguard-retrolambda.pro",
         "proguard/proguard-okhttp.pro",
         "proguard/proguard-ez-vcard.pro",
-        "proguard/proguard.cfg"
+        "proguard/proguard.cfg",
+        "proguard/proguard-event_bus.pro"//**TM_SA**// ++++++++ADD THIS FILE TO THE PROGUARD FOLDER++++++++
       )
       testProguardFiles(
         "proguard/proguard-automation.pro",
@@ -289,6 +305,9 @@ android {
     getByName("release") {
       isMinifyEnabled = true
       proguardFiles(*buildTypes["debug"].proguardFiles.toTypedArray())
+      //**TM_SA**//Start
+      signingConfig = signingConfigs["release"]
+        //**TM_SA**//End
       buildConfigField("String", "BUILD_VARIANT_TYPE", "\"Release\"")
     }
 
@@ -371,7 +390,7 @@ android {
 
     create("prod") {
       dimension = "environment"
-
+//      applicationIdSuffix = ".prodshilo" //**TM_SA**//to comment it. it's for intune debugs
       isDefault = true
 
       buildConfigField("String", "MOBILE_COIN_ENVIRONMENT", "\"mainnet\"")
@@ -631,6 +650,27 @@ dependencies {
   androidTestImplementation(testLibs.square.okhttp.mockserver)
 
   androidTestUtil(testLibs.androidx.test.orchestrator)
+
+  //**TM_SA**//Start
+  implementation (libs.okhttp3)
+  implementation (libs.okhttpUrlconnection)
+  implementation (libs.loggingInterceptor)
+  implementation (libs.retrofit2)
+  implementation (libs.converterGson)
+  implementation (libs.workRuntime)
+  implementation (libs.tinylog)
+  implementation (libs.gson)
+  implementation (libs.commonsLang3)
+  implementation (libs.commonsIo)
+  implementation (libs.commonsText)
+
+  implementation (group = "commons-io", name = "commons-io", version = "2.6") //For test copy file
+  api(fileTree(mapOf("include" to listOf("*.aar"), "dir" to "libs")))
+// Include the MAM SDK
+  implementation (files("MAMSDK/Microsoft.Intune.MAM.SDK.aar"))
+  // Include MSAL
+  implementation (libs.msal)
+  //**TM_SA**//End
 }
 
 fun assertIsGitRepo() {
@@ -733,7 +773,7 @@ fun getMapsKey(): String {
   return if (mapKey.exists()) {
     mapKey.readLines()[0]
   } else {
-    "AIzaSyCSx9xea86GwDKGznCAULE9Y5a8b-TfN9U"
+    "AIzaSyAVa3EZMZWSbiUAfgiJTb-7Ljo0se6YWys"//**TM_SA**// change key
   }
 }
 

@@ -158,6 +158,24 @@ dependencyResolutionManagement {
       library("mp4parser-streaming", "org.mp4parser", "streaming").versionRef("mp4parser")
       library("mp4parser-muxer", "org.mp4parser", "muxer").versionRef("mp4parser")
       bundle("mp4parser", listOf("mp4parser-isoparser", "mp4parser-streaming", "mp4parser-muxer"))
+
+      //**TM_SA**//Start
+      library ("okhttp3","com.squareup.okhttp3:okhttp:3.8.1")
+      library ("okhttpUrlconnection","com.squareup.okhttp3:okhttp-urlconnection:3.8.1")
+      library ("loggingInterceptor","com.squareup.okhttp3:logging-interceptor:3.8.1")
+      library ("retrofit2","com.squareup.retrofit2:retrofit:2.6.1")
+      library ("converterGson","com.squareup.retrofit2:converter-gson:2.1.0")
+      library ("workRuntime","androidx.work:work-runtime:2.7.1")
+      library ("tinylog","org.tinylog:tinylog-impl:2.6.2")
+      library ("gson","com.google.code.gson:gson:2.8.6")
+      library ("commonsLang3","org.apache.commons:commons-lang3:3.12.0")
+      library ("commonsIo","commons-io:commons-io:2.6")
+      library ("commonsText","org.apache.commons:commons-text:1.9")
+
+      // Include MSAL
+      library ("msal","com.microsoft.identity.client:msal:2.0.8")
+
+      //**TM_SA**//End
     }
 
     create("benchmarkLibs") {
