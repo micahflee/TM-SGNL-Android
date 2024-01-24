@@ -78,6 +78,17 @@
             app:exitAnim="@anim/fragment_open_exit"
             app:popEnterAnim="@anim/fragment_close_enter"
             app:popExitAnim="@anim/fragment_close_exit" />
+
+        <!--//**TM_SA**//-->
+        <action
+            android:id="@+id/action_appSettingsFragment_to_tmAboutSettings"
+            app:destination="@id/tmAboutSettings"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit" />
+        <!--//**TM_SA**//-->
+
         <action
             android:id="@+id/action_appSettingsFragment_to_dataAndStorageSettingsFragment"
             app:destination="@id/dataAndStorageSettingsFragment"
@@ -196,6 +207,14 @@
         android:id="@+id/advancedPinSettingsFragment"
         android:name="org.tm.archive.components.settings.app.wrapped.WrappedAdvancedPinPreferenceFragment"
         android:label="advanced_pin_settings_fragment" />
+
+    <!--//**TM_SA**//-->
+    <fragment
+        android:id="@+id/tmAboutSettings"
+        android:name="org.tm.archive.components.settings.app.about.AboutPreferenceFragment"
+        android:label="about_settings_fragment"
+        />
+    <!--//**TM_SA**//-->
 
     <fragment
         android:id="@+id/deleteAccountFragment"
