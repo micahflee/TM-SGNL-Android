@@ -313,7 +313,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
 
       dividerPref()
 
-      sectionHeaderPref(R.string.preferences_app_protection__payments)
+      /*sectionHeaderPref(R.string.preferences_app_protection__payments)
 
       switchPref(
         title = DSLSettingsText.from(R.string.preferences__payment_lock),
@@ -328,7 +328,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
             viewModel.togglePaymentLock(true)
           }
         }
-      )
+      )*/
 
       dividerPref()
 

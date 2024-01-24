@@ -1,5 +1,7 @@
 package org.tm.archive.components.settings.app
 
+import android.app.AlertDialog
+import android.app.Dialog
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -7,9 +9,14 @@ import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.tm.androidcopysdk.AndroidCopySDK
+import com.tm.androidcopysdk.ISendLogCallback
+import com.tm.androidcopysdk.utils.PrefManager
+import org.archiver.ArchivePreferenceConstants
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.selfAuthentication.ProgressDialog
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.components.AvatarImageView
@@ -46,11 +53,14 @@ import org.tm.archive.util.views.Stub
 class AppSettingsFragment : DSLSettingsFragment(
   titleId = R.string.text_secure_normal__menu_settings,
   layoutId = R.layout.dsl_settings_fragment_with_reminder
-) {
+)  ,
+  ISendLogCallback { //**TM_SA**// add ISendLogCallback{
 
   private val viewModel: AppSettingsViewModel by viewModels()
 
   private lateinit var reminderView: Stub<ReminderView>
+
+  lateinit var mProgressDialog : Dialog //**TM_SA**//
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     viewLifecycleOwner.lifecycle.addObserver(TerminalDonationDelegate(childFragmentManager, viewLifecycleOwner))
@@ -162,8 +172,9 @@ class AppSettingsFragment : DSLSettingsFragment(
         isEnabled = state.isDeprecatedOrUnregistered()
       )
 
-      if (state.allowUserToGoToDonationManagementScreen) {
-        clickPref(
+      //**TM_SA**// Start - Comment all the Signal mention and put our about and sending logs logic.
+      if (false/*state.allowUserToGoToDonationManagementScreen*/) {
+        /*clickPref(
           title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
           icon = DSLSettingsIcon.from(R.drawable.symbol_heart_24),
           iconEnd = if (state.hasExpiredGiftBadge) DSLSettingsIcon.from(R.drawable.symbol_info_fill_24, R.color.signal_accent_primary) else null,
@@ -171,82 +182,100 @@ class AppSettingsFragment : DSLSettingsFragment(
             findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToManageDonationsFragment())
           },
           onLongClick = this@AppSettingsFragment::copySubscriberIdToClipboard
-        )
+        )*/
       } else {
-        externalLinkPref(
+        /*externalLinkPref(
           title = DSLSettingsText.from(R.string.preferences__donate_to_signal),
           icon = DSLSettingsIcon.from(R.drawable.symbol_heart_24),
           linkId = R.string.donate_url
         )
-      }
+      }*/
 
-      dividerPref()
-
-      clickPref(
-        title = DSLSettingsText.from(R.string.preferences__appearance),
-        icon = DSLSettingsIcon.from(R.drawable.symbol_appearance_24),
-        onClick = {
-          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_appearanceSettingsFragment)
-        }
-      )
-
-      clickPref(
-        title = DSLSettingsText.from(R.string.preferences_chats__chats),
-        icon = DSLSettingsIcon.from(R.drawable.symbol_chat_24),
-        onClick = {
-          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_chatsSettingsFragment)
-        },
-        isEnabled = state.isDeprecatedOrUnregistered()
-      )
-
-      clickPref(
-        title = DSLSettingsText.from(R.string.preferences__stories),
-        icon = DSLSettingsIcon.from(R.drawable.symbol_stories_24),
-        onClick = {
-          findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToStoryPrivacySettings(R.string.preferences__stories))
-        },
-        isEnabled = state.isDeprecatedOrUnregistered()
-      )
-
-      clickPref(
-        title = DSLSettingsText.from(R.string.preferences__notifications),
-        icon = DSLSettingsIcon.from(R.drawable.symbol_bell_24),
-        onClick = {
-          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_notificationsSettingsFragment)
-        },
-        isEnabled = state.isDeprecatedOrUnregistered()
-      )
-
-      clickPref(
-        title = DSLSettingsText.from(R.string.preferences__privacy),
-        icon = DSLSettingsIcon.from(R.drawable.symbol_lock_24),
-        onClick = {
-          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_privacySettingsFragment)
-        },
-        isEnabled = state.isDeprecatedOrUnregistered()
-      )
-
-      clickPref(
-        title = DSLSettingsText.from(R.string.preferences__data_and_storage),
-        icon = DSLSettingsIcon.from(R.drawable.symbol_data_24),
-        onClick = {
-          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_dataAndStorageSettingsFragment)
-        }
-      )
-
-      if (Environment.IS_NIGHTLY) {
         clickPref(
-          title = DSLSettingsText.from("App updates"),
-          icon = DSLSettingsIcon.from(R.drawable.symbol_calendar_24),
+          title = DSLSettingsText.from(R.string.preferences__send_logs_to_telemessage),
+          icon = DSLSettingsIcon.from(R.drawable.ic_settings_logs_icon),
           onClick = {
-            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_appUpdatesSettingsFragment)
+            doSendLogsClicked()
+          })
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.EditAboutFragment_about),
+          icon = DSLSettingsIcon.from(R.drawable.ic_about_icon),
+          onClick = {
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_tmAboutSettings)
           }
         )
-      }
 
-      dividerPref()
+        //**TM_SA**// End
 
-      if (SignalStore.paymentsValues().paymentsAvailability.showPaymentsMenu()) {
+        dividerPref()
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__appearance),
+          icon = DSLSettingsIcon.from(R.drawable.symbol_appearance_24),
+          onClick = {
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_appearanceSettingsFragment)
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences_chats__chats),
+          icon = DSLSettingsIcon.from(R.drawable.symbol_chat_24),
+          onClick = {
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_chatsSettingsFragment)
+          },
+          isEnabled = state.isDeprecatedOrUnregistered()
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__stories),
+          icon = DSLSettingsIcon.from(R.drawable.symbol_stories_24),
+          onClick = {
+            findNavController().safeNavigate(AppSettingsFragmentDirections.actionAppSettingsFragmentToStoryPrivacySettings(R.string.preferences__stories))
+          },
+          isEnabled = state.isDeprecatedOrUnregistered()
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__notifications),
+          icon = DSLSettingsIcon.from(R.drawable.symbol_bell_24),
+          onClick = {
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_notificationsSettingsFragment)
+          },
+          isEnabled = state.isDeprecatedOrUnregistered()
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__privacy),
+          icon = DSLSettingsIcon.from(R.drawable.symbol_lock_24),
+          onClick = {
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_privacySettingsFragment)
+          },
+          isEnabled = state.isDeprecatedOrUnregistered()
+        )
+
+        clickPref(
+          title = DSLSettingsText.from(R.string.preferences__data_and_storage),
+          icon = DSLSettingsIcon.from(R.drawable.symbol_data_24),
+          onClick = {
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_dataAndStorageSettingsFragment)
+          }
+        )
+
+        if (Environment.IS_NIGHTLY) {
+          clickPref(
+            title = DSLSettingsText.from("App updates"),
+            icon = DSLSettingsIcon.from(R.drawable.symbol_calendar_24),
+            onClick = {
+              findNavController().safeNavigate(R.id.action_appSettingsFragment_to_appUpdatesSettingsFragment)
+            }
+          )
+        }
+
+        dividerPref()
+
+        //**TM_SA**// Mark this part
+        /*if (SignalStore.paymentsValues().paymentsAvailability.showPaymentsMenu()) {
         customPref(
           PaymentsPreference(
             unreadCount = state.unreadPaymentsCount
@@ -264,28 +293,79 @@ class AppSettingsFragment : DSLSettingsFragment(
         onClick = {
           findNavController().safeNavigate(R.id.action_appSettingsFragment_to_helpSettingsFragment)
         }
-      )
-
-      clickPref(
-        title = DSLSettingsText.from(R.string.AppSettingsFragment__invite_your_friends),
-        icon = DSLSettingsIcon.from(R.drawable.symbol_invite_24),
-        onClick = {
-          findNavController().safeNavigate(R.id.action_appSettingsFragment_to_inviteActivity)
-        }
-      )
-
-      if (FeatureFlags.internalUser()) {
-        dividerPref()
+      )*/
+//**TM_SA**//end
 
         clickPref(
-          title = DSLSettingsText.from(R.string.preferences__internal_preferences),
+          title = DSLSettingsText.from(R.string.AppSettingsFragment__invite_your_friends),
+          icon = DSLSettingsIcon.from(R.drawable.symbol_invite_24),
           onClick = {
-            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_internalSettingsFragment)
+            findNavController().safeNavigate(R.id.action_appSettingsFragment_to_inviteActivity)
           }
         )
+
+        if (FeatureFlags.internalUser()) {
+          dividerPref()
+
+          clickPref(
+            title = DSLSettingsText.from(R.string.preferences__internal_preferences),
+            onClick = {
+              findNavController().safeNavigate(R.id.action_appSettingsFragment_to_internalSettingsFragment)
+            }
+          )
+        }
       }
     }
+
   }
+
+  //**TM_SA**// start
+
+
+  override fun sendLogSucceed() {
+    mProgressDialog.hide()
+    com.tm.logger.Log.d("sendLog", "sendLogSucceed")
+  }
+
+  override fun sendLogFailure() {
+    mProgressDialog.hide()
+    com.tm.logger.Log.d("sendLog", "sendLogFailure")
+  }
+
+
+  private fun doSendLogsClicked() {
+
+    val builder = AlertDialog.Builder(context)
+
+    mProgressDialog = ProgressDialog.progressDialog(requireContext())
+
+    builder.setTitle(R.string.issue_report_list_title)
+    builder.setMessage(getString(R.string.issue_report_list_summery) + "?")
+
+    builder.setPositiveButton(R.string.ShareActivity__send) { dialog, which ->
+
+      mProgressDialog.show()
+
+      AndroidCopySDK.getInstance(context).sentLogs(
+        activity,
+        this,
+        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
+        "Signal Archiver logs",
+        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),
+        "",
+        "",
+        "",
+        "",
+        ArchivePreferenceConstants.GENERATE_TOK_NAME,
+        ArchivePreferenceConstants.GENERATE_TOK_PASS
+      )
+    }
+    builder.setNegativeButton(R.string.CommunicationActions_cancel, null)
+    builder.show()
+
+  }
+
+  //**TM_SA**// End
 
   private fun copySubscriberIdToClipboard(): Boolean {
     val subscriber = SignalStore.donationsValues().getSubscriber()

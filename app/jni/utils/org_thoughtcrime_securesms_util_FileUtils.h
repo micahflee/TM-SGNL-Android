@@ -12,7 +12,8 @@ extern "C" {
  * Method:    getFileDescriptorOwner
  * Signature: (Ljava/io/FileDescriptor;)I
  */
-JNIEXPORT jint JNICALL Java_org_thoughtcrime_securesms_util_FileUtils_getFileDescriptorOwner
+//**TM_SA**//Change the package name to be our name.
+JNIEXPORT jint JNICALL Java_org_tm_archive_util_FileUtils_getFileDescriptorOwner
   (JNIEnv *, jclass, jobject);
 
 /*
@@ -20,7 +21,8 @@ JNIEXPORT jint JNICALL Java_org_thoughtcrime_securesms_util_FileUtils_getFileDes
  * Method:    createMemoryFileDescriptor
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_thoughtcrime_securesms_util_FileUtils_createMemoryFileDescriptor
+//**TM_SA**//Change the package name to be our name.
+JNIEXPORT jint JNICALL Java_org_tm_archive_util_FileUtils_createMemoryFileDescriptor
   (JNIEnv *, jclass, jstring);
 
 #ifdef __cplusplus

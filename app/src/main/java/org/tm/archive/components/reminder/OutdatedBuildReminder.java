@@ -37,9 +37,11 @@ public class OutdatedBuildReminder extends Reminder {
     return false;
   }
 
+  //**TM_SA**// start
   public static boolean isEligible() {
-    return getDaysUntilExpiry() <= 10;
+    return false;//getDaysUntilExpiry() <= 10;
   }
+  //**TM_SA**// End
 
   private static int getDaysUntilExpiry() {
     return (int) TimeUnit.MILLISECONDS.toDays(Util.getTimeUntilBuildExpiry());

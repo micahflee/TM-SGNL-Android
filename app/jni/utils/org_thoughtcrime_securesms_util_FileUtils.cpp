@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <linux/memfd.h>
 #include <syscall.h>
-
-jint JNICALL Java_org_thoughtcrime_securesms_util_FileUtils_getFileDescriptorOwner
+//**TM_SA**//Change the package name to be our name.
+jint JNICALL Java_org_tm_archive_util_FileUtils_getFileDescriptorOwner
   (JNIEnv *env, jclass clazz, jobject fileDescriptor)
 {
   jclass fdClass = env->GetObjectClass(fileDescriptor);
@@ -32,7 +32,8 @@ jint JNICALL Java_org_thoughtcrime_securesms_util_FileUtils_getFileDescriptorOwn
   return stat_struct.st_uid;
 }
 
-JNIEXPORT jint JNICALL Java_org_thoughtcrime_securesms_util_FileUtils_createMemoryFileDescriptor
+//**TM_SA**//Change the package name to be our name.
+JNIEXPORT jint JNICALL Java_org_tm_archive_util_FileUtils_createMemoryFileDescriptor
   (JNIEnv *env, jclass clazz, jstring jname)
 {
   const char *name = env->GetStringUTFChars(jname, NULL);

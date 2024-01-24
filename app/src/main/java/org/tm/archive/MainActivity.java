@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
@@ -15,7 +17,9 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.tm.androidcopysdk.utils.PrefManager;
 
+import org.archiver.ArchivePreferenceConstants;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.logging.Log;
 import org.signal.donations.StripeApi;
@@ -25,6 +29,7 @@ import org.tm.archive.components.settings.app.AppSettingsActivity;
 import org.tm.archive.components.voice.VoiceNoteMediaController;
 import org.tm.archive.components.voice.VoiceNoteMediaControllerOwner;
 import org.tm.archive.conversationlist.RelinkDevicesReminderBottomSheetFragment;
+import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.devicetransfer.olddevice.OldDeviceExitActivity;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.net.DeviceTransferBlockingInterceptor;
@@ -168,7 +173,33 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     updateTabVisibility();
 
     vitalsViewModel.checkSlowNotificationHeuristics();
+    //**TM_SA**// start
+    notifyMessageIfNeeded();
   }
+
+  private void notifyMessageIfNeeded() {
+    boolean isAlreadyRestarted = PrefManager.getBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, false);
+
+    if(!isAlreadyRestarted){
+      PrefManager.setBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, true);
+
+      final Handler handler = new Handler(Looper.getMainLooper());
+      handler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          notifyMessage();
+        }
+      }, 4000);
+    }
+  }
+
+  public synchronized void notifyMessage(){
+    synchronized (ApplicationDependencies.getIncomingMessageObserver()) {
+      ApplicationDependencies.getIncomingMessageObserver().notifyAll();
+    }
+  }
+
+  //**TM_SA**// End
 
   @Override
   protected void onStop() {

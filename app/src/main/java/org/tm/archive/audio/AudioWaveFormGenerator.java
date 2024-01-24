@@ -57,6 +57,12 @@ public final class AudioWaveFormGenerator {
         throw new IOException("Mime not audio");
       }
 
+      //**TM_SA**//S
+      if(mime.equals("audio/ac3")){
+        throw new IOException("Ac3 Audio type not supported");
+      }
+      //**TM_SA**//E
+
       MediaCodec codec = MediaCodec.createDecoderByType(mime);
 
       if (totalDurationUs == 0) {

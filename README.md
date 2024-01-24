@@ -59,3 +59,45 @@ Copyright 2013-2023 Signal
 Licensed under the GNU AGPLv3: https://www.gnu.org/licenses/agpl-3.0.html
 
 Google Play and the Google Play logo are trademarks of Google LLC.
+
+
+//**TM_SA**//
+Signal – New Base-line
+1.	Download the Signal official open source from this link:
+      https://github.com/signalapp/Signal-Android
+
+2.	Rename each folder at the next order:
+      a.	thoughtcrime  tm
+      b.	securesms  archive
+3.	Replace all old package mentions vie “replace all” function (Ctrl +Shift + R)
+      a.	org.thoughtcrime.securesms -> org.tm.archive
+4.	Add our archiver SDK and Common library to new folder “libs” and compile them via dependencies.
+5.	Add archiver,intune,selfauthentication folders with all archiving class with util etc. (Take them from src->main->java->org)
+6.	Search “ArchiveLogger.Companion.sendArchiveLog” in the current project and add all those mentions to the updated project.
+7.	Add launcher icon app and change the round icon path in the manifest
+8.	Add proguard-event_bus from the current project to the updated one.
+9.	Go to the current TeleMessage Signal project and search via ctrl+alt+F : //**TM_SA**//
+
+There are dozens of references to this string please move on the result one by one and replace or add the code with this string ( //**TM_SA**//, in order to create continuation to baseline updating method)
+
+
+intune
+
+1. add dependencies using //**TM_SA**//
+2. add MAMSDK folder with aar and jar
+3. 1. register the app to intune server
+2. https://aad.portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview3. Azure Active Directory > App registrations > New Registration
+3. Authentication, add platform -> add uri -> package name.
+4. then add auth-config file using the View button that show it. put it in resource-> raw
+5. API permissions...
+
+4. 1. https://aad.portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps
+2. then, App configuration policies -> create app configuration policy -> manage apps -> Settings -> add the values(managerID etc)
+3. Then, Assignments -> include groups you want or assign everyone.
+
+5. http://everythingaboutintune.com/2021/07/guide-for-integrating-intune-sdk-and-msal-to-lob-application/
+
+https://www.youtube.com/watch?v=1AyGpcdDRkY&t=741s&ab_channel=EverythingAboutIntune
+
+https://github.com/msintuneappsdk/Taskr-Sample-Intune-Android-App#readme
+//**TM_SA**//
