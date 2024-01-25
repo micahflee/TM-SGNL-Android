@@ -7,6 +7,8 @@ import android.view.View
 import android.widget.Toast
 import androidx.annotation.StringRes
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.tm.androidcopysdk.utils.PrefManager
+import org.archiver.ArchivePreferenceConstants
 import org.tm.archive.R
 import org.tm.archive.logsubmit.SubmitDebugLogActivity
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
@@ -56,7 +58,18 @@ object RegistrationViewDelegate {
         setTitle(title)
       }
       setMessage(message)
-      setPositiveButton(android.R.string.ok) { _, _ -> onConfirmed.run() }
+      setPositiveButton(android.R.string.ok) { _, _ ->
+
+        //**TM_SA**//start
+        PrefManager.setStringPref(
+          context,
+          ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER,
+          e164number
+        )
+        //**TM_SA**//end
+
+        onConfirmed.run()
+      }
       setNegativeButton(R.string.RegistrationActivity_edit_number) { _, _ -> onEditNumber.run() }
       setOnCancelListener { onEditNumber.run() }
     }.show()

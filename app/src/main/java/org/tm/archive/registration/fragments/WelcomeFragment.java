@@ -23,11 +23,13 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.tm.authenticatorsdk.selfAuthenticator.api.ApiUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.logging.Log;
 import org.signal.devicetransfer.DeviceToDeviceTransferService;
 import org.signal.devicetransfer.TransferStatus;
+import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
 import org.tm.archive.keyvalue.SignalStore;
@@ -50,6 +52,8 @@ public final class WelcomeFragment extends LoggingFragment {
 
   private CircularProgressMaterialButton continueButton;
   private RegistrationViewModel          viewModel;
+
+  private Boolean environmentAlreadySelected = false; //**TM_SA**//
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -149,16 +153,26 @@ public final class WelcomeFragment extends LoggingFragment {
   {
     boolean isUserSelectionRequired = BackupUtil.isUserSelectionRequired(fragment.requireContext());
 
-    Permissions.with(fragment)
-               .request(WelcomePermissions.getWelcomePermissions(isUserSelectionRequired))
-               .ifNecessary()
-               .onAnyResult(() -> gatherInformationAndContinue(fragment,
-                                                               viewModel,
-                                                               onSearchForBackupStarted,
-                                                               onSearchForBackupFinished,
-                                                               actionSkipRestore,
-                                                               actionRestore))
-               .execute();
+    //**TM_SA**// START
+    if (!environmentAlreadySelected && BuildConfig.DEBUG) {
+      ApiUtil.Companion.selectServerEnvironment(getContext());
+      environmentAlreadySelected = true;
+    } else {
+
+
+      //**TM_SA**// END
+
+      Permissions.with(fragment)
+                 .request(WelcomePermissions.getWelcomePermissions(isUserSelectionRequired))
+                 .ifNecessary()
+                 .onAnyResult(() -> gatherInformationAndContinue(fragment,
+                                                                 viewModel,
+                                                                 onSearchForBackupStarted,
+                                                                 onSearchForBackupFinished,
+                                                                 actionSkipRestore,
+                                                                 actionRestore))
+                 .execute();
+    }
   }
 
   static void restoreFromBackupClicked(@NonNull Fragment fragment,

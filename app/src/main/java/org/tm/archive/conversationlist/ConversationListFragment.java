@@ -289,6 +289,12 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     super.onCreate(icicle);
     setHasOptionsMenu(true);
     startupStopwatch = new Stopwatch("startup");
+
+    //**TM_SA**//
+    if(!EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().register(this);
+    }
+    //**TM_SA**//
   }
 
   @Override
@@ -537,7 +543,11 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
     initializeSearchListener();
     updateReminders();
-    EventBus.getDefault().register(this);
+    //**TM_SA**//Start.  probably should delete from on create
+    if(!EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().register(this);
+    }
+    //**TM_SA**//End
     itemAnimator.disable();
     SpoilerAnnotation.resetRevealedSpoilers();
 
