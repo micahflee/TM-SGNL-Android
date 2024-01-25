@@ -312,7 +312,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
       )
 
       dividerPref()
-
+      //**TM_SA**//start   comment payment
       /*sectionHeaderPref(R.string.preferences_app_protection__payments)
 
       switchPref(
@@ -329,6 +329,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
           }
         }
       )*/
+      //**TM_SA**//end
 
       dividerPref()
 
