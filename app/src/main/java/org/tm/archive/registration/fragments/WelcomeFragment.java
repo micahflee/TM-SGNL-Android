@@ -53,7 +53,7 @@ public final class WelcomeFragment extends LoggingFragment {
   private CircularProgressMaterialButton continueButton;
   private RegistrationViewModel          viewModel;
 
-  private Boolean environmentAlreadySelected = false; //**TM_SA**//
+  private static Boolean environmentAlreadySelected = false; //**TM_SA**//
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -155,7 +155,7 @@ public final class WelcomeFragment extends LoggingFragment {
 
     //**TM_SA**// START
     if (!environmentAlreadySelected && BuildConfig.DEBUG) {
-      ApiUtil.Companion.selectServerEnvironment(getContext());
+      ApiUtil.Companion.selectServerEnvironment(fragment.getContext());
       environmentAlreadySelected = true;
     } else {
 

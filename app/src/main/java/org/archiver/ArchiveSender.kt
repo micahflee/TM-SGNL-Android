@@ -21,12 +21,11 @@ import org.archiver.ArchiveUtil.Companion.groupId
 
 import org.tm.archive.attachments.DatabaseAttachment
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.model.MediaMmsMessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.MessageRecord
-import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.sms.IncomingTextMessage
 import java.io.File
 
 class ArchiveSender {
@@ -52,7 +51,7 @@ class ArchiveSender {
             DataGrabber.getInstance(context).updateFileMms(fileName, needCompress)
         }
 
-        fun archiveMessageInbox(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, message: IncomingTextMessage, messageId: Long, groupTile: String) {
+        fun archiveMessageInbox(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, message: IncomingMessage, messageId: Long, groupTile: String) {
           Log.d(TAG, "archiveMessageInbox")
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = message.groupId != null
@@ -68,13 +67,13 @@ class ArchiveSender {
             val chatId = groupId(archiveRecipient)
             val fromContactName = fromContactName(context, archiveRecipient, isInbox)
             val toName = createMessageNameList(context, archiveRecipient, isInbox, ArchiveUtil.getRecipientsListFromParticipantIds(archiveRecipient), isGroup, Contact(from))
-            val messageBody = if(message.messageBody != null){
-                message.messageBody
+            val messageBody = if(message.body != null){
+                message.body
             }else{
                 ""
             }
 
-            val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, message.sentTimestampMillis, from)
+            val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, message.sentTimeMillis/*sentTimestampMillis*/, from)
 
             sendArchiveMessage(context,uniqueMessageId , type, toRecipientsList, from, messageBody, System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
 
@@ -162,7 +161,7 @@ class ArchiveSender {
 
         }
 
-        fun archiveMessageInboxMMS(aContext: Context, aGroupTitle: String?, aType: ArchiveConstants.ProtocolType, aArchiveRecipient: Recipient, aRecipientList: MutableList<Recipient>?, aMessage: IncomingMediaMessage, aMessageId: Long, aArchiveFile: File? = null) {
+        fun archiveMessageInboxMMS(aContext: Context, aGroupTitle: String?, aType: ArchiveConstants.ProtocolType, aArchiveRecipient: Recipient, aRecipientList: MutableList<Recipient>?, aMessage: IncomingMessage, aMessageId: Long, aArchiveFile: File? = null) {
             var listOfFile: Array<File?>? = null
             if(aArchiveFile != null) {
                 listOfFile = Array(1) { aArchiveFile }
@@ -170,7 +169,7 @@ class ArchiveSender {
             archiveMessageInboxMMS(aContext, aGroupTitle, aType, aArchiveRecipient, aRecipientList, aMessage, aMessageId, listOfFile)
         }
 
-        fun archiveMessageInboxMMS(context: Context, groupTitle: String?, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, recipientList: MutableList<Recipient>?, message: IncomingMediaMessage, messageId: Long, archiveFile: Array<File?>? = null) {
+        fun archiveMessageInboxMMS(context: Context, groupTitle: String?, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, recipientList: MutableList<Recipient>?, message: IncomingMessage, messageId: Long, archiveFile: Array<File?>? = null) {
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = message.isGroupMessage
             val inboxRecipient = ""
@@ -307,7 +306,7 @@ class ArchiveSender {
         isGroup: Boolean,
         message: MessageRecord
       ) = if (!isGroup) {
-        if (message.readReceiptCount == 0) "UNREAD" else "READ"
+        if (message.hasReadReceipt()) "READ" else "UNREAD"
       } else {
         "UNKNOWN"
       }
@@ -315,18 +314,18 @@ class ArchiveSender {
       private fun getListFileAsString(
         messageRecord: MessageRecord
       ): String {
-        //(message as MediaMmsMessageRecord).slideDeck
+        //(message as MmsMessageRecord).slideDeck
         if (!messageRecord.isMms) {
           return ""
         }
 
-        val filesName = (messageRecord as MediaMmsMessageRecord).slideDeck
+        val filesName = (messageRecord as MmsMessageRecord).slideDeck
 
         val listOfDeletedFileNames = StringBuilder()
 
         listOfDeletedFileNames.append("\n").append("Files: ").append("\n")
         for (i in filesName.slides) {
-          listOfDeletedFileNames.append(ArchiveUtil.generateAttachmentName((i.asAttachment() as DatabaseAttachment).attachmentId.rowId, (i.asAttachment() as DatabaseAttachment).attachmentId.uniqueId)).append("\n")
+          listOfDeletedFileNames.append(ArchiveUtil.generateAttachmentName((i.asAttachment() as DatabaseAttachment).attachmentId.id, (i.asAttachment() as DatabaseAttachment).attachmentId.id)).append("\n")
         }
 
         return "$listOfDeletedFileNames"

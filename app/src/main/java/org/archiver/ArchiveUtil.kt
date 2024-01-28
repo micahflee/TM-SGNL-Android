@@ -30,12 +30,11 @@ import org.tm.archive.database.model.Mention
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.groups.GroupId
 import org.tm.archive.linkpreview.LinkPreview
-import org.tm.archive.mms.IncomingMediaMessage
+import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.providers.BlobProvider
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.sms.IncomingTextMessage
 import java.io.File
 import java.io.IOException
 import java.util.function.Function
@@ -284,11 +283,11 @@ class ArchiveUtil {
     @JvmStatic
     fun getGroupInboxRecipientNumber(
       archiveRecipient: Recipient,
-      message: IncomingTextMessage
+      message: IncomingMessage
     ): String {
 
       val recipientList = getRecipientsListFromParticipantIds(archiveRecipient).filter {
-        message.authorId.toLong() == it.id.toLong()
+        message.from.toLong() == it.id.toLong()
       }
       return recipientList[0].e164.get()
     }
@@ -503,7 +502,7 @@ class ArchiveUtil {
 
     @JvmStatic
     fun createPreviewLinkBody(
-      incomingMediaMessage: IncomingMediaMessage?,
+      incomingMediaMessage: IncomingMessage?,
       outComingMediaMessage: OutgoingMessage?
     ): String? {
       var body = ""

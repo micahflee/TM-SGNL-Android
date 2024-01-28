@@ -670,6 +670,7 @@ dependencies {
   implementation (files("MAMSDK/Microsoft.Intune.MAM.SDK.aar"))
   // Include MSAL
   implementation (libs.msal)
+  implementation("com.microsoft.identity.client:msal:2.0.8")
   //**TM_SA**//End
 }
 

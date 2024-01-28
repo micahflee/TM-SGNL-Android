@@ -23,8 +23,16 @@ import android.text.SpannableString
 import android.text.TextUtils
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.contentValuesOf
+import com.annimon.stream.Stream
 import com.google.android.mms.pdu_alt.NotificationInd
 import com.google.android.mms.pdu_alt.PduHeaders
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.archiver.ArchiveConstants
+import org.archiver.ArchiveFileUtil
+import org.archiver.ArchiveSender
+import org.archiver.ArchiveUtil
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -129,8 +137,10 @@ import org.tm.archive.recipients.RecipientId
 import org.tm.archive.revealable.ViewOnceExpirationInfo
 import org.tm.archive.revealable.ViewOnceUtil
 import org.tm.archive.sms.GroupV2UpdateMessageUtil
+import org.tm.archive.sms.MessageSender
 import org.tm.archive.stories.Stories.isFeatureEnabled
 import org.tm.archive.util.FeatureFlags
+import org.tm.archive.util.FileUtils
 import org.tm.archive.util.JsonUtils
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.MessageConstraintsUtil
@@ -141,6 +151,7 @@ import org.whispersystems.signalservice.api.messages.multidevice.ReadMessage
 import org.whispersystems.signalservice.api.push.ServiceId
 import org.whispersystems.signalservice.internal.push.SyncMessage
 import java.io.Closeable
+import java.io.File
 import java.io.IOException
 import java.util.LinkedList
 import java.util.Optional
@@ -2678,14 +2689,16 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     message: OutgoingMessage,
     threadId: Long,
     forceSms: Boolean,
-    insertListener: InsertListener?
+    insertListener: InsertListener?,
+    preUploadResults : Collection<MessageSender.PreUploadResult>? = null/*TM_SA*/
   ): Long {
     return insertMessageOutbox(
       message = message,
       threadId = threadId,
       forceSms = forceSms,
       defaultReceiptStatus = GroupReceiptTable.STATUS_UNDELIVERED,
-      insertListener = insertListener
+      insertListener = insertListener,
+      preUploadResults = preUploadResults/*TM_SA*/
     )
   }
 
@@ -2695,7 +2708,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     threadId: Long,
     forceSms: Boolean,
     defaultReceiptStatus: Int,
-    insertListener: InsertListener?
+    insertListener: InsertListener?,
+    preUploadResults : Collection<MessageSender.PreUploadResult>? = null/*TM_SA*/
   ): Long {
     var type = MessageTypes.BASE_SENDING_TYPE
     var hasSpecialType = false
@@ -2947,6 +2961,43 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     if (!message.isIdentityVerified && !message.isIdentityDefault) {
       TrimThreadJob.enqueueAsync(threadId)
     }
+
+    //**TM_SA**//start
+    CoroutineScope(Dispatchers.IO).launch {
+      if (preUploadResults != null) { //preUploadResults not null indicates attachments exists
+        Log.i("MessageSender", "start archiving camera, gallery")
+        val attachmentDatabase = attachments
+        val recipient = message.threadRecipient
+        val attachmentIds: List<AttachmentId> = Stream.of(preUploadResults).map<AttachmentId>(
+          { obj: MessageSender.PreUploadResult -> obj.attachmentId }).toList()
+        val files = java.util.ArrayList<File?>()
+        val databaseAttachments = java.util.ArrayList<DatabaseAttachment>()
+        for (attachmentId in attachmentIds) {
+          val att: DatabaseAttachment? = attachmentDatabase.getAttachment(attachmentId)
+          if (att != null) {
+            databaseAttachments.add(att)
+            val file = ArchiveFileUtil.getFileFromDataBaseUri(context, att.uri.toString())
+            files.add(file)
+          }
+        }
+        ArchiveSender.archiveMessageOutboxMMS(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, message, messageId, files.toTypedArray<File?>())
+        for (i in files.indices) {
+          val fileNameWithType = ArchiveFileUtil.getFileNameWithType(
+            files[i]!!.name,
+            messageId,
+            databaseAttachments[i].attachmentId.id,
+            databaseAttachments[i].contentType,
+            false
+          )
+          val tempFileForArchiving = FileUtils.createPlaceHolderTempFile(context, fileNameWithType)
+          ArchiveSender.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.name, true)
+        }
+      } else {
+        Log.i("MessageSender", "start archiving SMS, contact, location, sticker, audio, file")
+        ArchiveUtil.archiveOutboxMessage(context, messageId, message)
+      }
+    }
+    //**TM_SA**//end
 
     return messageId
   }

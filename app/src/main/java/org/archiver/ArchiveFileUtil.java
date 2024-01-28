@@ -402,16 +402,17 @@ This method can parse out the real local file path from a file URI.
 
         String[] splitUri = contentUri.split("/");
         int splitLength = splitUri.length;
-        DatabaseAttachment databaseAttachment = SignalDatabase.attachments().getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
+//        DatabaseAttachment databaseAttachment = SignalDatabase.attachments().getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1]),Long.parseLong(splitUri[splitLength - 2])));
+        DatabaseAttachment databaseAttachment = SignalDatabase.attachments().getAttachment(new AttachmentId(Long.parseLong(splitUri[splitLength - 1])));
 
         InputStream attachmentInputStream = null;
         try {
-            attachmentInputStream = SignalDatabase.attachments().getAttachmentStream(databaseAttachment.getAttachmentId(),0);
+            attachmentInputStream = SignalDatabase.attachments().getAttachmentStream(databaseAttachment.attachmentId,0);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        String fileName = getFileNameWithType(databaseAttachment.getFileName(), 0 ,databaseAttachment.getAttachmentId().getRowId(),databaseAttachment.getContentType());
+        String fileName = getFileNameWithType(databaseAttachment.fileName, 0 ,databaseAttachment.attachmentId.id,databaseAttachment.contentType);
         File resultFile = new File(context.getCacheDir(),  fileName);
         ArchiveFileUtil.copyInputStreamToFile(attachmentInputStream, resultFile);
 
@@ -421,9 +422,9 @@ This method can parse out the real local file path from a file URI.
     public static String getFileType(DatabaseAttachment databaseAttachment) {
         String fileType;
         try {
-            fileType = databaseAttachment.getFileName().split("\\.")[1];
+            fileType = databaseAttachment.fileName.split("\\.")[1];
         }catch (Exception e){
-            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.getContentType());
+            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(databaseAttachment.contentType);
         }
         return fileType;
     }
@@ -445,9 +446,9 @@ This method can parse out the real local file path from a file URI.
     public static String getFileType(Attachment attachment) {
         String fileType;
         try {
-            fileType = attachment.getFileName().split("\\.")[1];
+            fileType = attachment.fileName.split("\\.")[1];
         }catch (Exception e){
-            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(attachment.getContentType());
+            fileType = MimeTypeMap.getSingleton().getExtensionFromMimeType(attachment.contentType);
         }
         return fileType;
     }

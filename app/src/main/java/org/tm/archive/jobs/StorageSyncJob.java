@@ -231,7 +231,15 @@ public class StorageSyncJob extends BaseJob {
     final StorageKey                  storageServiceKey = SignalStore.storageService().getOrCreateStorageKey();
 
     final SignalStorageManifest localManifest  = SignalStore.storageService().getManifest();
-    final SignalStorageManifest remoteManifest = accountManager.getStorageManifestIfDifferentVersion(storageServiceKey, localManifest.getVersion()).orElse(localManifest);
+    //**TM_SA**//Start change the following code like that:
+    SignalStorageManifest remoteManifest = null;
+    try {
+      remoteManifest = accountManager.getStorageManifestIfDifferentVersion(storageServiceKey, localManifest.getVersion())
+                                     .orElse(localManifest);
+    }catch (Exception e){
+      remoteManifest = localManifest;
+    }
+    //**TM_SA**//End
 
     stopwatch.split("remote-manifest");
 
@@ -354,7 +362,14 @@ public class StorageSyncJob extends BaseJob {
 
       StorageSyncValidations.validate(remoteWriteOperation, remoteManifest, needsForcePush, self);
 
-      Optional<SignalStorageManifest> conflict = accountManager.writeStorageRecords(storageServiceKey, remoteWriteOperation.getManifest(), remoteWriteOperation.getInserts(), remoteWriteOperation.getDeletes());
+      //**TM_SA**//Start change the code like that:
+      Optional<SignalStorageManifest> conflict = null;
+      try {
+        conflict = accountManager.writeStorageRecords(storageServiceKey, remoteWriteOperation.getManifest(), remoteWriteOperation.getInserts(), remoteWriteOperation.getDeletes());
+      }catch (Exception e){
+        conflict = Optional.empty();
+      }
+      //**TM_SA**//End
 
       if (conflict.isPresent()) {
         Log.w(TAG, "Hit a conflict when trying to resolve the conflict! Retrying.");

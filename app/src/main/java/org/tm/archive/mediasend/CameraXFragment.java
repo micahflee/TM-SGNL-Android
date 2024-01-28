@@ -140,7 +140,7 @@ public class CameraXFragment extends LoggingFragment implements CameraFragment {
     this.controlsContainer = view.findViewById(R.id.camerax_controls_container);
     this.cameraXModePolicy = CameraXModePolicy.acquire(requireContext(),
                                                        controller.getMediaConstraints(),
-                                                       requireArguments().getBoolean(IS_VIDEO_ENABLED, true));
+                                                       requireArguments().getBoolean(IS_VIDEO_ENABLED, false));//TM_SA// TODO Moti Amar. - Change the default value to false and fix the video capture bug.
 
     Log.d(TAG, "Starting CameraX with mode policy " + cameraXModePolicy.getClass().getSimpleName());
 
@@ -352,6 +352,7 @@ public class CameraXFragment extends LoggingFragment implements CameraFragment {
     galleryButton.setOnClickListener(v -> controller.onGalleryClicked());
     countButton.setOnClickListener(v -> controller.onCameraCountButtonClicked());
 
+//**TM_SA**//TODO Moti Amar- Fix the C++ native method (Java_org_tm_archive_util_FileUtils_createMemoryFileDescriptor)
     if (Build.VERSION.SDK_INT >= 26 && cameraXModePolicy.isVideoSupported()) {
       try {
         closeVideoFileDescriptor();

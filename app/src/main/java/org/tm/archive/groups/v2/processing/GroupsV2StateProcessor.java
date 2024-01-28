@@ -565,7 +565,7 @@ public class GroupsV2StateProcessor {
         MessageTable mmsDatabase = SignalDatabase.messages();
         ThreadTable  threadTable = SignalDatabase.threads();
         long         threadId    = threadTable.getOrCreateThreadIdFor(groupRecipient);
-        long         id          = mmsDatabase.insertMessageOutbox(leaveMessage, threadId, false, null);
+        long         id          = mmsDatabase.insertMessageOutbox(leaveMessage, threadId, false, null, null/*TM_SA*/);
         mmsDatabase.markAsSent(id, true);
         threadTable.update(threadId, false, false);
       } catch (MmsException e) {
@@ -795,7 +795,7 @@ public class GroupsV2StateProcessor {
           Recipient       recipient       = Recipient.resolved(recipientId);
           OutgoingMessage outgoingMessage = OutgoingMessage.groupUpdateMessage(recipient, decryptedGroupV2Context, timestamp);
           long            threadId        = threadTable.getOrCreateThreadIdFor(recipient);
-          long            messageId       = mmsDatabase.insertMessageOutbox(outgoingMessage, threadId, false, null);
+          long            messageId       = mmsDatabase.insertMessageOutbox(outgoingMessage, threadId, false, null, null/*TM_SA*/);
 
           mmsDatabase.markAsSent(messageId, true);
           threadTable.update(threadId, false, false);

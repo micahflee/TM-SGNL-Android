@@ -21,6 +21,12 @@ dependencyResolutionManagement {
     maven {
       url = uri("https://dl.cloudsmith.io/qxAgwaeEE1vN8aLU/mobilecoin/mobilecoin/maven/")
     }
+
+    //**TM_SA**//START
+    maven {
+      url = uri("https://pkgs.dev.azure.com/MicrosoftDeviceSDK/DuoSDK-Public/_packaging/Duo-SDK-Feed/maven/v1")
+    }
+    //**TM_SA**//END
     jcenter {
       content {
         includeVersion("mobi.upod", "time-duration-picker", "1.1.3")

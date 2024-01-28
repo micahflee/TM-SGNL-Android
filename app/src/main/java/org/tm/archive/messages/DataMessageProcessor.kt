@@ -1054,6 +1054,8 @@ object DataMessageProcessor {
     if (quotedMessage != null && !quotedMessage.isRemoteDelete) {
       log(timestamp, "Found matching message record...")
 
+
+
       val attachments: MutableList<Attachment> = mutableListOf()
       val mentions: MutableList<Mention> = mutableListOf()
 

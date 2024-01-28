@@ -184,7 +184,9 @@ public final class LiveRecipientCache {
   }
 
   /** Can safely get self id. If used during early registration (backup), will return null as we don't know self yet. */
-  @Nullable RecipientId getSelfId() {
+  //**TM_SA**//change to public
+  @Nullable
+  public RecipientId getSelfId() {
     RecipientId selfId;
 
     synchronized (localRecipientId) {
