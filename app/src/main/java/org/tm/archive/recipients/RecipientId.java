@@ -34,7 +34,7 @@ public class RecipientId implements Parcelable, Comparable<RecipientId>, Databas
   public static final RecipientId UNKNOWN = RecipientId.from(UNKNOWN_ID);
   public static final LongSerializer<RecipientId> SERIALIZER = new Serializer();
 
-  private final long id;
+  public final long id; //*TM_SA*//public
 
   public static RecipientId from(long id) {
     if (id == 0) {

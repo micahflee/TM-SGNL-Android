@@ -130,7 +130,7 @@ public class Recipient {
   private final String                       about;
   private final String                       aboutEmoji;
   private final ProfileName                  systemProfileName;
-  private final String                       systemContactName;
+  public final String                       systemContactName;//**TM_SA**//public
   private final Optional<Extras>             extras;
   private final boolean                      hasGroupsInCommon;
   private final List<Badge>                  badges;

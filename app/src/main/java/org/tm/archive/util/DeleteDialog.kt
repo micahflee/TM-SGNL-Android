@@ -4,6 +4,8 @@ import android.content.Context
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.core.SingleEmitter
+import org.archiver.ArchiveConstants
+import org.archiver.ArchiveSender
 import org.signal.core.util.concurrent.SignalExecutors
 import org.tm.archive.R
 import org.tm.archive.database.SignalDatabase
@@ -80,10 +82,13 @@ object DeleteDialog {
     }
   }
 
-  private fun deleteForEveryone(messageRecords: Set<MessageRecord>, emitter: SingleEmitter<Pair<Boolean, Boolean>>) {
+  private fun deleteForEveryone(context: Context/*TM_SA add context */,messageRecords: Set<MessageRecord>, emitter: SingleEmitter<Pair<Boolean, Boolean>>) {
     SignalExecutors.BOUNDED.execute {
       messageRecords.forEach { message ->
         MessageSender.sendRemoteDelete(message.id)
+        //**TM_SA**//
+        ArchiveSender.sendArchiveDeleteMessage(context, message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, true)
+        //**TM_SA**//
       }
 
       emitter.onSuccess(Pair(true, false))
@@ -100,6 +105,11 @@ object DeleteDialog {
     R.string.ConversationFragment_deleting_messages
   ) {
     override fun doInBackground(vararg params: Void?): Boolean {
+      //**TM_SA**//
+      for (message in messageRecords) {
+        ArchiveSender.sendArchiveDeleteMessage(context, message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, false)
+      }
+      //**TM_SA**//
       return messageRecords.map { record ->
         if (record.isMms) {
           SignalDatabase.messages.deleteMessage(record.id)

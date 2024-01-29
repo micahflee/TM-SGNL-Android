@@ -21,7 +21,9 @@ import androidx.navigation.Navigation;
 
 import com.airbnb.lottie.SimpleColorFilter;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.tm.androidcopysdk.utils.PrefManager;
 
+import org.archiver.ArchivePreferenceConstants;
 import org.signal.core.util.EditTextUtil;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.concurrent.SimpleTask;
@@ -223,6 +225,9 @@ public class CreateProfileFragment extends LoggingFragment {
     }
 
     binding.finishButton.setOnClickListener(v -> {
+      //**TM_SA**//Start
+      savePrefName();
+      //**TM_SA**//End
       binding.finishButton.setSpinning();
       handleUpload();
     });
@@ -235,6 +240,12 @@ public class CreateProfileFragment extends LoggingFragment {
       binding.title.setVisibility(View.GONE);
     }
   }
+
+  //**TM_SA**//Start
+  private void savePrefName() {
+    PrefManager.setStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, binding.givenName.getText() + " " + binding.familyName.getText());
+  }
+  //**TM_SA**//End
 
   private void initializeProfileName() {
     viewModel.isFormValid().observe(getViewLifecycleOwner(), isValid -> {

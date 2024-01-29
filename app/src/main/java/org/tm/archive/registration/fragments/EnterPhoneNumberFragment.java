@@ -106,6 +106,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   private ScrollView                     scrollView;
   private RegistrationViewModel          viewModel;
 
+  //**TM_SA**// START
   private Context mContext;
   private boolean     progressBarShown;
 
@@ -147,6 +148,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     scrollView  = view.findViewById(R.id.scroll_view);
     register    = view.findViewById(R.id.registerButton);
     constraintLayout = view.findViewById(R.id.constraint_layout);  //**TM_SA**//
+
     initProgressBar();  //**TM_SA**//
 
     RegistrationNumberInputController controller = new RegistrationNumberInputController(requireContext(),
