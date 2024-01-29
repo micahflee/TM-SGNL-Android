@@ -2,8 +2,13 @@ package org.tm.archive.messages
 
 import ProtoUtil.isNotEmpty
 import android.content.Context
+import com.annimon.stream.Stream
 import com.mobilecoin.lib.exceptions.SerializationException
 import okio.ByteString
+import org.archiver.ArchiveConstants
+import org.archiver.ArchiveFileUtil
+import org.archiver.ArchiveSender
+import org.archiver.ArchiveUtil
 import org.signal.core.util.Hex
 import org.signal.core.util.orNull
 import org.signal.libsignal.protocol.util.Pair
@@ -89,6 +94,7 @@ import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.stories.Stories
 import org.tm.archive.util.EarlyMessageCacheEntry
 import org.tm.archive.util.FeatureFlags
+import org.tm.archive.util.FileUtils
 import org.tm.archive.util.IdentityUtil
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.MessageConstraintsUtil
@@ -119,6 +125,7 @@ import org.whispersystems.signalservice.internal.push.SyncMessage.Sent
 import org.whispersystems.signalservice.internal.push.SyncMessage.StickerPackOperation
 import org.whispersystems.signalservice.internal.push.SyncMessage.ViewOnceOpen
 import org.whispersystems.signalservice.internal.push.Verified
+import java.io.File
 import java.io.IOException
 import java.util.Optional
 import java.util.UUID
@@ -218,7 +225,7 @@ object SyncMessageProcessor {
         }
         dataMessage.hasRemoteDelete -> DataMessageProcessor.handleRemoteDelete(context, envelope, dataMessage, senderRecipient.id, earlyMessageCacheEntry)
         dataMessage.isMediaMessage -> threadId = handleSynchronizeSentMediaMessage(context, sent, envelope.timestamp!!)
-        else -> threadId = handleSynchronizeSentTextMessage(sent, envelope.timestamp!!)
+        else -> threadId = handleSynchronizeSentTextMessage(context/***TM_SA**add context*/, sent, envelope.timestamp!!)
       }
 
       if (groupId != null && SignalDatabase.groups.isUnknownGroup(groupId)) {
@@ -490,7 +497,7 @@ object SyncMessageProcessor {
     )
 
     val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
-    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNDELIVERED, null)
+    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNDELIVERED, null, null/*TM_SA*/)
 
     if (groupId != null) {
       updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
@@ -627,7 +634,7 @@ object SyncMessageProcessor {
     val recipient: Recipient = getSyncMessageDestination(sent)
     val expirationUpdateMessage: OutgoingMessage = expirationUpdateMessage(recipient, if (sideEffect) sent.timestamp!! - 1 else sent.timestamp!!, sent.message!!.expireTimerDuration.inWholeMilliseconds)
     val threadId: Long = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
-    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(expirationUpdateMessage, threadId, false, null)
+    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(expirationUpdateMessage, threadId, false, null, null/*TM_SA*/)
 
     SignalDatabase.messages.markAsSent(messageId, true)
 
@@ -703,7 +710,7 @@ object SyncMessageProcessor {
       }
 
       val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
-      val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null, null/*TM_SA*/)
 
       if (recipient.isGroup) {
         updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
@@ -768,7 +775,7 @@ object SyncMessageProcessor {
     }
 
     val threadId = SignalDatabase.threads.getOrCreateThreadIdFor(recipient)
-    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+    val messageId: Long = SignalDatabase.messages.insertMessageOutbox(mediaMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null, null/*TM_SA*/)
 
     if (recipient.isGroup) {
       updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
@@ -779,6 +786,10 @@ object SyncMessageProcessor {
     SignalDatabase.messages.markAsSent(messageId, true)
 
     val attachments: List<DatabaseAttachment> = SignalDatabase.attachments.getAttachmentsForMessage(messageId)
+
+    //**TM_SA**//Start
+    archiveSyncMedia(messageId, attachments, context, recipient, mediaMessage)
+    //**TM_SA**//End
 
     if (dataMessage.expireTimerDuration > Duration.ZERO) {
       SignalDatabase.messages.markExpireStarted(messageId, sent.expirationStartTimestamp ?: 0)
@@ -800,8 +811,78 @@ object SyncMessageProcessor {
     return threadId
   }
 
+  //**TM_SA**//Start
+  private fun archiveSyncMedia(
+    messageId: Long,
+    attachments: List<DatabaseAttachment>,
+    context: Context,
+    recipient: Recipient,
+    mediaMessage: OutgoingMessage
+  ) {
+    var tempFileForArchiving: File?
+    val filesToArchive: Array<File?>
+    val allAttachments = SignalDatabase.attachments.getAttachmentsForMessage(messageId)
+    var stickerAttachments: List<DatabaseAttachment> =
+      Stream.of(allAttachments).filter { obj: DatabaseAttachment -> obj.isSticker }
+        .toList()
+
+    if (stickerAttachments.isNotEmpty()) {
+      filesToArchive = arrayOfNulls(stickerAttachments.size)
+      for (i in stickerAttachments.indices) {
+        val att: DatabaseAttachment = stickerAttachments.get(i)
+        if (att.uri != null) {
+          tempFileForArchiving =
+            ArchiveFileUtil.createFileFromContentUri(context, att.uri.toString())
+          filesToArchive[i] = tempFileForArchiving
+          ArchiveSender.archiveMessageOutboxSyncMMS(
+            context,
+            if (recipient.getDisplayName(context) == null) "" else recipient.getDisplayName(
+              context
+            ),
+            ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND,
+            recipient,
+            ArchiveUtil.getRecipientsListFromParticipantIds(recipient),
+            mediaMessage,
+            messageId,
+            filesToArchive
+          )
+          ArchiveSender.updateArchiveSDKToSendMMSMessage(context, tempFileForArchiving.name, false)
+        }
+      }
+    } else if (attachments.isNotEmpty()) {
+      filesToArchive = arrayOfNulls(attachments.size)
+      for (i in attachments.indices) {
+        val att = attachments[i]
+        tempFileForArchiving = FileUtils.createPlaceHolderTempFile(
+          context,
+          ArchiveFileUtil.getFileNameWithType(
+            att.fileName,
+            messageId,
+            att.attachmentId.rowId,
+            att.contentType,
+            true
+          )
+        )
+        filesToArchive[i] = tempFileForArchiving
+        ApplicationDependencies.getJobManager()
+          .add(AttachmentDownloadJob(messageId, att.attachmentId, false))
+      }
+      ArchiveSender.archiveMessageOutboxSyncMMS(
+        context,
+        if (recipient.getDisplayName(context) == null) "" else recipient.getDisplayName(context),
+        ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND,
+        recipient,
+        ArchiveUtil.getRecipientsListFromParticipantIds(recipient),
+        mediaMessage,
+        messageId,
+        filesToArchive
+      )
+    }
+  }
+  //**TM_SA**//End
+
   @Throws(MmsException::class, BadGroupIdException::class)
-  private fun handleSynchronizeSentTextMessage(sent: Sent, envelopeTimestamp: Long): Long {
+  private fun handleSynchronizeSentTextMessage(context: Context, sent: Sent, envelopeTimestamp: Long): Long {/***TM_SA**add context*/
     log(envelopeTimestamp, "Synchronize sent text message for " + sent.timestamp!!)
 
     val recipient = getSyncMessageDestination(sent)
@@ -828,11 +909,11 @@ object SyncMessageProcessor {
         bodyRanges = bodyRanges
       )
 
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingMessage, threadId, false, GroupReceiptTable.STATUS_UNKNOWN, null, null/*TM_SA*/)
       updateGroupReceiptStatus(sent, messageId, recipient.requireGroupId())
     } else {
       val outgoingTextMessage = text(threadRecipient = recipient, body = body, expiresIn = expiresInMillis, sentTimeMillis = sent.timestamp!!, bodyRanges = bodyRanges)
-      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null)
+      messageId = SignalDatabase.messages.insertMessageOutbox(outgoingTextMessage, threadId, false, null, null/*TM_SA*/)
       SignalDatabase.messages.markUnidentified(messageId, sent.isUnidentified(recipient.serviceId.orNull()))
     }
     SignalDatabase.threads.update(threadId, true)
@@ -846,6 +927,10 @@ object SyncMessageProcessor {
       SignalDatabase.messages.incrementDeliveryReceiptCount(sent.timestamp!!, recipient.id, System.currentTimeMillis())
       SignalDatabase.messages.incrementReadReceiptCount(sent.timestamp!!, recipient.id, System.currentTimeMillis())
     }
+
+    //**TM_SA**//
+    ArchiveSender.archiveMessageOutboxV1(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, recipient, body, messageId, sent.timestamp);
+    //**TM_SA**//*Baseline*
 
     return threadId
   }

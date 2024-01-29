@@ -1,6 +1,8 @@
 package org.tm.archive.messages
 
 import android.content.Context
+import org.archiver.ArchiveConstants
+import org.archiver.ArchiveSender
 import org.signal.core.util.logging.Log
 import org.signal.core.util.orNull
 import org.signal.core.util.toOptional
@@ -429,6 +431,14 @@ open class MessageContentProcessor(private val context: Context) {
           if (processingEarlyContent) null else EarlyMessageCacheEntry(envelope, content, metadata, serverDeliveredTimestamp),
           localMetric
         )
+
+        //**TM_SA**// Start
+        if(content.dataMessage.attachmentsCount == 0 && content.dataMessage.body.isNotEmpty()) {
+          ArchiveSender.archiveMessageInboxV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient , content.dataMessage.body, envelope.timestamp)
+        }else{
+          com.tm.logger.Log.d(TAG, "handleMessage -> content.dataMessage.attachmentsCount == 0 && content.dataMessage.body.isNotEmpty()   =   false")
+        }
+        //**TM_SA**//End
       }
 
       content.syncMessage != null -> {
