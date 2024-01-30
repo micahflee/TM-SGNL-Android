@@ -858,7 +858,7 @@ object SyncMessageProcessor {
           ArchiveFileUtil.getFileNameWithType(
             att.fileName,
             messageId,
-            att.attachmentId.rowId,
+            att.attachmentId.id,
             att.contentType,
             true
           )

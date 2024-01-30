@@ -948,7 +948,7 @@ object DataMessageProcessor {
     insertResult: InsertResult,
     attachments: List<Attachment>,
     groupId: GroupId.V2?,
-    mediaMessage: IncomingMediaMessage,
+    mediaMessage: IncomingMessage,
     context: Context,
     senderRecipient: Recipient,
     threadRecipient : Recipient
@@ -988,7 +988,7 @@ object DataMessageProcessor {
         val fileNameWithType = ArchiveFileUtil.getFileNameWithType(
           att.fileName,
           insertResult.messageId,
-          att.attachmentId.rowId,
+          att.attachmentId.id,
           att.contentType,
           true
         )
@@ -1027,7 +1027,7 @@ object DataMessageProcessor {
             context,
             ArchiveUtil.generateAttachmentName(
               insertResult.messageId,
-              att.attachmentId.rowId
+              att.attachmentId.id
             ) + "." + ArchiveFileUtil.getFileType(att)
           )
         filesToArchive[i] = tempFileForArchiving
@@ -1093,7 +1093,7 @@ object DataMessageProcessor {
     aInboxArchiveTypes: ArchiveUtil.InboxArchiveTypes,
     senderRecipient: Recipient,
     threadRecipient : Recipient,
-    mediaMessage: IncomingMediaMessage,
+    mediaMessage: IncomingMessage,
     attachments: Array<File?>?
   ) {
     var tempFileForArchiving: File?

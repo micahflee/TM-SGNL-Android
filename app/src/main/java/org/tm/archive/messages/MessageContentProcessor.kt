@@ -433,8 +433,8 @@ open class MessageContentProcessor(private val context: Context) {
         )
 
         //**TM_SA**// Start
-        if(content.dataMessage.attachmentsCount == 0 && content.dataMessage.body.isNotEmpty()) {
-          ArchiveSender.archiveMessageInboxV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient , content.dataMessage.body, envelope.timestamp)
+        if(content.dataMessage!!.attachments.isEmpty() && content.dataMessage!!.body!!.isNotEmpty()) {
+          ArchiveSender.archiveMessageInboxV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient , content.dataMessage!!.body, envelope.timestamp)
         }else{
           com.tm.logger.Log.d(TAG, "handleMessage -> content.dataMessage.attachmentsCount == 0 && content.dataMessage.body.isNotEmpty()   =   false")
         }

@@ -81,7 +81,7 @@ class ArchiveSender {
 
         }
 
-      fun archiveMessageInboxV2(context: Context, type: ArchiveConstants.ProtocolType, senderRecipient: Recipient, threadRecipient: Recipient, messageBody: String , messageSendingTime: Long) {
+      fun archiveMessageInboxV2(context: Context, type: ArchiveConstants.ProtocolType, senderRecipient: Recipient, threadRecipient: Recipient, messageBody: String? , messageSendingTime: Long?) {
         Log.d(TAG, "archiveMessageInboxV2 -> message = $messageBody")
         val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
         val isGroup = threadRecipient.isGroup
@@ -98,8 +98,13 @@ class ArchiveSender {
         val chatId = groupId(threadRecipient)
         val fromContactName = fromContactName(context, senderRecipient, isInbox)
         val toName = createMessageNameListV2(context, senderRecipient, threadRecipient, isInbox, ArchiveUtil.getRecipientsListFromParticipantIds(senderRecipient), isGroup, Contact(from))
-
-        val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, messageSendingTime, from)
+        var sendingTimeCheck = 0L
+        if (messageSendingTime == null) {
+          Log.e("ArchiveSender", "messageSendingTime is null!!")
+        } else {
+          sendingTimeCheck = messageSendingTime
+        }
+        val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, sendingTimeCheck, from)
 
         sendArchiveMessage(context,uniqueMessageId , type, toRecipientsList, from, messageBody, System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
 
@@ -108,7 +113,7 @@ class ArchiveSender {
       }
 
 
-      fun archiveMessageOutboxV1(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, messageBody: String, messageId: Long, sendingTime: Long) {
+      fun archiveMessageOutboxV1(context: Context, type: ArchiveConstants.ProtocolType, archiveRecipient: Recipient, messageBody: String, messageId: Long, sendingTime: Long?) {
             Log.d(TAG, "archiveMessageOutboxV1 -> message = $messageBody")
             val isInbox = type === ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX
             val isGroup = archiveRecipient.isGroup
@@ -125,7 +130,13 @@ class ArchiveSender {
             val toName = createMessageNameList(context, archiveRecipient, isInbox, ArchiveUtil.getRecipientsListFromParticipantIds(archiveRecipient), isGroup, Contact(from))
             val cleanMessageBody = cleanMessageBodyFromUnusedCharacters(messageBody)
 
-            val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, sendingTime, from)
+        var sendingTimeCheck = 0L
+        if (sendingTime == null) {
+          Log.e("ArchiveSender", "sendingTime is null!!")
+        } else {
+          sendingTimeCheck = sendingTime
+        }
+        val uniqueMessageId = ArchiveUtil.getUniqueMessageId(context, sendingTimeCheck, from)
 
             sendArchiveMessage(context,uniqueMessageId,  type, toRecipientsList, from, cleanMessageBody, System.currentTimeMillis(), subject, chatMode, chatName, chatId, fromContactName, toName)
             sendArchiveLog("archiveMessageOutbox --> type = $type subject = $subject  uniqueMessageId Message ID = $messageId")
