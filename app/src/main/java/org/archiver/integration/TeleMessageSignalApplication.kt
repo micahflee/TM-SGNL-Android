@@ -12,6 +12,7 @@ import org.archiver.ArchiveLogger.Companion.sendArchiveLog
 import org.tm.archive.ApplicationContext
 import org.tm.archive.BuildConfig
 import org.tm.archive.R
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.dependencies.ApplicationDependencyProvider
 
 

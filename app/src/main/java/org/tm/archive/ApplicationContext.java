@@ -301,9 +301,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     }
   }
 
-  protected ApplicationDependencyProvider createDependencyProvider() {
-    return new ApplicationDependencyProvider(this);
-  }
   //**TM_SA**// End
 
   @Override
@@ -441,8 +438,14 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   @VisibleForTesting
   void initializeAppDependencies() {
-    ApplicationDependencies.init(this, new ApplicationDependencyProvider(this));
+    ApplicationDependencies.init(this, createDependencyProvider()/*TM_SA change provider*/);
   }
+
+  //**TM_SA**// Start
+  protected ApplicationDependencyProvider createDependencyProvider() {
+    return new ApplicationDependencyProvider(this);
+  }
+  //**TM_SA**// End
 
   private void initializeFirstEverAppLaunch() {
     if (TextSecurePreferences.getFirstInstallVersion(this) == -1) {

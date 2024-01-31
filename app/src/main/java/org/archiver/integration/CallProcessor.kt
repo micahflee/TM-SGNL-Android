@@ -1,12 +1,12 @@
 package org.archiver.integration
 
 import android.content.Context
-import android.util.Log
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.CallObj
 import com.tm.androidcopysdk.DataGrabber
 import com.tm.androidcopysdk.Models.RecFileExt
 import com.tm.androidcopysdk.utils.Contact
+import com.tm.logger.Log
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
