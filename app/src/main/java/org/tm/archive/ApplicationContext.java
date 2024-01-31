@@ -300,6 +300,10 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       PrefManager.setBooleanPref(getApplicationContext(),R.string.installation_event_sent,true);
     }
   }
+
+  protected ApplicationDependencyProvider createDependencyProvider() {
+    return new ApplicationDependencyProvider(this);
+  }
   //**TM_SA**// End
 
   @Override
