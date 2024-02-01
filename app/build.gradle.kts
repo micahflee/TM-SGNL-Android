@@ -665,7 +665,8 @@ dependencies {
   implementation (libs.commonsText)
 
   implementation (group = "commons-io", name = "commons-io", version = "2.6") //For test copy file
-  api(fileTree(mapOf("include" to listOf("*.aar"), "dir" to "libs")))
+  implementation(fileTree(mapOf("include" to listOf("*.aar"), "dir" to "libs")))
+  implementation("com.arthenica:mobile-ffmpeg-full:4.4.LTS")
 // Include the MAM SDK
   implementation (files("MAMSDK/Microsoft.Intune.MAM.SDK.aar"))
   // Include MSAL
