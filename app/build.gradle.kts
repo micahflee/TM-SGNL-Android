@@ -669,8 +669,12 @@ dependencies {
   implementation (libs.commonsText)
 
   implementation (group = "commons-io", name = "commons-io", version = "2.6") //For test copy file
-  implementation(fileTree(mapOf("include" to listOf("*.aar"), "dir" to "libs")))
-// Include the MAM SDK
+  debugImplementation(files("libs/androidcopysdk-signal-debug.aar"))
+  releaseImplementation(files("libs/androidcopysdk-signal-release.aar"))
+  debugImplementation(files("libs/authenticatorsdk-signal-debug.aar"))
+  releaseImplementation(files("libs/authenticatorsdk-signal-release.aar"))
+  implementation(files("libs/common-debug.aar"))
+  // Include the MAM SDK
   implementation (files("MAMSDK/Microsoft.Intune.MAM.SDK.aar"))
   // Include MSAL
   implementation (libs.msal)
