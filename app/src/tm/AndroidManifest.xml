@@ -4,10 +4,8 @@
 
     <application
         android:name="org.archiver.TeleMessageSignalApplication"
-        android:allowBackup="true"
-        android:supportsRtl="true"
         tools:node="merge"
-        tools:replace="android:name,android:allowBackup,android:supportsRtl">
+        tools:replace="android:name">
 
         <activity
             android:name="com.microsoft.identity.client.BrowserTabActivity"
