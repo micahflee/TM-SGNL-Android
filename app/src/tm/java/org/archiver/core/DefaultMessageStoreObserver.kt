@@ -246,8 +246,8 @@ class DefaultMessageStoreObserver<Id> : IMessageStoreObserver<Id> {
     try {
       block()
     } catch (e: Throwable) {
+      Log.e(TAG, "execute failed ${e.message}", e)
       e.printStackTrace()
-      Log.e(TAG, "execute from $sender failed ${e.message}", e)
     } finally {
       val now = System.currentTimeMillis()
       Log.d(TAG, "execute from $sender took ${now - start}ms")
