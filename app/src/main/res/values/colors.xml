@@ -62,8 +62,4 @@
     <color name="safety_number_card_grey">#ffEBEAE8</color>
     <color name="safety_number_card_blue">#ff506ECD</color>
 
-    <!--//**TM_SA**//Start-->
-    <color name="telemessage_color">#0277bd</color>
-    <color name="registration_progress_bar_background_transparent_grey">#55000000</color>
-    <!--//**TM_SA**//End-->
 </resources>

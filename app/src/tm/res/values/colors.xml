@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources>
+    <color name="telemessage_color">#0277bd</color>
+    <color name="registration_progress_bar_background_transparent_grey">#55000000</color>
+</resources>
