@@ -100,7 +100,7 @@ android {
   buildToolsVersion = signalBuildToolsVersion
   compileSdkVersion = signalCompileSdkVersion
 
-  flavorDimensions += listOf("distribution", "environment")
+  flavorDimensions += listOf("distribution", "environment", "ext")
   useLibrary("org.apache.http.legacy")
   testBuildType = "instrumentation"
 
@@ -431,6 +431,10 @@ android {
       applicationIdSuffix = ".pnp"
 
       buildConfigField("String", "BUILD_ENVIRONMENT_TYPE", "\"Pnp\"")
+    }
+
+    create("tm") {
+      dimension = "ext"
     }
   }
 
