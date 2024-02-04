@@ -72,7 +72,8 @@
     <!--  region Telemessage  -->
     <string name="telemessage_faq_url" translatable="false">https://www.telemessage.com/faqs/</string>
     <string name="telemessage_help_url" translatable="false">https://www.telemessage.com/contact-us/</string>
-    
+    <string name="telemessage_privacy_url" translatable="false">https://www.sharonaintergreen.com/post/tm-sgnl-privacy-poilcy/</string>
+
     <string name="preferences__send_logs_to_telemessage">Send Logs to TeleMessage</string>
 
     <string name="installation_event_sent">installation_event_sent</string>

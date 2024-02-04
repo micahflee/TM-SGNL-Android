@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.archiver.annotation.TeleMessagePublicize;
 import org.signal.core.util.StringUtil;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.zkgroup.profiles.ExpiringProfileKeyCredential;
@@ -130,6 +131,7 @@ public class Recipient {
   private final String                       about;
   private final String                       aboutEmoji;
   private final ProfileName                  systemProfileName;
+  @TeleMessagePublicize
   public final String                       systemContactName;//**TM_SA**//public
   private final Optional<Extras>             extras;
   private final boolean                      hasGroupsInCommon;
