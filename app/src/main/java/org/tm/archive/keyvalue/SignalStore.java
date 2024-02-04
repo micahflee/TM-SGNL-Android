@@ -72,7 +72,7 @@ public final class SignalStore {
     this.storageServiceValues      = new StorageServiceValues(store);
     this.uiHints                   = new UiHints(store);
     this.tooltipValues             = new TooltipValues(store);
-    this.misc                      = new MiscellaneousValues(store);
+    this.misc                      = new TeleMessageMiscellaneousValues(store); // TM_SA
     this.internalValues            = new InternalValues(store);
     this.emojiValues               = new EmojiValues(store);
     this.settingsValues            = new SettingsValues(store);

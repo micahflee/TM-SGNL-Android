@@ -103,7 +103,7 @@ public class FcmRefreshJob extends BaseJob {
 
         ApplicationDependencies.getSignalServiceAccountManager().setGcmId(token);
         SignalStore.account().setFcmToken(token.get());
-        com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());//**TM_SA**//
+        com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());//**TM_SA TODO remove this ASAP!**//
       } else {
         throw new RetryLaterException(new IOException("Failed to retrieve a token."));
       }
