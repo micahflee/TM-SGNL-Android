@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name="org.archiver.TeleMessageSignalApplication"
+        android:name=".TeleMessageSignalApplication"
         tools:node="merge"
         tools:replace="android:name">
 
@@ -21,7 +21,6 @@
                     android:host="org.tm.archive.prodshilo"
                     android:path="/QGKhFQhiONVb16luOCu0/IA+Ut4="
                     android:scheme="msauth" /> -->
-
                 <!--release-->
                 <data
                     android:host="org.tm.archive.prodshilo"

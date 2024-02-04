@@ -3,7 +3,13 @@ package org.tm.archive.database
 import android.app.Application
 import android.content.Context
 import androidx.annotation.VisibleForTesting
+import com.tm.androidcopysdk.api.IDatabase
+import com.tm.androidcopysdk.api.IMessageDao
+import com.tm.androidcopysdk.api.IMessageStoreObserver
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper
+import org.archiver.core.DefaultMessageStoreObserver
+import org.archiver.data.TeleAttachmentTable
+import org.archiver.data.TeleMessageTable
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.logging.Log
 import org.signal.core.util.withinTransaction
@@ -35,10 +41,11 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
     SqlCipherDatabaseHook(),
     true
   ),
-  SignalDatabaseOpenHelper {
+  SignalDatabaseOpenHelper, IDatabase<Long> {
 
-  val messageTable: MessageTable = MessageTable(context, this)
-  val attachmentTable: AttachmentTable = AttachmentTable(context, this, attachmentSecret)
+  private val messageStoreObserver: IMessageStoreObserver<Long> = DefaultMessageStoreObserver.instance
+  val messageTable: MessageTable = TeleMessageTable(context, this, messageStoreObserver)
+  val attachmentTable: AttachmentTable = TeleAttachmentTable(context, this, attachmentSecret, messageStoreObserver)
   val mediaTable: MediaTable = MediaTable(context, this)
   val threadTable: ThreadTable = ThreadTable(context, this)
   val identityTable: IdentityTable = IdentityTable(context, this)
@@ -73,6 +80,17 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
   val callTable: CallTable = CallTable(context, this)
   val kyberPreKeyTable: KyberPreKeyTable = KyberPreKeyTable(context, this)
   val callLinkTable: CallLinkTable = CallLinkTable(context, this)
+
+  override fun messageDao(): IMessageDao<Long> = messageTable as TeleMessageTable
+
+  override fun beginTransaction() { /*sqlCipherDatabase.beginTransaction()*/ }
+
+  override fun endTransaction() { /*sqlCipherDatabase.endTransaction()*/ }
+
+  override fun setTransactionSuccessful() { /*sqlCipherDatabase.setTransactionSuccessful()*/ }
+
+  override fun isInTransaction() = false//sqlCipherDatabase.inTransaction()
+
 
   override fun onOpen(db: net.zetetic.database.sqlcipher.SQLiteDatabase) {
     db.setForeignKeyConstraintsEnabled(true)

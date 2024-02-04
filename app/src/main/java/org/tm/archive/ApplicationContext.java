@@ -438,7 +438,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   @VisibleForTesting
   void initializeAppDependencies() {
-    ApplicationDependencies.init(this, createDependencyProvider()/*TM_SA change provider*/);
+    ApplicationDependencies.init(this, new ApplicationDependencyProvider(this));
   }
 
   //**TM_SA**// Start

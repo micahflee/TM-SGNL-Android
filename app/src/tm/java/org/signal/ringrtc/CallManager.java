@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.archiver.aar.RecordedAudioToFileController;
+import org.archiver.device.RecordedAudioToFileController;
 import org.signal.ringrtc.CallLinkState.Restrictions;
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;

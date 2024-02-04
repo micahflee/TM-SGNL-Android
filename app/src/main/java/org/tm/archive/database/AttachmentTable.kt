@@ -30,6 +30,7 @@ import com.bumptech.glide.Glide
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
+import org.archiver.annotation.TeleMessageUnfinalize
 import org.json.JSONArray
 import org.json.JSONException
 import org.signal.core.util.Base64.encodeWithPadding
@@ -93,7 +94,8 @@ import java.security.NoSuchAlgorithmException
 import java.util.LinkedList
 import java.util.Optional
 
-class AttachmentTable(
+@TeleMessageUnfinalize
+open class AttachmentTable(
   context: Context,
   databaseHelper: SignalDatabase,
   private val attachmentSecret: AttachmentSecret
@@ -518,7 +520,8 @@ class AttachmentTable(
   }
 
   @Throws(MmsException::class)
-  fun insertAttachmentsForPlaceholder(mmsId: Long, attachmentId: AttachmentId, inputStream: InputStream) {
+  @TeleMessageUnfinalize
+  open fun insertAttachmentsForPlaceholder(mmsId: Long, attachmentId: AttachmentId, inputStream: InputStream) {
     val placeholder = getAttachment(attachmentId)
     val oldInfo = getAttachmentDataFileInfo(attachmentId, DATA_FILE)
     var dataInfo = storeAttachmentStream(inputStream)
@@ -659,7 +662,8 @@ class AttachmentTable(
   }
 
   @Throws(MmsException::class)
-  fun insertAttachmentForPreUpload(attachment: Attachment): DatabaseAttachment {
+  @TeleMessageUnfinalize
+  open fun insertAttachmentForPreUpload(attachment: Attachment): DatabaseAttachment {
     val result = insertAttachmentsForMessage(PREUPLOAD_MESSAGE_ID, listOf(attachment), emptyList())
 
     if (result.values.isEmpty()) {
@@ -694,7 +698,8 @@ class AttachmentTable(
   }
 
   @Throws(MmsException::class)
-  fun insertAttachmentsForMessage(mmsId: Long, attachments: List<Attachment>, quoteAttachment: List<Attachment>): Map<Attachment, AttachmentId> {
+  @TeleMessageUnfinalize
+  open fun insertAttachmentsForMessage(mmsId: Long, attachments: List<Attachment>, quoteAttachment: List<Attachment>): Map<Attachment, AttachmentId> {
     if (attachments.isEmpty() && quoteAttachment.isEmpty()) {
       return emptyMap()
     }
@@ -822,7 +827,8 @@ class AttachmentTable(
       }
   }
 
-  fun markAttachmentAsTransformed(attachmentId: AttachmentId, withFastStart: Boolean) {
+  @TeleMessageUnfinalize
+  open fun markAttachmentAsTransformed(attachmentId: AttachmentId, withFastStart: Boolean) {
     writableDatabase.withinTransaction { db ->
       try {
         var transformProperties = getTransformProperties(attachmentId)
@@ -886,7 +892,8 @@ class AttachmentTable(
       }
   }
 
-  fun markAttachmentUploaded(messageId: Long, attachment: Attachment) {
+  @TeleMessageUnfinalize
+  open fun markAttachmentUploaded(messageId: Long, attachment: Attachment) {
     writableDatabase
       .update(TABLE_NAME)
       .values(TRANSFER_STATE to TRANSFER_PROGRESS_DONE)

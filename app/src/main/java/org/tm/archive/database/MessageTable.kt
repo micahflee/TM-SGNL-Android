@@ -33,6 +33,7 @@ import org.archiver.ArchiveConstants
 import org.archiver.ArchiveFileUtil
 import org.archiver.ArchiveSender
 import org.archiver.ArchiveUtil
+import org.archiver.annotation.TeleMessageUnfinalize
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -619,7 +620,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     updateTypeBitmask(id, MessageTypes.ENCRYPTION_MASK, MessageTypes.ENCRYPTION_REMOTE_LEGACY_BIT)
   }
 
-  fun markSmsStatus(id: Long, status: Int) {
+  @TeleMessageUnfinalize
+  open fun markSmsStatus(id: Long, status: Int) {
     Log.i(TAG, "Updating ID: $id to status: $status")
 
     writableDatabase
@@ -633,7 +635,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     notifyConversationListeners(threadId)
   }
 
-  private fun updateTypeBitmask(id: Long, maskOff: Long, maskOn: Long) {
+  @TeleMessageUnfinalize
+  protected open fun updateTypeBitmask(id: Long, maskOff: Long, maskOn: Long) {
     writableDatabase.withinTransaction { db ->
       db.execSQL(
         """
@@ -694,7 +697,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     }
   }
 
-  fun setIncomingMessagesViewed(messageIds: List<Long>): List<MarkedMessageInfo> {
+  @TeleMessageUnfinalize
+  open fun setIncomingMessagesViewed(messageIds: List<Long>): List<MarkedMessageInfo> {
     if (messageIds.isEmpty()) {
       return emptyList()
     }
@@ -775,7 +779,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     return results
   }
 
-  fun insertCallLog(recipientId: RecipientId, type: Long, timestamp: Long, outgoing: Boolean): InsertResult {
+  @TeleMessageUnfinalize
+  open fun insertCallLog(recipientId: RecipientId, type: Long, timestamp: Long, outgoing: Boolean): InsertResult {
     val unread = MessageTypes.isMissedAudioCall(type) || MessageTypes.isMissedVideoCall(type)
     val recipient = Recipient.resolved(recipientId)
     val threadId = threads.getOrCreateThreadIdFor(recipient)
@@ -805,7 +810,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     return InsertResult(messageId, threadId)
   }
 
-  fun updateCallLog(messageId: Long, type: Long) {
+  @TeleMessageUnfinalize
+  open fun updateCallLog(messageId: Long, type: Long) {
     val unread = MessageTypes.isMissedAudioCall(type) || MessageTypes.isMissedVideoCall(type)
 
     writableDatabase
@@ -829,7 +835,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     ApplicationDependencies.getDatabaseObserver().notifyMessageUpdateObservers(MessageId(messageId))
   }
 
-  fun insertGroupCall(
+  @TeleMessageUnfinalize
+  open fun insertGroupCall(
     groupRecipientId: RecipientId,
     sender: RecipientId,
     timestamp: Long,
@@ -978,7 +985,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     }
   }
 
-  fun insertEditMessageInbox(mediaMessage: IncomingMessage, targetMessage: MmsMessageRecord): Optional<InsertResult> {
+  @TeleMessageUnfinalize
+  open fun insertEditMessageInbox(mediaMessage: IncomingMessage, targetMessage: MmsMessageRecord): Optional<InsertResult> {
     val insertResult = insertMessageInbox(retrieved = mediaMessage, editedMessage = targetMessage, notifyObservers = false)
 
     if (insertResult.isPresent) {
@@ -1881,7 +1889,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     }
   }
 
-  fun markAsOutbox(messageId: Long) {
+  @TeleMessageUnfinalize
+  open fun markAsOutbox(messageId: Long) {
     val threadId = getThreadIdForMessage(messageId)
     updateMailboxBitmask(messageId, MessageTypes.BASE_TYPE_MASK, MessageTypes.BASE_OUTBOX_TYPE, Optional.of(threadId))
   }
@@ -1913,21 +1922,24 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     ApplicationDependencies.getDatabaseObserver().notifyMessageUpdateObservers(MessageId(messageId))
   }
 
-  fun markAsSending(messageId: Long) {
+  @TeleMessageUnfinalize
+  open fun markAsSending(messageId: Long) {
     val threadId = getThreadIdForMessage(messageId)
     updateMailboxBitmask(messageId, MessageTypes.BASE_TYPE_MASK, MessageTypes.BASE_SENDING_TYPE, Optional.of(threadId))
     ApplicationDependencies.getDatabaseObserver().notifyMessageUpdateObservers(MessageId(messageId))
     ApplicationDependencies.getDatabaseObserver().notifyConversationListListeners()
   }
 
-  fun markAsSentFailed(messageId: Long) {
+  @TeleMessageUnfinalize
+  open fun markAsSentFailed(messageId: Long) {
     val threadId = getThreadIdForMessage(messageId)
     updateMailboxBitmask(messageId, MessageTypes.BASE_TYPE_MASK, MessageTypes.BASE_SENT_FAILED_TYPE, Optional.of(threadId))
     ApplicationDependencies.getDatabaseObserver().notifyMessageUpdateObservers(MessageId(messageId))
     ApplicationDependencies.getDatabaseObserver().notifyConversationListListeners()
   }
 
-  fun markAsSent(messageId: Long, secure: Boolean) {
+  @TeleMessageUnfinalize
+  open fun markAsSent(messageId: Long, secure: Boolean) {
     val threadId = getThreadIdForMessage(messageId)
     updateMailboxBitmask(messageId, MessageTypes.BASE_TYPE_MASK, MessageTypes.BASE_SENT_TYPE or if (secure) MessageTypes.PUSH_MESSAGE_BIT or MessageTypes.SECURE_MESSAGE_BIT else 0, Optional.of(threadId))
     ApplicationDependencies.getDatabaseObserver().notifyMessageUpdateObservers(MessageId(messageId))
@@ -1960,7 +1972,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     markAsRemoteDelete(targetMessage)
   }
 
-  private fun markAsRemoteDeleteInternal(messageId: Long) {
+  @TeleMessageUnfinalize
+  protected open fun markAsRemoteDeleteInternal(messageId: Long) {
     var deletedAttachments = false
     writableDatabase.withinTransaction { db ->
       db.update(TABLE_NAME)
@@ -1999,7 +2012,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     }
   }
 
-  fun markDownloadState(messageId: Long, state: Long) {
+  @TeleMessageUnfinalize
+  open fun markDownloadState(messageId: Long, state: Long) {
     writableDatabase
       .update(TABLE_NAME)
       .values(MMS_STATUS to state)
@@ -2197,7 +2211,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     return setMessagesRead("$STORY_TYPE = 0 AND $PARENT_STORY_ID <= 0 AND ($READ = 0 OR ($REACTIONS_UNREAD = 1 AND ($outgoingTypeClause)))", null)
   }
 
-  private fun setMessagesRead(where: String, arguments: Array<String>?): List<MarkedMessageInfo> {
+  @TeleMessageUnfinalize
+  protected open fun setMessagesRead(where: String, arguments: Array<String>?): List<MarkedMessageInfo> {
     val releaseChannelId = SignalStore.releaseChannelValues().releaseChannelRecipientId
     return writableDatabase.rawQuery(
       """
@@ -2445,7 +2460,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
 
   @JvmOverloads
   @Throws(MmsException::class)
-  fun insertMessageInbox(
+  @TeleMessageUnfinalize
+  open fun insertMessageInbox(
     retrieved: IncomingMessage,
     candidateThreadId: Long = -1,
     editedMessage: MmsMessageRecord? = null,
@@ -2703,7 +2719,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
   }
 
   @Throws(MmsException::class)
-  fun insertMessageOutbox(
+  @TeleMessageUnfinalize
+  open fun insertMessageOutbox(
     message: OutgoingMessage,
     threadId: Long,
     forceSms: Boolean,
@@ -3150,7 +3167,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     return deleteMessage(messageId, threadId)
   }
 
-  private fun deleteMessage(messageId: Long, threadId: Long = getThreadIdForMessage(messageId), notify: Boolean = true, updateThread: Boolean = true): Boolean {
+  @TeleMessageUnfinalize
+  protected open fun deleteMessage(messageId: Long, threadId: Long = getThreadIdForMessage(messageId), notify: Boolean = true, updateThread: Boolean = true): Boolean {
     Log.d(TAG, "deleteMessage($messageId)")
 
     attachments.deleteAttachmentsForMessage(messageId)
@@ -4243,7 +4261,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     return missingTargetTimestamps
   }
 
-  private fun incrementReceiptCountInternal(targetTimestamp: Long, receiptAuthor: RecipientId, receiptSentTimestamp: Long, receiptType: ReceiptType, messageQualifier: MessageQualifier, stopwatch: Stopwatch? = null): Set<MessageReceiptUpdate> {
+  @TeleMessageUnfinalize
+  protected open fun incrementReceiptCountInternal(targetTimestamp: Long, receiptAuthor: RecipientId, receiptSentTimestamp: Long, receiptType: ReceiptType, messageQualifier: MessageQualifier, stopwatch: Stopwatch? = null): Set<MessageReceiptUpdate> {
     val qualifierWhere: String = when (messageQualifier) {
       MessageQualifier.NORMAL -> " AND NOT ($IS_STORY_CLAUSE)"
       MessageQualifier.STORY -> " AND $IS_STORY_CLAUSE"
