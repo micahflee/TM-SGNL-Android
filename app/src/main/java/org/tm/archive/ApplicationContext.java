@@ -141,16 +141,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   private static final String TAG = Log.tag(ApplicationContext.class);
 
-  private static Application mApplicationContext;//**TM_SA**//
-
-  public static ApplicationContext getInstance(Context context) {
-    return (ApplicationContext)context.getApplicationContext();
-  }
-
-  public static Application getInstance() {//**TM_SA**//
-    return mApplicationContext;
-  }
-
   @Override
   public void onCreate() {
     Tracer.getInstance().start("Application#onCreate()");
@@ -241,67 +231,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
     SignalLocalMetrics.ColdStart.onApplicationCreateFinished();
     Tracer.getInstance().end("Application#onCreate()");
-
-    //**TM_SA**// start
-    com.tm.logger.Log.i(TAG, "1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
-    mApplicationContext = this;
-
-    com.tm.logger.Log.createInstance(getApplicationContext());
-    ArchiveLogger.Companion.sendArchiveLog("TeleMessage logger created");
-
-    initArchiveUrlsAndStartArchive();
   }
-
-  private void initArchiveUrlsAndStartArchive() {
-
-    if(CommonUtils.isMyServiceRunning(mApplicationContext, BackupService.class)){
-      CommonUtils.stopBackupService(mApplicationContext, false);
-    }
-
-    ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive \nsetUrl: \nchosenUrl =" + ArchiveConstants.charlieProduction + "\nKeeperUrl =" + ArchiveConstants.prodKeeper);
-    if(org.tm.archive.BuildConfig.DEBUG){
-      String baseUrlPrefProd = PrefManager.getStringPref(mApplicationContext, ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, ArchiveConstants.charlieProduction);
-      String baseUrlPrefKeeper = PrefManager.getStringPref(mApplicationContext, ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY,ArchiveConstants.prodKeeper);
-      AuthenticatorConstants.Companion.setBASE_URL(new Pair(baseUrlPrefProd, baseUrlPrefKeeper));
-      CommonUtils.setUrl(mApplicationContext, baseUrlPrefProd, baseUrlPrefKeeper);
-    }else {
-      CommonUtils.setUrl(mApplicationContext, ArchiveConstants.charlieProduction, ArchiveConstants.prodKeeper);
-    }
-    CommonUtils.setSqlInfo(getApplicationContext(), ArchiveConstants.isTestMode ? ArchiveConstants.signalTestPassword : ArchiveConstants.signalCurrentPassword);
-
-    //set SDK to active -> need to change it with the self register
-    boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);
-    PrefManager.setBooleanPref(getApplicationContext(), "activated_aa" ,true);
-
-    if(isTestMode || !installationEventSent) {
-      initializeTMAndroidArchive();
-      ArchiveLogger.Companion.sendArchiveLog("initializeTMAndroidArchive");
-    }
-
-    CommonUtils.startBackupService(getApplicationContext());
-    ArchiveLogger.Companion.sendArchiveLog("Backup service started");
-  }
-
-  private void initializeTMAndroidArchive() {
-
-    AndroidCopySettings mSettings = new AndroidCopySettings();
-
-    PrefManager.setStringPref(getApplicationContext(),"wifi3g","WIFI3G");
-
-    mSettings.setData(AndroidCopySettings.DataSaving.WIFI3G);
-    com.tm.logger.Log.d("initializeTMAndroidArchive", "signupSucess with emptey password and user name");
-    AndroidCopySDK.getInstance(getApplicationContext()).signupSucess(/*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/ "", "");
-
-    ArchiveLogger.Companion.sendArchiveLog("User name = " + "Password = ");
-
-    boolean installationEventSent = PrefManager.getBooleanPref(getApplicationContext(), R.string.installation_event_sent, false);
-    // InstallEvent should be sent only once
-    if(!installationEventSent) {
-      PrefManager.setBooleanPref(getApplicationContext(),R.string.installation_event_sent,true);
-    }
-  }
-
-  //**TM_SA**// End
 
   @Override
   public void onForeground() {
@@ -440,12 +370,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   void initializeAppDependencies() {
     ApplicationDependencies.init(this, new ApplicationDependencyProvider(this));
   }
-
-  //**TM_SA**// Start
-  protected ApplicationDependencyProvider createDependencyProvider() {
-    return new ApplicationDependencyProvider(this);
-  }
-  //**TM_SA**// End
 
   private void initializeFirstEverAppLaunch() {
     if (TextSecurePreferences.getFirstInstallVersion(this) == -1) {

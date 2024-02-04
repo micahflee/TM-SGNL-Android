@@ -40,10 +40,7 @@ class FCMConnector {
 
       try {
         FirebaseApp.clearInstancesForTest()
-        FirebaseApp.initializeApp(
-          ApplicationContext.getInstance(context).applicationContext,
-          options
-        )
+        FirebaseApp.initializeApp(context.applicationContext, options)
       } catch (e: Exception) {
         Log.d(TAG, "App already exists " + e.message)
       }
@@ -108,16 +105,9 @@ class FCMConnector {
             FirebaseApp.clearInstancesForTest()
           }
           if (fcmName == null || fcmName.isEmpty()) {
-            FirebaseApp.initializeApp(
-              ApplicationContext.getInstance(context).applicationContext,
-              options
-            )
+            FirebaseApp.initializeApp(context.applicationContext, options)
           } else {
-            FirebaseApp.initializeApp(
-              ApplicationContext.getInstance(context).applicationContext,
-              options,
-              fcmName
-            )
+            FirebaseApp.initializeApp(context.applicationContext, options, fcmName)
           }
           Log.d(TAG, "FirebaseApp.getApps(context): " + FirebaseApp.getApps(context))
           Log.i(

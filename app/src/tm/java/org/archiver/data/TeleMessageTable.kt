@@ -65,9 +65,8 @@ class TeleMessageTable(
     return result
   }
 
-  override fun insertMessageOutbox(message: OutgoingMessage, threadId: Long, forceSms: Boolean, defaultReceiptStatus: Int,
-                                   insertListener: InsertListener?, preUploadResults: Collection<MessageSender.PreUploadResult>?): Long {
-    val result = super.insertMessageOutbox(message, threadId, forceSms, defaultReceiptStatus, insertListener, preUploadResults)
+  override fun insertMessageOutbox(message: OutgoingMessage, threadId: Long, forceSms: Boolean, defaultReceiptStatus: Int, insertListener: InsertListener?): Long {
+    val result = super.insertMessageOutbox(message, threadId, forceSms, defaultReceiptStatus, insertListener)
     messageStoreObserver.afterMessageIdStateChanged(result)
     return result
   }

@@ -13,6 +13,7 @@ import com.tm.androidcopysdk.Models.MessageDetailsArchive
 import com.tm.androidcopysdk.Models.MessageStatus
 import com.tm.androidcopysdk.api.IMessageStoreObserver
 import com.tm.androidcopysdk.api.StoreListenerModule
+import com.tm.androidcopysdk.device.DefaultMessageStoreObserver
 import com.tm.androidcopysdk.utils.RuntimeObject.getCallerClassMethodAndLine
 import com.tm.logger.Log
 import java.io.File
@@ -101,37 +102,35 @@ class DefaultMessageStoreObserver<Id> : IMessageStoreObserver<Id> {
       val details = createMessageDetails(message, accountPhoneNumber)
       Log.d(TAG, "setMmsMessage $message")
       val files = message.attachments.map { getAttachmentFile(message, it) }.toTypedArray()
-      module.dataGrabber.setMmsMessage(details.protocol, details.toPhonesArray, details.fromPhoneNumber, details.body,
+      module.dataGrabber.setMmsMessage(
+        details.protocol, details.toPhonesArray, details.fromPhoneNumber, details.body,
         details.id, details.date, details.subject, accountPhoneNumber, details.chatMode, details.chatName, details.chatId,
         details.fromName, details.fromValue, details.toNameArray, details.toPhoneNumberArrayValue, files
       )
       return
     }
-    maybeUpdateAttachmentsFileMms(message)
+    message.attachments.forEach { maybeUpdateAttachmentsFileMms(message, existing, it) }
   }
 
-  private fun maybeUpdateAttachmentsFileMms(message: ArchiveMessage) {
-    val existing = getArchiverMessageDao().find(message.archiveIdentifier ?: return) ?: return
-    message.attachments.forEach { attachment ->
-      val targetPath = getAttachmentFile(message, attachment).absolutePath
-      val existingAttachment = existing.attachments.firstOrNull { it.sourcePath == targetPath } ?: return@forEach
-      if (!existingAttachment.archivePath.isNullOrEmpty() || existingAttachment.status != MessageAttachmentStatus.Loading)
-        return@forEach
-      if (attachment.status != MessageAttachmentStatus.Success || attachment.sourcePath == null)
-        return@forEach
-      val sourceFile = File(targetPath)
-      if (sourceFile.exists() && sourceFile.length() > 0)
-        return@forEach
+  private fun maybeUpdateAttachmentsFileMms(message: ArchiveMessage, existing: ArchiveMessage, attachment: ArchiveAttachment) {
+    val targetPath = getAttachmentFile(message, attachment).absolutePath
+    val existingAttachment = existing.attachments.firstOrNull { it.sourcePath == targetPath } ?: return
+    if (!existingAttachment.archivePath.isNullOrEmpty() || existingAttachment.status != MessageAttachmentStatus.Loading)
+      return
+    if (attachment.status != MessageAttachmentStatus.Success || attachment.sourcePath == null)
+      return
+    val sourceFile = File(targetPath)
+    if (sourceFile.exists() && sourceFile.length() > 0)
+      return
 
-      module.filer.streamIntoFile(attachment.copy(archivePath = targetPath))
-      if (!sourceFile.exists() && sourceFile.length() > 0)
-        return@forEach
-      val needsCompression = message.direction == Direction.Outgoing || attachment.type == ArchiveAttachmentType.Sticker
-      val file = File(targetPath)
-      Log.d(TAG, "updateFileMms(${file.exists()}) $needsCompression $message $existing")
-      module.dataGrabber.updateFileMms(File(targetPath).name, needsCompression)
-      Log.d(TAG, "updateFileMms(${file.exists()})")
-    }
+    module.filer.streamIntoFile(attachment.copy(archivePath = targetPath))
+    if (!sourceFile.exists() && sourceFile.length() > 0)
+      return
+    val needsCompression = message.direction == Direction.Outgoing || attachment.type == ArchiveAttachmentType.Sticker
+    val file = File(targetPath)
+    Log.d(TAG, "updateFileMms(${file.exists()}) $needsCompression $message $existing")
+    module.dataGrabber.updateFileMms(File(targetPath).name, needsCompression)
+    Log.d(TAG, "updateFileMms(${file.exists()})")
   }
 
   private fun isArchivingSupported(message: ArchiveMessage): Boolean = module.settings().isArchivingSupported(message)
@@ -279,7 +278,7 @@ class DefaultMessageStoreObserver<Id> : IMessageStoreObserver<Id> {
     private const val DELETED_MESSAGE_BODY_ORIGINAL_ID_REFERENCE = "Original Message (Msg ID - %s)"
     private const val EDITED_MESSAGE_BODY_ORIGINAL_ID_REFERENCE = "Original Message ID: %s"
 
-    val instance: IMessageStoreObserver<Long> = DefaultMessageStoreObserver()
+    val instance: IMessageStoreObserver<Long> by lazy { DefaultMessageStoreObserver() }
 
   }
 
