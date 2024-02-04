@@ -1,34 +1,51 @@
-/*
- * Copyright 2024 Signal Messenger, LLC
- * SPDX-License-Identifier: AGPL-3.0-only
- */
-
-package org.archiver
+package org.tm.archive
 
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.AndroidCopySettings
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
+import com.tm.androidcopysdk.DataGrabber
+import com.tm.androidcopysdk.api.IArchiveDatabase
+import com.tm.androidcopysdk.api.IMessageStoreObserver
+import com.tm.androidcopysdk.api.StoreListenerModule
+import com.tm.androidcopysdk.database.DefaultArchiveDatabase
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
-import org.tm.archive.ApplicationContext
-import org.tm.archive.BuildConfig
-import org.tm.archive.R
+import org.archiver.ArchiveConstants
+import org.archiver.ArchiveLogger
+import org.archiver.ArchiveUtil
+import org.archiver.core.DefaultMessageStoreObserver
+import org.archiver.di.TeleMessageApplicationDependencyProvider
+import org.archiver.model.SignalArchiveType
+import org.archiver.model.SignalFiler
+import org.tm.archive.database.SignalDatabase
+import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.dependencies.ApplicationDependencyProvider
 
 class TeleMessageSignalApplication : ApplicationContext() {
-
 
   override fun onCreate() {
     super.onCreate()
     Log.createInstance(applicationContext)
     ArchiveLogger.sendArchiveLog("TeleMessage logger created")
+
+    initializeArchiver()
     initArchiveUrlsAndStartArchive()
   }
 
-  override fun createDependencyProvider(): ApplicationDependencyProvider {
-    return TeleMessageApplicationDependencyProvider(this)
+  override fun initializeAppDependencies() {
+    ApplicationDependencies.init(this, TeleMessageApplicationDependencyProvider(this))
+  }
+
+  private fun initializeArchiver() {
+    val database = SignalDatabase.instance ?: return
+    val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this, SignalArchiveType.values().map { it }.toTypedArray())
+    val filer = SignalFiler(applicationContext, database.attachmentTable)
+    val module = StoreListenerModule(DataGrabber.getInstance(this), database, archiveDatabase, filer)
+    val messageStoreObserver: IMessageStoreObserver<Long> = DefaultMessageStoreObserver.instance
+    messageStoreObserver.initialize(module)
+    messageStoreObserver.setAccountPhoneNumber(ArchiveUtil.getPhoneNumberInTestMode(this))
   }
 
   private fun initArchiveUrlsAndStartArchive() {

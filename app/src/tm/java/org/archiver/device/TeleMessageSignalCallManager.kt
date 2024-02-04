@@ -1,11 +1,11 @@
-package org.archiver.call
+package org.archiver.device
 
 import android.app.Application
+import com.tm.androidcopysdk.Models.CallAnswerType
+import com.tm.androidcopysdk.Models.CallRtcMode
+import com.tm.androidcopysdk.Models.Direction
+import com.tm.androidcopysdk.device.CallProcessor
 import kotlinx.coroutines.Dispatchers
-import org.archiver.integration.CallProcessor
-import org.archiver.model.CallAnswerType
-import org.archiver.model.CallRtcMode
-import org.archiver.model.CallDirection
 import org.signal.ringrtc.CallManager.CallEvent
 import org.signal.ringrtc.Remote
 import org.tm.archive.events.WebRtcViewModel
@@ -44,7 +44,7 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
     val recipientPhoneNumber = recipient.e164.getOrNull() ?: return
     val recipientName = recipient.getDisplayNameOrUsername(context)
     processor.setAccountPhoneNumber(SignalStore.account().e164)
-    processor.onBeginCall(callId, CallDirection.fromIsOutgoing(isOutgoing), recipientPhoneNumber, recipientName)
+    processor.onBeginCall(callId, Direction.fromIsOutgoing(isOutgoing), recipientPhoneNumber, recipientName)
   }
 
   override fun onCallEvent(remote: Remote?, event: CallEvent) {
@@ -77,7 +77,5 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
     processor.onCallConcluded()
     super.onCallConcluded(remote)
   }
-
-  private fun isCallRecordingSupported(communicationType: CallRtcMode) = true
 
 }

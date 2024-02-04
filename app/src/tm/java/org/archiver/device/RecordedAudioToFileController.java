@@ -1,4 +1,4 @@
-package org.archiver.aar;
+package org.archiver.device;
 
 
 import android.media.AudioFormat;

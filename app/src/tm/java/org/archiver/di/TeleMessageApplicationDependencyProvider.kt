@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-package org.archiver
+package org.archiver.di
 
 import android.app.Application
-import org.archiver.call.TeleMessageSignalCallManager
+import org.archiver.device.TeleMessageSignalCallManager
 import org.tm.archive.dependencies.ApplicationDependencyProvider
 import org.tm.archive.service.webrtc.SignalCallManager
 
