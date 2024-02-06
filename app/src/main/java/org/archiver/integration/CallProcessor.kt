@@ -1,8 +1,10 @@
 package org.archiver.integration
 
 import android.content.Context
+import androidx.preference.PreferenceManager
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.CallObj
+import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.DataGrabber
 import com.tm.androidcopysdk.Models.RecFileExt
 import com.tm.androidcopysdk.utils.Contact
@@ -58,8 +60,18 @@ class CallProcessor(
         recordedFile.delete()
       return
     }
-    recordedFile = decodeRecordingFile(recordedFile)
-    archiveCallRecordedFile(call, recordedFile)
+//    PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("recording_type", 2).apply()
+    when (manageCallArchiveType()) {
+      CommonUtils.RECORDING_TYPE.NONE -> return
+      CommonUtils.RECORDING_TYPE.LOGS -> {
+        archiveCallRecordedFile(call, null)
+      }
+      else -> {
+        recordedFile = decodeRecordingFile(recordedFile)
+        archiveCallRecordedFile(call, recordedFile)
+      }
+    }
+
   }
 
   fun setAnswerType(answerType: CallAnswerType) {
@@ -98,6 +110,12 @@ class CallProcessor(
     val decodedFile = decoder.decodeToWave(file.absolutePath, wavFilePath)
     file.delete()
     return decodedFile
+  }
+
+  private fun manageCallArchiveType() : CommonUtils.RECORDING_TYPE {
+    val recordingType = CommonUtils.getRecordingStatus(context)
+    Log.d("call archiving", "recordingType $recordingType")
+    return recordingType;
   }
 
   private fun isCallSupported(rtcMode: CallRtcMode) = if (rtcMode == CallRtcMode.Voice) isVoiceCallSupported() else isVideoCallSupported()
