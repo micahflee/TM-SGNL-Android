@@ -53,6 +53,7 @@ import org.webrtc.PeerConnection.TcpCandidatePolicy;
 import org.webrtc.PeerConnectionFactory.InitializationOptions;
 import org.webrtc.audio.JavaAudioDeviceModule;
 
+//*TM_SA*/copy and change this class
 public class CallManager {
   @NonNull
   private static final String TAG = CallManager.class.getSimpleName();
@@ -195,9 +196,9 @@ public class CallManager {
     Log.i(TAG, "createAudioDeviceModule(): useHardware: " + useHardware + " useAecM: " + useAecM);
     Context context = ContextUtils.getApplicationContext();
     Log.d(TAG, "Enable recording of microphone input audio to file");
-    saveRecordedAudioToFile = new RecordedAudioToFileController(executor, context.getCacheDir().getAbsolutePath());
+    saveRecordedAudioToFile = new RecordedAudioToFileController(executor, context.getCacheDir().getAbsolutePath());/*TM_SA*/
     return JavaAudioDeviceModule.builder(context)
-                                .setSamplesReadyCallback(saveRecordedAudioToFile) //
+                                .setSamplesReadyCallback(saveRecordedAudioToFile) /*TM_SA*/
                                 .setUseHardwareAcousticEchoCanceler(useHardware).setUseHardwareNoiseSuppressor(useHardware).setUseAecm(useAecM).createAudioDeviceModule();
   }
 
@@ -533,11 +534,11 @@ public class CallManager {
 
         connection.setAudioSource(audioSource, audioTrack);
 
-        if (saveRecordedAudioToFile != null) {
+        if (saveRecordedAudioToFile != null) { /*TM_SA*/
           if (saveRecordedAudioToFile.start("" + callId.longValue())) {
             Log.d(TAG, "Recording input audio to file is activated");
           }
-        }
+        }/*TM_SA*/
 
         return connection;
       }
@@ -826,7 +827,7 @@ public class CallManager {
   @CalledByNative
   private void handleJoinStateChanged(long clientId, GroupCall.JoinState joinState, Long demuxId) {
     Log.i(TAG, "handleJoinStateChanged():");
-//    Log.i(TAG, "handleJoinStateChanged() -> joinState: " + joinState);
+    Log.i(TAG, "handleJoinStateChanged() -> joinState: " + joinState);
 //    Log.i(TAG, "handleJoinStateChanged() -> clientId: " + clientId + ". demuxId: " + demuxId);
     GroupCall groupCall = (GroupCall)this.groupCallByClientId.get(clientId);
     if (groupCall == null) {
@@ -834,18 +835,18 @@ public class CallManager {
     } else {
       groupCall.handleJoinStateChanged(joinState, demuxId);
     }
-    if (saveRecordedAudioToFile != null) {/*TM_SA*/
+    if (saveRecordedAudioToFile != null) {//*TM_SA*/Start
       if (demuxId != null && joinState == GroupCall.JoinState.JOINED) {
         if (saveRecordedAudioToFile.start("" + demuxId)) {
           Log.d(TAG, "Recording input audio to file is activated");
         }
       }
-      if (joinState == GroupCall.JoinState.NOT_JOINED) {/*TM_SA*/
+      if (joinState == GroupCall.JoinState.NOT_JOINED) {
         Log.d(TAG, "Closing audio file for recorded input audio.");
         saveRecordedAudioToFile.stop();
 //        saveRecordedAudioToFile = null;
       }
-    }
+    }//*TM_SA*/End
 
   }
 
@@ -887,7 +888,7 @@ public class CallManager {
   }
 
   @CalledByNative
-  private void handleEnded(long clientId, GroupCall.GroupCallEndReason reason) {
+  public void handleEnded(long clientId, GroupCall.GroupCallEndReason reason) { //*TM_SA*/ make it public
     Log.i(TAG, "handleEnded():");
     GroupCall groupCall = (GroupCall)this.groupCallByClientId.get(clientId);
     if (groupCall == null) {

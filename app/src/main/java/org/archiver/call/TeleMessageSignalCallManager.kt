@@ -3,21 +3,22 @@ package org.archiver.call
 import android.app.Application
 import com.tm.logger.Log
 import kotlinx.coroutines.Dispatchers
+import org.archiver.ArchiveUtil
 import org.archiver.integration.CallProcessor
 import org.archiver.model.CallAnswerType
 import org.archiver.model.CallDirection
 import org.archiver.model.CallRtcMode
 import org.signal.ringrtc.CallManager.CallEvent
+import org.signal.ringrtc.GroupCall
 import org.signal.ringrtc.Remote
 import org.tm.archive.events.WebRtcViewModel
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
-import org.tm.archive.recipients.RecipientId
-import org.tm.archive.ringrtc.RemotePeer
 import org.tm.archive.service.webrtc.SignalCallManager
 import org.tm.archive.service.webrtc.state.WebRtcServiceState
 import kotlin.jvm.optionals.getOrNull
 
+//*TM_SA*/add this class
 class TeleMessageSignalCallManager(application: Application) : SignalCallManager(application) {
 
   private val context = application.applicationContext
@@ -32,43 +33,37 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
     val callId : Long?
     val isVideoCall : Boolean
 //    Log.d("call archiving", "postStateUpdate - callRecipient: ${callRecipient.participantIds}")
-//    Log.d("call archiving", "postStateUpdate - state.callInfoState.callState: ${state.callInfoState.callState}")
-//    Log.d("call archiving", "postStateUpdate - state.callInfoState.groupState: ${state.callInfoState.groupState}")
 
     callConnectedTime = state.callInfoState.callConnectedTime
-    if (state.callInfoState.groupState == WebRtcViewModel.GroupCallState.IDLE) {
-//      val setupState = state.getCallSetupState(activePeer?.callId)
-      isVideoCall = state.getCallSetupState(activePeer?.callId).run { isEnableVideoOnCreate || isRemoteVideoOffer || isAcceptWithVideo }
-      callId = activePeer?.callId?.longValue()
+    isVideoCall = state.getCallSetupState(activePeer?.callId).run { isEnableVideoOnCreate || isRemoteVideoOffer || isAcceptWithVideo }
+
+    callId = if (!callRecipient.isGroup) {
+      activePeer?.callId?.longValue()
     } else {
-      isVideoCall = true
-      callId = state.callInfoState.groupCall?.localDeviceState?.demuxId
-//      Log.d("call archiving", "postStateUpdate - demuxId: ${state.callInfoState.groupCall?.localDeviceState?.demuxId}")
+      state.callInfoState.groupCall?.localDeviceState?.demuxId
     }
-    Log.d("call archiving", "postStateUpdate - callId: $callId")
+    Log.d("call archiving", "postStateUpdate - isVideoCall: $isVideoCall, isGroup: ${callRecipient.isGroup}, callId: $callId")
     if (!processor.isRunning() && callId != null) {
       onStartCall(callId, callRecipient, state.callInfoState.callState == WebRtcViewModel.State.CALL_OUTGOING)
     }
     processor.setRtcMode(CallRtcMode.fromIsVideo(isVideoCall))
-
-    if (state.callInfoState.callState == WebRtcViewModel.State.CALL_DISCONNECTED) {
-      val callConnectedTime = this.callConnectedTime.takeIf { it > 0 }
-      this.callConnectedTime = -1
-      val duration = callConnectedTime?.let { System.currentTimeMillis() - it } ?: 0
-      processor.setDuration(duration)
-      processor.onCallConcluded()
-    }
     super.postStateUpdate(state)
   }
 
   private fun onStartCall(callId: Long, recipient: Recipient, isOutgoing: Boolean) {
-    Log.d("call archiving", "onStartCall -> callId: $callId")
 //    val callId = remotePeer.callId.longValue()
-    var recipientPhoneNumber = recipient.e164.getOrNull()
-    recipient.getGroupName(context)
-    val groupName = recipient.getGroupName(context)
-    if (!groupName.isNullOrEmpty()) recipientPhoneNumber = groupName
+    var recipientPhoneNumber  : String? = null
+    recipientPhoneNumber = if (!recipient.isGroup) {
+      recipient.e164.getOrNull()
+    } else {
+      val participantList = ArchiveUtil.getRecipientsListFromParticipantIds(recipient)
+      participantList[0].e164.getOrNull()
+    }
+
+//    val groupName = recipient.getGroupName(context)
+//    if (!groupName.isNullOrEmpty()) recipientPhoneNumber = groupName
     val recipientName = recipient.getDisplayNameOrUsername(context)
+    Log.d("call archiving", "onStartCall -> callId: $callId, recipientName: $recipientName, recipientPhoneNumber: $recipientPhoneNumber")
     if (recipientName.isEmpty()) return
     processor.setAccountPhoneNumber(SignalStore.account().e164)
     if (recipientPhoneNumber != null) {
@@ -102,12 +97,22 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
 
   override fun onCallConcluded(remote: Remote?) {
     Log.d("call archiving", "onCallConcluded")
-    /*val callConnectedTime = this.callConnectedTime.takeIf { it > 0 }
+    onFinishCall()
+    super.onCallConcluded(remote)
+  }
+
+  override fun onEnded(groupCall: GroupCall, groupCallEndReason: GroupCall.GroupCallEndReason) {
+    Log.d("call archiving", "onEnded")
+    onFinishCall()
+    super.onEnded(groupCall, groupCallEndReason)
+  }
+
+  private fun onFinishCall() {
+    val callConnectedTime = this.callConnectedTime.takeIf { it > 0 }
     this.callConnectedTime = -1
     val duration = callConnectedTime?.let { System.currentTimeMillis() - it } ?: 0
     processor.setDuration(duration)
-    processor.onCallConcluded()*/
-    super.onCallConcluded(remote)
+    processor.onCallConcluded()
   }
 
   private fun isCallRecordingSupported(communicationType: CallRtcMode) = true

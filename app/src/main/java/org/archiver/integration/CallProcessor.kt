@@ -52,17 +52,21 @@ class CallProcessor(
   }
 
   private suspend fun submitCall(call: TeleMessage3dPartyCall) {
-    Log.d("CallProcessor", "submitCall")
     val savedDir = context.cacheDir
     val prefix = "${call.callId}_$recordedFilePrefix"
     var recordedFile = savedDir?.listFiles()?.firstOrNull { it.name.let { it.startsWith(prefix) && it.endsWith(recorderFileSuffix) } }
-    if (!isCallSupported(call.rtcMode)) {
+    val recordingType = CommonUtils.getRecordingStatus(context)
+    val isCallSupported = isCallSupported(call.rtcMode)
+    //    PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("recording_type", 2).apply()
+    Log.d("CallProcessor", "submitCall -> recordedFile $recordedFile, isCallSupported $isCallSupported, recordingType: $recordingType")
+
+    if (!isCallSupported) {
       if (recordedFile?.exists() == true)
         recordedFile.delete()
       return
     }
-//    PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("recording_type", 2).apply()
-    when (manageCallArchiveType()) {
+
+    when (recordingType) {
       CommonUtils.RECORDING_TYPE.NONE -> return
       CommonUtils.RECORDING_TYPE.LOGS -> {
         archiveCallRecordedFile(call, null)
@@ -93,7 +97,7 @@ class CallProcessor(
     val date = System.currentTimeMillis().toString()
     val type = call.type().toString()
     val lastModified = ""
-    Log.d("call archiving", "archiveCallRecordingFile - $accountPhoneNumber $call ${recordedFile?.absolutePath}")
+    Log.d("call archiving", "archiveCallRecordingFile -> $accountPhoneNumber $call ${recordedFile?.absolutePath}")
     val archiveCall = CallObj(callId, otherSideNumber, date, type, duration, lastModified, accountPhoneNumber, call.rtcMode.code)
     archiveCall.name = Contact(call.name)
 
@@ -111,12 +115,6 @@ class CallProcessor(
     val decodedFile = decoder.decodeToWave(file.absolutePath, wavFilePath)
     file.delete()
     return decodedFile
-  }
-
-  private fun manageCallArchiveType() : CommonUtils.RECORDING_TYPE {
-    val recordingType = CommonUtils.getRecordingStatus(context)
-    Log.d("call archiving", "recordingType $recordingType")
-    return recordingType;
   }
 
   private fun isCallSupported(rtcMode: CallRtcMode) = if (rtcMode == CallRtcMode.Voice) isVoiceCallSupported() else isVideoCallSupported()

@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.webrtc.audio.JavaAudioDeviceModule;
 import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
-
+//*TM_SA*/add this class
 /**
  * Implements the AudioRecordSamplesReadyCallback interface and writes
  * recorded raw audio samples to an output file.
