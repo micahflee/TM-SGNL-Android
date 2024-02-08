@@ -29,8 +29,8 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
   override fun postStateUpdate(state: WebRtcServiceState) {
     val activePeer = state.callInfoState.activePeer
     val callRecipient = state.callInfoState.callRecipient
-    var callId : Long?
-    var isVideoCall : Boolean
+    val callId : Long?
+    val isVideoCall : Boolean
 //    Log.d("call archiving", "postStateUpdate - callRecipient: ${callRecipient.participantIds}")
 //    Log.d("call archiving", "postStateUpdate - state.callInfoState.callState: ${state.callInfoState.callState}")
 //    Log.d("call archiving", "postStateUpdate - state.callInfoState.groupState: ${state.callInfoState.groupState}")
