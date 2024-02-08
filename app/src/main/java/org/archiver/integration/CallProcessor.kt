@@ -52,6 +52,7 @@ class CallProcessor(
   }
 
   private suspend fun submitCall(call: TeleMessage3dPartyCall) {
+    Log.d("CallProcessor", "submitCall")
     val savedDir = context.cacheDir
     val prefix = "${call.callId}_$recordedFilePrefix"
     var recordedFile = savedDir?.listFiles()?.firstOrNull { it.name.let { it.startsWith(prefix) && it.endsWith(recorderFileSuffix) } }
@@ -92,7 +93,7 @@ class CallProcessor(
     val date = System.currentTimeMillis().toString()
     val type = call.type().toString()
     val lastModified = ""
-    Log.d(javaClass.simpleName, "archiveCallRecordingFile - $accountPhoneNumber $call ${recordedFile?.absolutePath}")
+    Log.d("call archiving", "archiveCallRecordingFile - $accountPhoneNumber $call ${recordedFile?.absolutePath}")
     val archiveCall = CallObj(callId, otherSideNumber, date, type, duration, lastModified, accountPhoneNumber, call.rtcMode.code)
     archiveCall.name = Contact(call.name)
 

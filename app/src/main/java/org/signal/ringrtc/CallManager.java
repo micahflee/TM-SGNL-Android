@@ -245,7 +245,7 @@ public class CallManager {
     if (saveRecordedAudioToFile != null) {
       Log.d(TAG, "Closing audio file for recorded input audio.");
       saveRecordedAudioToFile.stop();
-      saveRecordedAudioToFile = null;
+//      saveRecordedAudioToFile = null;
     }
     this.ringrtcClose(this.nativeCallManager);
     this.nativeCallManager = 0L;
@@ -826,12 +826,27 @@ public class CallManager {
   @CalledByNative
   private void handleJoinStateChanged(long clientId, GroupCall.JoinState joinState, Long demuxId) {
     Log.i(TAG, "handleJoinStateChanged():");
+//    Log.i(TAG, "handleJoinStateChanged() -> joinState: " + joinState);
+//    Log.i(TAG, "handleJoinStateChanged() -> clientId: " + clientId + ". demuxId: " + demuxId);
     GroupCall groupCall = (GroupCall)this.groupCallByClientId.get(clientId);
     if (groupCall == null) {
       Log.w(TAG, "groupCall not found by clientId: " + clientId);
     } else {
       groupCall.handleJoinStateChanged(joinState, demuxId);
     }
+    if (saveRecordedAudioToFile != null) {/*TM_SA*/
+      if (demuxId != null && joinState == GroupCall.JoinState.JOINED) {
+        if (saveRecordedAudioToFile.start("" + demuxId)) {
+          Log.d(TAG, "Recording input audio to file is activated");
+        }
+      }
+      if (joinState == GroupCall.JoinState.NOT_JOINED) {/*TM_SA*/
+        Log.d(TAG, "Closing audio file for recorded input audio.");
+        saveRecordedAudioToFile.stop();
+//        saveRecordedAudioToFile = null;
+      }
+    }
+
   }
 
   @CalledByNative
