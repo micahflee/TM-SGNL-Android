@@ -101,11 +101,12 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
     <!-- //**TM_SA**//Change:
+           application name to TeleMessageSignalApplication
            icon resource
            app_name resource
            tools:replace="android:allowBackup,android:supportsRtl"
           -->
-    <application android:name=".ApplicationContext"
+    <application android:name="org.archiver.TeleMessageSignalApplication"
                  android:icon="@mipmap/ic_launcher"
                  android:label="@string/app_name"
                  android:supportsRtl="true"

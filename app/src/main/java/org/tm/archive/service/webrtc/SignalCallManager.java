@@ -117,7 +117,7 @@ import static org.tm.archive.service.webrtc.WebRtcUtil.getUrgencyFromCallUrgency
  * Entry point for all things calling. Lives for the life of the app instance and will spin up a foreground service when needed to
  * handle "active" calls.
  */
-public final class SignalCallManager implements CallManager.Observer, GroupCall.Observer, CameraEventListener, AppForegroundObserver.Listener {
+public class SignalCallManager implements CallManager.Observer, GroupCall.Observer, CameraEventListener, AppForegroundObserver.Listener {//*TM_SA*/delete final
 
   private static final String TAG = Log.tag(SignalCallManager.class);
 
