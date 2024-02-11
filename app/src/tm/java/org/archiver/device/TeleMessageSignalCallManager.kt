@@ -1,12 +1,13 @@
-package org.archiver.call
+package org.archiver.device
 
 import android.app.Application
+import com.tm.androidcopysdk.device.CallProcessor
+import com.tm.androidcopysdk.model.CallAnswerType
+import com.tm.androidcopysdk.model.CallRtcMode
+import com.tm.androidcopysdk.model.Direction
 import com.tm.logger.Log
 import kotlinx.coroutines.Dispatchers
 import org.archiver.ArchiveUtil
-import org.archiver.model.CallAnswerType
-import org.archiver.model.CallDirection
-import org.archiver.model.CallRtcMode
 import org.signal.ringrtc.CallManager.CallEvent
 import org.signal.ringrtc.GroupCall
 import org.signal.ringrtc.Remote
@@ -16,8 +17,6 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.service.webrtc.SignalCallManager
 import org.tm.archive.service.webrtc.state.WebRtcServiceState
 import kotlin.jvm.optionals.getOrNull
-
-//*TM_SA*/add this class
 
 class TeleMessageSignalCallManager(application: Application) : SignalCallManager(application) {
 
@@ -34,13 +33,11 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
   override fun postStateUpdate(state: WebRtcServiceState) {
     val activePeer = state.callInfoState.activePeer
     val callRecipient = state.callInfoState.callRecipient
-    val callId : Long?
-    val isVideoCall : Boolean
 
     callConnectedTime = state.callInfoState.callConnectedTime
-    isVideoCall = state.getCallSetupState(activePeer?.callId).run { isEnableVideoOnCreate || isRemoteVideoOffer || isAcceptWithVideo }
+    val isVideoCall = state.getCallSetupState(activePeer?.callId).run { isEnableVideoOnCreate || isRemoteVideoOffer || isAcceptWithVideo }
 
-    callId = if (!callRecipient.isGroup) {
+    val callId = if (!callRecipient.isGroup) {
       activePeer?.callId?.longValue()
     } else {
       state.callInfoState.groupCall?.localDeviceState?.demuxId
@@ -65,7 +62,7 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
     if (recipientName.isEmpty()) return
     processor.setAccountPhoneNumber(SignalStore.account().e164)
     if (recipientPhoneNumber != null) {
-      processor.onBeginCall(callId, CallDirection.fromIsOutgoing(isOutgoing), recipientPhoneNumber, recipientName)
+      processor.onBeginCall(callId, Direction.fromIsOutgoing(isOutgoing), recipientPhoneNumber, recipientName)
     }
   }
 
@@ -112,7 +109,5 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
     processor.setDuration(duration)
     processor.onCallConcluded()
   }
-
-  private fun isCallRecordingSupported(communicationType: CallRtcMode) = true
 
 }
