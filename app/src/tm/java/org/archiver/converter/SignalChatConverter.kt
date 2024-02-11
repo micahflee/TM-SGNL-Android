@@ -1,7 +1,7 @@
 package org.archiver.converter
 
 import android.content.Context
-import com.tm.androidcopysdk.Models.ArchiveChat
+import com.tm.androidcopysdk.model.ArchiveChat
 import org.archiver.model.Messages.chatRecipient
 import org.archiver.model.Messages.chatType
 import org.tm.archive.database.model.MessageRecord

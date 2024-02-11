@@ -1,6 +1,6 @@
 package org.archiver.model
 
-import com.tm.androidcopysdk.Models.IArchiveType
+import com.tm.androidcopysdk.model.IArchiveType
 
 
 enum class SignalArchiveType(override val key: String): IArchiveType {

@@ -1,7 +1,7 @@
 package org.archiver.converter
 
 import android.content.Context
-import com.tm.androidcopysdk.Models.ArchiveRecipient
+import com.tm.androidcopysdk.model.ArchiveRecipient
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchivePreferenceConstants
 import org.archiver.model.Messages.isGroupMessage
@@ -19,23 +19,23 @@ class SignalArchiveRecipientConverter(
 
   fun convertSenderRecipient(message: MessageRecord): ArchiveRecipient {
     if (message.isOutgoing)
-      return ArchiveRecipient(getMyPhoneNumber())
+      return ArchiveRecipient(null, getMyPhoneNumber())
     val recipient = message.fromRecipient
     var phoneNumber = getPhoneNumber(recipient)
     if (phoneNumber == null && message.isGroupMessage()) {
       phoneNumber = recipient.toParticipant { it == recipient.id }?.e164?.getOrNull() // TODO find message.authorId
     }
     phoneNumber = recipient.e164.getOrDefault(phoneNumber ?: recipient.requireE164())
-    return ArchiveRecipient(phoneNumber)
+    return ArchiveRecipient(null, phoneNumber)
   }
 
   fun convertReceiverRecipients(message: MessageRecord): List<ArchiveRecipient> {
     val recipient = message.toRecipient
     if (message.isGroupMessage())
-      return recipient.toParticipants().mapNotNull { it.e164.getOrNull()?.let { ArchiveRecipient(it) } }
+      return recipient.toParticipants().mapNotNull { it.e164.getOrNull()?.let { ArchiveRecipient(null, it) } }
     if (!message.isOutgoing)
-      return listOf(ArchiveRecipient(getMyPhoneNumber()))
-    return listOf(ArchiveRecipient(recipient.e164.getOrNull() ?: ""))
+      return listOf(ArchiveRecipient(null, getMyPhoneNumber()))
+    return listOf(ArchiveRecipient(null, recipient.e164.getOrNull() ?: ""))
   }
 
   private fun getPhoneNumber(recipient: Recipient): String? {

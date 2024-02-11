@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import com.tm.androidcopysdk.api.IDatabase
-import com.tm.androidcopysdk.api.IMessageDao
+import com.tm.androidcopysdk.api.IArchiveMessageDao
 import com.tm.androidcopysdk.api.IMessageStoreObserver
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 import org.archiver.core.DefaultMessageStoreObserver
@@ -43,7 +43,7 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
   ),
   SignalDatabaseOpenHelper, IDatabase<Long> {
 
-  private val messageStoreObserver: IMessageStoreObserver<Long> = DefaultMessageStoreObserver.instance
+  private val messageStoreObserver: IMessageStoreObserver<Long> = DefaultMessageStoreObserver.getInstance()
   val messageTable: MessageTable = TeleMessageTable(context, this, messageStoreObserver)
   val attachmentTable: AttachmentTable = TeleAttachmentTable(context, this, attachmentSecret, messageStoreObserver)
   val mediaTable: MediaTable = MediaTable(context, this)
@@ -81,15 +81,15 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
   val kyberPreKeyTable: KyberPreKeyTable = KyberPreKeyTable(context, this)
   val callLinkTable: CallLinkTable = CallLinkTable(context, this)
 
-  override fun messageDao(): IMessageDao<Long> = messageTable as TeleMessageTable
+  override fun messageDao(): IArchiveMessageDao<Long> = messageTable as TeleMessageTable
 
-  override fun beginTransaction() { /*sqlCipherDatabase.beginTransaction()*/ }
+  override fun beginTransaction() {}
 
-  override fun endTransaction() { /*sqlCipherDatabase.endTransaction()*/ }
+  override fun endTransaction() {}
 
-  override fun setTransactionSuccessful() { /*sqlCipherDatabase.setTransactionSuccessful()*/ }
+  override fun setTransactionSuccessful() {}
 
-  override fun isInTransaction() = false//sqlCipherDatabase.inTransaction()
+  override fun isInTransaction() = false
 
 
   override fun onOpen(db: net.zetetic.database.sqlcipher.SQLiteDatabase) {

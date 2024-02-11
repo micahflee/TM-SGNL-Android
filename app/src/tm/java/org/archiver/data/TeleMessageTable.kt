@@ -1,8 +1,8 @@
 package org.archiver.data
 
 import android.content.Context
-import com.tm.androidcopysdk.Models.ArchiveMessage
-import com.tm.androidcopysdk.api.IMessageDao
+import com.tm.androidcopysdk.model.ArchiveMessage
+import com.tm.androidcopysdk.api.IArchiveMessageDao
 import com.tm.androidcopysdk.api.IMessageStoreObserver
 import org.archiver.converter.SignalArchiveMessageConverter
 import org.signal.core.util.Stopwatch
@@ -13,7 +13,6 @@ import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.sms.MessageSender
 import java.util.Optional
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
@@ -25,7 +24,7 @@ class TeleMessageTable(
 
   private val messageStoreObserver: IMessageStoreObserver<Long>,
 
-) : MessageTable(context, databaseHelper), IMessageDao<Long> {
+) : MessageTable(context, databaseHelper), IArchiveMessageDao<Long> {
 
   private val converter = SignalArchiveMessageConverter(context)
 

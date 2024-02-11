@@ -20,7 +20,7 @@ class TeleAttachmentTable(
 
   private val messageStoreObserver: IMessageStoreObserver<Long>,
 
-  ) : AttachmentTable(context, databaseHelper, attachmentSecret) {
+) : AttachmentTable(context, databaseHelper, attachmentSecret) {
 
   override fun insertAttachmentForPreUpload(attachment: Attachment): DatabaseAttachment {
     val result = super.insertAttachmentForPreUpload(attachment)

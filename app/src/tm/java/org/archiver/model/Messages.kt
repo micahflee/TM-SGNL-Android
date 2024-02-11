@@ -1,8 +1,8 @@
 package org.archiver.model
 
-import com.tm.androidcopysdk.Models.ChatType
-import com.tm.androidcopysdk.Models.IArchiveType
-import com.tm.androidcopysdk.Models.MessageStatus
+import com.tm.androidcopysdk.model.ChatType
+import com.tm.androidcopysdk.model.IArchiveType
+import com.tm.androidcopysdk.model.MessageStatus
 import org.signal.glide.Log
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.util.isMediaMessage

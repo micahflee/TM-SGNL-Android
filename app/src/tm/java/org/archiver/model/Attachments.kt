@@ -1,8 +1,7 @@
 package org.archiver.model
 
-import com.tm.androidcopysdk.Models.MessageAttachmentStatus
+import com.tm.androidcopysdk.model.MessageAttachmentStatus
 import org.tm.archive.database.AttachmentTable
-import org.tm.archive.mms.MmsSlide
 import org.tm.archive.mms.Slide
 
 object Attachments {

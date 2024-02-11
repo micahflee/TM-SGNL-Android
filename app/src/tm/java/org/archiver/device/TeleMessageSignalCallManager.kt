@@ -1,9 +1,9 @@
 package org.archiver.device
 
 import android.app.Application
-import com.tm.androidcopysdk.Models.CallAnswerType
-import com.tm.androidcopysdk.Models.CallRtcMode
-import com.tm.androidcopysdk.Models.Direction
+import com.tm.androidcopysdk.model.CallAnswerType
+import com.tm.androidcopysdk.model.CallRtcMode
+import com.tm.androidcopysdk.model.Direction
 import com.tm.androidcopysdk.device.CallProcessor
 import kotlinx.coroutines.Dispatchers
 import org.signal.ringrtc.CallManager.CallEvent

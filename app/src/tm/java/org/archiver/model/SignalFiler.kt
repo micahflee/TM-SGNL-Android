@@ -1,7 +1,7 @@
 package org.archiver.model
 
 import android.content.Context
-import com.tm.androidcopysdk.Models.ArchiveAttachment
+import com.tm.androidcopysdk.model.ArchiveAttachment
 import com.tm.androidcopysdk.device.AbstractFiler
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
 import org.tm.archive.attachments.AttachmentId

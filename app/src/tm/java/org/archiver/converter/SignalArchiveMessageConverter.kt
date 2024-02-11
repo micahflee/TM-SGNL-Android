@@ -1,9 +1,10 @@
 package org.archiver.converter
 
 import android.content.Context
-import com.tm.androidcopysdk.Models.ArchiveMessage
-import com.tm.androidcopysdk.Models.ArchiveMessageType
-import com.tm.androidcopysdk.Models.Direction
+import com.tm.androidcopysdk.model.ArchiveMessage
+import com.tm.androidcopysdk.model.ArchiveMessageType
+import com.tm.androidcopysdk.model.Direction
+import com.tm.androidcopysdk.model.Timestamp
 import org.archiver.model.Messages.archiveType
 import org.archiver.model.Messages.isMultimediaMessage
 import org.archiver.model.Messages.isSmsMessage
@@ -36,18 +37,21 @@ class SignalArchiveMessageConverter(
     val receivers = recipientConverter.convertReceiverRecipients(message)
     return ArchiveMessage(
       id = message.id.toString(),
-      transportType = type,
+      uniqueId = null,
+      type = type,
       direction = if (message.isOutgoing) Direction.Outgoing else Direction.Incoming,
-      type = message.archiveType(),
+      archiveType = message.archiveType(),
       status = message.status(),
       isDeleted = isDeleted,
       isRemoteDeleted = message.isRemoteDelete,
       body = message.getDisplayBody(context).toString(),
-      timestamp = message.timestamp,
+      timestamp = Timestamp(message.timestamp),
       chat = chatConverter.convert(message),
       sender = sender,
       receivers = receivers,
       attachments = attachmentConverter.convert((message as? MmsMessageRecord)?.slideDeck),
+      edits = null,
+      headers = null
     )
   }
 
@@ -62,18 +66,21 @@ class SignalArchiveMessageConverter(
     val receivers = recipientConverter.convertReceiverRecipients(message)
     return ArchiveMessage(
       id = message.id.toString(),
-      transportType = ArchiveMessageType.Call,
+      uniqueId = null,
+      type = ArchiveMessageType.Call,
       direction = if (message.isOutgoing) Direction.Outgoing else Direction.Incoming,
-      type = message.archiveType(),
+      archiveType = message.archiveType(),
       status = message.status(),
       isDeleted = false,
       isRemoteDeleted = message.isRemoteDelete,
       body = message.getDisplayBody(context).toString(),
-      timestamp = message.timestamp,
+      timestamp = Timestamp(message.timestamp),
       chat = chatConverter.convert(message),
       sender = sender,
       receivers = receivers,
       attachments = attachmentConverter.convert((message as? MmsMessageRecord)?.slideDeck),
+      edits = null,
+      headers = null
     )
   }
 

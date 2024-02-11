@@ -1,7 +1,7 @@
 package org.archiver.converter
 
-import com.tm.androidcopysdk.Models.ArchiveAttachment
-import com.tm.androidcopysdk.Models.ArchiveAttachmentType
+import com.tm.androidcopysdk.model.ArchiveAttachment
+import com.tm.androidcopysdk.model.ArchiveAttachmentType
 import org.archiver.model.Attachments.status
 import org.tm.archive.attachments.DatabaseAttachment
 import org.tm.archive.mms.AudioSlide
