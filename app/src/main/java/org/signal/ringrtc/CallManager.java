@@ -71,9 +71,11 @@ public class CallManager {
   private PeerConnectionFactory groupFactory;
 
   @Nullable
-  private static RecordedAudioToFileController saveRecordedAudioToFile;
+  private static RecordedAudioToFileController saveRecordedAudioToFile;/*TM_SA*/
 
-  static final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+  static final ExecutorService executor = Executors.newSingleThreadExecutor();/*TM_SA*/
+
 
   public static void initialize(Context applicationContext, Log.Logger logger, Map<String, String> fieldTrials) {
     try {
@@ -194,8 +196,8 @@ public class CallManager {
     }
 
     Log.i(TAG, "createAudioDeviceModule(): useHardware: " + useHardware + " useAecM: " + useAecM);
-    Context context = ContextUtils.getApplicationContext();
-    Log.d(TAG, "Enable recording of microphone input audio to file");
+    Context context = ContextUtils.getApplicationContext();/*TM_SA*/
+    Log.d(TAG, "Enable recording of microphone input audio to file");/*TM_SA*/
     saveRecordedAudioToFile = new RecordedAudioToFileController(executor, context.getCacheDir().getAbsolutePath());/*TM_SA*/
     return JavaAudioDeviceModule.builder(context)
                                 .setSamplesReadyCallback(saveRecordedAudioToFile) /*TM_SA*/
@@ -243,11 +245,11 @@ public class CallManager {
       this.groupFactory.dispose();
     }
 
-    if (saveRecordedAudioToFile != null) {
+    if (saveRecordedAudioToFile != null) {//*TM_SA*/s
       Log.d(TAG, "Closing audio file for recorded input audio.");
       saveRecordedAudioToFile.stop();
 //      saveRecordedAudioToFile = null;
-    }
+    }//*TM_SA*/e
     this.ringrtcClose(this.nativeCallManager);
     this.nativeCallManager = 0L;
   }

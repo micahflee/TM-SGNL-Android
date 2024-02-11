@@ -19,6 +19,7 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceState
 import kotlin.jvm.optionals.getOrNull
 
 //*TM_SA*/add this class
+
 class TeleMessageSignalCallManager(application: Application) : SignalCallManager(application) {
 
   private val context = application.applicationContext
@@ -27,12 +28,15 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
 
   private var callConnectedTime = -1L
 
+  companion object {
+    private const val TAG = "TeleMessageSignalCallManager"
+  }
+
   override fun postStateUpdate(state: WebRtcServiceState) {
     val activePeer = state.callInfoState.activePeer
     val callRecipient = state.callInfoState.callRecipient
     val callId : Long?
     val isVideoCall : Boolean
-//    Log.d("call archiving", "postStateUpdate - callRecipient: ${callRecipient.participantIds}")
 
     callConnectedTime = state.callInfoState.callConnectedTime
     isVideoCall = state.getCallSetupState(activePeer?.callId).run { isEnableVideoOnCreate || isRemoteVideoOffer || isAcceptWithVideo }
@@ -42,7 +46,7 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
     } else {
       state.callInfoState.groupCall?.localDeviceState?.demuxId
     }
-    Log.d("call archiving", "postStateUpdate - isVideoCall: $isVideoCall, isGroup: ${callRecipient.isGroup}, callId: $callId")
+    Log.d(TAG, "postStateUpdate - isVideoCall: $isVideoCall, isGroup: ${callRecipient.isGroup}, callId: $callId")
     if (!processor.isRunning() && callId != null) {
       onStartCall(callId, callRecipient, state.callInfoState.callState == WebRtcViewModel.State.CALL_OUTGOING)
     }
@@ -51,19 +55,14 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
   }
 
   private fun onStartCall(callId: Long, recipient: Recipient, isOutgoing: Boolean) {
-//    val callId = remotePeer.callId.longValue()
-    var recipientPhoneNumber  : String? = null
-    recipientPhoneNumber = if (!recipient.isGroup) {
+    val recipientPhoneNumber  : String? = if (!recipient.isGroup) {
       recipient.e164.getOrNull()
-    } else {
+    } else {//TODO: fix it for list after Moti fix recipient list call log in SDK
       val participantList = ArchiveUtil.getRecipientsListFromParticipantIds(recipient)
       participantList[0].e164.getOrNull()
     }
-
-//    val groupName = recipient.getGroupName(context)
-//    if (!groupName.isNullOrEmpty()) recipientPhoneNumber = groupName
     val recipientName = recipient.getDisplayNameOrUsername(context)
-    Log.d("call archiving", "onStartCall -> callId: $callId, recipientName: $recipientName, recipientPhoneNumber: $recipientPhoneNumber")
+    Log.d(TAG, "onStartCall -> callId: $callId, recipientName: $recipientName, recipientPhoneNumber: $recipientPhoneNumber")
     if (recipientName.isEmpty()) return
     processor.setAccountPhoneNumber(SignalStore.account().e164)
     if (recipientPhoneNumber != null) {
@@ -73,7 +72,7 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
 
 
   override fun onCallEvent(remote: Remote?, event: CallEvent) {
-    Log.d("call archiving", "onCallEvent: $event")
+    Log.d(TAG, "onCallEvent: $event")
     super.onCallEvent(remote, event)
     when (event) {
       CallEvent.ENDED_LOCAL_HANGUP -> processor.setAnswerType(CallAnswerType.Missed)

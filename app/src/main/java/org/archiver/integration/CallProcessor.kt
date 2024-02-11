@@ -33,6 +33,10 @@ class CallProcessor(
   private var accountPhoneNumber: String? = null
   private var call: TeleMessage3dPartyCall? = null
 
+  companion object {
+    private const val TAG = "CallProcessor"
+  }
+
   fun setAccountPhoneNumber(phoneNumber: String?) {
     accountPhoneNumber = phoneNumber?.takeIf { it.isNotEmpty() } ?: accountPhoneNumber
   }
@@ -57,8 +61,8 @@ class CallProcessor(
     var recordedFile = savedDir?.listFiles()?.firstOrNull { it.name.let { it.startsWith(prefix) && it.endsWith(recorderFileSuffix) } }
     val recordingType = CommonUtils.getRecordingStatus(context)
     val isCallSupported = isCallSupported(call.rtcMode)
-    //    PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("recording_type", 2).apply()
-    Log.d("CallProcessor", "submitCall -> recordedFile $recordedFile, isCallSupported $isCallSupported, recordingType: $recordingType")
+        PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("recording_type", 1).apply()
+    Log.d(TAG, "submitCall -> recordedFile $recordedFile, isCallSupported $isCallSupported, recordingType: $recordingType")
 
     if (!isCallSupported) {
       if (recordedFile?.exists() == true)
@@ -97,7 +101,7 @@ class CallProcessor(
     val date = System.currentTimeMillis().toString()
     val type = call.type().toString()
     val lastModified = ""
-    Log.d("call archiving", "archiveCallRecordingFile -> $accountPhoneNumber $call ${recordedFile?.absolutePath}")
+    Log.d(TAG, "archiveCallRecordingFile -> $accountPhoneNumber $call ${recordedFile?.absolutePath}")
     val archiveCall = CallObj(callId, otherSideNumber, date, type, duration, lastModified, accountPhoneNumber, call.rtcMode.code)
     archiveCall.name = Contact(call.name)
 
