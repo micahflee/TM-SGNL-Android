@@ -1,4 +1,4 @@
-package org.archiver.integration
+package org.archiver.call
 
 import android.content.Context
 import androidx.preference.PreferenceManager
