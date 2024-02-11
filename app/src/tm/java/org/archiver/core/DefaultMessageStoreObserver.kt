@@ -23,17 +23,11 @@ class DefaultMessageStoreObserver<Id> : IMessageStoreObserver<Id> {
 
   private lateinit var handler: Handler
 
-  private var accountPhoneNumber: String? = null
-
   private var enabled = true
 
   override fun initialize(module: SdkModule<Id>) {
     this.module = module
     handler = Handler(module.handlerThread.looper)
-  }
-
-  override fun setAccountPhoneNumber(accountPhoneNumber: String?) {
-    this.accountPhoneNumber = accountPhoneNumber
   }
 
   override fun enable() {
@@ -73,8 +67,7 @@ class DefaultMessageStoreObserver<Id> : IMessageStoreObserver<Id> {
   private fun afterMessageStateChanged(message: ArchiveMessage, existing: ArchiveMessage?) {
     if (!enabled)
       return
-    val accountPhoneNumber = accountPhoneNumber
-    if (accountPhoneNumber.isNullOrEmpty()) {
+    if (message.accountPhoneNumber.isNullOrEmpty()) {
       Log.d(TAG, "ignoring archive message ${message.archiveId}, account phone number is missing.")
       return
     }
@@ -83,25 +76,25 @@ class DefaultMessageStoreObserver<Id> : IMessageStoreObserver<Id> {
       return
     }
     if (message.hasDeletions()) {
-      archiveDeletedMessage(message, existing, accountPhoneNumber)
+      archiveDeletedMessage(message, existing)
       return
     }
     when (message.type) {
-      ArchiveMessageType.Sms -> archiveMessage(message, existing, accountPhoneNumber)
-      ArchiveMessageType.Mms -> archiveMmsMessage(message, existing, accountPhoneNumber)
-      else -> Log.w(TAG, "not sure how to handle $message $existing ${MessageDetailsConverter(module.filer).convert(message, existing, accountPhoneNumber)}")
+      ArchiveMessageType.Sms -> archiveMessage(message, existing)
+      ArchiveMessageType.Mms -> archiveMmsMessage(message, existing)
+      else -> Log.w(TAG, "not sure how to handle $message $existing ${MessageDetailsConverter(module.filer).convert(message, existing)}")
     }
   }
 
-  private fun archiveDeletedMessage(message: ArchiveMessage, existing: ArchiveMessage?, accountPhoneNumber: String) {
+  private fun archiveDeletedMessage(message: ArchiveMessage, existing: ArchiveMessage?) {
     if (message.direction != Direction.Outgoing || existing != null)
       return
-    val details = MessageDetailsConverter(module.filer).convert(message, existing, accountPhoneNumber)
+    val details = MessageDetailsConverter(module.filer).convert(message, existing)
     Log.d(TAG, "setDeletedMessage $message $details")
     module.dataGrabber.setMessage(details)
   }
 
-  private fun archiveMessage(message: ArchiveMessage, existing: ArchiveMessage?, accountPhoneNumber: String) {
+  private fun archiveMessage(message: ArchiveMessage, existing: ArchiveMessage?) {
     if (existing != null) {
       Log.d(TAG, "message ${message.archiveId} was already archived, skipping.")
       return
@@ -111,17 +104,17 @@ class DefaultMessageStoreObserver<Id> : IMessageStoreObserver<Id> {
       return
     }
     Log.d(TAG, "setMessage $message")
-    module.dataGrabber.setMessage(MessageDetailsConverter(module.filer).convert(message, existing, accountPhoneNumber))
+    module.dataGrabber.setMessage(MessageDetailsConverter(module.filer).convert(message, existing))
   }
 
-  private fun archiveMmsMessage(message: ArchiveMessage, existing: ArchiveMessage?, accountPhoneNumber: String) {
+  private fun archiveMmsMessage(message: ArchiveMessage, existing: ArchiveMessage?) {
     if (existing == null) {
-      val details = MessageDetailsConverter(module.filer).convert(message, existing, accountPhoneNumber)
+      val details = MessageDetailsConverter(module.filer).convert(message, existing)
       val files = message.attachments.map { getAttachmentFile(message, it) }.toTypedArray()
       Log.d(TAG, "setMmsMessage $message ${files.joinToString { it.absolutePath }}")
       module.dataGrabber.setMmsMessage(
         details.protocol, details.toPhonesArray, details.fromPhoneNumber, details.body,
-        details.id, details.date, details.subject, accountPhoneNumber, details.chatMode, details.chatName, details.chatId,
+        details.id, details.date, details.subject, message.accountPhoneNumber, details.chatMode, details.chatName, details.chatId,
         details.fromName, details.fromValue, details.toNameArray, details.toPhoneNumberArrayValue, files
       )
       return
@@ -146,7 +139,7 @@ class DefaultMessageStoreObserver<Id> : IMessageStoreObserver<Id> {
       return
     }
 
-    module.filer.streamIntoFile(attachment.copy(archivePath = targetPath))
+    module.filer.streamIntoFile(message, attachment.copy(archivePath = targetPath))
     if (!sourceFile.exists() || sourceFile.length() <= 0) {
       Log.d(TAG, "message ${message.archiveId} source file failed to stream, skipping.")
       return

@@ -22,22 +22,23 @@ class SignalArchiveMessageConverter(
   private val recipientConverter = SignalArchiveRecipientConverter(context)
   private val attachmentConverter = SignalAttachmentConverter()
 
-  fun convert(messages: List<MessageRecord?>): List<ArchiveMessage> {
-    return messages.mapNotNull(this::convert)
+  fun convert(messages: List<MessageRecord?>, accountPhoneNumber: String?): List<ArchiveMessage> {
+    return messages.mapNotNull { convert(it, accountPhoneNumber) }
   }
 
-  fun convert(message: MessageRecord?, isDeleted: Boolean = false): ArchiveMessage? {
+  fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false): ArchiveMessage? {
     if (message == null)
       return null
 
     val type = getTransportType(message) ?: return null
     if (type == ArchiveMessageType.Call)
-      return (message as MmsMessageRecord).let { convert(it, requireNotNull(it.call)) }
+      return (message as MmsMessageRecord).let { convert(it, accountPhoneNumber, requireNotNull(it.call)) }
     val sender = recipientConverter.convertSenderRecipient(message)
     val receivers = recipientConverter.convertReceiverRecipients(message)
     return ArchiveMessage(
       id = message.id.toString(),
       uniqueId = null,
+      accountPhoneNumber = accountPhoneNumber,
       type = type,
       direction = if (message.isOutgoing) Direction.Outgoing else Direction.Incoming,
       archiveType = message.archiveType(),
@@ -61,12 +62,13 @@ class SignalArchiveMessageConverter(
     return if (message.isSmsMessage()) ArchiveMessageType.Sms else if (message.isMultimediaMessage()) ArchiveMessageType.Mms else null
   }
 
-  private fun convert(message: MmsMessageRecord, call: CallTable.Call): ArchiveMessage {
+  private fun convert(message: MmsMessageRecord, accountPhoneNumber: String?, call: CallTable.Call): ArchiveMessage {
     val sender = recipientConverter.convertSenderRecipient(message)
     val receivers = recipientConverter.convertReceiverRecipients(message)
     return ArchiveMessage(
       id = message.id.toString(),
       uniqueId = null,
+      accountPhoneNumber = accountPhoneNumber,
       type = ArchiveMessageType.Call,
       direction = if (message.isOutgoing) Direction.Outgoing else Direction.Incoming,
       archiveType = message.archiveType(),

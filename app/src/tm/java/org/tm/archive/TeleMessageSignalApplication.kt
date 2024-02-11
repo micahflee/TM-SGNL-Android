@@ -44,7 +44,6 @@ class TeleMessageSignalApplication : ApplicationContext() {
     val module = SdkModule(DataGrabber.getInstance(applicationContext), database, archiveDatabase, filer)
     val messageStoreObserver: IMessageStoreObserver<Long> = DefaultMessageStoreObserver.getInstance()
     messageStoreObserver.initialize(module)
-    messageStoreObserver.setAccountPhoneNumber(ArchiveUtil.getPhoneNumberInTestMode(applicationContext))
   }
 
   private fun initArchiveUrlsAndStartArchive() {

@@ -4,6 +4,7 @@ import android.content.Context
 import com.tm.androidcopysdk.model.ArchiveMessage
 import com.tm.androidcopysdk.api.IArchiveMessageDao
 import com.tm.androidcopysdk.api.IMessageStoreObserver
+import org.archiver.ArchiveUtil
 import org.archiver.converter.SignalArchiveMessageConverter
 import org.signal.core.util.Stopwatch
 import org.tm.archive.database.MessageTable
@@ -28,9 +29,14 @@ class TeleMessageTable(
 
   private val converter = SignalArchiveMessageConverter(context)
 
-  override fun find(id: Long): ArchiveMessage? = converter.convert(getMessageRecordOrNull(id))
+  override fun find(id: Long): ArchiveMessage? = converter.convert(getMessageRecordOrNull(id), getAccountPhoneNumber())
 
-  override fun findAll(ids: List<Long>): List<ArchiveMessage> = getMessages(ids).use { reader -> reader.mapNotNull(converter::convert) }
+  override fun findAll(ids: List<Long>): List<ArchiveMessage> {
+    val accountPhoneNumber = getAccountPhoneNumber()
+    return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, accountPhoneNumber) } }
+  }
+
+  private fun getAccountPhoneNumber() = ArchiveUtil.getPhoneNumberInTestMode(context)
 
   // region Call
   // region Call - Insert
@@ -138,7 +144,7 @@ class TeleMessageTable(
 
   // region Message - Delete
   override fun deleteMessage(messageId: Long, threadId: Long, notify: Boolean, updateThread: Boolean): Boolean {
-    val message = converter.convert(getMessageRecordOrNull(messageId), isDeleted = true)
+    val message = converter.convert(getMessageRecordOrNull(messageId), getAccountPhoneNumber(), isDeleted = true)
     val threadDeleted = super.deleteMessage(messageId, threadId, notify, updateThread)
     messageStoreObserver.afterMessageStateChanged(message ?: return threadDeleted)
     return threadDeleted
