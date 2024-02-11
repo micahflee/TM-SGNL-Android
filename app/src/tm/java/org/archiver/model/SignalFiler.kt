@@ -3,6 +3,7 @@ package org.archiver.model
 import android.content.Context
 import com.tm.androidcopysdk.model.ArchiveAttachment
 import com.tm.androidcopysdk.device.AbstractFiler
+import com.tm.androidcopysdk.model.ArchiveMessage
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
 import org.tm.archive.attachments.AttachmentId
 import org.tm.archive.database.AttachmentTable
@@ -15,7 +16,7 @@ class SignalFiler(
   private val attachments: AttachmentTable
 ) : AbstractFiler(context) {
 
-  override fun streamIntoFile(attachment: ArchiveAttachment) {
+  override fun streamIntoFile(message: ArchiveMessage, attachment: ArchiveAttachment) {
     val sourcePath = attachment.sourcePath ?: return
     val archivePath = attachment.archivePath ?: return
     val splitUri = sourcePath.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
