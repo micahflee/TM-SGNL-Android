@@ -827,7 +827,6 @@ public class CallManager {
 
   @CalledByNative
   private void handleJoinStateChanged(long clientId, GroupCall.JoinState joinState, Long demuxId) {
-    Log.i(TAG, "handleJoinStateChanged():");
     Log.i(TAG, "handleJoinStateChanged() -> joinState: " + joinState);
 //    Log.i(TAG, "handleJoinStateChanged() -> clientId: " + clientId + ". demuxId: " + demuxId);
     GroupCall groupCall = (GroupCall)this.groupCallByClientId.get(clientId);
