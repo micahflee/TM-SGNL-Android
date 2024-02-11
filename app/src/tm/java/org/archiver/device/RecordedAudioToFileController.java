@@ -17,24 +17,23 @@ import java.util.concurrent.ExecutorService;
 
 import org.webrtc.audio.JavaAudioDeviceModule;
 import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
-
 /**
  * Implements the AudioRecordSamplesReadyCallback interface and writes
  * recorded raw audio samples to an output file.
  */
 public class RecordedAudioToFileController implements SamplesReadyCallback {
-  private static final String TAG                    = "RecordedAudioToFile";
-  private static final long   MAX_FILE_SIZE_IN_BYTES = 58348800L;
+  private static final String TAG = "RecordedAudioToFile";
+  private static final long MAX_FILE_SIZE_IN_BYTES = 58348800L;
 
-  private final     Object          lock = new Object();
-  private final     ExecutorService executor;
-  private final     String          dirPath;
-  private           String          fileName;
-  @Nullable private OutputStream    rawAudioFileOutputStream;
-  private           boolean         isRunning;
-  private           long            fileSizeInBytes;
+  private final Object lock = new Object();
+  private final ExecutorService executor;
+  private final     String          dirPath;/*TM_SA*/
+  private           String          fileName;/*TM_SA*/
+  @Nullable private OutputStream rawAudioFileOutputStream;
+  private boolean isRunning;
+  private long fileSizeInBytes;
 
-  public RecordedAudioToFileController(ExecutorService executor, String dir) {
+  public RecordedAudioToFileController(ExecutorService executor, String dir) {//*TM_SA*/add dir
     Log.d(TAG, "ctor");
     this.executor = executor;
     this.dirPath  = dir;
@@ -44,14 +43,14 @@ public class RecordedAudioToFileController implements SamplesReadyCallback {
    * Should be called on the same executor thread as the one provided at
    * construction.
    */
-  public boolean start(String fileName) {
+  public boolean start(String fileName) {//*TM_SA*/add fileName
     Log.d(TAG, "start");
     if (!isExternalStorageWritable()) {
       Log.e(TAG, "Writing to external media is not possible");
       return false;
     }
     synchronized (lock) {
-      this.fileName = fileName;
+      this.fileName = fileName;/*TM_SA*/
       isRunning     = true;
     }
     return true;
@@ -65,7 +64,7 @@ public class RecordedAudioToFileController implements SamplesReadyCallback {
     Log.d(TAG, "stop");
     synchronized (lock) {
       isRunning = false;
-      fileName  = null;
+      fileName  = null;/*TM_SA*/
       if (rawAudioFileOutputStream != null) {
         try {
           rawAudioFileOutputStream.close();
@@ -102,8 +101,8 @@ public class RecordedAudioToFileController implements SamplesReadyCallback {
   // information so that the file can be played using an external file player.
   // Example: /sdcard/recorded_audio_16bits_48000Hz_mono.pcm.
   private void openRawAudioOutputFile(int sampleRate, int channelCount) {
-    final String fileName   = getFileName(sampleRate, channelCount);
-    final File   outputFile = new File(fileName);
+    final String fileName   = getFileName(sampleRate, channelCount);//*TM_SA*/change fileName
+    final File outputFile = new File(fileName);
     try {
       rawAudioFileOutputStream = new FileOutputStream(outputFile);
     } catch (FileNotFoundException e) {

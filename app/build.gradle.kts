@@ -675,6 +675,7 @@ dependencies {
   releaseImplementation(files("libs/authenticatorsdk-signal-release.aar"))
   implementation(files("libs/common-debug.aar"))
   // Include the MAM SDK
+  implementation("com.arthenica:mobile-ffmpeg-full:4.4.LTS")
   implementation (files("MAMSDK/Microsoft.Intune.MAM.SDK.aar"))
   // Include MSAL
   implementation (libs.msal)
