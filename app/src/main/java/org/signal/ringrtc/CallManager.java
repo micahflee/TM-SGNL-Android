@@ -244,12 +244,6 @@ public class CallManager {
     if (this.groupFactory != null) {
       this.groupFactory.dispose();
     }
-
-    if (saveRecordedAudioToFile != null) {//*TM_SA*/s
-      Log.d(TAG, "Closing audio file for recorded input audio.");
-      saveRecordedAudioToFile.stop();
-//      saveRecordedAudioToFile = null;
-    }//*TM_SA*/e
     this.ringrtcClose(this.nativeCallManager);
     this.nativeCallManager = 0L;
   }
@@ -662,6 +656,11 @@ public class CallManager {
   @CalledByNative
   private void onCallConcluded(Remote remote) {
     Log.i(TAG, "onCallConcluded():");
+    if (saveRecordedAudioToFile != null) {//*TM_SA*/s
+      Log.d(TAG, "Closing audio file for recorded input audio.");
+      saveRecordedAudioToFile.stop();
+//      saveRecordedAudioToFile = null;
+    }//*TM_SA*/e
     this.observer.onCallConcluded(remote);
   }
 

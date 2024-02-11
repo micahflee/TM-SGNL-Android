@@ -61,7 +61,6 @@ class CallProcessor(
     var recordedFile = savedDir?.listFiles()?.firstOrNull { it.name.let { it.startsWith(prefix) && it.endsWith(recorderFileSuffix) } }
     val recordingType = CommonUtils.getRecordingStatus(context)
     val isCallSupported = isCallSupported(call.rtcMode)
-        PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("recording_type", 1).apply()
     Log.d(TAG, "submitCall -> recordedFile $recordedFile, isCallSupported $isCallSupported, recordingType: $recordingType")
 
     if (!isCallSupported) {

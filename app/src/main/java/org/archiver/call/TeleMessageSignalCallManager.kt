@@ -94,15 +94,15 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
   }
 
   override fun onCallConcluded(remote: Remote?) {
-    Log.d("call archiving", "onCallConcluded")
-    onFinishCall()
+    Log.d(TAG, "onCallConcluded")
     super.onCallConcluded(remote)
+    onFinishCall()
   }
 
   override fun onEnded(groupCall: GroupCall, groupCallEndReason: GroupCall.GroupCallEndReason) {
-    Log.d("call archiving", "onEnded")
-    onFinishCall()
+    Log.d(TAG, "onEnded")
     super.onEnded(groupCall, groupCallEndReason)
+    onFinishCall()
   }
 
   private fun onFinishCall() {
