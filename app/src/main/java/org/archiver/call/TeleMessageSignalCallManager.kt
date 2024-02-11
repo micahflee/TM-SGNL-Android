@@ -58,7 +58,7 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
       recipient.e164.getOrNull()
     } else {//TODO: fix it for list after Moti fix recipient list call log in SDK
       val participantList = ArchiveUtil.getRecipientsListFromParticipantIds(recipient)
-      participantList[0].e164.getOrNull()
+      participantList.firstOrNull()?.e164?.getOrNull()
     }
     val recipientName = recipient.getDisplayNameOrUsername(context)
     Log.d(TAG, "onStartCall -> callId: $callId, recipientName: $recipientName, recipientPhoneNumber: $recipientPhoneNumber")

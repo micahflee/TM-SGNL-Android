@@ -1,7 +1,6 @@
 package org.archiver.call
 
 import android.content.Context
-import androidx.preference.PreferenceManager
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.CallObj
 import com.tm.androidcopysdk.CommonUtils
@@ -70,16 +69,19 @@ class CallProcessor(
     }
 
     when (recordingType) {
-      CommonUtils.RECORDING_TYPE.NONE -> return
+      CommonUtils.RECORDING_TYPE.NONE ->{
+      }
       CommonUtils.RECORDING_TYPE.LOGS -> {
         archiveCallRecordedFile(call, null)
       }
       else -> {
         recordedFile = decodeRecordingFile(recordedFile)
         archiveCallRecordedFile(call, recordedFile)
+        return
       }
     }
-
+    if (recordedFile?.exists() == true)
+      recordedFile.delete()
   }
 
   fun setAnswerType(answerType: CallAnswerType) {
@@ -115,7 +117,7 @@ class CallProcessor(
       return null
     val wavFilePath = "${context.filesDir.path}/${file.nameWithoutExtension}.wav"
     val decoder = PcmAudioFileDecoder()
-    val decodedFile = decoder.decodeToWave(file.absolutePath, wavFilePath)
+    val decodedFile = decoder.decodeToWav(file.absolutePath, wavFilePath)
     file.delete()
     return decodedFile
   }

@@ -13,7 +13,7 @@ private const val RECORDER_SAMPLERATE = 48000 // 44100
 
 class PcmAudioFileDecoder {
 
-  fun decodeToWave(src: String, dest: String): File {
+  fun decodeToWav(src: String, dest: String): File {
     val result = File(dest)
     try {
       rawToWave(File(src), result)
