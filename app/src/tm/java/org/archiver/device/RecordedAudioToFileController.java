@@ -27,30 +27,27 @@ public class RecordedAudioToFileController implements SamplesReadyCallback {
 
   private final Object lock = new Object();
   private final ExecutorService executor;
-  private final     String          dirPath;/*TM_SA*/
-  private           String          fileName;/*TM_SA*/
+
   @Nullable private OutputStream rawAudioFileOutputStream;
-  private boolean isRunning;
+  protected boolean isRunning;
   private long fileSizeInBytes;
 
-  public RecordedAudioToFileController(ExecutorService executor, String dir) {//*TM_SA*/add dir
+  public RecordedAudioToFileController(ExecutorService executor) {
     Log.d(TAG, "ctor");
     this.executor = executor;
-    this.dirPath  = dir;
   }
 
   /**
    * Should be called on the same executor thread as the one provided at
    * construction.
    */
-  public boolean start(String fileName) {//*TM_SA*/add fileName
+  public boolean start() {
     Log.d(TAG, "start");
     if (!isExternalStorageWritable()) {
       Log.e(TAG, "Writing to external media is not possible");
       return false;
     }
     synchronized (lock) {
-      this.fileName = fileName;/*TM_SA*/
       isRunning     = true;
     }
     return true;
@@ -64,7 +61,6 @@ public class RecordedAudioToFileController implements SamplesReadyCallback {
     Log.d(TAG, "stop");
     synchronized (lock) {
       isRunning = false;
-      fileName  = null;/*TM_SA*/
       if (rawAudioFileOutputStream != null) {
         try {
           rawAudioFileOutputStream.close();
@@ -78,7 +74,7 @@ public class RecordedAudioToFileController implements SamplesReadyCallback {
   }
 
   // Checks if external storage is available for read and write.
-  private boolean isExternalStorageWritable() {
+  protected boolean isExternalStorageWritable() { // TM_SA - protected
     String state = Environment.getExternalStorageState();
     if (Environment.MEDIA_MOUNTED.equals(state)) {
       return true;
@@ -86,22 +82,17 @@ public class RecordedAudioToFileController implements SamplesReadyCallback {
     return false;
   }
 
-  private String getFileName(int sampleRate, int channelCount) {
-    String fileName = this.fileName;
-    if (TextUtils.isEmpty(fileName))
-      fileName = "";
-    else
-      fileName = fileName + "_";
-    return dirPath + File.separator + fileName
-           + "recorded_audio_16bits_" + String.valueOf(sampleRate) + "Hz"
-           + ((channelCount == 1) ? "_mono" : "_stereo") + ".pcm";
+  protected String getFileName(int sampleRate, int channelCount) { // TM_SA - add this function
+    return Environment.getExternalStorageDirectory().getPath() + File.separator
+            + "recorded_audio_16bits_" + String.valueOf(sampleRate) + "Hz"
+            + ((channelCount == 1) ? "_mono" : "_stereo") + ".pcm";
   }
 
   // Utilizes audio parameters to create a file name which contains sufficient
   // information so that the file can be played using an external file player.
   // Example: /sdcard/recorded_audio_16bits_48000Hz_mono.pcm.
   private void openRawAudioOutputFile(int sampleRate, int channelCount) {
-    final String fileName   = getFileName(sampleRate, channelCount);//*TM_SA*/change fileName
+    final String fileName = getFileName(sampleRate, channelCount); // TM_SA call getFileName
     final File outputFile = new File(fileName);
     try {
       rawAudioFileOutputStream = new FileOutputStream(outputFile);

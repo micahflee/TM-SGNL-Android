@@ -8,6 +8,8 @@ import com.tm.androidcopysdk.model.Direction
 import com.tm.logger.Log
 import kotlinx.coroutines.Dispatchers
 import org.archiver.ArchiveUtil
+import org.signal.ringrtc.CallId
+import org.signal.ringrtc.CallManager
 import org.signal.ringrtc.CallManager.CallEvent
 import org.signal.ringrtc.GroupCall
 import org.signal.ringrtc.Remote
@@ -16,6 +18,10 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.service.webrtc.SignalCallManager
 import org.tm.archive.service.webrtc.state.WebRtcServiceState
+import org.webrtc.audio.JavaAudioDeviceModule
+import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import kotlin.jvm.optionals.getOrNull
 
 class TeleMessageSignalCallManager(application: Application) : SignalCallManager(application) {
@@ -26,10 +32,6 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
 
   private var callConnectedTime = -1L
 
-  companion object {
-    private const val TAG = "TeleMessageSignalCallManager"
-  }
-
   override fun postStateUpdate(state: WebRtcServiceState) {
     val activePeer = state.callInfoState.activePeer
     val callRecipient = state.callInfoState.callRecipient
@@ -37,26 +39,20 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
     callConnectedTime = state.callInfoState.callConnectedTime
     val isVideoCall = state.getCallSetupState(activePeer?.callId).run { isEnableVideoOnCreate || isRemoteVideoOffer || isAcceptWithVideo }
 
-    val callId = if (!callRecipient.isGroup) {
-      activePeer?.callId?.longValue()
-    } else {
-      state.callInfoState.groupCall?.localDeviceState?.demuxId
-    }
+    val callId = (if (!callRecipient.isGroup) activePeer?.callId else state.callInfoState.groupCall?.peekInfo?.eraId?.let(CallId::fromEra))?.longValue()?.toString()
     Log.d(TAG, "postStateUpdate - isVideoCall: $isVideoCall, isGroup: ${callRecipient.isGroup}, callId: $callId")
-    if (!processor.isRunning() && callId != null) {
+    if (!processor.isRunning() && callId != null)
       onStartCall(callId, callRecipient, state.callInfoState.callState == WebRtcViewModel.State.CALL_OUTGOING)
-    }
     processor.setRtcMode(CallRtcMode.fromIsVideo(isVideoCall))
     super.postStateUpdate(state)
   }
 
-  private fun onStartCall(callId: Long, recipient: Recipient, isOutgoing: Boolean) {
-    val recipientPhoneNumber  : String? = if (!recipient.isGroup) {
+  private fun onStartCall(callId: String, recipient: Recipient, isOutgoing: Boolean) {
+    val recipientPhoneNumber  : String? = if (!recipient.isGroup)
       recipient.e164.getOrNull()
-    } else {//TODO: fix it for list after Moti fix recipient list call log in SDK
-      val participantList = ArchiveUtil.getRecipientsListFromParticipantIds(recipient)
-      participantList.firstOrNull()?.e164?.getOrNull()
-    }
+    else //TODO: fix it for list after Moti fix recipient list call log in SDK
+        ArchiveUtil.getRecipientsListFromParticipantIds(recipient).firstOrNull()?.e164?.getOrNull()
+
     val recipientName = recipient.getDisplayNameOrUsername(context)
     Log.d(TAG, "onStartCall -> callId: $callId, recipientName: $recipientName, recipientPhoneNumber: $recipientPhoneNumber")
     if (recipientName.isEmpty()) return
@@ -65,7 +61,6 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
       processor.onBeginCall(callId, Direction.fromIsOutgoing(isOutgoing), recipientPhoneNumber, recipientName)
     }
   }
-
 
   override fun onCallEvent(remote: Remote?, event: CallEvent) {
     Log.d(TAG, "onCallEvent: $event")
@@ -110,4 +105,9 @@ class TeleMessageSignalCallManager(application: Application) : SignalCallManager
     processor.onCallConcluded()
   }
 
+  companion object {
+
+    private const val TAG = "TeleMessageSignalCallManager"
+
+  }
 }
