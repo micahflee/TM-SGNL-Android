@@ -6,13 +6,22 @@
 package org.archiver.di
 
 import android.app.Application
+import com.tm.androidcopysdk.api.IMessageStoreObserver
+import org.archiver.core.DefaultMessageStoreObserver
 import org.archiver.device.TeleMessageSignalCallManager
 import org.tm.archive.dependencies.ApplicationDependencyProvider
 import org.tm.archive.service.webrtc.SignalCallManager
 
-class TeleMessageApplicationDependencyProvider(private val application: Application) : ApplicationDependencyProvider(application) {
+class TeleMessageApplicationDependencyProvider(
+  private val application: Application,
+
+) : ApplicationDependencyProvider(application) {
 
   override fun provideSignalCallManager(): SignalCallManager {
     return TeleMessageSignalCallManager(application)
+  }
+
+  companion object {
+    val messageStoreObserver: IMessageStoreObserver<Long> by lazy { DefaultMessageStoreObserver.getInstance() }
   }
 }

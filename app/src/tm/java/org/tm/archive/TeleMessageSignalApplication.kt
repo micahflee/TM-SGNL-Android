@@ -43,12 +43,12 @@ class TeleMessageSignalApplication : ApplicationContext() {
   }
 
   private fun initializeSdk() {
+    val sdk = AndroidCopySDK.getInstance(applicationContext)
     val database = SignalDatabase.instance ?: return
-    val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this, SignalArchiveType.values().map { it }.toTypedArray())
+    val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this, SignalArchiveType.coreValues())
     val filer = SignalFiler(applicationContext, database.attachmentTable)
-    val module = SdkModule(DataGrabber.getInstance(applicationContext), database, archiveDatabase, filer)
-    val messageStoreObserver: IMessageStoreObserver<Long> = DefaultMessageStoreObserver.getInstance()
-    messageStoreObserver.initialize(module)
+    val module = SdkModule(sdk, DataGrabber.getInstance(applicationContext), database, archiveDatabase, filer)
+    TeleMessageApplicationDependencyProvider.messageStoreObserver.initialize(module)
   }
 
   private fun initArchiveUrlsAndStartArchive() {
