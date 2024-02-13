@@ -8,8 +8,41 @@ package org.signal.ringrtc;
 import android.content.Context;
 import android.os.Build;
 import android.util.LongSparseArray;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import org.archiver.device.ICallManagerRecordingDelegate;
+import org.signal.ringrtc.CallLinkState.Restrictions;
+import org.webrtc.AudioSource;
+import org.webrtc.AudioTrack;
+import org.webrtc.ContextUtils;
+import org.webrtc.DefaultVideoDecoderFactory;
+import org.webrtc.DefaultVideoEncoderFactory;
+import org.webrtc.EglBase;
+import org.webrtc.Logging.Severity;
+import org.webrtc.MediaConstraints;
+import org.webrtc.MediaStream;
+import org.webrtc.NativeLibraryLoader;
+import org.webrtc.PeerConnection;
+import org.webrtc.PeerConnection.AdapterType;
+import org.webrtc.PeerConnection.BundlePolicy;
+import org.webrtc.PeerConnection.ContinualGatheringPolicy;
+import org.webrtc.PeerConnection.IceTransportsType;
+import org.webrtc.PeerConnection.RtcpMuxPolicy;
+import org.webrtc.PeerConnection.SdpSemantics;
+import org.webrtc.PeerConnection.TcpCandidatePolicy;
+import org.webrtc.PeerConnectionFactory;
+import org.webrtc.PeerConnectionFactory.InitializationOptions;
+import org.webrtc.SoftwareVideoDecoderFactory;
+import org.webrtc.SoftwareVideoEncoderFactory;
+import org.webrtc.VideoDecoderFactory;
+import org.webrtc.VideoEncoderFactory;
+import org.webrtc.VideoSink;
+import org.webrtc.VideoSource;
+import org.webrtc.VideoTrack;
+import org.webrtc.audio.JavaAudioDeviceModule;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,41 +52,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import org.archiver.device.RecordedAudioToFileController;
-import org.signal.ringrtc.CallLinkState.Restrictions;
-import org.webrtc.AudioSource;
-import org.webrtc.AudioTrack;
-import org.webrtc.ContextUtils;
-import org.webrtc.DefaultVideoDecoderFactory;
-import org.webrtc.DefaultVideoEncoderFactory;
-import org.webrtc.EglBase;
-import org.webrtc.MediaConstraints;
-import org.webrtc.MediaStream;
-import org.webrtc.NativeLibraryLoader;
-import org.webrtc.PeerConnection;
-import org.webrtc.PeerConnectionFactory;
-import org.webrtc.SoftwareVideoDecoderFactory;
-import org.webrtc.SoftwareVideoEncoderFactory;
-import org.webrtc.VideoDecoderFactory;
-import org.webrtc.VideoEncoderFactory;
-import org.webrtc.VideoSink;
-import org.webrtc.VideoSource;
-import org.webrtc.VideoTrack;
-import org.webrtc.Logging.Severity;
-import org.webrtc.PeerConnection.AdapterType;
-import org.webrtc.PeerConnection.BundlePolicy;
-import org.webrtc.PeerConnection.ContinualGatheringPolicy;
-import org.webrtc.PeerConnection.IceTransportsType;
-import org.webrtc.PeerConnection.RtcpMuxPolicy;
-import org.webrtc.PeerConnection.SdpSemantics;
-import org.webrtc.PeerConnection.TcpCandidatePolicy;
-import org.webrtc.PeerConnectionFactory.InitializationOptions;
-import org.webrtc.audio.JavaAudioDeviceModule;
-
-//*TM_SA*/copy and change this class
+// WARNING: DO NOT CHANGE THIS FILE LOCATION!!!
+// Copy the content of this class, including package name to this location, and change relevant code segments.
 public class CallManager {
   @NonNull
   private static final String TAG = CallManager.class.getSimpleName();
@@ -70,12 +71,11 @@ public class CallManager {
   @Nullable
   private PeerConnectionFactory groupFactory;
 
-  @Nullable
-  private static RecordedAudioToFileController saveRecordedAudioToFile;/*TM_SA*/
+  private static ICallManagerRecordingDelegate delegate;
 
-
-  static final ExecutorService executor = Executors.newSingleThreadExecutor();/*TM_SA*/
-
+  public static void setDelegate(ICallManagerRecordingDelegate delegate) {
+    CallManager.delegate = delegate;
+  }
 
   public static void initialize(Context applicationContext, Log.Logger logger, Map<String, String> fieldTrials) {
     try {
@@ -94,6 +94,7 @@ public class CallManager {
         builder.setInjectableLogger(new WebRtcLogger(), Severity.LS_WARNING);
       }
 
+      CallManager.delegate = delegate;
       builder.setFieldTrials(fieldTrialsString);
       PeerConnectionFactory.initialize(builder.createInitializationOptions());
       ringrtcInitialize();
@@ -129,7 +130,7 @@ public class CallManager {
     return builder.toString();
   }
 
-  private PeerConnectionFactory createPeerConnectionFactory(@Nullable EglBase eglBase, AudioProcessingMethod audioProcessingMethod) {
+  private PeerConnectionFactory createPeerConnectionFactory(@Nullable EglBase eglBase, AudioProcessingMethod audioProcessingMethod, String id, boolean isGroup) {
     Set<String> HARDWARE_ENCODING_BLOCKLIST = new HashSet<String>() {
       {
         this.add("SM-G920F");
@@ -172,13 +173,13 @@ public class CallManager {
       decoderFactory = new DefaultVideoDecoderFactory(eglBase.getEglBaseContext());
     }
 
-    JavaAudioDeviceModule adm = createAudioDeviceModule(audioProcessingMethod);
+    JavaAudioDeviceModule adm = createAudioDeviceModule(audioProcessingMethod, id, isGroup);
     PeerConnectionFactory factory = PeerConnectionFactory.builder().setOptions(new PeerConnectionFactoryOptions()).setAudioDeviceModule(adm).setVideoEncoderFactory((VideoEncoderFactory)encoderFactory).setVideoDecoderFactory((VideoDecoderFactory)decoderFactory).createPeerConnectionFactory();
     adm.release();
     return factory;
   }
 
-  static JavaAudioDeviceModule createAudioDeviceModule(AudioProcessingMethod audioProcessingMethod) {
+  static JavaAudioDeviceModule createAudioDeviceModule(AudioProcessingMethod audioProcessingMethod, String id, Boolean isGroup) {
     boolean useHardware;
     boolean useAecM;
     switch (audioProcessingMethod) {
@@ -196,12 +197,13 @@ public class CallManager {
     }
 
     Log.i(TAG, "createAudioDeviceModule(): useHardware: " + useHardware + " useAecM: " + useAecM);
-    Context context = ContextUtils.getApplicationContext();/*TM_SA*/
-    Log.d(TAG, "Enable recording of microphone input audio to file");/*TM_SA*/
-    saveRecordedAudioToFile = new RecordedAudioToFileController(executor, context.getCacheDir().getAbsolutePath());/*TM_SA*/
+    Context context = ContextUtils.getApplicationContext();
     return JavaAudioDeviceModule.builder(context)
-                                .setSamplesReadyCallback(saveRecordedAudioToFile) /*TM_SA*/
-                                .setUseHardwareAcousticEchoCanceler(useHardware).setUseHardwareNoiseSuppressor(useHardware).setUseAecm(useAecM).createAudioDeviceModule();
+            .setSamplesReadyCallback(delegate.createSampleReadyCallback(isGroup)) // TM_SA
+            .setUseHardwareAcousticEchoCanceler(useHardware)
+            .setUseHardwareNoiseSuppressor(useHardware)
+            .setUseAecm(useAecM)
+            .createAudioDeviceModule();
   }
 
   private void checkCallManagerExists() {
@@ -275,7 +277,7 @@ public class CallManager {
       }
     }
 
-    PeerConnectionFactory factory = this.createPeerConnectionFactory(eglBase, audioProcessingMethod);
+    PeerConnectionFactory factory = this.createPeerConnectionFactory(eglBase, audioProcessingMethod, String.valueOf(callId.longValue()), false);
     CallContext callContext = new CallContext(callId, context, factory, localSink, remoteSink, camera, iceServers, hideIp);
     callContext.setVideoEnabled(enableCamera);
     int audioLevelsIntervalMillis = audioLevelsIntervalMs == null ? 0 : audioLevelsIntervalMs;
@@ -455,7 +457,7 @@ public class CallManager {
   public GroupCall createGroupCall(@NonNull byte[] groupId, @NonNull String sfuUrl, @NonNull byte[] hkdfExtraInfo, @Nullable Integer audioLevelsIntervalMs, AudioProcessingMethod audioProcessingMethod, @NonNull GroupCall.Observer observer) {
     this.checkCallManagerExists();
     if (this.groupFactory == null) {
-      this.groupFactory = this.createPeerConnectionFactory((EglBase)null, audioProcessingMethod);
+      this.groupFactory = this.createPeerConnectionFactory((EglBase)null, audioProcessingMethod, sfuUrl, true);
       if (this.groupFactory == null) {
         Log.e(TAG, "createPeerConnectionFactory failed");
         return null;
@@ -474,7 +476,7 @@ public class CallManager {
   public GroupCall createCallLinkCall(@NonNull String sfuUrl, @NonNull byte[] authCredentialPresentation, @NonNull CallLinkRootKey linkRootKey, @Nullable byte[] adminPasskey, @NonNull byte[] hkdfExtraInfo, @Nullable Integer audioLevelsIntervalMs, AudioProcessingMethod audioProcessingMethod, @NonNull GroupCall.Observer observer) {
     this.checkCallManagerExists();
     if (this.groupFactory == null) {
-      this.groupFactory = this.createPeerConnectionFactory((EglBase)null, audioProcessingMethod);
+      this.groupFactory = this.createPeerConnectionFactory((EglBase)null, audioProcessingMethod, sfuUrl, true);
       if (this.groupFactory == null) {
         Log.e(TAG, "createPeerConnectionFactory failed");
         return null;
@@ -529,12 +531,6 @@ public class CallManager {
         }
 
         connection.setAudioSource(audioSource, audioTrack);
-
-        if (saveRecordedAudioToFile != null) { /*TM_SA*/
-          if (saveRecordedAudioToFile.start("" + callId.longValue())) {
-            Log.d(TAG, "Recording input audio to file is activated");
-          }
-        }/*TM_SA*/
 
         return connection;
       }
@@ -603,6 +599,7 @@ public class CallManager {
   @CalledByNative
   private void onEvent(Remote remote, CallEvent event) {
     Log.i(TAG, "onEvent():");
+    delegate.onEvent(remote, event); // TM_SA
     this.observer.onCallEvent(remote, event);
   }
 
@@ -656,11 +653,8 @@ public class CallManager {
   @CalledByNative
   private void onCallConcluded(Remote remote) {
     Log.i(TAG, "onCallConcluded():");
-    if (saveRecordedAudioToFile != null) {//*TM_SA*/s
-      Log.d(TAG, "Closing audio file for recorded input audio.");
-      saveRecordedAudioToFile.stop();
-//      saveRecordedAudioToFile = null;
-    }//*TM_SA*/e
+
+    delegate.onCallConcluded(remote); // TM_SA
     this.observer.onCallConcluded(remote);
   }
 
@@ -828,26 +822,13 @@ public class CallManager {
   @CalledByNative
   private void handleJoinStateChanged(long clientId, GroupCall.JoinState joinState, Long demuxId) {
     Log.i(TAG, "handleJoinStateChanged() -> joinState: " + joinState);
-//    Log.i(TAG, "handleJoinStateChanged() -> clientId: " + clientId + ". demuxId: " + demuxId);
     GroupCall groupCall = (GroupCall)this.groupCallByClientId.get(clientId);
     if (groupCall == null) {
       Log.w(TAG, "groupCall not found by clientId: " + clientId);
     } else {
       groupCall.handleJoinStateChanged(joinState, demuxId);
+      delegate.handleJoinStateChanged(clientId, joinState, demuxId, groupCall); // TM_SA
     }
-    if (saveRecordedAudioToFile != null) {//*TM_SA*/Start
-      if (demuxId != null && joinState == GroupCall.JoinState.JOINED) {
-        if (saveRecordedAudioToFile.start("" + demuxId)) {
-          Log.d(TAG, "Recording input audio to file is activated");
-        }
-      }
-      if (joinState == GroupCall.JoinState.NOT_JOINED) {
-        Log.d(TAG, "Closing audio file for recorded input audio.");
-        saveRecordedAudioToFile.stop();
-//        saveRecordedAudioToFile = null;
-      }
-    }//*TM_SA*/End
-
   }
 
   @CalledByNative
@@ -888,7 +869,7 @@ public class CallManager {
   }
 
   @CalledByNative
-  public void handleEnded(long clientId, GroupCall.GroupCallEndReason reason) { //*TM_SA*/ make it public
+  private void handleEnded(long clientId, GroupCall.GroupCallEndReason reason) {
     Log.i(TAG, "handleEnded():");
     GroupCall groupCall = (GroupCall)this.groupCallByClientId.get(clientId);
     if (groupCall == null) {

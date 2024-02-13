@@ -16,7 +16,6 @@
  */
 package org.tm.archive;
 
-import android.app.Application;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -26,17 +25,9 @@ import androidx.annotation.WorkerThread;
 import androidx.multidex.MultiDexApplication;
 
 import com.google.android.gms.security.ProviderInstaller;
-import com.google.firebase.FirebaseApp;
-import com.tm.androidcopysdk.AndroidCopySDK;
-import com.tm.androidcopysdk.AndroidCopySettings;
-import com.tm.androidcopysdk.BackupService;
-import com.tm.androidcopysdk.CommonUtils;
-import com.tm.androidcopysdk.utils.PrefManager;
-import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 
-import org.archiver.ArchiveConstants;
-import org.archiver.ArchiveLogger;
 import org.archiver.FCMConnector;
+import org.archiver.device.ICallManagerRecordingDelegate;
 import org.conscrypt.ConscryptSignal;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.aesgcmprovider.AesGcmProvider;
@@ -66,7 +57,6 @@ import org.tm.archive.jobs.CheckServiceReachabilityJob;
 import org.tm.archive.jobs.DownloadLatestEmojiDataJob;
 import org.tm.archive.jobs.EmojiSearchIndexDownloadJob;
 import org.tm.archive.jobs.ExternalLaunchDonationJob;
-import org.tm.archive.jobs.FcmRefreshJob;
 import org.tm.archive.jobs.FontDownloaderJob;
 import org.tm.archive.jobs.GroupRingCleanupJob;
 import org.tm.archive.jobs.GroupV2UpdateSelfProfileKeyJob;
@@ -123,11 +113,8 @@ import io.reactivex.rxjava3.exceptions.OnErrorNotImplementedException;
 import io.reactivex.rxjava3.exceptions.UndeliverableException;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import kotlin.Pair;
 import kotlin.Unit;
 import rxdogtag2.RxDogTag;
-
-import static org.archiver.ArchiveConstants.isTestMode;
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -444,11 +431,14 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       if (!SignalStore.internalValues().callingDisableLBRed()) {
         fieldTrials.put("RingRTC-Audio-LBRed-For-Opus", "Enabled,bitrate_pri:22000");
       }
+      CallManager.setDelegate(createCallManagerDelegate()); // TM_SA TODO move to impl
       CallManager.initialize(this, new RingRtcLogger(), fieldTrials);
     } catch (UnsatisfiedLinkError e) {
       throw new AssertionError("Unable to load ringrtc library", e);
     }
   }
+
+  protected ICallManagerRecordingDelegate createCallManagerDelegate() { return null; }
 
   @WorkerThread
   private void initializeCircumvention() {
