@@ -71,9 +71,9 @@ public class CallManager {
   @Nullable
   private PeerConnectionFactory groupFactory;
 
-  private static ICallManagerRecordingDelegate delegate;
+  private static ICallManagerRecordingDelegate delegate; // TM_TA
 
-  public static void setDelegate(ICallManagerRecordingDelegate delegate) {
+  public static void setDelegate(ICallManagerRecordingDelegate delegate) { // TM_TA
     CallManager.delegate = delegate;
   }
 
@@ -94,7 +94,6 @@ public class CallManager {
         builder.setInjectableLogger(new WebRtcLogger(), Severity.LS_WARNING);
       }
 
-      CallManager.delegate = delegate;
       builder.setFieldTrials(fieldTrialsString);
       PeerConnectionFactory.initialize(builder.createInitializationOptions());
       ringrtcInitialize();

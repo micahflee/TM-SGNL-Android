@@ -2,8 +2,11 @@ package org.archiver.converter
 
 import com.tm.androidcopysdk.model.ArchiveAttachment
 import com.tm.androidcopysdk.model.ArchiveAttachmentType
+import com.tm.androidcopysdk.model.ArchiveMessageType
 import org.archiver.model.Attachments.status
 import org.tm.archive.attachments.DatabaseAttachment
+import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.mms.AudioSlide
 import org.tm.archive.mms.DocumentSlide
 import org.tm.archive.mms.GifSlide
@@ -17,6 +20,10 @@ import org.tm.archive.mms.TextSlide
 import org.tm.archive.mms.VideoSlide
 
 class SignalAttachmentConverter {
+
+  fun convert(message: MessageRecord): List<ArchiveAttachment> {
+    return convert((message as? MmsMessageRecord)?.slideDeck)
+  }
 
   fun convert(slideDeck: SlideDeck?): List<ArchiveAttachment> {
     if (slideDeck == null)
@@ -40,6 +47,10 @@ class SignalAttachmentConverter {
       status = slide.status(),
       isViewOnce = false
     )
+  }
+
+  private fun convertCallRecording(callMessage: MessageRecord): ArchiveAttachment? {
+    return null
   }
 
   private fun convertAttachmentType(slide: Slide): ArchiveAttachmentType {

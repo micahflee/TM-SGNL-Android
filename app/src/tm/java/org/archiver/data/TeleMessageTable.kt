@@ -1,16 +1,20 @@
 package org.archiver.data
 
 import android.content.Context
+import android.util.Log
 import com.tm.androidcopysdk.model.ArchiveMessage
 import com.tm.androidcopysdk.api.IArchiveMessageDao
 import com.tm.androidcopysdk.api.IMessageStoreObserver
 import org.archiver.ArchiveUtil
 import org.archiver.converter.SignalArchiveMessageConverter
+import org.archiver.model.Messages.chatRecipient
 import org.signal.core.util.Stopwatch
+import org.tm.archive.database.CallTable
 import org.tm.archive.database.MessageTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.MessageId
 import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.database.model.withCall
 import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.RecipientId
@@ -36,12 +40,19 @@ class TeleMessageTable(
     return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, accountPhoneNumber) } }
   }
 
+  fun onSubmitCall(call: CallTable.Call, startedAt: Long?, isAdHocCall: Boolean) {
+    val message = getMessageRecordOrNull(call.messageId ?: return)?.withCall(call)
+    val archiveMessage = converter.convertCall(message, getAccountPhoneNumber(), startedAt, isAdHocCall) ?: return
+    messageStoreObserver.afterMessageStateChanged(archiveMessage)
+  }
+
   private fun getAccountPhoneNumber() = ArchiveUtil.getPhoneNumberInTestMode(context)
 
   // region Call
   // region Call - Insert
   override fun insertCallLog(recipientId: RecipientId, type: Long, timestamp: Long, outgoing: Boolean): InsertResult {
     val result = super.insertCallLog(recipientId, type, timestamp, outgoing)
+    val message = getMessageRecord(result.messageId)
     messageStoreObserver.afterMessageIdStateChanged(result.messageId)
     return result
   }
@@ -57,6 +68,13 @@ class TeleMessageTable(
   // region Call - Update
   override fun updateCallLog(messageId: Long, type: Long) {
     super.updateCallLog(messageId, type)
+    messageStoreObserver.afterMessageIdStateChanged(messageId)
+  }
+
+  override fun updateGroupCall(messageId: Long, eraId: String, joinedUuids: Collection<UUID>, isCallFull: Boolean): MessageId {
+    val result = super.updateGroupCall(messageId, eraId, joinedUuids, isCallFull)
+    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    return result
   }
   // endregion Call - Update
   // endregion Call

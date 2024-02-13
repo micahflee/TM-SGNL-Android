@@ -6,12 +6,11 @@ import com.tm.androidcopysdk.model.ArchiveMessageType
 import com.tm.androidcopysdk.model.Direction
 import com.tm.androidcopysdk.model.Timestamp
 import org.archiver.model.Messages.archiveType
+import org.archiver.model.Messages.isCallMessage
 import org.archiver.model.Messages.isMultimediaMessage
 import org.archiver.model.Messages.isSmsMessage
 import org.archiver.model.Messages.status
-import org.tm.archive.database.CallTable
 import org.tm.archive.database.model.MessageRecord
-import org.tm.archive.database.model.MmsMessageRecord
 
 class SignalArchiveMessageConverter(
   @Deprecated("Converter should never have a context reference")
@@ -21,18 +20,25 @@ class SignalArchiveMessageConverter(
   private val chatConverter = SignalChatConverter(context)
   private val recipientConverter = SignalArchiveRecipientConverter(context)
   private val attachmentConverter = SignalAttachmentConverter()
+  private val callInfoConverter = SignalCallInfoConverter()
 
   fun convert(messages: List<MessageRecord?>, accountPhoneNumber: String?): List<ArchiveMessage> {
     return messages.mapNotNull { convert(it, accountPhoneNumber) }
   }
 
   fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false): ArchiveMessage? {
+    return convert(message, accountPhoneNumber, isDeleted, null, false)
+  }
+
+  fun convertCall(message: MessageRecord?, accountPhoneNumber: String?, startedAt: Long?, isAdHocCall: Boolean): ArchiveMessage? {
+    return convert(message, accountPhoneNumber, false, startedAt, isAdHocCall)
+  }
+
+  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, startedAt: Long?, isAdHocCall: Boolean): ArchiveMessage? {
     if (message == null)
       return null
 
-    val type = getTransportType(message) ?: return null
-    if (type == ArchiveMessageType.Call)
-      return (message as MmsMessageRecord).let { convert(it, accountPhoneNumber, requireNotNull(it.call)) }
+    val type = getTransportType(message, isAdHocCall) ?: return null
     val sender = recipientConverter.convertSenderRecipient(message)
     val receivers = recipientConverter.convertReceiverRecipients(message)
     return ArchiveMessage(
@@ -50,40 +56,19 @@ class SignalArchiveMessageConverter(
       chat = chatConverter.convert(message),
       sender = sender,
       receivers = receivers,
-      attachments = attachmentConverter.convert((message as? MmsMessageRecord)?.slideDeck),
+      attachments = attachmentConverter.convert(message),
+      callInfo = callInfoConverter.convert(message, type, startedAt),
       edits = null,
       headers = null
     )
   }
 
-  private fun getTransportType(message: MessageRecord): ArchiveMessageType? {
-    if (message is MmsMessageRecord && message.call != null)
+  private fun getTransportType(message: MessageRecord, isAdHocCall: Boolean): ArchiveMessageType? {
+    if (isAdHocCall)
+      return ArchiveMessageType.Unknown
+    if (message.isCallMessage())
       return ArchiveMessageType.Call
     return if (message.isSmsMessage()) ArchiveMessageType.Sms else if (message.isMultimediaMessage()) ArchiveMessageType.Mms else null
-  }
-
-  private fun convert(message: MmsMessageRecord, accountPhoneNumber: String?, call: CallTable.Call): ArchiveMessage {
-    val sender = recipientConverter.convertSenderRecipient(message)
-    val receivers = recipientConverter.convertReceiverRecipients(message)
-    return ArchiveMessage(
-      id = message.id.toString(),
-      uniqueId = null,
-      accountPhoneNumber = accountPhoneNumber,
-      type = ArchiveMessageType.Call,
-      direction = if (message.isOutgoing) Direction.Outgoing else Direction.Incoming,
-      archiveType = message.archiveType(),
-      status = message.status(),
-      isDeleted = false,
-      isRemoteDeleted = message.isRemoteDelete,
-      body = message.getDisplayBody(context).toString(),
-      timestamp = Timestamp(message.timestamp),
-      chat = chatConverter.convert(message),
-      sender = sender,
-      receivers = receivers,
-      attachments = attachmentConverter.convert((message as? MmsMessageRecord)?.slideDeck),
-      edits = null,
-      headers = null
-    )
   }
 
 }

@@ -5,19 +5,14 @@ import com.tm.androidcopysdk.model.IArchiveType
 import com.tm.androidcopysdk.model.MessageStatus
 import org.signal.glide.Log
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.ringrtc.RemotePeer
 import org.tm.archive.util.isMediaMessage
 
 object Messages {
 
-  fun MessageRecord.printTimestamps() {
-    Log.d("DavidLogger", "printTimestamps - " +
-      "timestamp: $timestamp, " +
-      "receiptTimestamp: $receiptTimestamp, " +
-      "serverTimestamp: $serverTimestamp, " +
-      "dateSent: $dateSent, " +
-      "dateReceived: $dateReceived" +
-      "")
-  }
+  fun RemotePeer.stringify() = "RemotePeer: [" +
+    "callId: ${callId.longValue()}" +
+    "]"
 
   fun MessageRecord.isMultimediaMessage() = isMediaMessage()// || (status() == MessageStatus.Sending && body.isEmpty())
 
@@ -31,6 +26,9 @@ object Messages {
 
   fun MessageRecord.chatType() = if (isGroupMessage()) ChatType.Group else if (isBroadcastMessage()) ChatType.Broadcast else ChatType.Chat
 
+  fun MessageRecord.isCallMessage() = isCallLog || isGroupCall || isIncomingAudioCall || isIncomingVideoCall ||
+    isMissedAudioCall || isMissedVideoCall || isOutgoingAudioCall || isIncomingAudioCall
+
   fun MessageRecord.status(): MessageStatus {
     if (isFailed)
       return MessageStatus.Failed
@@ -38,7 +36,7 @@ object Messages {
       return MessageStatus.Read
     if (isDelivered || isIncoming())
       return MessageStatus.Delivered
-    if (isSent)
+    if (isSent || isCallLog)
       return MessageStatus.Sent
     if (isPending)
       return MessageStatus.Sending

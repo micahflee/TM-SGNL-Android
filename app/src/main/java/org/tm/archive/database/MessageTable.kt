@@ -897,7 +897,8 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     }
   }
 
-  fun updateGroupCall(
+  @TeleMessageUnfinalize
+  open fun updateGroupCall(
     messageId: Long,
     eraId: String,
     joinedUuids: Collection<UUID>,

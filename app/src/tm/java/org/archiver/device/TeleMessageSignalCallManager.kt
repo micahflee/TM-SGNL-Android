@@ -1,109 +1,58 @@
 package org.archiver.device
 
 import android.app.Application
-import com.tm.androidcopysdk.device.CallProcessor
-import com.tm.androidcopysdk.model.CallAnswerType
-import com.tm.androidcopysdk.model.CallRtcMode
-import com.tm.androidcopysdk.model.Direction
 import com.tm.logger.Log
-import kotlinx.coroutines.Dispatchers
-import org.archiver.ArchiveUtil
+import org.archiver.data.TeleMessageTable
 import org.signal.ringrtc.CallId
-import org.signal.ringrtc.CallManager
 import org.signal.ringrtc.CallManager.CallEvent
 import org.signal.ringrtc.GroupCall
 import org.signal.ringrtc.Remote
-import org.tm.archive.events.WebRtcViewModel
-import org.tm.archive.keyvalue.SignalStore
-import org.tm.archive.recipients.Recipient
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.service.webrtc.SignalCallManager
+import org.tm.archive.service.webrtc.state.CallInfoState
 import org.tm.archive.service.webrtc.state.WebRtcServiceState
-import org.webrtc.audio.JavaAudioDeviceModule
-import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
-import kotlin.jvm.optionals.getOrNull
 
-class TeleMessageSignalCallManager(application: Application) : SignalCallManager(application) {
+class TeleMessageSignalCallManager(
+  application: Application,
+) : SignalCallManager(application) {
 
-  private val context = application.applicationContext
-
-  private val processor = CallProcessor(context, Dispatchers.IO)
-
-  private var callConnectedTime = -1L
+  private var callInfoState: CallInfoState? = null
 
   override fun postStateUpdate(state: WebRtcServiceState) {
-    val activePeer = state.callInfoState.activePeer
-    val callRecipient = state.callInfoState.callRecipient
-
-    callConnectedTime = state.callInfoState.callConnectedTime
-    val isVideoCall = state.getCallSetupState(activePeer?.callId).run { isEnableVideoOnCreate || isRemoteVideoOffer || isAcceptWithVideo }
-
-    val callId = (if (!callRecipient.isGroup) activePeer?.callId else state.callInfoState.groupCall?.peekInfo?.eraId?.let(CallId::fromEra))?.longValue()?.toString()
-    Log.d(TAG, "postStateUpdate - isVideoCall: $isVideoCall, isGroup: ${callRecipient.isGroup}, callId: $callId")
-    if (!processor.isRunning() && callId != null)
-      onStartCall(callId, callRecipient, state.callInfoState.callState == WebRtcViewModel.State.CALL_OUTGOING)
-    processor.setRtcMode(CallRtcMode.fromIsVideo(isVideoCall))
+    val callId = state.callInfoState.getCallId()
+    Log.d(TAG, "postStateUpdate - callId: $callId")
+    if (callId != null)
+      this.callInfoState = state.callInfoState
     super.postStateUpdate(state)
   }
 
-  private fun onStartCall(callId: String, recipient: Recipient, isOutgoing: Boolean) {
-    val recipientPhoneNumber  : String? = if (!recipient.isGroup)
-      recipient.e164.getOrNull()
-    else //TODO: fix it for list after Moti fix recipient list call log in SDK
-        ArchiveUtil.getRecipientsListFromParticipantIds(recipient).firstOrNull()?.e164?.getOrNull()
-
-    val recipientName = recipient.getDisplayNameOrUsername(context)
-    Log.d(TAG, "onStartCall -> callId: $callId, recipientName: $recipientName, recipientPhoneNumber: $recipientPhoneNumber")
-    if (recipientName.isEmpty()) return
-    processor.setAccountPhoneNumber(SignalStore.account().e164)
-    if (recipientPhoneNumber != null) {
-      processor.onBeginCall(callId, Direction.fromIsOutgoing(isOutgoing), recipientPhoneNumber, recipientName)
-    }
-  }
-
-  override fun onCallEvent(remote: Remote?, event: CallEvent) {
-    Log.d(TAG, "onCallEvent: $event")
-    super.onCallEvent(remote, event)
-    when (event) {
-      CallEvent.ENDED_LOCAL_HANGUP -> processor.setAnswerType(CallAnswerType.Missed)
-      CallEvent.ENDED_REMOTE_HANGUP,
-      CallEvent.ENDED_REMOTE_HANGUP_NEED_PERMISSION,
-      CallEvent.ENDED_REMOTE_HANGUP_ACCEPTED,
-      CallEvent.ENDED_REMOTE_HANGUP_DECLINED,
-      CallEvent.ENDED_REMOTE_HANGUP_BUSY -> processor.setAnswerType(CallAnswerType.Reject)
-      CallEvent.ENDED_REMOTE_BUSY,
-      CallEvent.ENDED_REMOTE_GLARE,
-      CallEvent.ENDED_REMOTE_RECALL,
-      CallEvent.ENDED_TIMEOUT,
-      CallEvent.ENDED_INTERNAL_FAILURE,
-      CallEvent.ENDED_SIGNALING_FAILURE,
-      CallEvent.ENDED_GLARE_HANDLING_FAILURE,
-      CallEvent.ENDED_CONNECTION_FAILURE,
-      CallEvent.ENDED_APP_DROPPED_CALL -> processor.setAnswerType(CallAnswerType.Missed)
-      else -> return
-    }
-  }
-
   override fun onCallConcluded(remote: Remote?) {
-    Log.d(TAG, "onCallConcluded")
     super.onCallConcluded(remote)
     onFinishCall()
   }
 
   override fun onEnded(groupCall: GroupCall, groupCallEndReason: GroupCall.GroupCallEndReason) {
-    Log.d(TAG, "onEnded")
     super.onEnded(groupCall, groupCallEndReason)
     onFinishCall()
   }
 
   private fun onFinishCall() {
-    val callConnectedTime = this.callConnectedTime.takeIf { it > 0 }
-    this.callConnectedTime = -1
-    val duration = callConnectedTime?.let { System.currentTimeMillis() - it } ?: 0
-    processor.setDuration(duration)
-    processor.onCallConcluded()
+    val callInfoState = callInfoState ?: return
+    this.callInfoState = null
+    val callConnectedTime = callInfoState.callConnectedTime.takeIf { it > 0 }
+    val call = callInfoState.call() ?: return
+    (SignalDatabase.messages as TeleMessageTable).onSubmitCall(call, callConnectedTime, callInfoState.callRecipient.isCallLink)
   }
+
+  private fun CallInfoState.getCallId(): CallId? {
+    val activePeer = activePeer
+    val callRecipient = callRecipient
+    if (!callRecipient.isGroup)
+      return activePeer?.callId
+    return groupCall?.peekInfo?.eraId?.let(CallId::fromEra)
+  }
+
+  private fun CallInfoState?.call() = this?.let { getCallId()?.let { SignalDatabase.calls.getCallById(it.longValue(), callRecipient.id) } }
 
   companion object {
 

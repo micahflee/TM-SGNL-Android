@@ -8,4 +8,7 @@ enum class SignalArchiveType(override val key: String): IArchiveType {
   Sms("SMS"),
   ;
 
+  companion object {
+    fun coreValues(): Array<IArchiveType> = values().map { it }.toTypedArray()
+  }
 }
