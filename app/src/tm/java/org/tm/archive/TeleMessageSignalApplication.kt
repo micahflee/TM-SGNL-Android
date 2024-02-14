@@ -15,6 +15,7 @@ import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
+import org.archiver.SignalLoggerAdapter
 import org.archiver.device.CallManagerRecordingDelegate
 import org.archiver.di.TeleMessageApplicationDependencyProvider
 import org.archiver.di.TeleMessageApplicationDependencyProvider.Companion.getSdkModule
@@ -42,6 +43,10 @@ class TeleMessageSignalApplication : ApplicationContext() {
   override fun beforeInitializeCallManager() {
     CallManager.setDelegate(CallManagerRecordingDelegate.getInstance(applicationContext))
     super.beforeInitializeCallManager()
+  }
+
+  override fun createLogger(): org.signal.core.util.logging.Log.Logger {
+    return SignalLoggerAdapter(this)
   }
 
   private fun initializeSdk() {
