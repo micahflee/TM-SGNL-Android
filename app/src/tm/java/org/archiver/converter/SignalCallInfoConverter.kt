@@ -18,7 +18,7 @@ class SignalCallInfoConverter {
     return ArchiveCallInfo(
       id = call?.callId?.toString(),
       startedAt = startedAt,
-      durationMs = durationMs,
+      durationMs = durationMs / 1000,
       answerType = message.answerType(call),
       rtcMode = message.rtcMode(call)
     )
@@ -27,8 +27,8 @@ class SignalCallInfoConverter {
   private fun MessageRecord.rtcMode(call: CallTable.Call?): CallRtcMode = call.rtcMode()
     ?: CallRtcMode.fromIsVideo(isGroupCall || isIncomingVideoCall || isOutgoingVideoCall || isMissedVideoCall)
 
-  private fun CallTable.Call?.rtcMode(): CallRtcMode? = this?.let {
-    CallRtcMode.fromIsVideo(type == CallTable.Type.VIDEO_CALL || type == CallTable.Type.GROUP_CALL || type == CallTable.Type.AD_HOC_CALL) }
+  private fun CallTable.Call?.rtcMode(): CallRtcMode? =
+    this?.let { CallRtcMode.fromIsVideo(type == CallTable.Type.VIDEO_CALL || type == CallTable.Type.GROUP_CALL || type == CallTable.Type.AD_HOC_CALL) }
 
   private fun MessageRecord.answerType(call: CallTable.Call?): CallAnswerType? {
     val callAnswerType = call.answerType()
