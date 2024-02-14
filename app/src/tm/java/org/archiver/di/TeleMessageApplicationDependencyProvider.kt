@@ -13,6 +13,8 @@ import com.tm.androidcopysdk.api.IMessageStoreObserver
 import com.tm.androidcopysdk.api.SdkModule
 import com.tm.androidcopysdk.database.DefaultArchiveDatabase
 import com.tm.androidcopysdk.device.DefaultMessageStoreObserver
+import com.tm.androidcopysdk.model.ArchiveSettings
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.archiver.device.TeleMessageSignalCallManager
 import org.archiver.model.SignalArchiveType
 import org.archiver.model.SignalFiler
@@ -41,7 +43,8 @@ class TeleMessageApplicationDependencyProvider(
         val sdk = AndroidCopySDK.getInstance(applicationContext)
         val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this, SignalArchiveType.coreValues())
         val filer = SignalFiler(applicationContext, database.attachmentTable)
-        sdkModule = SdkModule(sdk, DataGrabber.getInstance(applicationContext), database, archiveDatabase, filer)
+        val settings = MutableStateFlow(ArchiveSettings(isAppActivated = true))
+        sdkModule = SdkModule(sdk, DataGrabber.getInstance(applicationContext), database, archiveDatabase, filer, settings)
         TeleMessageApplicationDependencyProvider.sdkModule = sdkModule
       }
       return sdkModule
