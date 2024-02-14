@@ -10,6 +10,7 @@ import com.tm.androidcopysdk.device.DefaultMessageStoreObserver
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 import org.archiver.data.TeleAttachmentTable
 import org.archiver.data.TeleMessageTable
+import org.archiver.di.TeleMessageApplicationDependencyProvider
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.logging.Log
 import org.signal.core.util.withinTransaction
@@ -43,7 +44,7 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
   ),
   SignalDatabaseOpenHelper, IDatabase<Long> {
 
-  private val messageStoreObserver: IMessageStoreObserver<Long> = DefaultMessageStoreObserver.getInstance()
+  private val messageStoreObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver
   val messageTable: MessageTable = TeleMessageTable(context, this, messageStoreObserver)
   val attachmentTable: AttachmentTable = TeleAttachmentTable(context, this, attachmentSecret, messageStoreObserver)
   val mediaTable: MediaTable = MediaTable(context, this)
