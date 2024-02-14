@@ -11,24 +11,30 @@ class SignalLoggerAdapter(application: Application) : org.signal.core.util.loggi
   }
 
   override fun v(tag: String, message: String?, t: Throwable?, keepLonger: Boolean) {
-    Log.v(tag, message, t)
+    Log.v(TAG, getMessage(tag, message), t)
   }
 
   override fun d(tag: String, message: String?, t: Throwable?, keepLonger: Boolean) {
-    Log.d(tag, message, t)
+    Log.d(TAG, getMessage(tag, message), t)
   }
 
   override fun i(tag: String, message: String?, t: Throwable?, keepLonger: Boolean) {
-    Log.i(tag, message, t)
+    Log.i(TAG, getMessage(tag, message), t)
   }
 
   override fun w(tag: String, message: String?, t: Throwable?, keepLonger: Boolean) {
-    Log.w(tag, message, t)
+    Log.w(TAG, getMessage(tag, message), t)
   }
 
   override fun e(tag: String, message: String?, t: Throwable?, keepLonger: Boolean) {
-    Log.e(tag, message, t)
+    Log.e(TAG, getMessage(tag, message), t)
   }
 
   override fun flush() {}
+
+  private fun getMessage(tag: String, message: String?) = "$tag: $message"
+  
+  companion object {
+    private const val TAG = "TMSignalLogger"
+  }
 }
