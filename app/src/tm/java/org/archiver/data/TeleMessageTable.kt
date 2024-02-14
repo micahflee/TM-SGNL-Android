@@ -52,7 +52,6 @@ class TeleMessageTable(
   // region Call - Insert
   override fun insertCallLog(recipientId: RecipientId, type: Long, timestamp: Long, outgoing: Boolean): InsertResult {
     val result = super.insertCallLog(recipientId, type, timestamp, outgoing)
-    val message = getMessageRecord(result.messageId)
     messageStoreObserver.afterMessageIdStateChanged(result.messageId)
     return result
   }

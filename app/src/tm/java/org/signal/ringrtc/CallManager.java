@@ -53,8 +53,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-// WARNING: DO NOT CHANGE THIS FILE LOCATION!!!
-// Copy the content of this class, including package name to this location, and change relevant code segments.
+/**
+ * TM_SA
+ * WARNING: DO NOT CHANGE THIS FILE LOCATION!!!
+ * Copy the content of this class, including package name to this location, and change relevant code segments.
+ * */
 public class CallManager {
   @NonNull
   private static final String TAG = CallManager.class.getSimpleName();
@@ -71,9 +74,9 @@ public class CallManager {
   @Nullable
   private PeerConnectionFactory groupFactory;
 
-  private static ICallManagerRecordingDelegate delegate; // TM_TA
+  private static ICallManagerRecordingDelegate delegate; // TM_SA
 
-  public static void setDelegate(ICallManagerRecordingDelegate delegate) { // TM_TA
+  public static void setDelegate(ICallManagerRecordingDelegate delegate) { // TM_SA
     CallManager.delegate = delegate;
   }
 
