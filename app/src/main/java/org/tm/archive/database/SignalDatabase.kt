@@ -42,11 +42,11 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
     SqlCipherDatabaseHook(),
     true
   ),
-  SignalDatabaseOpenHelper, IDatabase<Long> {
+  SignalDatabaseOpenHelper, IDatabase<Long> { // TM_SA implement IDatabase
 
-  private val messageStoreObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver
-  val messageTable: MessageTable = TeleMessageTable(context, this, messageStoreObserver)
-  val attachmentTable: AttachmentTable = TeleAttachmentTable(context, this, attachmentSecret, messageStoreObserver)
+  private val messageStoreObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver // TM_SA
+  val messageTable: MessageTable = TeleMessageTable(context, this, messageStoreObserver)  // TM_SA TeleMessageTable
+  val attachmentTable: AttachmentTable = TeleAttachmentTable(context, this, attachmentSecret, messageStoreObserver) // TM_SA TeleAttachmentTable
   val mediaTable: MediaTable = MediaTable(context, this)
   val threadTable: ThreadTable = ThreadTable(context, this)
   val identityTable: IdentityTable = IdentityTable(context, this)

@@ -8,6 +8,8 @@ import com.tm.androidcopysdk.DataGrabber
 import com.tm.androidcopysdk.api.IArchiveDatabase
 import com.tm.androidcopysdk.api.SdkModule
 import com.tm.androidcopysdk.database.DefaultArchiveDatabase
+import com.tm.androidcopysdk.device.ArchiveMessagesProcessor
+import com.tm.androidcopysdk.device.SendSignatureProcessor
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
@@ -47,7 +49,10 @@ class TeleMessageSignalApplication : ApplicationContext() {
     val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this, SignalArchiveType.coreValues())
     val filer = SignalFiler(applicationContext, database.attachmentTable)
     val module = SdkModule(sdk, DataGrabber.getInstance(applicationContext), database, archiveDatabase, filer)
-    TeleMessageApplicationDependencyProvider.messageStoreObserver.initialize(module)
+    val messageObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver
+    messageObserver.addProcessor(ArchiveMessagesProcessor(module))
+    messageObserver.addProcessor(SendSignatureProcessor(module))
+    messageObserver.initialize(module)
   }
 
   private fun initArchiveUrlsAndStartArchive() {
