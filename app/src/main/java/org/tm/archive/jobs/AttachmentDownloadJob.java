@@ -6,16 +6,13 @@
 package org.tm.archive.jobs;
 
 import android.text.TextUtils;
-import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import org.archiver.ArchiveConstants;
-import org.archiver.ArchiveFileUtil;
-import org.archiver.ArchiveSender;
 import org.greenrobot.eventbus.EventBus;
+import org.signal.core.util.Base64;
 import org.signal.core.util.Hex;
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.InvalidMacException;
@@ -39,9 +36,7 @@ import org.tm.archive.releasechannel.ReleaseChannel;
 import org.tm.archive.s3.S3;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.AttachmentUtil;
-import org.signal.core.util.Base64;
 import org.tm.archive.util.FeatureFlags;
-import org.tm.archive.util.FileUtils;
 import org.tm.archive.util.Util;
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
@@ -221,16 +216,7 @@ public final class AttachmentDownloadJob extends BaseJob {
                                                                   return isCanceled();
                                                                 }
                                                               });
-      //**TM_SA**//Start
-      Pair<InputStream, InputStream> inputStreamPair  = FileUtils.duplicateInputStream(stream);
-      String                         fileNameWithType = ArchiveFileUtil.getFileNameWithType(attachment.fileName, messageId, attachmentId.id, attachment.contentType, true);
-      File                           tempFileWithData = FileUtils.writeFileOnInternalStorage(context, ArchiveConstants.ARCHIVE_FILE_FOLDER_NAME, fileNameWithType, inputStreamPair.first);
-
-      ArchiveSender.Companion.updateArchiveSDKToSendMMSMessage(context, tempFileWithData.getName(), false);
-
-
-      database.insertAttachmentsForPlaceholder(messageId, attachmentId, inputStreamPair.second);//TM_SA change the last param
-      //**TM_SA**//End
+      database.insertAttachmentsForPlaceholder(messageId, attachmentId, stream);
     } catch (RangeException e) {
       Log.w(TAG, "Range exception, file size " + attachmentFile.length(), e);
       if (attachmentFile.delete()) {

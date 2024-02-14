@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:name=".TeleMessageSignalApplication"
+        tools:node="merge"
+        tools:replace="android:name">
+
+        <activity
+            android:name="com.microsoft.identity.client.BrowserTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!--debug-->
+                <!-- <data
+                    android:host="org.tm.archive.prodshilo"
+                    android:path="/QGKhFQhiONVb16luOCu0/IA+Ut4="
+                    android:scheme="msauth" /> -->
+                <!--release-->
+                <data
+                    android:host="org.tm.archive.prodshilo"
+                    android:path="/a1GN26oMeVmtFyYoymQgC5B3diQ="
+                    android:scheme="msauth" />
+            </intent-filter>
+        </activity>
+
+        <service android:name=".gcm.FcmReceiveService" android:exported="true" tools:node="remove">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service android:name="org.archiver.gcm.TeleMessageFcmReceiveService" android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+    </application>
+</manifest>

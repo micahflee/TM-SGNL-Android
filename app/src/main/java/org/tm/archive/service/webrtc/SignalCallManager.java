@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
 
+import org.archiver.annotation.TeleMessageUnfinalize;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
@@ -117,7 +118,10 @@ import static org.tm.archive.service.webrtc.WebRtcUtil.getUrgencyFromCallUrgency
  * Entry point for all things calling. Lives for the life of the app instance and will spin up a foreground service when needed to
  * handle "active" calls.
  */
-public class SignalCallManager implements CallManager.Observer, GroupCall.Observer, CameraEventListener, AppForegroundObserver.Listener {//*TM_SA*/delete final
+
+//*TM_SA*/
+@TeleMessageUnfinalize
+public class SignalCallManager implements CallManager.Observer, GroupCall.Observer, CameraEventListener, AppForegroundObserver.Listener {
 
   private static final String TAG = Log.tag(SignalCallManager.class);
 

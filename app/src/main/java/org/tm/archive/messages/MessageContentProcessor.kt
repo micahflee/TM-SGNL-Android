@@ -432,16 +432,6 @@ open class MessageContentProcessor(private val context: Context) {
           if (processingEarlyContent) null else EarlyMessageCacheEntry(envelope, content, metadata, serverDeliveredTimestamp),
           localMetric
         )
-
-        //**TM_SA**// Start
-        val dataMessage = content.dataMessage
-        val body = dataMessage?.body
-        if(content.dataMessage!!.attachments.isEmpty() && !body.isNullOrEmpty()) {
-          ArchiveSender.archiveMessageInboxV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient , content.dataMessage!!.body, envelope.timestamp)
-        }else{
-          com.tm.logger.Log.d(TAG, "handleMessage -> content.dataMessage.attachmentsCount == 0 && content.dataMessage.body.isNotEmpty()   =   false")
-        }
-        //**TM_SA**//End
       }
 
       content.syncMessage != null -> {

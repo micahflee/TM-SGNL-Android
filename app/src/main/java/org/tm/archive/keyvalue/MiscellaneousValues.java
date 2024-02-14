@@ -5,6 +5,7 @@ import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.archiver.annotation.TeleMessageUnfinalize;
 import org.tm.archive.components.settings.app.usernamelinks.UsernameQrCodeColorScheme;
 import org.tm.archive.database.model.databaseprotos.PendingChangeNumberMetadata;
 import org.tm.archive.dependencies.ApplicationDependencies;
@@ -13,7 +14,8 @@ import org.tm.archive.jobmanager.impl.ChangeNumberConstraintObserver;
 import java.util.Collections;
 import java.util.List;
 
-public final class MiscellaneousValues extends SignalStoreValues {
+@TeleMessageUnfinalize
+public class MiscellaneousValues extends SignalStoreValues {
 
   private static final String LAST_PREKEY_REFRESH_TIME       = "last_prekey_refresh_time";
   private static final String MESSAGE_REQUEST_ENABLE_TIME    = "message_request_enable_time";
@@ -88,8 +90,8 @@ public final class MiscellaneousValues extends SignalStoreValues {
   }
 
   public boolean isClientDeprecated() {
-    return /*getBoolean(CLIENT_DEPRECATED, false)*/false;
-  }//**TM_SA**//
+    return getBoolean(CLIENT_DEPRECATED, false);
+  }
 
   public void markClientDeprecated() {
     putBoolean(CLIENT_DEPRECATED, true);

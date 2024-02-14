@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- smartling.instruction_comments_enabled = on -->
+<resources>
+  <string name="get_self_authentication_first_warning_message_step_1">TeleMessageアカウントが見つかりませんでした。 メッセージは7日間保存されます。アカウントを開設してアーカイブを開始するには TeleMessageサポートまでお問い合わせください。</string>
+  <string name="get_self_authentication_first_warning_message_step_1_dismiss">退出させる</string>
+  <string name="get_self_authentication_failure_contact_us">お問い合わせ</string>
+  <string name="get_self_authentication_contact_us_sent">ありがとう リクエストを受け取りました 担当者からすぐにご連絡いたします。</string>
+  <string name="get_self_authentication_failure_message_close">選ぶ</string>
+  <string name="get_self_authentication_second_warning_message_step_2">TeleMessageアカウントが見つかりませんでした。 アプリがブロックされました TeleMessageサポートに連絡してください。</string>
+</resources>

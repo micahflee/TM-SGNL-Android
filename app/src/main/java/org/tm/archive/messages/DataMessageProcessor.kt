@@ -3,13 +3,8 @@ package org.tm.archive.messages
 import ProtoUtil.isNotEmpty
 import android.content.Context
 import android.text.TextUtils
-import com.annimon.stream.Stream
 import com.mobilecoin.lib.exceptions.SerializationException
 import okio.ByteString.Companion.toByteString
-import org.archiver.ArchiveConstants
-import org.archiver.ArchiveFileUtil
-import org.archiver.ArchiveSender
-import org.archiver.ArchiveUtil
 import org.signal.core.util.Base64
 import org.signal.core.util.Hex
 import org.signal.core.util.concurrent.SignalExecutors
@@ -19,7 +14,6 @@ import org.signal.core.util.toOptional
 import org.signal.libsignal.zkgroup.groups.GroupSecretParams
 import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation
 import org.tm.archive.attachments.Attachment
-import org.tm.archive.attachments.DatabaseAttachment
 import org.tm.archive.attachments.PointerAttachment
 import org.tm.archive.attachments.TombstoneAttachment
 import org.tm.archive.attachments.UriAttachment
@@ -93,7 +87,6 @@ import org.tm.archive.recipients.RecipientUtil
 import org.tm.archive.stickers.StickerLocator
 import org.tm.archive.storage.StorageSyncHelper
 import org.tm.archive.util.EarlyMessageCacheEntry
-import org.tm.archive.util.FileUtils
 import org.tm.archive.util.LinkUtil
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.MessageConstraintsUtil
@@ -111,7 +104,6 @@ import org.whispersystems.signalservice.internal.push.DataMessage
 import org.whispersystems.signalservice.internal.push.Envelope
 import org.whispersystems.signalservice.internal.push.GroupContextV2
 import org.whispersystems.signalservice.internal.push.Preview
-import java.io.File
 import java.security.SecureRandom
 import java.util.Optional
 import java.util.UUID
@@ -900,10 +892,6 @@ object DataMessageProcessor {
       insertResult = SignalDatabase.messages.insertMessageInbox(mediaMessage, -1).orNull()
       if (insertResult != null) {
         SignalDatabase.messages.setTransactionSuccessful()
-
-        //**TM_SA**// Start
-        archiveInboxMedia(insertResult, attachments, groupId, mediaMessage, context, senderRecipient, threadRecipient)
-        //**TM_SA**//End
       }
     } catch (e: MmsException) {
       throw StorageFailedException(e, metadata.sourceServiceId.toString(), metadata.sourceDeviceId)
@@ -942,200 +930,6 @@ object DataMessageProcessor {
       null
     }
   }
-
-  //**TM_SA**//Start
-  private fun archiveInboxMedia(
-    insertResult: InsertResult,
-    attachments: List<Attachment>,
-    groupId: GroupId.V2?,
-    mediaMessage: IncomingMessage,
-    context: Context,
-    senderRecipient: Recipient,
-    threadRecipient : Recipient
-  ) {
-    var attachmentsList: List<Attachment>
-    var recipientList: MutableList<Recipient>? = null
-    var groupTitle = ""
-
-    val allAttachments = SignalDatabase.attachments.getAttachmentsForMessage(insertResult.messageId)
-
-    val stickerAttachments = Stream.of<DatabaseAttachment>(allAttachments)
-      .filter { obj: DatabaseAttachment -> obj.isSticker }
-      .toList()
-    attachmentsList =
-      Stream.of(allAttachments).filterNot { obj: DatabaseAttachment -> obj.isSticker }
-        .toList()
-    val filesToArchive = arrayOfNulls<File>(attachmentsList.size)
-
-    /*if (groupId.toOptional().isPresent) {
-      recipientList =
-        getRecipientsListFromParticipantIds(Recipient.externalGroupExact(groupId as GroupId)) as MutableList<Recipient>
-      groupTitle = groups.getGroup(groupId as GroupId).get().title.toString()
-    }*/
-
-    if (mediaMessage.sharedContacts.isNotEmpty()) {
-      archiveInboxMediaMessage(
-        context,
-        ArchiveUtil.InboxArchiveTypes.CONTACT,
-        senderRecipient,
-        threadRecipient,
-        mediaMessage,
-        null
-      )
-    } else if (attachmentsList.isNotEmpty()) {
-      for (i in attachmentsList.indices) {
-        val att: DatabaseAttachment = attachmentsList[i]
-        val fileNameWithType = ArchiveFileUtil.getFileNameWithType(
-          att.fileName,
-          insertResult.messageId,
-          att.attachmentId.id,
-          att.contentType,
-          true
-        )
-        val tempFileForArchiving =
-          FileUtils.createPlaceHolderTempFile(context, fileNameWithType)
-        filesToArchive[i] = tempFileForArchiving
-        ApplicationDependencies.getJobManager()
-          .add(AttachmentDownloadJob(insertResult.messageId, att.attachmentId, false))
-      }
-      if (mediaMessage.linkPreviews.isEmpty()) {
-        archiveInboxMediaMessage(
-          context,
-          ArchiveUtil.InboxArchiveTypes.MEDIA,
-          senderRecipient,
-          threadRecipient,
-          mediaMessage,
-          filesToArchive
-        )
-      } else {
-        archiveInboxMediaMessage(
-          context,
-          ArchiveUtil.InboxArchiveTypes.HYPER_LINK,
-          senderRecipient,
-          threadRecipient,
-          mediaMessage,
-          filesToArchive
-        )
-      }
-    }
-    if (stickerAttachments != null && stickerAttachments.size > 0) {
-      val filesToArchive = arrayOfNulls<File>(stickerAttachments.size)
-      for (i in stickerAttachments.indices) {
-        val att: DatabaseAttachment = stickerAttachments.get(i)
-        val tempFileForArchiving = FileUtils
-          .createPlaceHolderTempFile(
-            context,
-            ArchiveUtil.generateAttachmentName(
-              insertResult.messageId,
-              att.attachmentId.id
-            ) + "." + ArchiveFileUtil.getFileType(att)
-          )
-        filesToArchive[i] = tempFileForArchiving
-        ApplicationDependencies.getJobManager()
-          .add(AttachmentDownloadJob(insertResult.messageId, att.attachmentId, false))
-      }
-      archiveInboxMediaMessage(
-        context,
-        ArchiveUtil.InboxArchiveTypes.STICKER,
-        senderRecipient,
-        threadRecipient,
-        mediaMessage,
-        filesToArchive
-      )
-    } else if (mediaMessage.mentions.isNotEmpty()) {
-      archiveInboxMediaMessage(
-        context,
-        ArchiveUtil.InboxArchiveTypes.MENTIONS,
-        senderRecipient,
-        threadRecipient,
-        mediaMessage,
-        null
-      )
-    } /*else if (message.previewList != null && message.previewList.isPresent() && message.previewList.size > 0) {
-          //For a hyper link without image preview  - Converted this message to be text message.(SIG-189)
-          val textMessage = IncomingTextMessage(
-            senderRecipient.id,
-           senderRecipient.,
-            message.timestamp,
-            content.getServerReceivedTimestamp(),
-            receivedTime,
-            message.body.get(),
-            groupId.toOptional(),
-            TimeUnit.SECONDS.toMillis(message.expireTimer.toLong()),
-            content.isNeedsReceipt(),
-            content.getServerUuid()
-          )
-          val recipientSender = Recipient.resolved(textMessage.authorId)
-          val groupRecipient: Recipient?
-          groupRecipient = if (textMessage.groupId == null) {
-            null
-          } else {
-            val recipientId = recipients.getOrInsertFromPossiblyMigratedGroupId(
-              textMessage.groupId!!
-            )
-            Recipient.resolved(recipientId)
-          }
-          archiveMessageInbox(
-            context,
-            ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX,
-            if (groupRecipient != null && groupRecipient.isGroup) groupRecipient else recipientSender,
-            textMessage,
-            insertResult.messageId,
-            groupTitle
-          )
-        }*/
-  }
-  //**TM_SA**//End
-
-  //**TM_SA**//Start
-  private fun archiveInboxMediaMessage(
-    context: Context,
-    aInboxArchiveTypes: ArchiveUtil.InboxArchiveTypes,
-    senderRecipient: Recipient,
-    threadRecipient : Recipient,
-    mediaMessage: IncomingMessage,
-    attachments: Array<File?>?
-  ) {
-    var tempFileForArchiving: File?
-    var filesToSend = arrayOfNulls<File>(mediaMessage.attachments.size)
-    if (aInboxArchiveTypes === ArchiveUtil.InboxArchiveTypes.MEDIA) {
-      if (!attachments.isNullOrEmpty()) {
-        ArchiveSender.archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis, attachments)
-      }
-    } else if (aInboxArchiveTypes === ArchiveUtil.InboxArchiveTypes.HYPER_LINK) {
-      if (!attachments.isNullOrEmpty()) {
-        ArchiveSender.archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis, attachments)
-      }
-    } else if (aInboxArchiveTypes === ArchiveUtil.InboxArchiveTypes.STICKER) {
-      if (!attachments.isNullOrEmpty()) {
-        for (i in mediaMessage.attachments.indices) {
-          tempFileForArchiving =
-            ArchiveFileUtil.createFileFromContentUri(context, mediaMessage.attachments[i].uri.toString())
-          filesToSend[i] = tempFileForArchiving
-        }
-        ArchiveSender.archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis, filesToSend)
-
-        ArchiveSender.updateArchiveSDKToSendMMSMessage(context, filesToSend[0]!!.name, true)
-      }
-    } else if (aInboxArchiveTypes === ArchiveUtil.InboxArchiveTypes.CONTACT) {
-      filesToSend = arrayOfNulls(mediaMessage.sharedContacts.size)
-      if (mediaMessage.sharedContacts.isNotEmpty()) {
-        for (i in mediaMessage.sharedContacts.indices) {
-          tempFileForArchiving = ArchiveFileUtil.createVCFFileFromContact(
-            context,
-            mediaMessage.sharedContacts[0])
-          filesToSend[i] = tempFileForArchiving
-        }
-        ArchiveSender.archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis, filesToSend)
-
-        ArchiveSender.updateArchiveSDKToSendMMSMessage(context, filesToSend[0]!!.name, false)
-      }
-    }/* else if (aInboxArchiveTypes === InboxArchiveTypes.MENTIONS) {
-      archiveMessageInboxMMSV2(context, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_INBOX, senderRecipient, threadRecipient, mediaMessage.body, mediaMessage.serverTimeMillis,attachments)
-
-    }*/
-  }
-  //**TM_SA**//End
 
   @Throws(StorageFailedException::class)
   private fun handleTextMessage(

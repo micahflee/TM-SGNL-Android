@@ -4,8 +4,6 @@ import android.content.Context
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.core.SingleEmitter
-import org.archiver.ArchiveConstants
-import org.archiver.ArchiveSender
 import org.signal.core.util.concurrent.SignalExecutors
 import org.tm.archive.R
 import org.tm.archive.database.SignalDatabase
@@ -44,7 +42,7 @@ object DeleteDialog {
     val isNoteToSelfDelete = isNoteToSelfDelete(messageRecords)
 
     if (forceRemoteDelete) {
-      builder.setPositiveButton(R.string.ConversationFragment_delete_for_everyone) { _, _ -> deleteForEveryone(context/*TM_SA*/, messageRecords, emitter) }
+      builder.setPositiveButton(R.string.ConversationFragment_delete_for_everyone) { _, _ -> deleteForEveryone(messageRecords, emitter) }
     } else {
       builder.setPositiveButton(if (isNoteToSelfDelete) R.string.ConversationFragment_delete_on_this_device else R.string.ConversationFragment_delete_for_me) { _, _ ->
         DeleteProgressDialogAsyncTask(context, messageRecords) {
@@ -68,13 +66,13 @@ object DeleteDialog {
 
   private fun handleDeleteForEveryone(context: Context, messageRecords: Set<MessageRecord>, emitter: SingleEmitter<Pair<Boolean, Boolean>>) {
     if (SignalStore.uiHints().hasConfirmedDeleteForEveryoneOnce()) {
-      deleteForEveryone(context/*TM_SA*/, messageRecords, emitter)
+      deleteForEveryone(messageRecords, emitter)
     } else {
       MaterialAlertDialogBuilder(context)
         .setMessage(R.string.ConversationFragment_this_message_will_be_deleted_for_everyone_in_the_conversation)
         .setPositiveButton(R.string.ConversationFragment_delete_for_everyone) { _, _ ->
           SignalStore.uiHints().markHasConfirmedDeleteForEveryoneOnce()
-          deleteForEveryone(context/*TM_SA*/, messageRecords, emitter)
+          deleteForEveryone(messageRecords, emitter)
         }
         .setNegativeButton(android.R.string.cancel) { _, _ -> emitter.onSuccess(Pair(false, false)) }
         .setOnCancelListener { emitter.onSuccess(Pair(false, false)) }
@@ -82,15 +80,11 @@ object DeleteDialog {
     }
   }
 
-  private fun deleteForEveryone(context: Context/*TM_SA add context */,messageRecords: Set<MessageRecord>, emitter: SingleEmitter<Pair<Boolean, Boolean>>) {
+  private fun deleteForEveryone(messageRecords: Set<MessageRecord>, emitter: SingleEmitter<Pair<Boolean, Boolean>>) {
     SignalExecutors.BOUNDED.execute {
       messageRecords.forEach { message ->
         MessageSender.sendRemoteDelete(message.id)
-        //**TM_SA**//
-        ArchiveSender.sendArchiveDeleteMessage(context, message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, true)
-        //**TM_SA**//
       }
-
       emitter.onSuccess(Pair(true, false))
     }
   }
@@ -105,11 +99,6 @@ object DeleteDialog {
     R.string.ConversationFragment_deleting_messages
   ) {
     override fun doInBackground(vararg params: Void?): Boolean {
-      //**TM_SA**//
-      for (message in messageRecords) {
-        ArchiveSender.sendArchiveDeleteMessage(context, message, ArchiveConstants.ProtocolType.ARCHIVE_PARAM_PROTOCOL_SEND, false)
-      }
-      //**TM_SA**//
       return messageRecords.map { record ->
         if (record.isMms) {
           SignalDatabase.messages.deleteMessage(record.id)

@@ -1,5 +1,6 @@
 package org.tm.archive.registration.fragments;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -282,16 +283,17 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
     if (fcmStatus == PlayServicesUtil.PlayServicesStatus.SUCCESS) {
       //**TM_SA**//Start
+      Activity activity = requireActivity();
       if (BuildConfig.DEBUG) {
-        if (CommonUtils.isMyServiceRunning(ApplicationContext.getInstance(), BackupService.class)) {
-          CommonUtils.stopBackupService(ApplicationContext.getInstance(), false);
+        if (CommonUtils.isMyServiceRunning(activity, BackupService.class)) {
+          CommonUtils.stopBackupService(activity, false);
         }
 
         PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_PRODUCTION_KEY, AuthenticatorConstants.Companion.getBASE_URL().getFirst());
         PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, AuthenticatorConstants.Companion.getBASE_URL().getSecond());
 
-        CommonUtils.setUrl(ApplicationContext.getInstance(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
-        CommonUtils.startBackupService(ApplicationContext.getInstance());
+        CommonUtils.setUrl(activity.getApplicationContext(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
+        CommonUtils.startBackupService(activity);
       }
       ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
       PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);

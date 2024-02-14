@@ -1,24 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- smartling.instruction_comments_enabled = on -->
 <resources>
-    <string name="app_name" translatable="false">TM SGNL</string><!--//**TM_SA**//-->
+    <string name="app_name" translatable="false">Signal</string>
 
-    <!--//**TM_SA**// START Change the URL's to our-->
-    <string name="install_url" translatable="false">https://play.google.com/store/apps/details?id=org.tm.archive</string>
-    <string name="donate_url" translatable="false">https://www.telemessage.com/faqs</string>
-    <string name="backup_support_url" translatable="false">https://www.telemessage.com/faqs</string>
-    <string name="transfer_support_url" translatable="false">https://www.telemessage.com/contact-us</string>
-    <string name="support_center_url" translatable="false">https://www.telemessage.com/contact-us</string>
-    <string name="terms_and_privacy_policy_url" translatable="false">http://www.telemessage.com/Privacy-Policy</string>
-    <string name="donation_decline_code_error_url" translatable="false">https://www.telemessage.com/faqs</string>
-    <string name="sms_export_url" translatable="false">https://www.telemessage.com/contact-us</string>
-    <string name="username_support_url" translatable="false">https://www.telemessage.com/contact-us</string>
-    <string name="export_account_data_url" translatable="false">https://www.telemessage.com/contact-us</string>
-    <string name="pending_transfer_url" translatable="false">https://www.telemessage.com/contact-us</string>
-    <string name="donate_faq_url" translatable="false">https://www.telemessage.com/faqs</string>
-    <!--//**TM_SA**// END Change the URL's to our-->
+    <string name="install_url" translatable="false">https://signal.org/install</string>
+    <string name="donate_url" translatable="false">https://signal.org/donate</string>
+    <string name="backup_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string>
+    <string name="transfer_support_url" translatable="false">https://support.signal.org/hc/articles/360007059752</string>
+    <string name="support_center_url" translatable="false">https://support.signal.org/</string>
+    <string name="terms_and_privacy_policy_url" translatable="false">https://signal.org/legal</string>
     <string name="google_pay_url" translatable="false">https://pay.google.com</string>
+    <string name="donation_decline_code_error_url" translatable="false">https://support.signal.org/hc/articles/4408365318426#errors</string>
+    <string name="sms_export_url" translatable="false">https://support.signal.org/hc/articles/360007321171</string>
     <string name="signal_me_username_url" translatable="false">https://signal.me/#u/%1$s</string>
+    <string name="username_support_url" translatable="false">https://support.signal.org/hc/articles/5389476324250</string>
+    <string name="export_account_data_url" translatable="false">https://support.signal.org/hc/articles/5538911756954</string>
+    <string name="pending_transfer_url" translatable="false">https://support.signal.org/hc/articles/360031949872#pending</string>
+    <string name="donate_faq_url" translatable="false">https://support.signal.org/hc/articles/360031949872#donate</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -1554,7 +1552,7 @@
     <string name="MessageRequestBottomView_do_you_want_to_join_this_group_you_wont_see_their_messages">Join this group and share your name and photo with its members? You won\'t see their messages until you accept.</string>
     <string name="MessageRequestBottomView_join_this_group_they_wont_know_youve_seen_their_messages_until_you_accept">Join this group? They won’t know you’ve seen their messages until you accept.</string>
     <string name="MessageRequestBottomView_unblock_this_group_and_share_your_name_and_photo_with_its_members">Unblock this group and share your name and photo with its members? You won\'t receive any messages until you unblock them.</string>
-    <string name="MessageRequestBottomView_legacy_learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="MessageRequestBottomView_legacy_learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007459591</string>
     <string name="MessageRequestProfileView_view">View</string>
     <string name="MessageRequestProfileView_member_of_one_group">Member of %1$s</string>
     <string name="MessageRequestProfileView_member_of_two_groups">Member of %1$s and %2$s</string>
@@ -1651,7 +1649,7 @@
     <string name="PinRestoreLockedFragment_create_your_pin">Create your PIN</string>
     <string name="PinRestoreLockedFragment_youve_run_out_of_pin_guesses">You\'ve run out of PIN guesses, but you can still access your Signal account by creating a new PIN. For your privacy and security your account will be restored without any saved profile information or settings.</string>
     <string name="PinRestoreLockedFragment_create_new_pin">Create new PIN</string>
-    <string name="PinRestoreLockedFragment_learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="PinRestoreLockedFragment_learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
 
     <!-- Dialog button text indicating user wishes to send an sms code isntead of skipping it -->
     <string name="ReRegisterWithPinFragment_send_sms_code">Send SMS code</string>
@@ -2803,7 +2801,7 @@
     <string name="EditProfileFragment__edit_group">Edit group</string>
     <string name="EditProfileFragment__group_name">Group name</string>
     <string name="EditProfileFragment__group_description">Group description</string>
-    <string name="EditProfileFragment__support_link" translatable="false">https://www.telemessage.com/faqs/</string> <!--//**TM_SA**//-->
+    <string name="EditProfileFragment__support_link" translatable="false">https://support.signal.org/hc/articles/360007459591</string>
 
     <!-- EditProfileNameFragment -->
     <string name="EditProfileNameFragment_your_name">Your name</string>
@@ -2882,8 +2880,8 @@
     <string name="HelpFragment__emoji_3" translatable="false">emoji_3</string>
     <string name="HelpFragment__emoji_2" translatable="false">emoji_2</string>
     <string name="HelpFragment__emoji_1" translatable="false">emoji_1</string>
-    <string name="HelpFragment__link__debug_info" translatable="false">https://www.telemessage.com/contact-us/</string><!--//**TM_SA**//-->
-    <string name="HelpFragment__link__faq" translatable="false">https://www.telemessage.com/faqs</string><!--//**TM_SA**//-->
+    <string name="HelpFragment__link__debug_info" translatable="false">https://support.signal.org/hc/articles/360007318591</string>
+    <string name="HelpFragment__link__faq" translatable="false">https://support.signal.org</string>
     <string name="HelpFragment__support_info">Support Info</string>
     <string name="HelpFragment__signal_android_support_request">Signal Android Support Request</string>
     <string name="HelpFragment__debug_log">Debug Log:</string>
@@ -3080,7 +3078,7 @@
     <string name="preferences__if_typing_indicators_are_disabled_you_wont_be_able_to_see_typing_indicators">If typing indicators are disabled, you won\'t be able to see typing indicators from others.</string>
     <string name="preferences__request_keyboard_to_disable">Request keyboard to disable personalized learning.</string>
     <string name="preferences__this_setting_is_not_a_guarantee">This setting is not a guarantee, and your keyboard may ignore it.</string>
-    <string name="preferences__incognito_keyboard_learn_more" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="preferences__incognito_keyboard_learn_more" translatable="false">https://support.signal.org/hc/articles/360055276112</string>
     <string name="preferences_chats__when_using_mobile_data">When using mobile data</string>
     <string name="preferences_chats__when_using_wifi">When using Wi-Fi</string>
     <string name="preferences_chats__when_roaming">When roaming</string>
@@ -3224,7 +3222,7 @@
     <string name="PaymentsHomeFragment__payments_deactivated">Payments deactivated.</string>
     <string name="PaymentsHomeFragment__payment_failed">Payment failed</string>
     <string name="PaymentsHomeFragment__details">Details</string>
-    <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_activate</string>
     <!-- Displayed as a description in a dialog when the user tries to activate payments -->
     <string name="PaymentsHomeFragment__you_can_use_signal_to_send_and">You can use Signal to send and receive MobileCoin. All payments are subject to the Terms of Use for MobileCoins and the MobileCoin Wallet. You may encounter some issues and payments or balances you may lose can\'t be recovered. </string>
     <string name="PaymentsHomeFragment__activate">Activate</string>
@@ -3301,7 +3299,7 @@
     <string name="PaymentsAddMoneyFragment__copy">Copy</string>
     <string name="PaymentsAddMoneyFragment__copied_to_clipboard">Copied to clipboard</string>
     <string name="PaymentsAddMoneyFragment__to_add_funds">To add funds, send MobileCoin to your wallet address. Start a transaction from your account on an exchange that supports MobileCoin, then scan the QR code or copy your wallet address.</string>
-    <string name="PaymentsAddMoneyFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs</string><!--//**TM_SA**//-->
+    <string name="PaymentsAddMoneyFragment__learn_more__information" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_transfer_from_exchange</string>
 
     <!-- PaymentsDetailsFragment -->
     <string name="PaymentsDetailsFragment__details">Details</string>
@@ -3321,8 +3319,8 @@
     <string name="PaymentsDetailsFragment__coin_cleanup_fee">Coin cleanup fee</string>
     <string name="PaymentsDetailsFragment__coin_cleanup_information">A “coin cleanup fee” is charged when the coins in your possession can not be combined to complete a transaction. Cleanup will allow you to continue sending payments.</string>
     <string name="PaymentsDetailsFragment__no_details_available">No further details available for this transaction</string>
-    <string name="PaymentsDetailsFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
-    <string name="PaymentsDetailsFragment__learn_more__cleanup_fee" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="PaymentsDetailsFragment__learn_more__information" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_details</string>
+    <string name="PaymentsDetailsFragment__learn_more__cleanup_fee" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_details_fees</string>
     <string name="PaymentsDetailsFragment__sent_payment">Sent payment</string>
     <string name="PaymentsDetailsFragment__received_payment">Received payment</string>
     <string name="PaymentsDeatilsFragment__payment_completed_s">Payment completed %1$s</string>
@@ -3366,7 +3364,7 @@
     <string name="CreatePaymentFragment__backspace">Backspace</string>
     <string name="CreatePaymentFragment__add_note">Add note</string>
     <string name="CreatePaymentFragment__conversions_are_just_estimates">Conversions are just estimates and may not be accurate.</string>
-    <string name="CreatePaymentFragment__learn_more__conversions" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="CreatePaymentFragment__learn_more__conversions" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_currency_conversion</string>
 
     <!-- EditNoteFragment -->
     <string name="EditNoteFragment_note">Note</string>
@@ -3576,7 +3574,7 @@
     <string name="BaseKbsPinFragment__create_alphanumeric_pin">Create alphanumeric PIN</string>
     <!-- Button label to prompt them to return to creating a numbers-only password ("PIN") -->
     <string name="BaseKbsPinFragment__create_numeric_pin">Create numeric PIN</string>
-    <string name="BaseKbsPinFragment__learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="BaseKbsPinFragment__learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
 
     <!-- CreateKbsPinFragment -->
     <plurals name="CreateKbsPinFragment__pin_must_be_at_least_characters">
@@ -3608,7 +3606,7 @@
     <string name="KbsSplashFragment__introducing_pins">Introducing PINs</string>
     <string name="KbsSplashFragment__pins_keep_information_stored_with_signal_encrypted">PINs keep information stored with Signal encrypted so only you can access it. Your profile, settings, and contacts will restore when you reinstall. You won\'t need your PIN to open the app.</string>
     <string name="KbsSplashFragment__learn_more">Learn More</string>
-    <string name="KbsSplashFragment__learn_more_link" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="KbsSplashFragment__learn_more_link" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
     <string name="KbsSplashFragment__registration_lock_equals_pin">Registration Lock = PIN</string>
     <string name="KbsSplashFragment__your_registration_lock_is_now_called_a_pin">Your Registration Lock is now called a PIN, and it does more. Update it now.</string>
     <string name="KbsSplashFragment__update_pin">Update PIN</string>
@@ -3629,7 +3627,7 @@
     <string name="AccountLockedFragment__your_account_has_been_locked_to_protect_your_privacy">Your account has been locked to protect your privacy and security. After %1$d days of inactivity in your account you\'ll be able to re-register this phone number without needing your PIN. All content will be deleted.</string>
     <string name="AccountLockedFragment__next">Next</string>
     <string name="AccountLockedFragment__learn_more">Learn More</string>
-    <string name="AccountLockedFragment__learn_more_url" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="AccountLockedFragment__learn_more_url" translatable="false">https://support.signal.org/hc/articles/360007059792</string>
 
     <!-- KbsLockFragment -->
     <string name="RegistrationLockFragment__enter_your_pin">Enter your PIN</string>
@@ -4160,9 +4158,9 @@
     <string name="payment_info_card_with_a_high_balance">With a high balance, you may want to update to an alphanumeric PIN to add more protection to your account.</string>
     <string name="payment_info_card_update_pin">Update PIN</string>
 
-    <string name="payment_info_card__learn_more__about_mobilecoin" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
-    <string name="payment_info_card__learn_more__adding_to_your_wallet" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
-    <string name="payment_info_card__learn_more__cashing_out" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="payment_info_card__learn_more__about_mobilecoin" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_which_ones</string>
+    <string name="payment_info_card__learn_more__adding_to_your_wallet" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_transfer_from_exchange</string>
+    <string name="payment_info_card__learn_more__cashing_out" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_transfer_to_exchange</string>
 
     <!-- DeactivateWalletFragment -->
     <string name="DeactivateWalletFragment__deactivate_wallet">Deactivate Wallet</string>
@@ -4174,7 +4172,7 @@
     <string name="DeactivateWalletFragment__deactivate_without_transferring_question">Deactivate without transferring?</string>
     <string name="DeactivateWalletFragment__your_balance_will_remain">Your balance will remain in your wallet linked to Signal if you choose to reactivate payments.</string>
     <string name="DeactivateWalletFragment__error_deactivating_wallet">Error deactivating wallet.</string>
-    <string name="DeactivateWalletFragment__learn_more__we_recommend_transferring_your_funds" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="DeactivateWalletFragment__learn_more__we_recommend_transferring_your_funds" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_deactivate</string>
 
     <!-- PaymentsRecoveryStartFragment -->
     <string name="PaymentsRecoveryStartFragment__recovery_phrase">Recovery phrase</string>
@@ -4210,8 +4208,8 @@
     <string name="PaymentsRecoveryPasteFragment__invalid_recovery_phrase">Invalid recovery phrase</string>
     <string name="PaymentsRecoveryPasteFragment__make_sure">Make sure you\'ve entered %1$d words and try again.</string>
 
-    <string name="PaymentsRecoveryStartFragment__learn_more__view" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
-    <string name="PaymentsRecoveryStartFragment__learn_more__restore" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="PaymentsRecoveryStartFragment__learn_more__view" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_wallet_view_passphrase</string>
+    <string name="PaymentsRecoveryStartFragment__learn_more__restore" translatable="false">https://support.signal.org/hc/articles/360057625692#payments_wallet_restore_passphrase</string>
 
     <!-- PaymentsRecoveryPhraseFragment -->
     <string name="PaymentsRecoveryPhraseFragment__next">Next</string>
@@ -4445,7 +4443,7 @@
     <!-- Alert dialog button to cancel the dialog -->
 
     <!-- AdvancedPrivacySettingsFragment -->
-    <string name="AdvancedPrivacySettingsFragment__sealed_sender_link" translatable="false">https://www.telemessage.com/faqs/</string><!--//**TM_SA**//-->
+    <string name="AdvancedPrivacySettingsFragment__sealed_sender_link" translatable="false">https://signal.org/blog/sealed-sender</string>
     <string name="AdvancedPrivacySettingsFragment__show_status_icon">Show status icon</string>
     <string name="AdvancedPrivacySettingsFragment__show_an_icon">Show an icon in message details when they were delivered using sealed sender.</string>
 
@@ -6572,42 +6570,4 @@
     <string name="MonthlyDonationCanceled__not_now_button">Not now</string>
 
     <!-- EOF -->
-
-    <!--//**TM_SA**//Start-->
-    <string name="preferences__send_logs_to_telemessage">Send Logs to TeleMessage</string>
-
-    <string name="installation_event_sent">installation_event_sent</string>
-
-    <string name="issue_report_list_title">Issue report</string>
-    <string name="issue_report_list_summery">Send us a log file of the app</string>
-
-    <string name="settings_about_title">TM SGNL</string>
-
-    <string name="privacy_center_about">&lt;a href=https://www.sharonaintergreen.com/post/tm-sgnl-privacy-poilcy/&gt;&lt;b>Privacy Center&lt;/b>&lt;/a&gt;</string>
-    <string name="terms_about">&lt;a href=http://www.telemessage.com/terms-conditions/&gt;&lt;b>Terms Of Service&lt;/b>&lt;/a&gt;</string>
-    <string name="support_about">&lt;a href=https://www.telemessage.com/contact-us/&gt;&lt;b>Support Center&lt;/b>&lt;/a&gt;</string>
-    <string name="version">version</string>
-    <string name="privacy_center">privacy_center</string>
-    <string name="terms">terms</string>
-
-    <string name="error_self_authentication_process_failed">We couldn\'t locate your TeleMessage TM SGNL Archiver Account. Please contact</string>
-
-
-    <string name="get_self_authentication_first_warning_message_step_1">We could not locate your TeleMessage account.\nWe will save your messages for 7 days.\nTo open an account and start archiving contact us at TeleMessage support.</string>
-    <string name="get_self_authentication_first_warning_message_step_1_dismiss">Dismiss</string>
-    <string name="get_self_authentication_failure_contact_us">Contact us</string>
-
-    <string name="get_self_authentication_contact_us_sent">Thanks, We have received your request and one of our representatives will contact you soon.</string>
-    <string name="get_self_authentication_failure_message_close">close</string>
-    <string name="get_self_authentication_second_warning_message_step_2">We could not locate your TeleMessage account.\nYour app has been blocked Please contact TeleMessage support.</string>
-
-    <string name="log_report_sent">Log report sent</string>
-
-    <string name="intune_auth_title">Log in to Microsoft</string>
-    <string name="intune_auth_message">Your device is under MDM. In order to use TM SGNL, please log in to Microsoft account</string>
-    <string name="intune_auth_ok">OK</string>
-    <string name="intune_auth_cancel">Cancel</string>
-
-
-    <!--//**TM_SA**//End-->
 </resources>

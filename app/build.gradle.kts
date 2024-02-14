@@ -100,7 +100,7 @@ android {
   buildToolsVersion = signalBuildToolsVersion
   compileSdkVersion = signalCompileSdkVersion
 
-  flavorDimensions += listOf("distribution", "environment")
+  flavorDimensions += listOf("distribution", "environment", "ext")
   useLibrary("org.apache.http.legacy")
   testBuildType = "instrumentation"
 
@@ -432,6 +432,10 @@ android {
 
       buildConfigField("String", "BUILD_ENVIRONMENT_TYPE", "\"Pnp\"")
     }
+
+    create("tm") {
+      dimension = "ext"
+    }
   }
 
   lint {
@@ -665,9 +669,13 @@ dependencies {
   implementation (libs.commonsText)
 
   implementation (group = "commons-io", name = "commons-io", version = "2.6") //For test copy file
-  implementation(fileTree(mapOf("include" to listOf("*.aar"), "dir" to "libs")))
+  debugImplementation(files("libs/androidcopysdk-signal-debug.aar"))
+  releaseImplementation(files("libs/androidcopysdk-signal-release.aar"))
+  debugImplementation(files("libs/authenticatorsdk-signal-debug.aar"))
+  releaseImplementation(files("libs/authenticatorsdk-signal-release.aar"))
+  implementation(files("libs/common-debug.aar"))
+  // Include the MAM SDK
   implementation("com.arthenica:mobile-ffmpeg-full:4.4.LTS")
-// Include the MAM SDK
   implementation (files("MAMSDK/Microsoft.Intune.MAM.SDK.aar"))
   // Include MSAL
   implementation (libs.msal)

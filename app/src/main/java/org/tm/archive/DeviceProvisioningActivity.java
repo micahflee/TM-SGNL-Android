@@ -38,7 +38,7 @@ public class DeviceProvisioningActivity extends PassphraseRequiredActivity {
         .setOnDismissListener(dialog13 -> finish())
         .create();
 
-    dialog.setIcon(getResources().getDrawable(R.drawable.ic_launcher_foreground_new));//**TM_SA**//
+    dialog.setIcon(getResources().getDrawable(R.drawable.ic_launcher_foreground));
     dialog.show();
   }
 }

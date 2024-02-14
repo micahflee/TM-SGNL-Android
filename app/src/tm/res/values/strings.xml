@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- smartling.instruction_comments_enabled = on -->
+<resources>
+    <string name="app_name" translatable="false">TM SGNL</string>
+
+    <string name="install_url" translatable="false">https://play.google.com/store/apps/details?id=org.tm.archive</string>
+    <string name="donate_url" translatable="false">@string/telemessage_faq_url</string>
+    <string name="backup_support_url" translatable="false">@string/telemessage_faq_url</string>
+    <string name="transfer_support_url" translatable="false">@string/telemessage_help_url</string>
+    <string name="support_center_url" translatable="false">@string/telemessage_help_url</string>
+    <string name="terms_and_privacy_policy_url" translatable="false">http://www.telemessage.com/Privacy-Policy</string>
+    <string name="donation_decline_code_error_url" translatable="false">@string/telemessage_faq_url</string>
+    <string name="sms_export_url" translatable="false">@string/telemessage_help_url</string>
+    <string name="username_support_url" translatable="false">@string/telemessage_help_url</string>
+    <string name="export_account_data_url" translatable="false">@string/telemessage_help_url</string>
+    <string name="pending_transfer_url" translatable="false">@string/telemessage_help_url</string>
+    <string name="donate_faq_url" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- MessageRequestBottomView -->
+    <string name="MessageRequestBottomView_legacy_learn_more_url" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- PinRestoreLockedFragment -->
+    <string name="PinRestoreLockedFragment_learn_more_url" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- EditProfileFragment -->
+    <string name="EditProfileFragment__support_link" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- HelpFragment -->
+    <string name="HelpFragment__link__debug_info" translatable="false">@string/telemessage_help_url</string>
+    <string name="HelpFragment__link__faq" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- preferences.xml -->
+    <string name="preferences__incognito_keyboard_learn_more" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- Displayed on a welcome screen for payments -->
+    <string name="PaymentsHomeFragment__learn_more__activate_payments" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- PaymentsAddMoneyFragment -->
+    <string name="PaymentsAddMoneyFragment__learn_more__information" translatable="false">https://www.telemessage.com/faqs</string>
+
+    <!-- PaymentsDetailsFragment -->
+    <string name="PaymentsDetailsFragment__learn_more__information" translatable="false">@string/telemessage_faq_url</string>
+    <string name="PaymentsDetailsFragment__learn_more__cleanup_fee" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- CreatePaymentFragment -->
+    <string name="CreatePaymentFragment__learn_more__conversions" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- BaseKbsPinFragment -->
+    <string name="BaseKbsPinFragment__learn_more_url" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- KbsSplashFragment -->
+    <string name="KbsSplashFragment__learn_more_link" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- AccountLockedFragment -->
+    <string name="AccountLockedFragment__learn_more_url" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- InfoCard -->
+    <string name="payment_info_card__learn_more__about_mobilecoin" translatable="false">@string/telemessage_faq_url</string>
+    <string name="payment_info_card__learn_more__adding_to_your_wallet" translatable="false">@string/telemessage_faq_url</string>
+    <string name="payment_info_card__learn_more__cashing_out" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- DeactivateWalletFragment -->
+    <string name="DeactivateWalletFragment__learn_more__we_recommend_transferring_your_funds" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- PaymentsRecoveryPasteFragment -->
+    <string name="PaymentsRecoveryStartFragment__learn_more__view" translatable="false">@string/telemessage_faq_url</string>
+    <string name="PaymentsRecoveryStartFragment__learn_more__restore" translatable="false">@string/telemessage_faq_url</string>
+
+    <!-- AdvancedPrivacySettingsFragment -->
+    <string name="AdvancedPrivacySettingsFragment__sealed_sender_link" translatable="false">@string/telemessage_faq_url</string>
+
+    <!--  region Telemessage  -->
+    <string name="telemessage_faq_url" translatable="false">https://www.telemessage.com/faqs/</string>
+    <string name="telemessage_help_url" translatable="false">https://www.telemessage.com/contact-us/</string>
+    <string name="telemessage_privacy_url" translatable="false">https://www.sharonaintergreen.com/post/tm-sgnl-privacy-poilcy/</string>
+
+    <string name="preferences__send_logs_to_telemessage">Send Logs to TeleMessage</string>
+
+    <string name="installation_event_sent">installation_event_sent</string>
+
+    <string name="issue_report_list_title">Issue report</string>
+    <string name="issue_report_list_summery">Send us a log file of the app</string>
+
+    <string name="settings_about_title">TM SGNL</string>
+
+    <string name="privacy_center_about">&lt;a href=https://www.sharonaintergreen.com/post/tm-sgnl-privacy-poilcy/&gt;&lt;b>Privacy Center&lt;/b>&lt;/a&gt;</string>
+    <string name="terms_about">&lt;a href=http://www.telemessage.com/terms-conditions/&gt;&lt;b>Terms Of Service&lt;/b>&lt;/a&gt;</string>
+    <string name="support_about">&lt;a href=https://www.telemessage.com/contact-us/&gt;&lt;b>Support Center&lt;/b>&lt;/a&gt;</string>
+    <string name="version">version</string>
+    <string name="privacy_center">privacy_center</string>
+    <string name="terms">terms</string>
+
+    <string name="error_self_authentication_process_failed">We couldn\'t locate your TeleMessage TM SGNL Archiver Account. Please contact</string>
+
+
+    <string name="get_self_authentication_first_warning_message_step_1">We could not locate your TeleMessage account.\nWe will save your messages for 7 days.\nTo open an account and start archiving contact us at TeleMessage support.</string>
+    <string name="get_self_authentication_first_warning_message_step_1_dismiss">Dismiss</string>
+    <string name="get_self_authentication_failure_contact_us">Contact us</string>
+
+    <string name="get_self_authentication_contact_us_sent">Thanks, We have received your request and one of our representatives will contact you soon.</string>
+    <string name="get_self_authentication_failure_message_close">close</string>
+    <string name="get_self_authentication_second_warning_message_step_2">We could not locate your TeleMessage account.\nYour app has been blocked Please contact TeleMessage support.</string>
+
+    <string name="log_report_sent">Log report sent</string>
+
+    <string name="intune_auth_title">Log in to Microsoft</string>
+    <string name="intune_auth_message">Your device is under MDM. In order to use TM SGNL, please log in to Microsoft account</string>
+    <string name="intune_auth_ok">OK</string>
+    <string name="intune_auth_cancel">Cancel</string>
+    <!--  endregion Telemessage  -->
+</resources>

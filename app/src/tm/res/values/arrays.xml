@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string-array name="pref_media_download_mobile_data_default">
+        <item>image</item>
+        <item>audio</item>
+        <!--//**TM_SA**//Start-->
+        <item>video</item>
+        <item>documents</item>
+        <!--//**TM_SA**//End-->
+    </string-array>
+</resources>

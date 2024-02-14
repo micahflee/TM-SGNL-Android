@@ -113,12 +113,8 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
       executor.enqueue(context, conversationId)
     } else {
       //**TM_SA**//Start
-      val isAlreadyDoneSelfAuthentication =
-        PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
-      com.tm.logger.Log.d(
-        "SelfAuthenticatorProcess",
-        "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication"
-      )
+      val isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
+      com.tm.logger.Log.d("SelfAuthenticatorProcess", "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication")
 
       if(!isAlreadyDoneSelfAuthentication && SelfAuthenticatorManager.isAppValidationTimePassed(context)){
         return
