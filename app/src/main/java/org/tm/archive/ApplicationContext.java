@@ -27,7 +27,6 @@ import androidx.multidex.MultiDexApplication;
 import com.google.android.gms.security.ProviderInstaller;
 
 import org.archiver.FCMConnector;
-import org.archiver.device.ICallManagerRecordingDelegate;
 import org.conscrypt.ConscryptSignal;
 import org.greenrobot.eventbus.EventBus;
 import org.signal.aesgcmprovider.AesGcmProvider;
@@ -431,14 +430,14 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       if (!SignalStore.internalValues().callingDisableLBRed()) {
         fieldTrials.put("RingRTC-Audio-LBRed-For-Opus", "Enabled,bitrate_pri:22000");
       }
-      CallManager.setDelegate(createCallManagerDelegate()); // TM_SA TODO move to impl
+      beforeInitializeCallManager();  // TM_SA
       CallManager.initialize(this, new RingRtcLogger(), fieldTrials);
     } catch (UnsatisfiedLinkError e) {
       throw new AssertionError("Unable to load ringrtc library", e);
     }
   }
 
-  protected ICallManagerRecordingDelegate createCallManagerDelegate() { return null; }
+  protected void beforeInitializeCallManager() {  }  // TM_SA
 
   @WorkerThread
   private void initializeCircumvention() {

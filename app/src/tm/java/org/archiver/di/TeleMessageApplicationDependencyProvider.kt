@@ -7,7 +7,7 @@ package org.archiver.di
 
 import android.app.Application
 import com.tm.androidcopysdk.api.IMessageStoreObserver
-import org.archiver.core.DefaultMessageStoreObserver
+import com.tm.androidcopysdk.device.DefaultMessageStoreObserver
 import org.archiver.device.TeleMessageSignalCallManager
 import org.tm.archive.dependencies.ApplicationDependencyProvider
 import org.tm.archive.service.webrtc.SignalCallManager

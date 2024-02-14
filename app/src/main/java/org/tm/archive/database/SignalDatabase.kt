@@ -6,8 +6,8 @@ import androidx.annotation.VisibleForTesting
 import com.tm.androidcopysdk.api.IDatabase
 import com.tm.androidcopysdk.api.IArchiveMessageDao
 import com.tm.androidcopysdk.api.IMessageStoreObserver
+import com.tm.androidcopysdk.device.DefaultMessageStoreObserver
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper
-import org.archiver.core.DefaultMessageStoreObserver
 import org.archiver.data.TeleAttachmentTable
 import org.archiver.data.TeleMessageTable
 import org.signal.core.util.SqlUtil

@@ -6,7 +6,6 @@ import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.DataGrabber
 import com.tm.androidcopysdk.api.IArchiveDatabase
-import com.tm.androidcopysdk.api.IMessageStoreObserver
 import com.tm.androidcopysdk.api.SdkModule
 import com.tm.androidcopysdk.database.DefaultArchiveDatabase
 import com.tm.androidcopysdk.utils.PrefManager
@@ -14,12 +13,11 @@ import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
-import org.archiver.core.DefaultMessageStoreObserver
 import org.archiver.device.CallManagerRecordingDelegate
-import org.archiver.device.ICallManagerRecordingDelegate
 import org.archiver.di.TeleMessageApplicationDependencyProvider
 import org.archiver.model.SignalArchiveType
 import org.archiver.model.SignalFiler
+import org.signal.ringrtc.CallManager
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
 
@@ -38,8 +36,9 @@ class TeleMessageSignalApplication : ApplicationContext() {
     ApplicationDependencies.init(this, TeleMessageApplicationDependencyProvider(this))
   }
 
-  override fun createCallManagerDelegate(): ICallManagerRecordingDelegate {
-    return CallManagerRecordingDelegate.getInstance(applicationContext)
+  override fun beforeInitializeCallManager() {
+    CallManager.setDelegate(CallManagerRecordingDelegate.getInstance(applicationContext))
+    super.beforeInitializeCallManager()
   }
 
   private fun initializeSdk() {
