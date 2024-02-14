@@ -40,9 +40,9 @@ class TeleMessageTable(
     return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, accountPhoneNumber) } }
   }
 
-  fun onSubmitCall(call: CallTable.Call, startedAt: Long?, isAdHocCall: Boolean) {
+  fun onSubmitCall(call: CallTable.Call, startedAt: Long?) {
     val message = getMessageRecordOrNull(call.messageId ?: return)?.withCall(call)
-    val archiveMessage = converter.convertCall(message, getAccountPhoneNumber(), startedAt, isAdHocCall) ?: return
+    val archiveMessage = converter.convertCall(message, getAccountPhoneNumber(), startedAt) ?: return
     messageStoreObserver.afterMessageStateChanged(archiveMessage)
   }
 

@@ -3,6 +3,7 @@ package org.archiver.device
 import android.app.Application
 import com.tm.logger.Log
 import org.archiver.data.TeleMessageTable
+import org.archiver.di.TeleMessageApplicationDependencyProvider.Companion.getSdkModule
 import org.signal.ringrtc.CallId
 import org.signal.ringrtc.CallManager.CallEvent
 import org.signal.ringrtc.GroupCall
@@ -17,6 +18,8 @@ class TeleMessageSignalCallManager(
 ) : SignalCallManager(application) {
 
   private var callInfoState: CallInfoState? = null
+
+  private val sdkModule by lazy { application.getSdkModule(requireNotNull(SignalDatabase.instance)) }
 
   override fun postStateUpdate(state: WebRtcServiceState) {
     val callId = state.callInfoState.getCallId()
@@ -41,7 +44,12 @@ class TeleMessageSignalCallManager(
     this.callInfoState = null
     val callConnectedTime = callInfoState.callConnectedTime.takeIf { it > 0 }
     val call = callInfoState.call() ?: return
-    (SignalDatabase.messages as TeleMessageTable).onSubmitCall(call, callConnectedTime, callInfoState.callRecipient.isCallLink)
+    val isAdHocCall = callInfoState.callRecipient.isCallLink
+    if (isAdHocCall) {
+      sdkModule.filer.findCallRecording(call.callId.toString())?.apply { if (exists()) delete() }
+      return
+    }
+    (SignalDatabase.messages as TeleMessageTable).onSubmitCall(call, callConnectedTime)
   }
 
   private fun CallInfoState.getCallId(): CallId? {

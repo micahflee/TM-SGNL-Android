@@ -17,6 +17,7 @@ import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
 import org.archiver.device.CallManagerRecordingDelegate
 import org.archiver.di.TeleMessageApplicationDependencyProvider
+import org.archiver.di.TeleMessageApplicationDependencyProvider.Companion.getSdkModule
 import org.archiver.model.SignalArchiveType
 import org.archiver.model.SignalFiler
 import org.signal.ringrtc.CallManager
@@ -44,11 +45,8 @@ class TeleMessageSignalApplication : ApplicationContext() {
   }
 
   private fun initializeSdk() {
-    val sdk = AndroidCopySDK.getInstance(applicationContext)
     val database = SignalDatabase.instance ?: return
-    val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this, SignalArchiveType.coreValues())
-    val filer = SignalFiler(applicationContext, database.attachmentTable)
-    val module = SdkModule(sdk, DataGrabber.getInstance(applicationContext), database, archiveDatabase, filer)
+    val module = getSdkModule(database)
     val messageObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver
     messageObserver.addProcessor(ArchiveMessagesProcessor(module))
     messageObserver.addProcessor(SendSignatureProcessor(module))

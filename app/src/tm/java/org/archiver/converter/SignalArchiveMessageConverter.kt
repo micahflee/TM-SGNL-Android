@@ -27,18 +27,18 @@ class SignalArchiveMessageConverter(
   }
 
   fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, isDeleted, null, false)
+    return convert(message, accountPhoneNumber, isDeleted, null)
   }
 
-  fun convertCall(message: MessageRecord?, accountPhoneNumber: String?, startedAt: Long?, isAdHocCall: Boolean): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, false, startedAt, isAdHocCall)
+  fun convertCall(message: MessageRecord?, accountPhoneNumber: String?, startedAt: Long?): ArchiveMessage? {
+    return convert(message, accountPhoneNumber, false, startedAt)
   }
 
-  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, startedAt: Long?, isAdHocCall: Boolean): ArchiveMessage? {
+  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, startedAt: Long?): ArchiveMessage? {
     if (message == null)
       return null
 
-    val type = getTransportType(message, isAdHocCall) ?: return null
+    val type = getTransportType(message) ?: return null
     val sender = recipientConverter.convertSenderRecipient(message)
     val receivers = recipientConverter.convertReceiverRecipients(message)
     return ArchiveMessage(
@@ -63,9 +63,7 @@ class SignalArchiveMessageConverter(
     )
   }
 
-  private fun getTransportType(message: MessageRecord, isAdHocCall: Boolean): ArchiveMessageType? {
-    if (isAdHocCall)
-      return ArchiveMessageType.Unknown
+  private fun getTransportType(message: MessageRecord): ArchiveMessageType? {
     if (message.isCallMessage())
       return ArchiveMessageType.Call
     return if (message.isSmsMessage()) ArchiveMessageType.Sms else if (message.isMultimediaMessage()) ArchiveMessageType.Mms else null
