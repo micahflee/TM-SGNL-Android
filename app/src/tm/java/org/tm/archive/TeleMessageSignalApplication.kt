@@ -4,10 +4,6 @@ import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.AndroidCopySettings
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
-import com.tm.androidcopysdk.DataGrabber
-import com.tm.androidcopysdk.api.IArchiveDatabase
-import com.tm.androidcopysdk.api.SdkModule
-import com.tm.androidcopysdk.database.DefaultArchiveDatabase
 import com.tm.androidcopysdk.device.ArchiveMessagesProcessor
 import com.tm.androidcopysdk.device.SendSignatureProcessor
 import com.tm.androidcopysdk.utils.PrefManager
@@ -19,11 +15,16 @@ import org.archiver.SignalLoggerAdapter
 import org.archiver.device.CallManagerRecordingDelegate
 import org.archiver.di.TeleMessageApplicationDependencyProvider
 import org.archiver.di.TeleMessageApplicationDependencyProvider.Companion.getSdkModule
-import org.archiver.model.SignalArchiveType
-import org.archiver.model.SignalFiler
+import org.signal.core.util.concurrent.SignalExecutors
+import org.signal.core.util.logging.Log.blockUntilAllWritesFinished
+import org.signal.libsignal.protocol.logging.SignalProtocolLoggerProvider
 import org.signal.ringrtc.CallManager
+import org.tm.archive.database.LogDatabase.Companion.getInstance
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.logging.CustomSignalProtocolLogger
+import org.tm.archive.logging.PersistentLogger
+import org.tm.archive.util.FeatureFlags
 
 class TeleMessageSignalApplication : ApplicationContext() {
 
@@ -45,8 +46,16 @@ class TeleMessageSignalApplication : ApplicationContext() {
     super.beforeInitializeCallManager()
   }
 
-  override fun createLogger(): org.signal.core.util.logging.Log.Logger {
-    return SignalLoggerAdapter(this)
+  override fun initializeLogging() {
+    org.signal.core.util.logging.Log.initialize({ FeatureFlags.internalUser() }, SignalLoggerAdapter(this), PersistentLogger(this))
+
+    SignalProtocolLoggerProvider.setProvider(CustomSignalProtocolLogger())
+
+    SignalExecutors.UNBOUNDED.execute {
+      blockUntilAllWritesFinished()
+      getInstance(this).logs.trimToSize()
+      getInstance(this).crashes.trimToSize()
+    }
   }
 
   private fun initializeSdk() {

@@ -304,7 +304,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   @VisibleForTesting
   protected void initializeLogging() {
-    Log.initialize(FeatureFlags::internalUser, createLogger(), new PersistentLogger(this)); // TM_SA
+    Log.initialize(FeatureFlags::internalUser, new AndroidLogger(), new PersistentLogger(this)); // TM_SA
 
     SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
 
@@ -314,8 +314,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
       LogDatabase.getInstance(this).crashes().trimToSize();
     });
   }
-
-  protected Log.Logger createLogger() { return new AndroidLogger(); } // TM_SA
 
   private void initializeCrashHandling() {
     final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
