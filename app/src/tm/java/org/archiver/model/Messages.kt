@@ -5,6 +5,8 @@ import com.tm.androidcopysdk.model.IArchiveType
 import com.tm.androidcopysdk.model.MessageStatus
 import org.signal.glide.Log
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.database.model.StoryType
 import org.tm.archive.ringrtc.RemotePeer
 import org.tm.archive.util.isMediaMessage
 
@@ -15,6 +17,8 @@ object Messages {
     "]"
 
   fun MessageRecord.isMultimediaMessage() = isMediaMessage()// || (status() == MessageStatus.Sending && body.isEmpty())
+
+  fun MessageRecord.isStory() = (this as? MmsMessageRecord)?.storyType?.isStory == true
 
   fun MessageRecord.isSmsMessage() = !isMultimediaMessage() && body.isNotEmpty()
 

@@ -9,6 +9,7 @@ import org.archiver.model.Messages.archiveType
 import org.archiver.model.Messages.isCallMessage
 import org.archiver.model.Messages.isMultimediaMessage
 import org.archiver.model.Messages.isSmsMessage
+import org.archiver.model.Messages.isStory
 import org.archiver.model.Messages.status
 import org.tm.archive.database.model.MessageRecord
 
@@ -64,6 +65,8 @@ class SignalArchiveMessageConverter(
   }
 
   private fun getTransportType(message: MessageRecord): ArchiveMessageType? {
+    if (message.isStory())
+      return ArchiveMessageType.Unknown
     if (message.isCallMessage())
       return ArchiveMessageType.Call
     return if (message.isSmsMessage()) ArchiveMessageType.Sms else if (message.isMultimediaMessage()) ArchiveMessageType.Mms else null
