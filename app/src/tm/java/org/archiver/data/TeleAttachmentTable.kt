@@ -1,6 +1,7 @@
 package org.archiver.data
 
 import android.content.Context
+import com.tm.androidcopysdk.api.IAndroidCopySdk
 import com.tm.androidcopysdk.api.IMessageStoreObserver
 import org.tm.archive.attachments.Attachment
 import org.tm.archive.attachments.AttachmentId
@@ -18,9 +19,9 @@ class TeleAttachmentTable(
 
   attachmentSecret: AttachmentSecret,
 
-  private val messageStoreObserver: IMessageStoreObserver<Long>,
-
 ) : AttachmentTable(context, databaseHelper, attachmentSecret) {
+
+  private val messageStoreObserver: IMessageStoreObserver<Long> by lazy { IAndroidCopySdk.Factory.instance.messageStoreObserver() }
 
   override fun insertAttachmentForPreUpload(attachment: Attachment): DatabaseAttachment {
     val result = super.insertAttachmentForPreUpload(attachment)

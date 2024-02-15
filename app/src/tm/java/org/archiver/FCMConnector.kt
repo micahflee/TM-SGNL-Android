@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.tm.androidcopysdk.AndroidCopySDK
+import com.tm.androidcopysdk.api.IAndroidCopySdk
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.logger.Log
 import kotlinx.coroutines.CoroutineScope
@@ -123,8 +124,7 @@ class FCMConnector {
 
     @JvmStatic
     fun updateSignUpCredentials(context: Context, userName: String?, password: String?) {
-      AndroidCopySDK.getInstance(context)
-        .signupSucess(userName, password)
+      IAndroidCopySdk.Factory.instance.onSignupSuccess(userName, password)
     }
 
   }

@@ -1,20 +1,21 @@
 package org.tm.archive
 
-import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.AndroidCopySettings
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
-import com.tm.androidcopysdk.device.ArchiveMessagesProcessor
-import com.tm.androidcopysdk.device.SendSignatureProcessor
+import com.tm.androidcopysdk.api.IAndroidCopySdk
+import com.tm.androidcopysdk.api.SdkModule
+import com.tm.androidcopysdk.model.ArchiveSettings
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
 import org.archiver.SignalLoggerAdapter
 import org.archiver.device.CallManagerRecordingDelegate
 import org.archiver.di.TeleMessageApplicationDependencyProvider
-import org.archiver.di.TeleMessageApplicationDependencyProvider.Companion.getSdkModule
+import org.archiver.model.SignalArchiveType
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log.blockUntilAllWritesFinished
 import org.signal.libsignal.protocol.logging.SignalProtocolLoggerProvider
@@ -28,6 +29,8 @@ import org.tm.archive.util.FeatureFlags
 
 class TeleMessageSignalApplication : ApplicationContext() {
 
+  private val dependencyProvider by lazy { TeleMessageApplicationDependencyProvider(this) }
+
   override fun onCreate() {
     super.onCreate()
     Log.createInstance(applicationContext)
@@ -38,7 +41,7 @@ class TeleMessageSignalApplication : ApplicationContext() {
   }
 
   override fun initializeAppDependencies() {
-    ApplicationDependencies.init(this, TeleMessageApplicationDependencyProvider(this))
+    ApplicationDependencies.init(this, dependencyProvider)
   }
 
   override fun beforeInitializeCallManager() {
@@ -59,11 +62,9 @@ class TeleMessageSignalApplication : ApplicationContext() {
   }
 
   private fun initializeSdk() {
-    val module = getSdkModule(requireNotNull(SignalDatabase.instance))
-    val messageObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver
-    messageObserver.addProcessor(ArchiveMessagesProcessor(module))
-    messageObserver.addProcessor(SendSignatureProcessor(module))
-    messageObserver.initialize(module)
+    val settings = MutableStateFlow(ArchiveSettings(isAppActivated = true))
+    val module = SdkModule(this, SignalArchiveType.coreValues(), requireNotNull(SignalDatabase.instance), dependencyProvider.filer, settings = settings)
+    IAndroidCopySdk.Factory.instance.initialize(module)
   }
 
   private fun initArchiveUrlsAndStartArchive() {
@@ -101,7 +102,7 @@ class TeleMessageSignalApplication : ApplicationContext() {
     PrefManager.setStringPref(context, "wifi3g", "WIFI3G")
     mSettings.data = AndroidCopySettings.DataSaving.WIFI3G
     Log.d("initializeTMAndroidArchive", "signupSucess with emptey password and user name")
-    AndroidCopySDK.getInstance(context).signupSucess( /*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"", "")
+    IAndroidCopySdk.Factory.instance.onSignupSuccess( /*ArchiveConstants.signalTestUserName, ArchiveConstants.signalTestPassword*/"", "")
     ArchiveLogger.sendArchiveLog("User name = " + "Password = ")
     val installationEventSent: Boolean = PrefManager.getBooleanPref(context, R.string.installation_event_sent, false)
     // InstallEvent should be sent only once

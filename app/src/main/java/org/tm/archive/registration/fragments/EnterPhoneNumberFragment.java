@@ -42,6 +42,7 @@ import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.BackupService;
 import com.tm.androidcopysdk.CommonUtils;
 import com.tm.androidcopysdk.MessageEvent;
+import com.tm.androidcopysdk.api.IAndroidCopySdk;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
@@ -298,7 +299,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
       PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
 
-      AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
+      IAndroidCopySdk.Factory.getInstance().savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context), null);
       mIsLoginAuthenticationInProgress = true;
 //      startAutoAuthentication(requireContext(), e164number);
       mobileNumber = e164number;
