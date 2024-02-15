@@ -25,7 +25,7 @@ class SignalArchiveRecipientConverter(
     if (phoneNumber == null && message.isGroupMessage()) {
       phoneNumber = recipient.toParticipant { it == recipient.id }?.e164?.getOrNull() // TODO find message.authorId
     }
-    phoneNumber = recipient.e164.getOrDefault(phoneNumber ?: recipient.requireE164())
+    phoneNumber = recipient.e164.getOrDefault(phoneNumber ?: "")
     return ArchiveRecipient.forLongName(id = null, address = phoneNumber, longName = recipient.displayName())
   }
 
