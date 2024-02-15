@@ -6,11 +6,9 @@ import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.device.ArchiveMessagesProcessor
 import com.tm.androidcopysdk.device.SendSignatureProcessor
-import com.tm.androidcopysdk.model.ArchiveSettings
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
 import org.archiver.SignalLoggerAdapter
@@ -61,8 +59,7 @@ class TeleMessageSignalApplication : ApplicationContext() {
   }
 
   private fun initializeSdk() {
-    val database = SignalDatabase.instance ?: return
-    val module = getSdkModule(database)
+    val module = getSdkModule(requireNotNull(SignalDatabase.instance))
     val messageObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver
     messageObserver.addProcessor(ArchiveMessagesProcessor(module))
     messageObserver.addProcessor(SendSignatureProcessor(module))
