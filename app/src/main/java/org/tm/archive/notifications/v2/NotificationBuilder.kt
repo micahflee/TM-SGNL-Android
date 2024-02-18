@@ -15,6 +15,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
 import androidx.core.content.LocusIdCompat
 import androidx.core.graphics.drawable.IconCompat
+import com.tm.androidcopysdk.CommonUtils
+import com.tm.logger.Log
 import org.signal.core.util.PendingIntentFlags.mutable
 import org.tm.archive.R
 import org.tm.archive.conversation.ConversationIntents
@@ -177,7 +179,11 @@ sealed class NotificationBuilder(protected val context: Context) {
   }
 
   companion object {
-    fun create(context: Context): NotificationBuilder {
+    fun create(context: Context): NotificationBuilder? {
+      if (!CommonUtils.isActivatedUser(context)) {//**TM_TA**//Start
+        Log.d("NotificationsController", "stop notifications for messages when suspend")
+        return null
+      }//**TM_TA**//End
       return NotificationBuilderCompat(context)
     }
   }
