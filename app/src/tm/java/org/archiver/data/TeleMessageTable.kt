@@ -1,13 +1,12 @@
 package org.archiver.data
 
 import android.content.Context
-import android.util.Log
-import com.tm.androidcopysdk.model.ArchiveMessage
 import com.tm.androidcopysdk.api.IArchiveMessageDao
 import com.tm.androidcopysdk.api.IMessageStoreObserver
+import com.tm.androidcopysdk.model.ArchiveMessage
 import org.archiver.ArchiveUtil
 import org.archiver.converter.SignalArchiveMessageConverter
-import org.archiver.model.Messages.chatRecipient
+import org.archiver.di.TeleMessageApplicationDependencyProvider
 import org.signal.core.util.Stopwatch
 import org.tm.archive.database.CallTable
 import org.tm.archive.database.MessageTable
@@ -27,9 +26,9 @@ class TeleMessageTable(
 
   databaseHelper: SignalDatabase,
 
-  private val messageStoreObserver: IMessageStoreObserver<Long>,
-
 ) : MessageTable(context, databaseHelper), IArchiveMessageDao<Long> {
+
+  private val messageStoreObserver: IMessageStoreObserver<Long> = TeleMessageApplicationDependencyProvider.messageStoreObserver
 
   private val converter = SignalArchiveMessageConverter(context)
 

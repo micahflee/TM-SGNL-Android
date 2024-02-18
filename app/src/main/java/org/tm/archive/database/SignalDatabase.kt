@@ -3,14 +3,11 @@ package org.tm.archive.database
 import android.app.Application
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import com.tm.androidcopysdk.api.IDatabase
 import com.tm.androidcopysdk.api.IArchiveMessageDao
-import com.tm.androidcopysdk.api.IMessageStoreObserver
-import com.tm.androidcopysdk.device.DefaultMessageStoreObserver
+import com.tm.androidcopysdk.api.IDatabase
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 import org.archiver.data.TeleAttachmentTable
 import org.archiver.data.TeleMessageTable
-import org.archiver.di.TeleMessageApplicationDependencyProvider
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.logging.Log
 import org.signal.core.util.withinTransaction
@@ -44,9 +41,8 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
   ),
   SignalDatabaseOpenHelper, IDatabase<Long> { // TM_SA implement IDatabase
 
-  private val messageStoreObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver // TM_SA
-  val messageTable: MessageTable = TeleMessageTable(context, this, messageStoreObserver)  // TM_SA TeleMessageTable
-  val attachmentTable: AttachmentTable = TeleAttachmentTable(context, this, attachmentSecret, messageStoreObserver) // TM_SA TeleAttachmentTable
+  val messageTable: MessageTable = TeleMessageTable(context, this)  // TM_SA TeleMessageTable
+  val attachmentTable: AttachmentTable = TeleAttachmentTable(context, this, attachmentSecret) // TM_SA TeleAttachmentTable
   val mediaTable: MediaTable = MediaTable(context, this)
   val threadTable: ThreadTable = ThreadTable(context, this)
   val identityTable: IdentityTable = IdentityTable(context, this)

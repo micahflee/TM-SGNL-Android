@@ -1,5 +1,8 @@
 package org.tm.archive.registration.fragments;
 
+import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
+import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -63,7 +66,6 @@ import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.ApplicationContext;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
@@ -90,9 +92,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
-
-import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
-import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
 
 public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks
 , IAuthenticationStatus, IMDMAuthenticator //*TM_SA*//

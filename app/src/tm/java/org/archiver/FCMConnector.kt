@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.archiver.ArchiveUtil.Companion.fetchFCMToken
 import org.archiver.ArchiveUtil.Companion.getFCMTokenIfExists
-import org.tm.archive.ApplicationContext
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.gcm.FcmUtil
 import org.tm.archive.jobs.FcmRefreshJob
@@ -123,8 +122,7 @@ class FCMConnector {
 
     @JvmStatic
     fun updateSignUpCredentials(context: Context, userName: String?, password: String?) {
-      AndroidCopySDK.getInstance(context)
-        .signupSucess(userName, password)
+      AndroidCopySDK.getInstance(context).signupSucess(userName, password)
     }
 
   }

@@ -345,7 +345,6 @@ class AppSettingsFragment : DSLSettingsFragment(
     builder.setPositiveButton(R.string.ShareActivity__send) { dialog, which ->
 
       mProgressDialog.show()
-
       AndroidCopySDK.getInstance(context).sentLogs(
         activity,
         this,
