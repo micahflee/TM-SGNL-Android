@@ -42,11 +42,13 @@ import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.BackupService;
 import com.tm.androidcopysdk.CommonUtils;
 import com.tm.androidcopysdk.MessageEvent;
+import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
+import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticationDialogBuilder;
 
 import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.archiver.ArchiveConstants;
@@ -746,6 +748,24 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
       FCMConnector.initOfficialSignalFirebaseAccount(mContext);
       com.tm.logger.Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    }
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onEvent(UpdateEvent event) {
+    if (event == null) {
+      return;
+    }
+    com.tm.logger.Log.d("MainActivity", "UpdateEvent -> onEvent: " + event.type);
+
+    if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
+      
+    } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
+      if (!UserConfig.getInstance(currentAccount).isClientActivated()){
+        showEditDoneProgress(false, true);
+        SelfAuthenticationDialogBuilder dialog = new SelfAuthenticationDialogBuilder();
+        dialog.sendLogsClickedDialog(getParentActivity());
+      }
     }
   }
 

@@ -76,7 +76,11 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import com.tm.androidcopysdk.CommonUtils;
 import com.tm.androidcopysdk.MessageEvent;
+import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
+import com.tm.androidcopysdk.network.appSettings.WorkerIntentService;
+import com.tm.androidcopysdk.network.keepAlive.KeepWorkerIntentService;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
@@ -1925,7 +1929,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   }
 
   //**TM_SA**//Start
-  @Subscribe(threadMode = ThreadMode.BACKGROUND)
+  /*@Subscribe(threadMode = ThreadMode.BACKGROUND)
   public void onMessageEvent(MessageEvent event) {
     if(event.message != null){
       com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> event.message = " + event.message);
@@ -1962,6 +1966,37 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       FCMConnector.initOfficialSignalFirebaseAccount(getContext());
 
     }
+  }*/
+
+  //**TM_SA**//Start
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onEvent(UpdateEvent event) {
+    if (event == null) {
+      return;
+    }
+    com.tm.logger.Log.d("MainActivity", "UpdateEvent -> onEvent: " + event.type);
+    if (event.type == UpdateEvent.EVENTS_TYPE.authProcess) {
+      CommonUtils.setActivatedUser(requireContext(), false);
+      startAuthenticationProcess(getContext(), ArchiveUtil.getPhoneNumberInTestMode(requireContext()));
+    }
+    if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
+      CommonUtils.setActivatedUser(requireContext(),false);
+      /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        WorkerIntentService.cancelJob(requireContext());
+        KeepWorkerIntentService.cancelJob(requireContext());
+      }*/
+    } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
+      CommonUtils.setActivatedUser(requireContext(), true);
+    }
+
+    if (event.type != UpdateEvent.EVENTS_TYPE.authProcess) {
+      if (mAuthenticationProgressAlertDialog != null) {
+        mAuthenticationProgressAlertDialog.dismiss();
+      }
+    }
+
+    com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticator -> initOfficialSignalFirebaseAccount!!! ");
+    FCMConnector.initOfficialSignalFirebaseAccount(getContext());
   }
 
   public void updatedSelfAuthenticatorPreference() {
