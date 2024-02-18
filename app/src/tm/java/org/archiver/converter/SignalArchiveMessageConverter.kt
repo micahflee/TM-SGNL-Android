@@ -5,7 +5,6 @@ import com.tm.androidcopysdk.model.ArchiveMessage
 import com.tm.androidcopysdk.model.ArchiveMessageType
 import com.tm.androidcopysdk.model.Direction
 import com.tm.androidcopysdk.model.Timestamp
-import org.archiver.model.Messages.archiveType
 import org.archiver.model.Messages.isCallMessage
 import org.archiver.model.Messages.isMultimediaMessage
 import org.archiver.model.Messages.isSmsMessage
@@ -48,17 +47,17 @@ class SignalArchiveMessageConverter(
       accountPhoneNumber = accountPhoneNumber,
       type = type,
       direction = if (message.isOutgoing) Direction.Outgoing else Direction.Incoming,
-      archiveType = message.archiveType(),
       status = message.status(),
       isDeleted = isDeleted,
       isRemoteDeleted = message.isRemoteDelete,
+      isForwarded = false,
       body = message.getDisplayBody(context).toString(),
       timestamp = Timestamp(message.timestamp),
       chat = chatConverter.convert(message),
       sender = sender,
       receivers = receivers,
       attachments = attachmentConverter.convert(message),
-      callInfo = callInfoConverter.convert(message, type, startedAt),
+      callInfo = listOfNotNull(callInfoConverter.convert(message, type, startedAt)),
       edits = null,
       headers = null
     )

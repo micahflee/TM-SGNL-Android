@@ -4,11 +4,14 @@ import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.AndroidCopySettings
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
+import com.tm.androidcopysdk.api.SdkModule
 import com.tm.androidcopysdk.device.ArchiveMessagesProcessor
 import com.tm.androidcopysdk.device.SendSignatureProcessor
+import com.tm.androidcopysdk.model.ArchiveSettings
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
 import org.archiver.SignalLoggerAdapter
@@ -28,6 +31,8 @@ import org.tm.archive.util.FeatureFlags
 
 class TeleMessageSignalApplication : ApplicationContext() {
 
+  private val dependencyProvider by lazy { TeleMessageApplicationDependencyProvider(this) }
+
   override fun onCreate() {
     super.onCreate()
     Log.createInstance(applicationContext)
@@ -38,7 +43,7 @@ class TeleMessageSignalApplication : ApplicationContext() {
   }
 
   override fun initializeAppDependencies() {
-    ApplicationDependencies.init(this, TeleMessageApplicationDependencyProvider(this))
+    ApplicationDependencies.init(this, dependencyProvider)
   }
 
   override fun beforeInitializeCallManager() {

@@ -27,8 +27,8 @@ class SignalChatConverter(
 
   private fun getChatId(chatRecipient: Recipient?, type: ChatType): String? {
     if (type == ChatType.Group)
-      return chatRecipient?.groupId?.getOrNull()?.toString()
-    return chatRecipient?.serviceId?.getOrNull()?.toString()// ?: chatRecipient?.id?.toLong()?.toString()
+      return chatRecipient?.groupId?.getOrNull()?.toString()?.split(":")?.lastOrNull()
+    return chatRecipient?.serviceId?.getOrNull()?.toString()?.split(":")?.lastOrNull()// ?: chatRecipient?.id?.toLong()?.toString()
   }
 
 }
