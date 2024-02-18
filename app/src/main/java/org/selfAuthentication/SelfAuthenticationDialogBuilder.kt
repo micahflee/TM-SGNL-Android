@@ -3,26 +3,20 @@ package com.tm.authenticatorsdk.selfAuthenticator
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
-import android.content.Context
 import android.content.DialogInterface
 import android.os.Handler
 import android.os.Looper
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.ISendLogCallback
-import com.tm.androidcopysdk.api.IAndroidCopySdk
-import com.tm.androidcopysdk.model.sdk.SendLogFilesContext
 import com.tm.androidcopysdk.utils.PrefManager
-import com.tm.logger.BuildConfig
 import com.tm.logger.Log
 import org.archiver.ArchiveConstants
 import org.archiver.ArchivePreferenceConstants
 import org.selfAuthentication.AuthenticationUtils
 import org.selfAuthentication.ProgressDialog
 import org.selfAuthentication.SelfAuthenticatorManager
-import org.tm.archive.ApplicationContext
 import org.tm.archive.R
-
-import java.util.*
+import java.util.Calendar
 
 
 class SelfAuthenticationDialogBuilder : ISendLogCallback{
@@ -172,18 +166,19 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
         mLogsSentContext = context
         val name = PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, "")
         val freeText = TEXT_MESSAGE_FOR_SENDING_LOGS
-      val loggingContext = SendLogFilesContext(
-        phoneNumber = PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
-        emailSubject = "Signal logs - " + Calendar.getInstance().time.toString(),
-        userFieldName = name,
-        freeText = freeText,
-        firstName = "",
-        lastName = "",
-        email = "",
-        authenticationUserName = ArchiveConstants.GENERATE_TOK_NAME,
-        pass = ArchiveConstants.GENERATE_TOK_PASS
+      AndroidCopySDK.getInstance(context).sentLogs(
+        context,
+        this,
+        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
+        "Signal logs - " + Calendar.getInstance().time.toString(),
+        name,
+        freeText,
+        "",
+        "",
+        "",
+        ArchiveConstants.GENERATE_TOK_NAME,
+        ArchiveConstants.GENERATE_TOK_PASS
       )
-      IAndroidCopySdk.Factory.instance.sentLogs(this, loggingContext)
     }
 
     fun showDialogInTheActivity(activity: Activity, dialog: AlertDialog){

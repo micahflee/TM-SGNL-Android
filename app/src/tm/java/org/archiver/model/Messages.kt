@@ -1,12 +1,9 @@
 package org.archiver.model
 
 import com.tm.androidcopysdk.model.ChatType
-import com.tm.androidcopysdk.model.IArchiveType
 import com.tm.androidcopysdk.model.MessageStatus
-import org.signal.glide.Log
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
-import org.tm.archive.database.model.StoryType
 import org.tm.archive.ringrtc.RemotePeer
 import org.tm.archive.util.isMediaMessage
 
@@ -46,8 +43,6 @@ object Messages {
       return MessageStatus.Sending
     return MessageStatus.None
   }
-
-  fun MessageRecord.archiveType(): IArchiveType = SignalArchiveType.AppMessage
 
   fun MessageRecord.chatRecipient() = fromRecipient.takeUnless { isOutgoing } ?: toRecipient
 

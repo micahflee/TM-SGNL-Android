@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.tm.androidcopysdk.AndroidCopySDK
-import com.tm.androidcopysdk.api.IAndroidCopySdk
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.logger.Log
 import kotlinx.coroutines.CoroutineScope
@@ -12,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.archiver.ArchiveUtil.Companion.fetchFCMToken
 import org.archiver.ArchiveUtil.Companion.getFCMTokenIfExists
-import org.tm.archive.ApplicationContext
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.gcm.FcmUtil
 import org.tm.archive.jobs.FcmRefreshJob
@@ -124,7 +122,7 @@ class FCMConnector {
 
     @JvmStatic
     fun updateSignUpCredentials(context: Context, userName: String?, password: String?) {
-      IAndroidCopySdk.Factory.instance.onSignupSuccess(userName, password)
+      AndroidCopySDK.getInstance(context).signupSucess(userName, password)
     }
 
   }

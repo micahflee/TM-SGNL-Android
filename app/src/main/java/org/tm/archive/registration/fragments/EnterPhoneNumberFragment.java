@@ -1,5 +1,8 @@
 package org.tm.archive.registration.fragments;
 
+import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
+import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,7 +45,6 @@ import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.BackupService;
 import com.tm.androidcopysdk.CommonUtils;
 import com.tm.androidcopysdk.MessageEvent;
-import com.tm.androidcopysdk.api.IAndroidCopySdk;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
@@ -64,7 +66,6 @@ import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.ThreadUtil;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.ApplicationContext;
 import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
@@ -91,9 +92,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
-
-import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
-import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
 
 public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks
 , IAuthenticationStatus, IMDMAuthenticator //*TM_SA*//
@@ -299,7 +297,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
       PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
 
-      IAndroidCopySdk.Factory.getInstance().savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context), null);
+      AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
       mIsLoginAuthenticationInProgress = true;
 //      startAutoAuthentication(requireContext(), e164number);
       mobileNumber = e164number;

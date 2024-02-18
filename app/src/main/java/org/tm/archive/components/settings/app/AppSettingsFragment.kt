@@ -9,9 +9,8 @@ import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.ISendLogCallback
-import com.tm.androidcopysdk.api.IAndroidCopySdk
-import com.tm.androidcopysdk.model.sdk.SendLogFilesContext
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchivePreferenceConstants
 import org.greenrobot.eventbus.EventBus
@@ -346,18 +345,19 @@ class AppSettingsFragment : DSLSettingsFragment(
     builder.setPositiveButton(R.string.ShareActivity__send) { dialog, which ->
 
       mProgressDialog.show()
-      val loggingContext = SendLogFilesContext(
-        phoneNumber = PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
-        emailSubject = "Signal Archiver logs",
-        userFieldName = PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),
-        freeText = "",
-        firstName = "",
-        lastName = "",
-        email = "",
-        authenticationUserName = ArchivePreferenceConstants.GENERATE_TOK_NAME,
-        pass = ArchivePreferenceConstants.GENERATE_TOK_PASS
+      AndroidCopySDK.getInstance(context).sentLogs(
+        activity,
+        this,
+        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
+        "Signal Archiver logs",
+        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),
+        "",
+        "",
+        "",
+        "",
+        ArchivePreferenceConstants.GENERATE_TOK_NAME,
+        ArchivePreferenceConstants.GENERATE_TOK_PASS
       )
-      IAndroidCopySdk.Factory.instance.sentLogs(this, loggingContext)
     }
     builder.setNegativeButton(R.string.CommunicationActions_cancel, null)
     builder.show()
