@@ -133,8 +133,7 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     Log.d("MainActivity", "UpdateEvent -> onEvent: " + event.type);
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       showDialog();
-    }
-    else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
+    } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       dialog.dismiss();
     }
   }
