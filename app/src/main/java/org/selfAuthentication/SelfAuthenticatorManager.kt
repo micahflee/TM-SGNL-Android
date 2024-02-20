@@ -1,36 +1,35 @@
 package org.selfAuthentication
 
-import android.app.Activity
+import android.app.Dialog
 import android.content.Context
-import com.tm.authenticatorsdk.selfAuthenticator.*
+import android.view.LayoutInflater
+import android.view.View
+import androidx.appcompat.app.AlertDialog
+import androidx.constraintlayout.widget.ConstraintLayout
+import com.tm.authenticatorsdk.selfAuthenticator.AuthenticationAppType
+import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
+import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator
 import com.tm.logger.Log
-import org.archive.selfAuthentication.SelfAuthenticatorConstants
-import org.tm.archive.ApplicationContext
 import org.tm.archive.BuildConfig
-import java.util.concurrent.TimeUnit
+import org.tm.archive.R
+import org.tm.archive.util.views.CircularProgressMaterialButton
 
 //In order to change the environment base url call to this method:
 //ApiUtil.Companion.selectServerEnvironment(Context)
 //The default environment is charlieProduction = https://rest.telemessage.com
 
 object SelfAuthenticatorManager {
-
-
-    const val SELF_AUTHENTICATION_PREFERENCE_NAME = "SelfAuthenticatorPref"
-    const val SELF_AUTHENRICATION_PREF_FIRST_TIME_TRYING_KEY = "firstTimeTrying"
-    val SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS = 2 * 24
-    val SELF_AUTHENRICATION_WHEN_TO_SHOW_SECOND_WARNNING_IN_HOURS = 7 * 24
-
-
+  var shouldHideProgressDialog = false
+  var shouldShowSuspendDialog = false
     init {
         Log.d("SelfAuthenticatorProcess","class SelfAuthenticatorManager started.")
     }
 
-    lateinit var selfAuthenticator: SelfAuthenticator
-    val mSelfAuthenticationDialogBuilder = SelfAuthenticationDialogBuilder()
+  lateinit var selfAuthenticator: SelfAuthenticator
+  private var mAuthenticationProgressAlertDialogBuilder: AlertDialog.Builder? = null
+  private var mAuthenticationProgressAlertDialog: AlertDialog? = null
 
     fun initAuthenticator(phoneNumber: String) {
-
         selfAuthenticator = SelfAuthenticator
         Log.d("SelfAuthenticatorProcess", "initAuthenticator - The phone number is: $phoneNumber")
         selfAuthenticator.initSelfAuthenticator(
@@ -38,88 +37,53 @@ object SelfAuthenticatorManager {
             phoneNumber,
           BuildConfig.VERSION_NAME
         )
-
     }
 
-    fun startAuthentication(context: Context, aIAuthenticationStatus: IAuthenticationStatus) {
-        if (!isSelfAuthenticationAlreadyStarted(context)) {
-            saveSelfAuthenticationFirstTimeTryingTime(context)
-        }
+    fun startAuthentication(aIAuthenticationStatus: IAuthenticationStatus) {
         selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
     }
 
-    fun isSelfAuthenticationAlreadyStarted(context: Context): Boolean {
-        return getSelfAuthenticationFirstTimeTryingInHours(context) != -1
-    }
-
-    fun saveSelfAuthenticationFirstTimeTryingTime(context: Context) {
-        if (!isSelfAuthenticationAlreadyStarted(context)) {
-          context.getSharedPreferences(SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE).apply {
-                edit().apply {
-                    putLong(
-                        SELF_AUTHENRICATION_PREF_FIRST_TIME_TRYING_KEY,
-                        System.currentTimeMillis()
-                    )
-                    apply()
-                }
-            }
-        }
-    }
-
-    fun getSelfAuthenticationFirstTimeTryingInHours(context: Context): Int {
-        val sharedPreferences = context.getSharedPreferences(SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE)
-        val firstTimeInstallInMill =  sharedPreferences.getLong(SELF_AUTHENRICATION_PREF_FIRST_TIME_TRYING_KEY, -1)
-        if(firstTimeInstallInMill != (-1).toLong()){
-            Log.d("SelfAuthenticatorProcess", "hourDifferenceFromNow() = " + (hourDifferenceFromNow(firstTimeInstallInMill)).toInt())
-            return (hourDifferenceFromNow(firstTimeInstallInMill)).toInt()
-        }
-        Log.d("SelfAuthenticatorProcess", "hourDifferenceFromNow() = " + -1)
-        return -1
-    }
-
-    private fun hourDifferenceFromNow(millisTime: Long): Long {
-        val now = System.currentTimeMillis()
-        return TimeUnit.MILLISECONDS.toHours(now - millisTime)
-    }
-
-    fun showTheRelevantDialogIfNeeded(
-        aContext: Activity
-    ) {
-
-        Log.d("SelfAuthenticatorProcess", "getSelfAuthenticationFirstTimeTryingInHours() = " + getSelfAuthenticationFirstTimeTryingInHours(aContext))
-        Log.d("SelfAuthenticatorProcess", "getSelfAuthenticationFirstTimeTryingInHours() > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_DAYS = " + (getSelfAuthenticationFirstTimeTryingInHours(aContext) > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS))
-        Log.d("SelfAuthenticatorProcess", "isAppValidationTimePassed() = " + isAppValidationTimePassed(aContext))
-
-        if (getSelfAuthenticationFirstTimeTryingInHours(aContext) > SELF_AUTHENRICATION_WHEN_TO_SHOW_FIRST_WARNNING_IN_HOURS) {
-            if (!isAppValidationTimePassed(aContext)) {
-                mSelfAuthenticationDialogBuilder.showSelfAuthenticationFirstFailureWarning(aContext)
-            } else {
-                mSelfAuthenticationDialogBuilder.showSelfAuthenticationSecondFailureWarning(aContext)
-            }
-        }
-    }
-
-    fun isAppValidationTimePassed(aContext: Context): Boolean{
-        return getSelfAuthenticationFirstTimeTryingInHours(aContext) > SELF_AUTHENRICATION_WHEN_TO_SHOW_SECOND_WARNNING_IN_HOURS
-    }
-
-    fun showLogSentIfNeeded(
-        aContext: Activity
-    ){
-        mSelfAuthenticationDialogBuilder.showSelfAuthenticationFirstFailureWarningLogsSent(aContext)
-    }
-
-    fun isOneOfTheAuthenticationDialogIsShowing(): Boolean{
-        return mSelfAuthenticationDialogBuilder.isOneOfTheAuthenticationDialogIsShowing()
-    }
-
-    fun showProgressDialog(activity: Activity){
+    /*fun showProgressDialog(activity: Activity){
         mSelfAuthenticationDialogBuilder.showProgressDialog(activity)
     }
 
     fun hideProgressDialog(){
         mSelfAuthenticationDialogBuilder.hideProgressDialog()
-    }
+    }*/
 
+
+  fun startAuthenticationProcess(context: Context,
+                                 phone: String?, aIAuthenticationStatus: IAuthenticationStatus) {
+    initAuthenticator(phone!!)
+    selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
+    createAuthenticationProgressAlertDialogIfNotExist(context, true)
+    mAuthenticationProgressAlertDialog = mAuthenticationProgressAlertDialogBuilder!!.create()
+    mAuthenticationProgressAlertDialog!!.show()
+  }
+
+  private fun createAuthenticationProgressAlertDialogIfNotExist(context: Context, isCanCancel: Boolean) {
+    if (mAuthenticationProgressAlertDialogBuilder == null) {
+      mAuthenticationProgressAlertDialogBuilder = AlertDialog.Builder(context, R.style.AuthTmProgressDialog)
+      val view = LayoutInflater.from(context).inflate(R.layout.progress_bar_layout_with_background, null)
+      mAuthenticationProgressAlertDialogBuilder!!.setView(view)
+      mAuthenticationProgressAlertDialogBuilder!!.setCancelable(isCanCancel)
+    }
+  }
+  enum class SuspendUIAction(val action : Int) {
+    SHOULD_HIDE_PROGRESS_DIALOG(0),
+    SHOULD_SHOW_SUSPEND_DIALOG(1)
+  }
+
+  fun hideDialogAndShowSuspendDialog(action : SuspendUIAction) {
+    if (action == SuspendUIAction.SHOULD_HIDE_PROGRESS_DIALOG) shouldHideProgressDialog = true
+    if (action == SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG) shouldShowSuspendDialog = true
+    if (shouldHideProgressDialog && shouldShowSuspendDialog &&
+      mAuthenticationProgressAlertDialog != null) {
+      mAuthenticationProgressAlertDialog!!.dismiss()
+      Log.d("ConversationListFragment", "mAuthenticationProgressAlertDialog dismiss")
+      shouldHideProgressDialog = false
+      shouldShowSuspendDialog = false
+    }
+  }
 
 }

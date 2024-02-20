@@ -10,6 +10,7 @@ import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
+import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.utils.PrefManager
 import me.leolin.shortcutbadger.ShortcutBadger
 import org.selfAuthentication.SelfAuthenticatorManager
@@ -113,10 +114,10 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
       executor.enqueue(context, conversationId)
     } else {
       //**TM_SA**//Start
-      val isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
-      com.tm.logger.Log.d("SelfAuthenticatorProcess", "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication")
+      /*val isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
+      com.tm.logger.Log.d("SelfAuthenticatorProcess", "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication")*/
 
-      if(!isAlreadyDoneSelfAuthentication && SelfAuthenticatorManager.isAppValidationTimePassed(context)){
+      if(!CommonUtils.isActivatedUser(context)){
         return
       }
       //**TM_SA**//End

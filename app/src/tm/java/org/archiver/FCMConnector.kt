@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.tm.androidcopysdk.AndroidCopySDK
+import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.logger.Log
 import kotlinx.coroutines.CoroutineScope
@@ -80,18 +81,17 @@ class FCMConnector {
     @JvmStatic
     fun initTeleMessageSignalFirebaseAccount(context: Context, fcmName: String?, isClearAll: Boolean) {
       Log.d(TAG,"init---Telemessage---SignalFirebaseAccount")
-      val isAlreadyDoneSelfAuthentication =
+      /*val isAlreadyDoneSelfAuthentication =
         PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
       Log.d(
         TAG,
         "SelfAuthenticatorProcess -> onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication"
-      )
+      )*/
       if (getFCMTokenIfExists(context) == null || getFCMTokenIfExists(context)!!
-          .isEmpty() || !isAlreadyDoneSelfAuthentication
+          .isEmpty() || !CommonUtils.isActivatedUser(context)/*!isAlreadyDoneSelfAuthentication*/
       ) {
         Log.d(TAG, "ArchiveUtil.getFCMTokenIfExists(this) == null --" + (getFCMTokenIfExists(context) == null))
         Log.d(TAG, "ArchiveUtil.getFCMTokenIfExists(this).isEmpty() --" + getFCMTokenIfExists(context)!!.isEmpty())
-        Log.d(TAG, "!isAlreadyDoneSelfAuthentication --" + !isAlreadyDoneSelfAuthentication)
         Log.i(TAG, "init Telemessage -> current FCM: " + FirebaseApp.getInstance().options.projectId)
         val options = FirebaseOptions.Builder()
           .setApplicationId("1:578202328450:android:0c71bb144fc9cf628e039b")

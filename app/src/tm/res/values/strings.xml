@@ -107,5 +107,9 @@
     <string name="intune_auth_message">Your device is under MDM. In order to use TM SGNL, please log in to Microsoft account</string>
     <string name="intune_auth_ok">OK</string>
     <string name="intune_auth_cancel">Cancel</string>
+    <string name="OK">OK</string>
+    <string name="DebugSendLogs">Send Logs</string>
+    <string name="not_activated_user_dialog_title">Oops!</string>
+    <string name="not_activated_user_dialog_message">TeleMessage couldn\'t locate your account. Please send logs to support and contact your system administrator.</string>
     <!--  endregion Telemessage  -->
 </resources>

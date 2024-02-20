@@ -28,6 +28,7 @@ import org.archiver.ArchivePreferenceConstants;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.donations.StripeApi;
 import org.tm.archive.components.DebugLogsPromptDialogFragment;
@@ -62,7 +63,6 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
   private ConversationListTabsViewModel conversationListTabsViewModel;
   private VitalsViewModel               vitalsViewModel;
 
-  private Dialog dialog;
 
   private final LifecycleDisposable lifecycleDisposable = new LifecycleDisposable();
 
@@ -120,37 +120,9 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
             .getVitalsState()
             .subscribe(this::presentVitalsState)
     );
-
-    WorkerIntentService.startJobIntentService(this, true);/*TM_SA*/
   }
 
-  //**TM_SA**//Start
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void onEvent(UpdateEvent event) {
-    if (event == null) {
-      return;
-    }
-    Log.d("MainActivity", "UpdateEvent -> onEvent: " + event.type);
-    if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
-      showDialog();
-    } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
-      if (dialog != null) {
-        dialog.dismiss();
-      }
-    }
-  }
 
-  private void showDialog() {
-    dialog = new Dialog(this, android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen); // Fullscreen theme
-    dialog.setContentView(R.layout.fragment_registration_enter_phone_number);
-    ConstraintLayout layout = dialog.findViewById(R.id.constraint_layout);
-    layout.setBackgroundColor(getResources().getColor(R.color.white));
-    org.tm.archive.util.views.CircularProgressMaterialButton button = dialog.findViewById(R.id.registerButton);
-    button.setVisibility(View.GONE);
-    dialog.setCancelable(false);
-    dialog.show();
-  }
-  //**TM_SA**//End
 
   @SuppressLint("NewApi")
   private void presentVitalsState(VitalsViewModel.State state) {
@@ -212,50 +184,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     updateTabVisibility();
 
     vitalsViewModel.checkSlowNotificationHeuristics();
-    //**TM_SA**// start
-    notifyMessageIfNeeded();
-
-    if(!EventBus.getDefault().isRegistered(this)){
-      EventBus.getDefault().register(this);
-      Log.d("LaunchActivity", "registerBus");
-    }
-
   }
 
-  @Override protected void onDestroy() {
-    super.onDestroy();
-    //**TM_TA**// Start
-    if(EventBus.getDefault().isRegistered(this)) {
-      EventBus.getDefault().unregister(this);
-      Log.d("LaunchActivity", "unregisterBus");
-    }
-
-    //**TM_TA**// End
-  }
-
-  private void notifyMessageIfNeeded() {
-    boolean isAlreadyRestarted = PrefManager.getBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, false);
-
-    if(!isAlreadyRestarted){
-      PrefManager.setBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, true);
-
-      final Handler handler = new Handler(Looper.getMainLooper());
-      handler.postDelayed(new Runnable() {
-        @Override
-        public void run() {
-          notifyMessage();
-        }
-      }, 4000);
-    }
-  }
-
-  public synchronized void notifyMessage(){
-    synchronized (ApplicationDependencies.getIncomingMessageObserver()) {
-      ApplicationDependencies.getIncomingMessageObserver().notifyAll();
-    }
-  }
-
-  //**TM_SA**// End
 
   @Override
   protected void onStop() {

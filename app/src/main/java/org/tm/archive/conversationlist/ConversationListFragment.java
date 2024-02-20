@@ -32,8 +32,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -53,7 +51,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.PluralsRes;
 import androidx.annotation.WorkerThread;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.view.ActionMode;
@@ -77,16 +74,13 @@ import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.tm.androidcopysdk.CommonUtils;
-import com.tm.androidcopysdk.MessageEvent;
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
 import com.tm.androidcopysdk.network.appSettings.WorkerIntentService;
-import com.tm.androidcopysdk.network.keepAlive.KeepWorkerIntentService;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
 
-import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.archiver.ArchivePreferenceConstants;
 import org.archiver.ArchiveUtil;
 import org.archiver.FCMConnector;
@@ -267,12 +261,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   private   Stopwatch                             startupStopwatch;
   private   ConversationListTabsViewModel         conversationListTabsViewModel;
   private   ContactSearchMediator                 contactSearchMediator;
-
-  //**TM_SA**// Start
-  private AlertDialog.Builder mAuthenticationProgressAlertDialogBuilder;
-  private AlertDialog         mAuthenticationProgressAlertDialog;
-  public static boolean mIsAuthenticationIsInProgress = false;
-  //**TM_SA**// End
   public static ConversationListFragment newInstance() {
     return new ConversationListFragment();
   }
@@ -474,16 +462,21 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     requireCallback().bindScrollHelper(list);
 
     //**TM_SA**//Start
-    com.tm.logger.Log.d("ConversationListFragment", "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID);
-    int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
-                                            IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
-    com.tm.logger.Log.d("ConversationListFragment",
-                        "onCreate -> authStatus = " + authStatus + ". (0-signed, 1 -should intune auth, 2-self auth)");
-    FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
-    if(MDMAuthenticator.INSTANCE.isMDM(requireContext()) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) { //if intune managed device, start MDM auth
-      startIntuneAuth();
-    } else { // else self auth
-      startSelfAuth();
+    if (!CommonUtils.isActivatedUser(requireContext())) {
+      com.tm.logger.Log.d("ConversationListFragment", "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID);
+      int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
+                                              IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+      com.tm.logger.Log.d("ConversationListFragment",
+                          "onCreate -> authStatus = " + authStatus + ". (0-signed, 1 -should intune auth, 2-self auth)");
+      FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
+      if(MDMAuthenticator.INSTANCE.isMDM(requireContext()) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) { //if intune managed device, start MDM auth
+        startIntuneAuth();
+      } else { // else self auth
+        startSelfAuth();
+      }
+    }
+    if (CommonUtils.isActivatedUser(requireContext())) {
+      WorkerIntentService.startJobIntentService(requireContext(), true);/*TM_SA*/
     }
   }
 
@@ -493,30 +486,11 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   }
 
   public void startSelfAuth() {
-    createAuthenticationProgressAlertDialogIfNotExist(true);
-
-    boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(getContext(), "isAlreadyDoneSelfAuthentication", false);
-    com.tm.logger.Log.d(TAG, "SelfAuthenticatorProcess -> onCreate = isAlreadyDoneSelfAuthentication = " + isAlreadyDoneSelfAuthentication);
-
-    if(!isAlreadyDoneSelfAuthentication/* && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()*/){
-      startAuthenticationProcess(getContext(), ArchiveUtil.getPhoneNumberInTestMode(getContext()));
-    }
-  }
-
-  public void startAuthenticationProcess(Context context,
-                                         String phone){
-    mIsAuthenticationIsInProgress = true;
-    SelfAuthenticatorManager.INSTANCE.initAuthenticator(phone);
-    SelfAuthenticatorManager.INSTANCE.startAuthentication(context, this);
-    createAuthenticationProgressAlertDialogIfNotExist(true);
-    mAuthenticationProgressAlertDialog = mAuthenticationProgressAlertDialogBuilder.create();
-    mAuthenticationProgressAlertDialog.show();
-  }
-
-  private void createAuthenticationProgressAlertDialogIfNotExist(boolean isCanCancel) {
-    if (mAuthenticationProgressAlertDialogBuilder == null) {
-      mAuthenticationProgressAlertDialogBuilder = new AlertDialog.Builder(getContext(), 0);
-      mAuthenticationProgressAlertDialogBuilder.setCancelable(isCanCancel);
+    if(!CommonUtils.isActivatedUser(requireContext())){
+      SelfAuthenticatorManager.INSTANCE.
+          startAuthenticationProcess(requireContext(),
+                                     ArchiveUtil.getPhoneNumberInTestMode(requireContext()),
+                                     this);
     }
   }
   //**TM_SA**//END
@@ -1974,10 +1948,13 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     if (event == null) {
       return;
     }
-    com.tm.logger.Log.d("MainActivity", "UpdateEvent -> onEvent: " + event.type);
+    com.tm.logger.Log.d("ConversationListFragment", "UpdateEvent -> onEvent: " + event.type);
     if (event.type == UpdateEvent.EVENTS_TYPE.authProcess) {
       CommonUtils.setActivatedUser(requireContext(), false);
-      startAuthenticationProcess(getContext(), ArchiveUtil.getPhoneNumberInTestMode(requireContext()));
+      SelfAuthenticatorManager.INSTANCE.
+          startAuthenticationProcess(requireContext(),
+                                     ArchiveUtil.getPhoneNumberInTestMode(requireContext()),
+                                     this);
     }
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(),false);
@@ -1990,27 +1967,25 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
 
     if (event.type != UpdateEvent.EVENTS_TYPE.authProcess) {
-      if (mAuthenticationProgressAlertDialog != null) {
+      SelfAuthenticatorManager.INSTANCE.hideDialogAndShowSuspendDialog(
+          SelfAuthenticatorManager.SuspendUIAction.SHOULD_HIDE_PROGRESS_DIALOG);
+      WorkerIntentService.startJobIntentService(requireContext(), true);
+//      SelfAuthenticatorManager.INSTANCE.shouldHideProgressDialog();
+      /*if (mAuthenticationProgressAlertDialog != null) {
         mAuthenticationProgressAlertDialog.dismiss();
-      }
+      }*/
     }
 
     com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticator -> initOfficialSignalFirebaseAccount!!! ");
     FCMConnector.initOfficialSignalFirebaseAccount(getContext());
   }
 
-  public void updatedSelfAuthenticatorPreference() {
-    PrefManager.setBooleanPref(
-        getContext(),
-        "isAlreadyDoneSelfAuthentication", true
-    );
-  }
-
   @Override
   public void authenticationProcessMessage(@NotNull String message) {
     com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> authenticationProcessMessage = " + message);
     if (!message.isEmpty()) {
-      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
+//      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
+      EventBus.getDefault().post(new UpdateEvent(UpdateEvent.EVENTS_TYPE.suspension));
     }
   }
 

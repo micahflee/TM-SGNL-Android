@@ -44,16 +44,14 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.BackupService;
 import com.tm.androidcopysdk.CommonUtils;
-import com.tm.androidcopysdk.MessageEvent;
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
-import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticationDialogBuilder;
+import org.selfAuthentication.SelfAuthenticationDialogBuilder;
 
-import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.archiver.ArchiveConstants;
 import org.archiver.ArchiveLogger;
 import org.archiver.ArchivePreferenceConstants;
@@ -307,17 +305,17 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
                                               IntuneAuthManager.MDM_Auth_Status_String, IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
 
       FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
-      boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false);
-      if(!isAlreadyDoneSelfAuthentication/* && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()*/) {
+//      boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false);
+//      if(!CommonUtils.isActivatedUser(context)/*isAlreadyDoneSelfAuthentication*//* && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()*/) {
         if (MDMAuthenticator.INSTANCE.isMDM(context) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) {// mdm auth skip this fragment and work on EnterSmsCodeFragment
           startMdm();
           //confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
         } else {
           startAutoAuthentication(requireContext(), e164number); //start self auth
         }
-      } else {
-        confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
-      }
+//      } else {
+//        confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
+//      }
 //      confirmNumberPrompt(context, e164number, () -> onE164EnteredSuccessfully(context, true));
       //**TM_SA**//End
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
@@ -389,7 +387,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     com.tm.logger.Log.i(TAG , "startAutoAuthentication");
     com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
-    SelfAuthenticatorManager.INSTANCE.startAuthentication(context, this);
+    SelfAuthenticatorManager.INSTANCE.startAuthentication(this);
     if (!progressBarShown) {
       showProgressBar();
     }
@@ -693,7 +691,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   }
 
   //**TM_SA**//START
-  @Subscribe(threadMode = ThreadMode.MAIN)
+  /*@Subscribe(threadMode = ThreadMode.MAIN)
   public void onMessageEvent(MessageEvent event) {
     com.tm.logger.Log.d(TAG,"onMessageEvent -> SelfAuthenticator and Intune authenticator");
     if (event.message != null) {
@@ -748,33 +746,34 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       FCMConnector.initOfficialSignalFirebaseAccount(mContext);
       com.tm.logger.Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     }
-  }
+  }*/
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEvent(UpdateEvent event) {
     if (event == null) {
       return;
     }
-    com.tm.logger.Log.d("MainActivity", "UpdateEvent -> onEvent: " + event.type);
+    com.tm.logger.Log.d("EnterPhoneNumberFragment", "UpdateEvent -> onEvent: " + event.type);
 
     if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
-      
-    } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
-      if (!UserConfig.getInstance(currentAccount).isClientActivated()){
-        showEditDoneProgress(false, true);
-        SelfAuthenticationDialogBuilder dialog = new SelfAuthenticationDialogBuilder();
-        dialog.sendLogsClickedDialog(getParentActivity());
-      }
-    }
-  }
+      CommonUtils.setActivatedUser(requireContext(), true);
+      final NumberViewState number = viewModel.getNumber();
+      final String e164number = number.getE164Number();
+      confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
 
-  public void updatedSelfAuthenticatorDonePreference() {
-    com.tm.logger.Log.d("SelfAuthenticator", "updatedSelfAuthenticatorDonePreference ");
-    /*SharedPreferences        preferences = ApplicationContext.getInstance().getSharedPreferences(SelfAuthenticatorManager.SELF_AUTHENTICATION_PREFERENCE_NAME, Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor      = preferences.edit();
-    editor.putBoolean("isAlreadyDoneSelfAuthentication", true);
-    editor.apply();*/
-    PrefManager.setBooleanPref(requireContext(), "isAlreadyDoneSelfAuthentication", true);
+    } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
+      SelfAuthenticationDialogBuilder dialog = new SelfAuthenticationDialogBuilder();
+      dialog.doSendLogsClicked(requireActivity(), progressBarCustomView);
+    }
+
+    com.tm.logger.Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+    FCMConnector.initOfficialSignalFirebaseAccount(mContext);
+    com.tm.logger.Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+
+    if (progressBarShown) {
+      hideProgressBar();
+    }
   }
 
 
@@ -783,7 +782,8 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     com.tm.logger.Log.d(TAG, "authenticationProcessMessage = " + message);
     if (!message.isEmpty()) {
       mIsLoginAuthenticationInProgress = false;
-      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
+//      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
+      EventBus.getDefault().post(new UpdateEvent(UpdateEvent.EVENTS_TYPE.suspension));
     }
   }
   //**TM_SA**//End
