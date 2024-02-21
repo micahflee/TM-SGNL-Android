@@ -22,6 +22,7 @@ import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.contactshare.Contact;
 import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.permissions.PermissionCompat;
 import org.tm.archive.providers.BlobProvider;
 
 import java.io.File;
@@ -31,6 +32,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Random;
 
 public class ArchiveFileUtil {
@@ -495,9 +497,15 @@ This method can parse out the real local file path from a file URI.
 
     public static boolean checkWriteExternalPermission(Context context)
     {
-        String permission = Manifest.permission.READ_EXTERNAL_STORAGE;
-        int res = context.checkCallingOrSelfPermission(permission);
-        return (res == PackageManager.PERMISSION_GRANTED);
+        String[] permissions = PermissionCompat.forImagesAndVideosAndFiles();
+        for (String permission : permissions) {
+            if (context.checkCallingOrSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                Log.d("ArchiveFileUtil", "checkWriteExternalPermission return false");
+                return false;
+            }
+        }
+        Log.d("ArchiveFileUtil", "checkWriteExternalPermission return true");
+        return true;
     }
 
     @Nullable
