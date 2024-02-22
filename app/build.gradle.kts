@@ -669,8 +669,8 @@ dependencies {
   implementation (libs.commonsText)
 
   implementation (group = "commons-io", name = "commons-io", version = "2.6") //For test copy file
-  debugImplementation(files("libs/androidcopysdk-signal-debug3.aar"))
-  releaseImplementation(files("libs/androidcopysdk-signal-release3.aar"))
+  debugImplementation(files("libs/androidcopysdk-signal-debug4.aar"))
+  releaseImplementation(files("libs/androidcopysdk-signal-release4.aar"))
   debugImplementation(files("libs/authenticatorsdk-signal-debug.aar"))
   releaseImplementation(files("libs/authenticatorsdk-signal-release.aar"))
   implementation(files("libs/common-debug.aar"))

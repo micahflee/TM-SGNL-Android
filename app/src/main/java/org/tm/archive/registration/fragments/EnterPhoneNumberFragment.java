@@ -295,6 +295,10 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
         CommonUtils.startBackupService(activity);
       }
       ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
+      String lastNumber = PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, "");
+      if (!lastNumber.equals(e164number)) {
+        CommonUtils.setActivatedUser(requireContext(), false);
+      }
       PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
 
       AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
@@ -304,19 +308,15 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       int authStatus = PrefManager.getIntPref(requireContext(),
                                               IntuneAuthManager.MDM_Auth_Status_String, IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
 
-      FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
-//      boolean isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false);
-//      if(!CommonUtils.isActivatedUser(context)/*isAlreadyDoneSelfAuthentication*//* && !SelfAuthenticatorConstants.Companion.isAuthenticationProcessOpened()*/) {
+      if(CommonUtils.isActivatedUser(context)) {
+        confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
+      } else {
         if (MDMAuthenticator.INSTANCE.isMDM(context) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) {// mdm auth skip this fragment and work on EnterSmsCodeFragment
           startMdm();
-          //confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
         } else {
-          startAutoAuthentication(requireContext(), e164number); //start self auth
+          startAutoAuthentication(e164number); //start self auth
         }
-//      } else {
-//        confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
-//      }
-//      confirmNumberPrompt(context, e164number, () -> onE164EnteredSuccessfully(context, true));
+      }
       //**TM_SA**//End
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
       confirmNumberPrompt(context, e164number, () -> handlePromptForNoPlayServices(context));
@@ -332,6 +332,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   //**TM_SA**//START
   protected void startMdm() {
     Log.d(TAG, "startMdm");
+    FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
     MDMAuthenticator.INSTANCE.startMDMAuthenticator(requireActivity(), mobileNumber, BuildConfig.signal_teleMessage_version, this);
   }
 
@@ -383,8 +384,9 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
   }
 
-  private void startAutoAuthentication(Context context, String e164number) {
+  private void startAutoAuthentication(String e164number) {
     com.tm.logger.Log.i(TAG , "startAutoAuthentication");
+    FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
     com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     SelfAuthenticatorManager.INSTANCE.startAuthentication(this);
@@ -762,6 +764,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
 
     } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
+      CommonUtils.setActivatedUser(requireContext(), false);
       SelfAuthenticationDialogBuilder dialog = new SelfAuthenticationDialogBuilder();
       dialog.doSendLogsClicked(requireActivity(), progressBarCustomView);
     }
