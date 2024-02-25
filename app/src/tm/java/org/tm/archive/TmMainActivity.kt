@@ -38,13 +38,10 @@ class TmMainActivity : MainActivity() {
 
   override fun onDestroy() {
     super.onDestroy()
-    //**TM_TA**// Start
     if (EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().unregister(this)
       Log.d("LaunchActivity", "unregisterBus")
     }
-
-    //**TM_TA**// End
   }
 
   private fun notifyMessageIfNeeded() {
@@ -65,9 +62,6 @@ class TmMainActivity : MainActivity() {
     }
   }
 
-  //**TM_SA**// End
-
-  //**TM_SA**//Start
   @Subscribe(threadMode = ThreadMode.MAIN)
   fun onEvent(event: UpdateEvent?) {
     if (event == null) {
@@ -94,5 +88,4 @@ class TmMainActivity : MainActivity() {
       show()
     }
   }
-  //**TM_SA**//End
 }
