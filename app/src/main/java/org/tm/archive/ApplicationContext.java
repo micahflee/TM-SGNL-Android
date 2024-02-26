@@ -39,6 +39,7 @@ import org.archiver.ArchiveLogger;
 import org.archiver.FCMConnector;
 import org.conscrypt.ConscryptSignal;
 import org.greenrobot.eventbus.EventBus;
+import org.logger.SignalLoggerAdapter;
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.signal.core.util.MemoryTracker;
 import org.signal.core.util.concurrent.AnrDetector;
@@ -387,7 +388,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   @VisibleForTesting
   protected void initializeLogging() {
-    Log.initialize(FeatureFlags::internalUser, new AndroidLogger(), new PersistentLogger(this));
+    Log.initialize(FeatureFlags::internalUser, new SignalLoggerAdapter(this), new PersistentLogger(this));
 
     SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
 
