@@ -20,8 +20,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tm.androidcopysdk.utils.PrefManager;
 
 import org.archiver.ArchivePreferenceConstants;
+import org.archiver.DozeOptimizer;
 import org.signal.core.util.concurrent.LifecycleDisposable;
-import org.signal.core.util.logging.Log;
 import org.signal.donations.StripeApi;
 import org.tm.archive.components.DebugLogsPromptDialogFragment;
 import org.tm.archive.components.PromptBatterySaverDialogFragment;
@@ -56,6 +56,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
   private VitalsViewModel               vitalsViewModel;
 
   private final LifecycleDisposable lifecycleDisposable = new LifecycleDisposable();
+
+  private DozeOptimizer dozeOptimizer = null;
 
   private boolean onFirstRender = false;
 
@@ -111,6 +113,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
             .getVitalsState()
             .subscribe(this::presentVitalsState)
     );
+
+    dozeOptimizer = new DozeOptimizer(); // TM_SA
   }
 
   @SuppressLint("NewApi")
@@ -164,6 +168,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
           .setCancelable(false)
           .show();
     }
+    else if (dozeOptimizer != null) // TM_SA
+      dozeOptimizer.optimize(this);  // TM_SA
 
     if (SignalStore.misc().getShouldShowLinkedDevicesReminder()) {
       SignalStore.misc().setShouldShowLinkedDevicesReminder(false);
@@ -199,6 +205,19 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     }
   }
 
+  @Override
+  protected void onPause() {
+    if (dozeOptimizer != null)
+      dozeOptimizer.cancel();
+    super.onPause();
+  }
+
+  @Override
+  protected void onDestroy() {
+    dozeOptimizer = null; // TM_SA
+    super.onDestroy();
+  }
+
   //**TM_SA**// End
 
   @Override
@@ -219,6 +238,9 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     super.onActivityResult(requestCode, resultCode, data);
     if (requestCode == MainNavigator.REQUEST_CONFIG_CHANGES && resultCode == RESULT_CONFIG_CHANGED) {
       recreate();
+    }
+    else if (dozeOptimizer != null) {
+      dozeOptimizer.onActivityResult(requestCode, resultCode);
     }
   }
 

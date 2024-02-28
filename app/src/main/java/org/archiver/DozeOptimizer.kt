@@ -1,16 +1,18 @@
 package org.archiver
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.tm.archive.R
 import org.tm.archive.components.reminder.DozeReminder
-import org.tm.archive.util.PowerManagerCompat
-import org.tm.archive.util.TextSecurePreferences
 
 class DozeOptimizer {
 
   private var alert: AlertDialog? = null
+  private var userApproved = false
 
   fun optimize(activity: Activity) {
     requestBatteryOptimisation(activity)
@@ -20,8 +22,15 @@ class DozeOptimizer {
     dismiss()
   }
 
+  fun onActivityResult(requestCode: Int, resultCode: Int) {
+    if (requestCode != REQUEST_BATTERY_OPTIMIZATION  || resultCode == 0)
+      return
+    cancel()
+    userApproved = true
+  }
+
   private fun requestBatteryOptimisation(activity: Activity) {
-    if (!DozeReminder.isEligible(activity)) {
+    if (userApproved || !DozeReminder.isEligible(activity)) {
       dismiss()
       return
     }
@@ -34,12 +43,15 @@ class DozeOptimizer {
     builder.setCancelable(false)
     builder.setPositiveButton(R.string.ok) { dialog, which ->
       dialog.dismiss()
-      PowerManagerCompat.requestIgnoreBatteryOptimizations(activity)
+      val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + activity.packageName))
+      activity.startActivityForResult(intent, REQUEST_BATTERY_OPTIMIZATION)
+//      PowerManagerCompat.requestIgnoreBatteryOptimizations(activity)
     }
     this.alert = builder.show()
   }
 
   private fun dismiss() {
+    userApproved = false
     val alert = alert
     if (alert?.isShowing == true) {
       try {
@@ -47,5 +59,9 @@ class DozeOptimizer {
       } finally { }
     }
     this.alert = null
+  }
+
+  companion object {
+    const val REQUEST_BATTERY_OPTIMIZATION = 905
   }
 }

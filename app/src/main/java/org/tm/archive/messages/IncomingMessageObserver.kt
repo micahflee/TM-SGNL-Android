@@ -480,6 +480,7 @@ class IncomingMessageObserver(private val context: Application) {
         .setContentTitle(applicationContext.getString(R.string.MessageRetrievalService_signal))
         .setContentText(applicationContext.getString(R.string.MessageRetrievalService_background_connection_enabled))
         .setPriority(NotificationCompat.PRIORITY_MIN)
+        .setOngoing(!SignalStore.account().fcmEnabled || SignalStore.internalValues().isWebsocketModeForced)
         .setWhen(0)
         .setSmallIcon(R.drawable.ic_signal_background_connection)
         .build()

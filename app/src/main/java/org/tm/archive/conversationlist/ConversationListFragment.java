@@ -85,7 +85,6 @@ import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
 import org.archive.selfAuthentication.SelfAuthenticatorConstants;
 import org.archiver.ArchivePreferenceConstants;
 import org.archiver.ArchiveUtil;
-import org.archiver.DozeOptimizer;
 import org.archiver.FCMConnector;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -269,8 +268,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   private AlertDialog.Builder mAuthenticationProgressAlertDialogBuilder;
   private AlertDialog         mAuthenticationProgressAlertDialog;
   public static boolean mIsAuthenticationIsInProgress = false;
-
-  public DozeOptimizer dozeOptimizer = null;
   //**TM_SA**// End
   public static ConversationListFragment newInstance() {
     return new ConversationListFragment();
@@ -294,8 +291,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     startupStopwatch = new Stopwatch("startup");
 
     //**TM_SA**//
-    if (dozeOptimizer == null)
-      dozeOptimizer = new DozeOptimizer();
     if(!EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().register(this);
     }
@@ -605,10 +600,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
           getParentFragmentManager()
       );
     }
-
-    // TM_SA
-    if (dozeOptimizer != null)
-      dozeOptimizer.optimize(requireActivity());
   }
 
   @Override
@@ -621,8 +612,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   @Override
   public void onPause() {
     super.onPause();
-    if (dozeOptimizer != null) // TM_SA
-      dozeOptimizer.cancel(); // TM_SA
 
     requireCallback().getSearchAction().setOnClickListener(null);
     fab.stopPulse();
@@ -634,12 +623,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   public void onStop() {
     super.onStop();
     ApplicationDependencies.getAppForegroundObserver().removeListener(appForegroundObserver);
-  }
-
-  @Override
-  public void onDestroy() {
-    dozeOptimizer = null; // TM_SA
-    super.onDestroy();
   }
 
   @Override
