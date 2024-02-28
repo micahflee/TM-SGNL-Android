@@ -34,7 +34,7 @@ public class DozeReminder extends Reminder {
 
   public static boolean isEligible(Context context) {
     return !SignalStore.account().isFcmEnabled()                   &&
-           !TextSecurePreferences.hasPromptedOptimizeDoze(context) &&
+//           !TextSecurePreferences.hasPromptedOptimizeDoze(context) &&
            Build.VERSION.SDK_INT >= 23                             &&
            !((PowerManager)context.getSystemService(Context.POWER_SERVICE)).isIgnoringBatteryOptimizations(context.getPackageName());
   }
