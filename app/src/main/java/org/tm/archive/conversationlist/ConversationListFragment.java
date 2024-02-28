@@ -1151,9 +1151,10 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         return Optional.of(new OutdatedBuildReminder(context));
       } else if (PushRegistrationReminder.isEligible()) {
         return Optional.of((new PushRegistrationReminder(context)));
-      } /*else if (DozeReminder.isEligible(context)) {
-        return Optional.of(new DozeReminder(context)); // TM_SA
-      }*/ else if (CdsTemporaryErrorReminder.isEligible()) {
+      } else if (DozeReminder.isEligible(context)) {
+        return Optional.<Reminder>empty(); // TM_SA
+//        return Optional.of(new DozeReminder(context)); // TM_SA
+      } else if (CdsTemporaryErrorReminder.isEligible()) {
         return Optional.of(new CdsTemporaryErrorReminder());
       } else if (CdsPermanentErrorReminder.isEligible()) {
         return Optional.of(new CdsPermanentErrorReminder());
