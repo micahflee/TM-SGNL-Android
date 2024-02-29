@@ -37,6 +37,7 @@ import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import java.io.File
 import java.io.IOException
+import java.lang.AssertionError
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.stream.Collectors
@@ -191,7 +192,13 @@ class ArchiveUtil {
               inboxRecipient
             }
             else -> {
-              recipient.requireE164()
+              try {
+                recipient.requireE164()
+              } catch (e : AssertionError) {
+                Log.e(TAG, e.message.toString())
+                return ""
+              }
+
             }
           }
         }
