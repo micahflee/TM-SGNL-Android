@@ -42,6 +42,7 @@ class TmMainActivity : MainActivity() {
       EventBus.getDefault().unregister(this)
       Log.d("LaunchActivity", "unregisterBus")
     }
+    endSuspendDialog()
   }
 
   private fun notifyMessageIfNeeded() {
@@ -72,8 +73,13 @@ class TmMainActivity : MainActivity() {
       showSuspendDialog()
       hideDialogAndShowSuspendDialog(SelfAuthenticatorManager.SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
-      suspendDialog?.dismiss()
+      endSuspendDialog()
     }
+  }
+
+  fun endSuspendDialog() {
+    suspendDialog?.dismiss()
+    suspendDialog = null
   }
 
   private fun showSuspendDialog() {

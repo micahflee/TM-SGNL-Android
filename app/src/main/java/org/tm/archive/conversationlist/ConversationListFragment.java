@@ -462,22 +462,21 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     requireCallback().bindScrollHelper(list);
 
     //**TM_SA**//Start
-    if (!CommonUtils.isActivatedUser(requireContext())) {
+    if (CommonUtils.isActivatedUser(requireContext())) {
+      WorkerIntentService.startJobIntentService(requireContext(), true);/*TM_SA*/
+    } else {
       com.tm.logger.Log.d("ConversationListFragment", "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID);
       int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
                                               IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
       com.tm.logger.Log.d("ConversationListFragment",
                           "onCreate -> authStatus = " + authStatus + ". (0-signed, 1 -should intune auth, 2-self auth)");
-      FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
       if(MDMAuthenticator.INSTANCE.isMDM(requireContext()) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) { //if intune managed device, start MDM auth
         startIntuneAuth();
       } else { // else self auth
         startSelfAuth();
       }
     }
-    if (CommonUtils.isActivatedUser(requireContext())) {
-      WorkerIntentService.startJobIntentService(requireContext(), true);/*TM_SA*/
-    }
+
   }
 
   private void startIntuneAuth() {
@@ -487,6 +486,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   public void startSelfAuth() {
     if(!CommonUtils.isActivatedUser(requireContext())){
+      FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
       SelfAuthenticatorManager.INSTANCE.
           startAuthenticationProcess(requireContext(),
                                      ArchiveUtil.getPhoneNumberInTestMode(requireContext()),
@@ -1903,46 +1903,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   }
 
   //**TM_SA**//Start
-  /*@Subscribe(threadMode = ThreadMode.BACKGROUND)
-  public void onMessageEvent(MessageEvent event) {
-    if(event.message != null){
-      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> event.message = " + event.message);
-    }else{
-      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess event.message = null");
-    }
-
-    //check if listener is valid
-    if (event.message != null && (event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed()) ||
-                                  event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()))) {
-
-      if (mAuthenticationProgressAlertDialog != null) {
-        mAuthenticationProgressAlertDialog.dismiss();
-      }
-
-
-      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> event.message 2  = " + event.message);
-      if (SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed().equals(event.message)) {
-        updatedSelfAuthenticatorPreference();
-        com.tm.logger.Log.d("ConversationListFragment","SelfAuthenticatorProcess -> SelfAuthenticationSucceed ");
-      } else {
-        com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> getSelfAuthenticationFailure = " + event.message);
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(new Runnable() {
-          @Override
-          public void run() {
-            mIsAuthenticationIsInProgress = false;
-            SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded(getActivity());
-          }
-        }, 20);
-      }
-
-      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticator -> initOfficialSignalFirebaseAccount!!! ");
-      FCMConnector.initOfficialSignalFirebaseAccount(getContext());
-
-    }
-  }*/
-
-  //**TM_SA**//Start
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEvent(UpdateEvent event) {
     if (event == null) {
@@ -1958,27 +1918,20 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(),false);
-      /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        WorkerIntentService.cancelJob(requireContext());
-        KeepWorkerIntentService.cancelJob(requireContext());
-      }*/
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       CommonUtils.setActivatedUser(requireContext(), true);
-      SelfAuthenticatorManager.INSTANCE.hideAuthDialog();
+      SelfAuthenticatorManager.INSTANCE.endAuthDialog();
     }
 
     if (event.type != UpdateEvent.EVENTS_TYPE.authProcess) {
       SelfAuthenticatorManager.INSTANCE.hideDialogAndShowSuspendDialog(
           SelfAuthenticatorManager.SuspendUIAction.SHOULD_HIDE_PROGRESS_DIALOG);
-      WorkerIntentService.startJobIntentService(requireContext(), true);
-//      SelfAuthenticatorManager.INSTANCE.shouldHideProgressDialog();
-      /*if (mAuthenticationProgressAlertDialog != null) {
-        mAuthenticationProgressAlertDialog.dismiss();
-      }*/
+      WorkerIntentService.startJobIntentService(requireContext());
+//      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticator -> initOfficialSignalFirebaseAccount!!! ");
+//      FCMConnector.initOfficialSignalFirebaseAccount(requireContext());
     }
 
-    com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticator -> initOfficialSignalFirebaseAccount!!! ");
-    FCMConnector.initOfficialSignalFirebaseAccount(getContext());
+
   }
 
   @Override
@@ -2044,6 +1997,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   //**TM_SA**//START
 
   void startMdm() {
+    FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
     MDMAuthenticator.INSTANCE.startMDMAuthenticator(requireActivity(),
                                                     ArchiveUtil.getPhoneNumberInTestMode(requireContext()), BuildConfig.signal_teleMessage_version,  this);
   }
