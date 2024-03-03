@@ -12,13 +12,13 @@ import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.utils.PrefManager
-import com.tm.logger.Log
 import org.archiver.ArchivePreferenceConstants
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.selfAuthentication.SelfAuthenticatorManager
 import org.selfAuthentication.SelfAuthenticatorManager.hideDialogAndShowSuspendDialog
+import org.signal.core.util.logging.Log
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.util.views.CircularProgressMaterialButton
 
@@ -83,15 +83,18 @@ class TmMainActivity : MainActivity() {
   }
 
   private fun showSuspendDialog() {
-    suspendDialog = Dialog(this, android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen) // Fullscreen theme
-    suspendDialog!!.apply {
-      setContentView(R.layout.fragment_registration_enter_phone_number)
-      val layout = findViewById<ConstraintLayout>(R.id.constraint_layout)
-      layout.setBackgroundColor(resources.getColor(R.color.white))
-      val button = findViewById<CircularProgressMaterialButton>(R.id.registerButton)
-      button.visibility = View.GONE
-      setCancelable(false)
-      show()
+    if (suspendDialog == null) {
+      suspendDialog = Dialog(this, android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen) // Fullscreen theme
+      suspendDialog!!.apply {
+        setContentView(R.layout.fragment_registration_enter_phone_number)
+        val layout = findViewById<ConstraintLayout>(R.id.constraint_layout)
+        layout.setBackgroundColor(resources.getColor(R.color.white))
+        val button = findViewById<CircularProgressMaterialButton>(R.id.registerButton)
+        button.visibility = View.GONE
+        setCancelable(false)
+        if (!this@TmMainActivity.isFinishing || this@TmMainActivity.isDestroyed) show()
+      }
     }
   }
+
 }

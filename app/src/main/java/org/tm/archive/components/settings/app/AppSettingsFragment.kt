@@ -17,6 +17,7 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.selfAuthentication.ProgressDialog
+import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.components.AvatarImageView
@@ -324,12 +325,12 @@ class AppSettingsFragment : DSLSettingsFragment(
 
   override fun sendLogSucceed() {
     mProgressDialog.hide()
-    com.tm.logger.Log.d("sendLog", "sendLogSucceed")
+    Log.d("sendLog", "sendLogSucceed")
   }
 
   override fun sendLogFailure() {
     mProgressDialog.hide()
-    com.tm.logger.Log.d("sendLog", "sendLogFailure")
+    Log.d("sendLog", "sendLogFailure")
   }
 
 

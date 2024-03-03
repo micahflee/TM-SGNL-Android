@@ -219,7 +219,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       public void run() {
         progressBarCustomView.setVisibility(View.GONE);
         progressBarShown = false;
-        com.tm.logger.Log.d(TAG, "Registration progress hidden");
+        Log.d(TAG, "Registration progress hidden");
       }
     });
   }
@@ -230,7 +230,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       public void run() {
         progressBarCustomView.setVisibility(View.VISIBLE);
         progressBarShown = true;
-        com.tm.logger.Log.d(TAG, "Registration progress shown");
+        Log.d(TAG, "Registration progress shown");
       }
     });
   }
@@ -340,14 +340,14 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   @Override
   public void failureMDMAuth(String reason) {
     final String onCancel = "onCancel", server = "server";
-    com.tm.logger.Log.d(TAG, "failureMDMAuth, reason: " + reason);
+    Log.d(TAG, "failureMDMAuth, reason: " + reason);
     if(reason.equals(onCancel)) {
       IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
     } //update app that intune signed failed: two cases. 1. try intune auth again  2. move to self auth
     else if(reason.contains(server) || reason.contains("Authentication failed")
       /*|| reason.contains("managerID")*/) { //try intune auth again
       PrefManager.setIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
-      com.tm.logger.Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
+      Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
       requireActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
@@ -356,7 +356,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       });
     }else  { //this case should pass to self-auth
       PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
-      com.tm.logger.Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+      Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
       requireActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
@@ -369,7 +369,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
   @Override
   public void successMDMAuth() {
-    com.tm.logger.Log.d(TAG, "successMDMAuth");
+    Log.d(TAG, "successMDMAuth");
     startIntuneAutoAuthentication(mobileNumber);
   }
 
@@ -379,15 +379,15 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
    * @param e164number
    */
   private void startIntuneAutoAuthentication(String e164number) {
-    com.tm.logger.Log.d(TAG, "startAutoAuthentication");
+    Log.d(TAG, "startAutoAuthentication");
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
   }
 
   private void startAutoAuthentication(String e164number) {
-    com.tm.logger.Log.i(TAG , "startAutoAuthentication");
+    Log.i(TAG , "startAutoAuthentication");
     FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
-    com.tm.logger.Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     SelfAuthenticatorManager.INSTANCE.startAuthentication(this);
     if (!progressBarShown) {
@@ -695,11 +695,11 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   //**TM_SA**//START
   /*@Subscribe(threadMode = ThreadMode.MAIN)
   public void onMessageEvent(MessageEvent event) {
-    com.tm.logger.Log.d(TAG,"onMessageEvent -> SelfAuthenticator and Intune authenticator");
+    Log.d(TAG,"onMessageEvent -> SelfAuthenticator and Intune authenticator");
     if (event.message != null) {
-      com.tm.logger.Log.d(TAG, "event.message = " + event.message);
+      Log.d(TAG, "event.message = " + event.message);
     } else {
-      com.tm.logger.Log.d(TAG, "event.message = null, return;");
+      Log.d(TAG, "event.message = null, return;");
       return;
     }
     boolean authSucceed = event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed());
@@ -717,10 +717,10 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
           PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,
                                  IntuneAuthManager.MdmAuthStatus.ALREADY_SIGN.ordinal()); //update app that intune signed successfully
           updatedSelfAuthenticatorDonePreference();//update that signed successfully
-          com.tm.logger.Log.d(TAG, "status auth is ALREADY_SIGN");
+          Log.d(TAG, "status auth is ALREADY_SIGN");
         } else {
           PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal()); //update app that auth should pass to self auth
-          com.tm.logger.Log.d(TAG, "status auth is START_SELF_AUTH");
+          Log.d(TAG, "status auth is START_SELF_AUTH");
         }
       } else {
 
@@ -728,25 +728,25 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
           hideProgressBar();
         }
 
-        com.tm.logger.Log.d(TAG, "event.message 2  = " + event.message);
+        Log.d(TAG, "event.message 2  = " + event.message);
         if (authSucceed) {
           updatedSelfAuthenticatorDonePreference();
-          com.tm.logger.Log.d(TAG, "SelfAuthenticationSucceed ");
+          Log.d(TAG, "SelfAuthenticationSucceed ");
 
         } else {
           //I Removed this because we just show that after 48 hours.
           //SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
-          com.tm.logger.Log.d(TAG, "getSelfAuthenticationFailure = " + event.message);
+          Log.d(TAG, "getSelfAuthenticationFailure = " + event.message);
         }
 
       }
       final NumberViewState number = viewModel.getNumber();
       final String e164number = number.getE164Number();
       confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
-      com.tm.logger.Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
-      com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+      Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+      Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
       FCMConnector.initOfficialSignalFirebaseAccount(mContext);
-      com.tm.logger.Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+      Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     }
   }*/
 
@@ -755,7 +755,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     if (event == null) {
       return;
     }
-    com.tm.logger.Log.d("EnterPhoneNumberFragment", "UpdateEvent -> onEvent: " + event.type);
+    Log.d("EnterPhoneNumberFragment", "UpdateEvent -> onEvent: " + event.type);
 
     if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       CommonUtils.setActivatedUser(requireContext(), true);
@@ -769,10 +769,10 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       dialog.doSendLogsClicked(requireActivity(), progressBarCustomView);
     }
 
-    com.tm.logger.Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
-    com.tm.logger.Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+    Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
     FCMConnector.initOfficialSignalFirebaseAccount(mContext);
-    com.tm.logger.Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
 
     if (progressBarShown) {
       hideProgressBar();
@@ -782,7 +782,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
 
   @Override
   public void authenticationProcessMessage(@NotNull String message) {
-    com.tm.logger.Log.d(TAG, "authenticationProcessMessage = " + message);
+    Log.d(TAG, "authenticationProcessMessage = " + message);
     if (!message.isEmpty()) {
       mIsLoginAuthenticationInProgress = false;
 //      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));

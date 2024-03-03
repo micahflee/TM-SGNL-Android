@@ -16,8 +16,8 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.LocusIdCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.tm.androidcopysdk.CommonUtils
-import com.tm.logger.Log
 import org.signal.core.util.PendingIntentFlags.mutable
+import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.conversation.ConversationIntents
 import org.tm.archive.database.RecipientTable

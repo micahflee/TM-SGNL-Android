@@ -115,7 +115,7 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
     } else {
       //**TM_SA**//Start
       /*val isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
-      com.tm.logger.Log.d("SelfAuthenticatorProcess", "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication")*/
+      .Log.d("SelfAuthenticatorProcess", "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication")*/
 
       if(!CommonUtils.isActivatedUser(context)){
         return

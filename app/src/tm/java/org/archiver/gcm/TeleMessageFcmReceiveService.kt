@@ -11,7 +11,6 @@ import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.IOnCredentialsArrived
 import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator.getUserCredentials
-import com.tm.logger.Log
 //import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationFailed
 //import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationSucceed
 import org.archiver.ArchiveConstants
@@ -19,6 +18,7 @@ import org.archiver.ArchivePreferenceConstants
 import org.archiver.FCMConnector
 import org.archiver.FCMConnector.Companion.updateSignUpCredentials
 import org.greenrobot.eventbus.EventBus
+import org.signal.core.util.logging.Log
 import org.signal.core.util.logging.Log.i
 import org.tm.archive.BuildConfig
 import org.tm.archive.gcm.FcmReceiveService

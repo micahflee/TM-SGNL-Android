@@ -6,12 +6,12 @@ import com.google.firebase.FirebaseOptions
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.utils.PrefManager
-import com.tm.logger.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.archiver.ArchiveUtil.Companion.fetchFCMToken
 import org.archiver.ArchiveUtil.Companion.getFCMTokenIfExists
+import org.signal.core.util.logging.Log
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.gcm.FcmUtil
 import org.tm.archive.jobs.FcmRefreshJob

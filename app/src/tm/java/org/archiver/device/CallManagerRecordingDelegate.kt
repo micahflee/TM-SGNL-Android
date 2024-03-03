@@ -1,8 +1,8 @@
 package org.archiver.device
 
 import android.content.Context
-import com.tm.logger.Log
 import org.archiver.model.Messages.stringify
+import org.signal.core.util.logging.Log
 import org.signal.ringrtc.CallId
 import org.signal.ringrtc.CallManager
 import org.signal.ringrtc.GroupCall

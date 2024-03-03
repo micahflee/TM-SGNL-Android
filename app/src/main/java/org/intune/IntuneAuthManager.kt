@@ -4,7 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
-import com.tm.logger.Log
+import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import kotlin.system.exitProcess
 

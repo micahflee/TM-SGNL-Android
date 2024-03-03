@@ -64,7 +64,7 @@ object SelfAuthenticatorManager {
       mAuthenticationProgressAlertDialogBuilder!!.setCancelable(isCanCancel)
       mAuthenticationProgressAlertDialog = mAuthenticationProgressAlertDialogBuilder!!.create()
       if (!mAuthenticationProgressAlertDialog!!.isShowing) {
-        Log.d("SelfAuthenticatorManager","startAuthenticationProcess -> mAuthenticationProgressAlertDialog show")
+        Log.d("SelfAuthenticatorManager","createAndShowAuthProgressDialog -> mAuthenticationProgressAlertDialog show")
         mAuthenticationProgressAlertDialog!!.show()
       }
     }

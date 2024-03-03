@@ -279,6 +279,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
+    Log.d("ConversationListFragment", "onCreate");
     setHasOptionsMenu(true);
     startupStopwatch = new Stopwatch("startup");
 
@@ -465,10 +466,10 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     if (CommonUtils.isActivatedUser(requireContext())) {
       WorkerIntentService.startJobIntentService(requireContext(), true);/*TM_SA*/
     } else {
-      com.tm.logger.Log.d("ConversationListFragment", "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID);
+      Log.d("ConversationListFragment", "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID);
       int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
                                               IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
-      com.tm.logger.Log.d("ConversationListFragment",
+      Log.d("ConversationListFragment",
                           "onCreate -> authStatus = " + authStatus + ". (0-signed, 1 -should intune auth, 2-self auth)");
       if(MDMAuthenticator.INSTANCE.isMDM(requireContext()) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) { //if intune managed device, start MDM auth
         startIntuneAuth();
@@ -480,7 +481,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   }
 
   private void startIntuneAuth() {
-    com.tm.logger.Log.d("ConversationListFragment", "startIntuneAuth");
+    Log.d("ConversationListFragment", "startIntuneAuth");
     startMdm();
   }
 
@@ -518,7 +519,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   @Override
   public void onResume() {
     super.onResume();
-
+    Log.d("ConversationListFragment", "onResume");
     initializeSearchListener();
     updateReminders();
     //**TM_SA**//Start.  probably should delete from on create
@@ -594,13 +595,20 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     requireCallback().getSearchAction().setOnClickListener(null);
     fab.stopPulse();
     cameraFab.stopPulse();
-    EventBus.getDefault().unregister(this);
   }
 
   @Override
   public void onStop() {
     super.onStop();
     ApplicationDependencies.getAppForegroundObserver().removeListener(appForegroundObserver);
+  }
+
+  @Override public void onDestroy() {
+    super.onDestroy();
+    Log.d("ConversationListFragment", "onDestroy");
+    if (EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().unregister(this);
+    }
   }
 
   @Override
@@ -1908,13 +1916,14 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     if (event == null) {
       return;
     }
-    com.tm.logger.Log.d("ConversationListFragment", "UpdateEvent -> onEvent: " + event.type);
+    Log.d("ConversationListFragment", "UpdateEvent -> onEvent: " + event.type);
     if (event.type == UpdateEvent.EVENTS_TYPE.authProcess) {
       CommonUtils.setActivatedUser(requireContext(), false);
-      SelfAuthenticatorManager.INSTANCE.
+      startSelfAuth();
+      /*SelfAuthenticatorManager.INSTANCE.
           startAuthenticationProcess(requireContext(),
                                      ArchiveUtil.getPhoneNumberInTestMode(requireContext()),
-                                     this);
+                                     this);*/
     }
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(),false);
@@ -1927,8 +1936,8 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       SelfAuthenticatorManager.INSTANCE.hideDialogAndShowSuspendDialog(
           SelfAuthenticatorManager.SuspendUIAction.SHOULD_HIDE_PROGRESS_DIALOG);
       WorkerIntentService.startJobIntentService(requireContext());
-//      com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticator -> initOfficialSignalFirebaseAccount!!! ");
-//      FCMConnector.initOfficialSignalFirebaseAccount(requireContext());
+      Log.d("ConversationListFragment", "SelfAuthenticator -> initOfficialSignalFirebaseAccount!!! ");
+      FCMConnector.initOfficialSignalFirebaseAccount(requireContext());
     }
 
 
@@ -1936,7 +1945,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   @Override
   public void authenticationProcessMessage(@NotNull String message) {
-    com.tm.logger.Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> authenticationProcessMessage = " + message);
+    Log.d("ConversationListFragment", "SelfAuthenticatorProcess -> authenticationProcessMessage = " + message);
     if (!message.isEmpty()) {
 //      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
       EventBus.getDefault().post(new UpdateEvent(UpdateEvent.EVENTS_TYPE.suspension));
@@ -2005,7 +2014,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   @Override
   public void failureMDMAuth(String reason) {
     final String onCancel = "onCancel";
-    com.tm.logger.Log.d("ConversationListFragment", "failureMDMAuth, reason: " + reason);
+    Log.d("ConversationListFragment", "failureMDMAuth, reason: " + reason);
     //MDMAuthenticator.INSTANCE.signOutUser(requireActivity());
     if(reason.equals(onCancel)) {
       IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
@@ -2013,10 +2022,10 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     }else if(reason.contains("server") || reason.contains("Authentication failed")
       /*|| reason.contains("managerID")*/) { //try intune auth again
       PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
-      com.tm.logger.Log.d("ConversationListFragment", "status auth is 1");
+      Log.d("ConversationListFragment", "status auth is 1");
     }else  { //this case should pass to self-auth
       PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
-      com.tm.logger.Log.d("ConversationListFragment", "status auth is 2");
+      Log.d("ConversationListFragment", "status auth is 2");
       startSelfAuth();
     }
 
@@ -2024,7 +2033,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
 
   @Override
   public void successMDMAuth() {
-    com.tm.logger.Log.d("ConversationListFragment", "successMDMAuth");
+    Log.d("ConversationListFragment", "successMDMAuth");
     String e164number = PrefManager.getStringPref(requireContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER);
     startIntuneAutoAuthentication(e164number);
 
@@ -2035,7 +2044,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
    * @param e164number
    */
   private void startIntuneAutoAuthentication(String e164number) {
-    com.tm.logger.Log.d(TAG, "startAutoAuthentication");
+    Log.d(TAG, "startAutoAuthentication");
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
     IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
   }
