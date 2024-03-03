@@ -1964,6 +1964,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
       }*/
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       CommonUtils.setActivatedUser(requireContext(), true);
+      SelfAuthenticatorManager.INSTANCE.hideAuthDialog();
     }
 
     if (event.type != UpdateEvent.EVENTS_TYPE.authProcess) {

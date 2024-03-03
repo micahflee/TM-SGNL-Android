@@ -23,7 +23,7 @@ import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.util.views.CircularProgressMaterialButton
 
 class TmMainActivity : MainActivity() {
-  private var dialog: Dialog? = null
+  private var suspendDialog: Dialog? = null
 
   override fun onResume() {
     super.onResume()
@@ -69,16 +69,16 @@ class TmMainActivity : MainActivity() {
     }
     Log.d("MainActivity", "UpdateEvent -> onEvent: " + event.type)
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
-      showDialog()
+      showSuspendDialog()
       hideDialogAndShowSuspendDialog(SelfAuthenticatorManager.SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
-      dialog?.dismiss()
+      suspendDialog?.dismiss()
     }
   }
 
-  private fun showDialog() {
-    dialog = Dialog(this, android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen) // Fullscreen theme
-    dialog!!.apply {
+  private fun showSuspendDialog() {
+    suspendDialog = Dialog(this, android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen) // Fullscreen theme
+    suspendDialog!!.apply {
       setContentView(R.layout.fragment_registration_enter_phone_number)
       val layout = findViewById<ConstraintLayout>(R.id.constraint_layout)
       layout.setBackgroundColor(resources.getColor(R.color.white))

@@ -20,7 +20,7 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
     mProgressDialog = view
 
     builder.setTitle(R.string.not_activated_user_dialog_title)
-    builder.setMessage(context.getString(R.string.not_activated_user_dialog_message) + "?")
+    builder.setMessage(context.getString(R.string.not_activated_user_dialog_message))
 
     builder.setPositiveButton(R.string.DebugSendLogs) { dialog, which ->
 

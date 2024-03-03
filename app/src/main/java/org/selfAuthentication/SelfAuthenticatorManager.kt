@@ -74,12 +74,15 @@ object SelfAuthenticatorManager {
     SHOULD_SHOW_SUSPEND_DIALOG(1)
   }
 
+  fun hideAuthDialog() {
+    if (mAuthenticationProgressAlertDialog != null) mAuthenticationProgressAlertDialog!!.dismiss()
+  }
+
   fun hideDialogAndShowSuspendDialog(action : SuspendUIAction) {
     if (action == SuspendUIAction.SHOULD_HIDE_PROGRESS_DIALOG) shouldHideProgressDialog = true
     if (action == SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG) shouldShowSuspendDialog = true
-    if (shouldHideProgressDialog && shouldShowSuspendDialog &&
-      mAuthenticationProgressAlertDialog != null) {
-      mAuthenticationProgressAlertDialog!!.dismiss()
+    if (shouldHideProgressDialog && shouldShowSuspendDialog) {
+      hideAuthDialog()
       Log.d("ConversationListFragment", "mAuthenticationProgressAlertDialog dismiss")
       shouldHideProgressDialog = false
       shouldShowSuspendDialog = false
