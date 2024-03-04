@@ -6,10 +6,10 @@
 package org.tm.archive
 
 import android.app.Dialog
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.utils.PrefManager
@@ -88,11 +88,10 @@ open class BaseActivity : SignalBaseActivity() {
     if (suspendDialog == null) {
       suspendDialog = Dialog(this, android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen) // Fullscreen theme
       suspendDialog!!.apply {
-        setContentView(R.layout.fragment_registration_enter_phone_number)
+        setContentView(R.layout.fragment_registration_enter_phone_number_suspend)
         val layout = findViewById<ConstraintLayout>(R.id.constraint_layout)
         layout.setBackgroundColor(resources.getColor(R.color.white))
-        val button = findViewById<CircularProgressMaterialButton>(R.id.registerButton)
-        button.visibility = View.GONE
+        findViewById<TextView>(R.id.textViewMessage).visibility = View.VISIBLE
         setCancelable(false)
         show()
       }
