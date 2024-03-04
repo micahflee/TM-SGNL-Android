@@ -26,7 +26,7 @@ import org.tm.archive.util.views.CircularProgressMaterialButton
 open class BaseActivity : SignalBaseActivity() {
   private var suspendDialog: Dialog? = null
   private val TAG = "TM" + tag(BaseActivity::class.java)
-  
+
   override fun onResume() {
     super.onResume()
     Log.d(TAG, "onResume - ${System.identityHashCode(this)}")
@@ -56,7 +56,6 @@ open class BaseActivity : SignalBaseActivity() {
     }
   }
 
-
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
   @Synchronized
   fun notifyMessage() {
@@ -73,16 +72,13 @@ open class BaseActivity : SignalBaseActivity() {
     Log.d(TAG, "UpdateEvent -> onEvent: " + event.type)
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       showSuspendDialog()
-//      findViewById<FragmentContainerView>(R.id.conversation_list_tabs).visibility = View.INVISIBLE
-
       SelfAuthenticatorManager.hideDialogAndShowSuspendDialog(SelfAuthenticatorManager.SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
-//      findViewById<FragmentContainerView>(R.id.conversation_list_tabs).visibility = View.VISIBLE
       endSuspendDialog()
     }
   }
 
-  fun endSuspendDialog() {
+  private fun endSuspendDialog() {
     suspendDialog?.dismiss()
     suspendDialog = null
   }
@@ -97,11 +93,9 @@ open class BaseActivity : SignalBaseActivity() {
         val button = findViewById<CircularProgressMaterialButton>(R.id.registerButton)
         button.visibility = View.GONE
         setCancelable(false)
-        /*if (!this@TmMainActivity.isFinishing || this@TmMainActivity.isDestroyed) */
         show()
       }
     }
   }
-
 
 }

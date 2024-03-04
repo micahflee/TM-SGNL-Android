@@ -39,15 +39,6 @@ object SelfAuthenticatorManager {
         selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
     }
 
-    /*fun showProgressDialog(activity: Activity){
-        mSelfAuthenticationDialogBuilder.showProgressDialog(activity)
-    }
-
-    fun hideProgressDialog(){
-        mSelfAuthenticationDialogBuilder.hideProgressDialog()
-    }*/
-
-
   fun startAuthenticationProcess(context: Context,
                                  phone: String?, aIAuthenticationStatus: IAuthenticationStatus) {
     createAndShowAuthProgressDialog(context, true)
