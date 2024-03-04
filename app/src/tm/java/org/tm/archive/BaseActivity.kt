@@ -25,23 +25,16 @@ import org.tm.archive.util.views.CircularProgressMaterialButton
 
 open class BaseActivity : SignalBaseActivity() {
   private var suspendDialog: Dialog? = null
-  private val TAG = tag(BaseActivity::class.java)
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    Log.d(TAG, "TM onCreate $TAG")
-  }
-
-
-
+  private val TAG = "TM" + tag(BaseActivity::class.java)
+  
   override fun onResume() {
     super.onResume()
-    Log.d(TAG, "BaseActivity resumed - ${System.identityHashCode(this)}")
+    Log.d(TAG, "onResume - ${System.identityHashCode(this)}")
     notifyMessageIfNeeded()
 
     if (!EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().register(this)
-      Log.d("BaseActivity", "registerBus")
+      Log.d(TAG, "registerBus")
     }
   }
 
@@ -49,7 +42,7 @@ open class BaseActivity : SignalBaseActivity() {
     super.onDestroy()
     if (EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().unregister(this)
-      Log.d("BaseActivity", "unregisterBus")
+      Log.d(TAG, "unregisterBus")
     }
     endSuspendDialog()
   }
@@ -77,7 +70,7 @@ open class BaseActivity : SignalBaseActivity() {
     if (event == null) {
       return
     }
-    Log.d("BaseActivity", "UpdateEvent -> onEvent: " + event.type)
+    Log.d(TAG, "UpdateEvent -> onEvent: " + event.type)
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       showSuspendDialog()
 //      findViewById<FragmentContainerView>(R.id.conversation_list_tabs).visibility = View.INVISIBLE
