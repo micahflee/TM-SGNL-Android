@@ -37,7 +37,7 @@ class ArchiveSender {
           //  Log.d(TAG, "messageId = $uniqueMessageId message text $messageBody")
           Log.d(TAG, "sendArchiveMessage -> body = $messageBody sub = $subject")
 
-          if(archiveFile == null || archiveFile[0] == null) {
+          if(archiveFile.isNullOrEmpty()) {
             Log.d(TAG, "sendArchiveMessage -> only text")
             DataGrabber.getInstance(context).setMessage(aProtocolType.type, toRecipientsList, from, messageBody, uniqueMessageId, dateInTimeStamp.toString(), subject, ArchiveUtil.getPhoneNumberInTestMode(context), chatMode, chatName, chatId, fromNameString, from, toRecipientsListNames, toRecipientsList)
             }else {
