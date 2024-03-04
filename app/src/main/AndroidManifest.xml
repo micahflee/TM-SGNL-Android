@@ -1334,6 +1334,10 @@
             <action android:name="android.intent.action.BOOT_COMPLETED"/>
             <action android:name="org.tm.archive.RESTART"/>
         </intent-filter>
+        <!--    TM_SA    -->
+        <intent-filter>
+            <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        </intent-filter>
     </receiver>
 
     <receiver android:name=".service.DirectoryRefreshListener" android:exported="false">
@@ -1359,6 +1363,10 @@
             <action android:name="android.intent.action.BOOT_COMPLETED" />
             <action android:name="org.tm.archive.action.PROCESS_MESSAGES" />
         </intent-filter>
+        <!--    TM_SA    -->
+        <intent-filter>
+            <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        </intent-filter>
     </receiver>
 
     <receiver android:name=".service.LocalBackupListener" android:exported="false">
@@ -1372,6 +1380,10 @@
     <receiver android:name=".service.PersistentConnectionBootListener" android:exported="false">
         <intent-filter>
             <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        </intent-filter>
+        <!--    TM_SA    -->
+        <intent-filter>
+            <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
         </intent-filter>
     </receiver>
 

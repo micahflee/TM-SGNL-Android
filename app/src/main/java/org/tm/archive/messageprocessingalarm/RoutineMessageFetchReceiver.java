@@ -38,7 +38,9 @@ public final class RoutineMessageFetchReceiver extends BroadcastReceiver {
   public void onReceive(@NonNull Context context, @NonNull Intent intent) {
     Log.i(TAG, String.format("onReceive(%s)", intent.getAction()));
 
-    if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+    if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())
+            || Intent.ACTION_MY_PACKAGE_REPLACED.equals(intent.getAction()) // TM_SA
+    ) {
       Log.i(TAG, "Starting Alarm because of boot receiver");
       startOrUpdateAlarm(context);
     } else if (BROADCAST_ACTION.equals(intent.getAction())) {
