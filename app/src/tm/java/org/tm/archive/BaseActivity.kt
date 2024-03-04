@@ -6,6 +6,7 @@
 package org.tm.archive
 
 import android.app.Dialog
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -17,22 +18,30 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.selfAuthentication.SelfAuthenticatorManager
-import org.selfAuthentication.SelfAuthenticatorManager.hideDialogAndShowSuspendDialog
 import org.signal.core.util.logging.Log
+import org.signal.core.util.logging.Log.tag
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.util.views.CircularProgressMaterialButton
 
-class TmMainActivity : MainActivity() {
+open class BaseActivity : SignalBaseActivity() {
   private var suspendDialog: Dialog? = null
+  private val TAG = tag(BaseActivity::class.java)
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    Log.d(TAG, "TM onCreate $TAG")
+  }
+
+
 
   override fun onResume() {
     super.onResume()
-    Log.d(javaClass.simpleName, "Shilo TmMainActivity resumed - ${System.identityHashCode(this)}")
+    Log.d(TAG, "BaseActivity resumed - ${System.identityHashCode(this)}")
     notifyMessageIfNeeded()
 
     if (!EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().register(this)
-      Log.d("LaunchActivity", "registerBus")
+      Log.d("BaseActivity", "registerBus")
     }
   }
 
@@ -40,7 +49,7 @@ class TmMainActivity : MainActivity() {
     super.onDestroy()
     if (EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().unregister(this)
-      Log.d("LaunchActivity", "unregisterBus")
+      Log.d("BaseActivity", "unregisterBus")
     }
     endSuspendDialog()
   }
@@ -68,11 +77,14 @@ class TmMainActivity : MainActivity() {
     if (event == null) {
       return
     }
-    Log.d("MainActivity", "UpdateEvent -> onEvent: " + event.type)
+    Log.d("BaseActivity", "UpdateEvent -> onEvent: " + event.type)
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       showSuspendDialog()
-      hideDialogAndShowSuspendDialog(SelfAuthenticatorManager.SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG)
+//      findViewById<FragmentContainerView>(R.id.conversation_list_tabs).visibility = View.INVISIBLE
+
+      SelfAuthenticatorManager.hideDialogAndShowSuspendDialog(SelfAuthenticatorManager.SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
+//      findViewById<FragmentContainerView>(R.id.conversation_list_tabs).visibility = View.VISIBLE
       endSuspendDialog()
     }
   }
@@ -92,9 +104,11 @@ class TmMainActivity : MainActivity() {
         val button = findViewById<CircularProgressMaterialButton>(R.id.registerButton)
         button.visibility = View.GONE
         setCancelable(false)
-        if (!this@TmMainActivity.isFinishing || this@TmMainActivity.isDestroyed) show()
+        /*if (!this@TmMainActivity.isFinishing || this@TmMainActivity.isDestroyed) */
+        show()
       }
     }
   }
+
 
 }
