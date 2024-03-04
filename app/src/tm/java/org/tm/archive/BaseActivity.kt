@@ -72,6 +72,7 @@ open class BaseActivity : SignalBaseActivity() {
     Log.d(TAG, "UpdateEvent -> onEvent: " + event.type)
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       showSuspendDialog()
+      SelfAuthenticatorManager.removeLinkedDevices(this)
       SelfAuthenticatorManager.hideDialogAndShowSuspendDialog(SelfAuthenticatorManager.SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       endSuspendDialog()

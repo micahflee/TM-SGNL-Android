@@ -7,6 +7,7 @@ import com.tm.authenticatorsdk.selfAuthenticator.AuthenticationAppType
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
 import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator
 import com.tm.logger.Log
+import org.tm.archive.BaseActivity
 import org.tm.archive.BuildConfig
 import org.tm.archive.R
 
@@ -34,6 +35,10 @@ object SelfAuthenticatorManager {
           BuildConfig.VERSION_NAME
         )
     }
+
+  fun removeLinkedDevices(baseActivity: BaseActivity) {
+    DevicesDisconnector(baseActivity)
+  }
 
     fun startAuthentication(aIAuthenticationStatus: IAuthenticationStatus) {
         selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
