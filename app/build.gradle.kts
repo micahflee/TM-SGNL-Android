@@ -24,9 +24,9 @@ plugins {
 apply(from = "static-ips.gradle.kts")
 
 //**TM_SA**//Start - Change the version code and version name upon the current version
-val canonicalVersionCode = 1343
-val canonicalVersionName = "6.44.2.6"
-val signal_teleMessage_version = "6.44.2.6"//Change this param in Jenkins builder and delete it.
+val canonicalVersionCode = 1342
+val canonicalVersionName = "6.44.2.5"
+val signal_teleMessage_version = "6.44.2.5"//Change this param in Jenkins builder and delete it.
 //**TM_SA**//end
 
 /*val canonicalVersionCode = 1376
