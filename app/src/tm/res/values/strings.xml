@@ -111,6 +111,6 @@
     <string name="DebugSendLogs">Send Logs</string>
     <string name="not_activated_user_dialog_title">Oops!</string>
     <string name="not_activated_user_dialog_message">TeleMessage couldn\'t locate your account. Please send logs to support and contact your system administrator.</string>
-    <string name="not_activated_user_dialog_message_not_first_sign_in">Your account it blocked</string>
+    <string name="not_activated_user_dialog_message_not_first_sign_in">TeleMessage couldn\'t locate your account. Please contact your system administrator.</string>
     <!--  endregion Telemessage  -->
 </resources>
