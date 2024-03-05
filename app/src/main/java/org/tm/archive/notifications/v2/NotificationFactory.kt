@@ -220,8 +220,7 @@ object NotificationFactory {
       return
     }
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context)
-
+    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_TA*/return
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)//**TM_SA**// change icon
       setColor(ContextCompat.getColor(context, R.color.core_ultramarine))
@@ -269,7 +268,7 @@ object NotificationFactory {
       return
     }
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context)
+    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_TA*/return
 
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)
@@ -353,7 +352,7 @@ object NotificationFactory {
         .build()
     }.makeUniqueToPreventMerging()
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context)
+    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_TA*/return
 
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)
@@ -393,7 +392,7 @@ object NotificationFactory {
       GeneratedContactPhoto("Unknown", R.drawable.ic_profile_outline_40).asDrawable(context, AvatarColor.UNKNOWN)
     }.toLargeBitmap(context)
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context)
+    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_TA*/return
 
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)
@@ -423,7 +422,7 @@ object NotificationFactory {
         .build()
     }.makeUniqueToPreventMerging()
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context)
+    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_TA*/return
 
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)
@@ -442,7 +441,7 @@ object NotificationFactory {
 
   @JvmStatic
   fun notifyToBubbleConversation(context: Context, recipient: Recipient, threadId: Long) {
-    val builder: NotificationBuilder = NotificationBuilder.create(context)
+    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_TA*/return
 
     val conversation = NotificationConversation(
       recipient = recipient,

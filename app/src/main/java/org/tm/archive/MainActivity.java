@@ -2,6 +2,7 @@ package org.tm.archive;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -13,15 +14,22 @@ import android.view.ViewTreeObserver;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
+import com.tm.androidcopysdk.network.appSettings.WorkerIntentService;
 import com.tm.androidcopysdk.utils.PrefManager;
+import com.tm.logger.Log;
 
 import org.archiver.ArchivePreferenceConstants;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.concurrent.LifecycleDisposable;
-import org.signal.core.util.logging.Log;
 import org.signal.donations.StripeApi;
 import org.tm.archive.components.DebugLogsPromptDialogFragment;
 import org.tm.archive.components.PromptBatterySaverDialogFragment;
@@ -54,6 +62,7 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
   private VoiceNoteMediaController      mediaController;
   private ConversationListTabsViewModel conversationListTabsViewModel;
   private VitalsViewModel               vitalsViewModel;
+
 
   private final LifecycleDisposable lifecycleDisposable = new LifecycleDisposable();
 
@@ -112,6 +121,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
             .subscribe(this::presentVitalsState)
     );
   }
+
+
 
   @SuppressLint("NewApi")
   private void presentVitalsState(VitalsViewModel.State state) {
@@ -173,33 +184,8 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     updateTabVisibility();
 
     vitalsViewModel.checkSlowNotificationHeuristics();
-    //**TM_SA**// start
-    notifyMessageIfNeeded();
   }
 
-  private void notifyMessageIfNeeded() {
-    boolean isAlreadyRestarted = PrefManager.getBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, false);
-
-    if(!isAlreadyRestarted){
-      PrefManager.setBooleanPref(this, ArchivePreferenceConstants.PREF_KEY_MAIN_ACTIVITY_RESTART, true);
-
-      final Handler handler = new Handler(Looper.getMainLooper());
-      handler.postDelayed(new Runnable() {
-        @Override
-        public void run() {
-          notifyMessage();
-        }
-      }, 4000);
-    }
-  }
-
-  public synchronized void notifyMessage(){
-    synchronized (ApplicationDependencies.getIncomingMessageObserver()) {
-      ApplicationDependencies.getIncomingMessageObserver().notifyAll();
-    }
-  }
-
-  //**TM_SA**// End
 
   @Override
   protected void onStop() {

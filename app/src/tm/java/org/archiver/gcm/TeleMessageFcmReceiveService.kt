@@ -7,17 +7,18 @@ import com.google.firebase.messaging.RemoteMessage
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.MessageEvent
+import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.IOnCredentialsArrived
 import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator.getUserCredentials
-import com.tm.logger.Log
-import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationFailed
-import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationSucceed
+//import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationFailed
+//import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationSucceed
 import org.archiver.ArchiveConstants
 import org.archiver.ArchivePreferenceConstants
 import org.archiver.FCMConnector
 import org.archiver.FCMConnector.Companion.updateSignUpCredentials
 import org.greenrobot.eventbus.EventBus
+import org.signal.core.util.logging.Log
 import org.signal.core.util.logging.Log.i
 import org.tm.archive.BuildConfig
 import org.tm.archive.gcm.FcmReceiveService
@@ -70,9 +71,11 @@ class TeleMessageFcmReceiveService : FcmReceiveService(), IOnCredentialsArrived 
         }
       }
       Log.d(TAG, "SelfAuthenticatorM -> after updateSignUpCredentials")
-      EventBus.getDefault().post(MessageEvent(selfAuthenticationSucceed))
+      EventBus.getDefault().post(UpdateEvent(UpdateEvent.EVENTS_TYPE.activated))
+//      EventBus.getDefault().post(MessageEvent(selfAuthenticationSucceed))
     } else {
-      EventBus.getDefault().post(MessageEvent(selfAuthenticationFailed))
+      EventBus.getDefault().post(UpdateEvent(UpdateEvent.EVENTS_TYPE.suspension))
+//      EventBus.getDefault().post(MessageEvent(selfAuthenticationFailed))
     }
   }
 

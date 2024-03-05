@@ -2,8 +2,8 @@ package org.archiver.device
 
 import android.app.Application
 import com.tm.androidcopysdk.api.IFiler
-import com.tm.logger.Log
 import org.archiver.data.TeleMessageTable
+import org.signal.core.util.logging.Log
 import org.signal.ringrtc.CallId
 import org.signal.ringrtc.GroupCall
 import org.signal.ringrtc.Remote
