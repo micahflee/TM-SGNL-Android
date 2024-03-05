@@ -1,19 +1,16 @@
 package org.selfAuthentication
 
 import android.content.Context
-import android.view.LayoutInflater
-import androidx.appcompat.app.AlertDialog
+
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticationAppType
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
 import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator
 import com.tm.logger.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.tm.archive.BaseActivity
 import org.tm.archive.BuildConfig
-import org.tm.archive.R
 
 //In order to change the environment base url call to this method:
 //ApiUtil.Companion.selectServerEnvironment(Context)
