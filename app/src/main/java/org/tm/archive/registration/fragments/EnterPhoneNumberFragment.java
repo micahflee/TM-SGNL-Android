@@ -298,8 +298,8 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       String lastNumber = PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, "");
       if (!lastNumber.equals(e164number)) {
         CommonUtils.setActivatedUser(requireContext(), false);
+        PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
       }
-      PrefManager.setStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, e164number);
 
       AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
       mIsLoginAuthenticationInProgress = true;
@@ -330,7 +330,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   }
 
   //**TM_SA**//START
-  protected void startMdm() {
+  private void startMdm() {
     Log.d(TAG, "startMdm");
     FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
     MDMAuthenticator.INSTANCE.startMDMAuthenticator(requireActivity(), mobileNumber, BuildConfig.signal_teleMessage_version, this);
@@ -693,62 +693,6 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   }
 
   //**TM_SA**//START
-  /*@Subscribe(threadMode = ThreadMode.MAIN)
-  public void onMessageEvent(MessageEvent event) {
-    Log.d(TAG,"onMessageEvent -> SelfAuthenticator and Intune authenticator");
-    if (event.message != null) {
-      Log.d(TAG, "event.message = " + event.message);
-    } else {
-      Log.d(TAG, "event.message = null, return;");
-      return;
-    }
-    boolean authSucceed = event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationSucceed());
-    boolean authFailed = event.message.equals(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed());
-
-
-    //check if listener is valid
-    if (authSucceed || authFailed) {
-      int authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
-                                              IntuneAuthManager.MdmAuthStatus.ALREADY_SIGN.ordinal());
-      if (MDMAuthenticator.INSTANCE.isMDM(requireContext()) &&
-          authStatus!= IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal()) {// for managed device,
-        //this is managed device. if successful, user is signed and finish auth. if failure, move to self auth for regular flow.
-        if (authSucceed) {
-          PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,
-                                 IntuneAuthManager.MdmAuthStatus.ALREADY_SIGN.ordinal()); //update app that intune signed successfully
-          updatedSelfAuthenticatorDonePreference();//update that signed successfully
-          Log.d(TAG, "status auth is ALREADY_SIGN");
-        } else {
-          PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal()); //update app that auth should pass to self auth
-          Log.d(TAG, "status auth is START_SELF_AUTH");
-        }
-      } else {
-
-        if (progressBarShown) {
-          hideProgressBar();
-        }
-
-        Log.d(TAG, "event.message 2  = " + event.message);
-        if (authSucceed) {
-          updatedSelfAuthenticatorDonePreference();
-          Log.d(TAG, "SelfAuthenticationSucceed ");
-
-        } else {
-          //I Removed this because we just show that after 48 hours.
-          //SelfAuthenticatorManager.INSTANCE.showTheRelevantDialogIfNeeded((FragmentActivity)mContext);
-          Log.d(TAG, "getSelfAuthenticationFailure = " + event.message);
-        }
-
-      }
-      final NumberViewState number = viewModel.getNumber();
-      final String e164number = number.getE164Number();
-      confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
-      Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
-      Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
-      FCMConnector.initOfficialSignalFirebaseAccount(mContext);
-      Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
-    }
-  }*/
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEvent(UpdateEvent event) {

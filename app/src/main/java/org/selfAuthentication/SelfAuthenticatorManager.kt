@@ -7,6 +7,10 @@ import com.tm.authenticatorsdk.selfAuthenticator.AuthenticationAppType
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
 import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator
 import com.tm.logger.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.tm.archive.BaseActivity
 import org.tm.archive.BuildConfig
 import org.tm.archive.R
@@ -16,15 +20,14 @@ import org.tm.archive.R
 //The default environment is charlieProduction = https://rest.telemessage.com
 
 object SelfAuthenticatorManager {
-  var shouldHideProgressDialog = false
-  var shouldShowSuspendDialog = false
+  var mProgressDialogVisibility = true
+  var mSuspendDialogVisibility = false
     init {
         Log.d("SelfAuthenticatorManager","class SelfAuthenticatorManager started")
     }
 
   lateinit var selfAuthenticator: SelfAuthenticator
-  private var mAuthenticationProgressAlertDialogBuilder: AlertDialog.Builder? = null
-  private var mAuthenticationProgressAlertDialog: AlertDialog? = null
+
 
     fun initAuthenticator(phoneNumber: String) {
         selfAuthenticator = SelfAuthenticator
@@ -46,46 +49,32 @@ object SelfAuthenticatorManager {
 
   fun startAuthenticationProcess(context: Context,
                                  phone: String?, aIAuthenticationStatus: IAuthenticationStatus) {
-    createAndShowAuthProgressDialog(context, true)
-    initAuthenticator(phone!!)
-    selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
-  }
-
-  private fun createAndShowAuthProgressDialog(context: Context, isCanCancel: Boolean) {
-    if (mAuthenticationProgressAlertDialogBuilder == null) {
-      Log.d("SelfAuthenticatorManager","createAndShowAuthProgressDialog")
-      mAuthenticationProgressAlertDialogBuilder = AlertDialog.Builder(context, R.style.AuthTmProgressDialog)
-      val view = LayoutInflater.from(context).inflate(R.layout.progress_bar_layout_with_background, null)
-      mAuthenticationProgressAlertDialogBuilder!!.setView(view)
-      mAuthenticationProgressAlertDialogBuilder!!.setCancelable(isCanCancel)
-      mAuthenticationProgressAlertDialog = mAuthenticationProgressAlertDialogBuilder!!.create()
-      if (!mAuthenticationProgressAlertDialog!!.isShowing) {
-        Log.d("SelfAuthenticatorManager","createAndShowAuthProgressDialog -> mAuthenticationProgressAlertDialog show")
-        mAuthenticationProgressAlertDialog!!.show()
-      }
-    }
-  }
-  enum class SuspendUIAction(val action : Int) {
-    SHOULD_HIDE_PROGRESS_DIALOG(0),
-    SHOULD_SHOW_SUSPEND_DIALOG(1)
-  }
-
-  fun endAuthDialog() {
-    if (mAuthenticationProgressAlertDialog != null) {
-      Log.d("SelfAuthenticatorManager","endAuthDialog -> mAuthenticationProgressAlertDialog dismiss")
-      mAuthenticationProgressAlertDialog!!.dismiss()
-      mAuthenticationProgressAlertDialog = null
+    Log.d("SelfAuthenticatorManager","startAuthenticationProcess")
+//    createAndShowAuthProgressDialog(context, true)
+    CoroutineScope(Dispatchers.IO).launch {
+      initAuthenticator(phone!!)
+      selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
     }
   }
 
-  fun hideDialogAndShowSuspendDialog(action : SuspendUIAction) {
-    if (action == SuspendUIAction.SHOULD_HIDE_PROGRESS_DIALOG) shouldHideProgressDialog = true
-    if (action == SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG) shouldShowSuspendDialog = true
-    if (shouldHideProgressDialog && shouldShowSuspendDialog) {
+
+
+  /*fun isEndAuthenticationDialog() {
+   if (!mProgressDialogVisibility && mSuspendDialogVisibility) {
       endAuthDialog()
-      shouldHideProgressDialog = false
-      shouldShowSuspendDialog = false
+      mProgressDialogVisibility = true
+      mSuspendDialogVisibility = false
     }
   }
+
+  fun setProgressDialogVisibility(isShown : Boolean){
+    mProgressDialogVisibility = isShown
+    isEndAuthenticationDialog()
+  }
+  fun setSuspendDialogVisibility(isShown : Boolean){
+    mSuspendDialogVisibility = isShown
+    isEndAuthenticationDialog()
+  }*/
+
 
 }

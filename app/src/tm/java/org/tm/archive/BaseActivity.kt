@@ -21,7 +21,6 @@ import org.selfAuthentication.SelfAuthenticatorManager
 import org.signal.core.util.logging.Log
 import org.signal.core.util.logging.Log.tag
 import org.tm.archive.dependencies.ApplicationDependencies
-import org.tm.archive.util.views.CircularProgressMaterialButton
 
 open class BaseActivity : SignalBaseActivity() {
   private var suspendDialog: Dialog? = null
@@ -73,7 +72,7 @@ open class BaseActivity : SignalBaseActivity() {
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       showSuspendDialog()
       SelfAuthenticatorManager.removeLinkedDevices(this)
-      SelfAuthenticatorManager.hideDialogAndShowSuspendDialog(SelfAuthenticatorManager.SuspendUIAction.SHOULD_SHOW_SUSPEND_DIALOG)
+//      SelfAuthenticatorManager.setSuspendDialogVisibility(true)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       endSuspendDialog()
     }

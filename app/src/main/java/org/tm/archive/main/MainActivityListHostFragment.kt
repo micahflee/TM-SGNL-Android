@@ -31,6 +31,7 @@ import org.tm.archive.components.TooltipPopup
 import org.tm.archive.components.settings.app.AppSettingsActivity
 import org.tm.archive.components.settings.app.notifications.manual.NotificationProfileSelectionFragment
 import org.tm.archive.conversationlist.ConversationListFragment
+import org.tm.archive.conversationlist.SignalConversationListFragment
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.notifications.profiles.NotificationProfile
 import org.tm.archive.notifications.profiles.NotificationProfiles
@@ -49,7 +50,7 @@ import org.tm.archive.util.views.Stub
 import org.tm.archive.util.visible
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState
 
-class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_fragment), ConversationListFragment.Callback, Material3OnScrollHelperBinder, CallLogFragment.Callback {
+class MainActivityListHostFragment : Fragment(R.layout.main_activity_list_host_fragment), SignalConversationListFragment.Callback, Material3OnScrollHelperBinder, CallLogFragment.Callback {//**TM_SA**//change to SignalConversationListFragment.Callback
 
   companion object {
     private val TAG = Log.tag(MainActivityListHostFragment::class.java)
