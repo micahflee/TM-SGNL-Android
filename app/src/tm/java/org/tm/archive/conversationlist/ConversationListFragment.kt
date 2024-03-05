@@ -183,15 +183,13 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
     }
 
     if (mAuthenticationProgressAlertDialog != null && !mAuthenticationProgressAlertDialog!!.isShowing) {
-      Log.d("SelfAuthenticatorManager","createAndShowAuthProgressDialog -> mAuthenticationProgressAlertDialog show")
       mAuthenticationProgressAlertDialog!!.show()
     }
   }
 
-  fun endAuthDialog() {
+  private fun endAuthDialog() {
     Log.d("SelfAuthenticatorManager","endAuthDialog")
     if (mAuthenticationProgressAlertDialog != null) {
-      Log.d("SelfAuthenticatorManager","endAuthDialog -> mAuthenticationProgressAlertDialog dismiss")
       mAuthenticationProgressAlertDialog!!.dismiss()
       mAuthenticationProgressAlertDialog = null
     }
