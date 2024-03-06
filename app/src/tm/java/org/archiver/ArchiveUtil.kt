@@ -1,7 +1,6 @@
 package org.archiver
 
 import android.content.Context
-import android.net.Uri
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson
@@ -32,14 +31,14 @@ import org.tm.archive.groups.GroupId
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
-import org.tm.archive.providers.BlobProvider
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import java.io.File
-import java.io.IOException
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.jvm.optionals.getOrDefault
+import kotlin.jvm.optionals.getOrNull
 
 
 class ArchiveUtil {
@@ -191,7 +190,7 @@ class ArchiveUtil {
               inboxRecipient
             }
             else -> {
-              recipient.requireE164()
+              recipient.e164.getOrDefault("")
             }
           }
         }
