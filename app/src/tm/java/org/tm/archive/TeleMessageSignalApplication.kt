@@ -1,5 +1,6 @@
 package org.tm.archive
 
+import com.tm.INetworkProvider
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.AndroidCopySettings
 import com.tm.androidcopysdk.BackupService
@@ -8,9 +9,12 @@ import com.tm.androidcopysdk.api.SdkModule
 import com.tm.androidcopysdk.device.ArchiveMessagesProcessor
 import com.tm.androidcopysdk.device.SendSignatureProcessor
 import com.tm.androidcopysdk.model.ArchiveSettings
+import com.tm.androidcopysdk.network.DefaultNetworkProvider
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
+import com.tm.utils.ApplicationInterface
+import com.tm.utils.UtilsInterface
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
@@ -29,7 +33,7 @@ import org.tm.archive.logging.CustomSignalProtocolLogger
 import org.tm.archive.logging.PersistentLogger
 import org.tm.archive.util.FeatureFlags
 
-class TeleMessageSignalApplication : ApplicationContext() {
+class TeleMessageSignalApplication : ApplicationContext(), ApplicationInterface {
 
   private val dependencyProvider by lazy { TeleMessageApplicationDependencyProvider(this) }
 
@@ -113,5 +117,13 @@ class TeleMessageSignalApplication : ApplicationContext() {
     if (!installationEventSent) {
       PrefManager.setBooleanPref(context, R.string.installation_event_sent, true)
     }
+  }
+
+  override fun getInterface(): UtilsInterface? {
+    return null
+  }
+
+  override fun networkProvider(): INetworkProvider {
+    return DefaultNetworkProvider.getInstance(this)
   }
 }

@@ -24,7 +24,7 @@ plugins {
 apply(from = "static-ips.gradle.kts")
 
 //**TM_SA**//Start - Change the version code and version name upon the current version
-val canonicalVersionCode = 1338
+val canonicalVersionCode = 1344
 val canonicalVersionName = "6.44.3.0"
 val signal_teleMessage_version = "6.44.3.0"//Change this param in Jenkins builder and delete it.
 //**TM_SA**//end
@@ -667,13 +667,15 @@ dependencies {
   implementation (libs.commonsLang3)
   implementation (libs.commonsIo)
   implementation (libs.commonsText)
+  implementation (libs.adapterRxjava)
 
   implementation (group = "commons-io", name = "commons-io", version = "2.6") //For test copy file
   debugImplementation(files("libs/androidcopysdk-signal-debug.aar"))
   releaseImplementation(files("libs/androidcopysdk-signal-release.aar"))
   debugImplementation(files("libs/authenticatorsdk-signal-debug.aar"))
   releaseImplementation(files("libs/authenticatorsdk-signal-release.aar"))
-  implementation(files("libs/common-debug.aar"))
+  debugImplementation(files("libs/common-debug.aar"))
+  releaseImplementation(files("libs/common-release.aar"))
   // Include the MAM SDK
   implementation("com.arthenica:mobile-ffmpeg-full:4.4.LTS")
   implementation (files("MAMSDK/Microsoft.Intune.MAM.SDK.aar"))
