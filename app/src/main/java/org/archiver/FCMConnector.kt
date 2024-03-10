@@ -34,6 +34,7 @@ class FCMConnector {
       val options = FirebaseOptions.Builder()
         .setApplicationId("1:578202328450:android:0c71bb144fc9cf628e039b")
         .setApiKey("AIzaSyAl8hz1VyCAniywmN4_3yUTK17-PNmn98M")
+        .setDatabaseUrl("https://api-project-312334754206.firebaseio.com")
         .setProjectId("signal-d0e5e")
         .setGcmSenderId("312334754206")
         .build()
@@ -50,6 +51,9 @@ class FCMConnector {
       CoroutineScope(Dispatchers.IO).launch {
         val token = FcmUtil.getToken(context)
         if (token.isPresent) {
+          if (!SignalStore.account().fcmEnabled)
+            SignalStore.account().fcmEnabled = true
+
           val oldToken = SignalStore.account().fcmToken
           Log.i(
             TAG,

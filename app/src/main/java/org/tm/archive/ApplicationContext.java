@@ -463,7 +463,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     if (SignalStore.account().isRegistered()) {
       long nextSetTime = SignalStore.account().getFcmTokenLastSetTime() + TimeUnit.HOURS.toMillis(6);
 
-      if (SignalStore.account().getFcmToken() == null || nextSetTime <= System.currentTimeMillis()) {
+      if (!SignalStore.account().isFcmEnabled() || SignalStore.account().getFcmToken() == null || nextSetTime <= System.currentTimeMillis()) {
         FCMConnector.initOfficialSignalFirebaseAccount(this);//**TM_SA**//
 //        ApplicationDependencies.getJobManager().add(new FcmRefreshJob());//**TM_SA**//
       }
