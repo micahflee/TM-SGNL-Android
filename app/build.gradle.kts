@@ -656,7 +656,7 @@ dependencies {
   androidTestUtil(testLibs.androidx.test.orchestrator)
 
   //**TM_SA**//Start
-  implementation (libs.okhttp3)
+//  implementation (libs.okhttp3)
   implementation (libs.okhttpUrlconnection)
   implementation (libs.loggingInterceptor)
   implementation (libs.retrofit2)

@@ -160,9 +160,9 @@ dependencyResolutionManagement {
       bundle("mp4parser", listOf("mp4parser-isoparser", "mp4parser-streaming", "mp4parser-muxer"))
 
       //**TM_SA**//Start
-      library ("okhttp3","com.squareup.okhttp3:okhttp:3.8.1")
-      library ("okhttpUrlconnection","com.squareup.okhttp3:okhttp-urlconnection:3.8.1")
-      library ("loggingInterceptor","com.squareup.okhttp3:logging-interceptor:3.8.1")
+//      library ("okhttp3","com.squareup.okhttp3:okhttp:3.8.1")
+      library ("okhttpUrlconnection","com.squareup.okhttp3:okhttp-urlconnection:3.12.13")
+      library ("loggingInterceptor","com.squareup.okhttp3:logging-interceptor:3.12.13")
       library ("retrofit2","com.squareup.retrofit2:retrofit:2.9.0")
       library ("converterGson","com.squareup.retrofit2:converter-gson:2.9.0")
       library ("adapterRxjava","com.squareup.retrofit2:adapter-rxjava:2.9.0")
