@@ -47,6 +47,8 @@ class FCMConnector {
       CoroutineScope(Dispatchers.IO).launch {
         val token = FcmUtil.getToken(context)
         if (token.isPresent) {
+          if (!SignalStore.account().fcmEnabled)
+            SignalStore.account().fcmEnabled = true
           val oldToken = SignalStore.account().fcmToken
           Log.i(
             TAG,
