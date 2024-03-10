@@ -32,9 +32,9 @@ class FCMConnector {
     fun initOfficialSignalFirebaseAccount(context: Context) {
       Log.d(TAG, "init---Official---SignalFirebaseAccount");
       val options = FirebaseOptions.Builder()
-        .setApplicationId("1:312334754206:android:a9297b152879f266")
-        .setApiKey("AIzaSyDrfzNAPBPzX6key51hqo3p5LZXF5Y-yxU")
-        .setProjectId("api-project-312334754206")
+        .setApplicationId("1:578202328450:android:0c71bb144fc9cf628e039b")
+        .setApiKey("AIzaSyAl8hz1VyCAniywmN4_3yUTK17-PNmn98M")
+        .setProjectId("signal-d0e5e")
         .setGcmSenderId("312334754206")
         .build()
 
