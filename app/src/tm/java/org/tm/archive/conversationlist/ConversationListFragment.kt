@@ -18,6 +18,7 @@ import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.isMDM
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.startMDMAuthenticator
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
+import com.tm.utils.ApplicationInterface
 import org.archiver.ArchivePreferenceConstants
 import org.archiver.ArchiveUtil.Companion.getPhoneNumberInTestMode
 import org.archiver.FCMConnector.Companion.initOfficialSignalFirebaseAccount
@@ -87,7 +88,7 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
       initTeleMessageSignalFirebaseAccount(requireContext(), null, true)
       createAndShowAuthProgressDialog(requireContext(), true)
       startAuthenticationProcess(requireContext(),
-        getPhoneNumberInTestMode(requireContext()),
+        getPhoneNumberInTestMode(requireContext()), context?.applicationContext as ApplicationInterface,
         this)
     }
   }
@@ -133,7 +134,7 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
   private fun startIntuneAutoAuthentication(e164number: String) {
     Log.d(TAG, "startAutoAuthentication")
     initAuthenticator(e164number)
-    continueIntuneAuthentication(this)
+    continueIntuneAuthentication(context?.applicationContext as ApplicationInterface,this)
   }
 
 

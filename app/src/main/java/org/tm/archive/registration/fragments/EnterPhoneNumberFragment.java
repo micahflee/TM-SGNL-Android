@@ -50,6 +50,8 @@ import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants;
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
+import com.tm.utils.ApplicationInterface;
+
 import org.selfAuthentication.SelfAuthenticationDialogBuilder;
 
 import org.archiver.ArchiveConstants;
@@ -381,7 +383,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   private void startIntuneAutoAuthentication(String e164number) {
     Log.d(TAG, "startAutoAuthentication");
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
-    IntuneAuthManager.INSTANCE.continueIntuneAuthentication(this);
+    IntuneAuthManager.INSTANCE.continueIntuneAuthentication((ApplicationInterface)requireContext().getApplicationContext(), this);
   }
 
   private void startAutoAuthentication(String e164number) {
@@ -389,7 +391,7 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
     Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
     SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
-    SelfAuthenticatorManager.INSTANCE.startAuthentication(this);
+    SelfAuthenticatorManager.INSTANCE.startAuthentication((ApplicationInterface) getContext().getApplicationContext(), this);
     if (!progressBarShown) {
       showProgressBar();
     }

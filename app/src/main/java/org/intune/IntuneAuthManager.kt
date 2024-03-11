@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
+import com.tm.utils.ApplicationInterface
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import kotlin.system.exitProcess
@@ -18,11 +19,11 @@ object IntuneAuthManager {
     START_SELF_AUTH
   }
 
-  fun continueIntuneAuthentication(aIAuthenticationStatus: IAuthenticationStatus) {
+  fun continueIntuneAuthentication(applicationInterface: ApplicationInterface,  aIAuthenticationStatus: IAuthenticationStatus) {
     /*if (!SelfAuthenticatorManager.isSelfAuthenticationAlreadyStarted()) {
       SelfAuthenticatorManager.saveSelfAuthenticationFirstTimeTryingTime()
     }*/
-    MDMAuthenticator.continueIntuneSelfAuthentication(aIAuthenticationStatus)
+    MDMAuthenticator.continueIntuneSelfAuthentication(applicationInterface, aIAuthenticationStatus)
   }
 
   fun showDialog(context: Activity, listener: MDMDialogListener) {

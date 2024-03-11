@@ -6,6 +6,7 @@ import com.tm.authenticatorsdk.selfAuthenticator.AuthenticationAppType
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
 import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator
 import com.tm.logger.Log
+import com.tm.utils.ApplicationInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,17 +41,17 @@ object SelfAuthenticatorManager {
     DevicesDisconnector(baseActivity)
   }
 
-    fun startAuthentication(aIAuthenticationStatus: IAuthenticationStatus) {
-        selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
+    fun startAuthentication(applicationInterface: ApplicationInterface, aIAuthenticationStatus: IAuthenticationStatus) {
+        selfAuthenticator.startSelfAuthentication(applicationInterface, aIAuthenticationStatus)
     }
 
   fun startAuthenticationProcess(context: Context,
-                                 phone: String?, aIAuthenticationStatus: IAuthenticationStatus) {
+                                 phone: String?, applicationInterface: ApplicationInterface, aIAuthenticationStatus: IAuthenticationStatus) {
     Log.d("SelfAuthenticatorManager","startAuthenticationProcess")
 //    createAndShowAuthProgressDialog(context, true)
     CoroutineScope(Dispatchers.IO).launch {
       initAuthenticator(phone!!)
-      selfAuthenticator.startSelfAuthentication(aIAuthenticationStatus)
+      selfAuthenticator.startSelfAuthentication(applicationInterface, aIAuthenticationStatus)
     }
   }
 
