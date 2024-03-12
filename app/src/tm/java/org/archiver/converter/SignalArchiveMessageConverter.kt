@@ -68,6 +68,8 @@ class SignalArchiveMessageConverter(
       return ArchiveMessageType.Unknown
     if (message.isCallMessage())
       return ArchiveMessageType.Call
+    if (message.isUpdate)
+      return ArchiveMessageType.Event
     return if (message.isSmsMessage()) ArchiveMessageType.Sms else if (message.isMultimediaMessage()) ArchiveMessageType.Mms else null
   }
 
