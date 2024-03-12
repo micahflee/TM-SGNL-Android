@@ -38,7 +38,7 @@ class SignalArchiveMessageConverter(
     if (message == null)
       return null
 
-    val type = getMessageType(message) ?: return null
+    val type = getMessageType(message)
     val sender = recipientConverter.convertSenderRecipient(message)
     val receivers = recipientConverter.convertReceiverRecipients(message)
     return ArchiveMessage(
@@ -63,7 +63,7 @@ class SignalArchiveMessageConverter(
     )
   }
 
-  private fun getMessageType(message: MessageRecord): ArchiveMessageType? {
+  private fun getMessageType(message: MessageRecord): ArchiveMessageType {
     if (message.isStory())
       return ArchiveMessageType.Unknown
     if (message.isCallMessage())
