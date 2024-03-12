@@ -123,7 +123,7 @@ dependencyResolutionManagement {
       library("greenrobot-eventbus", "org.greenrobot:eventbus:3.0.0")
       library("jackson-core", "com.fasterxml.jackson.core:jackson-databind:2.9.9.2")
       library("jackson-module-kotlin", "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0")
-      library("square-okhttp3", "com.squareup.okhttp3:okhttp:3.12.13")
+      library("square-okhttp3", "com.squareup.okhttp3:okhttp:3.14.9") // TM_SA upgrade to 3.14.9
       library("square-okio", "com.squareup.okio:okio:3.0.0")
       library("square-leakcanary", "com.squareup.leakcanary:leakcanary-android:2.7")
       library("rxjava3-rxjava", "io.reactivex.rxjava3:rxjava:3.0.13")
