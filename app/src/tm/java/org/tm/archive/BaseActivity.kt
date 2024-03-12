@@ -11,6 +11,7 @@ import android.os.Looper
 import android.view.View
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchivePreferenceConstants
@@ -21,15 +22,23 @@ import org.selfAuthentication.SelfAuthenticatorManager
 import org.signal.core.util.logging.Log
 import org.signal.core.util.logging.Log.tag
 import org.tm.archive.dependencies.ApplicationDependencies
+import org.tm.archive.profiles.edit.CreateProfileActivity
 
 open class BaseActivity : SignalBaseActivity() {
   private var suspendDialog: Dialog? = null
   private val TAG = "TM" + tag(BaseActivity::class.java)
 
+  fun isCreateProfileActivity(): Boolean {
+    return this is CreateProfileActivity
+  }
   override fun onResume() {
     super.onResume()
     Log.d(TAG, "onResume - ${System.identityHashCode(this)}")
     notifyMessageIfNeeded()
+
+    if (isCreateProfileActivity() && !CommonUtils.isActivatedUser(this)) {
+      showSuspendDialog()
+    }
 
     if (!EventBus.getDefault().isRegistered(this)) {
       EventBus.getDefault().register(this)
