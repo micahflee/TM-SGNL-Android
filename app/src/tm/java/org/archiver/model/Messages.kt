@@ -13,7 +13,9 @@ object Messages {
     "callId: ${callId.longValue()}" +
     "]"
 
-  fun MessageRecord.isMultimediaMessage() = isMediaMessage()// || (status() == MessageStatus.Sending && body.isEmpty())
+  fun MessageRecord.isMultimediaMessage(): Boolean {
+    return isMms && !isMmsNotification && (this as MmsMessageRecord).containsMediaSlide()
+  }
 
   fun MessageRecord.isStory() = (this as? MmsMessageRecord)?.storyType?.isStory == true
 
