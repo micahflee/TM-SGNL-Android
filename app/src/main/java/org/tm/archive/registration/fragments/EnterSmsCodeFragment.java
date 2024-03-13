@@ -30,7 +30,6 @@ public class EnterSmsCodeFragment extends BaseEnterSmsCodeFragment<RegistrationV
 
   @Override
   protected void handleSuccessfulVerify() {
-    Log.i(TAG, "handleSuccessfulVerify not tm");
     SimpleTask.run(() -> {
       long startTime = System.currentTimeMillis();
       try {

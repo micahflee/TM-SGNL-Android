@@ -154,6 +154,7 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
           ResourceStatus.Success -> displaySuccess()
           ResourceStatus.Error -> displayFailure()
           ResourceStatus.Loading -> displayProgress()
+          else ->{}
         }
       }
       dialog.doSendLogsClicked(requireActivity())
