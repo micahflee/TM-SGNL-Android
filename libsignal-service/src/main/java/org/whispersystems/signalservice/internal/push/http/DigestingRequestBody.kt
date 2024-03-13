@@ -25,7 +25,7 @@ class DigestingRequestBody(
   private val progressListener: SignalServiceAttachment.ProgressListener?,
   private val cancelationSignal: CancelationSignal?,
   private val contentStart: Long
-) : RequestBody() {
+) : RequestBody() { //**TM_SA**//delete repeatableRequestBody
   var attachmentDigest: AttachmentDigest? = null
 
   init {
@@ -33,7 +33,7 @@ class DigestingRequestBody(
     require(contentStart >= 0)
   }
 
-  override fun isOneShot(): Boolean {
+  override fun isOneShot(): Boolean {//**TM_SA**//add this func
     return true
   }
 

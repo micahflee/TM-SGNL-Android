@@ -170,10 +170,10 @@
         android:name="org.tm.archive.registration.fragments.CountryPickerFragment"
         android:label="fragment_country_picker"
         tools:layout="@layout/fragment_registration_country_picker" />
-
+    <!--TM_SA change to TMEnterSmsCodeFragment-->
     <fragment
         android:id="@+id/enterCodeFragment"
-        android:name="org.tm.archive.registration.fragments.EnterSmsCodeFragment"
+        android:name="org.tm.archive.registration.fragments.TMEnterSmsCodeFragment"
         android:label="fragment_enter_code"
         tools:layout="@layout/fragment_registration_enter_code">
 
