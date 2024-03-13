@@ -173,7 +173,7 @@
 
     <fragment
         android:id="@+id/enterCodeFragment"
-        android:name="org.tm.archive.registration.fragments.EnterSmsCodeFragment"
+        android:name="org.tm.archive.registration.fragments.TMEnterSmsCodeFragment"
         android:label="fragment_enter_code"
         tools:layout="@layout/fragment_registration_enter_code">
 

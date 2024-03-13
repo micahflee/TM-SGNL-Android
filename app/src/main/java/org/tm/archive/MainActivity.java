@@ -19,16 +19,6 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
-import com.tm.androidcopysdk.network.appSettings.WorkerIntentService;
-import com.tm.androidcopysdk.utils.PrefManager;
-import com.tm.logger.Log;
-
-import org.archiver.ArchivePreferenceConstants;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.donations.StripeApi;
 import org.tm.archive.components.DebugLogsPromptDialogFragment;
