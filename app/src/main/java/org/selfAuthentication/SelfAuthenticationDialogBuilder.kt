@@ -19,7 +19,7 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
   val logCallback : LiveData<ResourceStatus> = logCallbackMutable
 
 
-  fun doSendLogsClicked(context: Activity) {
+  fun doSendLogsClicked(context: Activity) : AlertDialog {
     mLogsSentContext = context
     val builder = AlertDialog.Builder(context)
 
@@ -43,8 +43,9 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
       )
     }
     builder.setNegativeButton(R.string.OK, null)
-    builder.show()
-
+    val alertDialog = builder.create()
+    alertDialog.show()
+    return alertDialog
   }
 
     override fun sendLogFailure() {

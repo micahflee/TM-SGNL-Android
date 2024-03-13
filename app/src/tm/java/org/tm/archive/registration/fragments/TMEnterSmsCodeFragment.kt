@@ -5,6 +5,7 @@
 
 package org.tm.archive.registration.fragments
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -50,6 +51,7 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
   private var viewModel: RegistrationViewModel? = null
   private lateinit var mobileNumber: String
   private lateinit var startAuthButton: Button
+  private lateinit var dialog : AlertDialog
 
 
   override fun handleSuccessfulVerify() {
@@ -85,7 +87,10 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
     viewModel = ViewModelProvider(requireActivity())[RegistrationViewModel::class.java]
     mobileNumber = viewModel!!.number.e164Number
     startAuthButton.setOnClickListener {
-      startAutoAuthentication(mobileNumber) //start self auth
+      if (::dialog.isInitialized && !dialog.isShowing) {
+        displayProgress()
+        startAutoAuthentication(mobileNumber) //start self auth
+      }
     }
   }
 
@@ -148,8 +153,8 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
       continueSignalFlow()
     } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(), false)
-      val dialog = SelfAuthenticationDialogBuilder()
-      dialog.logCallback.observe(this) { result ->
+      val dialogBuilder = SelfAuthenticationDialogBuilder()
+      dialogBuilder.logCallback.observe(this) { result ->
         when (result) {
           ResourceStatus.Success -> displaySuccess()
           ResourceStatus.Error -> displayFailure()
@@ -157,7 +162,7 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
           else ->{}
         }
       }
-      dialog.doSendLogsClicked(requireActivity())
+      dialog = dialogBuilder.doSendLogsClicked(requireActivity())
       startAuthButton.visibility = View.VISIBLE
       displayFailure()
     }
