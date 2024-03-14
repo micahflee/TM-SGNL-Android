@@ -32,7 +32,6 @@ import org.intune.IntuneAuthManager.continueIntuneAuthentication
 import org.intune.IntuneAuthManager.showDialog
 import org.intune.MDMDialogListener
 import org.selfAuthentication.SelfAuthenticationDialogBuilder
-import org.selfAuthentication.SelfAuthenticatorManager
 import org.selfAuthentication.SelfAuthenticatorManager.initAuthenticator
 import org.selfAuthentication.SelfAuthenticatorManager.startAuthentication
 import org.signal.core.util.concurrent.SimpleTask
@@ -43,6 +42,7 @@ import org.tm.archive.BuildConfig
 import org.tm.archive.R
 import org.tm.archive.registration.viewmodel.RegistrationViewModel
 import org.tm.archive.util.FeatureFlags
+import org.tm.archive.util.TextSecurePreferences
 import org.tm.archive.util.navigation.safeNavigate
 import java.io.IOException
 
@@ -80,7 +80,10 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
         w(TAG, "Failed to refresh flags after " + (System.currentTimeMillis() - startTime) + " ms.", e)
       }
       null
-    }) { displaySuccess { findNavController(requireView()).safeNavigate(TMEnterSmsCodeFragmentDirections.actionSuccessfulRegistration()) } }
+    }) { displaySuccess {
+      findNavController(requireView()).safeNavigate(TMEnterSmsCodeFragmentDirections.actionSuccessfulRegistration())
+      TextSecurePreferences.setPromptedPushRegistration(context, true)
+    } }
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

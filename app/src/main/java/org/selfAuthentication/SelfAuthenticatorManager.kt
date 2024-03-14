@@ -18,8 +18,7 @@ import org.tm.archive.BuildConfig
 //The default environment is charlieProduction = https://rest.telemessage.com
 
 object SelfAuthenticatorManager {
-  var mProgressDialogVisibility = true
-  var mSuspendDialogVisibility = false
+
     init {
         Log.d("SelfAuthenticatorManager","class SelfAuthenticatorManager started")
     }

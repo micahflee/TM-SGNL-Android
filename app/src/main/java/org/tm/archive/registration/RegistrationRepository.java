@@ -8,6 +8,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.tm.androidcopysdk.CommonUtils;
+
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.IdentityKeyPair;
 import org.signal.libsignal.protocol.state.KyberPreKeyRecord;
@@ -169,7 +171,9 @@ public final class RegistrationRepository {
 
     SignalStore.account().setServicePassword(registrationData.getPassword());
     SignalStore.account().setRegistered(true);
-    TextSecurePreferences.setPromptedPushRegistration(context, true);
+    if (CommonUtils.isActivatedUser(context)) {//**TM_SA**//Start
+      TextSecurePreferences.setPromptedPushRegistration(context, true);
+    }//**TM_SA**//End
     TextSecurePreferences.setUnauthorizedReceived(context, false);
     NotificationManagerCompat.from(context).cancel(NotificationIds.UNREGISTERED_NOTIFICATION_ID);
 
