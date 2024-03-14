@@ -237,7 +237,6 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
         PrefManager.setStringPref(getContext(), ArchiveConstants.SHARED_PREFERENCE_SELECTED_BASE_URL_KEEPER_KEY, AuthenticatorConstants.Companion.getBASE_URL().getSecond());
 
         CommonUtils.setUrl(activity.getApplicationContext(), AuthenticatorConstants.Companion.getBASE_URL().getFirst(), AuthenticatorConstants.Companion.getBASE_URL().getSecond());
-        CommonUtils.startBackupService(activity);
       }
       ArchiveLogger.Companion.sendArchiveLog("Register success with " + e164number + " Phone number" );
       String lastNumber = PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, "");
