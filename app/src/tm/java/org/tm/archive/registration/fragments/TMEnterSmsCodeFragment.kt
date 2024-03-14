@@ -21,6 +21,7 @@ import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.isMDM
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.startMDMAuthenticator
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
 import com.tm.utils.ApplicationInterface
+import org.archiver.ArchiveLogger
 import org.archiver.FCMConnector.Companion.initOfficialSignalFirebaseAccount
 import org.archiver.FCMConnector.Companion.initTeleMessageSignalFirebaseAccount
 import org.greenrobot.eventbus.EventBus
@@ -31,6 +32,7 @@ import org.intune.IntuneAuthManager.continueIntuneAuthentication
 import org.intune.IntuneAuthManager.showDialog
 import org.intune.MDMDialogListener
 import org.selfAuthentication.SelfAuthenticationDialogBuilder
+import org.selfAuthentication.SelfAuthenticatorManager
 import org.selfAuthentication.SelfAuthenticatorManager.initAuthenticator
 import org.selfAuthentication.SelfAuthenticatorManager.startAuthentication
 import org.signal.core.util.concurrent.SimpleTask
@@ -150,6 +152,8 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
     d(TAG, "UpdateEvent -> onEvent: " + event.type)
     if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       CommonUtils.setActivatedUser(requireContext(), true)
+      CommonUtils.startBackupService(context)
+      ArchiveLogger.sendArchiveLog("Backup service started")
       continueSignalFlow()
     } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(), false)

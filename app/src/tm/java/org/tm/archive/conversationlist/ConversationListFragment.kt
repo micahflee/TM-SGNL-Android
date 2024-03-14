@@ -19,6 +19,7 @@ import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.isMDM
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.startMDMAuthenticator
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
 import com.tm.utils.ApplicationInterface
+import org.archiver.ArchiveLogger
 import org.archiver.ArchivePreferenceConstants
 import org.archiver.ArchiveUtil.Companion.getPhoneNumberInTestMode
 import org.archiver.FCMConnector.Companion.initOfficialSignalFirebaseAccount
@@ -153,6 +154,8 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
       CommonUtils.setActivatedUser(requireContext(), false)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       CommonUtils.setActivatedUser(requireContext(), true)
+      CommonUtils.startBackupService(context)
+      ArchiveLogger.sendArchiveLog("Backup service started")
 //      endAuthDialog()
     }
     if (event.type != UpdateEvent.EVENTS_TYPE.authProcess) {
