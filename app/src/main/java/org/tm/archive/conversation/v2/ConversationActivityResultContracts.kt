@@ -120,7 +120,7 @@ class ConversationActivityResultContracts(private val fragment: Fragment, privat
       //**TM_SA**//start   add request for selectFileLauncher.launch
       Permissions
         .with(fragment)
-        .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+        .request(*PermissionCompat.forImagesAndVideos())
         .ifNecessary()
         .withPermanentDenialDialog(fragment.getString(R.string.AttachmentManager_signal_requires_the_external_storage_permission_in_order_to_attach_photos_videos_or_audio))
         .onAllGranted { selectFileLauncher.launch(SelectFile.SelectFileMode.DOCUMENT) }
