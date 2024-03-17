@@ -17,6 +17,7 @@ import org.tm.archive.database.model.withCall
 import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.service.webrtc.state.CallInfoState
 import java.util.Optional
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
@@ -39,9 +40,9 @@ class TeleMessageTable(
     return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, accountPhoneNumber) } }
   }
 
-  fun onSubmitCall(call: CallTable.Call, startedAt: Long?) {
+  fun onSubmitCall(call: CallTable.Call, callInfo: CallInfoState) {
     val message = getMessageRecordOrNull(call.messageId ?: return)?.withCall(call)
-    val archiveMessage = converter.convertCall(message, getAccountPhoneNumber(), startedAt) ?: return
+    val archiveMessage = converter.convertCall(message, getAccountPhoneNumber(), callInfo) ?: return
     messageStoreObserver.afterMessageStateChanged(archiveMessage)
   }
 

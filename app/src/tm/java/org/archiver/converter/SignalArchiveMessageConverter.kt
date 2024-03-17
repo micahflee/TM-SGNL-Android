@@ -10,7 +10,10 @@ import org.archiver.model.Messages.isMultimediaMessage
 import org.archiver.model.Messages.isSmsMessage
 import org.archiver.model.Messages.isStory
 import org.archiver.model.Messages.status
+import org.tm.archive.database.CallTable
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.service.webrtc.state.CallInfoState
 
 class SignalArchiveMessageConverter(
   @Deprecated("Converter should never have a context reference")
@@ -30,23 +33,25 @@ class SignalArchiveMessageConverter(
     return convert(message, accountPhoneNumber, isDeleted, null)
   }
 
-  fun convertCall(message: MessageRecord?, accountPhoneNumber: String?, startedAt: Long?): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, false, startedAt)
+  fun convertCall(message: MessageRecord?, accountPhoneNumber: String?, callInfo: CallInfoState): ArchiveMessage? {
+    return convert(message, accountPhoneNumber, false, callInfo)
   }
 
-  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, startedAt: Long?): ArchiveMessage? {
+  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, callInfo: CallInfoState?): ArchiveMessage? {
     if (message == null)
       return null
 
     val type = getMessageType(message)
-    val sender = recipientConverter.convertSenderRecipient(message)
-    val receivers = recipientConverter.convertReceiverRecipients(message)
+    val direction = message.getDirection()
+    val call = callInfoConverter.convert(message, type, callInfo)
+    val sender = recipientConverter.convertSenderRecipient(message, direction)
+    val receivers = recipientConverter.convertReceiverRecipients(message, direction)
     return ArchiveMessage(
       id = message.id.toString(),
       uniqueId = null,
       accountPhoneNumber = accountPhoneNumber,
       type = type,
-      direction = if (message.isOutgoing) Direction.Outgoing else Direction.Incoming,
+      direction = direction,
       status = message.status(),
       isDeleted = isDeleted,
       isRemoteDeleted = message.isRemoteDelete,
@@ -57,10 +62,18 @@ class SignalArchiveMessageConverter(
       sender = sender,
       receivers = receivers,
       attachments = attachmentConverter.convert(message),
-      callInfo = listOfNotNull(callInfoConverter.convert(message, type, startedAt)),
+      callInfo = listOfNotNull(call),
       edits = null,
       headers = null
     )
+  }
+
+  private fun MessageRecord.getDirection(): Direction {
+    return when ((this as? MmsMessageRecord)?.call?.direction) {
+      CallTable.Direction.INCOMING -> Direction.Incoming
+      CallTable.Direction.OUTGOING -> Direction.Outgoing
+      else -> Direction.Outgoing.takeIf { isOutgoing } ?: Direction.Incoming
+    }
   }
 
   private fun getMessageType(message: MessageRecord): ArchiveMessageType {
