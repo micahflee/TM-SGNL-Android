@@ -29,7 +29,8 @@ class TeleMessageApplicationDependencyProvider(
 
 ) : ApplicationDependencyProvider(application) {
 
-  val filer: IFiler by lazy { SignalFiler(application.applicationContext, SignalDatabase.attachments, SignalDatabase.stickers, BlobProvider.getInstance()) }
+  val filer: IFiler by lazy { SignalFiler(application.applicationContext, SignalDatabase.messages, SignalDatabase.attachments,
+    SignalDatabase.stickers, BlobProvider.getInstance()) }
 
   override fun provideSignalCallManager(): SignalCallManager {
     return TeleMessageSignalCallManager(application, filer, SignalDatabase.calls)
@@ -46,7 +47,7 @@ class TeleMessageApplicationDependencyProvider(
       if (sdkModule == null) {
         val sdk = AndroidCopySDK.getInstance(applicationContext)
         val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this)
-        val filer = SignalFiler(applicationContext, database.attachmentTable, database.stickerTable, BlobProvider.getInstance())
+        val filer = SignalFiler(applicationContext, database.messageTable, database.attachmentTable, database.stickerTable, BlobProvider.getInstance())
         val settings = MutableStateFlow(ArchiveSettings(isAppActivated = true, editMessageArchivingSupported = false))
         sdkModule = SdkModule(sdk, DataGrabber.getInstance(applicationContext), ClientType.Signal, database, archiveDatabase, filer, settings)
         TeleMessageApplicationDependencyProvider.sdkModule = sdkModule
