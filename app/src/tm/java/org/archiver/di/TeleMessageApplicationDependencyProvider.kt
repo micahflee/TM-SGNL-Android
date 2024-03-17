@@ -32,7 +32,7 @@ class TeleMessageApplicationDependencyProvider(
   val filer: IFiler by lazy { SignalFiler(application.applicationContext, SignalDatabase.attachments, SignalDatabase.stickers, BlobProvider.getInstance()) }
 
   override fun provideSignalCallManager(): SignalCallManager {
-    return TeleMessageSignalCallManager(application, filer)
+    return TeleMessageSignalCallManager(application, filer, SignalDatabase.calls)
   }
 
   companion object {

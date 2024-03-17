@@ -7,6 +7,7 @@ import org.signal.core.util.logging.Log
 import org.signal.ringrtc.CallId
 import org.signal.ringrtc.GroupCall
 import org.signal.ringrtc.Remote
+import org.tm.archive.database.CallTable
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.service.webrtc.SignalCallManager
 import org.tm.archive.service.webrtc.state.CallInfoState
@@ -15,7 +16,9 @@ import org.tm.archive.service.webrtc.state.WebRtcServiceState
 class TeleMessageSignalCallManager(
   application: Application,
 
-  private val filer: IFiler
+  private val filer: IFiler,
+
+  private val calls: CallTable,
 ) : SignalCallManager(application) {
 
   private var callInfoState: CallInfoState? = null
@@ -41,14 +44,13 @@ class TeleMessageSignalCallManager(
   private fun onFinishCall() {
     val callInfoState = callInfoState ?: return
     this.callInfoState = null
-    val callConnectedTime = callInfoState.callConnectedTime.takeIf { it > 0 }
     val call = callInfoState.call() ?: return
     val isAdHocCall = callInfoState.callRecipient.isCallLink
     if (isAdHocCall) {
       filer.findCallRecording(call.callId.toString())?.apply { if (exists()) delete() }
       return
     }
-    (SignalDatabase.messages as TeleMessageTable).onSubmitCall(call, callConnectedTime)
+    (SignalDatabase.messages as TeleMessageTable).onSubmitCall(call, callInfoState)
   }
 
   private fun CallInfoState.getCallId(): CallId? {
@@ -59,7 +61,7 @@ class TeleMessageSignalCallManager(
     return groupCall?.peekInfo?.eraId?.let(CallId::fromEra)
   }
 
-  private fun CallInfoState?.call() = this?.let { getCallId()?.let { SignalDatabase.calls.getCallById(it.longValue(), callRecipient.id) } }
+  private fun CallInfoState?.call() = this?.let { getCallId()?.let { calls.getCallById(it.longValue(), callRecipient.id) } }
 
   companion object {
 
