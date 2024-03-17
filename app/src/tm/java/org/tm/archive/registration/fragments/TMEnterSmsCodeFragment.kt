@@ -62,6 +62,7 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
     if (CommonUtils.isActivatedUser(requireContext())) {
       continueSignalFlow()
     } else {
+      TextSecurePreferences.setPromptedPushRegistration(context, false)
       if (isMDM(requireContext()) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal) { // mdm auth skip this fragment and work on EnterSmsCodeFragment
         startMdm()
       } else {
@@ -82,7 +83,6 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
       null
     }) { displaySuccess {
       findNavController(requireView()).safeNavigate(TMEnterSmsCodeFragmentDirections.actionSuccessfulRegistration())
-      TextSecurePreferences.setPromptedPushRegistration(context, true)
     } }
   }
 
@@ -120,10 +120,12 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
     else if (reason.contains(server) || reason.contains("Authentication failed") /*|| reason.contains("managerID")*/) { //try intune auth again
       PrefManager.setIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String, IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal)
       d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal)
+      TextSecurePreferences.setPromptedPushRegistration(context, true)
       requireActivity().runOnUiThread { continueSignalFlow() }
     } else { //this case should pass to self-auth
       PrefManager.setIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String, IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal)
       d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal)
+      TextSecurePreferences.setPromptedPushRegistration(context, true)
       requireActivity().runOnUiThread { continueSignalFlow() }
     }
   }
@@ -157,6 +159,7 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
       CommonUtils.setActivatedUser(requireContext(), true)
       CommonUtils.startBackupService(context)
       ArchiveLogger.sendArchiveLog("Backup service started")
+      TextSecurePreferences.setPromptedPushRegistration(context, true)
       continueSignalFlow()
     } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(), false)

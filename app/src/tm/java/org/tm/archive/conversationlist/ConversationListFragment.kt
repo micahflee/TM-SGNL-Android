@@ -155,7 +155,6 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
       CommonUtils.setActivatedUser(requireContext(), false)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       CommonUtils.setActivatedUser(requireContext(), true)
-      TextSecurePreferences.setPromptedPushRegistration(context, true)//maybe don't need. when false, signal send user to welcome screen
       CommonUtils.startBackupService(context)
       ArchiveLogger.sendArchiveLog("Backup service started")
 //      endAuthDialog()

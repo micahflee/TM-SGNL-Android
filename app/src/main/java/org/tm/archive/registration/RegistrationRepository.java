@@ -171,7 +171,7 @@ public final class RegistrationRepository {
 
     SignalStore.account().setServicePassword(registrationData.getPassword());
     SignalStore.account().setRegistered(true);
-//    TextSecurePreferences.setPromptedPushRegistration(context, true);//**TM_SA**//comment this code. without telemessage auth, don't go to createProfile activity(in other words, don't continue)
+    TextSecurePreferences.setPromptedPushRegistration(context, true);
     TextSecurePreferences.setUnauthorizedReceived(context, false);
     NotificationManagerCompat.from(context).cancel(NotificationIds.UNREGISTERED_NOTIFICATION_ID);
 
