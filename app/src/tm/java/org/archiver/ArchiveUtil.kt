@@ -8,11 +8,13 @@ import com.tm.androidcopysdk.DataGrabber
 import com.tm.androidcopysdk.network.NetworkManager
 import com.tm.androidcopysdk.network.keepAlive.KeepALiveResponse
 import com.tm.androidcopysdk.network.keepAlive.KeepAliveRequest
+import com.tm.androidcopysdk.network.keepAlive.KeepWorkerIntentService
 import com.tm.androidcopysdk.utils.Contact
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticationAppType
 import com.tm.logger.Log
 import com.tm.utils.Definitions
+import com.tm.utils.FcmUtil
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_CHAT_GROUP
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_FROM_TEXT
 import org.archiver.ArchiveConstants.Companion.ARCHIVE_SUBJECT_TO_TEXT
@@ -38,7 +40,6 @@ import java.util.function.Function
 import java.util.function.Predicate
 import java.util.stream.Collectors
 import kotlin.jvm.optionals.getOrDefault
-import kotlin.jvm.optionals.getOrNull
 
 
 class ArchiveUtil {
@@ -704,6 +705,21 @@ class ArchiveUtil {
         return uniqueMessageId
 
     }
+
+    @JvmStatic
+    fun startKeepAliveWorker(context: Context) {
+      updateArchiverFCMToken(context)
+      updateArchiverInstallId(context)
+      KeepWorkerIntentService.startJobIntentService(context,true)
+    }
+
+    private fun updateArchiverFCMToken(context: Context) {
+      PrefManager.setStringPref(context, FcmUtil.FCM_TOKEN_KEY, getFCMTokenIfExists(context))
+    }
+    private fun updateArchiverInstallId(context: Context) {
+      PrefManager.setStringPref(context, FcmUtil.install_identifier, BuildConfig.VERSION_CODE.toString())
+    }
+
 
     @JvmStatic
     fun doTeleMessageKeepAlivePing(context: Context) {

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.network.appSettings.WorkerIntentService
+import com.tm.androidcopysdk.network.keepAlive.KeepWorkerIntentService
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.isMDM
@@ -21,6 +22,7 @@ import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
 import com.tm.utils.ApplicationInterface
 import org.archiver.ArchiveLogger
 import org.archiver.ArchivePreferenceConstants
+import org.archiver.ArchiveUtil
 import org.archiver.ArchiveUtil.Companion.getPhoneNumberInTestMode
 import org.archiver.FCMConnector.Companion.initOfficialSignalFirebaseAccount
 import org.archiver.FCMConnector.Companion.initTeleMessageSignalFirebaseAccount
@@ -36,10 +38,9 @@ import org.selfAuthentication.SelfAuthenticatorManager.startAuthenticationProces
 import org.signal.core.util.logging.Log
 import org.tm.archive.BuildConfig
 import org.tm.archive.R
-import org.tm.archive.util.TextSecurePreferences
 
 const val TAG = "TM ConversationListFragment"
-open class ConversationListFragment : SignalConversationListFragment(), IAuthenticationStatus, IMDMAuthenticator /*TM_SA*/ {
+open class ConversationListFragment : SignalConversationListFragment(), IAuthenticationStatus, IMDMAuthenticator {
   private var mAuthenticationProgressAlertDialogBuilder: AlertDialog.Builder? = null
   private var mAuthenticationProgressAlertDialog: AlertDialog? = null
 
@@ -48,9 +49,9 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
     Log.d(TAG, "onViewCreated")
 
 
-    //**TM_SA**//Start
     if (CommonUtils.isActivatedUser(requireContext())) {
       WorkerIntentService.startJobIntentService(requireContext(), true)
+      ArchiveUtil.startKeepAliveWorker(requireContext())
     } else {
       Log.d(TAG, "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID)
       val authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
@@ -140,7 +141,6 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
   }
 
 
-  //**TM_SA**//Start
   @Subscribe(threadMode = ThreadMode.MAIN)
   fun onEvent(event: UpdateEvent?) {
     if (event == null) {
