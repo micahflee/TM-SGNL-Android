@@ -50,7 +50,7 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
 
 
     if (CommonUtils.isActivatedUser(requireContext())) {
-      WorkerIntentService.startJobIntentService(requireContext(), true)
+      WorkerIntentService.startJobIntentService(requireContext(), false)
       ArchiveUtil.startKeepAliveWorker(requireContext())
     } else {
       Log.d(TAG, "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID)
