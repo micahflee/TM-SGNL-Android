@@ -50,8 +50,7 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
 
     //**TM_SA**//Start
     if (CommonUtils.isActivatedUser(requireContext())) {
-      WorkerIntentService.startJobIntentService(requireContext(), true) /*TM_SA*/
-      CommonUtils.startBackupService(context)
+      WorkerIntentService.startJobIntentService(requireContext(), true)
     } else {
       Log.d(TAG, "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID)
       val authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,

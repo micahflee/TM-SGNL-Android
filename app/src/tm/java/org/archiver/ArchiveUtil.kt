@@ -720,7 +720,7 @@ class ArchiveUtil {
                 .isEmpty()
             ) {
               Log.d(TAG, "KeepAliveRequest with 1 param")
-              KeepAliveRequest(AuthenticationAppType.TELEGRAM.aAppServerId.toString())
+              KeepAliveRequest(AuthenticationAppType.SIGNAL.aAppServerId.toString())
             } else {
               Log.d(TAG, "KeepAliveRequest with 4 param")
               KeepAliveRequest(
