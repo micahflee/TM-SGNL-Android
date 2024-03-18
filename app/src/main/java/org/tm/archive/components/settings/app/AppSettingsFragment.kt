@@ -12,7 +12,9 @@ import androidx.navigation.fragment.findNavController
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.ISendLogCallback
 import com.tm.androidcopysdk.utils.PrefManager
+import com.tm.androidcopysdk.utils.TMCredentialsStore
 import org.archiver.ArchivePreferenceConstants
+import org.archiver.ArchiveSender
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -344,21 +346,8 @@ class AppSettingsFragment : DSLSettingsFragment(
     builder.setMessage(getString(R.string.issue_report_list_summery) + "?")
 
     builder.setPositiveButton(R.string.ShareActivity__send) { dialog, which ->
-
       mProgressDialog.show()
-      AndroidCopySDK.getInstance(context).sentLogs(
-        activity,
-        this,
-        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
-        "Signal Archiver logs",
-        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),
-        "",
-        "",
-        "",
-        "",
-        ArchivePreferenceConstants.GENERATE_TOK_NAME,
-        ArchivePreferenceConstants.GENERATE_TOK_PASS
-      )
+      ArchiveSender.sendLogs(requireActivity(), this)
     }
     builder.setNegativeButton(R.string.CommunicationActions_cancel, null)
     builder.show()

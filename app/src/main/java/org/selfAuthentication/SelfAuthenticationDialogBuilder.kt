@@ -9,6 +9,7 @@ import com.tm.androidcopysdk.ISendLogCallback
 import com.tm.androidcopysdk.model.resource.ResourceStatus
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchivePreferenceConstants
+import org.archiver.ArchiveSender
 import org.tm.archive.R
 
 
@@ -19,28 +20,16 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
   val logCallback : LiveData<ResourceStatus> = logCallbackMutable
 
 
-  fun doSendLogsClicked(context: Activity) : AlertDialog {
-    mLogsSentContext = context
-    val builder = AlertDialog.Builder(context)
+  fun doSendLogsClicked(activity: Activity) : AlertDialog {
+    mLogsSentContext = activity
+    val builder = AlertDialog.Builder(activity)
 
     builder.setTitle(R.string.not_activated_user_dialog_title)
-    builder.setMessage(context.getString(R.string.not_activated_user_dialog_message))
+    builder.setMessage(activity.getString(R.string.not_activated_user_dialog_message))
 
     builder.setPositiveButton(R.string.DebugSendLogs) { dialog, which ->
       logCallbackMutable.postValue(ResourceStatus.Loading)
-      AndroidCopySDK.getInstance(context).sentLogs(
-        context,
-        this,
-        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
-        "Signal Archiver logs",
-        PrefManager.getStringPref(context, ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, ""),
-        "",
-        "",
-        "",
-        "",
-        ArchivePreferenceConstants.GENERATE_TOK_NAME,
-        ArchivePreferenceConstants.GENERATE_TOK_PASS
-      )
+      ArchiveSender.sendLogs(activity, this)
     }
     builder.setNegativeButton(R.string.OK, null)
     val alertDialog = builder.create()
@@ -48,7 +37,8 @@ class SelfAuthenticationDialogBuilder : ISendLogCallback{
     return alertDialog
   }
 
-    override fun sendLogFailure() {
+
+  override fun sendLogFailure() {
       logCallbackMutable.postValue(ResourceStatus.Error)
     }
 
