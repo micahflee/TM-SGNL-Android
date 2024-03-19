@@ -35,7 +35,7 @@ object Messages {
   fun MessageRecord.status(): MessageStatus {
     if (isFailed)
       return MessageStatus.Failed
-    if (isViewed)
+    if ((this as? MmsMessageRecord)?.isRead == true || isViewed)
       return MessageStatus.Read
     if (isDelivered || isIncoming())
       return MessageStatus.Delivered
