@@ -16,6 +16,7 @@ import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.model.resource.ResourceStatus
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.utils.PrefManager
+import com.tm.androidcopysdk.utils.PrefManagerConstants
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.isMDM
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.startMDMAuthenticator
@@ -163,6 +164,7 @@ class TMEnterSmsCodeFragment : EnterSmsCodeFragment(), IAuthenticationStatus, IM
       continueSignalFlow()
     } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(), false)
+      PrefManager.setBooleanPref(requireContext(), PrefManagerConstants.SHARED_PREFERENCE_ACTIVATED_AA_KEY, false)
       val dialogBuilder = SelfAuthenticationDialogBuilder()
       dialogBuilder.logCallback.observe(this) { result ->
         when (result) {
