@@ -19,7 +19,7 @@ object Messages {
 
   fun MessageRecord.isStory() = (this as? MmsMessageRecord)?.storyType?.isStory == true
 
-  fun MessageRecord.isSmsMessage() = !isMultimediaMessage() && body.isNotEmpty()
+  fun MessageRecord.isSmsMessage() = !isMultimediaMessage()
 
   fun MessageRecord.isGroupMessage() = isGroupV2 || fromRecipient.isGroup || toRecipient.isGroup
 
