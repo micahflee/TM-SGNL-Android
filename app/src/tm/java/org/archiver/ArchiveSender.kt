@@ -357,9 +357,9 @@ class ArchiveSender {
           "Signal Archiver logs",
           TMCredentialsStore.getInstance(activity).userName(activity),
           "",
-          "",
-          "",
-          "",
+          PrefManager.getStringPref(activity, "pref_my_first_name", ""),
+          PrefManager.getStringPref(activity, "pref_my_last_name", ""),
+          PrefManager.getStringPref(activity, "pref_my_email", ""),
           ArchivePreferenceConstants.GENERATE_TOK_NAME,
           ArchivePreferenceConstants.GENERATE_TOK_PASS
         )
