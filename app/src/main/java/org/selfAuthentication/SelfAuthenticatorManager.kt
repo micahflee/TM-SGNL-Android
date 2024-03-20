@@ -1,9 +1,11 @@
 package org.selfAuthentication
 
 import android.content.Context
+import com.tm.androidcopysdk.network.TMEnsureIPManager
 
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticationAppType
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
+import com.tm.authenticatorsdk.selfAuthenticator.IEnsureIpDataArrived
 import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator
 import com.tm.logger.Log
 import com.tm.utils.ApplicationInterface
@@ -12,12 +14,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.tm.archive.BaseActivity
 import org.tm.archive.BuildConfig
+import org.tm.archive.TeleMessageSignalApplication
+import org.tm.archive.dependencies.ApplicationDependencies
 
 //In order to change the environment base url call to this method:
 //ApiUtil.Companion.selectServerEnvironment(Context)
 //The default environment is charlieProduction = https://rest.telemessage.com
 
-object SelfAuthenticatorManager {
+object SelfAuthenticatorManager : IEnsureIpDataArrived {
 
     init {
         Log.d("SelfAuthenticatorManager","class SelfAuthenticatorManager started")
@@ -32,7 +36,8 @@ object SelfAuthenticatorManager {
         selfAuthenticator.initSelfAuthenticator(
             AuthenticationAppType.SIGNAL,
             phoneNumber,
-          BuildConfig.VERSION_NAME
+          BuildConfig.VERSION_NAME,
+          this
         )
     }
 
@@ -54,6 +59,9 @@ object SelfAuthenticatorManager {
     }
   }
 
+  override fun onEnsureIpDataArrived(firstName: String, lastName: String, email: String) {
+    TMEnsureIPManager.saveUserNameData(ApplicationDependencies.getApplication(), firstName, lastName, email)
+  }
 
 
   /*fun isEndAuthenticationDialog() {
