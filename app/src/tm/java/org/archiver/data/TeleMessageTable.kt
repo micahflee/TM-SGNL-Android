@@ -154,8 +154,9 @@ class TeleMessageTable(
   }
 
   override fun markAsRemoteDeleteInternal(messageId: Long) {
+    val message = converter.convert(getMessageRecordOrNull(messageId), getAccountPhoneNumber(), isRemoteDeleted = true)
     super.markAsRemoteDeleteInternal(messageId)
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    messageStoreObserver.afterMessageStateChanged(message ?: return)
   }
   // endregion Message - Update
 

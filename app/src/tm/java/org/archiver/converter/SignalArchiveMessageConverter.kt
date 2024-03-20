@@ -29,15 +29,15 @@ class SignalArchiveMessageConverter(
     return messages.mapNotNull { convert(it, accountPhoneNumber) }
   }
 
-  fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, isDeleted, null)
+  fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false, isRemoteDeleted: Boolean = false): ArchiveMessage? {
+    return convert(message, accountPhoneNumber, isDeleted, isRemoteDeleted, null)
   }
 
   fun convertCall(message: MessageRecord?, accountPhoneNumber: String?, callInfo: CallInfoState): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, false, callInfo)
+    return convert(message, accountPhoneNumber, false, false, callInfo)
   }
 
-  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, callInfo: CallInfoState?): ArchiveMessage? {
+  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, isRemoteDeleted: Boolean, callInfo: CallInfoState?): ArchiveMessage? {
     if (message == null)
       return null
 
@@ -54,7 +54,7 @@ class SignalArchiveMessageConverter(
       direction = direction,
       status = message.status(),
       isDeleted = isDeleted,
-      isRemoteDeleted = message.isRemoteDelete,
+      isRemoteDeleted = isRemoteDeleted,
       isForwarded = false,
       body = message.getDisplayBody(context).toString(),
       timestamp = Timestamp(message.timestamp),

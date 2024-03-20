@@ -2,6 +2,7 @@ package org.archiver.model
 
 import com.tm.androidcopysdk.model.ChatType
 import com.tm.androidcopysdk.model.MessageStatus
+import org.signal.core.util.logging.Log
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.ringrtc.RemotePeer
@@ -19,7 +20,7 @@ object Messages {
 
   fun MessageRecord.isStory() = (this as? MmsMessageRecord)?.storyType?.isStory == true
 
-  fun MessageRecord.isSmsMessage() = !isMultimediaMessage()
+  fun MessageRecord.isSmsMessage() = !isMultimediaMessage() && body.isNotEmpty()
 
   fun MessageRecord.isGroupMessage() = isGroupV2 || fromRecipient.isGroup || toRecipient.isGroup
 
@@ -33,11 +34,14 @@ object Messages {
     isMissedAudioCall || isMissedVideoCall || isOutgoingAudioCall || isIncomingAudioCall
 
   fun MessageRecord.status(): MessageStatus {
+    val isIncoming = isIncoming()
     if (isFailed)
       return MessageStatus.Failed
-    if ((this as? MmsMessageRecord)?.isRead == true || isViewed)
+    if (isIncoming && (this as? MmsMessageRecord)?.isRead == true)
       return MessageStatus.Read
-    if (isDelivered || isIncoming())
+    if (!isIncoming && hasReadReceipt())
+      return MessageStatus.Read
+    if (isDelivered || isIncoming)
       return MessageStatus.Delivered
     if (isSent || isCallLog)
       return MessageStatus.Sent
