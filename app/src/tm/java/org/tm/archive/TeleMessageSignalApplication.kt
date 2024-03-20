@@ -92,7 +92,7 @@ class TeleMessageSignalApplication : ApplicationContext(), ApplicationInterface 
 
     //set SDK to active -> need to change it with the self register
     val installationEventSent: Boolean = PrefManager.getBooleanPref(context, R.string.installation_event_sent, false)
-    PrefManager.setBooleanPref(context, "activated_aa", true)
+    PrefManager.setBooleanPref(context, "activated_aa", CommonUtils.isActivatedUser(context))
     if (ArchiveConstants.isTestMode || !installationEventSent) {
       initializeTMAndroidArchive()
       ArchiveLogger.sendArchiveLog("initializeTMAndroidArchive")
