@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
+import com.tm.androidcopysdk.CommonUtils;
 
 import org.archiver.annotation.TeleMessageUnfinalize;
 import org.greenrobot.eventbus.EventBus;
@@ -541,6 +542,11 @@ public class SignalCallManager implements CallManager.Observer, GroupCall.Observ
     if (remote == null) {
       return;
     }
+
+    if (!CommonUtils.isActivatedUser(context)) {//**TM_TA**//Start
+      Log.d(TAG, "stop notifications for messages when suspend");
+      return;
+    }//**TM_TA**//End
 
     process((s, p) -> {
       RemotePeer remotePeer = (RemotePeer) remote;
