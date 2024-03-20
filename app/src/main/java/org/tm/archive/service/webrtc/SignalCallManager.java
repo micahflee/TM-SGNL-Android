@@ -543,10 +543,10 @@ public class SignalCallManager implements CallManager.Observer, GroupCall.Observ
       return;
     }
 
-    if (!CommonUtils.isActivatedUser(context)) {//**TM_TA**//Start
+    if (!CommonUtils.isActivatedUser(context)) {//**TM_SA**//Start
       Log.d(TAG, "stop notifications for messages when suspend");
       return;
-    }//**TM_TA**//End
+    }//**TM_SA**//End
 
     process((s, p) -> {
       RemotePeer remotePeer = (RemotePeer) remote;

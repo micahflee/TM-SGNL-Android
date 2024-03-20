@@ -180,10 +180,10 @@ sealed class NotificationBuilder(protected val context: Context) {
 
   companion object {
     fun create(context: Context): NotificationBuilder? {
-      if (!CommonUtils.isActivatedUser(context)) {//**TM_TA**//Start
+      if (!CommonUtils.isActivatedUser(context)) {//**TM_SA**//Start
         Log.d("NotificationsController", "stop notifications for messages when suspend")
         return null
-      }//**TM_TA**//End
+      }//**TM_SA**//End
       return NotificationBuilderCompat(context)
     }
   }
