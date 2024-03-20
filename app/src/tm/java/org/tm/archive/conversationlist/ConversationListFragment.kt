@@ -49,7 +49,7 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
     Log.d(TAG, "onViewCreated")
 
 
-    if (CommonUtils.isActivatedUser(requireContext())) {
+    if (CommonUtils.isActivatedUser(requireContext()) && PrefManager.getStringPref(activity, "pref_my_first_name", "") != "") {
       WorkerIntentService.startJobIntentService(requireContext(), true)
       ArchiveUtil.startKeepAliveWorker(requireContext())
     } else {
@@ -87,7 +87,7 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
   }
 
   fun startSelfAuth() {
-    if (!CommonUtils.isActivatedUser(requireContext())) {
+    if (!CommonUtils.isActivatedUser(requireContext()) || PrefManager.getStringPref(activity, "pref_my_first_name", "") == "") {
       initTeleMessageSignalFirebaseAccount(requireContext(), null, true)
       createAndShowAuthProgressDialog(requireContext(), true)
       startAuthenticationProcess(requireContext(),
