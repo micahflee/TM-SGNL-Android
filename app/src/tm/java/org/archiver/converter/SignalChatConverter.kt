@@ -1,6 +1,7 @@
 package org.archiver.converter
 
 import android.content.Context
+import com.klinker.android.send_message.Utils
 import com.tm.androidcopysdk.model.ArchiveChat
 import com.tm.androidcopysdk.model.ChatType
 import org.archiver.model.Messages.chatRecipient
@@ -15,8 +16,8 @@ class SignalChatConverter(
 ) {
 
   fun convert(message: MessageRecord): ArchiveChat {
-    val chatRecipient = message.chatRecipient()
     val type = message.chatType()
+    val chatRecipient = message.chatRecipient(type)
     return ArchiveChat(
       id = getChatId(chatRecipient, type) ?: "",
       type = type,

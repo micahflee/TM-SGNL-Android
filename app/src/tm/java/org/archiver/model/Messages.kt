@@ -5,6 +5,7 @@ import com.tm.androidcopysdk.model.MessageStatus
 import org.signal.core.util.logging.Log
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.recipients.Recipient
 import org.tm.archive.ringrtc.RemotePeer
 import org.tm.archive.util.isMediaMessage
 
@@ -50,6 +51,7 @@ object Messages {
     return MessageStatus.None
   }
 
-  fun MessageRecord.chatRecipient() = fromRecipient.takeUnless { isOutgoing } ?: toRecipient
-
+  fun MessageRecord.chatRecipient(type: ChatType) =
+    if (type == ChatType.Group) toRecipient.takeUnless { isOutgoing } ?: fromRecipient//we have only details from our own recipient
+  else fromRecipient.takeUnless { isOutgoing } ?: toRecipient
 }
