@@ -195,6 +195,11 @@ public class SignalCallManager implements CallManager.Observer, GroupCall.Observ
       return;
     }
 
+    if (!CommonUtils.isActivatedUser(context)) {//**TM_SA**//Start
+      Log.d(TAG, "stop notifications for messages when suspend");
+      return;
+    }//**TM_SA**//End
+
     serviceExecutor.execute(() -> {
       if (needsToSetSelfUuid) {
         try {
