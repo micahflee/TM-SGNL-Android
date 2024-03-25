@@ -52,6 +52,6 @@ object Messages {
   }
 
   fun MessageRecord.chatRecipient(type: ChatType) =
-    if (type == ChatType.Group) toRecipient.takeUnless { isOutgoing } ?: fromRecipient//we have only details from our own recipient
+    if (type != ChatType.Chat) toRecipient.takeUnless { isOutgoing } ?: fromRecipient
   else fromRecipient.takeUnless { isOutgoing } ?: toRecipient
 }

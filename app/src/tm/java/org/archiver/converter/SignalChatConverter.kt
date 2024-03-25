@@ -21,7 +21,7 @@ class SignalChatConverter(
     return ArchiveChat(
       id = getChatId(chatRecipient, type) ?: "",
       type = type,
-      name = if (type == ChatType.Group) chatRecipient.getGroupName(context) else chatRecipient.getDisplayName(context),
+      name = chatRecipient.getDisplayName(context),
       isSecret = false,
     )
   }
