@@ -13,8 +13,8 @@ import androidx.appcompat.app.AlertDialog
 import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.network.appSettings.WorkerIntentService
-import com.tm.androidcopysdk.network.keepAlive.KeepWorkerIntentService
 import com.tm.androidcopysdk.utils.PrefManager
+import com.tm.androidcopysdk.utils.PrefManagerConstants
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.isMDM
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.startMDMAuthenticator
@@ -153,6 +153,7 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
     }
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(), false)
+      PrefManager.setBooleanPref(requireContext(), PrefManagerConstants.SHARED_PREFERENCE_ACTIVATED_AA_KEY, false)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       CommonUtils.setActivatedUser(requireContext(), true)
       CommonUtils.startBackupService(context)
