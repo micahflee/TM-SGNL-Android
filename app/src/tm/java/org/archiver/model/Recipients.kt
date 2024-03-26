@@ -9,14 +9,13 @@ object Recipients {
 
   fun Recipient.toParticipants() : List<Recipient> {
     return participantIds
-      .filter { it.isNotSelf() }
       .take(ArchiveConstants.MAX_MEMBER_NAMES)
       .map(Recipient::resolved)
   }
 
   fun Recipient.toParticipants(predicate: (id: RecipientId) -> Boolean) : List<Recipient> {
     return participantIds
-      .filter { it.isNotSelf() && predicate(it) }
+      .filter { predicate(it) }
       .take(ArchiveConstants.MAX_MEMBER_NAMES)
       .map(Recipient::resolved)
   }

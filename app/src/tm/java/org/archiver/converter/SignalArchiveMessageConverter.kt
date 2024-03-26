@@ -13,6 +13,7 @@ import org.archiver.model.Messages.status
 import org.tm.archive.database.CallTable
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.database.model.ThreadRecord
 import org.tm.archive.service.webrtc.state.CallInfoState
 
 class SignalArchiveMessageConverter(
@@ -25,27 +26,28 @@ class SignalArchiveMessageConverter(
   private val attachmentConverter = SignalAttachmentConverter()
   private val callInfoConverter = SignalCallInfoConverter()
 
-  fun convert(messages: List<MessageRecord?>, accountPhoneNumber: String?): List<ArchiveMessage> {
-    return messages.mapNotNull { convert(it, accountPhoneNumber) }
+  fun convert(messages: List<MessageRecord?>, thread: ThreadRecord?, accountPhoneNumber: String?): List<ArchiveMessage> {
+    return messages.mapNotNull { convert(it, thread, accountPhoneNumber) }
   }
 
-  fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false, isRemoteDeleted: Boolean = false): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, isDeleted, isRemoteDeleted, null)
+  fun convert(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false, isRemoteDeleted: Boolean = false): ArchiveMessage? {
+    return convert(message, thread, accountPhoneNumber, isDeleted, isRemoteDeleted, null)
   }
 
-  fun convertCall(message: MessageRecord?, accountPhoneNumber: String?, callInfo: CallInfoState): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, false, false, callInfo)
+  fun convertCall(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, callInfo: CallInfoState): ArchiveMessage? {
+    return convert(message, thread, accountPhoneNumber, isDeleted = false, isRemoteDeleted = false, callInfo = callInfo)
   }
 
-  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, isRemoteDeleted: Boolean, callInfo: CallInfoState?): ArchiveMessage? {
+  private fun convert(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, isDeleted: Boolean, isRemoteDeleted: Boolean, callInfo: CallInfoState?): ArchiveMessage? {
     if (message == null)
       return null
 
     val type = getMessageType(message)
     val direction = message.getDirection()
+    val chat = chatConverter.convert(message, thread)
     val call = callInfoConverter.convert(message, type, callInfo)
-    val sender = recipientConverter.convertSenderRecipient(message, direction)
-    val receivers = recipientConverter.convertReceiverRecipients(message, direction)
+    val sender = recipientConverter.convertSenderRecipient(message, chat, direction)
+    val receivers = recipientConverter.convertReceiverRecipients(message, thread, chat, sender, direction)
     return ArchiveMessage(
       id = message.id.toString(),
       uniqueId = null,
@@ -58,7 +60,7 @@ class SignalArchiveMessageConverter(
       isForwarded = false,
       body = message.getDisplayBody(context).toString(),
       timestamp = Timestamp(message.timestamp),
-      chat = chatConverter.convert(message),
+      chat = chat,
       sender = sender,
       receivers = receivers,
       attachments = attachmentConverter.convert(message),

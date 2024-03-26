@@ -33,16 +33,22 @@ class TeleMessageTable(
 
   private val converter = SignalArchiveMessageConverter(context)
 
-  override fun find(id: Long): ArchiveMessage? = converter.convert(getMessageRecordOrNull(id), getAccountPhoneNumber())
+  override fun find(id: Long): ArchiveMessage? {
+    val message = getMessageRecordOrNull(id) ?: return null
+    val thread = SignalDatabase.threads.getThreadRecord(message.threadId)
+    return converter.convert(getMessageRecordOrNull(id), thread, getAccountPhoneNumber())
+  }
 
   override fun findAll(ids: List<Long>): List<ArchiveMessage> {
     val accountPhoneNumber = getAccountPhoneNumber()
-    return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, accountPhoneNumber) } }
+    val threads = SignalDatabase.threads
+    return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, threads.getThreadRecord(it.threadId), accountPhoneNumber) } }
   }
 
   fun onSubmitCall(call: CallTable.Call, callInfo: CallInfoState) {
     val message = getMessageRecordOrNull(call.messageId ?: return)?.withCall(call)
-    val archiveMessage = converter.convertCall(message, getAccountPhoneNumber(), callInfo) ?: return
+    val thread = SignalDatabase.threads.getThreadRecord(message?.threadId)
+    val archiveMessage = converter.convertCall(message, thread, getAccountPhoneNumber(), callInfo) ?: return
     messageStoreObserver.afterMessageStateChanged(archiveMessage)
   }
 
@@ -154,7 +160,8 @@ class TeleMessageTable(
   }
 
   override fun markAsRemoteDeleteInternal(messageId: Long) {
-    val message = converter.convert(getMessageRecordOrNull(messageId), getAccountPhoneNumber(), isRemoteDeleted = true)
+    val record = getMessageRecordOrNull(messageId)
+    val message = converter.convert(record, record?.threadId?.let(SignalDatabase.threads::getThreadRecord), getAccountPhoneNumber(), isRemoteDeleted = true)
     super.markAsRemoteDeleteInternal(messageId)
     messageStoreObserver.afterMessageStateChanged(message ?: return)
   }
@@ -162,7 +169,8 @@ class TeleMessageTable(
 
   // region Message - Delete
   override fun deleteMessage(messageId: Long, threadId: Long, notify: Boolean, updateThread: Boolean): Boolean {
-    val message = converter.convert(getMessageRecordOrNull(messageId), getAccountPhoneNumber(), isDeleted = true)
+    val record = getMessageRecordOrNull(messageId)
+    val message = converter.convert(record, record?.threadId?.let(SignalDatabase.threads::getThreadRecord), getAccountPhoneNumber(), isDeleted = true)
     val threadDeleted = super.deleteMessage(messageId, threadId, notify, updateThread)
     messageStoreObserver.afterMessageStateChanged(message ?: return threadDeleted)
     return threadDeleted
