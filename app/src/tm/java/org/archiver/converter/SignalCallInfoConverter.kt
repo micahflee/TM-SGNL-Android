@@ -5,6 +5,7 @@ import com.tm.androidcopysdk.model.ArchiveMessageType
 import com.tm.androidcopysdk.model.CallAnswerType
 import com.tm.androidcopysdk.model.CallRtcMode
 import com.tm.androidcopysdk.model.Direction
+import org.signal.ringrtc.CallManager.CallEvent
 import org.tm.archive.database.CallTable
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
@@ -13,7 +14,7 @@ import org.tm.archive.service.webrtc.state.CallInfoState
 
 class SignalCallInfoConverter {
 
-  fun convert(message: MessageRecord, type: ArchiveMessageType, callInfo: CallInfoState?): ArchiveCallInfo? {
+  fun convert(message: MessageRecord, type: ArchiveMessageType, callInfo: CallInfoState? = null, event: CallTable.Event? = null): ArchiveCallInfo? {
     val callConnectedTime = callInfo?.callConnectedTime?.takeIf { it > 0 }
     if (type != ArchiveMessageType.Call && type != ArchiveMessageType.Unknown)
       return null
@@ -23,12 +24,20 @@ class SignalCallInfoConverter {
       id = call?.callId?.toString(),
       startedAt = callConnectedTime,
       durationMs = durationMs / 1000,
-      answerType = getAnswerType(call, callInfo),
+      answerType = if (callInfo != null) getAnswerType(call, callInfo) else getAnswerType(event),
       rtcMode = message.rtcMode(call)
     )
   }
 
   private fun CallTable.Call?.isAccepted() = this?.event == CallTable.Event.ACCEPTED
+
+  private fun getAnswerType(event: CallTable.Event?): CallAnswerType? {
+    if (event == null)
+      return null
+    if (event == CallTable.Event.DECLINED)
+      return CallAnswerType.Reject
+    return CallAnswerType.Missed
+  }
 
   private fun getAnswerType(call: CallTable.Call?, callInfo: CallInfoState?): CallAnswerType? {
     if (call == null || callInfo == null)

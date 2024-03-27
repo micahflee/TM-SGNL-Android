@@ -78,6 +78,16 @@ class TeleMessageTable(
 
   override fun updateGroupCall(messageId: Long, eraId: String, joinedUuids: Collection<UUID>, isCallFull: Boolean): MessageId {
     val result = super.updateGroupCall(messageId, eraId, joinedUuids, isCallFull)
+    val call = SignalDatabase.calls.getCallByMessageId(messageId)
+    if (call?.event == CallTable.Event.DECLINED || call?.event == CallTable.Event.MISSED) {
+      val message = getMessageRecordOrNull(messageId)?.withCall(call)
+      val thread = SignalDatabase.threads.getThreadRecord(message?.threadId)
+      val archiveMessage = converter.convertCall(message, thread, getAccountPhoneNumber(), call.event)
+      if (archiveMessage != null) {
+        messageStoreObserver.afterMessageStateChanged(archiveMessage)
+        return result
+      }
+    }
     messageStoreObserver.afterMessageIdStateChanged(messageId)
     return result
   }

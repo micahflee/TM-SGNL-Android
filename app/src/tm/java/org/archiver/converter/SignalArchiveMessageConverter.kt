@@ -31,21 +31,26 @@ class SignalArchiveMessageConverter(
   }
 
   fun convert(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false, isRemoteDeleted: Boolean = false): ArchiveMessage? {
-    return convert(message, thread, accountPhoneNumber, isDeleted, isRemoteDeleted, null)
+    return convert(message, thread, accountPhoneNumber, isDeleted, isRemoteDeleted, null, null)
+  }
+
+  fun convertCall(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, event: CallTable.Event): ArchiveMessage? {
+    return convert(message, thread, accountPhoneNumber, isDeleted = false, isRemoteDeleted = false,callInfo = null, event = event)
   }
 
   fun convertCall(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, callInfo: CallInfoState): ArchiveMessage? {
-    return convert(message, thread, accountPhoneNumber, isDeleted = false, isRemoteDeleted = false, callInfo = callInfo)
+    return convert(message, thread, accountPhoneNumber, isDeleted = false, isRemoteDeleted = false, callInfo = callInfo, event = null)
   }
 
-  private fun convert(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, isDeleted: Boolean, isRemoteDeleted: Boolean, callInfo: CallInfoState?): ArchiveMessage? {
+  private fun convert(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, isDeleted: Boolean,
+                      isRemoteDeleted: Boolean, callInfo: CallInfoState?, event: CallTable.Event?): ArchiveMessage? {
     if (message == null)
       return null
 
     val type = getMessageType(message)
     val direction = message.getDirection()
     val chat = chatConverter.convert(message, thread)
-    val call = callInfoConverter.convert(message, type, callInfo)
+    val call = callInfoConverter.convert(message, type, callInfo = callInfo, event)
     val sender = recipientConverter.convertSenderRecipient(message, chat, direction)
     val receivers = recipientConverter.convertReceiverRecipients(message, thread, chat, sender, direction)
     return ArchiveMessage(
