@@ -44,6 +44,7 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import com.tm.androidcopysdk.AndroidCopySDK;
 import com.tm.androidcopysdk.BackupService;
 import com.tm.androidcopysdk.CommonUtils;
+import com.tm.androidcopysdk.model.resource.ResourceStatus;
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
 import com.tm.androidcopysdk.utils.PrefManager;
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
@@ -96,7 +97,7 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
 
 public final class EnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks
-
+, IAuthenticationStatus, IMDMAuthenticator //*TM_SA*//
 {
 
   private static final String TAG = Log.tag(EnterPhoneNumberFragment.class);
@@ -108,12 +109,29 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
   private ScrollView                     scrollView;
   private RegistrationViewModel          viewModel;
 
+  //**TM_SA**// START
+  private Context mContext;
+  private boolean     progressBarShown;
+
+  public static boolean          mIsLoginAuthenticationInProgress = false;
+  private       ConstraintLayout constraintLayout;
+  private       View             progressBarCustomView;
+  String mobileNumber;
+  //**TM_SA**// END
+
   private final LifecycleDisposable disposables = new LifecycleDisposable();
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setHasOptionsMenu(true);
+
+    // <!--//**TM_SA**//--> START
+    mContext = getActivity();
+    if(!EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().register(this);
+    }
+    // <!--//**TM_SA**//--> END
   }
 
   @Override
@@ -132,7 +150,9 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     cancel      = view.findViewById(R.id.cancel_button);
     scrollView  = view.findViewById(R.id.scroll_view);
     register    = view.findViewById(R.id.registerButton);
+    constraintLayout = view.findViewById(R.id.constraint_layout);  //**TM_SA**//
 
+    initProgressBar();  //**TM_SA**//
 
     RegistrationNumberInputController controller = new RegistrationNumberInputController(requireContext(),
                                                                                          this,
@@ -176,10 +196,48 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       ThreadUtil.runOnMainDelayed(() -> handleRegister(requireContext()), 250);
     }
 
+    constraintLayout.addView(progressBarCustomView);//**TM_SA**//
+  }
 
+  //**TM_SA**// START
+  @Override public void onDestroy() {
+    super.onDestroy();
+    if(EventBus.getDefault().isRegistered(this)) {
+      EventBus.getDefault().unregister(this);
+    }
+  }
+  private void initProgressBar(){
+    progressBarShown = false;
+
+    progressBarCustomView = LayoutInflater.from(getContext()).inflate(R.layout.progress_bar_layout_with_background, null, false);
+    LinearLayout.LayoutParams backgroundLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+    progressBarCustomView.setLayoutParams(backgroundLayoutParams);
+    progressBarCustomView.setVisibility(View.GONE);
   }
 
 
+  private void hideProgressBar(){
+    getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        progressBarCustomView.setVisibility(View.GONE);
+        progressBarShown = false;
+        Log.d(TAG, "Registration progress hidden");
+      }
+    });
+  }
+
+  private void showProgressBar(){
+    getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        progressBarCustomView.setVisibility(View.VISIBLE);
+        progressBarShown = true;
+        Log.d(TAG, "Registration progress shown");
+      }
+    });
+  }
+  //**TM_SA**// END
 
   private void showKeyboard(View viewToFocus) {
     viewToFocus.requestFocus();
@@ -246,9 +304,21 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
       }
 
       AndroidCopySDK.getInstance(context).savePhoneNumber(ArchiveUtil.Companion.getPhoneNumberInTestMode(context));
+      mIsLoginAuthenticationInProgress = true;
+//      startAutoAuthentication(requireContext(), e164number);
+      mobileNumber = e164number;
+      int authStatus = PrefManager.getIntPref(requireContext(),
+                                              IntuneAuthManager.MDM_Auth_Status_String, IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
 
-      confirmNumberPrompt(context, e164number, () -> onE164EnteredSuccessfully(context, true));
-
+      if(CommonUtils.isActivatedUser(context)) {
+        confirmNumberPrompt(context, e164number, () -> handleRequestVerification(context, true));
+      } else {
+        if (MDMAuthenticator.INSTANCE.isMDM(context) && authStatus == IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal()) {// mdm auth skip this fragment and work on EnterSmsCodeFragment
+          startMdm();
+        } else {
+          startAutoAuthentication(e164number); //start self auth
+        }
+      }
       //**TM_SA**//End
     } else if (fcmStatus == PlayServicesUtil.PlayServicesStatus.MISSING) {
       confirmNumberPrompt(context, e164number, () -> handlePromptForNoPlayServices(context));
@@ -261,7 +331,72 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     }
   }
 
+  //**TM_SA**//START
+  private void startMdm() {
+    Log.d(TAG, "startMdm");
+    FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
+    MDMAuthenticator.INSTANCE.startMDMAuthenticator(requireActivity(), mobileNumber, BuildConfig.signal_teleMessage_version, this);
+  }
 
+
+  @Override
+  public void failureMDMAuth(String reason) {
+    final String onCancel = "onCancel", server = "server";
+    Log.d(TAG, "failureMDMAuth, reason: " + reason);
+    if(reason.equals(onCancel)) {
+      IntuneAuthManager.INSTANCE.showDialog(requireActivity(), this::startMdm);
+    } //update app that intune signed failed: two cases. 1. try intune auth again  2. move to self auth
+    else if(reason.contains(server) || reason.contains("Authentication failed")
+      /*|| reason.contains("managerID")*/) { //try intune auth again
+      PrefManager.setIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
+      Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_INTUNE_AUTH.ordinal());
+      requireActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          confirmNumberPrompt(requireContext(), mobileNumber, () -> handleRequestVerification(requireContext(), true));
+        }
+      });
+    }else  { //this case should pass to self-auth
+      PrefManager.setIntPref(requireContext(),IntuneAuthManager.MDM_Auth_Status_String,IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+      Log.d(TAG, "status auth is " + IntuneAuthManager.MdmAuthStatus.START_SELF_AUTH.ordinal());
+      requireActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          confirmNumberPrompt(requireContext(), mobileNumber, () -> handleRequestVerification(requireContext(), true));
+        }
+      });
+    }
+
+  }
+
+  @Override
+  public void successMDMAuth() {
+    Log.d(TAG, "successMDMAuth");
+    startIntuneAutoAuthentication(mobileNumber);
+  }
+
+  /**
+   * intune
+   *
+   * @param e164number
+   */
+  private void startIntuneAutoAuthentication(String e164number) {
+    Log.d(TAG, "startAutoAuthentication");
+    SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
+    IntuneAuthManager.INSTANCE.continueIntuneAuthentication((ApplicationInterface)requireContext().getApplicationContext(), this);
+  }
+
+  private void startAutoAuthentication(String e164number) {
+    Log.i(TAG , "startAutoAuthentication");
+    FCMConnector.initTeleMessageSignalFirebaseAccount(requireContext(), null, true);
+    Log.i(TAG, "current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    SelfAuthenticatorManager.INSTANCE.initAuthenticator(e164number);
+    SelfAuthenticatorManager.INSTANCE.startAuthentication((ApplicationInterface) getContext().getApplicationContext(), this);
+    if (!progressBarShown) {
+      showProgressBar();
+    }
+  }
+  //**TM_SA**//END
 
   private void onE164EnteredSuccessfully(@NonNull Context context, boolean fcmSupported) {
     enterInProgressUiState();
@@ -559,5 +694,55 @@ public final class EnterPhoneNumberFragment extends LoggingFragment implements R
     );
   }
 
+  //**TM_SA**//START
 
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onEvent(UpdateEvent event) {
+    if (event == null) {
+      return;
+    }
+    Log.d("EnterPhoneNumberFragment", "UpdateEvent -> onEvent: " + event.type);
+
+    if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
+      CommonUtils.setActivatedUser(requireContext(), true);
+      final NumberViewState number = viewModel.getNumber();
+      final String e164number = number.getE164Number();
+      confirmNumberPrompt(mContext, e164number, () -> handleRequestVerification(mContext, true));
+
+    } else if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
+      CommonUtils.setActivatedUser(requireContext(), false);
+      SelfAuthenticationDialogBuilder dialog = new SelfAuthenticationDialogBuilder();
+      dialog.doSendLogsClicked(requireActivity()/*, progressBarCustomView*/);
+      dialog.getLogCallback().observe(this, result -> {
+        if (result != null) {
+          switch (result) {
+            case Success, Error -> progressBarCustomView.setVisibility(View.GONE);
+            case Loading -> progressBarCustomView.setVisibility(View.VISIBLE);
+          }
+        }
+      });
+    }
+
+    Log.i(TAG, "onMessageEvent -> 1 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+    Log.d("SelfAuthenticator", "initOfficialSignalFirebaseAccount!!! ");
+    FCMConnector.initOfficialSignalFirebaseAccount(mContext);
+    Log.i(TAG, "onMessageEvent -> 2 current FCM: " + FirebaseApp.getInstance().getOptions().getProjectId());
+
+    if (progressBarShown) {
+      hideProgressBar();
+    }
+  }
+
+
+
+  @Override
+  public void authenticationProcessMessage(@NotNull String message) {
+    Log.d(TAG, "authenticationProcessMessage = " + message);
+    if (!message.isEmpty()) {
+      mIsLoginAuthenticationInProgress = false;
+//      EventBus.getDefault().post(new MessageEvent(SelfAuthenticatorConstants.Companion.getSelfAuthenticationFailed()));
+      EventBus.getDefault().post(new UpdateEvent(UpdateEvent.EVENTS_TYPE.suspension));
+    }
+  }
+  //**TM_SA**//End
 }

@@ -39,18 +39,18 @@ public class EnterSmsCodeFragment extends BaseEnterSmsCodeFragment<RegistrationV
         Log.w(TAG, "Failed to refresh flags after " + (System.currentTimeMillis() - startTime) + " ms.", e);
       }
       return null;
-    }, none -> displaySuccess(() -> SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), TMEnterSmsCodeFragmentDirections.actionSuccessfulRegistration())));
+    }, none -> displaySuccess(() -> SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), EnterSmsCodeFragmentDirections.actionSuccessfulRegistration())));
   }
 
   @Override
   protected void navigateToRegistrationLock(long timeRemaining) {
     SafeNavigation.safeNavigate(Navigation.findNavController(requireView()),
-                                TMEnterSmsCodeFragmentDirections.actionRequireKbsLockPin(timeRemaining));
+                                EnterSmsCodeFragmentDirections.actionRequireKbsLockPin(timeRemaining));
   }
 
   @Override
   protected void navigateToCaptcha() {
-    SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), TMEnterSmsCodeFragmentDirections.actionRequestCaptcha());
+    SafeNavigation.safeNavigate(NavHostFragment.findNavController(this), EnterSmsCodeFragmentDirections.actionRequestCaptcha());
   }
 
   @Override
