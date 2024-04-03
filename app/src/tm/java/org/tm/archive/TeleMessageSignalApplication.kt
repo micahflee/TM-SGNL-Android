@@ -97,6 +97,10 @@ class TeleMessageSignalApplication : ApplicationContext(), ApplicationInterface 
       initializeTMAndroidArchive()
       ArchiveLogger.sendArchiveLog("initializeTMAndroidArchive")
     }
+    if (CommonUtils.isActivatedUser(context)) {
+      CommonUtils.startBackupService(context)
+      ArchiveLogger.sendArchiveLog("Backup service started")
+    }
   }
 
   private fun initializeTMAndroidArchive() {

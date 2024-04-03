@@ -710,7 +710,7 @@ class ArchiveUtil {
     fun startKeepAliveWorker(context: Context) {
       updateArchiverFCMToken(context)
       updateArchiverInstallId(context)
-      KeepWorkerIntentService.startJobIntentService(context,true)
+      KeepWorkerIntentService.startJobIntentService(context,false)
     }
 
     private fun updateArchiverFCMToken(context: Context) {

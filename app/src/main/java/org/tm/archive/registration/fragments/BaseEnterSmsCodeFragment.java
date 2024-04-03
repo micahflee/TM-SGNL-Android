@@ -195,18 +195,7 @@ public abstract class BaseEnterSmsCodeFragment<ViewModel extends BaseRegistratio
       }
     });
   }
-  //**TM_SA**//Start
-  public void displaySuccess() {
-    keyboard.displaySuccess();
-  }
-  public void displayFailure() {
-    keyboard.displayFailure();
-  }
 
-  public void displayProgress() {
-    keyboard.displayProgress();
-  }
-  //**TM_SA**//End
   protected void handleRateLimited() {
     keyboard.displayFailure().addListener(new AssertedSuccessListener<Boolean>() {
       @Override

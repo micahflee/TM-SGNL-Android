@@ -113,10 +113,10 @@
             app:popExitAnim="@anim/slide_to_end" />
 
     </fragment>
-
+<!--    TM_SA change to TMEnterPhoneNumberFragment-->
     <fragment
         android:id="@+id/enterPhoneNumberFragment"
-        android:name="org.tm.archive.registration.fragments.EnterPhoneNumberFragment"
+        android:name="org.tm.archive.registration.fragments.TMEnterPhoneNumberFragment"
         android:label="fragment_enter_phone_number"
         tools:layout="@layout/fragment_registration_enter_phone_number">
 

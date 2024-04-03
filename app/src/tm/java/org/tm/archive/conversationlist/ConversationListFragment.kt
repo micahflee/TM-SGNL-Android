@@ -50,7 +50,6 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
 
 
     if (CommonUtils.isActivatedUser(requireContext()) && PrefManager.getStringPref(activity, "pref_my_first_name", "") != "") {
-      CommonUtils.startBackupService(activity)
       WorkerIntentService.startJobIntentService(requireContext(), true)
       ArchiveUtil.startKeepAliveWorker(requireContext())
     } else {
