@@ -3,6 +3,7 @@ package org.tm.archive;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.signal.qr.kitkat.ScanListener;
 import org.tm.archive.crypto.ProfileKeyUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
+import org.tm.archive.jobs.LinkedDeviceInactiveCheckJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.permissions.Permissions;
 import org.signal.core.util.Base64;
@@ -48,6 +50,8 @@ public class DeviceActivity extends PassphraseRequiredActivity
 
   private static final String TAG = Log.tag(DeviceActivity.class);
 
+  private static final String EXTRA_DIRECT_TO_SCANNER = "add";
+
   private final DynamicTheme    dynamicTheme    = new DynamicNoActionBarTheme();
   private final DynamicLanguage dynamicLanguage = new DynamicLanguage();
 
@@ -55,6 +59,13 @@ public class DeviceActivity extends PassphraseRequiredActivity
   private DeviceListFragment deviceListFragment;
   private DeviceLinkFragment deviceLinkFragment;
   private MenuItem           cameraSwitchItem = null;
+
+
+  public static Intent getIntentForScanner(Context context) {
+    Intent intent = new Intent(context, DeviceActivity.class);
+    intent.putExtra(EXTRA_DIRECT_TO_SCANNER, true);
+    return intent;
+  }
 
   @Override
   public void onPreCreate() {
@@ -79,7 +90,7 @@ public class DeviceActivity extends PassphraseRequiredActivity
     this.deviceListFragment.setAddDeviceButtonListener(this);
     this.deviceAddFragment.setScanListener(this);
 
-    if (getIntent().getBooleanExtra("add", false)) {
+    if (getIntent().getBooleanExtra(EXTRA_DIRECT_TO_SCANNER, false)) {
       initFragment(R.id.fragment_container, deviceAddFragment, dynamicLanguage.getCurrentLocale());
     } else {
       initFragment(R.id.fragment_container, deviceListFragment, dynamicLanguage.getCurrentLocale());
@@ -220,6 +231,8 @@ public class DeviceActivity extends PassphraseRequiredActivity
       @Override
       protected void onPostExecute(Integer result) {
         super.onPostExecute(result);
+
+        LinkedDeviceInactiveCheckJob.enqueue();
 
         Context context = DeviceActivity.this;
 

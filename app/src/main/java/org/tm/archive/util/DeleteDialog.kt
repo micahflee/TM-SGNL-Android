@@ -85,6 +85,7 @@ object DeleteDialog {
       messageRecords.forEach { message ->
         MessageSender.sendRemoteDelete(message.id)
       }
+
       emitter.onSuccess(Pair(true, false))
     }
   }

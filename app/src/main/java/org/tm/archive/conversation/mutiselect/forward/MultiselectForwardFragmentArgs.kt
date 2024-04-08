@@ -15,7 +15,6 @@ import org.tm.archive.attachments.Attachment
 import org.tm.archive.color.ViewColorSet
 import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.conversation.MessageStyler
-import org.tm.archive.conversation.mutiselect.Multiselect
 import org.tm.archive.conversation.mutiselect.MultiselectPart
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.model.MmsMessageRecord
@@ -23,7 +22,6 @@ import org.tm.archive.mediasend.Media
 import org.tm.archive.mms.PartAuthority
 import org.tm.archive.sharing.MultiShareArgs
 import org.tm.archive.stories.Stories
-import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.hasSharedContact
 import java.util.Optional
 import java.util.function.Consumer
@@ -41,7 +39,6 @@ import java.util.function.Consumer
  */
 @Parcelize
 data class MultiselectForwardFragmentArgs @JvmOverloads constructor(
-  val canSendToNonPush: Boolean,
   val multiShareArgs: List<MultiShareArgs> = listOf(),
   @StringRes val title: Int = R.string.MultiselectForwardFragment__forward_to,
   val forceDisableAddMessage: Boolean = false,
@@ -60,8 +57,6 @@ data class MultiselectForwardFragmentArgs @JvmOverloads constructor(
     @JvmStatic
     fun create(context: Context, threadId: Long, mediaUri: Uri, mediaType: String, consumer: Consumer<MultiselectForwardFragmentArgs>) {
       SignalExecutors.BOUNDED.execute {
-        val mediaSize = MediaUtil.getMediaSize(context, mediaUri)
-        val isMmsSupported = Multiselect.isMmsSupported(context, mediaUri, mediaType, mediaSize)
         val multiShareArgs = MultiShareArgs.Builder(setOf())
           .withDataUri(mediaUri)
           .withDataType(mediaType)
@@ -76,7 +71,6 @@ data class MultiselectForwardFragmentArgs @JvmOverloads constructor(
         ThreadUtil.runOnMain {
           consumer.accept(
             MultiselectForwardFragmentArgs(
-              isMmsSupported,
               listOf(multiShareArgs),
               storySendRequirements = Stories.MediaTransform.SendRequirements.CAN_NOT_SEND,
               sendButtonColors = sendButtonColors ?: ViewColorSet.PRIMARY
@@ -97,13 +91,11 @@ data class MultiselectForwardFragmentArgs @JvmOverloads constructor(
           throw AssertionError("Cannot forward view once media")
         }
 
-        val canSendToNonPush: Boolean = selectedParts.all { Multiselect.canSendToNonPush(context, it) }
         val multiShareArgs: List<MultiShareArgs> = conversationMessages.map { buildMultiShareArgs(context, it, selectedParts) }
 
         ThreadUtil.runOnMain {
           consumer.accept(
             MultiselectForwardFragmentArgs(
-              canSendToNonPush,
               multiShareArgs,
               storySendRequirements = Stories.MediaTransform.SendRequirements.CAN_NOT_SEND
             )

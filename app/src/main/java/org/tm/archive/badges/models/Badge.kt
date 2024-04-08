@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.compose.runtime.Stable
+import com.bumptech.glide.Glide
 import com.bumptech.glide.load.Key
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
@@ -14,7 +15,6 @@ import kotlinx.parcelize.Parcelize
 import org.tm.archive.R
 import org.tm.archive.badges.glide.BadgeSpriteTransformation
 import org.tm.archive.components.settings.PreferenceModel
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.util.ThemeUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
@@ -130,7 +130,7 @@ data class Badge(
 
       badge.alpha = if (model.badge.isExpired() || model.isFaded) 0.5f else 1f
 
-      GlideApp.with(badge)
+      Glide.with(badge)
         .load(model.badge)
         .downsample(DownsampleStrategy.NONE)
         .diskCacheStrategy(DiskCacheStrategy.NONE)

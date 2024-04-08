@@ -7,6 +7,7 @@ import org.signal.core.util.ThreadUtil
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.stickers.StickerSearchRepository
 import org.tm.archive.util.DefaultValueLiveData
+import org.tm.archive.util.FeatureFlags
 
 class KeyboardPagerViewModel : ViewModel() {
 
@@ -18,6 +19,11 @@ class KeyboardPagerViewModel : ViewModel() {
     if (SignalStore.settings().isPreferSystemEmoji) {
       startingPages.remove(KeyboardPage.EMOJI)
     }
+
+    if (!FeatureFlags.gifSearchAvailable()) {
+      startingPages.remove(KeyboardPage.GIF)
+    }
+
     pages = DefaultValueLiveData(startingPages)
     page = DefaultValueLiveData(startingPages.first())
 

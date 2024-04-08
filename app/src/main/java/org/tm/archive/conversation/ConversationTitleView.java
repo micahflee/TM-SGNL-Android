@@ -17,12 +17,12 @@ import androidx.core.content.ContextCompat;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
+import com.bumptech.glide.RequestManager;
 
 import org.tm.archive.R;
 import org.tm.archive.avatar.view.AvatarView;
 import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.database.model.StoryViewState;
-import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.ContextUtil;
 import org.tm.archive.util.DrawableUtil;
@@ -106,7 +106,7 @@ public class ConversationTitleView extends ConstraintLayout {
     updateSubtitleVisibility();
   }
 
-  public void setTitle(@NonNull GlideRequests glideRequests, @Nullable Recipient recipient) {
+  public void setTitle(@NonNull RequestManager requestManager, @Nullable Recipient recipient) {
     isSelf = recipient != null && recipient.isSelf();
 
     this.subtitleContainer.setVisibility(View.VISIBLE);
@@ -118,7 +118,8 @@ public class ConversationTitleView extends ConstraintLayout {
     Drawable endDrawable   = null;
 
     if (recipient != null && recipient.isBlocked()) {
-      startDrawable = ContextUtil.requireDrawable(getContext(), R.drawable.ic_block_white_18dp);
+      startDrawable = ContextUtil.requireDrawable(getContext(), R.drawable.symbol_block_16);
+      startDrawable.setBounds(0, 0, ViewUtil.dpToPx(18), ViewUtil.dpToPx(18));
     } else if (recipient != null && recipient.isMuted()) {
       startDrawable = ContextUtil.requireDrawable(getContext(), R.drawable.ic_bell_disabled_16);
       startDrawable.setBounds(0, 0, ViewUtil.dpToPx(18), ViewUtil.dpToPx(18));
@@ -143,7 +144,7 @@ public class ConversationTitleView extends ConstraintLayout {
     title.setCompoundDrawablesRelativeWithIntrinsicBounds(startDrawable, null, endDrawable, null);
 
     if (recipient != null) {
-      this.avatar.displayChatAvatar(glideRequests, recipient, false);
+      this.avatar.displayChatAvatar(requestManager, recipient, false);
     }
 
     if (recipient == null || recipient.isSelf()) {
@@ -206,7 +207,7 @@ public class ConversationTitleView extends ConstraintLayout {
   }
 
   private void setIndividualRecipientTitle(@NonNull Recipient recipient) {
-    final String displayName = recipient.getDisplayNameOrUsername(getContext());
+    final String displayName = recipient.getDisplayName(getContext());
     this.title.setText(displayName);
     this.subtitle.setText(null);
     updateSubtitleVisibility();

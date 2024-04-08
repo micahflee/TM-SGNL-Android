@@ -32,6 +32,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
+import com.bumptech.glide.Glide
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -58,7 +59,6 @@ import org.tm.archive.mediapreview.mediarail.MediaRailAdapter
 import org.tm.archive.mediapreview.mediarail.MediaRailAdapter.ImageLoadingListener
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mediasend.v2.MediaSelectionActivity
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.mms.PartAuthority
 import org.tm.archive.permissions.Permissions
 import org.tm.archive.recipients.Recipient
@@ -187,7 +187,7 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
       layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
       addItemDecoration(CenterDecoration(0))
       albumRailAdapter = MediaRailAdapter(
-        GlideApp.with(this@MediaPreviewV2Fragment),
+        Glide.with(this@MediaPreviewV2Fragment),
         { media -> jumpViewPagerToMedia(media) },
         object : ImageLoadingListener() {
           override fun onAllRequestsFinished() {
@@ -586,7 +586,7 @@ class MediaPreviewV2Fragment : LoggingFragment(R.layout.fragment_media_preview_v
     val attachment: DatabaseAttachment = mediaItem.attachment ?: return
 
     MaterialAlertDialogBuilder(requireContext()).apply {
-      setIcon(R.drawable.ic_warning)
+      setIcon(R.drawable.symbol_error_triangle_fill_24)
       setTitle(R.string.MediaPreviewActivity_media_delete_confirmation_title)
       setMessage(R.string.MediaPreviewActivity_media_delete_confirmation_message)
       setCancelable(true)

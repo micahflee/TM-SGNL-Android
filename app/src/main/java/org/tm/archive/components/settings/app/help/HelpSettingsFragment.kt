@@ -36,16 +36,14 @@ class HelpSettingsFragment : DSLSettingsFragment(R.string.preferences__help) {
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__version),
         summary = DSLSettingsText.from(BuildConfig.VERSION_NAME)
       )
-
-      //**TM_SA**//s
+//**TM_SA**//s
       /*clickPref(
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__debug_log),
         onClick = {
           Navigation.findNavController(requireView()).safeNavigate(R.id.action_helpSettingsFragment_to_submitDebugLogActivity)
         }
       )*/
-      //**TM_SA**//e
-
+//**TM_SA**//e
       clickPref(
         title = DSLSettingsText.from(R.string.HelpSettingsFragment__licenses),
         onClick = {

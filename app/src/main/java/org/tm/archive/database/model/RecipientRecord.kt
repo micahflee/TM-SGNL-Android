@@ -78,7 +78,9 @@ data class RecipientRecord(
   val needsPniSignature: Boolean,
   val hiddenState: Recipient.HiddenState,
   val callLinkRoomId: CallLinkRoomId?,
-  val phoneNumberSharing: PhoneNumberSharingState
+  val phoneNumberSharing: PhoneNumberSharingState,
+  val nickname: ProfileName,
+  val note: String?
 ) {
 
   fun e164Only(): Boolean {
@@ -111,17 +113,12 @@ data class RecipientRecord(
     val isArchived: Boolean,
     val isForcedUnread: Boolean,
     val unregisteredTimestamp: Long,
-    val systemNickname: String?
+    val systemNickname: String?,
+    val pniSignatureVerified: Boolean
   )
 
   data class Capabilities(
     val rawBits: Long,
-    val groupsV1MigrationCapability: Recipient.Capability,
-    val senderKeyCapability: Recipient.Capability,
-    val announcementGroupCapability: Recipient.Capability,
-    val changeNumberCapability: Recipient.Capability,
-    val storiesCapability: Recipient.Capability,
-    val giftBadgesCapability: Recipient.Capability,
     val pnpCapability: Recipient.Capability,
     val paymentActivation: Recipient.Capability
   ) {
@@ -129,12 +126,6 @@ data class RecipientRecord(
       @JvmField
       val UNKNOWN = Capabilities(
         0,
-        Recipient.Capability.UNKNOWN,
-        Recipient.Capability.UNKNOWN,
-        Recipient.Capability.UNKNOWN,
-        Recipient.Capability.UNKNOWN,
-        Recipient.Capability.UNKNOWN,
-        Recipient.Capability.UNKNOWN,
         Recipient.Capability.UNKNOWN,
         Recipient.Capability.UNKNOWN
       )

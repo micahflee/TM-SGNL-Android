@@ -68,35 +68,22 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.airbnb.lottie.SimpleColorFilter;
 import com.annimon.stream.Stream;
+import com.bumptech.glide.Glide;
 import com.google.android.material.animation.ArgbEvaluatorCompat;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
-import com.tm.androidcopysdk.CommonUtils;
-import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
-import com.tm.androidcopysdk.network.appSettings.WorkerIntentService;
-import com.tm.androidcopysdk.utils.PrefManager;
-import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator;
-import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator;
-import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus;
 
-import org.archiver.ArchivePreferenceConstants;
-import org.archiver.ArchiveUtil;
-import org.archiver.FCMConnector;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import org.intune.IntuneAuthManager;
-import org.jetbrains.annotations.NotNull;
-import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.DimensionUnit;
 import org.signal.core.util.Stopwatch;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
-import org.tm.archive.BuildConfig;
 import org.tm.archive.MainActivity;
 import org.tm.archive.MainFragment;
 import org.tm.archive.MainNavigator;
@@ -118,7 +105,6 @@ import org.tm.archive.components.reminder.CdsTemporaryErrorReminder;
 import org.tm.archive.components.reminder.DozeReminder;
 import org.tm.archive.components.reminder.ExpiredBuildReminder;
 import org.tm.archive.components.reminder.OutdatedBuildReminder;
-import org.tm.archive.components.reminder.PushRegistrationReminder;
 import org.tm.archive.components.reminder.Reminder;
 import org.tm.archive.components.reminder.ReminderView;
 import org.tm.archive.components.reminder.ServiceOutageReminder;
@@ -151,8 +137,8 @@ import org.tm.archive.database.ThreadTable;
 import org.tm.archive.database.model.ThreadRecord;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.events.ReminderUpdateEvent;
-import org.tm.archive.exporter.flow.SmsExportDialogs;
 import org.tm.archive.groups.SelectionLimits;
+import org.tm.archive.jobs.RefreshOwnProfileJob;
 import org.tm.archive.jobs.ServiceOutageDetectionJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.lock.v2.CreateSvrPinActivity;
@@ -163,12 +149,10 @@ import org.tm.archive.megaphone.Megaphone;
 import org.tm.archive.megaphone.MegaphoneActionController;
 import org.tm.archive.megaphone.MegaphoneViewBuilder;
 import org.tm.archive.megaphone.Megaphones;
-import org.tm.archive.megaphone.SmsExportMegaphoneActivity;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.notifications.MarkReadReceiver;
 import org.tm.archive.notifications.profiles.NotificationProfile;
 import org.tm.archive.permissions.Permissions;
-import org.tm.archive.profiles.manage.EditProfileActivity;
+import org.tm.archive.profiles.manage.UsernameEditFragment;
 import org.tm.archive.ratelimit.RecaptchaProofBottomSheetFragment;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -212,21 +196,19 @@ import java.util.stream.Collectors;
 
 import kotlin.Unit;
 
-import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 
 
 public class SignalConversationListFragment extends MainFragment implements ActionMode.Callback,//*TM_SA*/change ConversationListFragment to SignalConversationListFragment
                                                                       ConversationListAdapter.OnConversationClickListener,
                                                                       MegaphoneActionController, ClearFilterViewHolder.OnClearFilterClickListener
-
 {
   public static final short MESSAGE_REQUESTS_REQUEST_CODE_CREATE_NAME = 32562;
   public static final short SMS_ROLE_REQUEST_CODE                     = 32563;
 
   private static final int LIST_SMOOTH_SCROLL_TO_TOP_THRESHOLD = 25;
 
-  private static final String TAG = Log.tag(SignalConversationListFragment.class);
+  private static final String TAG = Log.tag(ConversationListFragment.class);
 
   private static final int MAXIMUM_PINNED_CONVERSATIONS = 4;
   private static final int MAX_CHATS_ABOVE_FOLD = 7;
@@ -261,6 +243,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
   private   Stopwatch                             startupStopwatch;
   private   ConversationListTabsViewModel         conversationListTabsViewModel;
   private   ContactSearchMediator                 contactSearchMediator;
+
   public static ConversationListFragment newInstance() {
     return new ConversationListFragment();
   }
@@ -279,7 +262,6 @@ public class SignalConversationListFragment extends MainFragment implements Acti
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
-    Log.d("ConversationListFragment", "onCreate");
     setHasOptionsMenu(true);
     startupStopwatch = new Stopwatch("startup");
   }
@@ -341,7 +323,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
                                                             storyContextMenuCallbacks,
                                                             callButtonClickCallbacks,
                                                             getViewLifecycleOwner(),
-                                                            GlideApp.with(this)
+                                                            Glide.with(this)
                                                         );
                                                       },
                                                       new ConversationListSearchAdapter.ChatFilterRepository()
@@ -433,7 +415,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
       @Override
       public void handleOnBackPressed() {
         if (!closeSearchIfOpen()) {
-          if (!NavHostFragment.findNavController(SignalConversationListFragment.this).popBackStack()) {
+          if (!NavHostFragment.findNavController(SignalConversationListFragment.this).popBackStack()) {//*TM_SA*/change to SignalConversationListFragment
             requireActivity().finish();
           }
         }
@@ -480,10 +462,10 @@ public class SignalConversationListFragment extends MainFragment implements Acti
   @Override
   public void onResume() {
     super.onResume();
-    Log.d("ConversationListFragment", "onResume");
+
     initializeSearchListener();
     updateReminders();
-
+    EventBus.getDefault().register(this);
     itemAnimator.disable();
     SpoilerAnnotation.resetRevealedSpoilers();
 
@@ -552,6 +534,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
     requireCallback().getSearchAction().setOnClickListener(null);
     fab.stopPulse();
     cameraFab.stopPulse();
+    EventBus.getDefault().unregister(this);
   }
 
   @Override
@@ -559,8 +542,6 @@ public class SignalConversationListFragment extends MainFragment implements Acti
     super.onStop();
     ApplicationDependencies.getAppForegroundObserver().removeListener(appForegroundObserver);
   }
-
-
 
   @Override
   public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
@@ -703,18 +684,14 @@ public class SignalConversationListFragment extends MainFragment implements Acti
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-    if (requestCode == SmsExportMegaphoneActivity.REQUEST_CODE) {
-      ApplicationDependencies.getMegaphoneRepository().markSeen(Megaphones.Event.SMS_EXPORT);
-      if (resultCode == RESULT_CANCELED) {
-        Snackbar.make(fab, R.string.ConversationActivity__you_will_be_reminded_again_soon, Snackbar.LENGTH_LONG).show();
-      } else {
-        SmsExportDialogs.showSmsRemovalDialog(requireContext(), fab);
-      }
-    }
-
     if (resultCode == RESULT_OK && requestCode == CreateSvrPinActivity.REQUEST_NEW_PIN) {
       Snackbar.make(fab, R.string.ConfirmKbsPinFragment__pin_created, Snackbar.LENGTH_LONG).show();
       viewModel.onMegaphoneCompleted(Megaphones.Event.PINS_FOR_ALL);
+    }
+
+    if (resultCode == RESULT_OK && requestCode == UsernameEditFragment.REQUEST_CODE) {
+      String snackbarString = getString(R.string.ConversationListFragment_username_recovered_toast, SignalStore.account().getUsername());
+      Snackbar.make(fab, snackbarString, Snackbar.LENGTH_LONG).show();
     }
   }
 
@@ -807,7 +784,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
     } else if (reminderActionId == R.id.reminder_action_cds_permanent_error_learn_more) {
       CdsPermanentErrorBottomSheet.show(getChildFragmentManager());
     } else if (reminderActionId == R.id.reminder_action_fix_username_and_link) {
-      startActivity(EditProfileActivity.getIntent(requireContext()));
+      startActivityForResult(AppSettingsActivity.usernameRecovery(requireContext()), UsernameEditFragment.REQUEST_CODE);
     } else if (reminderActionId == R.id.reminder_action_fix_username_link) {
       startActivity(AppSettingsActivity.usernameLinkSettings(requireContext()));
     } else if (reminderActionId == R.id.reminder_action_re_register) {
@@ -897,7 +874,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
 
 
   private void initializeListAdapters() {
-    defaultAdapter          = new ConversationListAdapter(getViewLifecycleOwner(), GlideApp.with(this), this, this);
+    defaultAdapter          = new ConversationListAdapter(getViewLifecycleOwner(), Glide.with(this), this, this);
 
     setAdapter(defaultAdapter);
 
@@ -914,7 +891,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
           @Override
           public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
             list.removeOnLayoutChangeListener(this);
-            list.post(SignalConversationListFragment.this::onFirstRender);
+            list.post(SignalConversationListFragment.this::onFirstRender);//*TM_SA*/change to SignalConversationListFragment
           }
         });
       }
@@ -1069,8 +1046,6 @@ public class SignalConversationListFragment extends MainFragment implements Acti
         return Optional.of(new ServiceOutageReminder());
       } else if (OutdatedBuildReminder.isEligible()) {
         return Optional.of(new OutdatedBuildReminder(context));
-      } else if (PushRegistrationReminder.isEligible()) {
-        return Optional.of((new PushRegistrationReminder(context)));
       } else if (DozeReminder.isEligible(context)) {
         return Optional.of(new DozeReminder(context));
       } else if (CdsTemporaryErrorReminder.isEligible()) {
@@ -1078,6 +1053,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
       } else if (CdsPermanentErrorReminder.isEligible()) {
         return Optional.of(new CdsPermanentErrorReminder());
       } else if (UsernameOutOfSyncReminder.isEligible()) {
+        ApplicationDependencies.getJobManager().add(new RefreshOwnProfileJob());
         return Optional.of(new UsernameOutOfSyncReminder());
       } else {
         return Optional.<Reminder>empty();
@@ -1224,7 +1200,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
           protected void onPreExecute() {
             dialog = SignalProgressDialog.show(requireActivity(),
                                                context.getString(R.string.ConversationListFragment_deleting),
-                                               context.getString(R.string.ConversationListFragment_deleting_selected_conversations),
+                                               context.getResources().getQuantityString(R.plurals.ConversationListFragment_deleting_selected_conversations, conversationsCount),
                                                true,
                                                false);
           }
@@ -1353,7 +1329,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
   }
 
   private void startActionMode() {
-    actionMode = ((AppCompatActivity) getActivity()).startSupportActionMode(SignalConversationListFragment.this);
+    actionMode = ((AppCompatActivity) getActivity()).startSupportActionMode(SignalConversationListFragment.this);//*TM_SA*/change to SignalConversationListFragment
     ViewUtil.animateIn(bottomActionBar, bottomActionBar.getEnterAnimation());
     ViewUtil.fadeOut(fab, 250);
     ViewUtil.fadeOut(cameraFab, 250);
@@ -1861,8 +1837,6 @@ public class SignalConversationListFragment extends MainFragment implements Acti
     }
   }
 
-
-
   public class ContactSearchClickCallbacks implements ConversationListSearchAdapter.ConversationListSearchClickCallbacks {//**TM_SA**//public
 
     private final ContactSearchAdapter.ClickCallbacks delegate;
@@ -1879,7 +1853,7 @@ public class SignalConversationListFragment extends MainFragment implements Acti
     @Override
     public void onMessageClicked(@NonNull View view, @NonNull ContactSearchData.Message thread, boolean isSelected) {
       SignalConversationListFragment.this.onMessageClicked(thread.getMessageResult());
-    }
+    }//*TM_SA*/change to SignalConversationListFragment
 
     @Override
     public void onGroupWithMembersClicked(@NonNull View view, @NonNull ContactSearchData.GroupWithMembers groupWithMembers, boolean isSelected) {
@@ -1911,8 +1885,6 @@ public class SignalConversationListFragment extends MainFragment implements Acti
       throw new UnsupportedOperationException();
     }
   }
-
-
 
   public interface Callback extends Material3OnScrollHelperBinder, SearchBinder {
     @NonNull Toolbar getToolbar();

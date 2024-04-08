@@ -3,9 +3,10 @@ package org.tm.archive;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
 
+import com.bumptech.glide.RequestManager;
+
 import org.tm.archive.conversationlist.model.ConversationSet;
 import org.tm.archive.database.model.ThreadRecord;
-import org.tm.archive.mms.GlideRequests;
 
 import java.util.Locale;
 import java.util.Set;
@@ -14,7 +15,7 @@ public interface BindableConversationListItem extends Unbindable {
 
   void bind(@NonNull LifecycleOwner lifecycleOwner,
             @NonNull ThreadRecord thread,
-            @NonNull GlideRequests glideRequests, @NonNull Locale locale,
+            @NonNull RequestManager requestManager, @NonNull Locale locale,
             @NonNull Set<Long> typingThreads,
             @NonNull ConversationSet selectedConversations);
 

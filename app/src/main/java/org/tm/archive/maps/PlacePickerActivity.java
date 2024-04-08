@@ -32,6 +32,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
+import org.signal.core.util.concurrent.ListenableFuture;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.components.location.SignalMapView;
@@ -40,7 +41,6 @@ import org.tm.archive.util.BitmapUtil;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.MediaUtil;
-import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.views.SimpleProgressDialog;
 
 import java.io.IOException;

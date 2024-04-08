@@ -220,9 +220,10 @@ object NotificationFactory {
       return
     }
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_SA*/return
+    val builder: NotificationBuilder = NotificationBuilder.create(context)
+
     builder.apply {
-      setSmallIcon(R.drawable.ic_notification)//**TM_SA**// change icon
+      setSmallIcon(R.drawable.ic_notification)
       setColor(ContextCompat.getColor(context, R.color.core_ultramarine))
       setCategory(NotificationCompat.CATEGORY_MESSAGE)
       setGroup(DefaultMessageNotifier.NOTIFICATION_GROUP)
@@ -268,7 +269,7 @@ object NotificationFactory {
       return
     }
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_SA*/return
+    val builder: NotificationBuilder = NotificationBuilder.create(context)
 
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)
@@ -352,11 +353,11 @@ object NotificationFactory {
         .build()
     }.makeUniqueToPreventMerging()
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_SA*/return
+    val builder: NotificationBuilder = NotificationBuilder.create(context)
 
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)
-      setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.ic_action_warning_red))
+      setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.symbol_error_triangle_fill_32))
       setContentTitle(context.getString(R.string.MessageNotifier_message_delivery_failed))
       setContentText(context.getString(R.string.MessageNotifier_failed_to_deliver_message))
       setTicker(context.getString(R.string.MessageNotifier_error_delivering_message))
@@ -392,7 +393,7 @@ object NotificationFactory {
       GeneratedContactPhoto("Unknown", R.drawable.ic_profile_outline_40).asDrawable(context, AvatarColor.UNKNOWN)
     }.toLargeBitmap(context)
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_SA*/return
+    val builder: NotificationBuilder = NotificationBuilder.create(context)
 
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)
@@ -422,7 +423,7 @@ object NotificationFactory {
         .build()
     }.makeUniqueToPreventMerging()
 
-    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_SA*/return
+    val builder: NotificationBuilder = NotificationBuilder.create(context)
 
     builder.apply {
       setSmallIcon(R.drawable.ic_notification)
@@ -441,7 +442,7 @@ object NotificationFactory {
 
   @JvmStatic
   fun notifyToBubbleConversation(context: Context, recipient: Recipient, threadId: Long) {
-    val builder: NotificationBuilder = NotificationBuilder.create(context) ?: return //*TM_SA*/return
+    val builder: NotificationBuilder = NotificationBuilder.create(context)
 
     val conversation = NotificationConversation(
       recipient = recipient,

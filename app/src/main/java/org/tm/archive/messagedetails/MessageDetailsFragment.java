@@ -11,20 +11,20 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestManager;
+
 import org.tm.archive.R;
 import org.tm.archive.components.FullScreenDialogFragment;
 import org.tm.archive.conversation.colors.Colorizer;
 import org.tm.archive.conversation.colors.RecyclerViewColorizer;
 import org.tm.archive.conversation.ui.edit.EditMessageHistoryDialog;
-import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.giph.mp4.GiphyMp4PlaybackController;
 import org.tm.archive.giph.mp4.GiphyMp4ProjectionPlayerHolder;
 import org.tm.archive.giph.mp4.GiphyMp4ProjectionRecycler;
 import org.tm.archive.messagedetails.MessageDetailsAdapter.MessageDetailsViewState;
 import org.tm.archive.messagedetails.MessageDetailsViewModel.Factory;
-import org.tm.archive.mms.GlideApp;
-import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.safety.SafetyNumberBottomSheet;
 import org.tm.archive.util.Material3OnScrollHelper;
@@ -39,7 +39,7 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment imple
   private static final String MESSAGE_ID_EXTRA = "message_id";
   private static final String RECIPIENT_EXTRA  = "recipient_id";
 
-  private GlideRequests           glideRequests;
+  private RequestManager          requestManager;
   private MessageDetailsViewModel viewModel;
   private MessageDetailsAdapter   adapter;
   private Colorizer               colorizer;
@@ -69,7 +69,7 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment imple
 
   @Override
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-    glideRequests = GlideApp.with(this);
+    requestManager = Glide.with(this);
 
     initializeList(view);
     initializeViewModel();
@@ -92,7 +92,7 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment imple
     View         toolbarShadow = view.findViewById(R.id.toolbar_shadow);
 
     colorizer             = new Colorizer();
-    adapter               = new MessageDetailsAdapter(getViewLifecycleOwner(), glideRequests, colorizer, this);
+    adapter               = new MessageDetailsAdapter(getViewLifecycleOwner(), requestManager, colorizer, this);
     recyclerViewColorizer = new RecyclerViewColorizer(list);
 
     list.setAdapter(adapter);
@@ -175,6 +175,11 @@ public final class MessageDetailsFragment extends FullScreenDialogFragment imple
     } else {
       EditMessageHistoryDialog.show(getParentFragmentManager(), record.getFromRecipient().getId(), record);
     }
+  }
+
+  @Override
+  public void onInternalDetailsClicked(MessageRecord record) {
+    InternalMessageDetailsFragment.create(record).show(getParentFragmentManager(), InternalMessageDetailsFragment.class.getSimpleName());
   }
 
   public interface Callback {

@@ -18,6 +18,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
@@ -32,7 +33,6 @@ import org.tm.archive.contacts.avatars.ContactPhoto;
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.ProfileContactPhoto;
 import org.tm.archive.contacts.avatars.ResourceContactPhoto;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.FullscreenHelper;
@@ -96,7 +96,7 @@ public final class AvatarPreviewActivity extends PassphraseRequiredActivity {
 
       Resources resources = this.getResources();
 
-      GlideApp.with(this)
+      Glide.with(this)
               .asBitmap()
               .load(contactPhoto)
               .fallback(fallbackPhoto.asCallCard(this))

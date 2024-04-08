@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.annimon.stream.Stream;
+import com.bumptech.glide.Glide;
 
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
@@ -18,7 +19,6 @@ import org.tm.archive.components.LinkPreviewView;
 import org.tm.archive.components.SelectionAwareEmojiEditText;
 import org.tm.archive.linkpreview.LinkPreviewRepository;
 import org.tm.archive.linkpreview.LinkPreviewViewModel;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.sharing.MultiShareDialogs;
@@ -156,7 +156,7 @@ public class ShareInterstitialActivity extends PassphraseRequiredActivity {
         preview.setLoading();
         viewModel.onLinkPreviewChanged(null);
       } else if (linkPreviewState.linkPreview.isPresent()) {
-        preview.setLinkPreview(GlideApp.with(this), linkPreviewState.linkPreview.get(), true);
+        preview.setLinkPreview(Glide.with(this), linkPreviewState.linkPreview.get(), true);
         viewModel.onLinkPreviewChanged(linkPreviewState.linkPreview.get());
       } else if (!linkPreviewState.hasLinks()) {
         preview.setVisibility(View.GONE);

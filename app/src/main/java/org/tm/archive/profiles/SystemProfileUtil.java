@@ -14,12 +14,12 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.signal.core.util.concurrent.ListenableFuture;
+import org.signal.core.util.concurrent.SettableFuture;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.mms.MediaConstraints;
 import org.tm.archive.util.BitmapDecodingException;
 import org.tm.archive.util.BitmapUtil;
-import org.tm.archive.util.concurrent.ListenableFuture;
-import org.tm.archive.util.concurrent.SettableFuture;
 
 public class SystemProfileUtil {
 

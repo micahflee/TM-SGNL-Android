@@ -17,6 +17,7 @@ import org.tm.archive.util.BitmapUtil;
 import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.MemoryFileDescriptor;
+import org.tm.archive.video.TranscodingPreset;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,13 +33,13 @@ public abstract class MediaConstraints {
     return new PushMediaConstraints(sentMediaQuality);
   }
 
-  public static MediaConstraints getMmsMediaConstraints(int subscriptionId) {
-    return new MmsMediaConstraints(subscriptionId);
-  }
-
   public abstract int getImageMaxWidth(Context context);
   public abstract int getImageMaxHeight(Context context);
   public abstract int getImageMaxSize(Context context);
+
+  public TranscodingPreset getVideoTranscodingSettings() {
+    return TranscodingPreset.LEVEL_1;
+  }
 
   public boolean isHighQuality() {
     return false;

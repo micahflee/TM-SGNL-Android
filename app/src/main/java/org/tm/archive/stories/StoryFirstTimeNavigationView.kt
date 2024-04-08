@@ -12,13 +12,13 @@ import android.view.View
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.airbnb.lottie.LottieAnimationView
+import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import org.tm.archive.R
 import org.tm.archive.blurhash.BlurHash
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.util.ContextUtil
 import org.tm.archive.util.visible
 
@@ -57,14 +57,14 @@ class StoryFirstTimeNavigationView @JvmOverloads constructor(
 
     gotIt.setOnClickListener {
       callback?.onGotItClicked()
-      GlideApp.with(this).clear(blurHashView)
+      Glide.with(this).clear(blurHashView)
       blurHashView.setImageDrawable(null)
       hide()
     }
 
     close.setOnClickListener {
       callback?.onCloseClicked()
-      GlideApp.with(this).clear(blurHashView)
+      Glide.with(this).clear(blurHashView)
       blurHashView.setImageDrawable(null)
       hide()
     }
@@ -81,7 +81,7 @@ class StoryFirstTimeNavigationView @JvmOverloads constructor(
       blurHashView.visible = false
       overlayView.visible = true
       overlayView.setImageDrawable(ColorDrawable(Color.argb(NO_BLUR_ALPHA, 0, 0, 0)))
-      GlideApp.with(this).clear(blurHashView)
+      Glide.with(this).clear(blurHashView)
       return
     } else {
       blurHashView.visible = true
@@ -89,7 +89,7 @@ class StoryFirstTimeNavigationView @JvmOverloads constructor(
       overlayView.setImageDrawable(ColorDrawable(Color.argb(BLUR_ALPHA, 0, 0, 0)))
     }
 
-    GlideApp.with(this)
+    Glide.with(this)
       .load(blurHash)
       .addListener(object : RequestListener<Drawable> {
         override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {

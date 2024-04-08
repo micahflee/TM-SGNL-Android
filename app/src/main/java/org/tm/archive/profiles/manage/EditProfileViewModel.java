@@ -24,8 +24,8 @@ import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientForeverObserver;
 import org.tm.archive.util.DefaultValueLiveData;
-import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.SingleLiveEvent;
+import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.whispersystems.signalservice.api.util.StreamDetails;
 
@@ -107,8 +107,12 @@ class EditProfileViewModel extends ViewModel {
     return UsernameRepository.deleteUsernameAndLink().observeOn(AndroidSchedulers.mainThread());
   }
 
-  public boolean shouldShowUsername() {
-    return FeatureFlags.usernames();
+  public boolean isRegisteredAndUpToDate() {
+    return !TextSecurePreferences.isUnauthorizedReceived(ApplicationDependencies.getApplication()) && SignalStore.account().isRegistered() && !SignalStore.misc().isClientDeprecated();
+  }
+
+  public boolean isDeprecated() {
+    return SignalStore.misc().isClientDeprecated();
   }
 
   public void onAvatarSelected(@NonNull Context context, @Nullable Media media) {

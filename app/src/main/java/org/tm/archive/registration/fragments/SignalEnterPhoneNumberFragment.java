@@ -1,8 +1,5 @@
 package org.tm.archive.registration.fragments;
 
-import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
-import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -67,7 +64,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.Disposable;
 
-public class SignalEnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks//**TM_SA**//change name, delete final
+import static org.tm.archive.registration.fragments.RegistrationViewDelegate.setDebugLogSubmitMultiTapView;
+import static org.tm.archive.registration.fragments.RegistrationViewDelegate.showConfirmNumberDialogIfTranslated;
+
+public class SignalEnterPhoneNumberFragment extends LoggingFragment implements RegistrationNumberInputController.Callbacks //**TM_SA**//change name, delete final
 {
 
   private static final String TAG = Log.tag(SignalEnterPhoneNumberFragment.class);
@@ -77,9 +77,7 @@ public class SignalEnterPhoneNumberFragment extends LoggingFragment implements R
   private CircularProgressMaterialButton register;
   private View                           cancel;
   private ScrollView                     scrollView;
-  RegistrationViewModel          viewModel;
-
-
+  RegistrationViewModel          viewModel;//**TM_SA**//delete private
 
   private final LifecycleDisposable disposables = new LifecycleDisposable();
 
@@ -147,9 +145,7 @@ public class SignalEnterPhoneNumberFragment extends LoggingFragment implements R
       viewModel.setAutoShowSmsConfirmDialog(false);
       ThreadUtil.runOnMainDelayed(() -> handleRegister(requireContext()), 250);
     }
-
   }
-
 
   private void showKeyboard(View viewToFocus) {
     viewToFocus.requestFocus();
@@ -172,7 +168,7 @@ public class SignalEnterPhoneNumberFragment extends LoggingFragment implements R
     }
   }
 
-  void handleRegister(@NonNull Context context) {
+  void handleRegister(@NonNull Context context) {//**TM_SA**//delete private
     if (viewModel.getNumber().getCountryCode() == 0) {
       showErrorDialog(context, getString(R.string.RegistrationActivity_you_must_specify_your_country_code));
       return;
@@ -373,7 +369,7 @@ public class SignalEnterPhoneNumberFragment extends LoggingFragment implements R
   }
 
   public void showErrorDialog(Context context, String msg, DialogInterface.OnClickListener positiveButtonListener) {
-    new MaterialAlertDialogBuilder(context).setMessage(msg).setPositiveButton(R.string.ok, positiveButtonListener).show();
+    new MaterialAlertDialogBuilder(context).setMessage(msg).setPositiveButton(android.R.string.ok, positiveButtonListener).show();
   }
 
   @Override
@@ -414,7 +410,7 @@ public class SignalEnterPhoneNumberFragment extends LoggingFragment implements R
                                     if (processor.hasResult() && processor.canSubmitProofImmediately()) {
                                       try {
                                         viewModel.restorePhoneNumberStateFromE164(sessionE164);
-                                        SafeNavigation.safeNavigate(navController, TMEnterPhoneNumberFragmentDirections.actionEnterVerificationCode());//*TM_SA*/ chane to TM..
+                                        SafeNavigation.safeNavigate(navController, TMEnterPhoneNumberFragmentDirections.actionEnterVerificationCode());//*TM_SA*/ change to TM..
                                       } catch (NumberParseException numberParseException) {
                                         viewModel.resetSession();
                                       }
@@ -503,5 +499,4 @@ public class SignalEnterPhoneNumberFragment extends LoggingFragment implements R
                  )
     );
   }
-
 }

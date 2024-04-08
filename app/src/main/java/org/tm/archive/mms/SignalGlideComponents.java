@@ -40,6 +40,7 @@ import org.tm.archive.glide.cache.EncryptedBitmapResourceEncoder;
 import org.tm.archive.glide.cache.EncryptedCacheDecoder;
 import org.tm.archive.glide.cache.EncryptedCacheEncoder;
 import org.tm.archive.glide.cache.EncryptedGifDrawableResourceEncoder;
+import org.tm.archive.glide.cache.WebpSanDecoder;
 import org.tm.archive.mms.AttachmentStreamUriLoader.AttachmentModel;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.stickers.StickerRemoteUri;
@@ -63,6 +64,8 @@ public class SignalGlideComponents implements RegisterGlideComponents {
     byte[]           secret           = attachmentSecret.getModernKey();
 
     registry.prepend(File.class, File.class, UnitModelLoader.Factory.getInstance());
+
+    registry.prepend(InputStream.class, Bitmap.class, new WebpSanDecoder());
 
     registry.prepend(InputStream.class, new EncryptedCacheEncoder(secret, glide.getArrayPool()));
 

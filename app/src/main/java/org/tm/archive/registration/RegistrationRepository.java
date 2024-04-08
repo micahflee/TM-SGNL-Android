@@ -8,8 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.tm.androidcopysdk.CommonUtils;
-
 import org.signal.core.util.logging.Log;
 import org.signal.libsignal.protocol.IdentityKeyPair;
 import org.signal.libsignal.protocol.state.KyberPreKeyRecord;
@@ -137,6 +135,8 @@ public final class RegistrationRepository {
     SignalStore.account().setAci(aci);
     SignalStore.account().setPni(pni);
 
+    ApplicationDependencies.resetProtocolStores();
+
     ApplicationDependencies.getProtocolStore().aci().sessions().archiveAllSessions();
     ApplicationDependencies.getProtocolStore().pni().sessions().archiveAllSessions();
     SenderKeyUtil.clearAllState();
@@ -183,7 +183,7 @@ public final class RegistrationRepository {
 
   public static PreKeyCollection generateSignedAndLastResortPreKeys(IdentityKeyPair identity, PreKeyMetadataStore metadataStore) {
     SignedPreKeyRecord      signedPreKey          = PreKeyUtil.generateSignedPreKey(metadataStore.getNextSignedPreKeyId(), identity.getPrivateKey());
-    KyberPreKeyRecord       lastResortKyberPreKey = PreKeyUtil.generateLastRestortKyberPreKey(metadataStore.getNextKyberPreKeyId(), identity.getPrivateKey());
+    KyberPreKeyRecord       lastResortKyberPreKey = PreKeyUtil.generateLastResortKyberPreKey(metadataStore.getNextKyberPreKeyId(), identity.getPrivateKey());
 
     return new PreKeyCollection(
         identity.getPublicKey(),

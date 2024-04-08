@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
@@ -17,7 +18,6 @@ import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mms.DecryptableStreamUriLoader
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.stories.StoryTextPostModel
 import org.tm.archive.util.DateUtils
 import org.tm.archive.util.DebouncedOnClickListener
@@ -136,14 +136,14 @@ object MyStoriesItem {
       clearGlide()
       storyBlur.visible = blur != null
       if (blur != null) {
-        GlideApp.with(storyBlur).load(blur).into(storyBlur)
+        Glide.with(storyBlur).load(blur).into(storyBlur)
       }
 
       @Suppress("CascadeIf")
       if (record.storyType.isTextStory) {
         storyBlur.visible = false
         val storyTextPostModel = StoryTextPostModel.parseFrom(record)
-        GlideApp.with(storyPreview)
+        Glide.with(storyPreview)
           .load(storyTextPostModel)
           .placeholder(storyTextPostModel.getPlaceholder())
           .centerCrop()
@@ -151,7 +151,7 @@ object MyStoriesItem {
           .into(storyPreview)
       } else if (thumbnail != null) {
         storyBlur.visible = blur != null
-        GlideApp.with(storyPreview)
+        Glide.with(storyPreview)
           .load(DecryptableStreamUriLoader.DecryptableUri(thumbnail))
           .addListener(HideBlurAfterLoadListener())
           .centerCrop()
@@ -207,8 +207,8 @@ object MyStoriesItem {
     }
 
     private fun clearGlide() {
-      GlideApp.with(storyPreview).clear(storyPreview)
-      GlideApp.with(storyBlur).clear(storyBlur)
+      Glide.with(storyPreview).clear(storyPreview)
+      Glide.with(storyBlur).clear(storyBlur)
     }
   }
 }

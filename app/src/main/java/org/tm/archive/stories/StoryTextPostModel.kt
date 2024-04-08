@@ -10,6 +10,7 @@ import android.view.ContextThemeWrapper
 import android.view.View
 import androidx.core.graphics.scale
 import androidx.core.view.drawToBitmap
+import com.bumptech.glide.Glide
 import com.bumptech.glide.load.Key
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.ResourceDecoder
@@ -30,7 +31,6 @@ import org.tm.archive.fonts.TextFont
 import org.tm.archive.fonts.TextToScript
 import org.tm.archive.fonts.TypefaceCache
 import org.tm.archive.mms.DecryptableStreamUriLoader
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.ParcelUtil
 import java.io.IOException
@@ -148,7 +148,7 @@ data class StoryTextPostModel(
       view.layout(0, 0, view.measuredWidth, view.measuredHeight)
 
       val drawable = if (linkPreview != null && linkPreview.thumbnail.isPresent) {
-        GlideApp
+        Glide
           .with(view)
           .load(DecryptableStreamUriLoader.DecryptableUri(linkPreview.thumbnail.get().uri!!))
           .centerCrop()

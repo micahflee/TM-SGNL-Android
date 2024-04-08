@@ -32,9 +32,13 @@ import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.signal.core.util.ThreadUtil;
+import org.signal.core.util.concurrent.ListenableFuture;
+import org.signal.core.util.concurrent.SettableFuture;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.animation.AnimationCompleteListener;
@@ -49,9 +53,9 @@ import org.tm.archive.conversation.ConversationStickerSuggestionAdapter;
 import org.tm.archive.conversation.MessageStyler;
 import org.tm.archive.conversation.VoiceNoteDraftView;
 import org.tm.archive.database.DraftTable;
-import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.database.model.MessageId;
 import org.tm.archive.database.model.MessageRecord;
+import org.tm.archive.database.model.MmsMessageRecord;
 import org.tm.archive.database.model.Quote;
 import org.tm.archive.database.model.StickerRecord;
 import org.tm.archive.keyboard.KeyboardPage;
@@ -59,8 +63,6 @@ import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.linkpreview.LinkPreviewRepository;
 import org.tm.archive.mms.DecryptableStreamUriLoader;
-import org.tm.archive.mms.GlideApp;
-import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.mms.QuoteModel;
 import org.tm.archive.mms.Slide;
 import org.tm.archive.mms.SlideDeck;
@@ -69,8 +71,6 @@ import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.MessageRecordUtil;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.concurrent.AssertedSuccessListener;
-import org.tm.archive.util.concurrent.ListenableFuture;
-import org.tm.archive.util.concurrent.SettableFuture;
 
 import java.util.Arrays;
 import java.util.List;
@@ -184,7 +184,7 @@ public class InputPanel extends ConstraintLayout
       }
     });
 
-    stickerSuggestionAdapter = new ConversationStickerSuggestionAdapter(GlideApp.with(this), this);
+    stickerSuggestionAdapter = new ConversationStickerSuggestionAdapter(Glide.with(this), this);
 
     stickerSuggestion.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
     stickerSuggestion.setAdapter(stickerSuggestionAdapter);
@@ -212,14 +212,14 @@ public class InputPanel extends ConstraintLayout
     composeText.setMediaListener(listener);
   }
 
-  public void setQuote(@NonNull GlideRequests glideRequests,
+  public void setQuote(@NonNull RequestManager requestManager,
                        long id,
                        @NonNull Recipient author,
                        @Nullable CharSequence body,
                        @NonNull SlideDeck attachments,
                        @NonNull QuoteModel.Type quoteType)
   {
-    this.quoteView.setQuote(glideRequests, id, author, body, false, attachments, null, quoteType);
+    this.quoteView.setQuote(requestManager, id, author, body, false, attachments, null, quoteType);
 
     int originalHeight = this.quoteView.getVisibility() == VISIBLE ? this.quoteView.getMeasuredHeight()
                                                                    : 0;
@@ -325,10 +325,10 @@ public class InputPanel extends ConstraintLayout
     this.linkPreview.setNoPreview(customError);
   }
 
-  public void setLinkPreview(@NonNull GlideRequests glideRequests, @NonNull Optional<LinkPreview> preview) {
+  public void setLinkPreview(@NonNull RequestManager requestManager, @NonNull Optional<LinkPreview> preview) {
     if (preview.isPresent()) {
       this.linkPreview.setVisibility(View.VISIBLE);
-      this.linkPreview.setLinkPreview(glideRequests, preview.get(), true);
+      this.linkPreview.setLinkPreview(requestManager, preview.get(), true);
     } else {
       this.linkPreview.setVisibility(View.GONE);
     }
@@ -404,7 +404,7 @@ public class InputPanel extends ConstraintLayout
     quoteView.setWallpaperEnabled(enabled);
   }
 
-  public void enterEditMessageMode(@NonNull GlideRequests glideRequests, @NonNull ConversationMessage conversationMessageToEdit, boolean fromDraft) {
+  public void enterEditMessageMode(@NonNull RequestManager requestManager, @NonNull ConversationMessage conversationMessageToEdit, boolean fromDraft) {
     SpannableString textToEdit = conversationMessageToEdit.getDisplayBody(getContext());
     if (!fromDraft) {
       MessageStyler.convertSpoilersToComposeMode(textToEdit);
@@ -415,14 +415,14 @@ public class InputPanel extends ConstraintLayout
     if (quote == null) {
       clearQuote();
     } else {
-      setQuote(glideRequests, quote.getId(), Recipient.resolved(quote.getAuthor()), quote.getDisplayText(), quote.getAttachment(), quote.getQuoteType());
+      setQuote(requestManager, quote.getId(), Recipient.resolved(quote.getAuthor()), quote.getDisplayText(), quote.getAttachment(), quote.getQuoteType());
     }
     this.messageToEdit = conversationMessageToEdit.getMessageRecord();
-    updateEditModeThumbnail(glideRequests);
+    updateEditModeThumbnail(requestManager);
     updateEditModeUi();
   }
 
-  private void updateEditModeThumbnail(@NonNull GlideRequests glideRequests) {
+  private void updateEditModeThumbnail(@NonNull RequestManager requestManager) {
     if (messageToEdit instanceof MmsMessageRecord) {
       MmsMessageRecord mediaEditMessage = (MmsMessageRecord) messageToEdit;
       SlideDeck        slideDeck        = mediaEditMessage.getSlideDeck();
@@ -430,7 +430,7 @@ public class InputPanel extends ConstraintLayout
 
       if (imageVideoSlide != null && imageVideoSlide.getUri() != null) {
         editMessageThumbnail.setVisibility(VISIBLE);
-        glideRequests.load(new DecryptableStreamUriLoader.DecryptableUri(imageVideoSlide.getUri()))
+        requestManager.load(new DecryptableStreamUriLoader.DecryptableUri(imageVideoSlide.getUri()))
                      .centerCrop()
                      .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                      .into(editMessageThumbnail);

@@ -2,7 +2,9 @@ package org.tm.archive.testing
 
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+import org.signal.core.util.deleteAll
 import org.tm.archive.database.SignalDatabase
+import org.tm.archive.database.ThreadTable
 import org.tm.archive.keyvalue.SignalStore
 import org.whispersystems.signalservice.api.push.ServiceId.ACI
 import org.whispersystems.signalservice.api.push.ServiceId.PNI
@@ -34,7 +36,8 @@ class SignalDatabaseRule(
 
   private fun deleteAllThreads() {
     if (deleteAllThreadsOnEachRun) {
-      SignalDatabase.threads.clearForTests()
+      SignalDatabase.threads.deleteAllConversations()
+      SignalDatabase.rawDatabase.deleteAll(ThreadTable.TABLE_NAME)
     }
   }
 }

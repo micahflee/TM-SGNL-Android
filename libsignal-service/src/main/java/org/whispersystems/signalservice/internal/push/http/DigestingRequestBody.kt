@@ -25,7 +25,7 @@ class DigestingRequestBody(
   private val progressListener: SignalServiceAttachment.ProgressListener?,
   private val cancelationSignal: CancelationSignal?,
   private val contentStart: Long
-) : RequestBody() { //**TM_SA**//delete repeatableRequestBody
+) : RequestBody() {//**TM_SA**//delete repeatableRequestBody
   var attachmentDigest: AttachmentDigest? = null
 
   init {

@@ -78,17 +78,6 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
   val kyberPreKeyTable: KyberPreKeyTable = KyberPreKeyTable(context, this)
   val callLinkTable: CallLinkTable = CallLinkTable(context, this)
 
-  override fun messageDao(): IArchiveMessageDao<Long> = messageTable as TeleMessageTable
-
-  override fun beginTransaction() {}
-
-  override fun endTransaction() {}
-
-  override fun setTransactionSuccessful() {}
-
-  override fun isInTransaction() = false
-
-
   override fun onOpen(db: net.zetetic.database.sqlcipher.SQLiteDatabase) {
     db.setForeignKeyConstraintsEnabled(true)
   }
@@ -542,4 +531,15 @@ open class SignalDatabase(private val context: Application, databaseSecret: Data
     val callLinks: CallLinkTable
       get() = instance!!.callLinkTable
   }
+  // TM_SA implement IDatabase start
+  override fun beginTransaction() {}
+
+  override fun endTransaction() {}
+
+  override fun isInTransaction(): Boolean  = false
+
+  override fun messageDao(): IArchiveMessageDao<Long> = messageTable as TeleMessageTable
+
+  override fun setTransactionSuccessful() {}
+  // TM_SA implement IDatabase end
 }

@@ -1,11 +1,11 @@
 package org.tm.archive.components.settings.conversation.preferences
 
 import android.view.View
+import com.bumptech.glide.Glide
 import org.tm.archive.R
 import org.tm.archive.components.ThreadPhotoRailView
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.database.MediaTable
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
@@ -40,7 +40,7 @@ object SharedMediaPreference {
     private val rail: ThreadPhotoRailView = itemView.findViewById(R.id.rail_view)
 
     override fun bind(model: Model) {
-      rail.setMediaRecords(GlideApp.with(rail), model.mediaRecords)
+      rail.setMediaRecords(Glide.with(rail), model.mediaRecords)
       rail.setListener { v, m ->
         model.onMediaRecordClick(v, m, ViewUtil.isLtr(rail))
       }

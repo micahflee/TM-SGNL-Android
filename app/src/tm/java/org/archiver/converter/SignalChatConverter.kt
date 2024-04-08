@@ -1,7 +1,6 @@
 package org.archiver.converter
 
 import android.content.Context
-import com.klinker.android.send_message.Utils
 import com.tm.androidcopysdk.model.ArchiveChat
 import com.tm.androidcopysdk.model.ChatType
 import org.archiver.model.Messages.chatRecipient

@@ -10,10 +10,7 @@ import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
-import com.tm.androidcopysdk.CommonUtils
-import com.tm.androidcopysdk.utils.PrefManager
 import me.leolin.shortcutbadger.ShortcutBadger
-import org.selfAuthentication.SelfAuthenticatorManager
 import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.logging.Log
 import org.tm.archive.R
@@ -113,14 +110,6 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
       Log.i(TAG, "Scheduling delayed notification...")
       executor.enqueue(context, conversationId)
     } else {
-      //**TM_SA**//Start
-      /*val isAlreadyDoneSelfAuthentication = PrefManager.getBooleanPref(context, "isAlreadyDoneSelfAuthentication", false)
-      .Log.d("SelfAuthenticatorProcess", "onCreate = isAlreadyDoneSelfAuthentication = $isAlreadyDoneSelfAuthentication")*/
-
-      if(!CommonUtils.isActivatedUser(context)){
-        return
-      }
-      //**TM_SA**//End
       updateNotification(context, conversationId, BubbleState.HIDDEN)
     }
   }

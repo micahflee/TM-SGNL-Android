@@ -8,12 +8,12 @@ import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.setPadding
 import com.airbnb.lottie.SimpleColorFilter
+import com.bumptech.glide.Glide
 import org.tm.archive.R
 import org.tm.archive.avatar.Avatar
 import org.tm.archive.avatar.AvatarRenderer
 import org.tm.archive.avatar.Avatars
 import org.tm.archive.mms.DecryptableStreamUriLoader
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingModel
@@ -132,12 +132,12 @@ object AvatarPickerItem {
         }
         is Avatar.Photo -> {
           textView.visible = false
-          GlideApp.with(imageView).load(DecryptableStreamUriLoader.DecryptableUri(model.avatar.uri)).into(imageView)
+          Glide.with(imageView).load(DecryptableStreamUriLoader.DecryptableUri(model.avatar.uri)).into(imageView)
         }
         is Avatar.Resource -> {
           imageView.setPadding((imageView.width * 0.2).toInt())
           textView.visible = false
-          GlideApp.with(imageView).clear(imageView)
+          Glide.with(imageView).clear(imageView)
           imageView.setImageResource(model.avatar.resourceId)
           imageView.colorFilter = SimpleColorFilter(model.avatar.color.foregroundColor)
           imageView.background.colorFilter = SimpleColorFilter(model.avatar.color.backgroundColor)

@@ -24,6 +24,7 @@ import androidx.annotation.RequiresApi;
 import androidx.annotation.WorkerThread;
 import androidx.exifinterface.media.ExifInterface;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 
@@ -36,7 +37,6 @@ import org.tm.archive.mms.AudioSlide;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.tm.archive.mms.DocumentSlide;
 import org.tm.archive.mms.GifSlide;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.ImageSlide;
 import org.tm.archive.mms.MmsSlide;
 import org.tm.archive.mms.PartAuthority;
@@ -202,7 +202,7 @@ public class MediaUtil {
 
     if (MediaUtil.isGif(contentType)) {
       try {
-        GifDrawable drawable = GlideApp.with(context)
+        GifDrawable drawable = Glide.with(context)
                                        .asGif()
                                        .skipMemoryCache(true)
                                        .diskCacheStrategy(DiskCacheStrategy.NONE)

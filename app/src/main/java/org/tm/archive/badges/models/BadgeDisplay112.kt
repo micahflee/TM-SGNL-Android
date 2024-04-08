@@ -2,10 +2,10 @@ package org.tm.archive.badges.models
 
 import android.view.View
 import android.widget.TextView
+import com.bumptech.glide.Glide
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.database.model.databaseprotos.GiftBadge
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingModel
@@ -49,7 +49,7 @@ object BadgeDisplay112 {
 
     override fun bind(model: GiftModel) {
       titleView.visible = false
-      badgeImageView.setGiftBadge(model.giftBadge, GlideApp.with(badgeImageView))
+      badgeImageView.setGiftBadge(model.giftBadge, Glide.with(badgeImageView))
     }
   }
 }

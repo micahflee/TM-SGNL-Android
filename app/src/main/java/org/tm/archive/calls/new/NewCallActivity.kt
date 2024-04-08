@@ -16,16 +16,14 @@ import org.tm.archive.ContactSelectionListFragment
 import org.tm.archive.InviteActivity
 import org.tm.archive.R
 import org.tm.archive.contacts.ContactSelectionDisplayMode
-import org.tm.archive.contacts.sync.ContactDiscovery.refresh
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.recipients.RecipientRepository
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.views.SimpleProgressDialog
-import java.io.IOException
 import java.util.Optional
 import java.util.function.Consumer
-import kotlin.time.Duration.Companion.seconds
 
 class NewCallActivity : ContactSelectionActivity(), ContactSelectionListFragment.NewCallCallback {
 
@@ -40,42 +38,42 @@ class NewCallActivity : ContactSelectionActivity(), ContactSelectionListFragment
   override fun onSelectionChanged() = Unit
 
   override fun onBeforeContactSelected(isFromUnknownSearchKey: Boolean, recipientId: Optional<RecipientId?>, number: String?, callback: Consumer<Boolean?>) {
-    if (isFromUnknownSearchKey) {
+    if (recipientId.isPresent) {
+      launch(Recipient.resolved(recipientId.get()))
+    } else {
       Log.i(TAG, "[onContactSelected] Maybe creating a new recipient.")
       if (SignalStore.account().isRegistered) {
         Log.i(TAG, "[onContactSelected] Doing contact refresh.")
+
         val progress = SimpleProgressDialog.show(this)
-        SimpleTask.run<Recipient>(lifecycle, {
-          var resolved = Recipient.external(this, number!!)
-          if (!resolved.isRegistered || !resolved.hasServiceId()) {
-            Log.i(TAG, "[onContactSelected] Not registered or no UUID. Doing a directory refresh.")
-            resolved = try {
-              refresh(this, resolved, false, 10.seconds.inWholeMilliseconds)
-              Recipient.resolved(resolved.id)
-            } catch (e: IOException) {
-              Log.w(TAG, "[onContactSelected] Failed to refresh directory for new contact.")
-              return@run null
-            }
-          }
-          resolved
-        }) { resolved: Recipient? ->
+
+        SimpleTask.run(lifecycle, { RecipientRepository.lookupNewE164(this, number!!) }, { result ->
           progress.dismiss()
-          if (resolved != null) {
-            if (resolved.isRegistered && resolved.hasServiceId()) {
-              launch(resolved)
-            } else {
+
+          when (result) {
+            is RecipientRepository.LookupResult.Success -> {
+              val resolved = Recipient.resolved(result.recipientId)
+              if (resolved.isRegistered && resolved.hasServiceId()) {
+                launch(resolved)
+              }
+            }
+
+            is RecipientRepository.LookupResult.NotFound,
+            is RecipientRepository.LookupResult.InvalidEntry -> {
               MaterialAlertDialogBuilder(this)
-                .setMessage(getString(R.string.NewConversationActivity__s_is_not_a_signal_user, resolved.getDisplayName(this)))
+                .setMessage(getString(R.string.NewConversationActivity__s_is_not_a_signal_user, number))
                 .setPositiveButton(android.R.string.ok, null)
                 .show()
             }
-          } else {
-            MaterialAlertDialogBuilder(this)
-              .setMessage(R.string.NetworkFailure__network_error_check_your_connection_and_try_again)
-              .setPositiveButton(android.R.string.ok, null)
-              .show()
+
+            else -> {
+              MaterialAlertDialogBuilder(this)
+                .setMessage(R.string.NetworkFailure__network_error_check_your_connection_and_try_again)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+            }
           }
-        }
+        })
       }
     }
     callback.accept(true)

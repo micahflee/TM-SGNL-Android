@@ -6,16 +6,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
-import android.graphics.drawable.Drawable
 import android.net.ConnectivityManager
 import android.text.SpannableStringBuilder
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.tm.archive.R
 import org.tm.archive.components.SignalProgressDialog
 import org.tm.archive.components.settings.DSLConfiguration
@@ -24,7 +20,6 @@ import org.tm.archive.components.settings.DSLSettingsText
 import org.tm.archive.components.settings.configure
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.phonenumbers.PhoneNumberFormatter
-import org.tm.archive.registration.RegistrationNavigationActivity
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.SpanUtil
 import org.tm.archive.util.ViewUtil
@@ -107,40 +102,6 @@ class AdvancedPrivacySettingsFragment : DSLSettingsFragment(R.string.preferences
 
   private fun getConfiguration(state: AdvancedPrivacySettingsState): DSLConfiguration {
     return configure {
-      switchPref(
-        title = DSLSettingsText.from(R.string.preferences__signal_messages_and_calls),
-        summary = DSLSettingsText.from(getPushToggleSummary(state.isPushEnabled)),
-        isChecked = state.isPushEnabled
-      ) {
-        if (state.isPushEnabled) {
-          val builder = MaterialAlertDialogBuilder(requireContext()).apply {
-            setMessage(R.string.ApplicationPreferencesActivity_disable_signal_messages_and_calls_by_unregistering)
-            setNegativeButton(android.R.string.cancel, null)
-            setPositiveButton(
-              android.R.string.ok
-            ) { _, _ -> viewModel.disablePushMessages() }
-          }
-
-          val icon: Drawable = requireNotNull(ContextCompat.getDrawable(builder.context, R.drawable.symbol_info_24))
-          icon.setBounds(0, 0, ViewUtil.dpToPx(32), ViewUtil.dpToPx(32))
-
-          val title = TextView(builder.context)
-          val padding = ViewUtil.dpToPx(16)
-          title.setText(R.string.ApplicationPreferencesActivity_disable_signal_messages_and_calls)
-          title.setPadding(padding, padding, padding, padding)
-          title.compoundDrawablePadding = padding / 2
-          TextViewCompat.setTextAppearance(title, R.style.TextAppearance_Signal_Title2_MaterialDialog)
-          TextViewCompat.setCompoundDrawablesRelative(title, icon, null, null, null)
-
-          builder
-            .setCustomTitle(title)
-            .setOnDismissListener { viewModel.refresh() }
-            .show()
-        } else {
-          startActivity(RegistrationNavigationActivity.newIntentForReRegistration(requireContext()))
-        }
-      }
-
       switchPref(
         title = DSLSettingsText.from(R.string.preferences_advanced__always_relay_calls),
         summary = DSLSettingsText.from(R.string.preferences_advanced__relay_all_calls_through_the_signal_server_to_avoid_revealing_your_ip_address),

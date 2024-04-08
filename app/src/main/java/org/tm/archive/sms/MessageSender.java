@@ -52,14 +52,12 @@ import org.tm.archive.jobs.AttachmentCompressionJob;
 import org.tm.archive.jobs.AttachmentCopyJob;
 import org.tm.archive.jobs.AttachmentMarkUploadedJob;
 import org.tm.archive.jobs.AttachmentUploadJob;
-import org.tm.archive.jobs.MmsSendJob;
 import org.tm.archive.jobs.ProfileKeySendJob;
 import org.tm.archive.jobs.PushDistributionListSendJob;
 import org.tm.archive.jobs.PushGroupSendJob;
 import org.tm.archive.jobs.IndividualSendJob;
 import org.tm.archive.jobs.ReactionSendJob;
 import org.tm.archive.jobs.RemoteDeleteSendJob;
-import org.tm.archive.jobs.SmsSendJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mediasend.Media;
@@ -232,10 +230,14 @@ public class MessageSender {
       Recipient recipient         = message.getThreadRecipient();
       long      messageId         = database.insertMessageOutbox(applyUniversalExpireTimerIfNecessary(context, recipient, message, allocatedThreadId), allocatedThreadId, sendType != SendType.SIGNAL, insertListener);
 
-      if (message.getThreadRecipient().isGroup() && message.getAttachments().isEmpty() && message.getLinkPreviews().isEmpty() && message.getSharedContacts().isEmpty()) {
-        SignalLocalMetrics.GroupMessageSend.onInsertedIntoDatabase(messageId, metricId);
+      if (message.getThreadRecipient().isGroup()) {
+        if (message.getAttachments().isEmpty() && message.getLinkPreviews().isEmpty() && message.getSharedContacts().isEmpty()) {
+          SignalLocalMetrics.GroupMessageSend.onInsertedIntoDatabase(messageId, metricId);
+        } else {
+          SignalLocalMetrics.GroupMessageSend.cancel(messageId);
+        }
       } else {
-        SignalLocalMetrics.GroupMessageSend.cancel(metricId);
+        SignalLocalMetrics.IndividualMessageSend.onInsertedIntoDatabase(messageId, metricId);
       }
 
       sendMessageInternal(context, recipient, sendType, messageId, Collections.emptyList(), message.getScheduledDate() > 0);
@@ -532,10 +534,8 @@ public class MessageSender {
       sendDistributionList(context, recipient, messageId, Collections.emptySet(), uploadJobIds);
     } else if (sendType == SendType.SIGNAL && isPushMediaSend(context, recipient)) {
       sendMediaPush(context, recipient, messageId, uploadJobIds);
-    } else if (sendType == SendType.MMS) {
-      sendMms(context, messageId);
     } else {
-      sendSms(recipient, messageId);
+      Log.w(TAG, "Unknown send type!");
     }
   }
 
@@ -570,16 +570,6 @@ public class MessageSender {
     } else {
       PushDistributionListSendJob.enqueue(context, jobManager, messageId, recipient.getId(), filterRecipientIds);
     }
-  }
-
-  private static void sendMms(Context context, long messageId) {
-    JobManager jobManager = ApplicationDependencies.getJobManager();
-    MmsSendJob.enqueue(context, jobManager, messageId);
-  }
-
-  private static void sendSms(Recipient recipient, long messageId) {
-    JobManager jobManager = ApplicationDependencies.getJobManager();
-    jobManager.add(new SmsSendJob(messageId, recipient));
   }
 
   private static boolean isPushMediaSend(Context context, Recipient recipient) {

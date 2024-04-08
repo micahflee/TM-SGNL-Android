@@ -28,7 +28,7 @@ import java.util.Objects;
  * screen lock.
  */
 public abstract class SignalBaseActivity extends AppCompatActivity {//*TM_SA*/change BaseActivity to SignalBaseActivity
-  private static final String TAG = Log.tag(SignalBaseActivity.class);
+  private static final String TAG = Log.tag(BaseActivity.class);
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {

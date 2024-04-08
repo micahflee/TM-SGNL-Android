@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-abstract class SignalStoreValues {
+public abstract class SignalStoreValues {//**TM_SA**//make public
 
   private final KeyValueStore store;
 

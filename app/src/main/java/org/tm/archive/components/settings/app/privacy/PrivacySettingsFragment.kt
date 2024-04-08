@@ -40,7 +40,6 @@ import org.tm.archive.service.KeyCachingService
 import org.tm.archive.util.CommunicationActions
 import org.tm.archive.util.ConversationUtil
 import org.tm.archive.util.ExpirationUtil
-import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.ServiceUtil
 import org.tm.archive.util.SpanUtil
 import org.tm.archive.util.TextSecurePreferences
@@ -119,18 +118,16 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
 
   private fun getConfiguration(state: PrivacySettingsState): DSLConfiguration {
     return configure {
-      if (FeatureFlags.phoneNumberPrivacy()) {
-        clickPref(
-          title = DSLSettingsText.from(R.string.preferences_app_protection__phone_number),
-          summary = DSLSettingsText.from(R.string.preferences_app_protection__choose_who_can_see),
-          onClick = {
-            Navigation.findNavController(requireView())
-              .safeNavigate(R.id.action_privacySettingsFragment_to_phoneNumberPrivacySettingsFragment)
-          }
-        )
+      clickPref(
+        title = DSLSettingsText.from(R.string.preferences_app_protection__phone_number),
+        summary = DSLSettingsText.from(R.string.preferences_app_protection__choose_who_can_see),
+        onClick = {
+          Navigation.findNavController(requireView())
+            .safeNavigate(R.id.action_privacySettingsFragment_to_phoneNumberPrivacySettingsFragment)
+        }
+      )
 
-        dividerPref()
-      }
+      dividerPref()
 
       clickPref(
         title = DSLSettingsText.from(R.string.PrivacySettingsFragment__blocked),
@@ -193,7 +190,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
             MaterialAlertDialogBuilder(requireContext()).apply {
               setTitle(R.string.ApplicationPreferencesActivity_disable_passphrase)
               setMessage(R.string.ApplicationPreferencesActivity_this_will_permanently_unlock_signal_and_message_notifications)
-              setIcon(R.drawable.ic_warning)
+              setIcon(R.drawable.symbol_error_triangle_fill_24)
               setPositiveButton(R.string.ApplicationPreferencesActivity_disable) { _, _ ->
                 MasterSecretUtil.changeMasterSecretPassphrase(
                   activity,
@@ -330,7 +327,6 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
         }
       )*/
       //**TM_SA**//end
-
       dividerPref()
 
       clickPref(

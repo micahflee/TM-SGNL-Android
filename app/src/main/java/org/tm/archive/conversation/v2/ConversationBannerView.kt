@@ -6,7 +6,6 @@
 package org.tm.archive.conversation.v2
 
 import android.content.Context
-import android.text.SpannableStringBuilder
 import android.transition.ChangeBounds
 import android.transition.Slide
 import android.transition.TransitionManager
@@ -15,8 +14,6 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.transition.addListener
 import org.tm.archive.R
 import org.tm.archive.components.identity.UnverifiedBannerView
@@ -28,9 +25,7 @@ import org.tm.archive.database.model.IdentityRecord
 import org.tm.archive.groups.GroupId
 import org.tm.archive.profiles.spoofing.ReviewBannerView
 import org.tm.archive.recipients.RecipientId
-import org.tm.archive.util.ContextUtil
 import org.tm.archive.util.IdentityUtil
-import org.tm.archive.util.SpanUtil
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.views.Stub
 import org.tm.archive.util.visible
@@ -114,20 +109,12 @@ class ConversationBannerView @JvmOverloads constructor(
       stub = reviewBannerStub
     ) {
       if (requestReviewState.individualReviewState != null) {
-        val message: CharSequence = SpannableStringBuilder()
-          .append(SpanUtil.bold(context.getString(R.string.ConversationFragment__review_requests_carefully)))
-          .append(" ")
-          .append(context.getString(R.string.ConversationFragment__signal_found_another_contact_with_the_same_name))
-
-        setBannerMessage(message)
-
-        val drawable = ContextUtil.requireDrawable(context, R.drawable.symbol_info_24).mutate()
-        DrawableCompat.setTint(drawable, ContextCompat.getColor(context, R.color.signal_icon_tint_primary))
-        setBannerIcon(drawable)
-        setOnClickListener { listener?.onRequestReviewIndividual(requestReviewState.individualReviewState.recipient.id) }
+        setBannerMessage(context.getString(R.string.ConversationFragment__review_banner_body))
+        setBannerRecipients(requestReviewState.individualReviewState.target, requestReviewState.individualReviewState.firstDuplicate)
+        setOnClickListener { listener?.onRequestReviewIndividual(requestReviewState.individualReviewState.target.id) }
       } else if (requestReviewState.groupReviewState != null) {
         setBannerMessage(context.getString(R.string.ConversationFragment__d_group_members_have_the_same_name, requestReviewState.groupReviewState.count))
-        setBannerRecipient(requestReviewState.groupReviewState.recipient)
+        setBannerRecipients(requestReviewState.groupReviewState.target, requestReviewState.groupReviewState.firstDuplicate)
         setOnClickListener { listener?.onReviewGroupMembers(requestReviewState.groupReviewState.groupId) }
       }
 

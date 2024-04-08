@@ -9,10 +9,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.RequestManager;
+
 import org.signal.libsignal.protocol.util.Pair;
 import org.tm.archive.R;
 import org.tm.archive.keyboard.sticker.KeyboardStickerListAdapter;
-import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.util.ViewUtil;
 
 import java.lang.ref.WeakReference;
@@ -26,13 +27,13 @@ public class StickerRolloverTouchListener implements RecyclerView.OnItemTouchLis
   private boolean             hoverMode;
 
   public StickerRolloverTouchListener(@NonNull Context context,
-                                      @NonNull GlideRequests glideRequests,
+                                      @NonNull RequestManager requestManager,
                                       @NonNull RolloverEventListener eventListener,
                                       @NonNull RolloverStickerRetriever stickerRetriever)
   {
     this.eventListener    = eventListener;
     this.stickerRetriever = stickerRetriever;
-    this.popup            = new StickerPreviewPopup(context, glideRequests);
+    this.popup            = new StickerPreviewPopup(context, requestManager);
     this.currentView      = new WeakReference<>(null);
 
     popup.setAnimationStyle(R.style.StickerPopupAnimation);

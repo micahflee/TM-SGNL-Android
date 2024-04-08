@@ -7,6 +7,7 @@ package org.tm.archive.backup.v2.processor
 
 import org.signal.core.util.logging.Log
 import org.tm.archive.backup.v2.BackupState
+import org.tm.archive.backup.v2.ExportState
 import org.tm.archive.backup.v2.database.ChatItemImportInserter
 import org.tm.archive.backup.v2.database.createChatItemInserter
 import org.tm.archive.backup.v2.database.getMessagesForBackup
@@ -17,10 +18,12 @@ import org.tm.archive.database.SignalDatabase
 object ChatItemBackupProcessor {
   val TAG = Log.tag(ChatItemBackupProcessor::class.java)
 
-  fun export(emitter: BackupFrameEmitter) {
-    SignalDatabase.messages.getMessagesForBackup().use { chatItems ->
+  fun export(exportState: ExportState, emitter: BackupFrameEmitter) {
+    SignalDatabase.messages.getMessagesForBackup(exportState.backupTime).use { chatItems ->
       for (chatItem in chatItems) {
-        emitter.emit(Frame(chatItem = chatItem))
+        if (exportState.threadIds.contains(chatItem.chatId)) {
+          emitter.emit(Frame(chatItem = chatItem))
+        }
       }
     }
   }

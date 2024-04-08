@@ -113,7 +113,7 @@
             app:popExitAnim="@anim/slide_to_end" />
 
     </fragment>
-<!--    TM_SA change to TMEnterPhoneNumberFragment-->
+    <!--    TM_SA change to TMEnterPhoneNumberFragment-->
     <fragment
         android:id="@+id/enterPhoneNumberFragment"
         android:name="org.tm.archive.registration.fragments.TMEnterPhoneNumberFragment"
@@ -170,7 +170,7 @@
         android:name="org.tm.archive.registration.fragments.CountryPickerFragment"
         android:label="fragment_country_picker"
         tools:layout="@layout/fragment_registration_country_picker" />
-    <!--TM_SA change to TMEnterSmsCodeFragment-->
+
     <fragment
         android:id="@+id/enterCodeFragment"
         android:name="org.tm.archive.registration.fragments.EnterSmsCodeFragment"
@@ -368,7 +368,34 @@
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
+        <action
+            android:id="@+id/action_transferOrRestore_to_moreOptions"
+            app:destination="@+id/transferOrRestoreMoreOptionsDialog" />
+
     </fragment>
+
+    <fragment
+        android:id="@+id/restoreFromBackupFragment"
+        android:name="org.tm.archive.backup.v2.ui.restore.RestoreFromBackupFragment">
+
+        <action
+            android:id="@+id/action_restoreFromBacakupFragment_to_moreOptions"
+            app:destination="@+id/transferOrRestoreMoreOptionsDialog" />
+
+        <argument
+            android:name="cancelable"
+            app:argType="boolean" />
+
+    </fragment>
+
+    <dialog
+        android:id="@+id/transferOrRestoreMoreOptionsDialog"
+        android:name="org.tm.archive.devicetransfer.moreoptions.MoreTransferOrRestoreOptionsSheet">
+
+        <argument
+            android:name="mode"
+            app:argType="org.tm.archive.devicetransfer.moreoptions.MoreTransferOrRestoreOptionsMode" />
+    </dialog>
 
     <fragment
         android:id="@+id/newDeviceTransferInstructions"

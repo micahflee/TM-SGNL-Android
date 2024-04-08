@@ -4,19 +4,19 @@ import android.content.Context
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import org.tm.archive.R
 import org.tm.archive.database.model.StickerRecord
 import org.tm.archive.glide.cache.ApngOptions
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri
-import org.tm.archive.mms.GlideRequests
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingModel
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
 
 class KeyboardStickerListAdapter(
-  private val glideRequests: GlideRequests,
+  private val requestManager: RequestManager,
   private val eventListener: EventListener?,
   private val allowApngAnimation: Boolean
 ) : MappingAdapter() {
@@ -44,7 +44,7 @@ class KeyboardStickerListAdapter(
     private val image: ImageView = findViewById(R.id.sticker_keyboard_page_image)
 
     override fun bind(model: Sticker) {
-      glideRequests.load(model.uri)
+      requestManager.load(model.uri)
         .set(ApngOptions.ANIMATE, allowApngAnimation)
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(image)

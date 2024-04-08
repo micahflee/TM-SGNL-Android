@@ -22,10 +22,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import org.tm.archive.InviteActivity;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.R;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.ThemeUtil;
@@ -90,7 +91,7 @@ public class CameraContactSelectionFragment extends LoggingFragment implements C
     this.selectionFooterGroup = view.findViewById(R.id.camera_contacts_footer_group);
     this.cameraContactsEmpty  = view.findViewById(R.id.camera_contacts_empty);
     this.inviteButton         = view.findViewById(R.id.camera_contacts_invite_button);
-    this.contactAdapter       = new CameraContactAdapter(GlideApp.with(this), this);
+    this.contactAdapter       = new CameraContactAdapter(Glide.with(this), this);
     this.selectionAdapter     = new CameraContactSelectionAdapter();
 
     contactList.setLayoutManager(new LinearLayoutManager(requireContext()));

@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import org.tm.archive.R;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.registration.RegistrationNavigationActivity;
 import org.tm.archive.util.TextSecurePreferences;
 
@@ -26,6 +27,6 @@ public class UnauthorizedReminder extends Reminder {
   }
 
   public static boolean isEligible(Context context) {
-    return TextSecurePreferences.isUnauthorizedReceived(context);
+    return TextSecurePreferences.isUnauthorizedReceived(context) || !SignalStore.account().isRegistered();
   }
 }

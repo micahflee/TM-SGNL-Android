@@ -1,27 +1,26 @@
 package org.tm.archive.registration.fragments;
 
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
+
 import org.signal.core.util.logging.Log;
 import org.tm.archive.R;
 import org.tm.archive.registration.viewmodel.RegistrationViewModel;
 import org.tm.archive.util.FeatureFlags;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.tm.archive.util.navigation.SafeNavigation;
+
 import java.io.IOException;
 
-public class EnterSmsCodeFragment extends BaseEnterSmsCodeFragment<RegistrationViewModel> implements SignalStrengthPhoneStateListener.Callback {
-
+public final class EnterSmsCodeFragment extends BaseEnterSmsCodeFragment<RegistrationViewModel> implements SignalStrengthPhoneStateListener.Callback {
 
   private static final String TAG = Log.tag(EnterSmsCodeFragment.class);
 
   public EnterSmsCodeFragment() {
     super(R.layout.fragment_registration_enter_code);
   }
-
 
   @Override
   protected @NonNull RegistrationViewModel getViewModel() {
@@ -57,8 +56,4 @@ public class EnterSmsCodeFragment extends BaseEnterSmsCodeFragment<RegistrationV
   protected void navigateToKbsAccountLocked() {
     SafeNavigation.safeNavigate(Navigation.findNavController(requireView()), RegistrationLockFragmentDirections.actionAccountLocked());
   }
-
-
-
 }
-

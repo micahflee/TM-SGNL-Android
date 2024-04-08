@@ -15,9 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
 import androidx.core.content.LocusIdCompat
 import androidx.core.graphics.drawable.IconCompat
-import com.tm.androidcopysdk.CommonUtils
 import org.signal.core.util.PendingIntentFlags.mutable
-import org.signal.core.util.logging.Log
 import org.tm.archive.R
 import org.tm.archive.conversation.ConversationIntents
 import org.tm.archive.database.RecipientTable
@@ -179,11 +177,7 @@ sealed class NotificationBuilder(protected val context: Context) {
   }
 
   companion object {
-    fun create(context: Context): NotificationBuilder? {
-      if (!CommonUtils.isActivatedUser(context)) {//**TM_SA**//Start
-        Log.d("NotificationsController", "stop notifications for messages when suspend")
-        return null
-      }//**TM_SA**//End
+    fun create(context: Context): NotificationBuilder {
       return NotificationBuilderCompat(context)
     }
   }
@@ -200,7 +194,7 @@ sealed class NotificationBuilder(protected val context: Context) {
       val markAsRead: PendingIntent? = conversation.getMarkAsReadIntent(context)
       if (markAsRead != null) {
         val markAsReadAction: NotificationCompat.Action =
-          NotificationCompat.Action.Builder(R.drawable.check, context.getString(R.string.MessageNotifier_mark_read), markAsRead)
+          NotificationCompat.Action.Builder(R.drawable.symbol_check_24, context.getString(R.string.MessageNotifier_mark_read), markAsRead)
             .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
             .setShowsUserInterface(false)
             .build()
@@ -245,7 +239,7 @@ sealed class NotificationBuilder(protected val context: Context) {
       val markAsRead: PendingIntent? = state.getMarkAsReadIntent(context)
 
       if (markAsRead != null) {
-        val markAllAsReadAction = NotificationCompat.Action(R.drawable.check, context.getString(R.string.MessageNotifier_mark_all_as_read), markAsRead)
+        val markAllAsReadAction = NotificationCompat.Action(R.drawable.symbol_check_24, context.getString(R.string.MessageNotifier_mark_all_as_read), markAsRead)
         builder.addAction(markAllAsReadAction)
         builder.extend(NotificationCompat.WearableExtender().addAction(markAllAsReadAction))
       }
@@ -254,7 +248,7 @@ sealed class NotificationBuilder(protected val context: Context) {
     override fun addTurnOffJoinedNotificationsAction(pendingIntent: PendingIntent?) {
       if (pendingIntent != null) {
         val turnOffTheseNotifications = NotificationCompat.Action(
-          R.drawable.check,
+          R.drawable.symbol_check_24,
           context.getString(R.string.MessageNotifier_turn_off_these_notifications),
           pendingIntent
         )

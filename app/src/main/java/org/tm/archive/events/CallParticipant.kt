@@ -7,7 +7,7 @@ import org.tm.archive.components.webrtc.BroadcastVideoSink
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.ringrtc.CameraState
 
-data class CallParticipant constructor(
+data class CallParticipant(
   val callParticipantId: CallParticipantId = CallParticipantId(Recipient.UNKNOWN),
   val recipient: Recipient = Recipient.UNKNOWN,
   val identityKey: IdentityKey? = null,

@@ -2,7 +2,6 @@ package org.tm.archive.database
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
-import com.google.android.mms.pdu_alt.PduHeaders
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.Recipient
@@ -75,7 +74,6 @@ object TestMms {
   ): Long {
     val contentValues = ContentValues().apply {
       put(MessageTable.DATE_SENT, message.sentTimeMillis)
-      put(MessageTable.MMS_MESSAGE_TYPE, PduHeaders.MESSAGE_TYPE_SEND_REQ)
 
       put(MessageTable.TYPE, type)
       put(MessageTable.THREAD_ID, threadId)

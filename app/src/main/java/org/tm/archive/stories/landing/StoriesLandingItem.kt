@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
@@ -18,7 +19,6 @@ import org.tm.archive.avatar.view.AvatarView
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.mms.DecryptableStreamUriLoader
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.stories.StoryTextPostModel
 import org.tm.archive.stories.dialogs.StoryContextMenu
@@ -164,14 +164,14 @@ object StoriesLandingItem {
       clearGlide()
       storyBlur.visible = blur != null
       if (blur != null) {
-        GlideApp.with(storyBlur).load(blur).into(storyBlur)
+        Glide.with(storyBlur).load(blur).into(storyBlur)
       }
 
       @Suppress("CascadeIf")
       if (record.storyType.isTextStory) {
         storyBlur.visible = false
         val storyTextPostModel = StoryTextPostModel.parseFrom(record)
-        GlideApp.with(storyPreview)
+        Glide.with(storyPreview)
           .load(storyTextPostModel)
           .placeholder(storyTextPostModel.getPlaceholder())
           .centerCrop()
@@ -179,7 +179,7 @@ object StoriesLandingItem {
           .into(storyPreview)
       } else if (thumbnail != null) {
         storyBlur.visible = blur != null
-        GlideApp.with(storyPreview)
+        Glide.with(storyPreview)
           .load(DecryptableStreamUriLoader.DecryptableUri(thumbnail))
           .addListener(HideBlurAfterLoadListener())
           .centerCrop()
@@ -195,7 +195,7 @@ object StoriesLandingItem {
         @Suppress("CascadeIf")
         if (secondaryRecord.storyType.isTextStory) {
           val storyTextPostModel = StoryTextPostModel.parseFrom(secondaryRecord)
-          GlideApp.with(storyMulti)
+          Glide.with(storyMulti)
             .load(storyTextPostModel)
             .placeholder(storyTextPostModel.getPlaceholder())
             .centerCrop()
@@ -203,7 +203,7 @@ object StoriesLandingItem {
             .into(storyMulti)
           storyMulti.visible = true
         } else if (secondaryThumb != null) {
-          GlideApp.with(storyMulti)
+          Glide.with(storyMulti)
             .load(DecryptableStreamUriLoader.DecryptableUri(secondaryThumb))
             .centerCrop()
             .dontAnimate()
@@ -211,12 +211,12 @@ object StoriesLandingItem {
           storyMulti.visible = true
         } else {
           storyOutline.setBackgroundColor(Color.TRANSPARENT)
-          GlideApp.with(storyMulti).clear(storyMulti)
+          Glide.with(storyMulti).clear(storyMulti)
           storyMulti.visible = false
         }
       } else {
         storyOutline.setBackgroundColor(Color.TRANSPARENT)
-        GlideApp.with(storyMulti).clear(storyMulti)
+        Glide.with(storyMulti).clear(storyMulti)
         storyMulti.visible = false
       }
 
@@ -303,8 +303,8 @@ object StoriesLandingItem {
     }
 
     private fun clearGlide() {
-      GlideApp.with(storyPreview).clear(storyPreview)
-      GlideApp.with(storyBlur).clear(storyBlur)
+      Glide.with(storyPreview).clear(storyPreview)
+      Glide.with(storyBlur).clear(storyBlur)
     }
 
     private inner class HideBlurAfterLoadListener : RequestListener<Drawable> {

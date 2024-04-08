@@ -15,7 +15,6 @@ import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.conversation.ConversationMessage.ConversationMessageFactory
 import org.tm.archive.database.MessageTable
 import org.tm.archive.database.SignalDatabase
-import org.tm.archive.database.model.InMemoryMessageRecord.NoGroupsInCommon
 import org.tm.archive.database.model.InMemoryMessageRecord.RemovedContactHidden
 import org.tm.archive.database.model.InMemoryMessageRecord.UniversalExpireTimerUpdate
 import org.tm.archive.database.model.MessageRecord
@@ -72,7 +71,6 @@ class ConversationDataSource(
     val startTime = System.currentTimeMillis()
     val size: Int = getSizeInternal() +
       THREAD_HEADER_COUNT +
-      messageRequestData.includeWarningUpdateMessage().toInt() +
       messageRequestData.isHidden.toInt() +
       showUniversalExpireTimerUpdate.toInt()
 
@@ -107,10 +105,6 @@ class ConversationDataSource(
           records.add(record)
         }
       }
-
-    if (messageRequestData.includeWarningUpdateMessage() && (start + length >= totalSize)) {
-      records.add(NoGroupsInCommon(threadId, messageRequestData.isGroup))
-    }
 
     if (messageRequestData.isHidden && (start + length >= totalSize)) {
       records.add(RemovedContactHidden(threadId))

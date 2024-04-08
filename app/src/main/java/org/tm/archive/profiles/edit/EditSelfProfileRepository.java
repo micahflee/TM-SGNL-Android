@@ -8,6 +8,8 @@ import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 
 import org.signal.core.util.StreamUtil;
+import org.signal.core.util.concurrent.ListenableFuture;
+import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.database.SignalDatabase;
@@ -23,8 +25,6 @@ import org.tm.archive.profiles.SystemProfileUtil;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.registration.RegistrationUtil;
-import org.tm.archive.util.concurrent.ListenableFuture;
-import org.signal.core.util.concurrent.SimpleTask;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -148,7 +148,7 @@ public class EditSelfProfileRepository implements EditProfileRepository {
       RegistrationUtil.maybeMarkRegistrationComplete();
 
       if (avatar != null) {
-        SignalStore.misc().markHasEverHadAnAvatar();
+        SignalStore.misc().setHasEverHadAnAvatar(true);
       }
 
       return UploadResult.SUCCESS;

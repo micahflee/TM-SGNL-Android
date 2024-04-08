@@ -48,7 +48,7 @@ class TeleMessageSignalApplication : ApplicationContext(), ApplicationInterface 
   }
 
   override fun beforeInitializeCallManager() {
-    CallManager.setDelegate(CallManagerRecordingDelegate.getInstance(applicationContext))
+//    CallManager.setDelegate(CallManagerRecordingDelegate.getInstance(applicationContext))
     super.beforeInitializeCallManager()
   }
 

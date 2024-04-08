@@ -27,6 +27,7 @@ import org.signal.core.util.logging.Log;
 import org.tm.archive.database.loaders.DeviceListLoader;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.devicelist.Device;
+import org.tm.archive.jobs.LinkedDeviceInactiveCheckJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.task.ProgressDialogAsyncTask;
@@ -166,6 +167,7 @@ public class DeviceListFragment extends ListFragment
         super.onPostExecute(result);
         if (result) {
           getLoaderManager().restartLoader(0, null, DeviceListFragment.this);
+          LinkedDeviceInactiveCheckJob.enqueue();
         } else {
           Toast.makeText(getActivity(), R.string.DeviceListActivity_network_failed, Toast.LENGTH_LONG).show();
         }

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -15,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -33,9 +33,9 @@ import org.tm.archive.components.settings.DSLSettingsIcon;
 import org.tm.archive.components.settings.conversation.preferences.ButtonStripPreference;
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.FallbackPhoto80dp;
+import org.tm.archive.fonts.SignalSymbols;
 import org.tm.archive.groups.GroupId;
-import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.phonenumbers.PhoneNumberFormatter;
+import org.tm.archive.nicknames.NicknameActivity;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientExporter;
 import org.tm.archive.recipients.RecipientId;
@@ -43,8 +43,7 @@ import org.tm.archive.recipients.RecipientUtil;
 import org.tm.archive.recipients.ui.about.AboutSheet;
 import org.tm.archive.util.BottomSheetUtil;
 import org.tm.archive.util.ContextUtil;
-import org.tm.archive.util.DrawableUtil;
-import org.tm.archive.util.ServiceUtil;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.SpanUtil;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
@@ -73,7 +72,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   private AvatarView               avatar;
   private TextView                 fullName;
   private TextView                 about;
-  private TextView                 usernameNumber;
+  private TextView                 nickname;
   private TextView                 blockButton;
   private TextView                 unblockButton;
   private TextView                 addContactButton;
@@ -92,20 +91,25 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
 
   private ButtonStripPreference.ViewHolder buttonStripViewHolder;
 
-  public static BottomSheetDialogFragment create(@NonNull RecipientId recipientId,
-                                                 @Nullable GroupId groupId)
-  {
-    Bundle                             args     = new Bundle();
-    RecipientBottomSheetDialogFragment fragment = new RecipientBottomSheetDialogFragment();
+  private ActivityResultLauncher<NicknameActivity.Args> nicknameLauncher;
 
-    args.putString(ARGS_RECIPIENT_ID, recipientId.serialize());
-    if (groupId != null) {
-      args.putString(ARGS_GROUP_ID, groupId.toString());
+  public static void show(FragmentManager fragmentManager, @NonNull RecipientId recipientId, @Nullable GroupId groupId) {
+    Recipient recipient = Recipient.resolved(recipientId);
+    if (recipient.isSelf()) {
+      AboutSheet.create(recipient).show(fragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG);
+    } else {
+      Bundle                             args     = new Bundle();
+      RecipientBottomSheetDialogFragment fragment = new RecipientBottomSheetDialogFragment();
+
+      args.putString(ARGS_RECIPIENT_ID, recipientId.serialize());
+      if (groupId != null) {
+        args.putString(ARGS_GROUP_ID, groupId.toString());
+      }
+
+      fragment.setArguments(args);
+
+      fragment.show(fragmentManager, BottomSheetUtil.STANDARD_BOTTOM_SHEET_FRAGMENT_TAG);
     }
-
-    fragment.setArguments(args);
-
-    return fragment;
   }
 
   @Override
@@ -124,7 +128,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
     avatar                 = view.findViewById(R.id.rbs_recipient_avatar);
     fullName               = view.findViewById(R.id.rbs_full_name);
     about                  = view.findViewById(R.id.rbs_about);
-    usernameNumber         = view.findViewById(R.id.rbs_username_number);
+    nickname               = view.findViewById(R.id.rbs_nickname_button);
     blockButton            = view.findViewById(R.id.rbs_block_button);
     unblockButton          = view.findViewById(R.id.rbs_unblock_button);
     addContactButton       = view.findViewById(R.id.rbs_add_contact_button);
@@ -147,6 +151,8 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
   @Override
   public void onViewCreated(@NonNull View fragmentView, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(fragmentView, savedInstanceState);
+
+    nicknameLauncher = registerForActivityResult(new NicknameActivity.Contract(), (b) -> {});
 
     Bundle      arguments   = requireArguments();
     RecipientId recipientId = RecipientId.from(Objects.requireNonNull(arguments.getString(ARGS_RECIPIENT_ID)));
@@ -186,20 +192,43 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
                                        : recipient.getDisplayName(requireContext());
       fullName.setVisibility(TextUtils.isEmpty(name) ? View.GONE : View.VISIBLE);
       SpannableStringBuilder nameBuilder = new SpannableStringBuilder(name);
-      if (recipient.isSystemContact() && !recipient.isSelf()) {
-        Drawable systemContact = DrawableUtil.tint(ContextUtil.requireDrawable(requireContext(), R.drawable.ic_profile_circle_outline_16),
-                                                   ContextCompat.getColor(requireContext(), R.color.signal_text_primary));
-        SpanUtil.appendCenteredImageSpan(nameBuilder, systemContact, 16, 16);
-      } else if (recipient.showVerified()) {
-        SpanUtil.appendCenteredImageSpan(nameBuilder, ContextUtil.requireDrawable(requireContext(), R.drawable.ic_official_28), 28, 28);
+      if (recipient.showVerified()) {
+        SpanUtil.appendSpacer(nameBuilder, 8);
+        SpanUtil.appendCenteredImageSpanWithoutSpace(nameBuilder, ContextUtil.requireDrawable(requireContext(), R.drawable.ic_official_28), 28, 28);
+      } else if (recipient.isSystemContact()) {
+        CharSequence systemContactGlyph = SignalSymbols.INSTANCE.getSpannedString(requireContext(),
+                                                                                  SignalSymbols.Weight.BOLD,
+                                                                                  SignalSymbols.Glyph.PERSON_CIRCLE);
+
+        nameBuilder.append(" ");
+        nameBuilder.append(SpanUtil.ofSize(systemContactGlyph, 20));
       }
 
-      SpanUtil.appendCenteredImageSpan(nameBuilder, ContextUtil.requireDrawable(requireContext(), R.drawable.symbol_chevron_right_24_color_on_secondary_container), 24, 24);
-      fullName.setText(nameBuilder);
-      fullName.setOnClickListener(v -> {
-        dismiss();
-        AboutSheet.create(recipient).show(getParentFragmentManager(), null);
-      });
+      if (!recipient.isSelf() && recipient.isIndividual()) {
+        CharSequence chevronGlyph = SignalSymbols.INSTANCE.getSpannedString(requireContext(),
+                                                                            SignalSymbols.Weight.BOLD,
+                                                                            SignalSymbols.Glyph.CHEVRON_RIGHT);
+
+        nameBuilder.append(" ");
+        nameBuilder.append(SpanUtil.color(ContextCompat.getColor(requireContext(), R.color.signal_colorOutline),
+                                          SpanUtil.ofSize(chevronGlyph, 24)));
+
+        fullName.setText(nameBuilder);
+        fullName.setOnClickListener(v -> {
+          dismiss();
+          AboutSheet.create(recipient).show(getParentFragmentManager(), null);
+        });
+
+        if (FeatureFlags.nicknames()) {
+          nickname.setVisibility(View.VISIBLE);
+          nickname.setOnClickListener(v -> {
+            nicknameLauncher.launch(new NicknameActivity.Args(
+                recipientId,
+                false
+            ));
+          });
+        }
+      }
 
       String aboutText = recipient.getCombinedAboutAndEmoji();
       if (recipient.isReleaseNotes()) {
@@ -213,18 +242,6 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         about.setVisibility(View.GONE);
       }
 
-      String usernameNumberString = recipient.hasAUserSetDisplayName(requireContext()) && !recipient.isSelf() && recipient.shouldShowE164()
-                                    ? recipient.getSmsAddress().map(PhoneNumberFormatter::prettyPrint).orElse("").trim()
-                                    : "";
-      usernameNumber.setText(usernameNumberString);
-      usernameNumber.setVisibility(TextUtils.isEmpty(usernameNumberString) ? View.GONE : View.VISIBLE);
-      usernameNumber.setOnLongClickListener(v -> {
-        Util.copyToClipboard(v.getContext(), usernameNumber.getText().toString());
-        ServiceUtil.getVibrator(v.getContext()).vibrate(250);
-        Toast.makeText(v.getContext(), R.string.RecipientBottomSheet_copied_to_clipboard, Toast.LENGTH_SHORT).show();
-        return true;
-      });
-
       noteToSelfDescription.setVisibility(recipient.isSelf() ? View.VISIBLE : View.GONE);
 
       if (RecipientUtil.isBlockable(recipient)) {
@@ -237,7 +254,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         unblockButton.setVisibility(View.GONE);
       }
 
-      boolean isAudioAvailable = (recipient.isRegistered() || SignalStore.misc().getSmsExportPhase().allowSmsFeatures()) &&
+      boolean isAudioAvailable = recipient.isRegistered() &&
                                  !recipient.isGroup() &&
                                  !recipient.isBlocked() &&
                                  !recipient.isSelf() &&
@@ -286,7 +303,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         buttonStrip.setVisibility(View.GONE);
       }
 
-      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes() || !recipient.hasE164()) {
+      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes() || !recipient.hasE164() || !recipient.shouldShowE164()) {
         addContactButton.setVisibility(View.GONE);
       } else {
         addContactButton.setVisibility(View.VISIBLE);

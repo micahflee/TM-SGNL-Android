@@ -8,7 +8,7 @@ import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobs.ProfileUploadJob
 import org.tm.archive.jobs.RefreshAttributesJob
 import org.tm.archive.jobs.RefreshOwnProfileJob
-import org.tm.archive.keyvalue.PhoneNumberPrivacyValues.PhoneNumberListingMode
+import org.tm.archive.keyvalue.PhoneNumberPrivacyValues.PhoneNumberDiscoverabilityMode
 import org.tm.archive.keyvalue.PhoneNumberPrivacyValues.PhoneNumberSharingMode
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.recipients.Recipient
@@ -19,7 +19,7 @@ class PhoneNumberPrivacySettingsViewModel : ViewModel() {
   private val _state = mutableStateOf(
     PhoneNumberPrivacySettingsState(
       phoneNumberSharing = SignalStore.phoneNumberPrivacy().isPhoneNumberSharingEnabled,
-      discoverableByPhoneNumber = SignalStore.phoneNumberPrivacy().isDiscoverableByPhoneNumber
+      discoverableByPhoneNumber = SignalStore.phoneNumberPrivacy().phoneNumberDiscoverabilityMode != PhoneNumberDiscoverabilityMode.NOT_DISCOVERABLE
     )
   )
 
@@ -51,7 +51,7 @@ class PhoneNumberPrivacySettingsViewModel : ViewModel() {
   }
 
   private fun setDiscoverableByPhoneNumber(discoverable: Boolean) {
-    SignalStore.phoneNumberPrivacy().phoneNumberListingMode = if (discoverable) PhoneNumberListingMode.LISTED else PhoneNumberListingMode.UNLISTED
+    SignalStore.phoneNumberPrivacy().phoneNumberDiscoverabilityMode = if (discoverable) PhoneNumberDiscoverabilityMode.DISCOVERABLE else PhoneNumberDiscoverabilityMode.NOT_DISCOVERABLE
     StorageSyncHelper.scheduleSyncForDataChange()
     ApplicationDependencies.getJobManager().startChain(RefreshAttributesJob()).then(RefreshOwnProfileJob()).enqueue()
     refresh()
@@ -60,7 +60,7 @@ class PhoneNumberPrivacySettingsViewModel : ViewModel() {
   fun refresh() {
     _state.value = PhoneNumberPrivacySettingsState(
       phoneNumberSharing = SignalStore.phoneNumberPrivacy().isPhoneNumberSharingEnabled,
-      discoverableByPhoneNumber = SignalStore.phoneNumberPrivacy().isDiscoverableByPhoneNumber
+      discoverableByPhoneNumber = SignalStore.phoneNumberPrivacy().phoneNumberDiscoverabilityMode != PhoneNumberDiscoverabilityMode.NOT_DISCOVERABLE
     )
   }
 }

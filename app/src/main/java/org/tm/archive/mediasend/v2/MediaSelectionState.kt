@@ -4,11 +4,14 @@ import android.net.Uri
 import org.tm.archive.conversation.MessageSendType
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mediasend.Media
-import org.tm.archive.mediasend.MediaSendConstants
+import org.tm.archive.mediasend.v2.videos.VideoTrimData
+import org.tm.archive.mms.MediaConstraints
 import org.tm.archive.mms.SentMediaQuality
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.stories.Stories
 import org.tm.archive.util.FeatureFlags
+import org.tm.archive.util.MediaUtil
+import org.tm.archive.video.TranscodingPreset
 
 data class MediaSelectionState(
   val sendType: MessageSendType,
@@ -17,7 +20,7 @@ data class MediaSelectionState(
   val recipient: Recipient? = null,
   val quality: SentMediaQuality = SignalStore.settings().sentMediaQuality,
   val message: CharSequence? = null,
-  val viewOnceToggleState: ViewOnceToggleState = ViewOnceToggleState.INFINITE,
+  val viewOnceToggleState: ViewOnceToggleState = ViewOnceToggleState.default,
   val isTouchEnabled: Boolean = true,
   val isSent: Boolean = false,
   val isPreUploadEnabled: Boolean = false,
@@ -29,17 +32,20 @@ data class MediaSelectionState(
   val suppressEmptyError: Boolean = true
 ) {
 
-  val maxSelection = if (sendType.usesSmsTransport) {
-    MediaSendConstants.MAX_SMS
-  } else {
-    FeatureFlags.maxAttachmentCount()
-  }
+  val isVideoTrimmingVisible: Boolean = focusedMedia != null && MediaUtil.isVideoType(focusedMedia.mimeType) && MediaConstraints.isVideoTranscodeAvailable() && !focusedMedia.isVideoGif
+
+  val transcodingPreset: TranscodingPreset = MediaConstraints.getPushMediaConstraints(SentMediaQuality.fromCode(quality.code)).videoTranscodingSettings
+
+  val maxSelection = FeatureFlags.maxAttachmentCount()
 
   val canSend = !isSent && selectedMedia.isNotEmpty()
 
+  fun getOrCreateVideoTrimData(uri: Uri): VideoTrimData {
+    return editorStateMap[uri] as? VideoTrimData ?: VideoTrimData()
+  }
+
   enum class ViewOnceToggleState(val code: Int) {
-    INFINITE(0),
-    ONCE(1);
+    INFINITE(0), ONCE(1);
 
     fun next(): ViewOnceToggleState {
       return when (this) {
@@ -49,6 +55,8 @@ data class MediaSelectionState(
     }
 
     companion object {
+      val default = INFINITE
+
       fun fromCode(code: Int): ViewOnceToggleState {
         return when (code) {
           1 -> ONCE
