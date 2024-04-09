@@ -666,15 +666,14 @@ dependencies {
 }
 
 fun assertIsGitRepo() {
-  /*if (!file("${project.rootDir}/.git").exists()) {//TODO DELETE CHANGES
+  if (!file("${project.rootDir}/.git").exists()) {
     throw IllegalStateException("Must be a git repository to guarantee reproducible builds! (git hash is part of APK)")
-  }*/
+  }
 }
 
 fun getLastCommitTimestamp(): String {
   assertIsGitRepo()
-  return /*os.toString() +*/ "000"//TODO DELETE CHANGES
-  /*ByteArrayOutputStream().use { os ->
+  ByteArrayOutputStream().use { os ->
     exec {
       executable = "git"
       args = listOf("log", "-1", "--pretty=format:%ct")
@@ -682,25 +681,23 @@ fun getLastCommitTimestamp(): String {
     }
 
     return os.toString() + "000"
-  }*/
+  }
 }
 
 fun getGitHash(): String {
   assertIsGitRepo()
 
   val stdout = ByteArrayOutputStream()
-  /*exec {
+  exec {
     commandLine = listOf("git", "rev-parse", "HEAD")
     standardOutput = stdout
   }
 
-  return stdout.toString().trim().substring(0, 12)*/
-  return "abc"//TODO DELETE CHANGES
+  return stdout.toString().trim().substring(0, 12)
 }
 
 fun getCurrentGitTag(): String? {
   assertIsGitRepo()
-  return ""//TODO DELETE CHANGES
   val stdout = ByteArrayOutputStream()
   exec {
     commandLine = listOf("git", "tag", "--points-at", "HEAD")
