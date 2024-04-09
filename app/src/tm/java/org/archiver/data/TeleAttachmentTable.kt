@@ -44,4 +44,9 @@ class TeleAttachmentTable(
     super.markAttachmentUploaded(messageId, attachment)
     messageStoreObserver.afterMessageIdStateChanged(messageId)
   }
+
+  override fun finalizeAttachmentAfterDownload(mmsId: Long, attachmentId: AttachmentId, inputStream: InputStream) {
+    super.finalizeAttachmentAfterDownload(mmsId, attachmentId, inputStream)
+    messageStoreObserver.afterMessageIdStateChanged(mmsId)
+  }
 }
