@@ -36,10 +36,6 @@ class TeleAttachmentTable(
     return result
   }
 
-  override fun markAttachmentAsTransformed(attachmentId: AttachmentId, withFastStart: Boolean) {
-    super.markAttachmentAsTransformed(attachmentId, withFastStart)
-  }
-
   override fun markAttachmentUploaded(messageId: Long, attachment: Attachment) {
     super.markAttachmentUploaded(messageId, attachment)
     messageStoreObserver.afterMessageIdStateChanged(messageId)

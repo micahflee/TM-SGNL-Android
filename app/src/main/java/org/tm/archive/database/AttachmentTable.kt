@@ -980,7 +980,7 @@ open class AttachmentTable( //TM_SA make class open
       .readToSingleObject { it.requireString(DATA_FILE) }
   }
 
-  open fun markAttachmentAsTransformed(attachmentId: AttachmentId, withFastStart: Boolean) { //TM_SA make fun open
+  fun markAttachmentAsTransformed(attachmentId: AttachmentId, withFastStart: Boolean) {
     Log.i(TAG, "[markAttachmentAsTransformed] Marking $attachmentId as transformed. withFastStart: $withFastStart")
     writableDatabase.withinTransaction { db ->
       try {
