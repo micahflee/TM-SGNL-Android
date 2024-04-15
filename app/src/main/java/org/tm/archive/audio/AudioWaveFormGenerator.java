@@ -12,7 +12,7 @@ import androidx.annotation.WorkerThread;
 
 import org.signal.core.util.logging.Log;
 import org.tm.archive.media.DecryptableUriMediaInput;
-import org.tm.archive.media.MediaInput;
+import org.tm.archive.video.interfaces.MediaInput;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -56,12 +56,6 @@ public final class AudioWaveFormGenerator {
       if (!mime.startsWith("audio/")) {
         throw new IOException("Mime not audio");
       }
-
-      //**TM_SA**//S
-      if(mime.equals("audio/ac3")){
-        throw new IOException("Ac3 Audio type not supported");
-      }
-      //**TM_SA**//E
 
       MediaCodec codec = MediaCodec.createDecoderByType(mime);
 

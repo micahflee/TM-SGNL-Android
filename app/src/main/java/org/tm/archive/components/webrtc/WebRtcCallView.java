@@ -25,6 +25,7 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import androidx.compose.ui.platform.ComposeView;
+import androidx.constraintlayout.widget.Barrier;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.constraintlayout.widget.Guideline;
@@ -35,6 +36,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.google.android.material.button.MaterialButton;
@@ -51,7 +53,7 @@ import org.tm.archive.contacts.avatars.ContactPhoto;
 import org.tm.archive.contacts.avatars.ProfileContactPhoto;
 import org.tm.archive.events.CallParticipant;
 import org.tm.archive.events.WebRtcViewModel;
-import org.tm.archive.mms.GlideApp;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.ringrtc.CameraState;
@@ -94,7 +96,6 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
   private RecipientId                   recipientId;
   private ImageView                     answer;
   private TextView                      answerWithoutVideoLabel;
-  private ImageView                     cameraDirectionToggle;
   private AccessibleToggleButton        ringToggle;
   private PictureInPictureGestureHelper pictureInPictureGestureHelper;
   private ImageView                     overflow;
@@ -124,6 +125,7 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
   private RecyclerView                  groupReactionsFeed;
   private MultiReactionBurstLayout      reactionViews;
   private ComposeView                   raiseHandSnackbar;
+  private Barrier                       pipBottomBoundaryBarrier;
 
 
 
@@ -175,7 +177,6 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
     incomingRingStatus            = findViewById(R.id.call_screen_incoming_ring_status);
     answer                        = findViewById(R.id.call_screen_answer_call);
     answerWithoutVideoLabel       = findViewById(R.id.call_screen_answer_without_video_label);
-    cameraDirectionToggle         = findViewById(R.id.call_screen_camera_direction_toggle);
     ringToggle                    = findViewById(R.id.call_screen_audio_ring_toggle);
     overflow                      = findViewById(R.id.call_screen_overflow_button);
     hangup                        = findViewById(R.id.call_screen_end_call);
@@ -203,6 +204,7 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
     groupReactionsFeed            = findViewById(R.id.call_screen_reactions_feed);
     reactionViews                 = findViewById(R.id.call_screen_reactions_container);
     raiseHandSnackbar             = findViewById(R.id.call_screen_raise_hand_view);
+    pipBottomBoundaryBarrier      = findViewById(R.id.pip_bottom_boundary_barrier);
 
     View decline      = findViewById(R.id.call_screen_decline_call);
     View answerLabel  = findViewById(R.id.call_screen_answer_call_label);
@@ -269,7 +271,6 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
       runIfNonNull(controlsListener, listener -> listener.onRingGroupChanged(isOn, ringToggle.isActivated()));
     });
 
-    cameraDirectionToggle.setOnClickListener(v -> runIfNonNull(controlsListener, ControlsListener::onCameraDirectionChanged));
     smallLocalRender.findViewById(R.id.call_participant_switch_camera).setOnClickListener(v -> runIfNonNull(controlsListener, ControlsListener::onCameraDirectionChanged));
 
     overflow.setOnClickListener(v -> {
@@ -351,10 +352,15 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
     rotatableControls.add(audioToggle);
     rotatableControls.add(micToggle);
     rotatableControls.add(videoToggle);
-    rotatableControls.add(cameraDirectionToggle);
     rotatableControls.add(decline);
     rotatableControls.add(smallLocalAudioIndicator);
     rotatableControls.add(ringToggle);
+
+    pipBottomBoundaryBarrier.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+      if (bottom != oldBottom) {
+        onBarrierBottomChanged(bottom);
+      }
+    });
   }
 
   @Override
@@ -432,7 +438,13 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
 
     if (state.getGroupCallState().isNotIdle()) {
       if (state.getCallState() == WebRtcViewModel.State.CALL_PRE_JOIN) {
-        callLinkWarningCard.setVisibility(callParticipantsViewState.isStartedFromCallLink() ? View.VISIBLE : View.GONE);
+        if (callParticipantsViewState.isStartedFromCallLink()) {
+          TextView warningTextView = callLinkWarningCard.get().findViewById(R.id.call_screen_call_link_warning_textview);
+          warningTextView.setText(SignalStore.phoneNumberPrivacy().isPhoneNumberSharingEnabled() ? R.string.WebRtcCallView__anyone_who_joins_pnp_enabled : R.string.WebRtcCallView__anyone_who_joins_pnp_disabled);
+          callLinkWarningCard.setVisibility(View.VISIBLE);
+        } else {
+          callLinkWarningCard.setVisibility(View.GONE);
+        }
         setStatus(state.getPreJoinGroupDescription(getContext()));
       } else if (state.getCallState() == WebRtcViewModel.State.CALL_CONNECTED && state.isInOutgoingRingingMode()) {
         callLinkWarningCard.setVisibility(View.GONE);
@@ -494,11 +506,11 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
 
     if (state == WebRtcLocalRenderState.EXPANDED) {
       pictureInPictureExpansionHelper.beginExpandTransition();
-      smallLocalRender.setSelfPipMode(CallParticipantView.SelfPipMode.EXPANDED_SELF_PIP);
+      smallLocalRender.setSelfPipMode(CallParticipantView.SelfPipMode.EXPANDED_SELF_PIP, localCallParticipant.isMoreThanOneCameraAvailable());
       return;
     } else if ((state.isAnySmall() || state == WebRtcLocalRenderState.GONE) && pictureInPictureExpansionHelper.isExpandedOrExpanding()) {
       pictureInPictureExpansionHelper.beginShrinkTransition();
-      smallLocalRender.setSelfPipMode(pictureInPictureExpansionHelper.isMiniSize() ? CallParticipantView.SelfPipMode.MINI_SELF_PIP : CallParticipantView.SelfPipMode.NORMAL_SELF_PIP);
+      smallLocalRender.setSelfPipMode(pictureInPictureExpansionHelper.isMiniSize() ? CallParticipantView.SelfPipMode.MINI_SELF_PIP : CallParticipantView.SelfPipMode.NORMAL_SELF_PIP, localCallParticipant.isMoreThanOneCameraAvailable());
 
       if (state != WebRtcLocalRenderState.GONE) {
         return;
@@ -514,14 +526,14 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
         break;
       case SMALL_RECTANGLE:
         smallLocalRenderFrame.setVisibility(View.VISIBLE);
-        animatePipToLargeRectangle(displaySmallSelfPipInLandscape);
+        animatePipToLargeRectangle(displaySmallSelfPipInLandscape, localCallParticipant.isMoreThanOneCameraAvailable());
 
         largeLocalRender.attachBroadcastVideoSink(null);
         largeLocalRenderFrame.setVisibility(View.GONE);
         break;
       case SMALLER_RECTANGLE:
         smallLocalRenderFrame.setVisibility(View.VISIBLE);
-        animatePipToSmallRectangle();
+        animatePipToSmallRectangle(localCallParticipant.isMoreThanOneCameraAvailable());
 
         largeLocalRender.attachBroadcastVideoSink(null);
         largeLocalRenderFrame.setVisibility(View.GONE);
@@ -546,7 +558,7 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
 
         if (!localAvatar.equals(previousLocalAvatar)) {
           previousLocalAvatar = localAvatar;
-          GlideApp.with(getContext().getApplicationContext())
+          Glide.with(getContext().getApplicationContext())
                   .load(localAvatar)
                   .transform(new CenterCrop(), new BlurTransformation(getContext(), 0.25f, BlurTransformation.MAX_RADIUS))
                   .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -773,7 +785,7 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
     }
   }
 
-  private void animatePipToLargeRectangle(boolean isLandscape) {
+  private void animatePipToLargeRectangle(boolean isLandscape, boolean moreThanOneCameraAvailable) {
     final Point dimens;
     if (isLandscape) {
       dimens = new Point(ViewUtil.dpToPx(PictureInPictureExpansionHelper.NORMAL_PIP_HEIGHT_DP),
@@ -790,10 +802,10 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
       }
     });
 
-    smallLocalRender.setSelfPipMode(CallParticipantView.SelfPipMode.NORMAL_SELF_PIP);
+    smallLocalRender.setSelfPipMode(CallParticipantView.SelfPipMode.NORMAL_SELF_PIP, moreThanOneCameraAvailable);
   }
 
-  private void animatePipToSmallRectangle() {
+  private void animatePipToSmallRectangle(boolean moreThanOneCameraAvailable) {
     pictureInPictureExpansionHelper.startDefaultSizeTransition(new Point(ViewUtil.dpToPx(PictureInPictureExpansionHelper.MINI_PIP_WIDTH_DP),
                                                                          ViewUtil.dpToPx(PictureInPictureExpansionHelper.MINI_PIP_HEIGHT_DP)),
                                                                new PictureInPictureExpansionHelper.Callback() {
@@ -803,7 +815,7 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
                                                                  }
                                                                });
 
-    smallLocalRender.setSelfPipMode(CallParticipantView.SelfPipMode.MINI_SELF_PIP);
+    smallLocalRender.setSelfPipMode(CallParticipantView.SelfPipMode.MINI_SELF_PIP, moreThanOneCameraAvailable);
   }
 
   private void toggleControls() {
@@ -826,6 +838,7 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
     previousLayoutPositions = layoutPositions;
 
     ConstraintSet constraintSet = new ConstraintSet();
+    constraintSet.setForceId(false);
     constraintSet.clone(this);
 
     constraintSet.connect(R.id.call_screen_participants_parent,
@@ -851,17 +864,18 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
 
   private void moveSnackbarAboveParticipantRail(boolean aboveRail) {
     if (aboveRail) {
-      updateSnackbarBottomConstraint(callParticipantsRecycler);
+      updatePendingParticipantsBottomConstraint(callParticipantsRecycler);
     } else {
-      updateSnackbarBottomConstraint(aboveControlsGuideline);
+      updatePendingParticipantsBottomConstraint(aboveControlsGuideline);
     }
   }
 
-  private void updateSnackbarBottomConstraint(View anchor) {
+  private void updatePendingParticipantsBottomConstraint(View anchor) {
     ConstraintSet constraintSet = new ConstraintSet();
+    constraintSet.setForceId(false);
     constraintSet.clone(this);
 
-    constraintSet.connect(R.id.call_screen_raise_hand_view,
+    constraintSet.connect(R.id.call_screen_pending_recipients,
                           ConstraintSet.BOTTOM,
                           anchor.getId(),
                           ConstraintSet.TOP,
@@ -903,7 +917,6 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
   }
 
   private void updateButtonStateForLargeButtons() {
-    cameraDirectionToggle.setImageResource(R.drawable.webrtc_call_screen_camera_toggle);
     hangup.setImageResource(R.drawable.webrtc_call_screen_hangup);
     overflow.setImageResource(R.drawable.webrtc_call_screen_overflow_menu);
     micToggle.setBackgroundResource(R.drawable.webrtc_call_screen_mic_toggle);
@@ -914,7 +927,6 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
   }
 
   private void updateButtonStateForSmallButtons() {
-    cameraDirectionToggle.setImageResource(R.drawable.webrtc_call_screen_camera_toggle_small);
     hangup.setImageResource(R.drawable.webrtc_call_screen_hangup_small);
     overflow.setImageResource(R.drawable.webrtc_call_screen_overflow_menu_small);
     micToggle.setBackgroundResource(R.drawable.webrtc_call_screen_mic_toggle_small);
@@ -938,15 +950,12 @@ public class WebRtcCallView extends InsetAwareConstraintLayout {
     ringToggle.setActivated(enabled);
   }
 
-  public void onControlTopChanged(int guidelineTop, int snackBarHeight) {
-    int offset = 0;
-    if (lastState != null) {
-      CallParticipantsState state = lastState.getCallParticipantsState();
-      if (!state.isViewingFocusedParticipant() && !state.isLargeVideoGroup()) {
-        offset = snackBarHeight;
-      }
-      pictureInPictureGestureHelper.setBottomVerticalBoundary(guidelineTop - offset);
-    }
+  public void onControlTopChanged() {
+    onBarrierBottomChanged(pipBottomBoundaryBarrier.getBottom());
+  }
+
+  private void onBarrierBottomChanged(int barrierBottom) {
+    pictureInPictureGestureHelper.setBottomVerticalBoundary(barrierBottom);
   }
 
   public interface ControlsListener {

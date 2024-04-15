@@ -11,6 +11,7 @@ import org.tm.archive.crypto.UnidentifiedAccessUtil;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobmanager.Job;
 import org.tm.archive.jobmanager.impl.NetworkConstraint;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.net.NotPushRegisteredException;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientUtil;
@@ -76,13 +77,13 @@ public class MultiDeviceProfileKeyUpdateJob extends BaseJob {
     ByteArrayOutputStream baos       = new ByteArrayOutputStream();
     DeviceContactsOutputStream out        = new DeviceContactsOutputStream(baos);
 
-    out.write(new DeviceContact(RecipientUtil.toSignalServiceAddress(context, Recipient.self()),
+    out.write(new DeviceContact(Optional.ofNullable(SignalStore.account().getAci()),
+                                Optional.ofNullable(SignalStore.account().getE164()),
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty(),
                                 profileKey,
-                                false,
                                 Optional.empty(),
                                 Optional.empty(),
                                 false));

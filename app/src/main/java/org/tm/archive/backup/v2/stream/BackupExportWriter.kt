@@ -5,8 +5,10 @@
 
 package org.tm.archive.backup.v2.stream
 
+import org.tm.archive.backup.v2.proto.BackupInfo
 import org.tm.archive.backup.v2.proto.Frame
 
 interface BackupExportWriter : AutoCloseable {
+  fun write(header: BackupInfo)
   fun write(frame: Frame)
 }

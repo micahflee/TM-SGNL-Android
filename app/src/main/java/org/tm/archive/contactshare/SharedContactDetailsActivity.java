@@ -18,6 +18,8 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.tm.archive.PassphraseRequiredActivity;
@@ -25,8 +27,6 @@ import org.tm.archive.R;
 import org.tm.archive.database.RecipientTable;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.DirectoryRefreshJob;
-import org.tm.archive.mms.GlideApp;
-import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
@@ -59,7 +59,7 @@ public class SharedContactDetailsActivity extends PassphraseRequiredActivity {
   private View                messageButtonView;
   private View                callButtonView;
 
-  private GlideRequests       glideRequests;
+  private RequestManager      requestManager;
   private Contact             contact;
 
   private final DynamicTheme    dynamicTheme    = new DynamicNoActionBarTheme();
@@ -132,13 +132,13 @@ public class SharedContactDetailsActivity extends PassphraseRequiredActivity {
     messageButtonView   = findViewById(R.id.contact_details_message_button);
     callButtonView      = findViewById(R.id.contact_details_call_button);
 
-    contactFieldAdapter = new ContactFieldAdapter(dynamicLanguage.getCurrentLocale(), glideRequests, false);
+    contactFieldAdapter = new ContactFieldAdapter(dynamicLanguage.getCurrentLocale(), requestManager, false);
 
     RecyclerView list = findViewById(R.id.contact_details_fields);
     list.setLayoutManager(new LinearLayoutManager(this));
     list.setAdapter(contactFieldAdapter);
 
-    glideRequests = GlideApp.with(this);
+    requestManager = Glide.with(this);
   }
 
   @SuppressLint("StaticFieldLeak")
@@ -172,13 +172,15 @@ public class SharedContactDetailsActivity extends PassphraseRequiredActivity {
 
   public void presentAvatar(@Nullable Uri uri) {
     if (uri != null) {
-      glideRequests.load(new DecryptableUri(uri))
-          .fallback(R.drawable.ic_contact_picture)
+      requestManager
+          .load(new DecryptableUri(uri))
+          .fallback(R.drawable.symbol_person_display_40)
           .circleCrop()
           .diskCacheStrategy(DiskCacheStrategy.ALL)
           .into(avatarView);
     } else {
-      glideRequests.load(R.drawable.ic_contact_picture)
+      requestManager
+          .load(R.drawable.symbol_person_display_40)
           .circleCrop()
           .diskCacheStrategy(DiskCacheStrategy.ALL)
           .into(avatarView);

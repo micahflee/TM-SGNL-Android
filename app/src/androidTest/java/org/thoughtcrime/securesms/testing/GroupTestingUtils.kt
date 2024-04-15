@@ -1,5 +1,6 @@
 package org.tm.archive.testing
 
+import okio.ByteString.Companion.toByteString
 import org.signal.libsignal.zkgroup.groups.GroupMasterKey
 import org.signal.storageservice.protos.groups.Member
 import org.signal.storageservice.protos.groups.local.DecryptedGroup
@@ -9,6 +10,7 @@ import org.tm.archive.groups.GroupId
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.whispersystems.signalservice.api.push.ServiceId.ACI
+import org.whispersystems.signalservice.internal.push.GroupContextV2
 import kotlin.random.Random
 
 /**
@@ -46,5 +48,8 @@ object GroupTestingUtils {
     return member(aci = requireAci())
   }
 
-  data class TestGroupInfo(val groupId: GroupId.V2, val masterKey: GroupMasterKey, val recipientId: RecipientId)
+  data class TestGroupInfo(val groupId: GroupId.V2, val masterKey: GroupMasterKey, val recipientId: RecipientId) {
+    val groupV2Context: GroupContextV2
+      get() = GroupContextV2(masterKey = masterKey.serialize().toByteString(), revision = 0)
+  }
 }

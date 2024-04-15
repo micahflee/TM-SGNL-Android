@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.navGraphViewModels
+import com.bumptech.glide.Glide
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.concurrent.LifecycleDisposable
@@ -33,6 +34,7 @@ import org.tm.archive.conversation.colors.Colorizer
 import org.tm.archive.conversation.colors.RecyclerViewColorizer
 import org.tm.archive.conversation.mutiselect.MultiselectPart
 import org.tm.archive.conversation.v2.ConversationAdapterV2
+import org.tm.archive.conversation.v2.items.ChatColorsDrawable
 import org.tm.archive.database.model.InMemoryMessageRecord
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
@@ -41,7 +43,6 @@ import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.GroupMigrationMembershipChange
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mediapreview.MediaIntentFactory
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.stickers.StickerLocator
@@ -61,11 +62,12 @@ class InternalConversationTestFragment : Fragment(R.layout.conversation_test_fra
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     val adapter = ConversationAdapterV2(
       lifecycleOwner = viewLifecycleOwner,
-      glideRequests = GlideApp.with(this),
+      requestManager = Glide.with(this),
       clickListener = ClickListener(),
       hasWallpaper = springboardViewModel.hasWallpaper.value,
       colorizer = Colorizer(),
-      startExpirationTimeout = {}
+      startExpirationTimeout = {},
+      chatColorsDataProvider = { ChatColorsDrawable.ChatColorsData(null, null) }
     )
 
     if (springboardViewModel.hasWallpaper.value) {
@@ -294,6 +296,18 @@ class InternalConversationTestFragment : Fragment(R.layout.conversation_test_fra
     }
 
     override fun onItemLongClick(itemView: View?, item: MultiselectPart?) {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onShowSafetyTips(forGroup: Boolean) {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onReportSpamLearnMoreClicked() {
+      Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onMessageRequestAcceptOptionsClicked() {
       Toast.makeText(requireContext(), "Can't touch this.", Toast.LENGTH_SHORT).show()
     }
   }

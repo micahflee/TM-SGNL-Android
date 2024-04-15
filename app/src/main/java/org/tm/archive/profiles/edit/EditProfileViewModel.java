@@ -8,8 +8,12 @@ import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import org.signal.core.util.logging.Log;
 import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.groups.GroupId;
+import org.tm.archive.keyvalue.PhoneNumberPrivacyValues;
+import org.tm.archive.keyvalue.PhoneNumberPrivacyValues.PhoneNumberDiscoverabilityMode;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mediasend.Media;
 import org.tm.archive.profiles.ProfileName;
 import org.tm.archive.profiles.edit.EditProfileRepository.UploadResult;
@@ -21,6 +25,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 class EditProfileViewModel extends ViewModel {
+
+  private static final String TAG = Log.tag(EditProfileViewModel.class);
 
   private final MutableLiveData<String>       givenName           = new MutableLiveData<>();
   private final MutableLiveData<String>       familyName          = new MutableLiveData<>();
@@ -112,10 +118,6 @@ class EditProfileViewModel extends ViewModel {
     return groupId;
   }
 
-  public boolean canRemoveProfilePhoto() {
-    return hasAvatar();
-  }
-
   public SingleLiveEvent<UploadResult> getUploadResult() {
     return uploadResult;
   }
@@ -145,6 +147,11 @@ class EditProfileViewModel extends ViewModel {
     byte[] newAvatar      = internalAvatar.getValue();
     String oldDisplayName = isGroup() ? originalDisplayName.getValue() : null;
     String oldDescription = isGroup() ? originalDescription : null;
+
+    if (!isGroup() && SignalStore.phoneNumberPrivacy().getPhoneNumberDiscoverabilityMode() == PhoneNumberDiscoverabilityMode.UNDECIDED) {
+      Log.i(TAG, "Phone number discoverability mode is still UNDECIDED. Setting to DISCOVERABLE.");
+      SignalStore.phoneNumberPrivacy().setPhoneNumberDiscoverabilityMode(PhoneNumberDiscoverabilityMode.DISCOVERABLE);
+    }
 
     repository.uploadProfile(profileName,
                              displayName,

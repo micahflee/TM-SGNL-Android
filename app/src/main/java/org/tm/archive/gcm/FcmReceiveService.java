@@ -27,13 +27,13 @@ public class FcmReceiveService extends FirebaseMessagingService {
   @Override
   public void onMessageReceived(RemoteMessage remoteMessage) {
     Log.i(TAG, String.format(Locale.US,
-            "onMessageReceived() ID: %s, Delay: %d (Server offset: %d), Priority: %d, Original Priority: %d, Network: %s",
-            remoteMessage.getMessageId(),
-            (System.currentTimeMillis() - remoteMessage.getSentTime()),
-            SignalStore.misc().getLastKnownServerTimeOffset(),
-            remoteMessage.getPriority(),
-            remoteMessage.getOriginalPriority(),
-            NetworkUtil.getNetworkStatus(this)));
+                             "onMessageReceived() ID: %s, Delay: %d (Server offset: %d), Priority: %d, Original Priority: %d, Network: %s",
+                             remoteMessage.getMessageId(),
+                             (System.currentTimeMillis() - remoteMessage.getSentTime()),
+                             SignalStore.misc().getLastKnownServerTimeOffset(),
+                             remoteMessage.getPriority(),
+                             remoteMessage.getOriginalPriority(),
+                             NetworkUtil.getNetworkStatus(this)));
 
     String registrationChallenge = remoteMessage.getData().get("challenge");
     String rateLimitChallenge    = remoteMessage.getData().get("rateLimitChallenge");

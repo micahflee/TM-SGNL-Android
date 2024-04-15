@@ -18,11 +18,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import org.signal.core.util.concurrent.ListenableFuture;
+import org.signal.core.util.concurrent.SettableFuture;
 import org.tm.archive.R;
 import org.tm.archive.components.NumericKeyboardView;
 import org.tm.archive.util.ViewUtil;
-import org.tm.archive.util.concurrent.ListenableFuture;
-import org.tm.archive.util.concurrent.SettableFuture;
 
 public class VerificationPinKeyboard extends FrameLayout {
 

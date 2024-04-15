@@ -13,6 +13,8 @@ import android.os.Build
 import android.text.SpannableStringBuilder
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.graphics.drawable.IconCompat
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -75,8 +77,6 @@ import org.tm.archive.keyboard.KeyboardUtil
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.messagerequests.MessageRequestState
-import org.tm.archive.mms.GlideApp
-import org.tm.archive.mms.GlideRequests
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.mms.PartAuthority
 import org.tm.archive.mms.QuoteModel
@@ -123,7 +123,7 @@ class ConversationRepository(
    */
   fun getKeyboardImageDetails(uri: Uri): Maybe<KeyboardUtil.ImageDetails> {
     return MaybeCompat.fromCallable {
-      KeyboardUtil.getImageDetails(GlideApp.with(applicationContext), uri)
+      KeyboardUtil.getImageDetails(Glide.with(applicationContext), uri)
     }.subscribeOn(Schedulers.io())
   }
 
@@ -366,12 +366,20 @@ class ConversationRepository(
 
   fun getRequestReviewState(recipient: Recipient, group: GroupRecord?, messageRequest: MessageRequestState): Single<RequestReviewState> {
     return Single.fromCallable {
-      if (group == null && messageRequest != MessageRequestState.INDIVIDUAL) {
+      if (group == null && messageRequest.state != MessageRequestState.State.INDIVIDUAL) {
         return@fromCallable RequestReviewState()
       }
 
-      if (group == null && ReviewUtil.isRecipientReviewSuggested(recipient.id)) {
-        return@fromCallable RequestReviewState(individualReviewState = IndividualReviewState(recipient))
+      if (group == null) {
+        val recipientsToReview = ReviewUtil.getRecipientsToPromptForReview(recipient.id)
+        if (recipientsToReview.size > 0) {
+          return@fromCallable RequestReviewState(
+            individualReviewState = IndividualReviewState(
+              target = recipient,
+              firstDuplicate = Recipient.resolvedList(recipientsToReview)[0]
+            )
+          )
+        }
       }
 
       if (group != null && group.isV2Group) {
@@ -383,6 +391,7 @@ class ConversationRepository(
             groupReviewState = GroupReviewState(
               groupId,
               duplicateRecipients[0],
+              duplicateRecipients[1],
               duplicateRecipients.size
             )
           )
@@ -474,12 +483,12 @@ class ConversationRepository(
       .joinTo(buffer = SpannableStringBuilder(), separator = "\n")
   }
 
-  fun getRecipientContactPhotoBitmap(context: Context, glideRequests: GlideRequests, recipient: Recipient): Single<ShortcutInfoCompat> {
+  fun getRecipientContactPhotoBitmap(context: Context, requestManager: RequestManager, recipient: Recipient): Single<ShortcutInfoCompat> {
     val fallback = recipient.fallbackContactPhoto.asDrawable(context, recipient.avatarColor, false)
 
     return Single
       .create { emitter ->
-        glideRequests
+        requestManager
           .asBitmap()
           .load(recipient.contactPhoto)
           .error(fallback)

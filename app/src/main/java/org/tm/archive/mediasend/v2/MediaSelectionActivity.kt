@@ -3,6 +3,7 @@ package org.tm.archive.mediasend.v2
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.os.Bundle
 import android.view.KeyEvent
@@ -42,6 +43,8 @@ import org.tm.archive.mediasend.v2.text.send.TextStoryPostSendRepository
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.safety.SafetyNumberBottomSheet
 import org.tm.archive.stories.Stories
+import org.tm.archive.util.Debouncer
+import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.FullscreenHelper
 import org.tm.archive.util.WindowUtil
 import org.tm.archive.util.navigation.safeNavigate
@@ -79,6 +82,8 @@ class MediaSelectionActivity :
   private val draftText: CharSequence?
     get() = intent.getCharSequenceExtra(MESSAGE)
 
+  private val debouncer = Debouncer(200)
+
   override fun attachBaseContext(newBase: Context) {
     delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
     super.attachBaseContext(newBase)
@@ -86,6 +91,10 @@ class MediaSelectionActivity :
 
   override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
     setContentView(R.layout.media_selection_activity)
+
+    if (FeatureFlags.customCameraXController()) {
+      requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+    }
 
     FullscreenHelper.showSystemUI(window)
     WindowUtil.setNavigationBarColor(this, 0x01000000)
@@ -122,7 +131,7 @@ class MediaSelectionActivity :
     }
 
     cameraSwitch.setOnClickListener {
-      viewModel.sendCommand(HudCommand.GoToCapture)
+      debouncer.publish { viewModel.sendCommand(HudCommand.GoToCapture) }
     }
 
     if (savedInstanceState == null) {

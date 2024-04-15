@@ -20,9 +20,11 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.Transformations;
 
+import com.bumptech.glide.RequestManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.collect.Sets;
 
+import org.signal.core.util.concurrent.ListenableFuture;
 import org.signal.core.util.logging.Log;
 import org.tm.archive.BindableConversationItem;
 import org.tm.archive.R;
@@ -37,7 +39,6 @@ import org.tm.archive.database.model.MessageRecord;
 import org.tm.archive.database.model.UpdateDescription;
 import org.tm.archive.groups.LiveGroup;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.LiveRecipient;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.util.DateUtils;
@@ -47,7 +48,6 @@ import org.tm.archive.util.ProjectionList;
 import org.tm.archive.util.ThemeUtil;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
-import org.tm.archive.util.concurrent.ListenableFuture;
 import org.tm.archive.util.livedata.LiveDataUtil;
 import org.tm.archive.verify.VerifyIdentityActivity;
 import org.whispersystems.signalservice.api.push.ServiceId;
@@ -116,7 +116,7 @@ public final class ConversationUpdateItem extends FrameLayout
                    @NonNull ConversationMessage conversationMessage,
                    @NonNull Optional<MessageRecord> previousMessageRecord,
                    @NonNull Optional<MessageRecord> nextMessageRecord,
-                   @NonNull GlideRequests glideRequests,
+                   @NonNull RequestManager requestManager,
                    @NonNull Locale locale,
                    @NonNull Set<MultiselectPart> batchSelected,
                    @NonNull Recipient conversationRecipient,
@@ -564,6 +564,22 @@ public final class ConversationUpdateItem extends FrameLayout
       actionButton.setOnClickListener(v -> {
         if (batchSelected.isEmpty() && eventListener != null) {
           eventListener.onSendPaymentClicked(conversationMessage.getMessageRecord().getFromRecipient().getId());
+        }
+      });
+    } else if (conversationMessage.getMessageRecord().isReportedSpam()) {
+      actionButton.setText(R.string.ConversationUpdateItem_learn_more);
+      actionButton.setVisibility(VISIBLE);
+      actionButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onReportSpamLearnMoreClicked();
+        }
+      });
+    } else if (conversationMessage.getMessageRecord().isMessageRequestAccepted()) {
+      actionButton.setText(R.string.ConversationUpdateItem_options);
+      actionButton.setVisibility(VISIBLE);
+      actionButton.setOnClickListener(v -> {
+        if (batchSelected.isEmpty() && eventListener != null) {
+          eventListener.onMessageRequestAcceptOptionsClicked();
         }
       });
     } else{

@@ -152,8 +152,7 @@ public final class WelcomeFragment extends LoggingFragment {
                               @NonNull NavDirections actionRestore)
   {
     boolean isUserSelectionRequired = BackupUtil.isUserSelectionRequired(fragment.requireContext());
-
-    //**TM_SA**// START
+//**TM_SA**// START
     if (!environmentAlreadySelected && BuildConfig.DEBUG) {
       ApiUtil.Companion.selectServerEnvironment(fragment.getContext());
       environmentAlreadySelected = true;
@@ -161,7 +160,6 @@ public final class WelcomeFragment extends LoggingFragment {
 
 
       //**TM_SA**// END
-
       Permissions.with(fragment)
                  .request(WelcomePermissions.getWelcomePermissions(isUserSelectionRequired))
                  .ifNecessary()
@@ -260,8 +258,9 @@ public final class WelcomeFragment extends LoggingFragment {
   }
 
   private void onTermsClicked() {
-    CommunicationActions.openBrowserLink(requireContext(), requireContext().getString(R.string.telemessage_privacy_url)/*TM_TA RegistrationConstants.TERMS_AND_CONDITIONS_URL*/);
+    CommunicationActions.openBrowserLink(requireContext(), requireContext().getString(R.string.telemessage_privacy_url)/*TM_SA RegistrationConstants.TERMS_AND_CONDITIONS_URL*/);
   }
+
 
   private boolean canUserSelectBackup() {
     return BackupUtil.isUserSelectionRequired(requireContext()) &&

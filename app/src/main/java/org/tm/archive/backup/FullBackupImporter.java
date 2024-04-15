@@ -155,11 +155,9 @@ public class FullBackupImporter extends FullBackupBase {
   }
 
   private static void processVersion(@NonNull SQLiteDatabase db, DatabaseVersion version) throws IOException {
-    //**TM_SA**//s
-    /*if (version.version == null || version.version > db.getVersion()) {
+    if (version.version == null || version.version > db.getVersion()) {
       throw new DatabaseDowngradeException(db.getVersion(), version.version != null ? version.version : -1);
-    }*/
-    //**TM_SA**//s
+    }
 
     db.setVersion(version.version);
   }
@@ -196,7 +194,7 @@ public class FullBackupImporter extends FullBackupBase {
   private static void processAttachment(@NonNull Context context, @NonNull AttachmentSecret attachmentSecret, @NonNull SQLiteDatabase db, @NonNull Attachment attachment, BackupRecordInputStream inputStream)
       throws IOException
   {
-    File                       dataFile      = AttachmentTable.newFile(context);
+    File                       dataFile      = AttachmentTable.newDataFile(context);
     Pair<byte[], OutputStream> output        = ModernEncryptingPartOutputStream.createFor(attachmentSecret, dataFile, false);
     boolean                    isLegacyTable = SqlUtil.tableExists(db, "part");
 

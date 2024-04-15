@@ -24,6 +24,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 import androidx.multidex.MultiDexApplication;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.security.ProviderInstaller;
 
 import org.archiver.FCMConnector;
@@ -56,9 +57,11 @@ import org.tm.archive.jobs.CheckServiceReachabilityJob;
 import org.tm.archive.jobs.DownloadLatestEmojiDataJob;
 import org.tm.archive.jobs.EmojiSearchIndexDownloadJob;
 import org.tm.archive.jobs.ExternalLaunchDonationJob;
+import org.tm.archive.jobs.FcmRefreshJob;
 import org.tm.archive.jobs.FontDownloaderJob;
 import org.tm.archive.jobs.GroupRingCleanupJob;
 import org.tm.archive.jobs.GroupV2UpdateSelfProfileKeyJob;
+import org.tm.archive.jobs.LinkedDeviceInactiveCheckJob;
 import org.tm.archive.jobs.MultiDeviceContactUpdateJob;
 import org.tm.archive.jobs.PnpInitializeDevicesJob;
 import org.tm.archive.jobs.PreKeysSyncJob;
@@ -74,7 +77,6 @@ import org.tm.archive.logging.CustomSignalProtocolLogger;
 import org.tm.archive.logging.PersistentLogger;
 import org.tm.archive.messageprocessingalarm.RoutineMessageFetchReceiver;
 import org.tm.archive.migrations.ApplicationMigrations;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.SignalGlideComponents;
 import org.tm.archive.mms.SignalGlideModule;
 import org.tm.archive.providers.BlobProvider;
@@ -127,6 +129,10 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   private static final String TAG = Log.tag(ApplicationContext.class);
 
+ /* public static ApplicationContext getInstance(Context context) {
+    return (ApplicationContext)context.getApplicationContext();
+  }*///*TM_SA*/
+
   @Override
   public void onCreate() {
     Tracer.getInstance().start("Application#onCreate()");
@@ -174,7 +180,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                             .addBlocking("ring-rtc", this::initializeRingRtc)
                             .addBlocking("glide", () -> SignalGlideModule.setRegisterGlideComponents(new SignalGlideComponents()))
                             .addNonBlocking(() -> RegistrationUtil.maybeMarkRegistrationComplete())
-                            .addNonBlocking(() -> GlideApp.get(this))
+                            .addNonBlocking(() -> Glide.get(this))
                             .addNonBlocking(this::cleanAvatarStorage)
                             .addNonBlocking(this::initializeRevealableMessageManager)
                             .addNonBlocking(this::initializePendingRetryReceiptManager)
@@ -186,7 +192,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                             .addNonBlocking(this::initializeCleanup)
                             .addNonBlocking(this::initializeGlideCodecs)
                             .addNonBlocking(StorageSyncHelper::scheduleRoutineSync)
-                            .addNonBlocking(() -> ApplicationDependencies.getJobManager().beginJobLoop())
+                            .addNonBlocking(this::beginJobLoop)
                             .addNonBlocking(EmojiSource::refresh)
                             .addNonBlocking(() -> ApplicationDependencies.getGiphyMp4Cache().onAppStart(this))
                             .addNonBlocking(this::ensureProfileUploaded)
@@ -194,7 +200,6 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                             .addPostRender(() -> ApplicationDependencies.getDeletedCallEventManager().scheduleIfNecessary())
                             .addPostRender(() -> RateLimitUtil.retryAllRateLimitedMessages(this))
                             .addPostRender(this::initializeExpiringMessageManager)
-                            .addPostRender(() -> SignalStore.settings().setDefaultSms(Util.isDefaultSmsProvider(this)))
                             .addPostRender(this::initializeTrimThreadsByDateManager)
                             .addPostRender(RefreshSvrCredentialsJob::enqueueIfNecessary)
                             .addPostRender(() -> DownloadLatestEmojiDataJob.scheduleIfNecessary(this))
@@ -212,6 +217,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
                             .addPostRender(() -> ApplicationDependencies.getRecipientCache().warmUp())
                             .addPostRender(AccountConsistencyWorkerJob::enqueueIfNecessary)
                             .addPostRender(GroupRingCleanupJob::enqueue)
+                            .addPostRender(LinkedDeviceInactiveCheckJob::enqueueIfNecessary)
                             .execute();
 
     Log.d(TAG, "onCreate() took " + (System.currentTimeMillis() - startTime) + " ms");
@@ -270,7 +276,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
   public void checkBuildExpiration() {
     if (Util.getTimeUntilBuildExpiry() <= 0 && !SignalStore.misc().isClientDeprecated()) {
       Log.w(TAG, "Build expired!");
-      SignalStore.misc().markClientDeprecated();
+      SignalStore.misc().setClientDeprecated(true);
     }
   }
 
@@ -304,7 +310,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
 
   @VisibleForTesting
   protected void initializeLogging() {
-    Log.initialize(FeatureFlags::internalUser, new AndroidLogger(), new PersistentLogger(this)); // TM_SA
+    Log.initialize(FeatureFlags::internalUser, new AndroidLogger(), new PersistentLogger(this));
 
     SignalProtocolLoggerProvider.setProvider(new CustomSignalProtocolLogger());
 
@@ -461,6 +467,11 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     if (TextSecurePreferences.needsFullContactSync(this)) {
       ApplicationDependencies.getJobManager().add(new MultiDeviceContactUpdateJob(true));
     }
+  }
+
+  @VisibleForTesting
+  protected void beginJobLoop() {
+    ApplicationDependencies.getJobManager().beginJobLoop();
   }
 
   @WorkerThread

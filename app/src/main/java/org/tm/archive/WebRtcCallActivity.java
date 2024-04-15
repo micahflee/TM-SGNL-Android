@@ -137,6 +137,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
   public static final String EXTRA_ENABLE_VIDEO_IF_AVAILABLE = WebRtcCallActivity.class.getCanonicalName() + ".ENABLE_VIDEO_IF_AVAILABLE";
   public static final String EXTRA_STARTED_FROM_FULLSCREEN   = WebRtcCallActivity.class.getCanonicalName() + ".STARTED_FROM_FULLSCREEN";
   public static final String EXTRA_STARTED_FROM_CALL_LINK    = WebRtcCallActivity.class.getCanonicalName() + ".STARTED_FROM_CALL_LINK";
+  public static final String EXTRA_LAUNCH_IN_PIP             = WebRtcCallActivity.class.getCanonicalName() + ".STARTED_FROM_CALL_LINK";
 
   private CallParticipantsListUpdatePopupWindow participantUpdateWindow;
   private CallStateUpdatePopupWindow            callStateUpdatePopupWindow;
@@ -159,6 +160,8 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
   private LifecycleDisposable              lifecycleDisposable;
   private long                             lastCallLinkDisconnectDialogShowTime;
   private ControlsAndInfoController        controlsAndInfo;
+  private boolean                          enterPipOnResume;
+  private long                             lastProcessedIntentTimestamp;
 
   private Disposable ephemeralStateDisposable = Disposable.empty();
 
@@ -264,6 +267,11 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
         }
       }, TimeUnit.SECONDS.toMillis(1));
     }
+
+    if (enterPipOnResume) {
+      enterPipOnResume = false;
+      enterPipModeIfPossible();
+    }
   }
 
   @Override
@@ -299,10 +307,16 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
       requestNewSizesThrottle.clear();
     }
 
+    ApplicationDependencies.getSignalCallManager().setEnableVideo(false);
+
     if (!viewModel.isCallStarting()) {
       CallParticipantsState state = viewModel.getCallParticipantsStateSnapshot();
-      if (state != null && state.getCallState().isPreJoinOrNetworkUnavailable()) {
-        ApplicationDependencies.getSignalCallManager().cancelPreJoin();
+      if (state != null) {
+        if (state.getCallState().isPreJoinOrNetworkUnavailable()) {
+          ApplicationDependencies.getSignalCallManager().cancelPreJoin();
+        } else if (state.getCallState().getInOngoingCall() && isInPipMode()) {
+          ApplicationDependencies.getSignalCallManager().relaunchPipOnForeground();
+        }
       }
     }
   }
@@ -361,6 +375,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
     Log.d(TAG, "Intent: Action: " + intent.getAction());
     Log.d(TAG, "Intent: EXTRA_STARTED_FROM_FULLSCREEN: " + intent.getBooleanExtra(EXTRA_STARTED_FROM_FULLSCREEN, false));
     Log.d(TAG, "Intent: EXTRA_ENABLE_VIDEO_IF_AVAILABLE: " + intent.getBooleanExtra(EXTRA_ENABLE_VIDEO_IF_AVAILABLE, false));
+    Log.d(TAG, "Intent: EXTRA_LAUNCH_IN_PIP: " + intent.getBooleanExtra(EXTRA_LAUNCH_IN_PIP, false));
   }
 
   private void processIntent(@NonNull Intent intent) {
@@ -373,6 +388,12 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
     } else if (END_CALL_ACTION.equals(intent.getAction())) {
       handleEndCall();
     }
+
+    if (System.currentTimeMillis() - lastProcessedIntentTimestamp > TimeUnit.SECONDS.toMillis(1)) {
+      enterPipOnResume = intent.getBooleanExtra(EXTRA_LAUNCH_IN_PIP, false);
+    }
+
+    lastProcessedIntentTimestamp = System.currentTimeMillis();
   }
 
   private void initializePendingParticipantFragmentListener() {
@@ -765,7 +786,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
     if (isFinishing()) return; // XXX Stuart added this check above, not sure why, so I'm repeating in ignorance. - moxie
     new MaterialAlertDialogBuilder(this)
         .setTitle(R.string.RedPhone_number_not_registered)
-        .setIcon(R.drawable.ic_warning)
+        .setIcon(R.drawable.symbol_error_triangle_fill_24)
         .setMessage(R.string.RedPhone_the_number_you_dialed_does_not_support_secure_voice)
         .setCancelable(true)
         .setPositiveButton(R.string.RedPhone_got_it, (d, w) -> handleTerminate(event.getRecipient(), HangupMessage.Type.NORMAL))
@@ -851,8 +872,7 @@ public class WebRtcCallActivity extends BaseActivity implements SafetyNumberChan
   }
 
   private boolean isSystemPipEnabledAndAvailable() {
-    return Build.VERSION.SDK_INT >= 26 &&
-           getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
+    return Build.VERSION.SDK_INT >= 26 && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
   }
 
   private void delayedFinish() {

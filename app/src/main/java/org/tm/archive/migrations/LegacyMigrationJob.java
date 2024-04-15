@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
+import com.bumptech.glide.Glide;
+
 import org.signal.core.util.logging.Log;
 import org.tm.archive.attachments.DatabaseAttachment;
 import org.tm.archive.crypto.MasterSecret;
@@ -21,7 +23,6 @@ import org.tm.archive.jobs.DirectoryRefreshJob;
 import org.tm.archive.jobs.PreKeysSyncJob;
 import org.tm.archive.jobs.RefreshAttributesJob;
 import org.tm.archive.keyvalue.SignalStore;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.service.KeyCachingService;
 import org.tm.archive.transport.RetryLaterException;
 import org.tm.archive.util.FileUtils;
@@ -200,7 +201,7 @@ public class LegacyMigrationJob extends MigrationJob {
 
     if (lastSeenVersion < IMAGE_CACHE_CLEANUP) {
       FileUtils.deleteDirectoryContents(context.getExternalCacheDir());
-      GlideApp.get(context).clearDiskCache();
+      Glide.get(context).clearDiskCache();
     }
 
     // This migration became unnecessary after switching away from WorkManager

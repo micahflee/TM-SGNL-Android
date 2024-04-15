@@ -143,11 +143,14 @@ public class ApplicationMigrations {
     static final int SELF_REGISTERTED_STATE        = 99;
     static final int SVR2_ENCLAVE_UPDATE           = 100;
     static final int STORAGE_LOCAL_UNKNOWNS_FIX    = 101;
+    static final int PNP_LAUNCH                    = 102;
+    static final int EMOJI_VERSION_10              = 103;
+    static final int ATTACHMENT_HASH_BACKFILL      = 104;
   }
 
-  public static final int CURRENT_VERSION = 101;
+  public static final int CURRENT_VERSION = 104;
 
-  /**
+ /**
    * This *must* be called after the {@link JobManager} has been instantiated, but *before* the call
    * to {@link JobManager#beginJobLoop()}. Otherwise, other non-migration jobs may have started
    * executing before we add the migration jobs.
@@ -164,7 +167,7 @@ public class ApplicationMigrations {
       return;
     } else {
       Log.d(TAG, "About to update. Clearing deprecation flag.");
-      SignalStore.misc().clearClientDeprecated();
+      SignalStore.misc().setClientDeprecated(false);
     }
 
     final int lastSeenVersion = TextSecurePreferences.getAppMigrationVersion(context);
@@ -650,6 +653,18 @@ public class ApplicationMigrations {
 
     if (lastSeenVersion < Version.STORAGE_LOCAL_UNKNOWNS_FIX) {
       jobs.put(Version.STORAGE_LOCAL_UNKNOWNS_FIX, new StorageFixLocalUnknownMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.PNP_LAUNCH) {
+      jobs.put(Version.PNP_LAUNCH, new PnpLaunchMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.EMOJI_VERSION_10) {
+      jobs.put(Version.EMOJI_VERSION_10, new EmojiDownloadMigrationJob());
+    }
+
+    if (lastSeenVersion < Version.ATTACHMENT_HASH_BACKFILL) {
+      jobs.put(Version.ATTACHMENT_HASH_BACKFILL, new AttachmentHashBackfillMigrationJob());
     }
 
     return jobs;

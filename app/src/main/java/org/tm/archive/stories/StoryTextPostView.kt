@@ -12,6 +12,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.doOnNextLayout
 import androidx.core.view.isVisible
+import org.signal.core.util.concurrent.ListenableFuture
 import org.tm.archive.R
 import org.tm.archive.components.ClippedCardView
 import org.tm.archive.conversation.MessageStyler
@@ -25,7 +26,6 @@ import org.tm.archive.mediasend.v2.text.TextStoryPostCreationState
 import org.tm.archive.mediasend.v2.text.TextStoryScale
 import org.tm.archive.mediasend.v2.text.TextStoryTextWatcher
 import org.tm.archive.util.LongClickMovementMethod
-import org.tm.archive.util.concurrent.ListenableFuture
 import org.tm.archive.util.visible
 import java.util.Locale
 

@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 
@@ -22,7 +23,6 @@ import org.tm.archive.R;
 import org.tm.archive.conversation.colors.ChatColorsPalette;
 import org.tm.archive.giph.model.ChunkedImageUrl;
 import org.tm.archive.giph.model.GiphyImage;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.util.Projection;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
@@ -99,7 +99,7 @@ final class GiphyMp4ViewHolder extends MappingViewHolder<GiphyImage> implements 
   }
 
   private void loadPlaceholderImage(@NonNull GiphyImage giphyImage) {
-    GlideApp.with(itemView)
+    Glide.with(itemView)
             .load(new ChunkedImageUrl(giphyImage.getStillUrl()))
             .placeholder(placeholder)
             .diskCacheStrategy(DiskCacheStrategy.ALL)

@@ -8,6 +8,8 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 
+import com.bumptech.glide.RequestManager;
+
 import org.signal.ringrtc.CallLinkRootKey;
 import org.tm.archive.components.voice.VoiceNotePlaybackState;
 import org.tm.archive.contactshare.Contact;
@@ -26,7 +28,6 @@ import org.tm.archive.groups.GroupId;
 import org.tm.archive.groups.GroupMigrationMembershipChange;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mediapreview.MediaIntentFactory;
-import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.stickers.StickerLocator;
@@ -41,7 +42,7 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
             @NonNull ConversationMessage messageRecord,
             @NonNull Optional<MessageRecord> previousMessageRecord,
             @NonNull Optional<MessageRecord> nextMessageRecord,
-            @NonNull GlideRequests glideRequests,
+            @NonNull RequestManager requestManager,
             @NonNull Locale locale,
             @NonNull Set<MultiselectPart> batchSelected,
             @NonNull Recipient recipients,
@@ -122,5 +123,8 @@ public interface BindableConversationItem extends Unbindable, GiphyMp4Playable, 
     void onEditedIndicatorClicked(@NonNull MessageRecord messageRecord);
     void onShowGroupDescriptionClicked(@NonNull String groupName, @NonNull String description, boolean shouldLinkifyWebLinks);
     void onJoinCallLink(@NonNull CallLinkRootKey callLinkRootKey);
+    void onShowSafetyTips(boolean forGroup);
+    void onReportSpamLearnMoreClicked();
+    void onMessageRequestAcceptOptionsClicked();
   }
 }

@@ -4,16 +4,16 @@ import android.content.res.ColorStateList
 import android.view.View
 import android.widget.ImageView
 import androidx.core.widget.ImageViewCompat
+import com.bumptech.glide.RequestManager
 import org.tm.archive.R
 import org.tm.archive.glide.cache.ApngOptions
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri
-import org.tm.archive.mms.GlideRequests
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingModel
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
 
-class KeyboardStickerPackListAdapter(private val glideRequests: GlideRequests, private val allowApngAnimation: Boolean, private val onTabSelected: (StickerPack) -> Unit) : MappingAdapter() {
+class KeyboardStickerPackListAdapter(private val requestManager: RequestManager, private val allowApngAnimation: Boolean, private val onTabSelected: (StickerPack) -> Unit) : MappingAdapter() {
 
   init {
     registerFactory(StickerPack::class.java, LayoutFactory(::StickerPackViewHolder, R.layout.keyboard_pager_category_icon))
@@ -47,7 +47,7 @@ class KeyboardStickerPackListAdapter(private val glideRequests: GlideRequests, p
       if (model.loadImage) {
         ImageViewCompat.setImageTintList(icon, null)
         icon.alpha = if (model.selected) 1f else 0.5f
-        glideRequests.load(model.uri)
+        requestManager.load(model.uri)
           .set(ApngOptions.ANIMATE, allowApngAnimation)
           .into(icon)
       } else {

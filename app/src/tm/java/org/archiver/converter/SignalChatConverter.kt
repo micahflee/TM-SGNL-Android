@@ -6,6 +6,7 @@ import com.tm.androidcopysdk.model.ChatType
 import org.archiver.model.Messages.chatRecipient
 import org.archiver.model.Messages.chatType
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.ThreadRecord
 import org.tm.archive.recipients.Recipient
 import kotlin.jvm.optionals.getOrNull
 
@@ -14,13 +15,13 @@ class SignalChatConverter(
   private val context: Context
 ) {
 
-  fun convert(message: MessageRecord): ArchiveChat {
-    val chatRecipient = message.chatRecipient()
-    val type = message.chatType()
+  fun convert(message: MessageRecord, thread: ThreadRecord?): ArchiveChat {
+    val type = message.chatType(thread)
+    val chatRecipient = message.chatRecipient(type, thread)
     return ArchiveChat(
       id = getChatId(chatRecipient, type) ?: "",
       type = type,
-      name = if (type == ChatType.Group) chatRecipient.getGroupName(context) else chatRecipient.getDisplayName(context),
+      name = chatRecipient.getDisplayName(context),
       isSecret = false,
     )
   }

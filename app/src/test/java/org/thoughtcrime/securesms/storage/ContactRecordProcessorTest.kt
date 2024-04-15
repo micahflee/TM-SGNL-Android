@@ -283,8 +283,6 @@ class ContactRecordProcessorTest {
     // GIVEN
     val subject = ContactRecordProcessor(ACI_A, PNI_A, E164_A, recipientTable)
 
-    featureFlags.`when`<Boolean> { FeatureFlags.phoneNumberPrivacy() }.thenReturn(true)
-
     val local = buildRecord(
       STORAGE_ID_A,
       record = ContactRecord(
@@ -316,8 +314,6 @@ class ContactRecordProcessorTest {
   fun `merge, pnisMatchButE164sDont pnpEnabled, keepLocal`() {
     // GIVEN
     val subject = ContactRecordProcessor(ACI_A, PNI_A, E164_A, recipientTable)
-
-    featureFlags.`when`<Boolean> { FeatureFlags.phoneNumberPrivacy() }.thenReturn(true)
 
     val local = buildRecord(
       STORAGE_ID_A,
@@ -351,8 +347,6 @@ class ContactRecordProcessorTest {
     // GIVEN
     val subject = ContactRecordProcessor(ACI_A, PNI_A, E164_A, recipientTable)
 
-    featureFlags.`when`<Boolean> { FeatureFlags.phoneNumberPrivacy() }.thenReturn(true)
-
     val local = buildRecord(
       STORAGE_ID_A,
       record = ContactRecord(
@@ -381,18 +375,15 @@ class ContactRecordProcessorTest {
   }
 
   @Test
-  fun `merge, pnpDisabled, pniNotDropped`() {
+  fun `merge, nickname change, useRemote`() {
     // GIVEN
     val subject = ContactRecordProcessor(ACI_A, PNI_A, E164_A, recipientTable)
-
-    featureFlags.`when`<Boolean> { FeatureFlags.phoneNumberPrivacy() }.thenReturn(false)
 
     val local = buildRecord(
       STORAGE_ID_A,
       record = ContactRecord(
         aci = ACI_A.toString(),
-        e164 = E164_A,
-        pni = PNI_A.toStringWithoutPrefix()
+        e164 = E164_A
       )
     )
 
@@ -400,8 +391,9 @@ class ContactRecordProcessorTest {
       STORAGE_ID_B,
       record = ContactRecord(
         aci = ACI_A.toString(),
-        e164 = E164_B,
-        pni = PNI_B.toStringWithoutPrefix()
+        e164 = E164_A,
+        nickname = ContactRecord.Name(given = "Ghost", family = "Spider"),
+        note = "Spidey Friend"
       )
     )
 
@@ -409,9 +401,9 @@ class ContactRecordProcessorTest {
     val result = subject.merge(remote, local, TestKeyGenerator(STORAGE_ID_C))
 
     // THEN
-    assertEquals(remote.aci, result.aci)
-    assertEquals(remote.number.get(), result.number.get())
-    assertEquals(true, result.pni.isPresent)
+    assertEquals("Ghost", result.nicknameGivenName.get())
+    assertEquals("Spider", result.nicknameFamilyName.get())
+    assertEquals("Spidey Friend", result.note.get())
   }
 
   private fun buildRecord(id: StorageId = STORAGE_ID_A, record: ContactRecord): SignalContactRecord {

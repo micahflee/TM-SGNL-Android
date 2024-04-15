@@ -5,10 +5,10 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
 import androidx.core.content.res.use
+import com.bumptech.glide.RequestManager
 import org.tm.archive.R
 import org.tm.archive.components.AvatarImageView
 import org.tm.archive.database.model.StoryViewState
-import org.tm.archive.mms.GlideRequests
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.stories.Stories
 import org.tm.archive.util.visible
@@ -76,7 +76,7 @@ class AvatarView @JvmOverloads constructor(
   /**
    * Displays Note-to-Self
    */
-  fun displayChatAvatar(requestManager: GlideRequests, recipient: Recipient, isQuickContactEnabled: Boolean) {
+  fun displayChatAvatar(requestManager: RequestManager, recipient: Recipient, isQuickContactEnabled: Boolean) {
     avatar.setAvatar(requestManager, recipient, isQuickContactEnabled)
   }
 

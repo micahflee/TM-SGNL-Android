@@ -10,9 +10,9 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import org.tm.archive.R
 import org.tm.archive.keyboard.emoji.KeyboardPageSearchView
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.stickers.StickerEventListener
 import org.tm.archive.util.DeviceProperties
 import org.tm.archive.util.InsetItemDecoration
@@ -47,7 +47,7 @@ class StickerSearchDialogFragment : DialogFragment(), KeyboardStickerListAdapter
     list = view.findViewById(R.id.sticker_search_list)
     noResults = view.findViewById(R.id.sticker_search_no_results)
 
-    adapter = KeyboardStickerListAdapter(GlideApp.with(this), this, DeviceProperties.shouldAllowApngStickerAnimation(requireContext()))
+    adapter = KeyboardStickerListAdapter(Glide.with(this), this, DeviceProperties.shouldAllowApngStickerAnimation(requireContext()))
     layoutManager = GridLayoutManager(requireContext(), 2)
 
     list.layoutManager = layoutManager

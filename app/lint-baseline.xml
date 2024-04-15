@@ -6,12 +6,11 @@
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
         errorLine1="    List&lt;SubscriptionInfo> list = subscriptionManager.getActiveSubscriptionInfoList();"
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <!--//**TM_SA**//Start-->
+        <!--//**TM_SA**//change path name-->
         <location
             file="src/main/java/org/tm/archive/util/dualsim/SubscriptionManagerCompat.java"
             line="101"
             column="35"/>
-        <!--//**TM_SA**//End-->
     </issue>
 
     <issue

@@ -5,10 +5,14 @@
 
 package org.tm.archive.jobs
 
+import androidx.annotation.WorkerThread
+import okio.ByteString.Companion.toByteString
+import org.tm.archive.database.CallTable
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.jobmanager.Job
 import org.tm.archive.jobmanager.impl.NetworkConstraint
 import org.tm.archive.jobs.protos.CallLogEventSendJobData
+import org.tm.archive.recipients.Recipient
 import org.whispersystems.signalservice.api.messages.multidevice.SignalServiceSyncMessage
 import org.whispersystems.signalservice.api.push.exceptions.PushNetworkException
 import org.whispersystems.signalservice.api.push.exceptions.ServerRejectedException
@@ -27,8 +31,9 @@ class CallLogEventSendJob private constructor(
   companion object {
     const val KEY = "CallLogEventSendJob"
 
+    @WorkerThread
     fun forClearHistory(
-      timestamp: Long
+      call: CallTable.Call
     ) = CallLogEventSendJob(
       Parameters.Builder()
         .setQueue("CallLogEventSendJob")
@@ -37,8 +42,28 @@ class CallLogEventSendJob private constructor(
         .addConstraint(NetworkConstraint.KEY)
         .build(),
       SyncMessage.CallLogEvent(
-        timestamp = timestamp,
+        timestamp = call.timestamp,
+        callId = call.callId,
+        conversationId = Recipient.resolved(call.peer).requireCallConversationId().toByteString(),
         type = SyncMessage.CallLogEvent.Type.CLEAR
+      )
+    )
+
+    @WorkerThread
+    fun forMarkedAsRead(
+      call: CallTable.Call
+    ) = CallLogEventSendJob(
+      Parameters.Builder()
+        .setQueue("CallLogEventSendJob")
+        .setLifespan(TimeUnit.DAYS.toMillis(1))
+        .setMaxAttempts(Parameters.UNLIMITED)
+        .addConstraint(NetworkConstraint.KEY)
+        .build(),
+      SyncMessage.CallLogEvent(
+        timestamp = call.timestamp,
+        callId = call.callId,
+        conversationId = Recipient.resolved(call.peer).requireCallConversationId().toByteString(),
+        type = SyncMessage.CallLogEvent.Type.MARKED_AS_READ
       )
     )
   }

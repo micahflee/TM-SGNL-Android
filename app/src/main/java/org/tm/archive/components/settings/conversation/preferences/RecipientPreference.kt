@@ -1,12 +1,16 @@
 package org.tm.archive.components.settings.conversation.preferences
 
+import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import org.tm.archive.R
 import org.tm.archive.badges.BadgeImageView
 import org.tm.archive.components.AvatarImageView
 import org.tm.archive.components.settings.PreferenceModel
 import org.tm.archive.recipients.Recipient
+import org.tm.archive.util.ContextUtil
+import org.tm.archive.util.SpanUtil
 import org.tm.archive.util.adapter.mapping.LayoutFactory
 import org.tm.archive.util.adapter.mapping.MappingAdapter
 import org.tm.archive.util.adapter.mapping.MappingViewHolder
@@ -56,7 +60,16 @@ object RecipientPreference {
       name.text = if (model.recipient.isSelf) {
         context.getString(R.string.Recipient_you)
       } else {
-        model.recipient.getDisplayName(context)
+        if (model.recipient.isSystemContact) {
+          SpannableStringBuilder(model.recipient.getDisplayName(context)).apply {
+            val drawable = ContextUtil.requireDrawable(context, R.drawable.symbol_person_circle_24).apply {
+              setTint(ContextCompat.getColor(context, R.color.signal_colorOnSurface))
+            }
+            SpanUtil.appendCenteredImageSpan(this, drawable, 16, 16)
+          }
+        } else {
+          model.recipient.getDisplayName(context)
+        }
       }
 
       val aboutText = model.recipient.combinedAboutAndEmoji

@@ -8,10 +8,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import org.tm.archive.R;
 import org.tm.archive.badges.BadgeImageView;
 import org.tm.archive.components.AvatarImageView;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.util.AvatarUtil;
 
 import java.util.Collections;
@@ -65,12 +66,12 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
 
       if (reaction.getSender().isSelf()) {
         this.recipient.setText(R.string.ReactionsRecipientAdapter_you);
-        this.avatar.setAvatar(GlideApp.with(avatar), null, false);
+        this.avatar.setAvatar(Glide.with(avatar), null, false);
         this.badge.setBadge(null);
         AvatarUtil.loadIconIntoImageView(reaction.getSender(), avatar);
       } else {
         this.recipient.setText(reaction.getSender().getDisplayName(itemView.getContext()));
-        this.avatar.setAvatar(GlideApp.with(avatar), reaction.getSender(), false);
+        this.avatar.setAvatar(Glide.with(avatar), reaction.getSender(), false);
         this.badge.setBadgeFromRecipient(reaction.getSender());
       }
     }

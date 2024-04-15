@@ -12,6 +12,7 @@ import org.tm.archive.R;
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.FallbackPhoto20dp;
 import org.tm.archive.contacts.avatars.GeneratedContactPhoto;
+import org.tm.archive.contacts.avatars.ResourceContactPhoto;
 import org.tm.archive.conversation.colors.AvatarColor;
 import org.tm.archive.databinding.ReviewBannerViewBinding;
 import org.tm.archive.recipients.Recipient;
@@ -69,9 +70,9 @@ public class ReviewBannerView extends FrameLayout {
     binding.bannerAvatarStroke.setVisibility(GONE);
   }
 
-  public void setBannerRecipient(@NonNull Recipient recipient) {
-    binding.bannerTopLeftAvatar.setAvatar(recipient);
-    binding.bannerBottomRightAvatar.setAvatar(recipient);
+  public void setBannerRecipients(@NonNull Recipient target, @NonNull Recipient dupe) {
+    binding.bannerTopLeftAvatar.setAvatar(target);
+    binding.bannerBottomRightAvatar.setAvatar(dupe);
 
     binding.bannerIcon.setVisibility(GONE);
     binding.bannerTopLeftAvatar.setVisibility(VISIBLE);
@@ -99,7 +100,7 @@ public class ReviewBannerView extends FrameLayout {
 
     @Override
     public @NonNull FallbackContactPhoto getPhotoForLocalNumber() {
-      throw new UnsupportedOperationException("This provider does not support local number");
+      return new ResourceContactPhoto(R.drawable.symbol_note_light_24, R.drawable.symbol_note_light_24);
     }
 
     @NonNull

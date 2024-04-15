@@ -6,11 +6,14 @@
 package org.tm.archive.conversation.v2
 
 import android.content.Context
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.lifecycle.ViewModel
+import com.bumptech.glide.RequestManager
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Maybe
@@ -33,8 +36,10 @@ import org.tm.archive.components.reminder.Reminder
 import org.tm.archive.contactshare.Contact
 import org.tm.archive.conversation.ConversationMessage
 import org.tm.archive.conversation.ScheduledMessagesRepository
+import org.tm.archive.conversation.colors.ChatColors
 import org.tm.archive.conversation.mutiselect.MultiselectPart
 import org.tm.archive.conversation.v2.data.ConversationElementKey
+import org.tm.archive.conversation.v2.items.ChatColorsDrawable
 import org.tm.archive.database.DatabaseObserver
 import org.tm.archive.database.MessageTable
 import org.tm.archive.database.model.IdentityRecord
@@ -54,7 +59,6 @@ import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.messagerequests.MessageRequestRepository
 import org.tm.archive.messagerequests.MessageRequestState
-import org.tm.archive.mms.GlideRequests
 import org.tm.archive.mms.QuoteModel
 import org.tm.archive.mms.Slide
 import org.tm.archive.mms.SlideDeck
@@ -79,6 +83,7 @@ import kotlin.time.Duration
 class ConversationViewModel(
   val threadId: Long,
   private val requestedStartingPosition: Int,
+  initialChatColors: ChatColors,
   private val repository: ConversationRepository,
   recipientRepository: ConversationRecipientRepository,
   messageRequestRepository: MessageRequestRepository,
@@ -110,6 +115,10 @@ class ConversationViewModel(
     .distinctUntilChanged()
     .observeOn(AndroidSchedulers.mainThread())
 
+  private val chatBounds: BehaviorSubject<Rect> = BehaviorSubject.create()
+  private val chatColors: RxStore<ChatColorsDrawable.ChatColorsData> = RxStore(ChatColorsDrawable.ChatColorsData(initialChatColors, null))
+  val chatColorsSnapshot: ChatColorsDrawable.ChatColorsData get() = chatColors.state
+
   @Volatile
   var recipientSnapshot: Recipient? = null
     private set
@@ -123,9 +132,11 @@ class ConversationViewModel(
   private val _inputReadyState: Observable<InputReadyState>
   val inputReadyState: Observable<InputReadyState>
 
-  private val hasMessageRequestStateSubject: BehaviorSubject<Boolean> = BehaviorSubject.createDefault(false)
+  private val hasMessageRequestStateSubject: BehaviorSubject<MessageRequestState> = BehaviorSubject.createDefault(MessageRequestState())
   val hasMessageRequestState: Boolean
-    get() = hasMessageRequestStateSubject.value ?: false
+    get() = hasMessageRequestStateSubject.value?.state != MessageRequestState.State.NONE
+  val messageRequestState: MessageRequestState
+    get() = hasMessageRequestStateSubject.value ?: MessageRequestState()
 
   private val refreshReminder: Subject<Unit> = PublishSubject.create()
   val reminder: Observable<Optional<Reminder>>
@@ -152,6 +163,19 @@ class ConversationViewModel(
       .subscribeBy {
         recipientSnapshot = it
       }
+
+    val chatColorsDataObservable: Observable<ChatColorsDrawable.ChatColorsData> = Observable.combineLatest(
+      recipient.map { it.chatColors }.distinctUntilChanged(),
+      chatBounds.distinctUntilChanged()
+    ) { chatColors, bounds ->
+      val chatMask = chatColors.chatBubbleMask
+
+      chatMask.bounds = bounds
+
+      ChatColorsDrawable.ChatColorsData(chatColors, chatMask)
+    }
+
+    disposables += chatColors.update(chatColorsDataObservable.toFlowable(BackpressureStrategy.LATEST)) { c, _ -> c }
 
     disposables += repository.getConversationThreadState(threadId, requestedStartingPosition)
       .subscribeBy(onSuccess = {
@@ -214,10 +238,11 @@ class ConversationViewModel(
         messageRequestState = messageRequestRepository.getMessageRequestState(recipient, threadId),
         groupRecord = groupRecord.orNull(),
         isClientExpired = SignalStore.misc().isClientDeprecated,
-        isUnauthorized = TextSecurePreferences.isUnauthorizedReceived(ApplicationDependencies.getApplication())
+        isUnauthorized = TextSecurePreferences.isUnauthorizedReceived(ApplicationDependencies.getApplication()),
+        threadContainsSms = !recipient.isRegistered && !recipient.isPushGroup && !recipient.isSelf && messageRequestRepository.threadContainsSms(threadId)
       )
     }.doOnNext {
-      hasMessageRequestStateSubject.onNext(it.messageRequestState != MessageRequestState.NONE)
+      hasMessageRequestStateSubject.onNext(it.messageRequestState)
     }
     inputReadyState = _inputReadyState.observeOn(AndroidSchedulers.mainThread())
 
@@ -249,6 +274,10 @@ class ConversationViewModel(
         override fun onError(e: Throwable) = Unit
         override fun onComplete() = Unit
       })
+  }
+
+  fun onChatBoundsChanged(bounds: Rect) {
+    chatBounds.onNext(bounds)
   }
 
   fun setSearchQuery(query: String?) {
@@ -322,9 +351,9 @@ class ConversationViewModel(
       .addTo(disposables)
   }
 
-  fun getContactPhotoIcon(context: Context, glideRequests: GlideRequests): Single<ShortcutInfoCompat> {
+  fun getContactPhotoIcon(context: Context, requestManager: RequestManager): Single<ShortcutInfoCompat> {
     return recipient.firstOrError().flatMap {
-      repository.getRecipientContactPhotoBitmap(context, glideRequests, it)
+      repository.getRecipientContactPhotoBitmap(context, requestManager, it)
     }
   }
 

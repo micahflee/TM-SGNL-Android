@@ -27,6 +27,7 @@ dependencyResolutionManagement {
       url = uri("https://pkgs.dev.azure.com/MicrosoftDeviceSDK/DuoSDK-Public/_packaging/Duo-SDK-Feed/maven/v1")
     }
     //**TM_SA**//END
+
     jcenter {
       content {
         includeVersion("mobi.upod", "time-duration-picker", "1.1.3")
@@ -47,8 +48,6 @@ include(":device-transfer")
 include(":device-transfer-app")
 include(":image-editor")
 include(":image-editor-app")
-include(":sms-exporter")
-include(":sms-exporter-app")
 include(":donations")
 include(":donations-app")
 include(":spinner")
@@ -64,8 +63,6 @@ include(":benchmark")
 include(":microbenchmark")
 include(":video")
 include(":video-app")
-include(":glide-webp")
-include(":glide-webp-app")
 
 project(":app").name = "Signal-Android"
 project(":paging").projectDir = file("paging/lib")
@@ -76,9 +73,6 @@ project(":device-transfer-app").projectDir = file("device-transfer/app")
 
 project(":image-editor").projectDir = file("image-editor/lib")
 project(":image-editor-app").projectDir = file("image-editor/app")
-
-project(":sms-exporter").projectDir = file("sms-exporter/lib")
-project(":sms-exporter-app").projectDir = file("sms-exporter/app")
 
 project(":donations").projectDir = file("donations/lib")
 project(":donations-app").projectDir = file("donations/app")
@@ -94,9 +88,6 @@ project(":qr-app").projectDir = file("qr/app")
 
 project(":video").projectDir = file("video/lib")
 project(":video-app").projectDir = file("video/app")
-
-project(":glide-webp").projectDir = file("glide-webp/lib")
-project(":glide-webp-app").projectDir = file("glide-webp/app")
 
 rootProject.name = "Signal"
 

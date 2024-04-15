@@ -130,7 +130,6 @@ public class Recipient {
   private final String                       about;
   private final String                       aboutEmoji;
   private final ProfileName                  systemProfileName;
-
   public final String                       systemContactName;//**TM_SA**//public
   private final Optional<Extras>             extras;
   private final boolean                      hasGroupsInCommon;
@@ -140,6 +139,8 @@ public class Recipient {
   private final CallLinkRoomId               callLinkRoomId;
   private final Optional<GroupRecord>        groupRecord;
   private final PhoneNumberSharingState      phoneNumberSharing;
+  private final ProfileName                  nickname;
+  private final String                       note;
 
   /**
    * Returns a {@link LiveRecipient}, which contains a {@link Recipient} that may or may not be
@@ -430,6 +431,8 @@ public class Recipient {
     this.callLinkRoomId               = null;
     this.groupRecord                  = Optional.empty();
     this.phoneNumberSharing           = PhoneNumberSharingState.UNKNOWN;
+    this.nickname                     = ProfileName.EMPTY;
+    this.note                         = null;
   }
 
   public Recipient(@NonNull RecipientId id, @NonNull RecipientDetails details, boolean resolved) {
@@ -486,6 +489,8 @@ public class Recipient {
     this.callLinkRoomId               = details.callLinkRoomId;
     this.groupRecord                  = details.groupRecord;
     this.phoneNumberSharing           = details.phoneNumberSharing;
+    this.nickname                     = details.nickname;
+    this.note                         = details.note;
   }
 
   public @NonNull RecipientId getId() {
@@ -498,6 +503,10 @@ public class Recipient {
 
   public @Nullable Uri getContactUri() {
     return contactUri;
+  }
+
+  public @Nullable String getNote() {
+    return note;
   }
 
   public @Nullable String getGroupName(@NonNull Context context) {
@@ -545,15 +554,12 @@ public class Recipient {
     }
   }
 
-  public boolean hasName() {
-    return groupName != null;
-  }
-
   /**
    * False iff it {@link #getDisplayName} would fall back to e164, email or unknown.
    */
   public boolean hasAUserSetDisplayName(@NonNull Context context) {
     return !TextUtils.isEmpty(getGroupName(context))             ||
+           !TextUtils.isEmpty(getNickname().toString())          ||
            !TextUtils.isEmpty(systemContactName)                 ||
            !TextUtils.isEmpty(getProfileName().toString());
   }
@@ -562,21 +568,11 @@ public class Recipient {
     String name = getNameFromLocalData(context);
 
     if (Util.isEmpty(name)) {
-      name = context.getString(R.string.Recipient_unknown);
-    }
-
-    return StringUtil.isolateBidi(name);
-  }
-
-  public @NonNull String getDisplayNameOrUsername(@NonNull Context context) {
-    String name = getNameFromLocalData(context);
-
-    if (Util.isEmpty(name)) {
-      name = StringUtil.isolateBidi(username);
+      name = username;
     }
 
     if (Util.isEmpty(name)) {
-      name = StringUtil.isolateBidi(context.getString(R.string.Recipient_unknown));
+      name = getUnknownDisplayName(context);
     }
 
     return StringUtil.isolateBidi(name);
@@ -591,6 +587,10 @@ public class Recipient {
    */
   private @Nullable String getNameFromLocalData(@NonNull Context context) {
     String name = getGroupName(context);
+
+    if (Util.isEmpty(name)) {
+      name = getNickname().toString();
+    }
 
     if (Util.isEmpty(name)) {
       name = systemContactName;
@@ -614,6 +614,11 @@ public class Recipient {
   public @NonNull String getMentionDisplayName(@NonNull Context context) {
     String name = isSelf ? getProfileName().toString() : getGroupName(context);
     name = StringUtil.isolateBidi(name);
+
+    if (Util.isEmpty(name)) {
+      name = isSelf ? getGroupName(context) : getNickname().toString();
+      name = StringUtil.isolateBidi(name);
+    }
 
     if (Util.isEmpty(name)) {
       name = isSelf ? getGroupName(context) : systemContactName;
@@ -642,22 +647,24 @@ public class Recipient {
 
   public @NonNull String getShortDisplayName(@NonNull Context context) {
     String name = Util.getFirstNonEmpty(getGroupName(context),
+                                        getNickname().getGivenName(),
+                                        getNickname().toString(),
                                         getSystemProfileName().getGivenName(),
+                                        getSystemProfileName().toString(),
                                         getProfileName().getGivenName(),
+                                        getProfileName().toString(),
+                                        getUsername().orElse(null),
                                         getDisplayName(context));
 
     return StringUtil.isolateBidi(name);
   }
 
-  public @NonNull String getShortDisplayNameIncludingUsername(@NonNull Context context) {
-    String name = Util.getFirstNonEmpty(getGroupName(context),
-                                        getSystemProfileName().getGivenName(),
-                                        getProfileName().getGivenName(),
-                                        getE164().orElse(null),
-                                        getUsername().orElse(null),
-                                        getDisplayName(context));
-
-    return StringUtil.isolateBidi(name);
+  private String getUnknownDisplayName(@NonNull Context context) {
+    if (getRegistered() == RegisteredState.NOT_REGISTERED) {
+      return context.getString(R.string.Recipient_deleted_account);
+    } else {
+      return context.getString(R.string.Recipient_unknown);
+    }
   }
 
   public @NonNull Optional<ServiceId> getServiceId() {
@@ -673,11 +680,7 @@ public class Recipient {
   }
 
   public @NonNull Optional<String> getUsername() {
-    if (FeatureFlags.usernames()) {
-      return OptionalUtil.absentIfEmpty(username);
-    } else {
-      return Optional.empty();
-    }
+    return OptionalUtil.absentIfEmpty(username);
   }
 
   public @NonNull Optional<String> getE164() {
@@ -688,7 +691,7 @@ public class Recipient {
    * Whether or not we should show this user's e164 in the interface.
    */
   public boolean shouldShowE164() {
-    return hasE164() && (isSystemContact() || getPhoneNumberSharing() != PhoneNumberSharingState.DISABLED);
+    return hasE164() && (isSystemContact() || getPhoneNumberSharing() == PhoneNumberSharingState.ENABLED);
   }
 
   public @NonNull Optional<String> getEmail() {
@@ -846,6 +849,10 @@ public class Recipient {
     return requireSmsAddress();
   }
 
+  public @NonNull ProfileName getNickname() {
+    return nickname;
+  }
+
   public @NonNull ProfileName getProfileName() {
     return signalProfileName;
   }
@@ -981,6 +988,7 @@ public class Recipient {
     else if (isGroupInternal())                     return fallbackPhotoProvider.getPhotoForGroup();
     else if (isGroup())                             return fallbackPhotoProvider.getPhotoForGroup();
     else if (!TextUtils.isEmpty(groupName))         return fallbackPhotoProvider.getPhotoForRecipientWithName(groupName, targetSize);
+    else if (!nickname.isEmpty())                   return fallbackPhotoProvider.getPhotoForRecipientWithName(nickname.toString(), targetSize);
     else if (!TextUtils.isEmpty(systemContactName)) return fallbackPhotoProvider.getPhotoForRecipientWithName(systemContactName, targetSize);
     else if (!signalProfileName.isEmpty())          return fallbackPhotoProvider.getPhotoForRecipientWithName(signalProfileName.toString(), targetSize);
     else                                            return fallbackPhotoProvider.getPhotoForRecipientWithoutName();
@@ -1242,6 +1250,18 @@ public class Recipient {
     return Objects.requireNonNull(callLinkRoomId);
   }
 
+  public @NonNull byte[] requireCallConversationId() {
+    if (isPushGroup()) {
+      return requireGroupId().getDecodedId();
+    } else if (isCallLink()) {
+      return requireCallLinkRoomId().encodeForProto().toByteArray();
+    } else if (isIndividual()) {
+      return requireServiceId().toByteArray();
+    } else {
+      throw new IllegalStateException("Recipient does not support conversation id");
+    }
+  }
+
   public PhoneNumberSharingState getPhoneNumberSharing() {
     return phoneNumberSharing;
   }
@@ -1403,7 +1423,9 @@ public class Recipient {
            Objects.equals(badges, other.badges) &&
            isActiveGroup == other.isActiveGroup &&
            Objects.equals(callLinkRoomId, other.callLinkRoomId) &&
-           phoneNumberSharing == other.phoneNumberSharing;
+           phoneNumberSharing == other.phoneNumberSharing &&
+           Objects.equals(nickname, other.nickname) &&
+           Objects.equals(note, other.note);
   }
 
   private static boolean allContentsAreTheSame(@NonNull List<Recipient> a, @NonNull List<Recipient> b) {

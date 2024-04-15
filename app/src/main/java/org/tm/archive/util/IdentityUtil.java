@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
+import org.signal.core.util.concurrent.ListenableFuture;
+import org.signal.core.util.concurrent.SettableFuture;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
@@ -31,8 +33,6 @@ import org.tm.archive.mms.OutgoingMessage;
 import org.tm.archive.notifications.v2.ConversationId;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
-import org.tm.archive.util.concurrent.ListenableFuture;
-import org.tm.archive.util.concurrent.SettableFuture;
 import org.whispersystems.signalservice.api.SignalSessionLock;
 import org.whispersystems.signalservice.api.messages.multidevice.VerifiedMessage;
 import org.whispersystems.signalservice.api.push.ServiceId;
@@ -164,6 +164,7 @@ public final class IdentityUtil {
       throw new AssertionError(e);
     }
 
+    SignalDatabase.messageLog().deleteAllForRecipient(recipientId);
   }
 
   public static void saveIdentity(String user, IdentityKey identityKey) {

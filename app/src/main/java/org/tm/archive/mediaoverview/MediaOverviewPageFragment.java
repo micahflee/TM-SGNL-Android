@@ -26,6 +26,7 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.codewaves.stickyheadergrid.StickyHeaderGridLayoutManager;
 
 import org.signal.core.util.DimensionUnit;
@@ -41,7 +42,6 @@ import org.tm.archive.database.loaders.GroupedThreadMediaLoader;
 import org.tm.archive.database.loaders.MediaLoader;
 import org.tm.archive.mediapreview.MediaIntentFactory;
 import org.tm.archive.mediapreview.MediaPreviewV2Activity;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.PartAuthority;
 import org.tm.archive.util.BottomOffsetDecoration;
 import org.tm.archive.util.MediaUtil;
@@ -125,7 +125,7 @@ public final class MediaOverviewPageFragment extends Fragment
     this.gridManager     = new StickyHeaderGridLayoutManager(spans);
 
     this.adapter = new MediaGalleryAllAdapter(context,
-                                              GlideApp.with(this),
+                                              Glide.with(this),
                                               new GroupedThreadMediaLoader.EmptyGroupedThreadMedia(),
                                               this,
                                               this,

@@ -10,7 +10,13 @@ import org.signal.storageservice.protos.groups.local.DecryptedGroup;
 import org.signal.storageservice.protos.groups.local.DecryptedGroupChange;
 import org.signal.storageservice.protos.groups.local.DecryptedMember;
 import org.signal.storageservice.protos.groups.local.DecryptedPendingMember;
+import org.tm.archive.backup.v2.proto.GroupChangeChatUpdate;
+import org.tm.archive.database.SignalDatabase;
+import org.tm.archive.database.model.GroupsV2UpdateMessageConverter;
 import org.tm.archive.database.model.databaseprotos.DecryptedGroupV2Context;
+import org.tm.archive.database.model.databaseprotos.GV2UpdateDescription;
+import org.tm.archive.database.model.databaseprotos.MessageExtras;
+import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 import org.whispersystems.signalservice.api.groupsv2.PartialDecryptedGroup;
@@ -43,6 +49,19 @@ public final class GroupProtoUtil {
       }
     }
     throw new GroupNotAMemberException();
+  }
+
+  public static GV2UpdateDescription createOutgoingGroupV2UpdateDescription(@NonNull GroupMasterKey masterKey,
+                                                                            @NonNull GroupMutation groupMutation,
+                                                                            @Nullable GroupChange signedServerChange)
+  {
+    DecryptedGroupV2Context groupV2Context = createDecryptedGroupV2Context(masterKey, groupMutation, signedServerChange);
+    GroupChangeChatUpdate   update         = GroupsV2UpdateMessageConverter.translateDecryptedChange(SignalStore.account().getServiceIds(), groupV2Context);
+
+    return new GV2UpdateDescription.Builder()
+        .gv2ChangeDescription(groupV2Context)
+        .groupChangeUpdate(update)
+        .build();
   }
 
   public static DecryptedGroupV2Context createDecryptedGroupV2Context(@NonNull GroupMasterKey masterKey,

@@ -2,8 +2,11 @@ package org.signal.core.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -12,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,35 +42,60 @@ object Scaffolds {
     titleContent: @Composable (Float, String) -> Unit = { _, title ->
       Text(text = title, style = MaterialTheme.typography.titleLarge)
     },
+    snackbarHost: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
   ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
+      snackbarHost = snackbarHost,
       topBar = {
-        TopAppBar(
-          title = {
-            titleContent(scrollBehavior.state.contentOffset, title)
-          },
-          navigationIcon = {
-            IconButton(
-              onClick = onNavigationClick,
-              Modifier.padding(end = 16.dp)
-            ) {
-              Icon(
-                painter = navigationIconPainter,
-                contentDescription = navigationContentDescription
-              )
-            }
-          },
-          scrollBehavior = scrollBehavior,
-          colors = TopAppBarDefaults.topAppBarColors(
-            scrolledContainerColor = SignalTheme.colors.colorSurface2
-          )
+        DefaultTopAppBar(
+          title,
+          titleContent,
+          scrollBehavior,
+          onNavigationClick,
+          navigationIconPainter,
+          navigationContentDescription,
+          actions
         )
       },
       modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
       content = content
+    )
+  }
+
+  @Composable
+  private fun DefaultTopAppBar(
+    title: String,
+    titleContent: @Composable (Float, String) -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior,
+    onNavigationClick: () -> Unit,
+    navigationIconPainter: Painter,
+    navigationContentDescription: String?,
+    actions: @Composable RowScope.() -> Unit
+  ) {
+    TopAppBar(
+      title = {
+        titleContent(scrollBehavior.state.contentOffset, title)
+      },
+      navigationIcon = {
+        IconButton(
+          onClick = onNavigationClick,
+          Modifier.padding(end = 16.dp)
+        ) {
+          Icon(
+            painter = navigationIconPainter,
+            contentDescription = navigationContentDescription
+          )
+        }
+      },
+      scrollBehavior = scrollBehavior,
+      colors = TopAppBarDefaults.topAppBarColors(
+        scrolledContainerColor = SignalTheme.colors.colorSurface2
+      ),
+      actions = actions
     )
   }
 }
@@ -78,7 +107,12 @@ private fun SettingsScaffoldPreview() {
     Scaffolds.Settings(
       "Settings Scaffold",
       onNavigationClick = {},
-      navigationIconPainter = ColorPainter(Color.Black)
+      navigationIconPainter = ColorPainter(Color.Black),
+      actions = {
+        IconButton(onClick = {}) {
+          Icon(Icons.Default.Settings, contentDescription = null)
+        }
+      }
     ) { paddingValues ->
       Box(
         contentAlignment = Alignment.Center,

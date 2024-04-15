@@ -26,6 +26,7 @@ import org.tm.archive.database.documents.IdentityKeyMismatch;
 import org.tm.archive.database.documents.NetworkFailure;
 import org.tm.archive.database.model.databaseprotos.BodyRangeList;
 import org.tm.archive.database.model.databaseprotos.GiftBadge;
+import org.tm.archive.database.model.databaseprotos.MessageExtras;
 import org.tm.archive.linkpreview.LinkPreview;
 import org.tm.archive.mms.Slide;
 import org.tm.archive.mms.SlideDeck;
@@ -111,12 +112,13 @@ public class MmsMessageRecord extends MessageRecord {
                           @Nullable MessageId latestRevisionId,
                           @Nullable MessageId originalMessageId,
                           int revisionNumber,
-                          boolean isRead)
+                          boolean isRead,
+                          @Nullable MessageExtras messageExtras)
   {
     super(id, body, fromRecipient, fromDeviceId, toRecipient,
           dateSent, dateReceived, dateServer, threadId, Status.STATUS_NONE, hasDeliveryReceipt,
           mailbox, mismatches, failures, subscriptionId, expiresIn, expireStarted, hasReadReceipt,
-          unidentified, reactions, remoteDelete, notifiedTimestamp, viewed, receiptTimestamp, originalMessageId, revisionNumber);
+          unidentified, reactions, remoteDelete, notifiedTimestamp, viewed, receiptTimestamp, originalMessageId, revisionNumber, messageExtras);
 
     this.slideDeck        = slideDeck;
     this.quote            = quote;
@@ -299,7 +301,7 @@ public class MmsMessageRecord extends MessageRecord {
                                 getType(), getIdentityKeyMismatches(), getNetworkFailures(), getSubscriptionId(), getExpiresIn(), getExpireStarted(), isViewOnce(),
                                 hasReadReceipt(), getQuote(), getSharedContacts(), getLinkPreviews(), isUnidentified(), reactions, isRemoteDelete(), mentionsSelf,
                                 getNotifiedTimestamp(), isViewed(), getReceiptTimestamp(), getMessageRanges(), getStoryType(), getParentStoryId(), getGiftBadge(), getPayment(), getCall(), getScheduledDate(), getLatestRevisionId(),
-                                getOriginalMessageId(), getRevisionNumber(), isRead());
+                                getOriginalMessageId(), getRevisionNumber(), isRead(), getMessageExtras());
   }
 
   public @NonNull MmsMessageRecord withoutQuote() {
@@ -307,7 +309,7 @@ public class MmsMessageRecord extends MessageRecord {
                                 getType(), getIdentityKeyMismatches(), getNetworkFailures(), getSubscriptionId(), getExpiresIn(), getExpireStarted(), isViewOnce(),
                                 hasReadReceipt(), null, getSharedContacts(), getLinkPreviews(), isUnidentified(), getReactions(), isRemoteDelete(), mentionsSelf,
                                 getNotifiedTimestamp(), isViewed(), getReceiptTimestamp(), getMessageRanges(), getStoryType(), getParentStoryId(), getGiftBadge(), getPayment(), getCall(), getScheduledDate(), getLatestRevisionId(),
-                                getOriginalMessageId(), getRevisionNumber(), isRead());
+                                getOriginalMessageId(), getRevisionNumber(), isRead(), getMessageExtras());
   }
 
   public @NonNull MmsMessageRecord withAttachments(@NonNull List<DatabaseAttachment> attachments) {
@@ -329,7 +331,7 @@ public class MmsMessageRecord extends MessageRecord {
                                 getType(), getIdentityKeyMismatches(), getNetworkFailures(), getSubscriptionId(), getExpiresIn(), getExpireStarted(), isViewOnce(),
                                 hasReadReceipt(), quote, contacts, linkPreviews, isUnidentified(), getReactions(), isRemoteDelete(), mentionsSelf,
                                 getNotifiedTimestamp(), isViewed(), getReceiptTimestamp(), getMessageRanges(), getStoryType(), getParentStoryId(), getGiftBadge(), getPayment(), getCall(), getScheduledDate(), getLatestRevisionId(),
-                                getOriginalMessageId(), getRevisionNumber(), isRead());
+                                getOriginalMessageId(), getRevisionNumber(), isRead(), getMessageExtras());
   }
 
   public @NonNull MmsMessageRecord withPayment(@NonNull Payment payment) {
@@ -337,7 +339,7 @@ public class MmsMessageRecord extends MessageRecord {
                                 getType(), getIdentityKeyMismatches(), getNetworkFailures(), getSubscriptionId(), getExpiresIn(), getExpireStarted(), isViewOnce(),
                                 hasReadReceipt(), getQuote(), getSharedContacts(), getLinkPreviews(), isUnidentified(), getReactions(), isRemoteDelete(), mentionsSelf,
                                 getNotifiedTimestamp(), isViewed(), getReceiptTimestamp(), getMessageRanges(), getStoryType(), getParentStoryId(), getGiftBadge(), payment, getCall(), getScheduledDate(), getLatestRevisionId(),
-                                getOriginalMessageId(), getRevisionNumber(), isRead());
+                                getOriginalMessageId(), getRevisionNumber(), isRead(), getMessageExtras());
   }
 
 
@@ -346,7 +348,7 @@ public class MmsMessageRecord extends MessageRecord {
                                 getType(), getIdentityKeyMismatches(), getNetworkFailures(), getSubscriptionId(), getExpiresIn(), getExpireStarted(), isViewOnce(),
                                 hasReadReceipt(), getQuote(), getSharedContacts(), getLinkPreviews(), isUnidentified(), getReactions(), isRemoteDelete(), mentionsSelf,
                                 getNotifiedTimestamp(), isViewed(), getReceiptTimestamp(), getMessageRanges(), getStoryType(), getParentStoryId(), getGiftBadge(), getPayment(), call, getScheduledDate(), getLatestRevisionId(),
-                                getOriginalMessageId(), getRevisionNumber(), isRead());
+                                getOriginalMessageId(), getRevisionNumber(), isRead(), getMessageExtras());
   }
 
   private static @NonNull List<Contact> updateContacts(@NonNull List<Contact> contacts, @NonNull Map<AttachmentId, DatabaseAttachment> attachmentIdMap) {

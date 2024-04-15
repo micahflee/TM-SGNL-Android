@@ -8,11 +8,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
 
+import com.bumptech.glide.RequestManager;
+
 import org.tm.archive.BindableConversationListItem;
 import org.tm.archive.R;
 import org.tm.archive.conversationlist.model.ConversationSet;
 import org.tm.archive.database.model.ThreadRecord;
-import org.tm.archive.mms.GlideRequests;
 
 import java.util.Locale;
 import java.util.Set;
@@ -42,7 +43,7 @@ public class ConversationListItemAction extends FrameLayout implements BindableC
   @Override
   public void bind(@NonNull LifecycleOwner lifecycleOwner,
                    @NonNull ThreadRecord thread,
-                   @NonNull GlideRequests glideRequests,
+                   @NonNull RequestManager requestManager,
                    @NonNull Locale locale,
                    @NonNull Set<Long> typingThreads,
                    @NonNull ConversationSet selectedConversations)

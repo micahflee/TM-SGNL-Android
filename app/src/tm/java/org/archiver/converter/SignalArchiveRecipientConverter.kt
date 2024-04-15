@@ -1,13 +1,18 @@
 package org.archiver.converter
 
 import android.content.Context
+import com.tm.androidcopysdk.model.ArchiveChat
 import com.tm.androidcopysdk.model.ArchiveRecipient
+import com.tm.androidcopysdk.model.ChatType
+import com.tm.androidcopysdk.model.Direction
 import com.tm.androidcopysdk.utils.PrefManager
 import org.archiver.ArchivePreferenceConstants
+import org.archiver.ArchiveSender
 import org.archiver.model.Messages.isGroupMessage
 import org.archiver.model.Recipients.toParticipant
 import org.archiver.model.Recipients.toParticipants
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.ThreadRecord
 import org.tm.archive.recipients.Recipient
 import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrNull
@@ -17,23 +22,26 @@ class SignalArchiveRecipientConverter(
   private val context: Context
 ) {
 
-  fun convertSenderRecipient(message: MessageRecord): ArchiveRecipient {
+  fun convertSenderRecipient(message: MessageRecord, chat: ArchiveChat, direction: Direction): ArchiveRecipient {
     val recipient = message.fromRecipient
-    if (message.isOutgoing)
+    if (direction == Direction.Outgoing)
       return ArchiveRecipient.forLongName(id = null, address = getMyPhoneNumber(), longName = recipient.displayName())
     var phoneNumber = getPhoneNumber(recipient)
-    if (phoneNumber == null && message.isGroupMessage()) {
+    if (phoneNumber == null && chat.type == ChatType.Group)
       phoneNumber = recipient.toParticipant { it == recipient.id }?.e164?.getOrNull() // TODO find message.authorId
-    }
     phoneNumber = recipient.e164.getOrDefault(phoneNumber ?: "")
     return ArchiveRecipient.forLongName(id = null, address = phoneNumber, longName = recipient.displayName())
   }
 
-  fun convertReceiverRecipients(message: MessageRecord): List<ArchiveRecipient> {
-    val recipient = message.toRecipient
-    if (message.isGroupMessage())
-      return recipient.toParticipants().mapNotNull { r -> r.e164.getOrNull()?.let { ArchiveRecipient.forLongName(id = null, address = it, longName = r.displayName()) } }
-    if (!message.isOutgoing)
+  fun convertReceiverRecipients(message: MessageRecord, thread: ThreadRecord?, chat: ArchiveChat, sender: ArchiveRecipient, direction: Direction): List<ArchiveRecipient> {
+    val recipient = thread?.takeIf { chat.type != ChatType.Chat }?.recipient ?: message.toRecipient
+    if (chat.type == ChatType.Group) {
+      return recipient.toParticipants().mapNotNull { r -> r.e164.getOrNull()?.takeIf { it != sender.address }?.let { ArchiveRecipient.forLongName(
+          id = null,
+          address = it,
+          longName = r.displayName()) } }
+    }
+    if (direction == Direction.Incoming)
       return listOf(ArchiveRecipient.forLongName(id = null, address = getMyPhoneNumber(), longName = recipient.displayName()))
     return listOf(ArchiveRecipient.forLongName(id = null, address = recipient.e164.getOrNull() ?: "", longName = recipient.displayName()))
   }

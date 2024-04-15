@@ -3,9 +3,10 @@ package org.tm.archive.migrations;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.bumptech.glide.Glide;
+
 import org.signal.core.util.logging.Log;
 import org.tm.archive.jobmanager.Job;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.util.FileUtils;
 
 import java.io.File;
@@ -39,7 +40,7 @@ public class CachedAttachmentsMigrationJob extends MigrationJob {
     }
 
     FileUtils.deleteDirectoryContents(context.getExternalCacheDir());
-    GlideApp.get(context).clearDiskCache();
+    Glide.get(context).clearDiskCache();
   }
 
   @Override

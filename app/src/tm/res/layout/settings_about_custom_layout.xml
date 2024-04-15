@@ -17,12 +17,18 @@
         tools:visibility="gone">-->
 
 
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        app:srcCompat="@drawable/ic_bg_tm"
+        android:weightSum="10"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@drawable/ic_bg_tm"
         android:weightSum="10">
 
 

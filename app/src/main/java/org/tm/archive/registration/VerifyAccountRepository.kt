@@ -9,6 +9,7 @@ import org.signal.core.util.logging.Log
 import org.signal.libsignal.protocol.IdentityKeyPair
 import org.tm.archive.AppCapabilities
 import org.tm.archive.gcm.FcmUtil
+import org.tm.archive.keyvalue.PhoneNumberPrivacyValues.PhoneNumberDiscoverabilityMode
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.pin.SvrWrongPinException
 import org.tm.archive.push.AccountManagerFactory
@@ -72,7 +73,6 @@ class VerifyAccountRepository(private val context: Application) {
     val subscriber = PushTokenChallengeSubscriber()
     val eventBus = EventBus.getDefault()
     eventBus.register(subscriber)
-
     Log.d("VerifyAccountRepository",
       "createSessionAndBlockForPushChallenge -> fcmToken: $fcmToken"
     )//**TM_SA**//
@@ -183,7 +183,7 @@ class VerifyAccountRepository(private val context: Application) {
       unidentifiedAccessKey = unidentifiedAccessKey,
       unrestrictedUnidentifiedAccess = universalUnidentifiedAccess,
       capabilities = AppCapabilities.getCapabilities(true),
-      discoverableByPhoneNumber = SignalStore.phoneNumberPrivacy().phoneNumberListingMode.isDiscoverable,
+      discoverableByPhoneNumber = SignalStore.phoneNumberPrivacy().phoneNumberDiscoverabilityMode == PhoneNumberDiscoverabilityMode.DISCOVERABLE,
       name = null,
       pniRegistrationId = registrationData.pniRegistrationId,
       recoveryPassword = registrationData.recoveryPassword

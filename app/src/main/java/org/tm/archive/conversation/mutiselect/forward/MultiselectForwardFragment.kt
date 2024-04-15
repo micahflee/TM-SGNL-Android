@@ -59,7 +59,6 @@ import org.tm.archive.stories.settings.privacy.ChooseInitialMyStoryMembershipBot
 import org.tm.archive.util.BottomSheetUtil
 import org.tm.archive.util.FeatureFlags
 import org.tm.archive.util.FullscreenHelper
-import org.tm.archive.util.Util
 import org.tm.archive.util.ViewUtil
 import org.tm.archive.util.fragments.findListener
 import org.tm.archive.util.fragments.requireListener
@@ -470,7 +469,7 @@ class MultiselectForwardFragment :
         addSection(
           ContactSearchConfiguration.Section.Individuals(
             includeHeader = true,
-            transportType = if (includeSms()) ContactSearchConfiguration.TransportType.ALL else ContactSearchConfiguration.TransportType.PUSH,
+            transportType = ContactSearchConfiguration.TransportType.PUSH,
             includeSelf = true
           )
         )
@@ -485,16 +484,11 @@ class MultiselectForwardFragment :
 
         addSection(
           ContactSearchConfiguration.Section.Groups(
-            includeHeader = true,
-            includeMms = includeSms()
+            includeHeader = true
           )
         )
       }
     }
-  }
-
-  private fun includeSms(): Boolean {
-    return Util.isDefaultSmsProvider(requireContext()) && args.canSendToNonPush
   }
 
   private fun isSelectedMediaValidForStories(): Boolean {

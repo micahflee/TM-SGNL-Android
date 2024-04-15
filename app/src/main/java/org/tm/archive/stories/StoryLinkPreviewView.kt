@@ -7,6 +7,9 @@ import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.bumptech.glide.Glide
+import org.signal.core.util.concurrent.ListenableFuture
+import org.signal.core.util.concurrent.SettableFuture
 import org.signal.core.util.isAbsent
 import org.tm.archive.R
 import org.tm.archive.components.ThumbnailView
@@ -14,11 +17,8 @@ import org.tm.archive.databinding.StoriesTextPostLinkPreviewBinding
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.linkpreview.LinkPreviewState
 import org.tm.archive.linkpreview.LinkPreviewUtil
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.mms.ImageSlide
 import org.tm.archive.mms.Slide
-import org.tm.archive.util.concurrent.ListenableFuture
-import org.tm.archive.util.concurrent.SettableFuture
 import org.tm.archive.util.views.Stub
 import org.tm.archive.util.visible
 import java.text.DateFormat
@@ -56,7 +56,7 @@ class StoryLinkPreviewView @JvmOverloads constructor(
 
   fun setThumbnailDrawable(drawable: Drawable?, useLargeThumbnail: Boolean) {
     val image = getThumbnailTarget(useLargeThumbnail)
-    image.setImageDrawable(GlideApp.with(this), drawable)
+    image.setImageDrawable(Glide.with(this), drawable)
   }
 
   fun bind(linkPreview: LinkPreview?, hiddenVisibility: Int = View.INVISIBLE, useLargeThumbnail: Boolean, loadThumbnail: Boolean = true): ListenableFuture<Boolean> {
@@ -120,7 +120,7 @@ class StoryLinkPreviewView @JvmOverloads constructor(
     if (imageSlide != null) {
       if (loadThumbnail) {
         future = image.setImageResource(
-          GlideApp.with(this),
+          Glide.with(this),
           imageSlide,
           false,
           false

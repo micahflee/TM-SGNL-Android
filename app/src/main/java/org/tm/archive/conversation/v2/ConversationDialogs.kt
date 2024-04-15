@@ -10,12 +10,10 @@ import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.concurrent.SimpleTask
 import org.tm.archive.R
 import org.tm.archive.components.settings.app.AppSettingsActivity
-import org.tm.archive.database.model.InMemoryMessageRecord.NoGroupsInCommon
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.sms.MessageSender
-import org.tm.archive.util.CommunicationActions
 import org.tm.archive.verify.VerifyIdentityActivity
 
 /**
@@ -30,7 +28,7 @@ object ConversationDialogs {
   fun displayCannotStartGroupCallDueToPermissionsDialog(context: Context) {
     MaterialAlertDialogBuilder(context).setTitle(R.string.ConversationActivity_cant_start_group_call)
       .setMessage(R.string.ConversationActivity_only_admins_of_this_group_can_start_a_call)
-      .setPositiveButton(R.string.ok) { d: DialogInterface, w: Int -> d.dismiss() }
+      .setPositiveButton(android.R.string.ok) { d: DialogInterface, w: Int -> d.dismiss() }
       .show()
   }
 
@@ -82,24 +80,7 @@ object ConversationDialogs {
     dialog.show()
   }
 
-  fun displayInMemoryMessageDialog(context: Context, messageRecord: MessageRecord) {
-    if (messageRecord is NoGroupsInCommon) {
-      val isGroup = messageRecord.isGroup
-      MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_Signal_MaterialAlertDialog)
-        .setMessage(
-          if (isGroup) {
-            R.string.GroupsInCommonMessageRequest__none_of_your_contacts_or_people_you_chat_with_are_in_this_group
-          } else {
-            R.string.GroupsInCommonMessageRequest__you_have_no_groups_in_common_with_this_person
-          }
-        )
-        .setNeutralButton(R.string.GroupsInCommonMessageRequest__about_message_requests) { _, _ ->
-          CommunicationActions.openBrowserLink(context, context.getString(R.string.GroupsInCommonMessageRequest__support_article))
-        }
-        .setPositiveButton(R.string.GroupsInCommonMessageRequest__okay, null)
-        .show()
-    }
-  }
+  fun displayInMemoryMessageDialog(context: Context, messageRecord: MessageRecord) = Unit
 
   fun displayMessageCouldNotBeSentDialog(context: Context, messageRecord: MessageRecord) {
     MaterialAlertDialogBuilder(context)

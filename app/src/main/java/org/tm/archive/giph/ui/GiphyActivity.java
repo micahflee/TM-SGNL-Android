@@ -26,6 +26,7 @@ import org.tm.archive.providers.BlobProvider;
 import org.tm.archive.recipients.RecipientId;
 import org.tm.archive.util.DynamicNoActionBarTheme;
 import org.tm.archive.util.DynamicTheme;
+import org.tm.archive.util.FeatureFlags;
 import org.tm.archive.util.MediaUtil;
 import org.tm.archive.util.ViewUtil;
 import org.tm.archive.util.views.SimpleProgressDialog;
@@ -59,6 +60,9 @@ public class GiphyActivity extends PassphraseRequiredActivity implements Keyboar
   @SuppressLint("MissingInflatedId")
   @Override
   public void onCreate(Bundle bundle, boolean ready) {
+    if (!FeatureFlags.gifSearchAvailable()) {
+      finish();
+    }
     setContentView(R.layout.giphy_activity);
 
     final boolean forMms = getIntent().getBooleanExtra(EXTRA_IS_MMS, false);

@@ -11,11 +11,12 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import org.tm.archive.PassphraseRequiredActivity;
 import org.tm.archive.R;
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragment;
 import org.tm.archive.conversation.mutiselect.forward.MultiselectForwardFragmentArgs;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.sharing.MultiShareArgs;
 import org.tm.archive.util.DeviceProperties;
 import org.tm.archive.util.DynamicTheme;
@@ -99,7 +100,6 @@ public final class StickerManagementActivity extends PassphraseRequiredActivity 
     MultiselectForwardFragment.showBottomSheet(
         getSupportFragmentManager(),
         new MultiselectForwardFragmentArgs(
-            true,
             Collections.singletonList(new MultiShareArgs.Builder()
                                           .withDraftText(StickerUrl.createShareLink(packId, packKey))
                                           .build()),
@@ -110,7 +110,7 @@ public final class StickerManagementActivity extends PassphraseRequiredActivity 
 
   private void initView() {
     this.list    = findViewById(R.id.sticker_management_list);
-    this.adapter = new StickerManagementAdapter(GlideApp.with(this), this, DeviceProperties.shouldAllowApngStickerAnimation(this));
+    this.adapter = new StickerManagementAdapter(Glide.with(this), this, DeviceProperties.shouldAllowApngStickerAnimation(this));
 
     list.setLayoutManager(new LinearLayoutManager(this));
     list.setAdapter(adapter);

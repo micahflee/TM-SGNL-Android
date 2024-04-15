@@ -10,7 +10,11 @@ import org.archiver.model.Messages.isMultimediaMessage
 import org.archiver.model.Messages.isSmsMessage
 import org.archiver.model.Messages.isStory
 import org.archiver.model.Messages.status
+import org.tm.archive.database.CallTable
 import org.tm.archive.database.model.MessageRecord
+import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.database.model.ThreadRecord
+import org.tm.archive.service.webrtc.state.CallInfoState
 
 class SignalArchiveMessageConverter(
   @Deprecated("Converter should never have a context reference")
@@ -22,53 +26,75 @@ class SignalArchiveMessageConverter(
   private val attachmentConverter = SignalAttachmentConverter()
   private val callInfoConverter = SignalCallInfoConverter()
 
-  fun convert(messages: List<MessageRecord?>, accountPhoneNumber: String?): List<ArchiveMessage> {
-    return messages.mapNotNull { convert(it, accountPhoneNumber) }
+  fun convert(messages: List<MessageRecord?>, thread: ThreadRecord?, accountPhoneNumber: String?): List<ArchiveMessage> {
+    return messages.mapNotNull { convert(it, thread, accountPhoneNumber) }
   }
 
-  fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, isDeleted, null)
+  fun convert(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, isDeleted: Boolean = false, isRemoteDeleted: Boolean = false): ArchiveMessage? {
+    return convert(message, thread, accountPhoneNumber, isDeleted, isRemoteDeleted, null, null)
   }
 
-  fun convertCall(message: MessageRecord?, accountPhoneNumber: String?, startedAt: Long?): ArchiveMessage? {
-    return convert(message, accountPhoneNumber, false, startedAt)
+  fun convertCall(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, event: CallTable.Event): ArchiveMessage? {
+    return convert(message, thread, accountPhoneNumber, isDeleted = false, isRemoteDeleted = false,callInfo = null, event = event)
   }
 
-  private fun convert(message: MessageRecord?, accountPhoneNumber: String?, isDeleted: Boolean, startedAt: Long?): ArchiveMessage? {
+  fun convertCall(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, callInfo: CallInfoState): ArchiveMessage? {
+    return convert(message, thread, accountPhoneNumber, isDeleted = false, isRemoteDeleted = false, callInfo = callInfo, event = null)
+  }
+
+  private fun convert(message: MessageRecord?, thread: ThreadRecord?, accountPhoneNumber: String?, isDeleted: Boolean,
+                      isRemoteDeleted: Boolean, callInfo: CallInfoState?, event: CallTable.Event?): ArchiveMessage? {
     if (message == null)
       return null
 
-    val type = getTransportType(message) ?: return null
-    val sender = recipientConverter.convertSenderRecipient(message)
-    val receivers = recipientConverter.convertReceiverRecipients(message)
+    val type = getMessageType(message)
+    val direction = message.getDirection()
+    val chat = chatConverter.convert(message, thread)
+    val call = callInfoConverter.convert(message, type, callInfo = callInfo, event)
+    val sender = recipientConverter.convertSenderRecipient(message, chat, direction)
+    val receivers = recipientConverter.convertReceiverRecipients(message, thread, chat, sender, direction)
     return ArchiveMessage(
       id = message.id.toString(),
       uniqueId = null,
       accountPhoneNumber = accountPhoneNumber,
       type = type,
-      direction = if (message.isOutgoing) Direction.Outgoing else Direction.Incoming,
+      direction = direction,
       status = message.status(),
       isDeleted = isDeleted,
-      isRemoteDeleted = message.isRemoteDelete,
+      isRemoteDeleted = isRemoteDeleted,
       isForwarded = false,
       body = message.getDisplayBody(context).toString(),
       timestamp = Timestamp(message.timestamp),
-      chat = chatConverter.convert(message),
+      chat = chat,
       sender = sender,
       receivers = receivers,
       attachments = attachmentConverter.convert(message),
-      callInfo = listOfNotNull(callInfoConverter.convert(message, type, startedAt)),
+      callInfo = listOfNotNull(call),
       edits = null,
       headers = null
     )
   }
 
-  private fun getTransportType(message: MessageRecord): ArchiveMessageType? {
+  private fun MessageRecord.getDirection(): Direction {
+    return when ((this as? MmsMessageRecord)?.call?.direction) {
+      CallTable.Direction.INCOMING -> Direction.Incoming
+      CallTable.Direction.OUTGOING -> Direction.Outgoing
+      else -> Direction.Outgoing.takeIf { isOutgoing } ?: Direction.Incoming
+    }
+  }
+
+  private fun getMessageType(message: MessageRecord): ArchiveMessageType {
     if (message.isStory())
       return ArchiveMessageType.Unknown
     if (message.isCallMessage())
       return ArchiveMessageType.Call
-    return if (message.isSmsMessage()) ArchiveMessageType.Sms else if (message.isMultimediaMessage()) ArchiveMessageType.Mms else null
+    if (message.isUpdate)
+      return ArchiveMessageType.Event
+    if (message.isSmsMessage())
+      return ArchiveMessageType.Sms
+    if (message.isMultimediaMessage())
+      return ArchiveMessageType.Mms
+    return ArchiveMessageType.Unknown
   }
 
 }

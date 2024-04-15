@@ -16,6 +16,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import org.signal.core.util.EditTextUtil
 import org.tm.archive.R
+import org.tm.archive.components.KeyboardAwareLinearLayout
 import org.tm.archive.components.KeyboardEntryDialogFragment
 import org.tm.archive.components.ViewBinderDelegate
 import org.tm.archive.components.emoji.MediaKeyboard
@@ -32,6 +33,7 @@ import org.tm.archive.keyboard.KeyboardPage
 import org.tm.archive.keyboard.KeyboardPagerViewModel
 import org.tm.archive.keyvalue.SignalStore
 import org.tm.archive.mediasend.v2.HudCommand
+import org.tm.archive.mediasend.v2.MediaSelectionState
 import org.tm.archive.mediasend.v2.MediaSelectionViewModel
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
@@ -94,9 +96,16 @@ class AddMessageDialogFragment : KeyboardEntryDialogFragment(R.layout.v2_media_a
       binding.content.emojiToggle.visible = false
     } else {
       binding.content.emojiToggle.setOnClickListener { onEmojiToggleClicked() }
+      if (requireArguments().getBoolean(ARG_INITIAL_EMOJI_TOGGLE) && view is KeyboardAwareLinearLayout) {
+        view.addOnKeyboardShownListener(EmojiLaunchListener(view))
+      }
     }
 
     binding.hud.setOnClickListener { dismissAllowingStateLoss() }
+
+    binding.content.viewOnceToggle.setOnClickListener {
+      viewModel.incrementViewOnceState()
+    }
 
     val confirm: View = view.findViewById(R.id.confirm_button)
     confirm.setOnClickListener { dismissAllowingStateLoss() }
@@ -117,6 +126,15 @@ class AddMessageDialogFragment : KeyboardEntryDialogFragment(R.layout.v2_media_a
         }
       }
     )
+
+    viewModel.state.observe(viewLifecycleOwner) { state ->
+      binding.content.viewOnceToggle.displayedChild = if (state.viewOnceToggleState == MediaSelectionState.ViewOnceToggleState.ONCE) 1 else 0
+      if (state.viewOnceToggleState == MediaSelectionState.ViewOnceToggleState.ONCE) {
+        binding.content.addAMessageInput.text = null
+        dismiss()
+      }
+      binding.content.viewOnceToggle.visible = state.selectedMedia.size == 1 && !state.isStory
+    }
 
     initializeMentions()
   }
@@ -271,16 +289,25 @@ class AddMessageDialogFragment : KeyboardEntryDialogFragment(R.layout.v2_media_a
     binding.content.addAMessageInput.dispatchKeyEvent(keyEvent)
   }
 
+  private inner class EmojiLaunchListener(private val layout: KeyboardAwareLinearLayout) : KeyboardAwareLinearLayout.OnKeyboardShownListener {
+    override fun onKeyboardShown() {
+      layout.removeOnKeyboardShownListener(this)
+      onEmojiToggleClicked()
+    }
+  }
+
   companion object {
 
     const val TAG = "ADD_MESSAGE_DIALOG_FRAGMENT"
 
     private const val ARG_INITIAL_TEXT = "arg.initial.text"
+    private const val ARG_INITIAL_EMOJI_TOGGLE = "arg.initial.emojiToggle"
 
-    fun show(fragmentManager: FragmentManager, initialText: CharSequence?) {
+    fun show(fragmentManager: FragmentManager, initialText: CharSequence?, startWithEmojiKeyboard: Boolean) {
       AddMessageDialogFragment().apply {
         arguments = Bundle().apply {
           putCharSequence(ARG_INITIAL_TEXT, initialText)
+          putBoolean(ARG_INITIAL_EMOJI_TOGGLE, startWithEmojiKeyboard)
         }
       }.show(fragmentManager, TAG)
     }

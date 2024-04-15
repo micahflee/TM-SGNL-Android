@@ -41,6 +41,8 @@ import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyvalue.SignalStore
+import org.tm.archive.recipients.Recipient
+import org.tm.archive.recipients.RecipientForeverObserver
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.InterceptableLongClickCopyLinkSpan
 import org.tm.archive.util.LongClickMovementMethod
@@ -66,7 +68,7 @@ open class V2ConversationItemTextOnlyViewHolder<Model : MappingModel<Model>>(
   private val binding: V2ConversationItemTextOnlyBindingBridge,
   private val conversationContext: V2ConversationContext,
   footerDelegate: V2FooterPositionDelegate = V2FooterPositionDelegate(binding)
-) : V2ConversationItemViewHolder<Model>(binding.root, conversationContext), Multiselectable, InteractiveConversationElement {
+) : V2ConversationItemViewHolder<Model>(binding.root, conversationContext), Multiselectable, InteractiveConversationElement, RecipientForeverObserver {
 
   companion object {
     private val STYLE_FACTORY = SearchUtil.StyleFactory { arrayOf<CharacterStyle>(BackgroundColorSpan(Color.YELLOW), ForegroundColorSpan(Color.BLACK)) }
@@ -103,9 +105,9 @@ open class V2ConversationItemTextOnlyViewHolder<Model : MappingModel<Model>>(
   private var reactionMeasureListener: ReactionMeasureListener = ReactionMeasureListener()
   private var formattedDate: FormattedDate? = null
 
-  private val bodyBubbleDrawable = ChatColorsDrawable()
-  private val footerDrawable = ChatColorsDrawable()
-  private val senderDrawable = ChatColorsDrawable()
+  private val bodyBubbleDrawable = ChatColorsDrawable(conversationContext::getChatColorsData)
+  private val footerDrawable = ChatColorsDrawable(conversationContext::getChatColorsData)
+  private val senderDrawable = ChatColorsDrawable(conversationContext::getChatColorsData)
   private val bodyBubbleLayoutTransition = BodyBubbleLayoutTransition()
 
   protected lateinit var shape: V2ConversationItemShape.MessageShape
@@ -189,7 +191,15 @@ open class V2ConversationItemTextOnlyViewHolder<Model : MappingModel<Model>>(
     }
 
     check(model is ConversationMessageElement)
+
+    if (this::conversationMessage.isInitialized) {
+      conversationMessage.messageRecord.fromRecipient.live().removeForeverObserver(this)
+    }
+
     conversationMessage = model.conversationMessage
+    if (conversationMessage.threadRecipient.isGroup) {
+      conversationMessage.messageRecord.fromRecipient.live().observeForever(this)
+    }
 
     shape = shapeDelegate.setMessageShape(
       currentMessage = conversationMessage.messageRecord,
@@ -531,8 +541,8 @@ open class V2ConversationItemTextOnlyViewHolder<Model : MappingModel<Model>>(
       binding.senderBadge.visible = shape.isEndingShape
 
       binding.senderName.text = sender.getDisplayName(context)
-      binding.senderPhoto.setAvatar(conversationContext.glideRequests, sender, false)
-      binding.senderBadge.setBadgeFromRecipient(sender, conversationContext.glideRequests)
+      binding.senderPhoto.setAvatar(conversationContext.requestManager, sender, false)
+      binding.senderBadge.setBadgeFromRecipient(sender, conversationContext.requestManager)
       binding.senderPhoto.setOnClickListener {
         conversationContext.clickListener.onGroupMemberClicked(
           conversationMessage.messageRecord.fromRecipient.id,
@@ -560,7 +570,7 @@ open class V2ConversationItemTextOnlyViewHolder<Model : MappingModel<Model>>(
     binding.body.setCompoundDrawablesWithIntrinsicBounds(
       0,
       0,
-      if (record.isKeyExchange) R.drawable.ic_menu_login else 0,
+      if (record.isKeyExchange) R.drawable.symbol_key_24 else 0,
       0
     )
 
@@ -632,6 +642,9 @@ open class V2ConversationItemTextOnlyViewHolder<Model : MappingModel<Model>>(
       }
 
       binding.footerDate.setText(errorMessage)
+      binding.footerDate.setOnClickListener {
+        conversationContext.clickListener.onMessageWithErrorClicked(record)
+      }
     } else if (record.isPendingInsecureSmsFallback) {
       binding.footerDate.setText(R.string.ConversationItem_click_to_approve_unencrypted)
     } else if (record.isRateLimited) {
@@ -761,5 +774,9 @@ open class V2ConversationItemTextOnlyViewHolder<Model : MappingModel<Model>>(
       binding.root.performLongClick()
       return true
     }
+  }
+
+  override fun onRecipientChanged(recipient: Recipient) {
+    presentSender()
   }
 }

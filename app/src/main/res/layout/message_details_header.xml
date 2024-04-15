@@ -69,7 +69,8 @@
                 android:layout_gravity="center_vertical"
                 android:text="@string/message_recipients_list_item__resend"
                 android:visibility="gone"
-                app:icon="@drawable/ic_refresh_white_18dp"
+                app:icon="@drawable/symbol_refresh_24"
+                app:iconTint="@color/signal_colorOnPrimaryContainer"
                 tools:visibility="visible" />
 
         </LinearLayout>
@@ -128,6 +129,17 @@
                 tools:text="@string/message_details_header_via" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <Button
+            android:id="@+id/message_details_header_internal_details_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Internal Details"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            style="@style/Signal.Widget.Button.Medium.OutlinedButton"
+            tools:ignore="HardcodedText" />
 
         <include
             layout="@layout/dsl_divider_item"

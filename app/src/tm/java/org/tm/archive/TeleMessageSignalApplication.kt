@@ -1,17 +1,18 @@
 package org.tm.archive
 
+import com.tm.INetworkProvider
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.AndroidCopySettings
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
-import com.tm.androidcopysdk.api.SdkModule
 import com.tm.androidcopysdk.device.ArchiveMessagesProcessor
 import com.tm.androidcopysdk.device.SendSignatureProcessor
-import com.tm.androidcopysdk.model.ArchiveSettings
+import com.tm.androidcopysdk.network.DefaultNetworkProvider
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.tm.utils.ApplicationInterface
+import com.tm.utils.UtilsInterface
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
 import org.archiver.SignalLoggerAdapter
@@ -29,7 +30,7 @@ import org.tm.archive.logging.CustomSignalProtocolLogger
 import org.tm.archive.logging.PersistentLogger
 import org.tm.archive.util.FeatureFlags
 
-class TeleMessageSignalApplication : ApplicationContext() {
+class TeleMessageSignalApplication : ApplicationContext(), ApplicationInterface {
 
   private val dependencyProvider by lazy { TeleMessageApplicationDependencyProvider(this) }
 
@@ -47,7 +48,7 @@ class TeleMessageSignalApplication : ApplicationContext() {
   }
 
   override fun beforeInitializeCallManager() {
-    CallManager.setDelegate(CallManagerRecordingDelegate.getInstance(applicationContext))
+//    CallManager.setDelegate(CallManagerRecordingDelegate.getInstance(applicationContext))
     super.beforeInitializeCallManager()
   }
 
@@ -91,13 +92,15 @@ class TeleMessageSignalApplication : ApplicationContext() {
 
     //set SDK to active -> need to change it with the self register
     val installationEventSent: Boolean = PrefManager.getBooleanPref(context, R.string.installation_event_sent, false)
-    PrefManager.setBooleanPref(context, "activated_aa", true)
+    PrefManager.setBooleanPref(context, "activated_aa", CommonUtils.isActivatedUser(context))
     if (ArchiveConstants.isTestMode || !installationEventSent) {
       initializeTMAndroidArchive()
       ArchiveLogger.sendArchiveLog("initializeTMAndroidArchive")
     }
-    CommonUtils.startBackupService(context)
-    ArchiveLogger.sendArchiveLog("Backup service started")
+    if (CommonUtils.isActivatedUser(context)) {
+      CommonUtils.startBackupService(context)
+      ArchiveLogger.sendArchiveLog("Backup service started")
+    }
   }
 
   private fun initializeTMAndroidArchive() {
@@ -113,5 +116,13 @@ class TeleMessageSignalApplication : ApplicationContext() {
     if (!installationEventSent) {
       PrefManager.setBooleanPref(context, R.string.installation_event_sent, true)
     }
+  }
+
+  override fun getInterface(): UtilsInterface? {
+    return null
+  }
+
+  override fun networkProvider(): INetworkProvider {
+    return DefaultNetworkProvider.getInstance(this)
   }
 }

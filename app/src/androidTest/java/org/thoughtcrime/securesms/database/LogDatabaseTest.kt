@@ -10,7 +10,7 @@ import org.signal.core.util.forEach
 import org.signal.core.util.requireLong
 import org.signal.core.util.requireNonNullString
 import org.signal.core.util.select
-import org.signal.core.util.update
+import org.signal.core.util.updateAll
 import org.tm.archive.crash.CrashConfig
 import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.testing.assertIs
@@ -220,7 +220,7 @@ class LogDatabaseTest {
     )
 
     db.writableDatabase
-      .update(LogDatabase.CrashTable.TABLE_NAME)
+      .updateAll(LogDatabase.CrashTable.TABLE_NAME)
       .values(LogDatabase.CrashTable.LAST_PROMPTED_AT to currentTime)
       .run()
 

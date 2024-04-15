@@ -17,17 +17,16 @@ import android.widget.Toast;
 
 import androidx.annotation.AnimRes;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import org.signal.core.util.concurrent.ListenableFuture.Listener;
 import org.tm.archive.components.ContactFilterView;
 import org.tm.archive.components.ContactFilterView.OnFilterChangedListener;
 import org.tm.archive.contacts.ContactSelectionDisplayMode;
 import org.tm.archive.contacts.SelectedContact;
-import org.tm.archive.database.SignalDatabase;
 import org.tm.archive.groups.SelectionLimits;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mms.OutgoingMessage;
@@ -38,7 +37,6 @@ import org.tm.archive.util.DynamicNoActionBarInviteTheme;
 import org.tm.archive.util.DynamicTheme;
 import org.tm.archive.util.Util;
 import org.tm.archive.util.ViewUtil;
-import org.tm.archive.util.concurrent.ListenableFuture.Listener;
 import org.tm.archive.util.task.ProgressDialogAsyncTask;
 import org.tm.archive.util.text.AfterTextChanged;
 
@@ -121,14 +119,9 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
     smsSendButton.setOnClickListener(new SmsSendClickListener());
     contactFilter.setOnFilterChangedListener(new ContactFilterChangedListener());
 
-    if (Util.isDefaultSmsProvider(this) && SignalStore.misc().getSmsExportPhase().isSmsSupported()) {
-      shareButton.setOnClickListener(new ShareClickListener());
-      smsButton.setOnClickListener(new SmsClickListener());
-    } else {
-      smsButton.setVisibility(View.GONE);
-      shareText.setText(R.string.InviteActivity_share);
-      shareButton.setOnClickListener(new ShareClickListener());
-    }
+    smsButton.setVisibility(View.GONE);
+    shareText.setText(R.string.InviteActivity_share);
+    shareButton.setOnClickListener(new ShareClickListener());
   }
 
   private Animation loadAnimation(@AnimRes int animResId) {
@@ -199,13 +192,6 @@ public class InviteActivity extends PassphraseRequiredActivity implements Contac
       } else {
         Toast.makeText(InviteActivity.this, R.string.InviteActivity_no_app_to_share_to, Toast.LENGTH_LONG).show();
       }
-    }
-  }
-
-  private class SmsClickListener implements OnClickListener {
-    @Override
-    public void onClick(View v) {
-      ViewUtil.animateIn(smsSendFrame, slideInAnimation);
     }
   }
 

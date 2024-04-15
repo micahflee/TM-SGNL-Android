@@ -15,7 +15,7 @@ import org.tm.archive.mediasend.MediaRepository
 import org.tm.archive.providers.BlobProvider
 import org.tm.archive.util.MediaUtil
 import org.tm.archive.util.StorageUtil
-import org.tm.archive.video.VideoUtil
+import org.tm.archive.video.videoconverter.utils.VideoConstants
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
@@ -66,7 +66,7 @@ class MediaCaptureRepository(context: Context) {
         dataSupplier = { FileInputStream(fileDescriptor) },
         getLength = { it.channel.size() },
         createBlobBuilder = BlobProvider::forData,
-        mimeType = VideoUtil.RECORDED_VIDEO_CONTENT_TYPE,
+        mimeType = VideoConstants.RECORDED_VIDEO_CONTENT_TYPE,
         width = 0,
         height = 0
       )

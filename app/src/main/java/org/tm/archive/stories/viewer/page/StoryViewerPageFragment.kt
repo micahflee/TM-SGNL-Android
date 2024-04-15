@@ -28,6 +28,7 @@ import androidx.core.view.animation.PathInterpolatorCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.progressindicator.CircularProgressIndicatorSpec
@@ -61,7 +62,6 @@ import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.mediapreview.MediaPreviewFragment
 import org.tm.archive.mediapreview.VideoControlsDelegate
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.recipients.ui.bottomsheet.RecipientBottomSheetDialogFragment
@@ -138,7 +138,7 @@ class StoryViewerPageFragment :
           storyViewStateViewModel.storyViewStateCache
         ),
         StoryCache(
-          GlideApp.with(requireActivity()),
+          Glide.with(requireActivity()),
           StoryDisplay.getStorySize(resources)
         )
       )
@@ -933,8 +933,7 @@ class StoryViewerPageFragment :
   private fun onSenderClicked(senderId: RecipientId) {
     viewModel.setIsDisplayingRecipientBottomSheet(true)
     RecipientBottomSheetDialogFragment
-      .create(senderId, null)
-      .show(childFragmentManager, "BOTTOM")
+      .show(childFragmentManager, senderId, null)
   }
 
   private fun presentBottomBar(post: StoryPost, replyState: StoryViewerPageState.ReplyState, isReceiptsEnabled: Boolean) {

@@ -10,6 +10,7 @@ import androidx.core.view.doOnNextLayout
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import io.reactivex.rxjava3.kotlin.subscribeBy
@@ -36,7 +37,6 @@ import org.tm.archive.giph.mp4.GiphyMp4ProjectionPlayerHolder
 import org.tm.archive.giph.mp4.GiphyMp4ProjectionRecycler
 import org.tm.archive.groups.GroupId
 import org.tm.archive.groups.GroupMigrationMembershipChange
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.recipients.Recipient
 import org.tm.archive.recipients.RecipientId
 import org.tm.archive.util.BottomSheetUtil
@@ -85,7 +85,7 @@ class EditMessageHistoryDialog : FixedRoundedCornerBottomSheetDialogFragment() {
     val messageAdapter = ConversationAdapter(
       requireContext(),
       viewLifecycleOwner,
-      GlideApp.with(this),
+      Glide.with(this),
       Locale.getDefault(),
       ConversationAdapterListener(),
       conversationRecipient.hasWallpaper(),
@@ -165,6 +165,9 @@ class EditMessageHistoryDialog : FixedRoundedCornerBottomSheetDialogFragment() {
     override fun onActivatePaymentsClicked() = Unit
     override fun onSendPaymentClicked(recipientId: RecipientId) = Unit
     override fun onEditedIndicatorClicked(messageRecord: MessageRecord) = Unit
+    override fun onShowSafetyTips(forGroup: Boolean) = Unit
+    override fun onReportSpamLearnMoreClicked() = Unit
+    override fun onMessageRequestAcceptOptionsClicked() = Unit
   }
 
   companion object {

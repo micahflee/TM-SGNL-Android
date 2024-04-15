@@ -38,10 +38,12 @@ public class DeviceContactsOutputStream extends ChunkedOutputStream {
   private void writeContactDetails(DeviceContact contact) throws IOException {
     ContactDetails.Builder contactDetails = new ContactDetails.Builder();
 
-    contactDetails.aci(contact.getAddress().getServiceId().toString());
+    if (contact.getAci().isPresent()) {
+      contactDetails.aci(contact.getAci().get().toString());
+    }
 
-    if (contact.getAddress().getNumber().isPresent()) {
-      contactDetails.number(contact.getAddress().getNumber().get());
+    if (contact.getE164().isPresent()) {
+      contactDetails.number(contact.getE164().get());
     }
 
     if (contact.getName().isPresent()) {
@@ -91,7 +93,6 @@ public class DeviceContactsOutputStream extends ChunkedOutputStream {
       contactDetails.inboxPosition(contact.getInboxPosition().get());
     }
 
-    contactDetails.blocked(contact.isBlocked());
     contactDetails.archived(contact.isArchived());
 
     byte[] serializedContactDetails = contactDetails.build().encode();

@@ -46,8 +46,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.lifecycle.Lifecycle;
 
-import org.tm.archive.util.concurrent.ListenableFuture;
-import org.tm.archive.util.concurrent.SettableFuture;
+import org.signal.core.util.concurrent.ListenableFuture;
+import org.signal.core.util.concurrent.SettableFuture;
 import org.tm.archive.util.views.Stub;
 
 public final class ViewUtil {

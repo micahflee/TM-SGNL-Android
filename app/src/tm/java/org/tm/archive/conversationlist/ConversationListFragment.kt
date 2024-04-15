@@ -14,11 +14,15 @@ import com.tm.androidcopysdk.CommonUtils
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.network.appSettings.WorkerIntentService
 import com.tm.androidcopysdk.utils.PrefManager
+import com.tm.androidcopysdk.utils.PrefManagerConstants
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.isMDM
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.startMDMAuthenticator
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
+import com.tm.utils.ApplicationInterface
+import org.archiver.ArchiveLogger
 import org.archiver.ArchivePreferenceConstants
+import org.archiver.ArchiveUtil
 import org.archiver.ArchiveUtil.Companion.getPhoneNumberInTestMode
 import org.archiver.FCMConnector.Companion.initOfficialSignalFirebaseAccount
 import org.archiver.FCMConnector.Companion.initTeleMessageSignalFirebaseAccount
@@ -36,7 +40,7 @@ import org.tm.archive.BuildConfig
 import org.tm.archive.R
 
 const val TAG = "TM ConversationListFragment"
-open class ConversationListFragment : SignalConversationListFragment(), IAuthenticationStatus, IMDMAuthenticator /*TM_SA*/ {
+open class ConversationListFragment : SignalConversationListFragment(), IAuthenticationStatus, IMDMAuthenticator {
   private var mAuthenticationProgressAlertDialogBuilder: AlertDialog.Builder? = null
   private var mAuthenticationProgressAlertDialog: AlertDialog? = null
 
@@ -45,9 +49,9 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
     Log.d(TAG, "onViewCreated")
 
 
-    //**TM_SA**//Start
-    if (CommonUtils.isActivatedUser(requireContext())) {
-      WorkerIntentService.startJobIntentService(requireContext(), true) /*TM_SA*/
+    if (CommonUtils.isActivatedUser(requireContext()) && PrefManager.getStringPref(activity, "pref_my_first_name", "") != "") {
+      WorkerIntentService.startJobIntentService(requireContext(), true)
+      ArchiveUtil.startKeepAliveWorker(requireContext())
     } else {
       Log.d(TAG, "BuildConfig.APPLICATION_ID: " + BuildConfig.APPLICATION_ID)
       val authStatus = PrefManager.getIntPref(requireContext(), IntuneAuthManager.MDM_Auth_Status_String,
@@ -83,11 +87,11 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
   }
 
   fun startSelfAuth() {
-    if (!CommonUtils.isActivatedUser(requireContext())) {
+    if (!CommonUtils.isActivatedUser(requireContext()) || PrefManager.getStringPref(activity, "pref_my_first_name", "") == "") {
       initTeleMessageSignalFirebaseAccount(requireContext(), null, true)
       createAndShowAuthProgressDialog(requireContext(), true)
       startAuthenticationProcess(requireContext(),
-        getPhoneNumberInTestMode(requireContext()),
+        getPhoneNumberInTestMode(requireContext()), context?.applicationContext as ApplicationInterface,
         this)
     }
   }
@@ -133,11 +137,10 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
   private fun startIntuneAutoAuthentication(e164number: String) {
     Log.d(TAG, "startAutoAuthentication")
     initAuthenticator(e164number)
-    continueIntuneAuthentication(this)
+    continueIntuneAuthentication(context?.applicationContext as ApplicationInterface,this)
   }
 
 
-  //**TM_SA**//Start
   @Subscribe(threadMode = ThreadMode.MAIN)
   fun onEvent(event: UpdateEvent?) {
     if (event == null) {
@@ -150,8 +153,11 @@ open class ConversationListFragment : SignalConversationListFragment(), IAuthent
     }
     if (event.type == UpdateEvent.EVENTS_TYPE.suspension) {
       CommonUtils.setActivatedUser(requireContext(), false)
+      PrefManager.setBooleanPref(requireContext(), PrefManagerConstants.SHARED_PREFERENCE_ACTIVATED_AA_KEY, false)
     } else if (event.type == UpdateEvent.EVENTS_TYPE.activated) {
       CommonUtils.setActivatedUser(requireContext(), true)
+      CommonUtils.startBackupService(context)
+      ArchiveLogger.sendArchiveLog("Backup service started")
 //      endAuthDialog()
     }
     if (event.type != UpdateEvent.EVENTS_TYPE.authProcess) {

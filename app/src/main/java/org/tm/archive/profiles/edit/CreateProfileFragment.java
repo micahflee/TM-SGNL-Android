@@ -20,10 +20,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.airbnb.lottie.SimpleColorFilter;
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.tm.androidcopysdk.utils.PrefManager;
 
-import org.archiver.ArchivePreferenceConstants;
 import org.signal.core.util.EditTextUtil;
 import org.signal.core.util.StreamUtil;
 import org.signal.core.util.concurrent.SimpleTask;
@@ -38,7 +37,6 @@ import org.tm.archive.groups.ParcelableGroupId;
 import org.tm.archive.keyvalue.PhoneNumberPrivacyValues;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.mediasend.Media;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.profiles.edit.pnp.WhoCanFindMeByPhoneNumberFragment;
 import org.tm.archive.profiles.manage.EditProfileNameFragment;
 import org.tm.archive.providers.BlobProvider;
@@ -132,7 +130,7 @@ public class CreateProfileFragment extends LoggingFragment {
       if (avatarBytes != null) {
         viewModel.setAvatarMedia(media);
         viewModel.setAvatar(avatarBytes);
-        GlideApp.with(CreateProfileFragment.this)
+        Glide.with(CreateProfileFragment.this)
                 .load(avatarBytes)
                 .skipMemoryCache(true)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -211,23 +209,18 @@ public class CreateProfileFragment extends LoggingFragment {
       binding.profileDescriptionText.setLinkColor(ContextCompat.getColor(requireContext(), R.color.signal_colorPrimary));
       binding.profileDescriptionText.setOnLinkClickListener(v -> CommunicationActions.openBrowserLink(requireContext(), getString(R.string.EditProfileFragment__support_link)));
 
-      if (FeatureFlags.phoneNumberPrivacy()) {
-        getParentFragmentManager().setFragmentResultListener(WhoCanFindMeByPhoneNumberFragment.REQUEST_KEY, getViewLifecycleOwner(), (requestKey, result) -> {
-          if (WhoCanFindMeByPhoneNumberFragment.REQUEST_KEY.equals(requestKey)) {
-            presentWhoCanFindMeDescription(SignalStore.phoneNumberPrivacy().getPhoneNumberListingMode());
-          }
-        });
+      getParentFragmentManager().setFragmentResultListener(WhoCanFindMeByPhoneNumberFragment.REQUEST_KEY, getViewLifecycleOwner(), (requestKey, result) -> {
+        if (WhoCanFindMeByPhoneNumberFragment.REQUEST_KEY.equals(requestKey)) {
+          presentWhoCanFindMeDescription(SignalStore.phoneNumberPrivacy().getPhoneNumberDiscoverabilityMode());
+        }
+      });
 
-        binding.whoCanFindMeContainer.setVisibility(View.VISIBLE);
-        binding.whoCanFindMeContainer.setOnClickListener(v -> SafeNavigation.safeNavigate(Navigation.findNavController(v), CreateProfileFragmentDirections.actionCreateProfileFragmentToPhoneNumberPrivacy()));
-        presentWhoCanFindMeDescription(SignalStore.phoneNumberPrivacy().getPhoneNumberListingMode());
-      }
+      binding.whoCanFindMeContainer.setVisibility(View.VISIBLE);
+      binding.whoCanFindMeContainer.setOnClickListener(v -> SafeNavigation.safeNavigate(Navigation.findNavController(v), CreateProfileFragmentDirections.actionCreateProfileFragmentToPhoneNumberPrivacy()));
+      presentWhoCanFindMeDescription(SignalStore.phoneNumberPrivacy().getPhoneNumberDiscoverabilityMode());
     }
 
     binding.finishButton.setOnClickListener(v -> {
-      //**TM_SA**//Start
-      savePrefName();
-      //**TM_SA**//End
       binding.finishButton.setSpinning();
       handleUpload();
     });
@@ -240,12 +233,6 @@ public class CreateProfileFragment extends LoggingFragment {
       binding.title.setVisibility(View.GONE);
     }
   }
-
-  //**TM_SA**//Start
-  private void savePrefName() {
-    PrefManager.setStringPref(getContext(), ArchivePreferenceConstants.PREF_KEY_DEVICE_NAME, binding.givenName.getText() + " " + binding.familyName.getText());
-  }
-  //**TM_SA**//End
 
   private void initializeProfileName() {
     viewModel.isFormValid().observe(getViewLifecycleOwner(), isValid -> {
@@ -263,11 +250,11 @@ public class CreateProfileFragment extends LoggingFragment {
   private void initializeProfileAvatar() {
     viewModel.avatar().observe(getViewLifecycleOwner(), bytes -> {
       if (bytes == null) {
-        GlideApp.with(this).clear(binding.avatar);
+        Glide.with(this).clear(binding.avatar);
         return;
       }
 
-      GlideApp.with(this)
+      Glide.with(this)
               .load(bytes)
               .circleCrop()
               .into(binding.avatar);
@@ -296,12 +283,15 @@ public class CreateProfileFragment extends LoggingFragment {
     }
   }
 
-  private void presentWhoCanFindMeDescription(PhoneNumberPrivacyValues.PhoneNumberListingMode phoneNumberListingMode) {
+  private void presentWhoCanFindMeDescription(PhoneNumberPrivacyValues.PhoneNumberDiscoverabilityMode phoneNumberListingMode) {
     switch (phoneNumberListingMode) {
-      case LISTED:
+      case DISCOVERABLE:
+      case UNDECIDED:
+        binding.whoCanFindMeIcon.setImageResource(R.drawable.symbol_group_24);
         binding.whoCanFindMeDescription.setText(R.string.PhoneNumberPrivacy_everyone);
         break;
-      case UNLISTED:
+      case NOT_DISCOVERABLE:
+        binding.whoCanFindMeIcon.setImageResource(R.drawable.symbol_lock_24);
         binding.whoCanFindMeDescription.setText(R.string.PhoneNumberPrivacy_nobody);
         break;
     }

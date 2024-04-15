@@ -21,6 +21,7 @@ import org.archiver.device.TeleMessageSignalCallManager
 import org.archiver.model.SignalFiler
 import org.tm.archive.database.SignalDatabase
 import org.tm.archive.dependencies.ApplicationDependencyProvider
+import org.tm.archive.providers.BlobProvider
 import org.tm.archive.service.webrtc.SignalCallManager
 
 class TeleMessageApplicationDependencyProvider(
@@ -28,10 +29,11 @@ class TeleMessageApplicationDependencyProvider(
 
 ) : ApplicationDependencyProvider(application) {
 
-  val filer: IFiler by lazy { SignalFiler(application.applicationContext, SignalDatabase.attachments) }
+  val filer: IFiler by lazy { SignalFiler(application.applicationContext, SignalDatabase.messages, SignalDatabase.attachments,
+    SignalDatabase.stickers, BlobProvider.getInstance()) }
 
   override fun provideSignalCallManager(): SignalCallManager {
-    return TeleMessageSignalCallManager(application, filer)
+    return TeleMessageSignalCallManager(application, filer, SignalDatabase.calls)
   }
 
   companion object {
@@ -45,8 +47,8 @@ class TeleMessageApplicationDependencyProvider(
       if (sdkModule == null) {
         val sdk = AndroidCopySDK.getInstance(applicationContext)
         val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this)
-        val filer = SignalFiler(applicationContext, database.attachmentTable)
-        val settings = MutableStateFlow(ArchiveSettings(isAppActivated = true))
+        val filer = SignalFiler(applicationContext, database.messageTable, database.attachmentTable, database.stickerTable, BlobProvider.getInstance())
+        val settings = MutableStateFlow(ArchiveSettings(isAppActivated = true, editMessageArchivingSupported = false, supportCallArchiving = false))
         sdkModule = SdkModule(sdk, DataGrabber.getInstance(applicationContext), ClientType.Signal, database, archiveDatabase, filer, settings)
         TeleMessageApplicationDependencyProvider.sdkModule = sdkModule
       }

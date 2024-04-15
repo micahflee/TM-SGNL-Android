@@ -23,9 +23,11 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.signal.core.util.logging.Log;
+import org.tm.archive.BuildConfig;
 import org.tm.archive.LoggingFragment;
 import org.tm.archive.MainActivity;
 import org.tm.archive.R;
+import org.tm.archive.backup.v2.ui.MessageBackupsTestRestoreActivity;
 import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.jobs.ProfileUploadJob;
 import org.tm.archive.keyvalue.SignalStore;
@@ -236,7 +238,9 @@ public class PinRestoreEntryFragment extends LoggingFragment {
 
     Activity activity = requireActivity();
 
-    if (Recipient.self().getProfileName().isEmpty() || !AvatarHelper.hasAvatar(activity, Recipient.self().getId())) {
+    if (BuildConfig.MESSAGE_BACKUP_RESTORE_ENABLED) {
+      startActivity(MessageBackupsTestRestoreActivity.Companion.getIntent(activity));
+    } else if (Recipient.self().getProfileName().isEmpty() || !AvatarHelper.hasAvatar(activity, Recipient.self().getId())) {
       final Intent main    = MainActivity.clearTop(activity);
       final Intent profile = CreateProfileActivity.getIntentForUserProfile(activity);
 

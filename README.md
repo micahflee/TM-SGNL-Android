@@ -1,4 +1,4 @@
-# Signal Android 
+# Signal Android
 
 Signal is a simple, powerful, and secure messenger.
 
@@ -54,7 +54,7 @@ The form and manner of this distribution makes it eligible for export under the 
 
 ## License
 
-Copyright 2013-2023 Signal
+Copyright 2013-2024 Signal Messenger, LLC
 
 Licensed under the GNU AGPLv3: https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -70,7 +70,7 @@ Signal – New Base-line
       a.	thoughtcrime  tm
       b.	securesms  archive
 3.	Replace all old package mentions vie “replace all” function (Ctrl +Shift + R)
-      a.	org.thoughtcrime.securesms -> org.tm.archive
+      a.	org.tm.archive -> org.tm.archive
 4.	Add our archiver SDK and Common library to new folder “libs” and compile them via dependencies.
 5.	Add archiver,intune,selfauthentication folders with all archiving class with util etc. (Take them from src->main->java->org)
 6.	Search “ArchiveLogger.Companion.sendArchiveLog” in the current project and add all those mentions to the updated project.

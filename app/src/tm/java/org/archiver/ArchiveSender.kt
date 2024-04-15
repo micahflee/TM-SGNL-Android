@@ -1,9 +1,14 @@
 package org.archiver
 
+import android.app.Activity
 import android.content.Context
+import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.DataGrabber
+import com.tm.androidcopysdk.ISendLogCallback
 import com.tm.androidcopysdk.utils.Contact
+import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.androidcopysdk.utils.RuntimeObject.getCallerClassMethodAndLine
+import com.tm.androidcopysdk.utils.TMCredentialsStore
 import com.tm.logger.Log
 import org.archiver.ArchiveLogger.Companion.sendArchiveLog
 import org.archiver.ArchiveUtil.Companion.cleanMessageBodyFromUnusedCharacters
@@ -344,7 +349,21 @@ class ArchiveSender {
         return "$listOfDeletedFileNames"
       }
 
-
+      fun sendLogs(activity: Activity, listener : ISendLogCallback) {
+        AndroidCopySDK.getInstance(activity).sentLogs(
+          activity,
+          listener,
+          PrefManager.getStringPref(activity, ArchivePreferenceConstants.PREF_KEY_DEVICE_PHONE_NUMBER, ""),
+          "Signal Archiver logs",
+          TMCredentialsStore.getInstance(activity).userName(activity),
+          "",
+          PrefManager.getStringPref(activity, "pref_my_first_name", ""),
+          PrefManager.getStringPref(activity, "pref_my_last_name", ""),
+          PrefManager.getStringPref(activity, "pref_my_email", ""),
+          ArchivePreferenceConstants.GENERATE_TOK_NAME,
+          ArchivePreferenceConstants.GENERATE_TOK_PASS
+        )
+      }
 
     }
 }

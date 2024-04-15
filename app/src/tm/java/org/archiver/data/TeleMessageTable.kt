@@ -17,6 +17,7 @@ import org.tm.archive.database.model.withCall
 import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.RecipientId
+import org.tm.archive.service.webrtc.state.CallInfoState
 import java.util.Optional
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
@@ -32,16 +33,22 @@ class TeleMessageTable(
 
   private val converter = SignalArchiveMessageConverter(context)
 
-  override fun find(id: Long): ArchiveMessage? = converter.convert(getMessageRecordOrNull(id), getAccountPhoneNumber())
+  override fun find(id: Long): ArchiveMessage? {
+    val message = getMessageRecordOrNull(id) ?: return null
+    val thread = SignalDatabase.threads.getThreadRecord(message.threadId)
+    return converter.convert(getMessageRecordOrNull(id), thread, getAccountPhoneNumber())
+  }
 
   override fun findAll(ids: List<Long>): List<ArchiveMessage> {
     val accountPhoneNumber = getAccountPhoneNumber()
-    return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, accountPhoneNumber) } }
+    val threads = SignalDatabase.threads
+    return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, threads.getThreadRecord(it.threadId), accountPhoneNumber) } }
   }
 
-  fun onSubmitCall(call: CallTable.Call, startedAt: Long?) {
+  fun onSubmitCall(call: CallTable.Call, callInfo: CallInfoState) {
     val message = getMessageRecordOrNull(call.messageId ?: return)?.withCall(call)
-    val archiveMessage = converter.convertCall(message, getAccountPhoneNumber(), startedAt) ?: return
+    val thread = SignalDatabase.threads.getThreadRecord(message?.threadId)
+    val archiveMessage = converter.convertCall(message, thread, getAccountPhoneNumber(), callInfo) ?: return
     messageStoreObserver.afterMessageStateChanged(archiveMessage)
   }
 
@@ -71,6 +78,16 @@ class TeleMessageTable(
 
   override fun updateGroupCall(messageId: Long, eraId: String, joinedUuids: Collection<UUID>, isCallFull: Boolean): MessageId {
     val result = super.updateGroupCall(messageId, eraId, joinedUuids, isCallFull)
+    val call = SignalDatabase.calls.getCallByMessageId(messageId)
+    if (call?.event == CallTable.Event.DECLINED || call?.event == CallTable.Event.MISSED) {
+      val message = getMessageRecordOrNull(messageId)?.withCall(call)
+      val thread = SignalDatabase.threads.getThreadRecord(message?.threadId)
+      val archiveMessage = converter.convertCall(message, thread, getAccountPhoneNumber(), call.event)
+      if (archiveMessage != null) {
+        messageStoreObserver.afterMessageStateChanged(archiveMessage)
+        return result
+      }
+    }
     messageStoreObserver.afterMessageIdStateChanged(messageId)
     return result
   }
@@ -153,14 +170,17 @@ class TeleMessageTable(
   }
 
   override fun markAsRemoteDeleteInternal(messageId: Long) {
+    val record = getMessageRecordOrNull(messageId)
+    val message = converter.convert(record, record?.threadId?.let(SignalDatabase.threads::getThreadRecord), getAccountPhoneNumber(), isRemoteDeleted = true)
     super.markAsRemoteDeleteInternal(messageId)
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    messageStoreObserver.afterMessageStateChanged(message ?: return)
   }
   // endregion Message - Update
 
   // region Message - Delete
   override fun deleteMessage(messageId: Long, threadId: Long, notify: Boolean, updateThread: Boolean): Boolean {
-    val message = converter.convert(getMessageRecordOrNull(messageId), getAccountPhoneNumber(), isDeleted = true)
+    val record = getMessageRecordOrNull(messageId)
+    val message = converter.convert(record, record?.threadId?.let(SignalDatabase.threads::getThreadRecord), getAccountPhoneNumber(), isDeleted = true)
     val threadDeleted = super.deleteMessage(messageId, threadId, notify, updateThread)
     messageStoreObserver.afterMessageStateChanged(message ?: return threadDeleted)
     return threadDeleted

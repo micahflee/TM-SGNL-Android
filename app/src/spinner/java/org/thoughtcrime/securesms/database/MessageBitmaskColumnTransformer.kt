@@ -52,9 +52,11 @@ import org.tm.archive.database.MessageTypes.SECURE_MESSAGE_BIT
 import org.tm.archive.database.MessageTypes.SMS_EXPORT_TYPE
 import org.tm.archive.database.MessageTypes.SPECIAL_TYPES_MASK
 import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_GIFT_BADGE
+import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED
 import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_PAYMENTS_ACTIVATED
 import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_PAYMENTS_ACTIVATE_REQUEST
 import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_PAYMENTS_NOTIFICATION
+import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_REPORTED_SPAM
 import org.tm.archive.database.MessageTypes.SPECIAL_TYPE_STORY_REACTION
 import org.tm.archive.database.MessageTypes.THREAD_MERGE_TYPE
 import org.tm.archive.database.MessageTypes.UNSUPPORTED_MESSAGE_TYPE
@@ -131,6 +133,8 @@ object MessageBitmaskColumnTransformer : ColumnTransformer {
       isPaymentsNotificaiton:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_PAYMENTS_NOTIFICATION}
       isRequestToActivatePayments:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_PAYMENTS_ACTIVATE_REQUEST}
       isPaymentsActivated:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_PAYMENTS_ACTIVATED}
+      isReportSpam:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_REPORTED_SPAM}
+      isMessageRequestAccepted:${type and SPECIAL_TYPES_MASK == SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED}
     """.trimIndent()
 
     return "$type<br><br>" + describe.replace(Regex("is[A-Z][A-Za-z0-9]*:false\n?"), "").replace("\n", "<br>")

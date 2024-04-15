@@ -135,6 +135,8 @@ public final class RegistrationRepository {
     SignalStore.account().setAci(aci);
     SignalStore.account().setPni(pni);
 
+    ApplicationDependencies.resetProtocolStores();
+
     ApplicationDependencies.getProtocolStore().aci().sessions().archiveAllSessions();
     ApplicationDependencies.getProtocolStore().pni().sessions().archiveAllSessions();
     SenderKeyUtil.clearAllState();
@@ -159,7 +161,6 @@ public final class RegistrationRepository {
     ApplicationDependencies.getRecipientCache().clearSelf();
 
     SignalStore.account().setE164(registrationData.getE164());
-    Log.i("RegistrationRepository","registerAccountInternal ->  fcmToken: "+registrationData.getFcmToken());//**TM_SA TODO remove ASAP!**//
     SignalStore.account().setFcmToken(registrationData.getFcmToken());
     SignalStore.account().setFcmEnabled(registrationData.isFcm());
 
@@ -182,7 +183,7 @@ public final class RegistrationRepository {
 
   public static PreKeyCollection generateSignedAndLastResortPreKeys(IdentityKeyPair identity, PreKeyMetadataStore metadataStore) {
     SignedPreKeyRecord      signedPreKey          = PreKeyUtil.generateSignedPreKey(metadataStore.getNextSignedPreKeyId(), identity.getPrivateKey());
-    KyberPreKeyRecord       lastResortKyberPreKey = PreKeyUtil.generateLastRestortKyberPreKey(metadataStore.getNextKyberPreKeyId(), identity.getPrivateKey());
+    KyberPreKeyRecord       lastResortKyberPreKey = PreKeyUtil.generateLastResortKyberPreKey(metadataStore.getNextKyberPreKeyId(), identity.getPrivateKey());
 
     return new PreKeyCollection(
         identity.getPublicKey(),

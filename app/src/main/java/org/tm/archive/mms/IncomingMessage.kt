@@ -8,7 +8,9 @@ import org.tm.archive.database.model.ParentStoryId
 import org.tm.archive.database.model.StoryType
 import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.database.model.databaseprotos.DecryptedGroupV2Context
+import org.tm.archive.database.model.databaseprotos.GV2UpdateDescription
 import org.tm.archive.database.model.databaseprotos.GiftBadge
+import org.tm.archive.database.model.databaseprotos.MessageExtras
 import org.tm.archive.groups.GroupId
 import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.recipients.RecipientId
@@ -36,7 +38,8 @@ class IncomingMessage(
   sharedContacts: List<Contact> = emptyList(),
   linkPreviews: List<LinkPreview> = emptyList(),
   mentions: List<Mention> = emptyList(),
-  val giftBadge: GiftBadge? = null
+  val giftBadge: GiftBadge? = null,
+  val messageExtras: MessageExtras? = null
 ) {
 
   val attachments: List<Attachment> = ArrayList(attachments)
@@ -94,7 +97,7 @@ class IncomingMessage(
     }
 
     @JvmStatic
-    fun groupUpdate(from: RecipientId, timestamp: Long, groupId: GroupId, groupContext: DecryptedGroupV2Context): IncomingMessage {
+    fun groupUpdate(from: RecipientId, timestamp: Long, groupId: GroupId, groupContext: DecryptedGroupV2Context, serverGuid: String?): IncomingMessage {
       val messageGroupContext = MessageGroupContext(groupContext)
 
       return IncomingMessage(
@@ -104,8 +107,8 @@ class IncomingMessage(
         serverTimeMillis = timestamp,
         groupId = groupId,
         groupContext = messageGroupContext,
-        body = messageGroupContext.encodedGroupContext,
-        type = MessageType.GROUP_UPDATE
+        type = MessageType.GROUP_UPDATE,
+        messageExtras = MessageExtras(gv2UpdateDescription = GV2UpdateDescription(gv2ChangeDescription = groupContext, groupChangeUpdate = null))
       )
     }
   }

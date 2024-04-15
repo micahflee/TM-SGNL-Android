@@ -13,13 +13,13 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.RequestManager;
+
 import org.signal.paging.PagingController;
 import org.tm.archive.BindableConversationListItem;
 import org.tm.archive.R;
 import org.tm.archive.conversationlist.model.Conversation;
-import org.tm.archive.conversationlist.model.ConversationReader;
 import org.tm.archive.conversationlist.model.ConversationSet;
-import org.tm.archive.mms.GlideRequests;
 import org.tm.archive.util.CachedInflater;
 import org.tm.archive.util.ViewUtil;
 
@@ -46,8 +46,8 @@ class ConversationListAdapter extends ListAdapter<Conversation, RecyclerView.Vie
   }
 
   private final LifecycleOwner              lifecycleOwner;
-  private final GlideRequests               glideRequests;
-  private final OnConversationClickListener                      onConversationClickListener;
+  private final RequestManager              requestManager;
+  private final OnConversationClickListener onConversationClickListener;
   private final ClearFilterViewHolder.OnClearFilterClickListener onClearFilterClicked;
   private       ConversationSet                                  selectedConversations = new ConversationSet();
   private final Set<Long>                   typingSet             = new HashSet<>();
@@ -55,14 +55,14 @@ class ConversationListAdapter extends ListAdapter<Conversation, RecyclerView.Vie
   private PagingController pagingController;
 
   protected ConversationListAdapter(@NonNull LifecycleOwner lifecycleOwner,
-                                    @NonNull GlideRequests glideRequests,
+                                    @NonNull RequestManager requestManager,
                                     @NonNull OnConversationClickListener onConversationClickListener,
                                     @NonNull ClearFilterViewHolder.OnClearFilterClickListener onClearFilterClicked)
   {
     super(new ConversationDiffCallback());
 
     this.lifecycleOwner              = lifecycleOwner;
-    this.glideRequests               = glideRequests;
+    this.requestManager              = requestManager;
     this.onConversationClickListener = onConversationClickListener;
     this.onClearFilterClicked        = onClearFilterClicked;
   }
@@ -151,7 +151,7 @@ class ConversationListAdapter extends ListAdapter<Conversation, RecyclerView.Vie
 
       casted.getConversationListItem().bind(lifecycleOwner,
                                             conversation.getThreadRecord(),
-                                            glideRequests,
+                                            requestManager,
                                             Locale.getDefault(),
                                             typingSet,
                                             selectedConversations);

@@ -2,33 +2,20 @@ package org.tm.archive;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.tm.androidcopysdk.network.appSettings.UpdateEvent;
-import com.tm.androidcopysdk.network.appSettings.WorkerIntentService;
-import com.tm.androidcopysdk.utils.PrefManager;
-import com.tm.logger.Log;
 
-import org.archiver.ArchivePreferenceConstants;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-import org.selfAuthentication.SelfAuthenticatorManager;
 import org.signal.core.util.concurrent.LifecycleDisposable;
 import org.signal.donations.StripeApi;
 import org.tm.archive.components.DebugLogsPromptDialogFragment;
@@ -37,7 +24,6 @@ import org.tm.archive.components.settings.app.AppSettingsActivity;
 import org.tm.archive.components.voice.VoiceNoteMediaController;
 import org.tm.archive.components.voice.VoiceNoteMediaControllerOwner;
 import org.tm.archive.conversationlist.RelinkDevicesReminderBottomSheetFragment;
-import org.tm.archive.dependencies.ApplicationDependencies;
 import org.tm.archive.devicetransfer.olddevice.OldDeviceExitActivity;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.net.DeviceTransferBlockingInterceptor;
@@ -62,7 +48,6 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
   private VoiceNoteMediaController      mediaController;
   private ConversationListTabsViewModel conversationListTabsViewModel;
   private VitalsViewModel               vitalsViewModel;
-
 
   private final LifecycleDisposable lifecycleDisposable = new LifecycleDisposable();
 
@@ -122,8 +107,6 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
     );
   }
 
-
-
   @SuppressLint("NewApi")
   private void presentVitalsState(VitalsViewModel.State state) {
     switch (state) {
@@ -169,7 +152,7 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
           .setMessage(R.string.OldDeviceTransferLockedDialog__your_signal_account_has_been_transferred_to_your_new_device)
           .setPositiveButton(R.string.OldDeviceTransferLockedDialog__done, (d, w) -> OldDeviceExitActivity.exit(this))
           .setNegativeButton(R.string.OldDeviceTransferLockedDialog__cancel_and_activate_this_device, (d, w) -> {
-            SignalStore.misc().clearOldDeviceTransferLocked();
+            SignalStore.misc().setOldDeviceTransferLocked(false);
             DeviceTransferBlockingInterceptor.getInstance().unblockNetwork();
           })
           .setCancelable(false)
@@ -185,7 +168,6 @@ public class MainActivity extends PassphraseRequiredActivity implements VoiceNot
 
     vitalsViewModel.checkSlowNotificationHeuristics();
   }
-
 
   @Override
   protected void onStop() {

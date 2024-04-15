@@ -14,12 +14,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
+
 import org.tm.archive.BaseActivity;
 import org.tm.archive.R;
 import org.tm.archive.components.AvatarImageView;
 import org.tm.archive.contacts.avatars.FallbackContactPhoto;
 import org.tm.archive.contacts.avatars.ResourceContactPhoto;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.recipients.Recipient;
 import org.tm.archive.recipients.RecipientId;
 
@@ -70,7 +71,7 @@ public class CalleeMustAcceptMessageRequestActivity extends BaseActivity {
 
     viewModel.getRecipient().observe(this, recipient -> {
       description.setText(getString(R.string.CalleeMustAcceptMessageRequestDialogFragment__s_will_get_a_message_request_from_you, recipient.getDisplayName(this)));
-      avatar.setAvatar(GlideApp.with(this), recipient, false);
+      avatar.setAvatar(Glide.with(this), recipient, false);
     });
   }
 

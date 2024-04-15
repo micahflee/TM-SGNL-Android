@@ -7,6 +7,7 @@ import org.signal.core.util.logging.Log
 import org.signal.spinner.Spinner
 import org.signal.spinner.Spinner.DatabaseConfig
 import org.signal.spinner.SpinnerLogger
+import org.tm.archive.database.AttachmentTransformer
 import org.tm.archive.database.DatabaseMonitor
 import org.tm.archive.database.GV2Transformer
 import org.tm.archive.database.GV2UpdateTransformer
@@ -58,7 +59,18 @@ class SpinnerApplicationContext : ApplicationContext() {
       linkedMapOf(
         "signal" to DatabaseConfig(
           db = { SignalDatabase.rawDatabase },
-          columnTransformers = listOf(MessageBitmaskColumnTransformer, GV2Transformer, GV2UpdateTransformer, IsStoryTransformer, TimestampTransformer, ProfileKeyCredentialTransformer, MessageRangesTransformer, KyberKeyTransformer, RecipientTransformer)
+          columnTransformers = listOf(
+            MessageBitmaskColumnTransformer,
+            GV2Transformer,
+            GV2UpdateTransformer,
+            IsStoryTransformer,
+            TimestampTransformer,
+            ProfileKeyCredentialTransformer,
+            MessageRangesTransformer,
+            KyberKeyTransformer,
+            RecipientTransformer,
+            AttachmentTransformer
+          )
         ),
         "jobmanager" to DatabaseConfig(db = { JobDatabase.getInstance(this).sqlCipherDatabase }, columnTransformers = listOf(TimestampTransformer)),
         "keyvalue" to DatabaseConfig(db = { KeyValueDatabase.getInstance(this).sqlCipherDatabase }),

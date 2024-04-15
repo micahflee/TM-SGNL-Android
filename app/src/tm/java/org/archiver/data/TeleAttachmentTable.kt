@@ -29,10 +29,6 @@ class TeleAttachmentTable(
     return result
   }
 
-  override fun insertAttachmentsForPlaceholder(mmsId: Long, attachmentId: AttachmentId, inputStream: InputStream) {
-    super.insertAttachmentsForPlaceholder(mmsId, attachmentId, inputStream)
-    messageStoreObserver.afterMessageIdStateChanged(mmsId)
-  }
 
   override fun insertAttachmentsForMessage(mmsId: Long, attachments: List<Attachment>, quoteAttachment: List<Attachment>): Map<Attachment, AttachmentId> {
     val result = super.insertAttachmentsForMessage(mmsId, attachments, quoteAttachment)
@@ -40,12 +36,13 @@ class TeleAttachmentTable(
     return result
   }
 
-  override fun markAttachmentAsTransformed(attachmentId: AttachmentId, withFastStart: Boolean) {
-    super.markAttachmentAsTransformed(attachmentId, withFastStart)
-  }
-
   override fun markAttachmentUploaded(messageId: Long, attachment: Attachment) {
     super.markAttachmentUploaded(messageId, attachment)
     messageStoreObserver.afterMessageIdStateChanged(messageId)
+  }
+
+  override fun finalizeAttachmentAfterDownload(mmsId: Long, attachmentId: AttachmentId, inputStream: InputStream) {
+    super.finalizeAttachmentAfterDownload(mmsId, attachmentId, inputStream)
+    messageStoreObserver.afterMessageIdStateChanged(mmsId)
   }
 }

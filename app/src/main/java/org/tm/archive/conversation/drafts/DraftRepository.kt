@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.text.Spannable
 import android.text.SpannableString
+import com.bumptech.glide.Glide
 import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.Base64
@@ -33,7 +34,6 @@ import org.tm.archive.dependencies.ApplicationDependencies
 import org.tm.archive.keyboard.KeyboardUtil
 import org.tm.archive.mediasend.Media
 import org.tm.archive.mms.GifSlide
-import org.tm.archive.mms.GlideApp
 import org.tm.archive.mms.ImageSlide
 import org.tm.archive.mms.PartAuthority
 import org.tm.archive.mms.QuoteId
@@ -97,7 +97,7 @@ class DraftRepository(
     }
 
     if (shareMedia != null && shareContentType != null && borderless) {
-      val details = KeyboardUtil.getImageDetails(GlideApp.with(context), shareMedia)
+      val details = KeyboardUtil.getImageDetails(Glide.with(context), shareMedia)
 
       if (details == null || !details.hasTransparency) {
         return ShareOrDraftData.SetMedia(shareMedia, shareMediaType!!, null) to null

@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.signal.core.util.Hex;
@@ -35,7 +36,6 @@ import org.tm.archive.groups.v2.GroupInviteLinkUrl;
 import org.tm.archive.jobs.AvatarGroupsV2DownloadJob;
 import org.tm.archive.keyvalue.SignalStore;
 import org.tm.archive.linkpreview.LinkPreviewUtil.OpenGraph;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.mms.PushMediaConstraints;
 import org.tm.archive.net.CallRequestController;
 import org.tm.archive.net.CompositeRequestController;
@@ -190,7 +190,15 @@ public class LinkPreviewRepository {
           return;
         }
 
-        String           body        = OkHttpUtil.readAsString(response.body(), FAILSAFE_MAX_TEXT_SIZE);
+        String body;
+        try {
+          body = OkHttpUtil.readAsString(response.body(), FAILSAFE_MAX_TEXT_SIZE);
+        } catch (IOException e) {
+          Log.w(TAG, "Failed to read body", e);
+          callback.accept(Metadata.empty());
+          return;
+        }
+
         OpenGraph        openGraph   = LinkPreviewUtil.parseOpenGraphFields(body);
         Optional<String> title       = openGraph.getTitle();
         Optional<String> description = openGraph.getDescription();
@@ -236,7 +244,7 @@ public class LinkPreviewRepository {
                 bitmap,
                 maxDimension,
                 mediaConfig.getMaxImageFileSize(),
-                mediaConfig.getQualitySetting()
+                mediaConfig.getImageQualitySetting()
             );
 
             if (result != null) {
@@ -279,7 +287,7 @@ public class LinkPreviewRepository {
         Optional<StickerInfo> cover        = OptionalUtil.or(manifest.getCover(), firstSticker);
 
         if (cover.isPresent()) {
-          Bitmap bitmap = GlideApp.with(context).asBitmap()
+          Bitmap bitmap = Glide.with(context).asBitmap()
                                                 .load(new StickerRemoteUri(packIdString, packKeyString, cover.get().getId()))
                                                 .skipMemoryCache(true)
                                                 .diskCacheStrategy(DiskCacheStrategy.NONE)

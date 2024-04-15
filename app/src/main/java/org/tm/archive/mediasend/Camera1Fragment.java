@@ -49,7 +49,6 @@ import org.tm.archive.mediasend.camerax.CameraXModelBlocklist;
 import org.tm.archive.mediasend.v2.MediaAnimations;
 import org.tm.archive.mediasend.v2.MediaCountIndicatorButton;
 import org.tm.archive.mms.DecryptableStreamUriLoader.DecryptableUri;
-import org.tm.archive.mms.GlideApp;
 import org.tm.archive.util.ServiceUtil;
 import org.tm.archive.util.TextSecurePreferences;
 import org.tm.archive.util.ViewUtil;
@@ -396,7 +395,7 @@ public class Camera1Fragment extends LoggingFragment implements CameraFragment,
       Transformation<Bitmap> transformation = frontFacing ? new MultiTransformation<>(new CenterCrop(), new FlipTransformation())
                                                           : new CenterCrop();
 
-      GlideApp.with(this)
+      Glide.with(this)
               .asBitmap()
               .load(jpegData)
               .transform(transformation)
