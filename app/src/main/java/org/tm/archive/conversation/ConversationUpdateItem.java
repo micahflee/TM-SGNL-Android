@@ -533,11 +533,11 @@ public final class ConversationUpdateItem extends FrameLayout
         }
       });
     } else if (conversationMessage.getMessageRecord().isBoostRequest()) {
-      actionButton.setVisibility(VISIBLE);
+//      actionButton.setVisibility(VISIBLE);/*TM_SA*/turn off the code
       actionButton.setOnClickListener(v -> {
-        if (batchSelected.isEmpty() && eventListener != null) {
-          eventListener.onDonateClicked();
-        }
+//        if (batchSelected.isEmpty() && eventListener != null) {//*TM_SA*/turn off the code
+////          eventListener.onDonateClicked();
+//        }
       });
 
       actionButton.setText(R.string.ConversationUpdateItem_donate);
