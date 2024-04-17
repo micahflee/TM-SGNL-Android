@@ -7,7 +7,6 @@ import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.ThreadRecord
 import org.tm.archive.ringrtc.RemotePeer
 
-const val PreviewMessageType = 10485782L//should be as SMS message
 object Messages {
 
   fun RemotePeer.stringify() = "RemotePeer: [" +
@@ -15,7 +14,7 @@ object Messages {
     "]"
 
   fun MessageRecord.isMultimediaMessage(): Boolean {
-    return isMms && !isMmsNotification && this.type != PreviewMessageType && (this as MmsMessageRecord).let { containsMediaSlide() || sharedContacts.isNotEmpty() }
+    return isMms && !isMmsNotification && (this as MmsMessageRecord).let { containsMediaSlide() || sharedContacts.isNotEmpty() }
   }
 
   fun MessageRecord.isStory() = (this as? MmsMessageRecord)?.storyType?.isStory == true
