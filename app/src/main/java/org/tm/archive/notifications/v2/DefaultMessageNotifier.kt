@@ -10,6 +10,7 @@ import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
+import com.tm.androidcopysdk.CommonUtils
 import me.leolin.shortcutbadger.ShortcutBadger
 import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.logging.Log
@@ -123,6 +124,12 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
     conversationId: ConversationId?,
     defaultBubbleState: BubbleState
   ) {
+    //**TM_SA**//Start
+    if(!CommonUtils.isActivatedUser(context)){
+      Log.d("NotificationsController", "stop notifications for messages when suspend")
+      return
+    }
+    //**TM_SA**//End
     NotificationChannels.getInstance().ensureCustomChannelConsistency()
 
     val currentLockStatus: Boolean = KeyCachingService.isLocked(context)
