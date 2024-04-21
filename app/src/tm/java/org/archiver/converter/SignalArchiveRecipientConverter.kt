@@ -34,7 +34,7 @@ class SignalArchiveRecipientConverter(
   }
 
   fun convertReceiverRecipients(message: MessageRecord, thread: ThreadRecord?, chat: ArchiveChat, sender: ArchiveRecipient, direction: Direction): List<ArchiveRecipient> {
-    val recipient = thread?.takeIf { chat.type != ChatType.Chat }?.recipient ?: message.toRecipient
+    val recipient = thread?.takeIf { chat.type != ChatType.Chat && it.recipient.participantIds.isNotEmpty() }?.recipient ?: message.toRecipient
     if (chat.type == ChatType.Group) {
       return recipient.toParticipants().map { r -> ArchiveRecipient.forLongName(id = null, address = r.e164.getOrNull(), longName = r.displayName()) }
     }
