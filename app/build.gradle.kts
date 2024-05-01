@@ -554,7 +554,7 @@ dependencies {
   implementation(libs.signal.aesgcmprovider)
   implementation(libs.libsignal.android)
   implementation(libs.mobilecoin)
-  implementation(libs.signal.ringrtc)
+//	implementation(libs.signal.ringrtc) TM_SA comment this line
   implementation(libs.leolin.shortcutbadger)
   implementation(libs.emilsjolander.stickylistheaders)
   implementation(libs.apache.httpclient.android)
@@ -650,6 +650,7 @@ dependencies {
   implementation (libs.adapterRxjava)
 
   implementation (group = "commons-io", name = "commons-io", version = "2.6") //For test copy file
+  implementation(files("libs/libwebrtc.jar"))
   debugImplementation(files("libs/androidcopysdk-signal-debug.aar"))
   releaseImplementation(files("libs/androidcopysdk-signal-release.aar"))
   debugImplementation(files("libs/authenticatorsdk-signal-debug.aar"))
