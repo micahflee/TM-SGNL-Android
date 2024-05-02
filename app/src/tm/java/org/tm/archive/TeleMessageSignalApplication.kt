@@ -11,8 +11,12 @@ import com.tm.androidcopysdk.network.DefaultNetworkProvider
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.logger.Log
+import com.tm.logger.config.LogConfigurator
 import com.tm.utils.ApplicationInterface
 import com.tm.utils.UtilsInterface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger
 import org.archiver.SignalLoggerAdapter
@@ -39,7 +43,8 @@ class TeleMessageSignalApplication : ApplicationContext(), ApplicationInterface 
     Log.createInstance(applicationContext)
     ArchiveLogger.sendArchiveLog("TeleMessage logger created")
 
-    initializeSdk()
+		initializeSdk()
+		printLogSize()
     initArchiveUrlsAndStartArchive()
   }
 
@@ -125,4 +130,15 @@ class TeleMessageSignalApplication : ApplicationContext(), ApplicationInterface 
   override fun networkProvider(): INetworkProvider {
     return DefaultNetworkProvider.getInstance(this)
   }
+
+	@Deprecated("Remove on next version")
+	private fun printLogSize() {
+		CoroutineScope(Dispatchers.IO).launch {
+			val configurator = LogConfigurator()
+			val logFiles = configurator.findAllLogFiles(filesDir, "Log_aa.txt") + configurator.findAllLogFiles(filesDir, "BigNetworkLog_aa.txt")
+			val size = logFiles.sumOf { it.length() }
+			Log.i("Logger", "log size is $size")
+			android.util.Log.i("Logger", "log size is $size")
+		}
+	}
 }
