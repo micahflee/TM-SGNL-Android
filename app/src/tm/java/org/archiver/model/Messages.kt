@@ -6,6 +6,12 @@ import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.ThreadRecord
 import org.tm.archive.ringrtc.RemotePeer
+import org.tm.archive.util.hasAudio
+import org.tm.archive.util.hasDocument
+import org.tm.archive.util.hasGif
+import org.tm.archive.util.hasLocation
+import org.tm.archive.util.hasSharedContact
+import org.tm.archive.util.hasSticker
 
 object Messages {
 
@@ -14,7 +20,7 @@ object Messages {
     "]"
 
   fun MessageRecord.isMultimediaMessage(): Boolean {
-    return isMms && !isMmsNotification && (this as MmsMessageRecord).let { containsMediaSlide() || sharedContacts.isNotEmpty() }
+    return isMms && !isMmsNotification && (this as MmsMessageRecord).let { containsMediaSlide() || sharedContacts.isNotEmpty() } && isMessageContainMedia(this)
   }
 
   fun MessageRecord.isStory() = (this as? MmsMessageRecord)?.storyType?.isStory == true
@@ -47,6 +53,10 @@ object Messages {
     if (isPending)
       return MessageStatus.Sending
     return MessageStatus.None
+  }
+
+  private fun isMessageContainMedia(messageRecord: MmsMessageRecord): Boolean {
+    return messageRecord.hasSharedContact() || messageRecord.hasDocument() || messageRecord.hasAudio() || messageRecord.hasSticker() || messageRecord.hasLocation() || messageRecord.hasSharedContact() ||  messageRecord.hasGif()
   }
 
   fun MessageRecord.chatRecipient(type: ChatType, thread: ThreadRecord?) =
