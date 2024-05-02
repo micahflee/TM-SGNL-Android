@@ -34,6 +34,9 @@ fun MessageRecord.hasSharedContact(): Boolean =
 fun MessageRecord.hasLocation(): Boolean =
   isMms && ((this as MmsMessageRecord).slideDeck.slides).any { slide -> slide.hasLocation() }
 
+fun MessageRecord.hasGif(): Boolean =
+  isMms && ((this as MmsMessageRecord).slideDeck.slides).any { slide -> slide.isVideoGif }
+
 fun MessageRecord.hasAudio(): Boolean =
   isMms && (this as MmsMessageRecord).slideDeck.audioSlide != null
 
