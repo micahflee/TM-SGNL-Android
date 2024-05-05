@@ -5,6 +5,7 @@ import com.tm.androidcopysdk.model.ArchiveMessage
 import com.tm.androidcopysdk.model.ArchiveMessageType
 import com.tm.androidcopysdk.model.Direction
 import com.tm.androidcopysdk.model.Timestamp
+import com.tm.model.SecretProperty
 import org.archiver.model.Messages.isCallMessage
 import org.archiver.model.Messages.isMultimediaMessage
 import org.archiver.model.Messages.isSmsMessage
@@ -63,7 +64,7 @@ class SignalArchiveMessageConverter(
       isDeleted = isDeleted,
       isRemoteDeleted = isRemoteDeleted,
       isForwarded = false,
-      body = message.getDisplayBody(context).toString(),
+      body = SecretProperty(message.getDisplayBody(context).toString()),
       timestamp = Timestamp(message.timestamp),
       chat = chat,
       sender = sender,
