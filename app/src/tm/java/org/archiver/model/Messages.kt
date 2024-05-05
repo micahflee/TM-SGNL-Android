@@ -20,7 +20,7 @@ object Messages {
     "]"
 
   fun MessageRecord.isMultimediaMessage(): Boolean {
-    return isMms && !isMmsNotification && (this as MmsMessageRecord).let { containsMediaSlide() || sharedContacts.isNotEmpty() } && isMessageContainMedia(this)
+    return isMms && !isMmsNotification && (this as MmsMessageRecord).let { containsMediaSlide() || sharedContacts.isNotEmpty() }
   }
 
   fun MessageRecord.isStory() = (this as? MmsMessageRecord)?.storyType?.isStory == true
