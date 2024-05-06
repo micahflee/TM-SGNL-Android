@@ -2,13 +2,18 @@ package org.archiver.model
 
 import com.tm.androidcopysdk.model.ChatType
 import com.tm.androidcopysdk.model.MessageStatus
+import org.signal.core.util.logging.Log
 import org.tm.archive.database.model.MessageRecord
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.database.model.ThreadRecord
+import org.tm.archive.linkpreview.LinkPreviewState
+import org.tm.archive.linkpreview.LinkPreviewUtil
 import org.tm.archive.ringrtc.RemotePeer
 import org.tm.archive.util.hasAudio
 import org.tm.archive.util.hasDocument
 import org.tm.archive.util.hasGif
+import org.tm.archive.util.hasImage
+import org.tm.archive.util.hasLinkPreview
 import org.tm.archive.util.hasLocation
 import org.tm.archive.util.hasSharedContact
 import org.tm.archive.util.hasSticker
@@ -20,7 +25,7 @@ object Messages {
     "]"
 
   fun MessageRecord.isMultimediaMessage(): Boolean {
-    return isMms && !isMmsNotification && (this as MmsMessageRecord).let { containsMediaSlide() || sharedContacts.isNotEmpty() }
+    return isMms && !isMmsNotification && (this as MmsMessageRecord).let { containsMediaSlide() || sharedContacts.isNotEmpty() } && !hasLinkPreview()
   }
 
   fun MessageRecord.isStory() = (this as? MmsMessageRecord)?.storyType?.isStory == true
@@ -53,10 +58,6 @@ object Messages {
     if (isPending)
       return MessageStatus.Sending
     return MessageStatus.None
-  }
-
-  private fun isMessageContainMedia(messageRecord: MmsMessageRecord): Boolean {
-    return messageRecord.hasSharedContact() || messageRecord.hasDocument() || messageRecord.hasAudio() || messageRecord.hasSticker() || messageRecord.hasLocation() || messageRecord.hasSharedContact() ||  messageRecord.hasGif()
   }
 
   fun MessageRecord.chatRecipient(type: ChatType, thread: ThreadRecord?) =

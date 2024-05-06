@@ -1,5 +1,6 @@
 package org.archiver.data
 
+import android.content.ContentValues
 import android.content.Context
 import com.tm.androidcopysdk.api.IArchiveMessageDao
 import com.tm.androidcopysdk.api.IMessageStoreObserver
@@ -8,12 +9,18 @@ import org.archiver.ArchiveUtil
 import org.archiver.converter.SignalArchiveMessageConverter
 import org.archiver.di.TeleMessageApplicationDependencyProvider
 import org.signal.core.util.Stopwatch
+import org.tm.archive.attachments.Attachment
+import org.tm.archive.attachments.AttachmentId
+import org.tm.archive.contactshare.Contact
 import org.tm.archive.database.CallTable
 import org.tm.archive.database.MessageTable
 import org.tm.archive.database.SignalDatabase
+import org.tm.archive.database.model.Mention
 import org.tm.archive.database.model.MessageId
 import org.tm.archive.database.model.MmsMessageRecord
+import org.tm.archive.database.model.databaseprotos.BodyRangeList
 import org.tm.archive.database.model.withCall
+import org.tm.archive.linkpreview.LinkPreview
 import org.tm.archive.mms.IncomingMessage
 import org.tm.archive.mms.OutgoingMessage
 import org.tm.archive.recipients.RecipientId
@@ -106,6 +113,12 @@ class TeleMessageTable(
   override fun insertMessageOutbox(message: OutgoingMessage, threadId: Long, forceSms: Boolean, defaultReceiptStatus: Int, insertListener: InsertListener?): Long {
     val result = super.insertMessageOutbox(message, threadId, forceSms, defaultReceiptStatus, insertListener)
     messageStoreObserver.afterMessageIdStateChanged(result)
+    return result
+  }
+
+  override fun insertMediaMessage(threadId: Long, body: String?, attachments: List<Attachment>, quoteAttachments: List<Attachment>, sharedContacts: List<Contact>, linkPreviews: List<LinkPreview>, mentions: List<Mention>, messageRanges: BodyRangeList?, contentValues: ContentValues, insertListener: InsertListener?, updateThread: Boolean, unarchive: Boolean): Pair<Long, Map<Attachment, AttachmentId>?> {
+    val result = super.insertMediaMessage(threadId, body, attachments, quoteAttachments, sharedContacts, linkPreviews, mentions, messageRanges, contentValues, insertListener, updateThread, unarchive)
+    messageStoreObserver.afterMessageIdStateChanged(result.first)
     return result
   }
   // endregion Message - Insert

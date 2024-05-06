@@ -3016,7 +3016,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
   }
 
   @Throws(MmsException::class)
-  private fun insertMediaMessage(
+  protected open fun insertMediaMessage( //TM_SA make fun protected open
     threadId: Long,
     body: String?,
     attachments: List<Attachment>,

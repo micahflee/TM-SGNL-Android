@@ -853,7 +853,7 @@ open class AttachmentTable( //TM_SA make class open
    * If the attachment has no data, it is assumed that you will later call [finalizeAttachmentAfterDownload].
    */
   @Throws(MmsException::class)
-  open fun insertAttachmentsForMessage(mmsId: Long, attachments: List<Attachment>, quoteAttachment: List<Attachment>): Map<Attachment, AttachmentId> { //TM_SA make fun open
+  fun insertAttachmentsForMessage(mmsId: Long, attachments: List<Attachment>, quoteAttachment: List<Attachment>): Map<Attachment, AttachmentId> {
     if (attachments.isEmpty() && quoteAttachment.isEmpty()) {
       return emptyMap()
     }
