@@ -12,7 +12,6 @@ import org.tm.archive.ringrtc.RemotePeer
 import org.tm.archive.util.hasAudio
 import org.tm.archive.util.hasDocument
 import org.tm.archive.util.hasGif
-import org.tm.archive.util.hasImage
 import org.tm.archive.util.hasLinkPreview
 import org.tm.archive.util.hasLocation
 import org.tm.archive.util.hasSharedContact
