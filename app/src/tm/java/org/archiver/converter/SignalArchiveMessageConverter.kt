@@ -71,9 +71,7 @@ class SignalArchiveMessageConverter(
       receivers = receivers,
       attachments = attachmentConverter.convert(message),
       callInfo = listOfNotNull(call),
-      edits = null,
-      headers = null
-    )
+      edits = null)
   }
 
   private fun MessageRecord.getDirection(): Direction {
