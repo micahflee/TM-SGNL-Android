@@ -48,7 +48,7 @@ class TeleMessageApplicationDependencyProvider(
         val sdk = AndroidCopySDK.getInstance(applicationContext)
         val archiveDatabase: IArchiveDatabase = DefaultArchiveDatabase(this)
         val filer = SignalFiler(applicationContext, database.messageTable, database.attachmentTable, database.stickerTable, BlobProvider.getInstance())
-        val settings = MutableStateFlow(ArchiveSettings(isAppActivated = true, editMessageArchivingSupported = true, supportCallArchiving = true))
+        val settings = MutableStateFlow(ArchiveSettings(isAppActivated = true, editMessageArchivingSupported = false, supportCallArchiving = true))
         sdkModule = SdkModule(sdk, DataGrabber.getInstance(applicationContext), ClientType.Signal, database, archiveDatabase, filer, settings)
         TeleMessageApplicationDependencyProvider.sdkModule = sdkModule
       }
