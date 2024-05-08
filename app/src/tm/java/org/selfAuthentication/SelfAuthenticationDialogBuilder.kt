@@ -4,11 +4,8 @@ import android.app.Activity
 import android.app.AlertDialog
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.ISendLogCallback
-import com.tm.androidcopysdk.model.resource.ResourceStatus
-import com.tm.androidcopysdk.utils.PrefManager
-import org.archiver.ArchivePreferenceConstants
+import com.tm.model.ResourceStatus
 import org.archiver.ArchiveSender
 import org.tm.archive.R
 

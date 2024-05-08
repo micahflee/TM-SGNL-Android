@@ -1,18 +1,17 @@
 package org.archiver.gcm
 
+//import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationFailed
+//import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationSucceed
 import android.os.Handler
 import android.os.Looper
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.RemoteMessage
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
-import com.tm.androidcopysdk.MessageEvent
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.IOnCredentialsArrived
 import com.tm.authenticatorsdk.selfAuthenticator.SelfAuthenticator.getUserCredentials
-//import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationFailed
-//import org.archive.selfAuthentication.SelfAuthenticatorConstants.Companion.selfAuthenticationSucceed
 import org.archiver.ArchiveConstants
 import org.archiver.ArchivePreferenceConstants
 import org.archiver.FCMConnector

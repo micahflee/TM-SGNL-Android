@@ -2,12 +2,12 @@ package org.archiver.data
 
 import android.content.ContentValues
 import android.content.Context
+import com.tm.androidcopysdk.api.IAndroidCopySdk
 import com.tm.androidcopysdk.api.IArchiveMessageDao
-import com.tm.androidcopysdk.api.IMessageStoreObserver
 import com.tm.androidcopysdk.model.ArchiveMessage
+import com.tm.androidcopysdk.model.query.ArchiveMessageFilter
 import org.archiver.ArchiveUtil
 import org.archiver.converter.SignalArchiveMessageConverter
-import org.archiver.di.TeleMessageApplicationDependencyProvider
 import org.signal.core.util.Stopwatch
 import org.tm.archive.attachments.Attachment
 import org.tm.archive.attachments.AttachmentId
@@ -36,27 +36,48 @@ class TeleMessageTable(
 
 ) : MessageTable(context, databaseHelper), IArchiveMessageDao<Long> {
 
-  private val messageStoreObserver: IMessageStoreObserver<Long> = TeleMessageApplicationDependencyProvider.messageStoreObserver
+	private val sdk: IAndroidCopySdk<Long> = IAndroidCopySdk.getInstance()
 
   private val converter = SignalArchiveMessageConverter(context)
 
-  override fun find(id: Long): ArchiveMessage? {
+  override suspend fun find(id: Long): ArchiveMessage? {
     val message = getMessageRecordOrNull(id) ?: return null
     val thread = SignalDatabase.threads.getThreadRecord(message.threadId)
     return converter.convert(getMessageRecordOrNull(id), thread, getAccountPhoneNumber())
   }
 
-  override fun findAll(ids: List<Long>): List<ArchiveMessage> {
+  override suspend fun findAll(ids: List<Long>): List<ArchiveMessage> {
     val accountPhoneNumber = getAccountPhoneNumber()
     val threads = SignalDatabase.threads
     return getMessages(ids).use { reader -> reader.mapNotNull { converter.convert(it, threads.getThreadRecord(it.threadId), accountPhoneNumber) } }
   }
 
+	override suspend fun findAll(filter: ArchiveMessageFilter<Long>): List<ArchiveMessage> {
+		val messageIds = filter.messageIds
+		if (messageIds != null)
+			return findAll(messageIds)
+		val accountPhoneNumber = getAccountPhoneNumber()
+		val threads = SignalDatabase.threads
+		val afterSelector = ">=".takeIf { filter.afterInclusive } ?: ">"
+		val beforeSelector = "<=".takeIf { filter.beforeInclusive } ?: "<"
+		val before = filter.before
+		var selection = "$TABLE_NAME.$DATE_SENT $afterSelector ${filter.after}"
+		if (before != null && before > filter.after)
+			selection += " AND $TABLE_NAME.$DATE_SENT $beforeSelector $before"
+		rawQueryWithAttachments(selection, null).use { cursor ->
+			return MmsReader(cursor).use { reader -> reader.mapNotNull { converter.convert(it, threads.getThreadRecord(it.threadId), accountPhoneNumber) } }
+		}
+	}
+
+	override suspend fun count(filter: ArchiveMessageFilter<Long>): Int {
+		return 0
+	}
+
   fun onSubmitCall(call: CallTable.Call, callInfo: CallInfoState) {
     val message = getMessageRecordOrNull(call.messageId ?: return)?.withCall(call)
     val thread = SignalDatabase.threads.getThreadRecord(message?.threadId)
     val archiveMessage = converter.convertCall(message, thread, getAccountPhoneNumber(), callInfo) ?: return
-    messageStoreObserver.afterMessageStateChanged(archiveMessage)
+    sdk.afterMessageStateChanged(archiveMessage)
   }
 
   private fun getAccountPhoneNumber() = ArchiveUtil.getPhoneNumberInTestMode(context)
@@ -65,14 +86,14 @@ class TeleMessageTable(
   // region Call - Insert
   override fun insertCallLog(recipientId: RecipientId, type: Long, timestamp: Long, outgoing: Boolean): InsertResult {
     val result = super.insertCallLog(recipientId, type, timestamp, outgoing)
-    messageStoreObserver.afterMessageIdStateChanged(result.messageId)
+    sdk.afterMessageIdStateChanged(result.messageId)
     return result
   }
 
   override fun insertGroupCall(groupRecipientId: RecipientId, sender: RecipientId, timestamp: Long, eraId: String,
                                joinedUuids: Collection<UUID>, isCallFull: Boolean): MessageId {
     val result = super.insertGroupCall(groupRecipientId, sender, timestamp, eraId, joinedUuids, isCallFull)
-    messageStoreObserver.afterMessageIdStateChanged(result.id)
+    sdk.afterMessageIdStateChanged(result.id)
     return result
   }
   // endregion Call - Insert
@@ -80,7 +101,7 @@ class TeleMessageTable(
   // region Call - Update
   override fun updateCallLog(messageId: Long, type: Long) {
     super.updateCallLog(messageId, type)
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    sdk.afterMessageIdStateChanged(messageId)
   }
 
   override fun updateGroupCall(messageId: Long, eraId: String, joinedUuids: Collection<UUID>, isCallFull: Boolean): MessageId {
@@ -91,11 +112,11 @@ class TeleMessageTable(
       val thread = SignalDatabase.threads.getThreadRecord(message?.threadId)
       val archiveMessage = converter.convertCall(message, thread, getAccountPhoneNumber(), call.event)
       if (archiveMessage != null) {
-        messageStoreObserver.afterMessageStateChanged(archiveMessage)
+        sdk.afterMessageStateChanged(archiveMessage)
         return result
       }
     }
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    sdk.afterMessageIdStateChanged(messageId)
     return result
   }
   // endregion Call - Update
@@ -106,19 +127,19 @@ class TeleMessageTable(
   override fun insertMessageInbox(retrieved: IncomingMessage, candidateThreadId: Long, editedMessage: MmsMessageRecord?, notifyObservers: Boolean): Optional<InsertResult> {
     val result = super.insertMessageInbox(retrieved, candidateThreadId, editedMessage, notifyObservers)
     val messageId = result.getOrNull()?.messageId ?: return result
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    sdk.afterMessageIdStateChanged(messageId)
     return result
   }
 
   override fun insertMessageOutbox(message: OutgoingMessage, threadId: Long, forceSms: Boolean, defaultReceiptStatus: Int, insertListener: InsertListener?): Long {
     val result = super.insertMessageOutbox(message, threadId, forceSms, defaultReceiptStatus, insertListener)
-    messageStoreObserver.afterMessageIdStateChanged(result)
+    sdk.afterMessageIdStateChanged(result)
     return result
   }
 
   override fun insertMediaMessage(threadId: Long, body: String?, attachments: List<Attachment>, quoteAttachments: List<Attachment>, sharedContacts: List<Contact>, linkPreviews: List<LinkPreview>, mentions: List<Mention>, messageRanges: BodyRangeList?, contentValues: ContentValues, insertListener: InsertListener?, updateThread: Boolean, unarchive: Boolean): Pair<Long, Map<Attachment, AttachmentId>?> {
     val result = super.insertMediaMessage(threadId, body, attachments, quoteAttachments, sharedContacts, linkPreviews, mentions, messageRanges, contentValues, insertListener, updateThread, unarchive)
-    messageStoreObserver.afterMessageIdStateChanged(result.first)
+		sdk.afterMessageIdStateChanged(result.first)
     return result
   }
   // endregion Message - Insert
@@ -126,12 +147,12 @@ class TeleMessageTable(
   // region Message - Update
   override fun markSmsStatus(id: Long, status: Int) {
     super.markSmsStatus(id, status)
-    messageStoreObserver.afterMessageIdStateChanged(id)
+    sdk.afterMessageIdStateChanged(id)
   }
 
   override fun setIncomingMessagesViewed(messageIds: List<Long>): List<MarkedMessageInfo> {
     val result = super.setIncomingMessagesViewed(messageIds)
-    messageStoreObserver.afterMessageIdsStateChanged(result.map { it.messageId.id })
+    sdk.afterMessageIdsStateChanged(result.map { it.messageId.id })
     return result
   }
 
@@ -141,52 +162,52 @@ class TeleMessageTable(
 
   override fun markAsOutbox(messageId: Long) {
     super.markAsOutbox(messageId)
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    sdk.afterMessageIdStateChanged(messageId)
   }
 
   override fun markAsSending(messageId: Long) {
     super.markAsSending(messageId)
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    sdk.afterMessageIdStateChanged(messageId)
   }
 
   override fun markAsSentFailed(messageId: Long) {
     super.markAsSentFailed(messageId)
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    sdk.afterMessageIdStateChanged(messageId)
   }
 
   override fun markAsSent(messageId: Long, secure: Boolean) {
     super.markAsSent(messageId, secure)
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    sdk.afterMessageIdStateChanged(messageId)
   }
 
   override fun markDownloadState(messageId: Long, state: Long) {
     super.markDownloadState(messageId, state)
-    messageStoreObserver.afterMessageIdStateChanged(messageId)
+    sdk.afterMessageIdStateChanged(messageId)
   }
 
   override fun setMessagesRead(where: String, arguments: Array<String>?): List<MarkedMessageInfo> {
     val result = super.setMessagesRead(where, arguments)
-    messageStoreObserver.afterMessageIdsStateChanged(result.map { it.messageId.id })
+    sdk.afterMessageIdsStateChanged(result.map { it.messageId.id })
     return result
   }
 
   override fun incrementReceiptCountInternal(targetTimestamp: Long, receiptAuthor: RecipientId, receiptSentTimestamp: Long,
                                              receiptType: ReceiptType, messageQualifier: MessageQualifier, stopwatch: Stopwatch?): Set<MessageReceiptUpdate> {
     val result = super.incrementReceiptCountInternal(targetTimestamp, receiptAuthor, receiptSentTimestamp, receiptType, messageQualifier, stopwatch)
-    messageStoreObserver.afterMessageIdsStateChanged(result.map { it.messageId.id })
+    sdk.afterMessageIdsStateChanged(result.map { it.messageId.id })
     return result
   }
 
   override fun updateTypeBitmask(id: Long, maskOff: Long, maskOn: Long) {
     super.updateTypeBitmask(id, maskOff, maskOn)
-    messageStoreObserver.afterMessageIdStateChanged(id)
+    sdk.afterMessageIdStateChanged(id)
   }
 
   override fun markAsRemoteDeleteInternal(messageId: Long) {
     val record = getMessageRecordOrNull(messageId)
     val message = converter.convert(record, record?.threadId?.let(SignalDatabase.threads::getThreadRecord), getAccountPhoneNumber(), isRemoteDeleted = true)
     super.markAsRemoteDeleteInternal(messageId)
-    messageStoreObserver.afterMessageStateChanged(message ?: return)
+    sdk.afterMessageStateChanged(message ?: return)
   }
   // endregion Message - Update
 
@@ -195,9 +216,13 @@ class TeleMessageTable(
     val record = getMessageRecordOrNull(messageId)
     val message = converter.convert(record, record?.threadId?.let(SignalDatabase.threads::getThreadRecord), getAccountPhoneNumber(), isDeleted = true)
     val threadDeleted = super.deleteMessage(messageId, threadId, notify, updateThread)
-    messageStoreObserver.afterMessageStateChanged(message ?: return threadDeleted)
+    sdk.afterMessageStateChanged(message ?: return threadDeleted)
     return threadDeleted
   }
   // endregion Message - Delete
   // endregion Message
+
+	companion object {
+		private const val RAW_FILTER_WHERE = "$TABLE_NAME.$ID = %s"
+	}
 }

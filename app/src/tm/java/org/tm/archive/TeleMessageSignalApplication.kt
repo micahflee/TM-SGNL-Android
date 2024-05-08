@@ -5,8 +5,9 @@ import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.AndroidCopySettings
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
-import com.tm.androidcopysdk.device.ArchiveMessagesProcessor
-import com.tm.androidcopysdk.device.SendSignatureProcessor
+import com.tm.androidcopysdk.api.IAndroidCopySdk
+import com.tm.androidcopysdk.api.SdkModule
+import com.tm.androidcopysdk.model.ClientType
 import com.tm.androidcopysdk.network.DefaultNetworkProvider
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
@@ -22,7 +23,7 @@ import org.archiver.ArchiveLogger
 import org.archiver.SignalLoggerAdapter
 import org.archiver.device.CallManagerRecordingDelegate
 import org.archiver.di.TeleMessageApplicationDependencyProvider
-import org.archiver.di.TeleMessageApplicationDependencyProvider.Companion.getSdkModule
+import org.archiver.model.SignalFiler
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log.blockUntilAllWritesFinished
 import org.signal.libsignal.protocol.logging.SignalProtocolLoggerProvider
@@ -70,11 +71,9 @@ class TeleMessageSignalApplication : ApplicationContext(), ApplicationInterface 
   }
 
   private fun initializeSdk() {
-    val module = getSdkModule(requireNotNull(SignalDatabase.instance))
-    val messageObserver = TeleMessageApplicationDependencyProvider.messageStoreObserver
-    messageObserver.addProcessor(ArchiveMessagesProcessor(module))
-    messageObserver.addProcessor(SendSignatureProcessor(module))
-    messageObserver.initialize(module)
+		val database = requireNotNull(SignalDatabase.instance)
+    val module = SdkModule(this, ClientType.Signal, database, SignalFiler.getInstance(applicationContext))
+    IAndroidCopySdk.getInstance<Long>().initialize(module)
   }
 
   private fun initArchiveUrlsAndStartArchive() {

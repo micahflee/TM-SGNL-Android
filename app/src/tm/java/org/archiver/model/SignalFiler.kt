@@ -3,10 +3,13 @@ package org.archiver.model
 import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
+import com.tm.androidcopysdk.api.IFiler
 import com.tm.androidcopysdk.device.AbstractFiler
 import com.tm.androidcopysdk.model.ArchiveAttachment
 import com.tm.androidcopysdk.model.ArchiveAttachmentType
 import com.tm.androidcopysdk.model.ArchiveMessage
+import com.tm.androidcopysdk.model.ArchiveMessageType
+import com.tm.androidcopysdk.model.MessageAttachmentStatus
 import com.tm.logger.Log
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveConstants.Companion.SIGNAL_ARCHIVE_ATTACHMENT_TEMPLATE_PREFIX
@@ -14,6 +17,7 @@ import org.archiver.ArchiveFileUtil
 import org.tm.archive.attachments.AttachmentId
 import org.tm.archive.database.AttachmentTable
 import org.tm.archive.database.MessageTable
+import org.tm.archive.database.SignalDatabase
 import org.tm.archive.database.StickerTable
 import org.tm.archive.database.model.MmsMessageRecord
 import org.tm.archive.dependencies.ApplicationDependencies
@@ -35,9 +39,13 @@ class SignalFiler(
 
   private val blobProvider: BlobProvider,
 
-  ) : AbstractFiler(context) {
+) : AbstractFiler(context) {
 
   override fun streamIntoFile(message: ArchiveMessage, attachment: ArchiveAttachment) {
+		if (message.type == ArchiveMessageType.Call) {
+			super.streamIntoFile(message, attachment)
+			return
+		}
     val sourcePath = attachment.sourcePath ?: return
     val archivePath = attachment.archivePath ?: return
     val archiveFile = File(archivePath)
@@ -57,6 +65,18 @@ class SignalFiler(
       e.printStackTrace()
     }
   }
+
+	fun getRecordedFile(id: String?): ArchiveAttachment? {
+		if (id == null)
+			return null
+		val cacheFiles = cacheDir().listFiles() ?: return null
+		return cacheFiles.firstNotNullOfOrNull {
+			if (it.extension == "pcm" && (it.name.startsWith("${id}_") || it.name.startsWith("${id}-")))
+				ArchiveAttachment(id, ArchiveAttachmentType.Audio,  "audio/pcm", it.absolutePath, null, MessageAttachmentStatus.Success, true)
+			else
+				null
+		}
+	}
 
   override fun getAttachmentFile(message: ArchiveMessage, attachment: ArchiveAttachment): File {
     if (attachment.type == ArchiveAttachmentType.VCard)
@@ -139,5 +159,19 @@ class SignalFiler(
     private const val VCARD_POSTAL_ADDRESS = "ADR;TYPE=WORK:;;%s\r\n"
     private const val VCARD_PHONE_NUMBERS = "TEL;TYPE=WORK,VOICE:%s\r\n"
     private const val VCARD_EMAIL = "EMAIL;TYPE=PREF,INTERNET:%s\r\n"
+
+
+		var filer: IFiler? = null
+
+		fun requireInstance() = requireNotNull(filer)
+
+		fun getInstance(context: Context): IFiler {
+			var filer = filer
+			if (filer == null) {
+				filer = SignalFiler(context, SignalDatabase.messages, SignalDatabase.attachments, SignalDatabase.stickers, BlobProvider.getInstance())
+				SignalFiler.filer = filer
+			}
+			return filer
+		}
   }
 }

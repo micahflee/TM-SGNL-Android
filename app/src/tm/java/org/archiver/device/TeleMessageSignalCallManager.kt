@@ -3,6 +3,7 @@ package org.archiver.device
 import android.app.Application
 import com.tm.androidcopysdk.api.IFiler
 import org.archiver.data.TeleMessageTable
+import org.archiver.model.SignalFiler
 import org.signal.core.util.logging.Log
 import org.signal.ringrtc.CallId
 import org.signal.ringrtc.GroupCall
@@ -12,6 +13,7 @@ import org.tm.archive.database.SignalDatabase
 import org.tm.archive.service.webrtc.SignalCallManager
 import org.tm.archive.service.webrtc.state.CallInfoState
 import org.tm.archive.service.webrtc.state.WebRtcServiceState
+import java.io.File
 
 class TeleMessageSignalCallManager(
   application: Application,
@@ -47,7 +49,7 @@ class TeleMessageSignalCallManager(
     val call = callInfoState.call() ?: return
     val isAdHocCall = callInfoState.callRecipient.isCallLink
     if (isAdHocCall) {
-      filer.findCallRecording(call.callId.toString())?.apply { if (exists()) delete() }
+			deleteRecordedFiles(call.callId)
       return
     }
     (SignalDatabase.messages as TeleMessageTable).onSubmitCall(call, callInfoState)
@@ -62,6 +64,10 @@ class TeleMessageSignalCallManager(
   }
 
   private fun CallInfoState?.call() = this?.let { getCallId()?.let { calls.getCallById(it.longValue(), callRecipient.id) } }
+
+	private fun deleteRecordedFiles(callId: Long) {
+		(filer as SignalFiler).getRecordedFile(callId.toString())?.sourcePath?.let(::File)?.run { if (exists()) delete() }
+	}
 
   companion object {
 

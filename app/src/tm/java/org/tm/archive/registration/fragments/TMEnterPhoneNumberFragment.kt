@@ -20,7 +20,6 @@ import com.google.firebase.FirebaseApp
 import com.tm.androidcopysdk.AndroidCopySDK
 import com.tm.androidcopysdk.BackupService
 import com.tm.androidcopysdk.CommonUtils
-import com.tm.androidcopysdk.model.resource.ResourceStatus
 import com.tm.androidcopysdk.network.appSettings.UpdateEvent
 import com.tm.androidcopysdk.utils.PrefManager
 import com.tm.authenticatorsdk.mamsdk.IMDMAuthenticator
@@ -28,6 +27,7 @@ import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.isMDM
 import com.tm.authenticatorsdk.mamsdk.MDMAuthenticator.startMDMAuthenticator
 import com.tm.authenticatorsdk.selfAuthenticator.AuthenticatorConstants
 import com.tm.authenticatorsdk.selfAuthenticator.IAuthenticationStatus
+import com.tm.model.ResourceStatus
 import com.tm.utils.ApplicationInterface
 import org.archiver.ArchiveConstants
 import org.archiver.ArchiveLogger.Companion.sendArchiveLog
