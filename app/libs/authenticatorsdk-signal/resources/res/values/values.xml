@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr format="reference" name="signinButton"/>
+    <attr format="reference" name="text_frame"/>
+    <color name="ColorPrimary">#F5F5F5</color>
+    <color name="ColorPrimaryCompose">#E1E4E5</color>
+    <color name="ColorPrimaryDark">#a2a7a8</color>
+    <color name="ColorPrimaryDarkCompose">#a2a7a8</color>
+    <color name="blueish">#a8ddf2</color>
+    <color name="call_me_color">#ffffff</color>
+    <color name="call_me_color_enable">#ffffff</color>
+    <color name="contact_color">#182028</color>
+    <color name="contact_name_color">#ff182028</color>
+    <color name="dark_transparent">#80000000</color>
+    <color name="date_status_color">#ff777777</color>
+    <color name="gray">#a2a7a8</color>
+    <color name="gray_status_background">#ffe7e7e7</color>
+    <color name="group_sender_color">#39a8ff</color>
+    <color name="link_color">#27b2e7</color>
+    <color name="no_tm_contact">#808080</color>
+    <color name="read_bgcolor">#ff000000</color>
+    <color name="red_not_autorised">#ff0416</color>
+    <color name="sender_name1">#a6bbe1</color>
+    <color name="sender_name2">#1473a3</color>
+    <color name="sender_name3">#25b7ea</color>
+    <color name="sender_name4">#235b71</color>
+    <color name="sender_name5">#1897d4</color>
+    <color name="status_remaining_color">#ff919191</color>
+    <color name="status_text_color">#ff1473a3</color>
+    <color name="status_text_color_one_on_one">#ff182028</color>
+    <color name="subtitle_color">#000000</color>
+    <color name="timestamp_color">#bf000000</color>
+    <color name="tm_contact">#0497D3</color>
+    <color name="transparent">#00000000</color>
+    <color name="unread_bgcolor">#ff404040</color>
+    <drawable name="class_zero_background">#7f040000</drawable>
+    <drawable name="light_blue_background">#ffecfbff</drawable>
+    <drawable name="text_color">#ffffffff</drawable>
+    <drawable name="text_color_black">#ff000000</drawable>
+    <drawable name="text_color_offwhite">#55ffffff</drawable>
+    <drawable name="text_color_red">#ffff0000</drawable>
+    <drawable name="white_background">#ffffffff</drawable>
+    <string name="activate">Activate</string>
+    <string name="activating_progress_dialog">Activating...</string>
+    <string name="activation_code">Activation code</string>
+    <string name="app_name">authenticatorsdk</string>
+    <string name="archiver_notification_title">"Android archiver"</string>
+    <string name="archiver_notification_title_samrsh">"Capture Mobile Android"</string>
+    <string name="authorities_path_provider" translatable="false">com.tm.authenticatorsdk.myfileprovider</string>
+    <string name="by_validating_email">By validating your email, you agree to Terms of Service
+    and Privacy Policy</string>
+    <string name="call_me">Call Me</string>
+    <string name="call_me_failed">Failed to preform operation, please try again or contact your Administrator</string>
+    <string name="call_me_prefix">Didn’t get the SMS? \nTap on “Call Me” in</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm_phone_number">In order to sign up, please enter your phone number.</string>
+    <string name="contact_us_email_subject">Log from Android Archiver </string>
+    <string name="contact_us_email_subject_samrsh">Log from Capture Mobile Android </string>
+    <string name="email">Email</string>
+    <string name="enter_activation_code_no_number">Please enter the activation code we’ve sent you by E-mail and/or SMS </string>
+    <string name="how_do_i_register">&lt;a href=https://www.telemessage.com/archive-text-messages/telemessage-android-archiver-app-download-instructions/>&lt;b>How do I signup? &lt;/b>&lt;/a>&lt;/br></string>
+    <string name="how_do_i_register_smarsh">&lt;a href= https://central.smarsh.com/s/product/capture-mobile>&lt;b>How do I signup? &lt;/b>&lt;/a>&lt;/br></string>
+    <string name="invalid_activation_code">Invalid activation code</string>
+    <string name="message_in_process_notification_title">"Android archiver"</string>
+    <string name="message_in_process_notification_title_smarsh">"Capture Mobile Android"</string>
+    <string name="microphone">Microphone</string>
+    <string name="noData">No Network</string>
+    <string name="no_sms">Didn’t get the SMS? Tap on “Call me”</string>
+    <string name="phone">Phone</string>
+    <string name="please_unmount">Please unmount your device before using \"Contact us\" option</string>
+    <string name="progress_dialog_msg">Please wait...</string>
+    <string name="send_as_voice">Call Me</string>
+    <string name="send_logs_signup">Send Logs</string>
+    <string name="sign_in_activate">Register</string>
+    <string name="sign_in_progress_dialog">Please wait while signing in...</string>
+    <string name="signin_sms_activation_key">activation_code</string>
+    <string name="signup_no_sim">"No SIM"</string>
+    <string name="sms_mms">SMS/MMS</string>
+    <string name="support_email">support@telemessage.com</string>
+    <string name="support_email_smarsh">CaptureMobileSupport@Smarsh.com</string>
+    <string name="support_please_call_me__subject1">"Please call me at %s for my activation PIN"</string>
+    <string name="support_please_call_me_body1">"Hi Support. I didn't get the activation PIN. Please Call Me."</string>
+    <string name="tap_send_voice"> Tap on “Call me”</string>
+    <string name="validating_mobile_number">By validating your mobile number, you agree to &lt;a href=http://www.telemessage.com/terms-conditions/>&lt;b>Terms Of Service&lt;/b>&lt;/a> and  &lt;a href=http://www.telemessage.com/Privacy-Policy/>&lt;b>Privacy Policy&lt;/b>&lt;/a> &lt;br></string>
+    <string name="validating_mobile_number_smarsh">By validating your mobile number, you agree to &lt;a href=https://www.smarsh.com/legal-website-terms-conditions>&lt;b>Terms Of Service&lt;/b>&lt;/a> and  &lt;a href=https://www.smarsh.com/legal-website-privacy-policy>&lt;b>Privacy Policy&lt;/b>&lt;/a> &lt;br></string>
+    <style name="AndroidTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+
+
+
+
+    </style>
+</resources>

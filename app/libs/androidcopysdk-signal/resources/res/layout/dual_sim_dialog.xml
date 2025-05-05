@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="14dp"
+    android:paddingEnd="6dp"
+    android:paddingTop="19dp"
+    android:paddingBottom="6dp"
+    >
+
+    <TextView
+        android:textSize="22dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/title"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:text="@string/dual_sim_title"
+        android:layout_marginTop="8dp"
+        />
+
+
+    <TextView
+        android:layout_marginTop="12dp"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/part1"
+        android:text="@string/dual_sim_part1"
+        android:textSize="17dp"
+        android:textColor="@android:color/darker_gray"
+        />
+
+    <TextView
+        android:layout_marginTop="12dp"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/edit_title"
+        android:text="@string/dual_sim_edit_title_1"
+        android:textSize="20dp"
+        android:textColor="@android:color/black"
+        />
+
+
+    <EditText
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:id="@+id/sim_countrt_code_edit"
+        android:inputType="phone"
+        android:hint="@string/dual_sim_code_hint"
+        android:backgroundTint="#27b2e7"
+
+        />
+
+
+    <TextView
+        android:layout_marginTop="12dp"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/edit_title_2"
+        android:text="@string/dual_sim_edit_title_2"
+        android:textSize="20dp"
+        android:textColor="@android:color/black"
+        />
+    <TextView
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/part2"
+        android:text="@string/dual_sim_part2"
+        android:textSize="17dp"
+        android:textColor="@android:color/darker_gray"
+        />
+
+    <EditText
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:id="@+id/sim_phone_edit"
+        android:inputType="phone"
+        android:hint="@string/dual_sim_hint"
+        android:backgroundTint="#27b2e7"
+
+
+        />
+
+    <TextView
+        android:text="@string/dual_sim_part3"
+        android:layout_marginTop="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/part3"
+        android:textSize="20dp"
+        android:textColor="@android:color/black"
+        />
+
+    <RadioGroup
+        android:layout_marginTop="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/myRadioGroup"
+        android:orientation="horizontal"
+        android:backgroundTint="#27b2e7"
+        android:checkedButton="@+id/slot1" >
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/slot1"
+            android:backgroundTint="#27b2e7"
+            android:buttonTint="#27b2e7"
+            android:text="#1" />
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/slot2"
+            android:backgroundTint="#27b2e7"
+            android:buttonTint="#27b2e7"
+            android:text="#2" />
+
+
+    </RadioGroup>
+
+    <LinearLayout
+        android:id="@+id/BottomLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/cancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="0.35"
+            android:maxLines="1"
+            android:text="@string/cancel"
+            android:textColor="#ffffff"
+            android:enabled="true"
+            android:background="@drawable/sign_in_buttons_sky_blue"
+            android:textSize="17dp" />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="2dp"
+            android:layout_weight="0.3"/>
+
+        <Button
+            android:id="@+id/ok_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginStart="5dp"
+            android:layout_weight="0.35"
+            android:text="@string/ok"
+            android:textColor="#ffffff"
+            android:enabled="false"
+            android:background="@drawable/sign_in_buttons_sky_blue"
+            android:textSize="17dp" />
+
+    </LinearLayout>
+
+
+</LinearLayout>

@@ -1,0 +1,2 @@
+int string app_name 0x0
+int string install_identifier 0x0

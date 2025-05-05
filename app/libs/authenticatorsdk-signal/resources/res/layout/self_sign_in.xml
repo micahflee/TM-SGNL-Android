@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_alignParentRight="true"
+    android:orientation="vertical"
+
+    >
+
+    <RelativeLayout
+        android:id="@+id/TextAndErrorLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/imageView1"
+        android:layout_centerHorizontal="true"
+        android:visibility="visible"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        >
+
+
+        <RelativeLayout
+            android:id="@+id/errorLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="10dp"
+            android:visibility="invisible"
+            android:layout_marginLeft="10dp"
+            android:layout_alignParentLeft="true">
+
+            <TextView
+                android:id="@+id/errorMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="3dp"
+                android:layout_toEndOf="@+id/errorImage"
+                android:text= "@string/noData"
+                android:textColor="#ff4a4a"
+                android:textSize="11sp"
+                android:layout_marginLeft="3dp"
+                android:layout_toRightOf="@+id/errorImage" />
+
+            <ImageView
+                android:id="@+id/errorImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_error"
+                android:layout_alignParentLeft="true" />
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/sendLogs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="3dp"
+        android:layout_toEndOf="@+id/errorMessage"
+        android:text= "@string/send_logs_signup"
+        android:textColor="#27b2e7"
+        android:textSize="14sp"
+        android:layout_marginLeft="3dp"
+        android:layout_toRightOf="@+id/errorMessage"
+        />
+
+    <TextView
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/welcome"
+        android:gravity="center"
+        android:drawableTop="@drawable/welcome_ilustration"
+        android:drawablePadding="10dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:paddingTop="19dp"
+        android:text="Welcome to"
+
+        android:textColor="#000000"
+        android:textSize="20dp"
+        />
+
+    <TextView
+        android:id="@+id/android_archiver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:lineSpacingExtra="-0.27dp"
+        android:text="Android Archiver"
+        android:textAlignment="center"
+        android:textColor="#27b2e7"
+        android:textSize="23dp" />
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:paddingTop="20dp"
+        android:paddingEnd="36dp"
+        android:paddingLeft="36dp"
+        android:paddingRight="35dp"
+        android:paddingStart="35dp">
+
+        <EditText
+            android:id="@+id/CountryCodeET"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:layout_alignParentStart="true"
+            android:inputType="phone"
+            android:minWidth="87dp"
+            android:textSize="20dp"
+            android:visibility="gone"/>
+
+        <EditText
+            android:id="@+id/UserNameET"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+
+            android:gravity="left"
+            android:hint="My MDM email"
+            android:inputType="phone"
+            android:minWidth="190dp"
+            android:textSize="20dp" />
+    </RelativeLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:gravity="center_horizontal"
+        android:lineSpacingExtra="4.5sp"
+        android:paddingEnd="34.3dp"
+        android:paddingStart="34.3dp"
+        android:paddingTop="12dp"
+        android:textColor="#8a8a8a"
+        android:textColorLink="#00003c"
+        android:textSize="16dp"
+        android:textStyle="normal"
+        android:id="@+id/Terms_and_Policy"
+        tools:text="By validating your account, you agree to Terms of Service
+and Privacy Policy"
+        android:visibility="gone"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="bottom"
+        android:paddingTop="2.4dp"
+        android:paddingEnd="16dp"
+        android:paddingLeft="23dp"
+        android:paddingRight="16dp">
+
+        <TextView
+            android:id="@+id/howsignup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/SignUnButton"
+
+            android:minWidth="125dp"
+            android:textColorLink="#00003c"
+            android:text="@string/how_do_i_register"
+            android:textColor="#27b2e7"
+            android:textSize="16dp"
+            android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/SignUnButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_gravity="right|end"
+            android:background="@drawable/sign_in_buttons_sky_blue"
+            android:minWidth="89dp"
+            android:minHeight="36dp"
+            android:paddingRight="16dp"
+            android:text="Next"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+            android:textColor="@android:color/white"
+            android:textSize="16dp"
+            android:visibility="gone"/>
+    </RelativeLayout>
+
+
+</LinearLayout>

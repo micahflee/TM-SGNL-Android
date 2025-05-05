@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/newscrollview"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fillViewport="true"  >
+
+    <LinearLayout
+        android:id="@+id/linearLayout100000"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal" >
+
+
+        <RelativeLayout
+            android:id="@+id/linearLayout1"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical" >
+
+            <ImageView
+                android:id="@+id/imageView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="25dp"
+                android:src="@drawable/logo" >
+            </ImageView>
+
+
+        <RelativeLayout
+            android:id="@+id/TextAndErrorLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView1"
+            android:layout_centerHorizontal="true"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+             >
+
+
+            <RelativeLayout
+                android:id="@+id/errorLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="10dp"
+                android:visibility="invisible"
+                android:layout_marginLeft="10dp"
+                android:layout_alignParentLeft="true">
+
+                <TextView
+                    android:id="@+id/errorMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginStart="3dp"
+                    android:layout_toEndOf="@+id/errorImage"
+                    android:text= "@string/noData"
+                    android:textColor="#ff4a4a"
+                    android:textSize="11sp"
+                    android:layout_marginLeft="3dp"
+                    android:layout_toRightOf="@+id/errorImage" />
+
+                <ImageView
+                    android:id="@+id/errorImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_error"
+                    android:layout_alignParentLeft="true" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/confirm_phone_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/errorLayout"
+                android:layout_marginTop="2dp"
+                android:layout_centerHorizontal="true"
+
+                android:gravity="start"
+                android:text="@string/confirm_phone_number"
+                android:textColor="#6d6e71"
+                android:textSize="16sp" />
+
+            </RelativeLayout>
+
+
+
+            <RelativeLayout
+                android:id="@+id/phone_edit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/TextAndErrorLayout"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="1dp" >
+
+                <TextView
+                    android:id="@+id/countryCodeTV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="left" />
+
+                <EditText
+                    android:id="@+id/CountryCodeET"
+                    android:layout_width="60dp"
+                    android:layout_height="50dp"
+                    android:layout_below="@id/countryCodeTV"
+                    android:layout_marginEnd="10sp"
+                    android:background="@drawable/sky_blue_text_frame_down"
+                    android:editable="true"
+                    android:gravity="center"
+                    android:inputType="phone"
+                    android:layout_marginRight="10sp" />
+
+                <RelativeLayout
+                    android:id="@+id/clearableEditText"
+                    android:layout_width="fill_parent"
+                    android:layout_height="50dp"
+                    android:layout_below="@id/countryCodeTV"
+                    android:layout_toEndOf="@id/CountryCodeET"
+                    android:paddingLeft="10sp"
+                    android:layout_toRightOf="@id/CountryCodeET">
+
+                    <EditText
+                        android:id="@+id/UserNameET"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:background="@drawable/sky_blue_text_frame_down"
+                        android:editable="true"
+                        android:inputType="phone"
+                        android:maxLength="16"
+                        android:paddingLeft="10dp" >
+
+                        <requestFocus />
+                    </EditText>
+                </RelativeLayout>
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/Terms_and_Policy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
+                android:layout_below="@id/phone_edit"
+                android:layout_marginTop="14dp"
+                android:gravity="left"
+                android:textColor="#00003c"
+                android:textColorLink="#00003c"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:textSize="14sp"
+
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentRight="true" />
+
+            <LinearLayout
+                android:id="@+id/BottomLayout"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="false"
+                android:layout_alignParentTop="false"
+                android:layout_below="@id/Terms_and_Policy"
+                android:layout_marginTop="5dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_alignParentEnd="@+id/Terms_and_Policy"
+                android:layout_alignEnd="@+id/Terms_and_Policy"
+                android:layout_alignParentStart="@+id/Terms_and_Policy"
+                android:layout_alignStart="@+id/Terms_and_Policy"
+                android:layout_alignParentRight="@+id/Terms_and_Policy"
+                android:layout_alignRight="@+id/Terms_and_Policy"
+                android:layout_alignParentLeft="@+id/Terms_and_Policy"
+                android:layout_alignLeft="@+id/Terms_and_Policy">
+
+                <Button
+                    android:id="@+id/cancel"
+                    style="?signinButton"
+                    android:layout_width="0dp"
+
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp"
+
+                    android:layout_weight="1"
+                    android:maxLines="1"
+                    android:text="@string/cancel"
+                    android:textColor="#00003c"
+                    android:textSize="17sp"
+                    android:layout_marginRight="5dp" />
+
+                <Button
+                    android:id="@+id/SignUnButton"
+                    style="?signinButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+
+                    android:text="@string/sign_in_activate"
+                    android:textColor="#00003c"
+                    android:textSize="17sp"
+                    android:layout_marginLeft="5dp" />
+            </LinearLayout>
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</ScrollView>
+

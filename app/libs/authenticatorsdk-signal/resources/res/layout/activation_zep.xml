@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+
+    android:layout_height="match_parent"
+   >
+
+    <RelativeLayout
+        android:id="@+id/errorLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_below="@+id/imageView1"
+        android:layout_marginTop="3dp"
+        android:visibility="invisible">
+
+        <TextView
+            android:id="@+id/errorMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="3dp"
+            android:layout_toEndOf="@+id/errorImage"
+            android:text="@string/noData"
+            android:textColor="#ff4a4a"
+            android:textSize="11sp"
+            android:layout_marginLeft="3dp"
+            android:layout_toRightOf="@+id/errorImage" />
+
+        <ImageView
+            android:id="@+id/errorImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_error"
+            android:layout_alignParentLeft="true" />
+    </RelativeLayout>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:paddingStart="85dp"
+    android:paddingEnd="84dp"
+    android:layout_height="wrap_content"
+    android:paddingLeft="85dp"
+    android:paddingRight="84dp">
+
+
+    <EditText
+        android:id="@+id/insert_activation_code"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:ems="10"
+        android:backgroundTint="#27b2e7"
+
+        android:gravity="center"
+        android:drawablePadding="-20dp"
+        android:hint="Code"
+        android:drawableEnd="@drawable/ic_approve_disable"
+        android:inputType="textPersonName"
+        android:minWidth="190dp"
+        android:paddingTop="90dp"
+        android:textAlignment="center"
+        android:drawableRight="@drawable/ic_approve_disable" />
+
+
+    <TextView
+
+
+        android:textSize="14sp"
+        android:fontFamily="sans-serif"
+        android:textStyle="normal"
+        android:textColor="#8a8a8a"
+        android:lineSpacingExtra="6.5sp"
+        android:gravity="center_horizontal"
+        android:text= "@string/enter_activation_code_no_number"
+
+        android:id="@+id/enter_activation_textView"
+        android:layout_marginTop="11dp"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/SignInActivateButton"
+
+        android:layout_marginTop="35.1dp"
+        android:minWidth="145dp"
+        android:minHeight="38dp"
+        tools:textColor="#ffffff"
+        tools:textSize="20dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/sign_in_buttons_sky_blue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="Activate" />
+
+
+
+</LinearLayout>
+    <LinearLayout
+        android:orientation="vertical"
+
+
+        android:paddingTop="50dp"
+        android:layout_gravity="center"
+        android:layout_height="wrap_content"
+
+        android:layout_width="wrap_content">
+
+            <TextView
+
+                android:textSize="16dp"
+                android:fontFamily="sans-serif"
+                android:textStyle="normal"
+                android:textColor="#8a8a8a"
+                android:lineSpacingExtra="4.5sp"
+                android:text="@string/call_me_prefix"
+
+                android:id="@+id/call_me_prefix"
+
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+
+            <TextView
+
+                android:textSize="16dp"
+                android:fontFamily="sans-serif"
+                android:textStyle="normal"
+                android:textColor="#8a8a8a"
+                android:lineSpacingExtra="4.5sp"
+                android:text="@string/call_me_prefix"
+
+                android:id="@+id/call_me_count_down"
+
+
+                android:visibility="gone"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                />
+
+
+        <Button
+
+            android:id="@+id/SendAsVoiceActivateButton"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            android:fontFamily="sans-serif"
+            android:lineSpacingExtra="4.5sp"
+            android:paddingLeft="7dp"
+            android:text="@string/call_me"
+            android:maxWidth="110dp"
+            android:layout_gravity="center"
+
+            android:textColor="#27b2e7"
+            android:textSize="18dp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+
+
+</LinearLayout>

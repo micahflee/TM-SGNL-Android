@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- When selected -->
+    <item android:drawable="@drawable/sky_blue_text_frame_down"
+          android:state_focused="true" />
+    <!-- When not selected-->
+    <item android:drawable="@drawable/text_frame_up" />
+</selector>

@@ -1,0 +1,7 @@
+idle.event.interval,86400400
+low.storage.event.interval.millis,86400400
+low.storage.free.space.threshold.mega,1000
+app.settings.interval.minute,30
+app.settings.interval.day,1
+app.keep_alive.interval.minute,360
+app.alarm.interval.minute,60

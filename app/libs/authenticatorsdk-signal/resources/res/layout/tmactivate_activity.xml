@@ -1,0 +1,178 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/myScrollView"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fillViewport="true"  >
+
+    <LinearLayout
+        android:id="@+id/mainLinearLayout1"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal" >
+
+        <View
+            android:id="@+id/leftEmpty"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="7.8"></View>
+
+        <RelativeLayout
+            android:id="@+id/linearLayout1"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="84.4"
+            android:orientation="vertical" >
+
+            <ImageView
+                android:id="@+id/imageView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginTop="25dp"
+                android:src="@drawable/logo"
+                android:layout_alignParentLeft="true" />
+
+            <RelativeLayout
+                android:id="@+id/errorLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:layout_below="@+id/imageView1"
+                android:layout_marginTop="3dp"
+                android:visibility="invisible">
+
+                <TextView
+                    android:id="@+id/errorMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginStart="3dp"
+                    android:layout_toEndOf="@+id/errorImage"
+                    android:text="@string/noData"
+                    android:textColor="#ff4a4a"
+                    android:textSize="11sp"
+                    android:layout_marginLeft="3dp"
+                    android:layout_toRightOf="@+id/errorImage" />
+
+                <ImageView
+                    android:id="@+id/errorImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_error"
+                    android:layout_alignParentLeft="true" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/enter_activation_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/errorLayout"
+                android:layout_marginTop="5dp"
+                android:minLines="3"
+                android:text=""
+                android:textColor="#000000"
+                android:layout_alignParentLeft="true" />
+
+            <RelativeLayout
+                android:id="@+id/clearableEditText"
+                android:layout_width="fill_parent"
+                android:layout_height="50dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/enter_activation_textView"
+                android:layout_alignParentLeft="true">
+
+                <EditText
+                    android:id="@+id/insert_activation_code"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/sky_blue_text_frame_down"
+                    android:inputType="textPassword|phone"
+                    android:maxLength="16"
+                    android:maxLines="2"
+                    android:minLines="2"
+                    android:paddingLeft="12dp"
+                    android:hint="@string/activation_code" >
+
+                    <requestFocus />
+                </EditText>
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/no_sms_text_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/clearableEditText"
+                android:layout_marginTop="2dp"
+                android:orientation="vertical"
+                android:layout_alignParentLeft="true">
+
+                <TextView
+                    android:id="@+id/no_sms"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_sms"
+                    android:textColor="#000000" />
+
+                <TextView
+                    android:id="@+id/tap_send_voice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minLines="2"
+                    android:text="@string/tap_send_voice"
+                    android:visibility="invisible"
+                    android:textColor="#000000" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/BottomLayout"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/no_sms_text_layout"
+                android:layout_marginTop="2dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_alignParentLeft="true">
+
+                <Button
+                    android:id="@+id/SendAsVoiceActivateButton"
+                    style="?signinButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:maxLines="1"
+                    android:text="@string/send_as_voice"
+                    android:textColor="#ffffff"
+                    android:textSize="14sp"
+                    android:layout_marginRight="5dp" />
+
+                <Button
+                    android:id="@+id/SignInActivateButton"
+                    style="?signinButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:text="@string/activate"
+                    android:textColor="#ffffff"
+                    android:textSize="14sp"
+                    android:layout_marginLeft="5dp" />
+            </LinearLayout>
+        </RelativeLayout>
+
+        <View
+            android:id="@+id/rightEmpty"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="7.8" >
+        </View>
+    </LinearLayout>
+
+</ScrollView>
+
