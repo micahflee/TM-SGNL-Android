@@ -1,3 +1,34 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="center">
+        <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=en">English</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=zh-CN">简体中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=zh-TW">繁體中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=ja">日本語</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=ko">한국어</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=hi">हिन्दी</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=th">ไทย</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=fr">Français</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=de">Deutsch</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=es">Español</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=it">Italiano</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=ru">Русский</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=pt">Português</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=nl">Nederlands</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=pl">Polski</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=ar">العربية</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=fa">فارسی</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=tr">Türkçe</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=vi">Tiếng Việt</a>
+        | <a href="https://openaitx.github.io/view.html?user=micahflee&project=TM-SGNL-Android&lang=id">Bahasa Indonesia</a>
+      </div>
+    </div>
+  </details>
+</div>
+
 # Signal Android
 
 Signal is a simple, powerful, and secure messenger.
